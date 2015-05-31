@@ -8,8 +8,8 @@
 
 #pragma once
 
-#ifndef __INIFILE_H__
-#define __INIFILE_H__
+#ifndef __MEWUI_INIFILE_H__
+#define __MEWUI_INIFILE_H__
 
 #include "mewui/utils.h"
 
@@ -49,7 +49,7 @@ public:
 
 	// files indices
 	std::vector<IniFileIndex> ini_index;
-	UINT16 current_file, current_category;
+	static UINT16 current_file, current_category;
 
 private:
 
@@ -117,4 +117,4 @@ private:
 	std::string 	fullpath;
 };
 
-#endif  /* __INIFILE_H__ */
+#endif  /* __MEWUI_INIFILE_H__ */

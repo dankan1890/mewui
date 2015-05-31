@@ -8,8 +8,8 @@
 
 #pragma once
 
-#ifndef __MSELECTOR_H__
-#define __MSELECTOR_H__
+#ifndef __MEWUI_SELECTOR_H__
+#define __MEWUI_SELECTOR_H__
 
 enum
 {
@@ -36,14 +36,14 @@ public:
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
-	char		m_search[40];
-	UINT16	  *selector;
-	int		 p_category, hover;
-	bool		first_pass;
-	std::vector<std::string> str_items;
-	std::string *searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
+	char						m_search[40];
+	UINT16	  					*selector;
+	int		 					p_category, hover;
+	bool						first_pass;
+	std::vector<std::string> 	str_items;
+	std::string 				*searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
 
 	void find_matches(const char *str);
 };
 
-#endif /* __MSELECTOR_H__ */
+#endif /* __MEWUI_SELECTOR_H__ */

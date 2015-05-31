@@ -484,10 +484,8 @@ void ui_mewui_select_game::populate()
 			switch (mewui_globals::actual_filter)
 			{
 				case FILTER_CATEGORY:
-				{
 					build_category();
 					break;
-				}
 
 				case FILTER_MANUFACTURER:
 					build_list(m_tmp, c_mnfct::ui[c_mnfct::actual].c_str());
@@ -726,7 +724,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	int line;
 	bool isstar = false;
 
-	strprintf(tempbuf[0], "MEWUI %s (%d / %d machines)", mewui_version, visible_items, (driver_list::total() - 1));
+	strprintf(tempbuf[0], "MEWUI %s (%s) (%d / %d machines)", mewui_version, bare_build_version, visible_items, (driver_list::total() - 1));
 
 	std::string filtered;
 
@@ -1303,6 +1301,7 @@ void ui_mewui_select_game::build_custom()
 	{
 		int filter = custfltr::other[count];
 		s_drivers = m_displaylist;
+		m_displaylist.clear();
 
 		switch (filter)
 		{

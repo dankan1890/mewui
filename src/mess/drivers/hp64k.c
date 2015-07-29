@@ -162,8 +162,8 @@
 #define BIT_MASK(n) (1U << (n))
 
 // Macros to clear/set single bits
-#define BIT_CLR(w , n)  ((w) &= ~BIT_MASK(n))
-#define BIT_SET(w , n)  ((w) |= BIT_MASK(n))
+#define BIT_CLR(w , n)	((w) &= ~BIT_MASK(n))
+#define BIT_SET(w , n)	((w) |= BIT_MASK(n))
 
 class hp64k_state : public driver_device
 {

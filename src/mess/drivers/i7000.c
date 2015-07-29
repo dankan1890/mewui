@@ -56,10 +56,10 @@ public:
 	i7000_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag),
           m_maincpu(*this, "maincpu"),
-			m_card(*this, "cardslot"),
+          m_card(*this, "cardslot"),
           m_gfxdecode(*this, "gfxdecode"),
-			m_videoram(*this, "videoram")
-	{ }
+          m_videoram(*this, "videoram")
+    { }
 
 	void video_start();
 	void machine_start();
@@ -245,8 +245,8 @@ static ADDRESS_MAP_START(i7000_mem, AS_PROGRAM, 8, i7000_state)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( i7000_io , AS_IO, 8, i7000_state)
-    ADDRESS_MAP_UNMAP_HIGH
-    ADDRESS_MAP_GLOBAL_MASK (0xff)
+	ADDRESS_MAP_UNMAP_HIGH
+	ADDRESS_MAP_GLOBAL_MASK (0xff)
 //	AM_RANGE(0x06, 0x06) AM_WRITE(i7000_io_?_w)
 //	AM_RANGE(0x08, 0x09) AM_WRITE(i7000_io_?_w) //printer perhaps?
 //	AM_RANGE(0x0c, 0x0c) AM_WRITE(i7000_io_?_w) //0x0C and 0x10 may be related to mem page swapping. (self-test "4. PAG")

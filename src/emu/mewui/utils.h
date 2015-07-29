@@ -21,12 +21,14 @@
 #define MENU_FLAG_MEWUI_HISTORY  (1 << 7)
 #define MENU_FLAG_MEWUI_SWLIST   (1 << 8)
 #define MENU_FLAG_MEWUI_FAVORITE (1 << 9)
+#define MENU_FLAG_MEWUI_PALETTE  (1 << 10)
 #define MAX_CHAR_INFO            256
 #define CR                       0x0d   //  '\n' and '\r' meanings are swapped in some
 #define LF                       0x0a   //  compilers (e.g., Mac compilers)
 #define UI_MENU_PROCESS_ONLYCHAR 8
-#define MAX_FILTER               10
+#define MAX_CUST_FILTER          8
 #define MAX_ICONS_RENDER         40
+#define MEWUI_TOOLBAR_BUTTONS    7
 
 #define MEWUI_VERSION_TAG        "# MEWUI INFO "
 
@@ -49,8 +51,11 @@ enum
 	FILTER_MANUFACTURER,
 	FILTER_YEAR,
 	FILTER_SAVE,
+	FILTER_NOSAVE,
 	FILTER_CHD,
+	FILTER_NOCHD,
 	FILTER_SAMPLES,
+	FILTER_NOSAMPLES,
 	FILTER_STEREO,
 	FILTER_VERTICAL,
 	FILTER_HORIZONTAL,
@@ -116,7 +121,9 @@ enum
 	MEWUI_SW_PARTIAL_SUPPORTED,
 	MEWUI_SW_UNSUPPORTED,
 	MEWUI_SW_REGION,
-	MEWUI_SW_LAST = MEWUI_SW_REGION
+	MEWUI_SW_TYPE,
+	MEWUI_SW_CUSTOM,
+	MEWUI_SW_LAST = MEWUI_SW_CUSTOM
 };
 
 enum
@@ -126,6 +133,23 @@ enum
 	MEWUI_ARCADES,
 	MEWUI_SYSTEMS,
 	MEWUI_MAME_LAST = MEWUI_SYSTEMS
+};
+
+enum
+{
+	HOVER_DAT_UP = -100,
+	HOVER_DAT_DOWN,
+	HOVER_UI_LEFT,
+	HOVER_UI_RIGHT,
+	HOVER_ARROW_UP,
+	HOVER_ARROW_DOWN,
+	HOVER_B_FAV,
+	HOVER_B_EXPORT,
+	HOVER_B_HISTORY,
+	HOVER_B_MAMEINFO,
+	HOVER_B_COMMAND,
+	HOVER_B_FOLDERS,
+	HOVER_B_SETTINGS
 };
 
 // GLOBAL STRUCTURES
@@ -168,7 +192,7 @@ struct cache_info
 
 struct reselect_last
 {
-	static std::string driver, software, part;
+	static std::string driver, software, swlist;
 };
 
 // Manufacturers
@@ -188,6 +212,40 @@ struct c_year
 	static UINT16 actual;
 };
 
+// Software region
+struct c_sw_region
+{
+	std::vector<std::string> ui;
+	UINT16 actual;
+	void set(const char *str);
+	std::string getname(const char *str);
+};
+
+// Software publishers
+struct c_sw_publisher
+{
+	std::vector<std::string> ui;
+	UINT16 actual;
+	void set(const char *str);
+	std::string getname(const char *str);
+};
+
+// Software device type
+struct c_sw_type
+{
+	std::vector<std::string> ui;
+	UINT16 actual;
+	void set(const char *str);
+};
+
+// Software years
+struct c_sw_year
+{
+	std::vector<std::string> ui;
+	UINT16 actual;
+	void set(const char *str);
+};
+
 // GLOBAL CLASS
 struct mewui_globals
 {
@@ -199,11 +257,6 @@ struct mewui_globals
 	static bool         force_reselect_software, force_reset_main;
 	static int          visible_main_lines, visible_sw_lines;
 	static std::vector<cache_info> driver_cache;
-
-	static void save_available_machines(running_machine &machine, std::vector<const game_driver *> &available, std::vector<const game_driver *> &unavailable,
-										std::vector<const game_driver *> &availablesorted, std::vector<const game_driver *> &unavailablesorted);
-	static bool load_available_machines(running_machine &machine, std::vector<const game_driver *> &available, std::vector<const game_driver *> &unavailable,
-										std::vector<const game_driver *> &availablesorted, std::vector<const game_driver *> &unavailablesorted);
 };
 
 // Custom filter class
@@ -211,9 +264,21 @@ struct custfltr
 {
 	static UINT16  main_filter;
 	static UINT16  numother;
-	static UINT16  other[MAX_FILTER];
-	static UINT16  mnfct[MAX_FILTER];
-	static UINT16  year[MAX_FILTER];
+	static UINT16  other[MAX_CUST_FILTER];
+	static UINT16  mnfct[MAX_CUST_FILTER];
+	static UINT16  year[MAX_CUST_FILTER];
+};
+
+// Custom filter class
+struct sw_custfltr
+{
+	static UINT16  main_filter;
+	static UINT16  numother;
+	static UINT16  other[MAX_CUST_FILTER];
+	static UINT16  mnfct[MAX_CUST_FILTER];
+	static UINT16  year[MAX_CUST_FILTER];
+	static UINT16  region[MAX_CUST_FILTER];
+	static UINT16  type[MAX_CUST_FILTER];
 };
 
 // GLOBAL FUNCTIONS
@@ -227,11 +292,13 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 // advanced search function
 int fuzzy_substring(const char *needle, const char *haystack);
 
-void fskip(char *s, int id = 0);
-
 // custom filter load and save
 void load_custom_filters(running_machine &machine);
 void save_custom_filters(running_machine &machine);
+
+// custom software filter load and save
+void load_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &_region, c_sw_publisher &_publisher, c_sw_year &_year, c_sw_type &_type);
+void save_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &_region, c_sw_publisher &_publisher, c_sw_year &_year, c_sw_type &_type);
 
 // jpeg loader
 template <typename _T>

@@ -40,22 +40,32 @@ UINT8 mewui_globals::ume_system = 0;
 // Custom filter
 UINT16 custfltr::main_filter = 0;
 UINT16 custfltr::numother = 0;
-UINT16 custfltr::other[MAX_FILTER];
-UINT16 custfltr::mnfct[MAX_FILTER];
-UINT16 custfltr::year[MAX_FILTER];
+UINT16 custfltr::other[MAX_CUST_FILTER];
+UINT16 custfltr::mnfct[MAX_CUST_FILTER];
+UINT16 custfltr::year[MAX_CUST_FILTER];
+
+// Custom filter
+UINT16 sw_custfltr::main_filter = 0;
+UINT16 sw_custfltr::numother = 0;
+UINT16 sw_custfltr::other[MAX_CUST_FILTER];
+UINT16 sw_custfltr::mnfct[MAX_CUST_FILTER];
+UINT16 sw_custfltr::year[MAX_CUST_FILTER];
+UINT16 sw_custfltr::region[MAX_CUST_FILTER];
+UINT16 sw_custfltr::type[MAX_CUST_FILTER];
 
 std::string reselect_last::driver;
 std::string reselect_last::software;
-std::string reselect_last::part;
+std::string reselect_last::swlist;
 
 std::vector<cache_info> mewui_globals::driver_cache(driver_list::total() + 1);
 
 const char *mewui_globals::filter_text[] = { "All", "Available", "Unavailable", "Working", "Not Mechanical", "Category", "Favorites", "BIOS",
-												"Originals", "Clones", "Not Working", "Mechanical", "Manufacturers", "Years", "Support Save",
-												"CHD", "Use Samples", "Stereo", "Vertical", "Horizontal", "Raster", "Vectors", "Custom" };
+                                             "Originals", "Clones", "Not Working", "Mechanical", "Manufacturers", "Years", "Support Save",
+                                             "Not Support Save", "CHD", "No CHD", "Use Samples", "Not Use Samples", "Stereo", "Vertical",
+                                             "Horizontal", "Raster", "Vectors", "Custom" };
 
 const char *mewui_globals::sw_filter_text[] = { "All", "Available", "Unavailable", "Originals", "Clones", "Years", "Publishers", "Supported",
-												"Partial Supported", "Unsupported", "Region" };
+                                                "Partial Supported", "Unsupported", "Region", "Device Type", "Custom" };
 
 const char *mewui_globals::ume_text[] = { "ALL", "ARCADES", "SYSTEMS" };
 
@@ -71,7 +81,6 @@ void save_game_options(running_machine &machine)
 {
 	// attempt to open the output file
 	emu_file file(machine.options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-
 	if (file.open(emulator_info::get_configname(), ".ini") == FILERR_NONE)
 	{
 		// generate the updated INI
@@ -79,7 +88,6 @@ void save_game_options(running_machine &machine)
 		file.puts(machine.options().output_ini(initext));
 		file.close();
 	}
-
 	else
 		popmessage("**Error to save %s.ini**", emulator_info::get_configname());
 }
@@ -95,7 +103,6 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 	strcatprintf(buffer, "Manufacturer: %-.100s\n", driver->manufacturer);
 
 	int cloneof = driver_list::non_bios_clone(*driver);
-
 	if (cloneof != -1)
 		strcatprintf(buffer, "Driver is Clone of: %-.100s\n", driver_list::driver(cloneof).description);
 	else
@@ -216,16 +223,6 @@ int fuzzy_substring(const char *needle, const char *haystack)
 }
 
 //-------------------------------------------------
-//  cut off final CR/LF
-//-------------------------------------------------
-
-void fskip(char *s, int id)
-{
-	for (; s[id] && s[id] != CR && s[id] != LF; id++) ;
-	s[id] = '\0';
-}
-
-//-------------------------------------------------
 //  save custom filters info to file
 //-------------------------------------------------
 
@@ -233,25 +230,21 @@ void save_custom_filters(running_machine &machine)
 {
 	// attempt to open the output file
 	emu_file file(machine.options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-
 	if (file.open("custom_", emulator_info::get_configname(), "_filter.ini") == FILERR_NONE)
 	{
 		// generate custom filters info
 		std::string cinfo;
-		strcatprintf(cinfo, "Total filters = %d\n", (custfltr::numother + 1));
-		cinfo.append("Main filter = ").append(mewui_globals::filter_text[FILTER_ALL + custfltr::main_filter]).append("\n");
+		strprintf(cinfo, "Total filters = %d\n", (custfltr::numother + 1));
+		cinfo.append("Main filter = ").append(mewui_globals::filter_text[custfltr::main_filter]).append("\n");
 
 		for (int x = 1; x <= custfltr::numother; x++)
 		{
-			cinfo.append("Other filter = ").append(mewui_globals::filter_text[FILTER_ALL + custfltr::other[x]]).append("\n");
-
+			cinfo.append("Other filter = ").append(mewui_globals::filter_text[custfltr::other[x]]).append("\n");
 			if (custfltr::other[x] == FILTER_MANUFACTURER)
 				cinfo.append("  Manufacturer filter = ").append(c_mnfct::ui[custfltr::mnfct[x]]).append("\n");
-
 			else if (custfltr::other[x] == FILTER_YEAR)
 				cinfo.append("  Year filter = ").append(c_year::ui[custfltr::year[x]]).append("\n");
 		}
-
 		file.puts(cinfo.c_str());
 		file.close();
 	}
@@ -265,7 +258,6 @@ void load_custom_filters(running_machine &machine)
 {
 	// attempt to open the output file
 	emu_file file(machine.options().mewui_path(), OPEN_FLAG_READ);
-
 	if (file.open("custom_", emulator_info::get_configname(), "_filter.ini") == FILERR_NONE)
 	{
 		char buffer[MAX_CHAR_INFO];
@@ -294,21 +286,19 @@ void load_custom_filters(running_machine &machine)
 				if (!strncmp(cb, mewui_globals::filter_text[y], strlen(mewui_globals::filter_text[y])))
 				{
 					custfltr::other[x] = y;
-
 					if (y == FILTER_MANUFACTURER)
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *ab = strchr(buffer, '=') + 2;
-						for (int z = 0; z < c_mnfct::ui.size(); z++)
+						for (size_t z = 0; z < c_mnfct::ui.size(); z++)
 							if (!strncmp(ab, c_mnfct::ui[z].c_str(), c_mnfct::ui[z].length()))
 								custfltr::mnfct[x] = z;
 					}
-
 					else if (y == FILTER_YEAR)
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (int z = 0; z < c_year::ui.size(); z++)
+						for (size_t z = 0; z < c_year::ui.size(); z++)
 							if (!strncmp(db, c_year::ui[z].c_str(), c_year::ui[z].length()))
 								custfltr::year[x] = z;
 					}
@@ -357,119 +347,108 @@ void c_year::set(const char *str)
 }
 
 //-------------------------------------------------
-//  save drivers infos to file
+//  save custom filters info to file
 //-------------------------------------------------
 
-void mewui_globals::save_available_machines(running_machine &machine, std::vector<const game_driver *> &available, std::vector<const game_driver *> &unavailable,
-											std::vector<const game_driver *> &availablesorted, std::vector<const game_driver *> &unavailablesorted)
+void save_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &m_region, c_sw_publisher &m_publisher, c_sw_year &m_year, c_sw_type &m_type)
 {
 	// attempt to open the output file
 	emu_file file(machine.options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-
-	if (file.open(emulator_info::get_configname(), "_avail.ini") == FILERR_NONE)
+	if (file.open("custom_", driver->name, "_filter.ini") == FILERR_NONE)
 	{
-		std::string filename(file.fullpath());
+		// generate custom filters info
+		std::string cinfo;
+		strprintf(cinfo, "Total filters = %d\n", (sw_custfltr::numother + 1));
+		cinfo.append("Main filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::main_filter]).append("\n");
+
+		for (int x = 1; x <= sw_custfltr::numother; x++)
+		{
+			cinfo.append("Other filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::other[x]]).append("\n");
+			if (sw_custfltr::other[x] == MEWUI_SW_PUBLISHERS)
+				cinfo.append("  Manufacturer filter = ").append(m_publisher.ui[sw_custfltr::mnfct[x]]).append("\n");
+			else if (sw_custfltr::other[x] == MEWUI_SW_YEARS)
+				cinfo.append("  Year filter = ").append(m_year.ui[sw_custfltr::year[x]]).append("\n");
+			else if (sw_custfltr::other[x] == MEWUI_SW_TYPE)
+				cinfo.append("  Type filter = ").append(m_type.ui[sw_custfltr::type[x]]).append("\n");
+			else if (sw_custfltr::other[x] == MEWUI_SW_REGION)
+				cinfo.append("  Region filter = ").append(m_region.ui[sw_custfltr::region[x]]).append("\n");
+		}
+		file.puts(cinfo.c_str());
 		file.close();
-		std::ofstream myfile(filename.c_str());
-		UINT8 space = 0;
-
-		// generate header
-		std::string buffer = std::string("#\n# MEWUI INFO ").append(mewui_version).append("\n#\n\n");
-		myfile << buffer;
-		myfile << (int)available.size();
-		myfile << space;
-		myfile << (int)unavailable.size();
-		myfile << space;
-		int find = 0;
-
-		// generate available list
-		for (int x = 0; x < available.size(); ++x)
-		{
-			find = driver_list::find(available[x]->name);
-			myfile << find;
-			myfile << space;
-			find = driver_list::find(availablesorted[x]->name);
-			myfile << find;
-			myfile << space;
-		}
-
-		// generate unavailable list
-		for (int x = 0; x < unavailable.size(); ++x)
-		{
-			find = driver_list::find(unavailable[x]->name);
-			myfile << find;
-			myfile << space;
-			find = driver_list::find(unavailablesorted[x]->name);
-			myfile << find;
-			myfile << space;
-		}
-		myfile.close();
 	}
 }
 
 //-------------------------------------------------
-//  load drivers infos from file
+//  load custom filters info from file
 //-------------------------------------------------
 
-bool mewui_globals::load_available_machines(running_machine &machine, std::vector<const game_driver *> &available, std::vector<const game_driver *> &unavailable,
-											std::vector<const game_driver *> &availablesorted, std::vector<const game_driver *> &unavailablesorted)
+void load_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &m_region, c_sw_publisher &m_publisher, c_sw_year &m_year, c_sw_type &m_type)
 {
-	// try to load available drivers from file
-	emu_file efile(machine.options().mewui_path(), OPEN_FLAG_READ);
-	file_error filerr = efile.open(emulator_info::get_configname(), "_avail.ini");
-
-	// file not exist ? exit
-	if (filerr != FILERR_NONE)
-		return false;
-
-	std::string filename(efile.fullpath());
-	efile.close();
-
-	std::ifstream myfile(filename.c_str());
-	std::string readbuf;
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
-	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
-
-	// version not matching ? exit
-	if (a_rev != readbuf)
+	// attempt to open the output file
+	emu_file file(machine.options().mewui_path(), OPEN_FLAG_READ);
+	if (file.open("custom_", driver->name, "_filter.ini") == FILERR_NONE)
 	{
-		myfile.close();
-		return false;
+		char buffer[MAX_CHAR_INFO];
+
+		// get number of filters
+		file.gets(buffer, MAX_CHAR_INFO);
+		char *pb = strchr(buffer, '=');
+		sw_custfltr::numother = atoi(++pb) - 1;
+
+		// get main filter
+		file.gets(buffer, MAX_CHAR_INFO);
+		pb = strchr(buffer, '=') + 2;
+
+		for (int y = 0; y < mewui_globals::sw_filter_len; y++)
+			if (!strncmp(pb, mewui_globals::sw_filter_text[y], strlen(mewui_globals::sw_filter_text[y])))
+			{
+				sw_custfltr::main_filter = y;
+				break;
+			}
+
+		for (int x = 1; x <= sw_custfltr::numother; x++)
+		{
+			file.gets(buffer, MAX_CHAR_INFO);
+			char *cb = strchr(buffer, '=') + 2;
+			for (int y = 0; y < mewui_globals::sw_filter_len; y++)
+				if (!strncmp(cb, mewui_globals::sw_filter_text[y], strlen(mewui_globals::sw_filter_text[y])))
+				{
+					sw_custfltr::other[x] = y;
+					if (y == MEWUI_SW_PUBLISHERS)
+					{
+						file.gets(buffer, MAX_CHAR_INFO);
+						char *ab = strchr(buffer, '=') + 2;
+						for (size_t z = 0; z < m_publisher.ui.size(); z++)
+							if (!strncmp(ab, m_publisher.ui[z].c_str(), m_publisher.ui[z].length()))
+								sw_custfltr::mnfct[x] = z;
+					}
+					else if (y == MEWUI_SW_YEARS)
+					{
+						file.gets(buffer, MAX_CHAR_INFO);
+						char *db = strchr(buffer, '=') + 2;
+						for (size_t z = 0; z < m_year.ui.size(); z++)
+							if (!strncmp(db, m_year.ui[z].c_str(), m_year.ui[z].length()))
+								sw_custfltr::year[x] = z;
+					}
+					else if (y == MEWUI_SW_TYPE)
+					{
+						file.gets(buffer, MAX_CHAR_INFO);
+						char *fb = strchr(buffer, '=') + 2;
+						for (size_t z = 0; z < m_type.ui.size(); z++)
+							if (!strncmp(fb, m_type.ui[z].c_str(), m_type.ui[z].length()))
+								sw_custfltr::type[x] = z;
+					}
+					else if (y == MEWUI_SW_REGION)
+					{
+						file.gets(buffer, MAX_CHAR_INFO);
+						char *eb = strchr(buffer, '=') + 2;
+						for (size_t z = 0; z < m_region.ui.size(); z++)
+							if (!strncmp(eb, m_region.ui[z].c_str(), m_region.ui[z].length()))
+								sw_custfltr::region[x] = z;
+					}
+				}
+		}
+		file.close();
 	}
 
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
-
-	UINT8 space = 0;
-	int avsize, unavsize;
-	myfile >> avsize;
-	myfile >> space;
-	myfile >> unavsize;
-	myfile >> space;
-	int find = 0;
-
-	// load available list
-	for (int x = 0; x < avsize; ++x)
-	{
-		myfile >> find;
-		myfile >> space;
-		available.push_back(&driver_list::driver(find));
-		myfile >> find;
-		myfile >> space;
-		availablesorted.push_back(&driver_list::driver(find));
-	}
-
-	// load unavailable list
-	for (int x = 0; x < unavsize; ++x)
-	{
-		myfile >> find;
-		myfile >> space;
-		unavailable.push_back(&driver_list::driver(find));
-		myfile >> find;
-		myfile >> space;
-		unavailablesorted.push_back(&driver_list::driver(find));
-	}
-	myfile.close();
-	return true;
 }

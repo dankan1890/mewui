@@ -477,7 +477,7 @@ WRITE8_MEMBER( namcos1_state::key_type3_w )
 
 WRITE8_MEMBER(namcos1_state::sound_bankswitch_w)
 {
-	membank("soundbank")->set_entry((data & 0x70) >> 4);
+	m_soundbank->set_entry((data & 0x70) >> 4);
 }
 
 
@@ -487,34 +487,6 @@ WRITE8_MEMBER(namcos1_state::sound_bankswitch_w)
 *   Banking emulation (CUS117)                                                 *
 *                                                                              *
 *******************************************************************************/
-
-// These direct handlers are merely for speed - taking two trips
-// through the memory system for every opcode fetch is rather slow
-
-DIRECT_UPDATE_MEMBER(namcos1_state::direct_handler_main)
-{
-	return direct_handler(0, direct, address);
-}
-
-DIRECT_UPDATE_MEMBER(namcos1_state::direct_handler_sub)
-{
-	return direct_handler(1, direct, address);
-}
-
-inline offs_t namcos1_state::direct_handler(int whichcpu, direct_read_data &direct, offs_t address)
-{
-	offs_t remapped_address = m_c117->remap(whichcpu, address);
-
-	// if not in ROM, return
-	if (remapped_address < 0x400000) return address;
-
-	// calculate the base of the 8KB ROM page
-	remapped_address &= 0x3fe000;
-
-	direct.explicit_configure(address & 0xe000, address | 0x1fff, 0x1fff, &m_rom[remapped_address]);
-	return ~0;
-}
-
 
 WRITE_LINE_MEMBER(namcos1_state::subres_w)
 {
@@ -538,8 +510,8 @@ WRITE_LINE_MEMBER(namcos1_state::subres_w)
 
 void namcos1_state::machine_start()
 {
-	membank("soundbank")->configure_entries(0, 8, memregion("audiocpu")->base(), 0x4000);
-	membank("mcubank")->configure_entries(0, 24, memregion("voice")->base(), 0x8000);
+	m_soundbank->configure_entries(0, 8, memregion("audiocpu")->base(), 0x4000);
+	m_mcubank->configure_entries(0, 24, memregion("voice")->base(), 0x8000);
 
 	save_item(NAME(m_dac0_value));
 	save_item(NAME(m_dac1_value));
@@ -596,7 +568,7 @@ WRITE8_MEMBER(namcos1_state::mcu_bankswitch_w)
 	/* bit 0-1 : address line A15-A16 */
 	bank += (data & 3);
 
-	membank("mcubank")->set_entry(bank);
+	m_mcubank->set_entry(bank);
 }
 
 
@@ -640,9 +612,6 @@ void namcos1_state::driver_init()
 			m_rom[i + 0x010000] = t;
 		}
 	}
-
-	m_maincpu->space(AS_PROGRAM).set_direct_update_handler(direct_update_delegate(FUNC(namcos1_state::direct_handler_main), this));
-	m_subcpu->space(AS_PROGRAM).set_direct_update_handler(direct_update_delegate(FUNC(namcos1_state::direct_handler_sub), this));
 
 	// kludge! see notes
 	m_mcu->space(AS_PROGRAM).install_write_handler(0xc000, 0xc000, write8_delegate(FUNC(namcos1_state::mcu_patch_w), this));

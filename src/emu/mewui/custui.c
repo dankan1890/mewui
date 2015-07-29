@@ -11,6 +11,7 @@
 #include "mewui/utils.h"
 #include "mewui/selector.h"
 #include "mewui/custui.h"
+#include "mewui/palsel.h"
 
 /***************************************************************************
     CUSTOM UI CLASS
@@ -77,7 +78,7 @@ void ui_menu_custom_ui::custom_render(void *selectedref, float top, float bottom
 	float width;
 
 	machine().ui().draw_text_full(container, "Custom UI Settings", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
 
@@ -97,7 +98,7 @@ void ui_menu_custom_ui::custom_render(void *selectedref, float top, float bottom
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, "Custom UI Settings", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }
 
 
@@ -119,7 +120,7 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 	m_italic = (strreplace(name, "[I]", "") + strreplace(name, "[i]", "") > 0);
 	m_class.actual = 0;
 
-	for (int index = 0; index < m_class.ui.size(); index++)
+	for (size_t index = 0; index < m_class.ui.size(); index++)
 	{
 		if (m_class.ui[index] == name)
 		{
@@ -180,7 +181,7 @@ void ui_menu_font_ui::list()
 	ReleaseDC( NULL, hDC );
 
 	// sort
-	std::sort(m_class.ui.begin(), m_class.ui.end());
+	std::stable_sort(m_class.ui.begin(), m_class.ui.end());
 
 	// add default string to the top of array
 	m_class.ui.insert(m_class.ui.begin(), std::string("default"));
@@ -195,7 +196,7 @@ ui_menu_font_ui::~ui_menu_font_ui()
 {
 	std::string error_string;
 
-#if MEWUI_WINDOWS
+#ifdef MEWUI_WINDOWS
 	std::string name(m_class.ui[m_class.actual]);
 	if (m_class.ui[m_class.actual] != "default")
 	{
@@ -323,7 +324,7 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 	std::string topbuf("UI Fonts Settings");
 
 	machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
 
@@ -343,14 +344,14 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 	if ((FPTR)selectedref == INFOS_SIZE)
 	{
 		topbuf.assign("Sample text - Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 
 		machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_NEVER,
-										DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL, info_size);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL, info_size);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(origx2 - origx1, width);
 
@@ -370,7 +371,7 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 
 		// draw the text within it
 		machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-										DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, info_size);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, info_size);
 	}
 }
 
@@ -504,7 +505,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 	std::string topbuf("UI Colors Settings");
 
 	machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -524,7 +525,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 	// bottom text
 	// get the text for 'UI Select'
@@ -533,7 +534,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 	topbuf.assign("Double click or press ").append(ui_select_text.c_str()).append(" to change the color value");
 
 	machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -553,13 +554,13 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 	// compute maxwidth
 	topbuf.assign("Menu Preview");
 
 	machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	maxwidth = width + 2.0f * UI_BOX_LR_BORDER;
 
 	std::string sampletxt[5];
@@ -573,7 +574,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 	for (int x = 0; x < 5; x++)
 	{
 		machine().ui().draw_text_full(container, sampletxt[x].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-										DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -595,7 +596,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 	// compute our bounds for menu preview
 	x1 -= UI_BOX_LR_BORDER;
@@ -613,29 +614,29 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// draw normal text
 	machine().ui().draw_text_full(container, sampletxt[0].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, color_table[MUI_TEXT_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
+	                              DRAW_NORMAL, color_table[MUI_TEXT_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
 	y1 += line_height;
 
 	// draw subitem text
 	machine().ui().draw_text_full(container, sampletxt[1].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, color_table[MUI_SUBITEM_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
+	                              DRAW_NORMAL, color_table[MUI_SUBITEM_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
 	y1 += line_height;
 
 	// draw selected text
 	highlight(container, x1, y1, x2, y1 + line_height, color_table[MUI_SELECTED_BG_COLOR].color);
 	machine().ui().draw_text_full(container, sampletxt[2].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, color_table[MUI_SELECTED_COLOR].color, color_table[MUI_SELECTED_BG_COLOR].color, NULL, NULL);
+	                              DRAW_NORMAL, color_table[MUI_SELECTED_COLOR].color, color_table[MUI_SELECTED_BG_COLOR].color, NULL, NULL);
 	y1 += line_height;
 
 	// draw mouse over text
 	highlight(container, x1, y1, x2, y1 + line_height, color_table[MUI_MOUSEOVER_BG_COLOR].color);
 	machine().ui().draw_text_full(container, sampletxt[3].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, color_table[MUI_MOUSEOVER_COLOR].color, color_table[MUI_MOUSEOVER_BG_COLOR].color, NULL, NULL);
+	                              DRAW_NORMAL, color_table[MUI_MOUSEOVER_COLOR].color, color_table[MUI_MOUSEOVER_BG_COLOR].color, NULL, NULL);
 	y1 += line_height;
 
 	// draw clone text
 	machine().ui().draw_text_full(container, sampletxt[4].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, color_table[MUI_CLONE_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
+	                              DRAW_NORMAL, color_table[MUI_CLONE_COLOR].color, color_table[MUI_TEXT_BG_COLOR].color, NULL, NULL);
 
 }
 
@@ -690,6 +691,7 @@ void ui_menu_rgb_ui::handle()
 		menu_event = process(UI_MENU_PROCESS_ONLYCHAR);
 
 	if (menu_event != NULL && menu_event->itemref != NULL)
+	{
 		switch ((FPTR)menu_event->itemref)
 		{
 			case RGB_ALPHA:
@@ -775,7 +777,13 @@ void ui_menu_rgb_ui::handle()
 				}
 
 				break;
+
+			case PALETTE_CHOOSE:
+				if (menu_event->iptkey == IPT_UI_SELECT)
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_palette_sel(machine(), container, *color)));
+				break;
 		}
+	}
 
 	if (changed)
 		reset(UI_MENU_RESET_REMEMBER_REF);
@@ -829,6 +837,8 @@ void ui_menu_rgb_ui::populate()
 		item_append("Blue", s_text.c_str(), 0, (void *)RGB_BLUE);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append("Choose from palette", NULL, 0, (void *)PALETTE_CHOOSE);
+	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
@@ -843,12 +853,12 @@ void ui_menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, f
 	float x1, x2, y1, y2, width, maxwidth;
 
 	// top text
-	std::string topbuf = std::string(title).append(" - RGB Settings");
+	std::string topbuf = std::string(title).append(" - ARGB Settings");
 
 	maxwidth = origx2 - origx1;
 
 	machine().ui().draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -868,13 +878,13 @@ void ui_menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, f
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, topbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
-	std::string sampletxt("Color preview");
+	std::string sampletxt("Color preview =");
 
 	maxwidth = origx2 - origx1;
 	machine().ui().draw_text_full(container, sampletxt.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -894,7 +904,7 @@ void ui_menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, f
 
 	// draw the normal text
 	machine().ui().draw_text_full(container, sampletxt.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-									DRAW_NORMAL, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
+	                              DRAW_NORMAL, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
 
 	float t_x2 = x1 - UI_BOX_LR_BORDER + maxwidth;
 	x1 = x2 + 2.0f * UI_BOX_LR_BORDER;

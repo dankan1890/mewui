@@ -17,8 +17,9 @@
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "mewui/selector.h"
+#include "mewui/swcustmenu.h"
 
-static const char *region_lists[] = { "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
+static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
 									"ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
 									"isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",
 									"pol", "rus", "slo", "spa", "sui", "swe", "tha", "tpe", "tw", "uk", "ukr", "usa" };
@@ -88,6 +89,7 @@ ui_menu_select_software::ui_menu_select_software(running_machine &machine, rende
 
 	ui_driver = driver;
 	build_software_list();
+	load_sw_custom_filters(machine, driver, m_region, m_publisher, m_year, m_type);
 
 	mewui_globals::curimage_view = SNAPSHOT_VIEW;
 	mewui_globals::switch_image = true;
@@ -274,13 +276,21 @@ void ui_menu_select_software::handle()
 
 		if (l_sw_hover == MEWUI_SW_REGION)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_region.ui,
-													&m_region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+			                                     &m_region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 		else if (l_sw_hover == MEWUI_SW_YEARS)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_year.ui,
-													&m_year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+			                                     &m_year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+		else if (l_sw_hover == MEWUI_SW_TYPE)
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_type.ui,
+			                                     &m_type.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 		else if (l_sw_hover == MEWUI_SW_PUBLISHERS)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_publisher.ui,
-													&m_publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+			                                                                 &m_publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+		else if (l_sw_hover == MEWUI_SW_CUSTOM)
+		{
+			mewui_globals::actual_sw_filter = l_sw_hover;
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_swcustom_filter(machine(), container, ui_driver, m_region, m_publisher, m_year, m_type)));
+		}
 		else
 		{
 			mewui_globals::actual_sw_filter = l_sw_hover;
@@ -316,18 +326,46 @@ void ui_menu_select_software::populate()
 	{
 		// if the device can be loaded empty, add an item
 		if (has_empty_start)
-			item_append("[Start empty]", NULL, flags_mewui, (void *)&ui_swlist[0]);
+			item_append("[Start empty]", NULL, flags_mewui, (void *)&m_swlist[0]);
 
-		build_list();
+		m_displaylist.clear();
+		m_tmp.clear();
+
+		switch (mewui_globals::actual_sw_filter)
+		{
+			case MEWUI_SW_PUBLISHERS:
+				build_list(m_tmp, m_publisher.ui[m_publisher.actual].c_str());
+				break;
+
+			case MEWUI_SW_YEARS:
+				build_list(m_tmp, m_year.ui[m_year.actual].c_str());
+				break;
+
+			case MEWUI_SW_TYPE:
+				build_list(m_tmp, m_type.ui[m_type.actual].c_str());
+				break;
+
+			case MEWUI_SW_REGION:
+				build_list(m_tmp, m_region.ui[m_region.actual].c_str());
+				break;
+
+			case MEWUI_SW_CUSTOM:
+				build_custom();
+				break;
+
+			default:
+				build_list(m_tmp);
+				break;
+		}
 
 		// iterate over entries
-		for (int curitem = 0; m_displaylist[curitem]; curitem++)
+		for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
 		{
 			if (reselect_last::software.compare("[Start empty]") == 0 && !reselect_last::driver.empty())
 				old_software = 0;
 
 			else if (!reselect_last::software.empty() && m_displaylist[curitem]->shortname.compare(reselect_last::software) == 0
-							&& m_displaylist[curitem]->part.compare(reselect_last::part) == 0)
+							&& m_displaylist[curitem]->listname.compare(reselect_last::swlist) == 0)
 					old_software = has_empty_start ? curitem + 1 : curitem;
 
 			item_append(m_displaylist[curitem]->longname.c_str(), m_displaylist[curitem]->devicetype.c_str(),
@@ -348,7 +386,8 @@ void ui_menu_select_software::populate()
 	item_append(MENU_SEPARATOR_ITEM, NULL, flags_mewui, NULL);
 
 	// configure the custom rendering
-	customtop = 3.0f * machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	float y_pixel = 1.0f / container->manager().ui_target().height();
+	customtop = 3.0f * machine().ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER + 32 * y_pixel;
 	custombottom = 5.0f * machine().ui().get_line_height() + 4.0f * UI_BOX_TB_BORDER;
 
 	if (old_software != -1)
@@ -359,7 +398,7 @@ void ui_menu_select_software::populate()
 
 	reselect_last::driver.clear();
 	reselect_last::software.clear();
-	reselect_last::part.clear();
+	reselect_last::swlist.clear();
 }
 
 //-------------------------------------------------
@@ -386,7 +425,7 @@ void ui_menu_select_software::build_software_list()
 	first_swlist.usage.clear();
 	first_swlist.devicetype.clear();
 	first_swlist.available = true;
-	ui_swlist.push_back(first_swlist);
+	m_swlist.push_back(first_swlist);
 
 	machine_config config(*ui_driver, machine().options());
 	software_list_device_iterator deviter(config.root_device());
@@ -443,50 +482,51 @@ void ui_menu_select_software::build_software_list()
 					if (!strcmp(flist->name(), "usage"))
 						tmpmatches.usage.assign(flist->value());
 
-				ui_swlist.push_back(tmpmatches);
+				m_swlist.push_back(tmpmatches);
 				m_region.set(tmpmatches.longname.c_str());
 				m_publisher.set(tmpmatches.publisher.c_str());
 				m_year.set(tmpmatches.year.c_str());
+				m_type.set(tmpmatches.devicetype.c_str());
 			}
 		}
 	}
 
 	// no software found? start directly the driver
-	if (ui_swlist.size() == 1)
+	if (m_swlist.size() == 1)
 	{
-		reselect_last::driver.assign(ui_swlist[0].driver->name);
+		reselect_last::driver.assign(m_swlist[0].driver->name);
 		reselect_last::software.clear();
-		reselect_last::part.clear();
+		reselect_last::swlist.clear();
 		mewui_globals::force_reselect_software = true;
-		machine().manager().schedule_new_driver(*ui_swlist[0].driver);
+		machine().manager().schedule_new_driver(*m_swlist[0].driver);
 		machine().schedule_hard_reset();
 		ui_menu::stack_reset(machine());
 		return;
 	}
 
-	m_displaylist.resize(ui_swlist.size() + 1);
+	m_displaylist.resize(m_swlist.size() + 1);
 
 	// retrieve and set the long name of software for parents
-	for (int y = 1; y < ui_swlist.size(); y++)
+	for (size_t y = 1; y < m_swlist.size(); y++)
 	{
-		if (!ui_swlist[y].parentname.empty())
+		if (!m_swlist[y].parentname.empty())
 		{
 			bool found = false;
 
 			// first scan backward
 			for (int x = y; x > 0; x--)
-				if (!ui_swlist[y].parentname.compare(ui_swlist[x].shortname) && !ui_swlist[y].instance.compare(ui_swlist[x].instance))
+				if (!m_swlist[y].parentname.compare(m_swlist[x].shortname) && !m_swlist[y].instance.compare(m_swlist[x].instance))
 				{
-					ui_swlist[y].parentlongname.assign(ui_swlist[x].longname);
+					m_swlist[y].parentlongname.assign(m_swlist[x].longname);
 					found = true;
 					break;
 				}
 
 			// not found? then scan forward
-			for (int x = y; !found && x < ui_swlist.size(); x++)
-				if (!ui_swlist[y].parentname.compare(ui_swlist[x].shortname) && !ui_swlist[y].instance.compare(ui_swlist[x].instance))
+			for (size_t x = y; !found && x < m_swlist.size(); x++)
+				if (!m_swlist[y].parentname.compare(m_swlist[x].shortname) && !m_swlist[y].instance.compare(m_swlist[x].instance))
 				{
-					ui_swlist[y].parentlongname.assign(ui_swlist[x].longname);
+					m_swlist[y].parentlongname.assign(m_swlist[x].longname);
 					break;
 				}
 		}
@@ -514,11 +554,11 @@ void ui_menu_select_software::build_software_list()
 					continue;
 
 				strmakelower(name);
-				for (size_t y = 0; y < ui_swlist.size(); ++y)
+				for (size_t y = 0; y < m_swlist.size(); ++y)
 				{
-					if (ui_swlist[y].shortname == name && ui_swlist[y].listname == vlist[x])
+					if (m_swlist[y].shortname == name && m_swlist[y].listname == vlist[x])
 					{
-						ui_swlist[y].available = true;
+						m_swlist[y].available = true;
 						break;
 					}
 				}
@@ -527,10 +567,14 @@ void ui_menu_select_software::build_software_list()
 	}
 
 	// sort array
-	std::stable_sort(ui_swlist.begin() + 1, ui_swlist.end(), compare_software);
+	std::stable_sort(m_swlist.begin() + 1, m_swlist.end(), compare_software);
 	std::stable_sort(m_region.ui.begin(), m_region.ui.end());
 	std::stable_sort(m_year.ui.begin(), m_year.ui.end());
+	std::stable_sort(m_type.ui.begin(), m_type.ui.end());
 	std::stable_sort(m_publisher.ui.begin(), m_publisher.ui.end());
+
+	for (size_t x = 1; x < m_swlist.size(); ++x)
+		m_sortedlist.push_back(&m_swlist[x]);
 }
 
 //-------------------------------------------------
@@ -545,10 +589,11 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	std::string tempbuf[5], filtered;
 	rgb_t color = UI_BACKGROUND_COLOR;
 	bool isstar = false;
+	float tbarspace = (1.0f / container->manager().ui_target().height()) * 32;
 
 	// determine the text for the header
 	int vis_item = (m_search[0] != 0) ? visible_items : (has_empty_start ? visible_items - 1 : visible_items);
-	strprintf(tempbuf[0], "MEWUI %s (%s) (%d / %d softwares)", mewui_version, bare_build_version, vis_item, (int)ui_swlist.size() - 1);
+	strprintf(tempbuf[0], "MEWUI %s ( %d / %d softwares )", mewui_version, vis_item, (int)m_swlist.size() - 1);
 	tempbuf[1].assign("Driver: \"").append(ui_driver->description).append("\" software list ");
 
 	if (mewui_globals::actual_sw_filter == MEWUI_SW_REGION && m_region.ui.size() != 0)
@@ -557,6 +602,8 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		filtered.assign("Publisher: ").append(m_publisher.ui[m_publisher.actual]).append(" - ");
 	else if (mewui_globals::actual_sw_filter == MEWUI_SW_YEARS)
 		filtered.assign("Year: ").append(m_year.ui[m_year.actual]).append(" - ");
+	else if (mewui_globals::actual_sw_filter == MEWUI_SW_TYPE)
+		filtered.assign("Device type: ").append(m_type.ui[m_type.actual]).append(" - ");
 
 	tempbuf[2].assign(filtered).append("Search: ").append(m_search).append("_");
 
@@ -566,7 +613,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	for (int line = 0; line < 3; line++)
 	{
 		machine().ui().draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-										DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(width, maxwidth);
 	}
@@ -575,7 +622,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	float x1 = 0.5f - 0.5f * maxwidth;
 	float x2 = x1 + maxwidth;
 	float y1 = origy1 - top;
-	float y2 = origy1 - UI_BOX_TB_BORDER;
+	float y2 = origy1 - 3.0f * UI_BOX_TB_BORDER - tbarspace;
 
 	// draw a box
 	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
@@ -584,13 +631,12 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	x1 += UI_BOX_LR_BORDER;
 	x2 -= UI_BOX_LR_BORDER;
 	y1 += UI_BOX_TB_BORDER;
-	y2 -= UI_BOX_TB_BORDER;
 
 	// draw the text within it
 	for (int line = 0; line < 3; line++)
 	{
 		machine().ui().draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-										DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 		y1 += machine().ui().get_line_height();
 	}
 
@@ -698,13 +744,22 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		tempbuf[4].assign("MEWUI by dankan1890 http://sourceforge.net/projects/mewui");
 	}
 
+	// compute our bounds
+	x1 = 0.5f - 0.5f * maxwidth;
+	x2 = x1 + maxwidth;
+	y1 = y2;
+	y2 = origy1 - UI_BOX_TB_BORDER;
+
+	// draw toolbar
+	draw_toolbar(container, x1, y1, x2, y2, true);
+
 	// get the size of the text
 	maxwidth = origx2 - origx1;
 
 	for (int line = 0; line < 5; line++)
 	{
 		machine().ui().draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-										DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -731,7 +786,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	for (int line = 0; line < 5; line++)
 	{
 		machine().ui().draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-										DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 		y1 += machine().ui().get_line_height();
 	}
 }
@@ -748,7 +803,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 	{
 		reselect_last::driver.assign(ui_swinfo->driver->name);
 		reselect_last::software.assign("[Start empty]");
-		reselect_last::part.clear();
+		reselect_last::swlist.clear();
 		mewui_globals::force_reselect_software = true;
 		machine().manager().schedule_new_driver(*ui_swinfo->driver);
 		machine().schedule_hard_reset();
@@ -762,19 +817,37 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 		media_auditor auditor(drivlist);
 		drivlist.next();
 		software_list_device *swlist = software_list_device::find_by_name(drivlist.config(), ui_swinfo->listname.c_str());
-		software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
+		swinfo = swlist->find(ui_swinfo->shortname.c_str());
 
 		media_auditor::summary summary = auditor.audit_software(swlist->list_name(), swinfo, AUDIT_VALIDATE_FAST);
 
-		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE)
+		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
+			if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
+			{
+				std::vector<std::string> partname, partdesc;
+				for (const software_part *swpart = swinfo->first_part(); swpart != NULL; swpart = swpart->next())
+				{
+					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
+					{
+						partname.push_back(swpart->name());
+						std::string menu_part_name(swpart->name());
+						if (swpart->feature("part_id") != NULL)
+							menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
+						partdesc.push_back(menu_part_name);
+					}
+				}
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
+				return;
+			}
+
 			std::string error_string;
 			std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
 			machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 
 			reselect_last::driver.assign(drivlist.driver().name);
-			reselect_last::software.assign(ui_swinfo->shortname.c_str());
-			reselect_last::part.assign(ui_swinfo->part.c_str());
+			reselect_last::software.assign(ui_swinfo->shortname);
+			reselect_last::swlist.assign(ui_swinfo->listname);
 			mewui_globals::force_reselect_software = true;
 
 			std::string snap_list = std::string(ui_swinfo->listname).append("/").append(ui_swinfo->shortname);
@@ -850,6 +923,19 @@ std::string c_sw_region::getname(const char *str)
 }
 
 //-------------------------------------------------
+//  set software device type
+//-------------------------------------------------
+
+void c_sw_type::set(const char *str)
+{
+	std::string name(str);
+	if (std::find(ui.begin(), ui.end(), name) != ui.end())
+		return;
+
+	ui.push_back(name);
+}
+
+//-------------------------------------------------
 //  set software years
 //-------------------------------------------------
 
@@ -889,80 +975,88 @@ std::string c_sw_publisher::getname(const char *str)
 //-------------------------------------------------
 //  build display list
 //-------------------------------------------------
-
-void ui_menu_select_software::build_list()
+void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_drivers, const char *filter_text, int filter)
 {
-	int arrayindex = 0;
+
+	if (s_drivers.empty() && filter == -1)
+	{
+		filter = mewui_globals::actual_sw_filter;
+		s_drivers = m_sortedlist;
+	}
 
 	// iterate over entries
-	for (int x = 1; x < ui_swlist.size(); x++)
+	for (size_t x = 0; x < s_drivers.size(); x++)
 	{
-		switch (mewui_globals::actual_sw_filter)
+		switch (filter)
 		{
 			case MEWUI_SW_PARENTS:
-				if (ui_swlist[x].parentname.empty())
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (s_drivers[x]->parentname.empty())
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			case MEWUI_SW_CLONES:
-				if (!ui_swlist[x].parentname.empty())
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (!s_drivers[x]->parentname.empty())
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			case MEWUI_SW_AVAILABLE:
-				if (ui_swlist[x].available)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (s_drivers[x]->available)
+					m_displaylist.push_back(s_drivers[x]);
 					break;
 
 			case MEWUI_SW_UNAVAILABLE:
-				if (!ui_swlist[x].available)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (!s_drivers[x]->available)
+					m_displaylist.push_back(s_drivers[x]);
 					break;
 
 			case MEWUI_SW_SUPPORTED:
-				if (ui_swlist[x].supported != SOFTWARE_SUPPORTED_NO && ui_swlist[x].supported != SOFTWARE_SUPPORTED_PARTIAL)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (s_drivers[x]->supported != SOFTWARE_SUPPORTED_NO && s_drivers[x]->supported != SOFTWARE_SUPPORTED_PARTIAL)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			case MEWUI_SW_PARTIAL_SUPPORTED:
-				if (ui_swlist[x].supported == SOFTWARE_SUPPORTED_PARTIAL)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (s_drivers[x]->supported == SOFTWARE_SUPPORTED_PARTIAL)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			case MEWUI_SW_UNSUPPORTED:
-				if (ui_swlist[x].supported == SOFTWARE_SUPPORTED_NO)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if (s_drivers[x]->supported == SOFTWARE_SUPPORTED_NO)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			case MEWUI_SW_REGION:
 			{
-				std::string name = m_region.getname(ui_swlist[x].longname.c_str());
+				std::string name = m_region.getname(s_drivers[x]->longname.c_str());
 
-				if(!name.empty() && m_region.ui[m_region.actual].compare(name) == 0)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if(!name.empty() && name.compare(filter_text) == 0)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 			}
 
 			case MEWUI_SW_PUBLISHERS:
 			{
-				std::string name = m_publisher.getname(ui_swlist[x].publisher.c_str());
+				std::string name = m_publisher.getname(s_drivers[x]->publisher.c_str());
 
-				if(!name.empty() && m_publisher.ui[m_publisher.actual].compare(name) == 0)
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if(!name.empty() && name.compare(filter_text) == 0)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 			}
 
 			case MEWUI_SW_YEARS:
-				if(ui_swlist[x].year == m_year.ui[m_year.actual])
-					m_displaylist[arrayindex++] = &ui_swlist[x];
+				if(s_drivers[x]->year == filter_text)
+					m_displaylist.push_back(s_drivers[x]);
+				break;
+
+			case MEWUI_SW_TYPE:
+				if(s_drivers[x]->devicetype == filter_text)
+					m_displaylist.push_back(s_drivers[x]);
 				break;
 
 			default:
-				m_displaylist[arrayindex++] = &ui_swlist[x];
+				m_displaylist.push_back(s_drivers[x]);
 				break;
 		}
 	}
-	m_displaylist[arrayindex] = NULL;
 }
 
 //-------------------------------------------------
@@ -1002,3 +1096,88 @@ void ui_menu_select_software::find_matches(const char *str, int count)
 	}
 	(index < count) ? searchlist[index] = NULL : searchlist[count] = NULL;
 }
+
+//-------------------------------------------------
+//  build custom display list
+//-------------------------------------------------
+
+void ui_menu_select_software::build_custom()
+{
+	std::vector<ui_software_info *> s_drivers;
+
+	build_list(m_sortedlist, NULL, sw_custfltr::main_filter);
+
+	for (int count = 1; count <= sw_custfltr::numother; count++)
+	{
+		int filter = sw_custfltr::other[count];
+		s_drivers = m_displaylist;
+		m_displaylist.clear();
+
+		switch (filter)
+		{
+			case MEWUI_SW_YEARS:
+				build_list(s_drivers, m_year.ui[sw_custfltr::year[count]].c_str(), filter);
+				break;
+			case MEWUI_SW_TYPE:
+				build_list(s_drivers, m_type.ui[sw_custfltr::type[count]].c_str(), filter);
+				break;
+			case MEWUI_SW_PUBLISHERS:
+				build_list(s_drivers, m_publisher.ui[sw_custfltr::mnfct[count]].c_str(), filter);
+				break;
+			case MEWUI_SW_REGION:
+				build_list(s_drivers, m_region.ui[sw_custfltr::region[count]].c_str(), filter);
+				break;
+			default:
+				build_list(s_drivers, NULL, filter);
+				break;
+		}
+	}
+}
+
+
+ui_mewui_software_parts::ui_mewui_software_parts(running_machine &machine, render_container *container, std::vector<std::string> partname, std::vector<std::string> partdesc, ui_software_info *ui_info) : ui_menu(machine, container)
+{
+	m_nameparts = partname;
+	m_descpart = partdesc;
+	m_uiinfo = ui_info;
+}
+
+ui_mewui_software_parts::~ui_mewui_software_parts()
+{
+}
+
+void ui_mewui_software_parts::populate()
+{
+	for (size_t index = 0; index < m_nameparts.size(); index++)
+		item_append(m_nameparts[index].c_str(), m_descpart[index].c_str(), 0, (void *)&m_nameparts[index]);
+}
+
+void ui_mewui_software_parts::handle()
+{
+	// process the menu
+	const ui_menu_event *event = process(0);
+	if (event != NULL && event->iptkey == IPT_UI_SELECT && event->itemref != NULL)
+	{
+		for (size_t idx = 0; idx < m_nameparts.size(); idx++)
+			if ((void*)&m_nameparts[idx] == event->itemref)
+			{
+				std::string error_string;
+				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(m_nameparts[idx]).append(":").append(m_uiinfo->instance);
+				machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+
+				reselect_last::driver.assign(m_uiinfo->driver->name);
+				reselect_last::software.assign(m_uiinfo->shortname);
+				reselect_last::swlist.assign(m_uiinfo->listname);
+				mewui_globals::force_reselect_software = true;
+
+				std::string snap_list = std::string(m_uiinfo->listname).append("/").append(m_uiinfo->shortname);
+				machine().options().set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+
+				machine().manager().schedule_new_driver(*m_uiinfo->driver);
+				machine().schedule_hard_reset();
+				ui_menu::stack_reset(machine());
+			}
+	}
+}
+
+

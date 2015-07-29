@@ -9,45 +9,21 @@
 #define USE_FIXED_STV 0
 #endif
 
-NETLIST_EXTERNAL(LM324_DIP)
-NETLIST_EXTERNAL(LM358_DIP)
+/* ----------------------------------------------------------------------------
+ *  Library section header START
+ * ---------------------------------------------------------------------------*/
 
 #ifndef __PLIB_PREPROCESSOR__
-#define MC14584B_GATE(_name)                                          \
-		NET_REGISTER_DEV_X(MC14584B_GATE, _name)
+
 #endif
 
-NETLIST_START(kidniki_lib)
-	TRUTHTABLE_START(MC14584B_GATE, 1, 1, 0, "A,B")
-		TT_HEAD(" A | Q ")
-		TT_LINE(" 0 | 1 |100")
-		TT_LINE(" 1 | 0 |100")
-		TT_FAMILY(".model MC14584B FAMILY(IVL=2.1 IVH=2.7 OVL=0.05 OVH=4.95 ORL=10.0 ORH 10.0)")
-	TRUTHTABLE_END()
-NETLIST_END()
+/* ----------------------------------------------------------------------------
+ *  Library section header END
+ * ---------------------------------------------------------------------------*/
 
-NETLIST_START(MC14584B_DIP)
-	MC14584B_GATE(s1)
-	MC14584B_GATE(s2)
-	MC14584B_GATE(s3)
-	MC14584B_GATE(s4)
-	MC14584B_GATE(s5)
-	MC14584B_GATE(s6)
-
-	ALIAS( 1, s1.A)
-	ALIAS( 2, s1.Q)
-	ALIAS( 3, s2.A)
-	ALIAS( 4, s2.Q)
-	ALIAS( 5, s3.A)
-	ALIAS( 6, s3.Q)
-
-	ALIAS( 8, s4.Q)
-	ALIAS( 9, s4.A)
-	ALIAS(10, s5.Q)
-	ALIAS(11, s5.A)
-	ALIAS(12, s6.Q)
-	ALIAS(13, s6.A)
-NETLIST_END()
+/* ----------------------------------------------------------------------------
+ *  Kidniki schematics
+ * ---------------------------------------------------------------------------*/
 
 NETLIST_START(kidniki_schematics)
 	//  EESCHEMA NETLIST VERSION 1.1 (SPICE FORMAT) CREATION DATE: SAT 06 JUN 2015 01:06:26 PM CEST
@@ -57,9 +33,15 @@ NETLIST_START(kidniki_schematics)
 	// IGNORED O_AUDIO0: O_AUDIO0  49 0
 	// .END
 
-	LOCAL_SOURCE(kidniki_lib)
+	/*
+	 * Workaround: The simplified opamp model does not correctly
+	 * model the internals of the inputs.
+	 */
 
-	INCLUDE(kidniki_lib)
+	ANALOG_INPUT(VWORKAROUND, 2.061)
+	RES(RWORKAROUND, RES_K(27))
+	NET_C(VWORKAROUND.Q, RWORKAROUND.1)
+	NET_C(XU1.6, RWORKAROUND.2)
 
 	CAP(C200, CAP_N(100))
 	CAP(C28, CAP_U(1))
@@ -118,10 +100,10 @@ NETLIST_START(kidniki_schematics)
 	QBJT_EB(Q7, "2SC945")
 	QBJT_EB(Q9, "2SC945")
 
-	SUBMODEL(LM324_DIP,XU1)
-	SUBMODEL(LM358_DIP,XU2)
+	LM324_DIP(XU1)
+	LM358_DIP(XU2)
 
-	SUBMODEL(MC14584B_DIP, XU3)
+	MC14584B_DIP(XU3)
 
 	RES(R100, RES_K(560))
 	RES(R101, RES_K(150))
@@ -140,6 +122,7 @@ NETLIST_START(kidniki_schematics)
 	RES(R29, RES_K(2.7))
 	RES(R30, RES_K(10))
 	RES(R31, RES_K(5.1))
+	//RES(R32, RES_K(1))
 	RES(R32, RES_K(4.7))
 	RES(R34, RES_K(100))
 	RES(R35, RES_K(100))
@@ -217,9 +200,9 @@ NETLIST_START(kidniki_schematics)
 	NET_C(XU3.6, R105.1, R106.2)
 	#if USE_FIXED_STV
 	//FIXME: We should have a NET_C_REMOVE
-	NET_C(/*XU3.7,*/ C69.2, C73.2, C72.2, C77.2, C67.2, C68.2, R65.2, R38.2, XU1.11, R54.2, Q4.E, R63.2, C47.2, R72.2, R67.2, R71.2, R68.2, C48.2, R46.2, C28.1, C32.1, R43.2, XU2.4, C56.1, C52.1,/* R77.2, C58.1, */ R48.2, R93.2, R94.2, R119.2, R104.2, R53.2, R34.2, R81.2, R92.2, R89.2, C33.1, R37.2, R36.1, R91.1, I_V0.Q, RV1.3)
+	NET_C(XU3.7, C69.2, C73.2, C72.2, C77.2, C67.2, C68.2, R65.2, R38.2, XU1.11, R54.2, Q4.E, R63.2, C47.2, R72.2, R67.2, R71.2, R68.2, C48.2, R46.2, C28.1, C32.1, R43.2, XU2.4, C56.1, C52.1,/* R77.2, C58.1, */ R48.2, R93.2, R94.2, R119.2, R104.2, R53.2, R34.2, R81.2, R92.2, R89.2, C33.1, R37.2, R36.1, R91.1, I_V0.Q, RV1.3)
 	#else
-	NET_C(/*XU3.7,*/ C69.2, C73.2, C72.2, C77.2, C67.2, C68.2, R65.2, R38.2, XU1.11, R54.2, Q4.E, R63.2, C47.2, R72.2, R67.2, R71.2, R68.2, C48.2, R46.2, C28.1, C32.1, R43.2, XU2.4, C56.1, C52.1, R77.2, C58.1, R48.2, R93.2, R94.2, R119.2, R104.2, R53.2, R34.2, R81.2, R92.2, R89.2, C33.1, R37.2, R36.1, R91.1, I_V0.Q, RV1.3)
+	NET_C(XU3.7, C69.2, C73.2, C72.2, C77.2, C67.2, C68.2, R65.2, R38.2, XU1.11, R54.2, Q4.E, R63.2, C47.2, R72.2, R67.2, R71.2, R68.2, C48.2, R46.2, C28.1, C32.1, R43.2, XU2.4, C56.1, C52.1, R77.2, C58.1, R48.2, R93.2, R94.2, R119.2, R104.2, R53.2, R34.2, R81.2, R92.2, R89.2, C33.1, R37.2, R36.1, R91.1, I_V0.Q, RV1.3)
 	#endif
 	NET_C(XU3.8, R108.1, R107.2)
 	NET_C(XU3.9, R108.2, C77.1)
@@ -228,9 +211,9 @@ NETLIST_START(kidniki_schematics)
 	NET_C(XU3.12, R98.1, R97.2)
 	NET_C(XU3.13, R98.2, C68.1)
 	#if USE_FIXED_STV
-	NET_C(/*XU3.14,*/ XU1.4, R66.1, R70.1, Q6.C, Q5.C, XU2.8, /* R78.1, */ R86.1, R83.1, Q3.C, I_V5.Q)
+	NET_C(XU3.14, XU1.4, R66.1, R70.1, Q6.C, Q5.C, XU2.8, /* R78.1, */ R86.1, R83.1, Q3.C, I_V5.Q)
 	#else
-	NET_C(/*XU3.14,*/ XU1.4, R66.1, R70.1, Q6.C, Q5.C, XU2.8, R78.1, R86.1, R83.1, Q3.C, I_V5.Q)
+	NET_C(XU3.14, XU1.4, R66.1, R70.1, Q6.C, Q5.C, XU2.8, R78.1, R86.1, R83.1, Q3.C, I_V5.Q)
 	#endif
 	NET_C(R96.1, R102.1, R106.1, R107.1, R101.1, R97.1, R65.1, C63.2)
 	NET_C(C63.1, R65_1.2)
@@ -308,120 +291,17 @@ NETLIST_START(kidniki_schematics)
 	NET_C(I_MSM3K0.Q, R200.2)
 	NET_C(I_MSM2K0.Q, R201.2)
 	NET_C(R200.1, R201.1, C200.1)
-NETLIST_END()
 
-NETLIST_START(opamp)
+	/* Amplifier stage */
 
-	/* Opamp model from
-	 *
-	 * http://www.ecircuitcenter.com/Circuits/opmodel1/opmodel1.htm
-	 *
-	 * Bandwidth 1Mhz
-	 *
-	 */
+	CAP(C26, CAP_U(1))
+	RES(R25, 560)
+	RES(R26, RES_K(47))
+	CAP(C29, CAP_U(0.01))
 
-	/* Terminal definitions for calling netlists */
+	NET_C(RV1.2, C26.1)
+	NET_C(C26.2, R25.1)
+	NET_C(R25.2, R26.1, C29.1)
+	NET_C(R26.2, C29.2, GND)
 
-	ALIAS(PLUS, G1.IP) // Positive input
-	ALIAS(MINUS, G1.IN) // Negative input
-	ALIAS(OUT, EBUF.OP) // Opamp output ...
-
-	ALIAS(GND, EBUF.ON) // GND terminal
-	ALIAS(VCC, DUMMY.I) // VCC terminal
-	DUMMY_INPUT(DUMMY)
-
-	/* The opamp model */
-
-	VCCS(G1)
-	PARAM(G1.RI, RES_K(1000))
-#if 1
-	PARAM(G1.G, 100)  // typical OP-AMP amplification 100 * 1000 = 100000
-	RES(RP1, 1000)
-	CAP(CP1, 1.59e-5)   // <== change to 1.59e-3 for 10Khz bandwidth
-#else
-	PARAM(G1.G, 1)  // typical OP-AMP amplification 100 * 1000 = 100000
-	RES(RP1, 100000)
-	CAP(CP1, 1.59e-7)   // <== change to 1.59e-3 for 10Khz bandwidth
-#endif
-	VCVS(EBUF)
-	PARAM(EBUF.RO, 50)
-	PARAM(EBUF.G, 1)
-
-//    PARAM(EBUF.RI, 1e20)
-//    NET_C(EBUF.ON, GND)
-
-	NET_C(G1.ON, GND)
-	NET_C(RP1.2, GND)
-	NET_C(CP1.2, GND)
-	NET_C(EBUF.IN, GND)
-
-	NET_C(RP1.1, G1.OP)
-	NET_C(CP1.1, RP1.1)
-
-	DIODE(DP,"1N914")
-	DIODE(DN,"1N914")
-
-	NET_C(DP.K, VCC)
-#if 1
-	NET_C(DP.A, DN.K, RP1.1)
-#else
-	RES(RDP, 1000)
-	RES(RDN, 1000)
-	NET_C(RDP.1, DP.A)
-	NET_C(RDN.1, DN.K)
-	NET_C(RDP.2, RDN.2, RP1.1)
-#endif
-	NET_C(DN.A, GND)
-
-	NET_C(EBUF.IP, RP1.1)
-
-NETLIST_END()
-
-NETLIST_START(LM324_DIP)
-	SUBMODEL(opamp, op1)
-	SUBMODEL(opamp, op2)
-	SUBMODEL(opamp, op3)
-	SUBMODEL(opamp, op4)
-
-	ALIAS( 1, op1.OUT)
-	ALIAS( 2, op1.MINUS)
-	ALIAS( 3, op1.PLUS)
-
-	ALIAS( 7, op2.OUT)
-	ALIAS( 6, op2.MINUS)
-	ALIAS( 5, op2.PLUS)
-
-	ALIAS( 8, op3.OUT)
-	ALIAS( 9, op3.MINUS)
-	ALIAS(10, op3.PLUS)
-
-	ALIAS(14, op4.OUT)
-	ALIAS(13, op4.MINUS)
-	ALIAS(12, op4.PLUS)
-
-	NET_C(op1.GND, op2.GND, op3.GND, op4.GND)
-	NET_C(op1.VCC, op2.VCC, op3.VCC, op4.VCC)
-
-	ALIAS(11, op1.GND)
-	ALIAS( 4, op1.VCC)
-NETLIST_END()
-
-NETLIST_START(LM358_DIP)
-	SUBMODEL(opamp, op1)
-	SUBMODEL(opamp, op2)
-
-	ALIAS( 1, op1.OUT)
-	ALIAS( 2, op1.MINUS)
-	ALIAS( 3, op1.PLUS)
-
-	ALIAS( 7, op2.OUT)
-	ALIAS( 6, op2.MINUS)
-	ALIAS( 5, op2.PLUS)
-
-
-	NET_C(op1.GND, op2.GND)
-	NET_C(op1.VCC, op2.VCC)
-
-	ALIAS( 4, op1.GND)
-	ALIAS( 8, op1.VCC)
 NETLIST_END()

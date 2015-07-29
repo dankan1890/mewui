@@ -17,6 +17,7 @@
 #include "machine/mc146818.h"
 #include "imagedev/snapquik.h"
 #include "bus/cpc/cpcexp.h"
+#include "bus/cpc/ddi1.h"
 #include "bus/cpc/cpc_ssa1.h"
 #include "bus/cpc/cpc_rom.h"
 #include "bus/cpc/mface2.h"
@@ -242,7 +243,7 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( cpc_romen );
 	DECLARE_WRITE8_MEMBER(rom_select);
 
-	DECLARE_FLOPPY_FORMATS( floppy_formats );
+	DECLARE_FLOPPY_FORMATS( aleste_floppy_formats );
 
 	IRQ_CALLBACK_MEMBER(amstrad_cpu_acknowledge_int);
 

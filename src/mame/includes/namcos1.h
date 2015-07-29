@@ -23,7 +23,10 @@ public:
 		m_spriteram(*this, "spriteram"),
 		m_playfield_control(*this, "pfcontrol"),
 		m_triram(*this, "triram"),
-		m_rom(*this, "user1") { }
+		m_rom(*this, "user1"),
+		m_soundbank(*this, "soundbank"),
+		m_mcubank(*this, "mcubank"),
+		m_io_dipsw(*this, "DIPSW") { }
 
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_subcpu;
@@ -39,8 +42,12 @@ public:
 	required_shared_ptr<UINT8> m_spriteram;
 	required_shared_ptr<UINT8> m_playfield_control;
 	required_shared_ptr<UINT8> m_triram;
-
 	required_region_ptr<UINT8> m_rom;
+
+	required_memory_bank m_soundbank;
+	required_memory_bank m_mcubank;
+
+	required_ioport m_io_dipsw;
 
 	int m_dac0_value;
 	int m_dac1_value;
@@ -67,9 +74,6 @@ public:
 	UINT8 *m_tilemap_maskdata;
 	int m_copy_sprites;
 	UINT8 m_drawmode_table[16];
-
-	DECLARE_DIRECT_UPDATE_MEMBER(direct_handler_main);
-	DECLARE_DIRECT_UPDATE_MEMBER(direct_handler_sub);
 
 	DECLARE_WRITE_LINE_MEMBER(subres_w);
 	DECLARE_WRITE8_MEMBER(irq_ack_w);
@@ -138,6 +142,5 @@ public:
 	void init_DACs();
 
 private:
-	inline offs_t direct_handler(int whichcpu, direct_read_data &direct, offs_t address);
 	inline void get_tile_info(tile_data &tileinfo,int tile_index,UINT8 *info_vram);
 };

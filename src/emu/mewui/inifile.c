@@ -114,7 +114,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 	bool search_clones = false;
 	std::string file_name(ini_index[current_file].name);
 	long offset = ini_index[current_file].category[current_category].offset;
-	std::string  carriage("\r\n");
+	std::string carriage("\r\n");
 
 	if (!core_stricmp(file_name.c_str(), "category.ini") || !core_stricmp(file_name.c_str(), "alltime.ini"))
 		search_clones = true;
@@ -124,9 +124,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		std::ifstream myfile(fullpath.c_str(), std::ifstream::binary);
 		int num_game = driver_list::total();
 		std::string readbuf;
-
 		myfile.seekg(offset, myfile.beg);
-
 		while (std::getline(myfile, readbuf))
 		{
 			if (readbuf[0] == '[') break;
@@ -139,7 +137,6 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 			{
 				temp_filter.push_back(dfind);
 				int clone_of = driver_list::non_bios_clone(dfind);
-
 				if (clone_of == -1)
 				{
 					for (int x = 0; x < num_game; x++)
@@ -194,7 +191,6 @@ favorite_manager::favorite_manager(running_machine &machine)
 void favorite_manager::add_favorite_game(const game_driver *driver)
 {
 	ui_software_info tmpmatches;
-
 	tmpmatches.shortname.assign(driver->name);
 	tmpmatches.longname.assign(driver->description);
 	tmpmatches.parentname.clear();
@@ -211,7 +207,6 @@ void favorite_manager::add_favorite_game(const game_driver *driver)
 	tmpmatches.usage.clear();
 	tmpmatches.devicetype.clear();
 	tmpmatches.available = true;
-
 	favorite_list.push_back(tmpmatches);
 	save_favorite_games();
 }
@@ -242,25 +237,42 @@ void favorite_manager::add_favorite_game()
 	image_interface_iterator iter(machine().root_device());
 	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
 	{
-		// get the base name
-		if (image->basename() != NULL)
+		if (image->exists() && image->software_entry())
 		{
 			const software_info *swinfo = image->software_entry();
 			ui_software_info tmpmatches;
 			if (swinfo->shortname()) tmpmatches.shortname.assign(swinfo->shortname());
-			if (swinfo->longname()) tmpmatches.longname.assign(swinfo->longname());
+			if (image->longname()) tmpmatches.longname.assign(image->longname());
 			if (swinfo->parentname()) tmpmatches.parentname.assign(swinfo->parentname());
-			if (swinfo->year()) tmpmatches.year.assign(swinfo->year());
-			if (swinfo->publisher()) tmpmatches.publisher.assign(swinfo->publisher());
-			tmpmatches.supported = swinfo->supported();
+			if (image->year()) tmpmatches.year.assign(image->year());
+			if (image->manufacturer()) tmpmatches.publisher.assign(image->manufacturer());
+			tmpmatches.supported = image->supported();
 			if (image->part_entry()->name()) tmpmatches.part.assign(image->part_entry()->name());
 			tmpmatches.driver = &machine().system();
 			if (image->software_list_name()) tmpmatches.listname.assign(image->software_list_name());
 			if (image->part_entry()->interface()) tmpmatches.interface.assign(image->part_entry()->interface());
-			tmpmatches.instance.clear();
+			if (image->instance_name()) tmpmatches.instance.assign(image->instance_name());
 			tmpmatches.startempty = 0;
 			tmpmatches.parentlongname.clear();
+			if (swinfo->parentname())
+			{
+				software_list_device *swlist = software_list_device::find_by_name(machine().config(), image->software_list_name());
+				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != NULL; c_swinfo = c_swinfo->next())
+				{
+					std::string c_parent(c_swinfo->parentname());
+					if (!c_parent.empty() && !c_parent.compare(swinfo->shortname()))
+						{
+							tmpmatches.parentlongname.assign(c_swinfo->longname());
+							break;
+						}
+				}
+			}
+
 			tmpmatches.usage.clear();
+			for (feature_list_item *flist = swinfo->other_info(); flist != NULL; flist = flist->next())
+				if (!strcmp(flist->name(), "usage"))
+					tmpmatches.usage.assign(flist->value());
+
 			if (image->image_type_name()) tmpmatches.devicetype.assign(image->image_type_name());
 			tmpmatches.available = true;
 			software_avail = true;
@@ -313,30 +325,23 @@ bool favorite_manager::isgame_favorite()
 
 	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
 	{
-		if (image->filename() != NULL)
+		if (image->exists() && image->software_entry())
 		{
 			image_loaded = true;
 			const software_info *swinfo = image->software_entry();
-			const software_part *swpart = image->part_entry();
 
 			for (size_t current = 0; current < favorite_list.size(); current++)
-				if (favorite_list[current].shortname.compare(swinfo->shortname()) == 0)
-					if (swpart != NULL)
-						if (swpart->name() != NULL && favorite_list[current].part.compare(swpart->name()) == 0)
-						{
-							current_favorite = current;
-							return true;
-						}
+				if (!favorite_list[current].shortname.compare(swinfo->shortname()) &&
+				    !favorite_list[current].listname.compare(image->software_list_name()))
+				{
+					current_favorite = current;
+					return true;
+				}
 		}
 	}
 
 	if (!image_loaded)
-		for (size_t current = 0; current < favorite_list.size(); current++)
-			if (favorite_list[current].driver == &machine().system())
-			{
-				current_favorite = current;
-				return true;
-			}
+		return isgame_favorite(&machine().system());
 
 	current_favorite = -1;
 	return false;
@@ -382,39 +387,57 @@ bool favorite_manager::isgame_favorite(ui_software_info &swinfo)
 
 void favorite_manager::parse_favorite()
 {
-	if (parseOpen(favorite_filename))
+	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
+
+	if (file.open(favorite_filename) == FILERR_NONE)
 	{
-		std::ifstream myfile(fullpath.c_str());
-		std::string readbuf;
+		char readbuf[1024];
+		std::string text;
 
-		std::getline(myfile, readbuf);
+		file.gets(readbuf, 1024);
 		while (readbuf[0] == '[')
-			std::getline(myfile, readbuf);
+			file.gets(readbuf, 1024);
 
-		while (std::getline(myfile, readbuf))
+		while (file.gets(readbuf, 1024))
 		{
 			ui_software_info tmpmatches;
-			tmpmatches.shortname = readbuf;
-			std::getline(myfile, tmpmatches.longname);
-			std::getline(myfile, tmpmatches.parentname);
-			std::getline(myfile, tmpmatches.year);
-			std::getline(myfile, tmpmatches.publisher);
-			myfile >> tmpmatches.supported;
-			std::getline(myfile, tmpmatches.part);
-			std::getline(myfile, readbuf);
-			int dx = driver_list::find(readbuf.c_str());
+			tmpmatches.shortname = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.longname = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.parentname = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.year = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.publisher = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.supported = atoi(readbuf);
+			file.gets(readbuf, 1024);
+			tmpmatches.part = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			text = strtrimspace(text.assign(readbuf));
+			int dx = driver_list::find(text.c_str());
+			if (dx == -1) continue;
 			tmpmatches.driver = &driver_list::driver(dx);
-			std::getline(myfile, tmpmatches.listname);
-			std::getline(myfile, tmpmatches.interface);
-			std::getline(myfile, tmpmatches.instance);
-			myfile >> tmpmatches.startempty;
-			std::getline(myfile, tmpmatches.parentlongname);
-			std::getline(myfile, tmpmatches.usage);
-			std::getline(myfile, tmpmatches.devicetype);
-			myfile >> tmpmatches.available;
+			file.gets(readbuf, 1024);
+			tmpmatches.listname = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.interface = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.instance = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.startempty = atoi(readbuf);
+			file.gets(readbuf, 1024);
+			tmpmatches.parentlongname = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.usage = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.devicetype = strtrimspace(text.assign(readbuf));
+			file.gets(readbuf, 1024);
+			tmpmatches.available = atoi(readbuf);
 			favorite_list.push_back(tmpmatches);
 		}
-		myfile.close();
+		file.close();
 	}
 }
 
@@ -424,71 +447,41 @@ void favorite_manager::parse_favorite()
 
 void favorite_manager::save_favorite_games()
 {
-	// if the list is empty, then deletes the file
-	if (favorite_list.empty())
-	{
-		if (parseOpen(favorite_filename))
-			remove(fullpath.c_str());
-		return;
-	}
-
 	// attempt to open the output file
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
 
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
-		std::string filename(file.fullpath());
-		file.close();
-
-		std::ofstream myfile(filename.c_str());
+		if (favorite_list.empty())
+		{
+			file.remove_on_close();
+			file.close();
+			return;
+		}
 
 		// generate the favorite INI
-		std::string favtext;
-		std::string headtext("[ROOT_FOLDER]\n[Favorite]\n\n");
-		myfile << headtext;
+		std::string text("[ROOT_FOLDER]\n[Favorite]\n\n");
 
 		for (size_t current = 0; current < favorite_list.size(); current++)
 		{
-			myfile << favorite_list[current].shortname << "\n";
-			myfile << favorite_list[current].longname << "\n";
-			myfile << favorite_list[current].parentname << "\n";
-			myfile << favorite_list[current].year << "\n";
-			myfile << favorite_list[current].publisher << "\n";
-			myfile << favorite_list[current].supported;
-			myfile << favorite_list[current].part << "\n";
-			myfile << favorite_list[current].driver->name << "\n";
-			myfile << favorite_list[current].listname << "\n";
-			myfile << favorite_list[current].interface << "\n";
-			myfile << favorite_list[current].instance << "\n";
-			myfile << favorite_list[current].startempty;
-			myfile << favorite_list[current].parentlongname << "\n";
-			myfile << favorite_list[current].usage << "\n";
-			myfile << favorite_list[current].devicetype << "\n";
-			myfile << favorite_list[current].available;
+			text += favorite_list[current].shortname + "\n";
+			text += favorite_list[current].longname + "\n";
+			text += favorite_list[current].parentname + "\n";
+			text += favorite_list[current].year + "\n";
+			text += favorite_list[current].publisher + "\n";
+			strcatprintf(text, "%d\n", favorite_list[current].supported);
+			text += favorite_list[current].part + "\n";
+			strcatprintf(text, "%s\n", favorite_list[current].driver->name);
+			text += favorite_list[current].listname + "\n";
+			text += favorite_list[current].interface + "\n";
+			text += favorite_list[current].instance + "\n";
+			strcatprintf(text, "%d\n", favorite_list[current].startempty);
+			text += favorite_list[current].parentlongname + "\n";
+			text += favorite_list[current].usage + "\n";
+			text += favorite_list[current].devicetype + "\n";
+			strcatprintf(text, "%d\n", favorite_list[current].available);
 		}
-		myfile.close();
+		file.puts(text.c_str());
+		file.close();
 	}
-}
-
-//-------------------------------------------------
-//  open up file for reading
-//-------------------------------------------------
-
-//-------------------------------------------------
-//  open up file for reading
-//-------------------------------------------------
-
-bool favorite_manager::parseOpen(const char *filename)
-{
-	// Open file up in binary mode
-	emu_file fp(machine().options().mewui_path(), OPEN_FLAG_READ);
-
-	if (fp.open(filename) == FILERR_NONE)
-	{
-		fullpath.assign(fp.fullpath());
-		fp.close();
-		return true;
-	}
-
-	return false;
 }

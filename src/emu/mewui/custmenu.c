@@ -74,7 +74,7 @@ void ui_menu_custom_filter::handle()
 				break;
 		}
 
-		if ((FPTR)menu_event->itemref >= OTHER_FILTER && (FPTR)menu_event->itemref < OTHER_FILTER + MAX_FILTER)
+		if ((FPTR)menu_event->itemref >= OTHER_FILTER && (FPTR)menu_event->itemref < OTHER_FILTER + MAX_CUST_FILTER)
 		{
 			int pos = (int)((FPTR)menu_event->itemref - OTHER_FILTER);
 			if (menu_event->iptkey == IPT_UI_LEFT && custfltr::other[pos] > FILTER_UNAVAILABLE + 1)
@@ -84,7 +84,6 @@ void ui_menu_custom_filter::handle()
 						|| custfltr::other[pos] == FILTER_FAVORITE_GAME); custfltr::other[pos]--) ;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::other[pos] < FILTER_LAST - 1)
 			{
 				custfltr::other[pos]++;
@@ -92,7 +91,6 @@ void ui_menu_custom_filter::handle()
 						|| custfltr::other[pos] == FILTER_FAVORITE_GAME); custfltr::other[pos]++) ;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 			{
 				int total = mewui_globals::s_filter_text;
@@ -106,8 +104,7 @@ void ui_menu_custom_filter::handle()
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::other[pos])));
 			}
 		}
-
-		else if ((FPTR)menu_event->itemref >= YEAR_FILTER && (FPTR)menu_event->itemref < YEAR_FILTER + MAX_FILTER)
+		else if ((FPTR)menu_event->itemref >= YEAR_FILTER && (FPTR)menu_event->itemref < YEAR_FILTER + MAX_CUST_FILTER)
 		{
 			int pos = (int)((FPTR)menu_event->itemref - YEAR_FILTER);
 			if (menu_event->iptkey == IPT_UI_LEFT && custfltr::year[pos] > 0)
@@ -115,18 +112,15 @@ void ui_menu_custom_filter::handle()
 				custfltr::year[pos]--;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::year[pos] < c_year::ui.size() - 1)
 			{
 				custfltr::year[pos]++;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_year::ui, &custfltr::year[pos])));
 		}
-
-		else if ((FPTR)menu_event->itemref >= MNFCT_FILTER && (FPTR)menu_event->itemref < MNFCT_FILTER + MAX_FILTER)
+		else if ((FPTR)menu_event->itemref >= MNFCT_FILTER && (FPTR)menu_event->itemref < MNFCT_FILTER + MAX_CUST_FILTER)
 		{
 			int pos = (int)((FPTR)menu_event->itemref - MNFCT_FILTER);
 			if (menu_event->iptkey == IPT_UI_LEFT && custfltr::mnfct[pos] > 0)
@@ -134,13 +128,11 @@ void ui_menu_custom_filter::handle()
 				custfltr::mnfct[pos]--;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::mnfct[pos] < c_mnfct::ui.size() - 1)
 			{
 				custfltr::mnfct[pos]++;
 				changed = true;
 			}
-
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_mnfct::ui, &custfltr::mnfct[pos])));
 		}
@@ -205,8 +197,8 @@ void ui_menu_custom_filter::populate()
 	if (custfltr::numother > 0)
 		item_append("Remove last filter", NULL, 0, (void *)REMOVE_FILTER);
 
-	if (custfltr::numother < MAX_FILTER)
-		item_append("Add other filter", NULL, 0, (void *)ADD_FILTER);
+	if (custfltr::numother < MAX_CUST_FILTER - 2)
+		item_append("Add filter", NULL, 0, (void *)ADD_FILTER);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
@@ -222,7 +214,7 @@ void ui_menu_custom_filter::custom_render(void *selectedref, float top, float bo
 
 	// get the size of the text
 	machine().ui().draw_text_full(container, "Select custom filters:", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-			DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	float maxwidth = MAX(width, origx2 - origx1);
 
@@ -242,5 +234,5 @@ void ui_menu_custom_filter::custom_render(void *selectedref, float top, float bo
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, "Select custom filters:", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-			DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }

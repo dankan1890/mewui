@@ -150,7 +150,7 @@ inline void mips3_device::save_fast_iregs(drcuml_block *block)
 
 void mips3_device::mips3drc_set_options(UINT32 options)
 {
-	if (!machine().options().drc()) return;
+	if (!(mconfig().options().drc() && !mconfig().m_force_no_drc)) return;
 	m_drcoptions = options;
 }
 
@@ -196,7 +196,7 @@ void mips3_device::add_fastram(offs_t start, offs_t end, UINT8 readonly, void *b
 
 void mips3_device::mips3drc_add_hotspot(offs_t pc, UINT32 opcode, UINT32 cycles)
 {
-	if (!machine().options().drc()) return;
+	if (!(mconfig().options().drc() && !mconfig().m_force_no_drc)) return;
 	if (m_hotspot_select < ARRAY_LENGTH(m_hotspot))
 	{
 		m_hotspot[m_hotspot_select].pc = pc;
@@ -778,7 +778,7 @@ void mips3_device::static_generate_exception(UINT8 exception, int recover, const
 
 	/* choose our target PC */
 	UML_ADD(block, I0, I3, 0xbfc00200);                             // add     i0,i3,0xbfc00200
-	UML_TEST(block, I1, SR_BEV);                                            // test    i1,SR_BEV
+	UML_TEST(block, CPR032(COP0_Status), SR_BEV);                   // test    CPR032(COP0_Status),SR_BEV
 	UML_JMPc(block, COND_NZ, skip);                                                 // jnz     <skip>
 	UML_ADD(block, I0, I3, 0x80000000);                             // add     i0,i3,0x80000000,z
 	UML_LABEL(block, skip);                                                     // <skip>:
@@ -2791,7 +2791,7 @@ int mips3_device::generate_cop1(drcuml_block *block, compiler_state *compiler, c
 					else                /* NEG.D - MIPS I */
 					{
 						UML_FDNEG(block, FPR64(FDREG), FPR64(FSREG));               // fdneg   <fdreg>,<fsreg>
-						UML_CMP(block, FPR64(FSREG), 0);                            // cmp     <fsreg>,0.0
+						UML_DCMP(block, FPR64(FSREG), 0);                            // cmp     <fsreg>,0.0
 						UML_DMOVc(block, COND_E, FPR64(FDREG), U64(0x8000000000000000));// dmov    <fdreg>,-0.0,e
 					}
 					return TRUE;

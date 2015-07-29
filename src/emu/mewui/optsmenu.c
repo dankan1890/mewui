@@ -28,8 +28,6 @@
 
 ui_menu_game_options::ui_menu_game_options(running_machine &machine, render_container *container) : ui_menu(machine, container)
 {
-//  m_grouped = machine.options().ui_grouped();
-//  m_audit = machine.options().audit_mode();
 }
 
 //-------------------------------------------------
@@ -38,9 +36,6 @@ ui_menu_game_options::ui_menu_game_options(running_machine &machine, render_cont
 
 ui_menu_game_options::~ui_menu_game_options()
 {
-	std::string error_string;
-//  machine().options().set_value(OPTION_GROUPED, m_grouped, OPTION_PRIORITY_CMDLINE, error_string);
-//  machine().options().set_value(OPTION_AUDIT_MODE, m_audit, OPTION_PRIORITY_CMDLINE, error_string);
 	ui_menu::menu_stack->reset(UI_MENU_RESET_SELECT_FIRST);
 	save_game_options(machine());
 	mewui_globals::switch_image = true;
@@ -277,7 +272,6 @@ void ui_menu_game_options::populate()
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	// add options items
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	item_append("Customize UI", NULL, 0, (void *)CUSTOM_MENU);
 	item_append("Display Options", NULL, 0, (void *)DISPLAY_MENU);
 	item_append("Sound Options", NULL, 0, (void *)SOUND_MENU);
@@ -298,7 +292,7 @@ void ui_menu_game_options::custom_render(void *selectedref, float top, float bot
 {
 	float width;
 	machine().ui().draw_text_full(container, "Settings", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
 
@@ -318,5 +312,5 @@ void ui_menu_game_options::custom_render(void *selectedref, float top, float bot
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, "Settings", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-									DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }

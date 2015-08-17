@@ -250,6 +250,7 @@ samp {
  */
 
 button,
+button-sf,
 input,
 optgroup,
 select,
@@ -263,7 +264,8 @@ textarea {
  * Address `overflow` set to `hidden` in IE 8/9/10/11.
  */
 
-button {
+button,
+button-sf {
   overflow: visible;
 }
 
@@ -275,6 +277,7 @@ button {
  */
 
 button,
+button-sf,
 select {
   text-transform: none;
 }
@@ -288,6 +291,7 @@ select {
  */
 
 button,
+button-sf,
 html input[type="button"], /* 1 */
 input[type="reset"],
 input[type="submit"] {
@@ -300,6 +304,7 @@ input[type="submit"] {
  */
 
 button[disabled],
+button-sf[disabled],
 html input[disabled] {
   cursor: default;
 }
@@ -309,6 +314,7 @@ html input[disabled] {
  */
 
 button::-moz-focus-inner,
+button-sf::-moz-focus-inner,
 input::-moz-focus-inner {
   padding: 0;
   border: 0;
@@ -526,16 +532,19 @@ a.button {
   line-height: 1.2;
   color: #fff;
 }
+
 a.button small {
   display: block;
   font-size: 11px;
 }
+
 header a.button {
   position: absolute;
   top: 0;
   right: 0;
   background: transparent url(../images/github-button.png) 0 0 no-repeat;
 }
+
 aside a.button {
   display: block;
   width: 138px;
@@ -543,6 +552,30 @@ aside a.button {
   margin-bottom: 20px;
   font-size: 21px;
   background: transparent url(../images/download-button.png) 0 0 no-repeat;
+}
+
+a.button-sf {
+  width: 134px;
+  height: 58px;
+  padding-top: 22px;
+  padding-left: 68px;
+  font-family: 'Architects Daughter', 'Helvetica Neue', Helvetica, Arial, serif;
+  font-size: 23px;
+  line-height: 1.2;
+  color: #fff;
+}
+a.button-sf small {
+  display: block;
+  font-size: 11px;
+}
+
+aside a.button-sf {
+  display: block;
+  width: 138px;
+  padding-left: 64px;
+  margin-bottom: 20px;
+  font-size: 21px;
+  background: transparent url(../images/download-button-sf.png) 0 0 no-repeat;
 }
 
 code, pre {

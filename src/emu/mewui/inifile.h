@@ -1,8 +1,10 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/inifile.h
 
-    MEWUI inifile system.
+    MEWUI INIs file manager.
 
 ***************************************************************************/
 
@@ -64,7 +66,7 @@ private:
 
 	// internal state
 	running_machine &m_machine;  // reference to our machine
-	std::string     fullpath;
+	std::string     m_fullpath;
 };
 
 /**************************************************************************
@@ -79,7 +81,7 @@ public:
 	favorite_manager(running_machine &machine);
 
 	// favorite indices
-	std::vector<ui_software_info> favorite_list;
+	std::vector<ui_software_info> m_favorite_list;
 
 	// getters
 	running_machine &machine() const { return m_machine; }
@@ -104,7 +106,7 @@ public:
 private:
 
 	// current
-	int current_favorite;
+	int m_current_favorite;
 
 	// parse file mewui_favorite
 	void parse_favorite();

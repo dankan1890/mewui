@@ -499,8 +499,7 @@ public:
 				}
 				p = p->m_next;
 			}
-			//FXIME: throw a standard exception
-			//nl_assert_always(false, "element not found");
+			throw pexception("element not found");
 		}
 	}
 
@@ -567,7 +566,7 @@ public:
 			p = pn + onstr.len();
 			pn = str.find(onstr, p);
 		}
-		if (p<str.len())
+		if (p < (int) str.len())
 		{
 			pstring t = str.substr(p);
 			if (!ignore_empty || t.len() != 0)
@@ -580,13 +579,13 @@ public:
 		pstring_list_t temp;
 		pstring col = "";
 
-		int i = 0;
-		while (i<str.len())
+		unsigned i = 0;
+		while (i<str.blen())
 		{
 			int p = -1;
 			for (std::size_t j=0; j < onstrl.size(); j++)
 			{
-				if (std::strncmp(onstrl[j].cstr(), &(str.cstr()[i]), onstrl[j].len())==0)
+				if (std::memcmp(onstrl[j].cstr(), &(str.cstr()[i]), onstrl[j].blen())==0)
 				{
 					p = j;
 					break;
@@ -596,14 +595,16 @@ public:
 			{
 				if (col != "")
 					temp.add(col);
+
 				col = "";
 				temp.add(onstrl[p]);
-				i += onstrl[p].len();
+				i += onstrl[p].blen();
 			}
 			else
 			{
-				col += str.cstr()[i];
-				i++;
+				pstring::traits::code_t c = pstring::traits::code(str.cstr() + i);
+				col += c;
+				i+=pstring::traits::codelen(c);
 			}
 		}
 		if (col != "")
@@ -640,9 +641,9 @@ struct phash_functor<pstring>
 	phash_functor(const pstring &v)
 	{
 		/* modified djb2 */
-		const char *string = v.cstr();
+		const pstring::mem_t *string = v.cstr();
 		unsigned result = 5381;
-		for (UINT8 c = *string; c != 0; c = *string++)
+		for (pstring::mem_t c = *string; c != 0; c = *string++)
 			result = ((result << 5) + result ) ^ (result >> (32 - 5)) ^ c;
 			//result = (result*33) ^ c;
 		m_hash = result;
@@ -657,7 +658,7 @@ private:
 #if 0
 	unsigned hash(const pstring &v) const
 	{
-		/* Fowler–Noll–Vo hash - FNV-1 */
+		/* Fowler???Noll???Vo hash - FNV-1 */
 		const char *string = v.cstr();
 		unsigned result = 2166136261;
 		for (UINT8 c = *string++; c != 0; c = *string++)
@@ -671,17 +672,17 @@ private:
 		/* jenkins one at a time algo */
 		unsigned result = 0;
 		const char *string = v.cstr();
-	    while (*string)
-	    {
-	        result += *string;
-	        string++;
-	        result += (result << 10);
-	        result ^= (result >> 6);
-	    }
-	    result += (result << 3);
-	    result ^= (result >> 11);
-	    result += (result << 15);
-	    return result;
+		while (*string)
+		{
+			result += *string;
+			string++;
+			result += (result << 10);
+			result ^= (result >> 6);
+		}
+		result += (result << 3);
+		result ^= (result >> 11);
+		result += (result << 15);
+		return result;
 	}
 #endif
 #endif
@@ -714,6 +715,7 @@ public:
 
 	void clear()
 	{
+#if 0
 		if (0)
 		{
 			unsigned cnt = 0;
@@ -726,6 +728,7 @@ public:
 			else
 				printf("phashmap: No elements .. \n");
 		}
+#endif
 		m_values.clear();
 		for (unsigned i=0; i<m_hash.size(); i++)
 			m_hash[i] = -1;

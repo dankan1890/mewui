@@ -4,12 +4,6 @@ if (_OPTIONS["targetos"] == "windows") then
 	}
 end
 
-if (_OPTIONS["osd"] == "sdl") then
-	defines {
-		"MEWUI_SDL",
-	}
-end
-
 files {
 	MAME_DIR .. "src/emu/mewui/auditmenu.c",
 	MAME_DIR .. "src/emu/mewui/auditmenu.h",
@@ -23,6 +17,7 @@ files {
 	MAME_DIR .. "src/emu/mewui/datfile.h",
 	MAME_DIR .. "src/emu/mewui/datmenu.c",
 	MAME_DIR .. "src/emu/mewui/datmenu.h",
+	MAME_DIR .. "src/emu/mewui/defimg.h",
 	MAME_DIR .. "src/emu/mewui/dirmenu.c",
 	MAME_DIR .. "src/emu/mewui/dirmenu.h",
 	MAME_DIR .. "src/emu/mewui/dsplmenu.c",
@@ -35,8 +30,6 @@ files {
 	MAME_DIR .. "src/emu/mewui/moptions.h",
 	MAME_DIR .. "src/emu/mewui/optsmenu.c",
 	MAME_DIR .. "src/emu/mewui/optsmenu.h",
-	MAME_DIR .. "src/emu/mewui/palsel.c",
-	MAME_DIR .. "src/emu/mewui/palsel.h",
 	MAME_DIR .. "src/emu/mewui/selector.c",
 	MAME_DIR .. "src/emu/mewui/selector.h",
 	MAME_DIR .. "src/emu/mewui/selgame.c",
@@ -45,8 +38,7 @@ files {
 	MAME_DIR .. "src/emu/mewui/selsoft.h",
 	MAME_DIR .. "src/emu/mewui/sndmenu.c",
 	MAME_DIR .. "src/emu/mewui/sndmenu.h",
-	MAME_DIR .. "src/emu/mewui/swcustmenu.c",
-	MAME_DIR .. "src/emu/mewui/swcustmenu.h",
+	MAME_DIR .. "src/emu/mewui/starimg.h",
 	MAME_DIR .. "src/emu/mewui/toolbar.h",
 	MAME_DIR .. "src/emu/mewui/utils.c",
 	MAME_DIR .. "src/emu/mewui/utils.h",

@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/utils.c
@@ -52,10 +54,7 @@ UINT16 sw_custfltr::mnfct[MAX_CUST_FILTER];
 UINT16 sw_custfltr::year[MAX_CUST_FILTER];
 UINT16 sw_custfltr::region[MAX_CUST_FILTER];
 UINT16 sw_custfltr::type[MAX_CUST_FILTER];
-
-std::string reselect_last::driver;
-std::string reselect_last::software;
-std::string reselect_last::swlist;
+UINT16 sw_custfltr::list[MAX_CUST_FILTER];
 
 std::vector<cache_info> mewui_globals::driver_cache(driver_list::total() + 1);
 
@@ -65,32 +64,13 @@ const char *mewui_globals::filter_text[] = { "All", "Available", "Unavailable", 
                                              "Horizontal", "Raster", "Vectors", "Custom" };
 
 const char *mewui_globals::sw_filter_text[] = { "All", "Available", "Unavailable", "Originals", "Clones", "Years", "Publishers", "Supported",
-                                                "Partial Supported", "Unsupported", "Region", "Device Type", "Custom" };
+                                                "Partial Supported", "Unsupported", "Region", "Device Type", "Software List", "Custom" };
 
 const char *mewui_globals::ume_text[] = { "ALL", "ARCADES", "SYSTEMS" };
 
 size_t mewui_globals::s_filter_text = ARRAY_LENGTH(mewui_globals::filter_text);
 size_t mewui_globals::sw_filter_len = ARRAY_LENGTH(mewui_globals::sw_filter_text);
 size_t mewui_globals::s_ume_text = ARRAY_LENGTH(mewui_globals::ume_text);
-
-//-------------------------------------------------
-//  save game options
-//-------------------------------------------------
-
-void save_game_options(running_machine &machine)
-{
-	// attempt to open the output file
-	emu_file file(machine.options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-	if (file.open(emulator_info::get_configname(), ".ini") == FILERR_NONE)
-	{
-		// generate the updated INI
-		std::string initext;
-		file.puts(machine.options().output_ini(initext));
-		file.close();
-	}
-	else
-		popmessage("**Error to save %s.ini**", emulator_info::get_configname());
-}
 
 //-------------------------------------------------
 //  generate general info
@@ -108,36 +88,36 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 	else
 		buffer.append("Driver is Parent\n");
 
-	if (driver->flags & GAME_NOT_WORKING)
+	if (driver->flags & MACHINE_NOT_WORKING)
 		buffer.append("Overall: NOT WORKING\n");
-	else if (driver->flags & GAME_UNEMULATED_PROTECTION)
+	else if (driver->flags & MACHINE_UNEMULATED_PROTECTION)
 		buffer.append("Overall: Unemulated Protection\n");
 	else
 		buffer.append("Overall: Working\n");
 
-	if (driver->flags & GAME_IMPERFECT_COLORS)
+	if (driver->flags & MACHINE_IMPERFECT_COLORS)
 		buffer.append("Graphics: Imperfect Colors\n");
-	else if (driver->flags & GAME_WRONG_COLORS)
+	else if (driver->flags & MACHINE_WRONG_COLORS)
 		buffer.append("Graphics: Wrong Colors\n");
-	else if (driver->flags & GAME_IMPERFECT_GRAPHICS)
+	else if (driver->flags & MACHINE_IMPERFECT_GRAPHICS)
 		buffer.append("Graphics: Imperfect\n");
 	else
 		buffer.append("Graphics: OK\n");
 
-	if (driver->flags & GAME_NO_SOUND)
+	if (driver->flags & MACHINE_NO_SOUND)
 		buffer.append("Sound: Unimplemented\n");
-	else if (driver->flags & GAME_IMPERFECT_SOUND)
+	else if (driver->flags & MACHINE_IMPERFECT_SOUND)
 		buffer.append("Sound: Imperfect\n");
 	else
 		buffer.append("Sound: OK\n");
 
-	strcatprintf(buffer, "Driver is Skeleton: %s\n", ((driver->flags & GAME_IS_SKELETON) ? "Yes" : "No"));
-	strcatprintf(buffer, "Game is Mechanical: %s\n", ((driver->flags & GAME_MECHANICAL) ? "Yes" : "No"));
-	strcatprintf(buffer, "Requires Artwork: %s\n", ((driver->flags & GAME_REQUIRES_ARTWORK) ? "Yes" : "No"));
-	strcatprintf(buffer, "Requires Clickable Artwork: %s\n", ((driver->flags & GAME_CLICKABLE_ARTWORK) ? "Yes" : "No"));
-	strcatprintf(buffer, "Support Cocktail: %s\n", ((driver->flags & GAME_NO_COCKTAIL) ? "Yes" : "No"));
-	strcatprintf(buffer, "Driver is Bios: %s\n", ((driver->flags & GAME_IS_BIOS_ROOT) ? "Yes" : "No"));
-	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & GAME_SUPPORTS_SAVE) ? "Yes" : "No"));
+	strcatprintf(buffer, "Driver is Skeleton: %s\n", ((driver->flags & MACHINE_IS_SKELETON) ? "Yes" : "No"));
+	strcatprintf(buffer, "Game is Mechanical: %s\n", ((driver->flags & MACHINE_MECHANICAL) ? "Yes" : "No"));
+	strcatprintf(buffer, "Requires Artwork: %s\n", ((driver->flags & MACHINE_REQUIRES_ARTWORK) ? "Yes" : "No"));
+	strcatprintf(buffer, "Requires Clickable Artwork: %s\n", ((driver->flags & MACHINE_CLICKABLE_ARTWORK) ? "Yes" : "No"));
+	strcatprintf(buffer, "Support Cocktail: %s\n", ((driver->flags & MACHINE_NO_COCKTAIL) ? "Yes" : "No"));
+	strcatprintf(buffer, "Driver is Bios: %s\n", ((driver->flags & MACHINE_IS_BIOS_ROOT) ? "Yes" : "No"));
+	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & MACHINE_SUPPORTS_SAVE) ? "Yes" : "No"));
 
 	int idx = driver_list::find(driver->name);
 	strcatprintf(buffer, "Screen Type: %s\n", (mewui_globals::driver_cache[idx].b_vector ? "Vector" : "Raster"));
@@ -221,92 +201,56 @@ int fuzzy_substring(const char *needle, const char *haystack)
 
 	return rv;
 }
-
 //-------------------------------------------------
-//  save custom filters info to file
+//  search a substring with even partial matching
 //-------------------------------------------------
 
-void save_custom_filters(running_machine &machine)
+int fuzzy_substring2(const char *needle, const char *haystack)
 {
-	// attempt to open the output file
-	emu_file file(machine.options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-	if (file.open("custom_", emulator_info::get_configname(), "_filter.ini") == FILERR_NONE)
-	{
-		// generate custom filters info
-		std::string cinfo;
-		strprintf(cinfo, "Total filters = %d\n", (custfltr::numother + 1));
-		cinfo.append("Main filter = ").append(mewui_globals::filter_text[custfltr::main_filter]).append("\n");
+	std::string s1(needle);
+	std::string s2(haystack);
+	strmakelower(s1);
+	strmakelower(s2);
+	const size_t m(s1.size());
+	const size_t n(s2.size());
 
-		for (int x = 1; x <= custfltr::numother; x++)
+	if (m == 0)
+		return n;
+	if (n == 0)
+		return m;
+
+	if (s1 == s2)
+		return 0;
+	size_t it = s2.find(s1);
+	if (it != std::string::npos)
+		return it;
+
+	size_t *costs = global_alloc_array(size_t, n + 1);
+	for(size_t k = 0; k <= n; ++k)
+		costs[k] = k;
+	size_t i = 0;
+	for (std::string::const_iterator it1 = s1.begin(); it1 != s1.end(); ++it1, ++i)
+	{
+		costs[0] = i+1;
+		size_t corner = i;
+		size_t j = 0;
+		for (std::string::const_iterator it2 = s2.begin(); it2 != s2.end(); ++it2, ++j)
 		{
-			cinfo.append("Other filter = ").append(mewui_globals::filter_text[custfltr::other[x]]).append("\n");
-			if (custfltr::other[x] == FILTER_MANUFACTURER)
-				cinfo.append("  Manufacturer filter = ").append(c_mnfct::ui[custfltr::mnfct[x]]).append("\n");
-			else if (custfltr::other[x] == FILTER_YEAR)
-				cinfo.append("  Year filter = ").append(c_year::ui[custfltr::year[x]]).append("\n");
-		}
-		file.puts(cinfo.c_str());
-		file.close();
-	}
-}
-
-//-------------------------------------------------
-//  load custom filters info from file
-//-------------------------------------------------
-
-void load_custom_filters(running_machine &machine)
-{
-	// attempt to open the output file
-	emu_file file(machine.options().mewui_path(), OPEN_FLAG_READ);
-	if (file.open("custom_", emulator_info::get_configname(), "_filter.ini") == FILERR_NONE)
-	{
-		char buffer[MAX_CHAR_INFO];
-
-		// get number of filters
-		file.gets(buffer, MAX_CHAR_INFO);
-		char *pb = strchr(buffer, '=');
-		custfltr::numother = atoi(++pb) - 1;
-
-		// get main filter
-		file.gets(buffer, MAX_CHAR_INFO);
-		pb = strchr(buffer, '=') + 2;
-
-		for (int y = 0; y < mewui_globals::s_filter_text; y++)
-			if (!strncmp(pb, mewui_globals::filter_text[y], strlen(mewui_globals::filter_text[y])))
+			size_t upper = costs[j+1];
+			if (*it1 == *it2)
+				costs[j+1] = corner;
+			else
 			{
-				custfltr::main_filter = y;
-				break;
+				size_t t(upper < corner ? upper : corner);
+				costs[j+1] = (costs[j] < t ? costs[j] : t) + 1;
 			}
-
-		for (int x = 1; x <= custfltr::numother; x++)
-		{
-			file.gets(buffer, MAX_CHAR_INFO);
-			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < mewui_globals::s_filter_text; y++)
-				if (!strncmp(cb, mewui_globals::filter_text[y], strlen(mewui_globals::filter_text[y])))
-				{
-					custfltr::other[x] = y;
-					if (y == FILTER_MANUFACTURER)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_mnfct::ui.size(); z++)
-							if (!strncmp(ab, c_mnfct::ui[z].c_str(), c_mnfct::ui[z].length()))
-								custfltr::mnfct[x] = z;
-					}
-					else if (y == FILTER_YEAR)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_year::ui.size(); z++)
-							if (!strncmp(db, c_year::ui[z].c_str(), c_year::ui[z].length()))
-								custfltr::year[x] = z;
-					}
-				}
+			corner = upper;
 		}
-		file.close();
 	}
 
+	size_t result = costs[n];
+	global_free_array(costs);
+	return result;
 }
 
 //-------------------------------------------------
@@ -346,109 +290,3 @@ void c_year::set(const char *str)
 	ui.push_back(name);
 }
 
-//-------------------------------------------------
-//  save custom filters info to file
-//-------------------------------------------------
-
-void save_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &m_region, c_sw_publisher &m_publisher, c_sw_year &m_year, c_sw_type &m_type)
-{
-	// attempt to open the output file
-	emu_file file(machine.options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-	if (file.open("custom_", driver->name, "_filter.ini") == FILERR_NONE)
-	{
-		// generate custom filters info
-		std::string cinfo;
-		strprintf(cinfo, "Total filters = %d\n", (sw_custfltr::numother + 1));
-		cinfo.append("Main filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::main_filter]).append("\n");
-
-		for (int x = 1; x <= sw_custfltr::numother; x++)
-		{
-			cinfo.append("Other filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::other[x]]).append("\n");
-			if (sw_custfltr::other[x] == MEWUI_SW_PUBLISHERS)
-				cinfo.append("  Manufacturer filter = ").append(m_publisher.ui[sw_custfltr::mnfct[x]]).append("\n");
-			else if (sw_custfltr::other[x] == MEWUI_SW_YEARS)
-				cinfo.append("  Year filter = ").append(m_year.ui[sw_custfltr::year[x]]).append("\n");
-			else if (sw_custfltr::other[x] == MEWUI_SW_TYPE)
-				cinfo.append("  Type filter = ").append(m_type.ui[sw_custfltr::type[x]]).append("\n");
-			else if (sw_custfltr::other[x] == MEWUI_SW_REGION)
-				cinfo.append("  Region filter = ").append(m_region.ui[sw_custfltr::region[x]]).append("\n");
-		}
-		file.puts(cinfo.c_str());
-		file.close();
-	}
-}
-
-//-------------------------------------------------
-//  load custom filters info from file
-//-------------------------------------------------
-
-void load_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &m_region, c_sw_publisher &m_publisher, c_sw_year &m_year, c_sw_type &m_type)
-{
-	// attempt to open the output file
-	emu_file file(machine.options().mewui_path(), OPEN_FLAG_READ);
-	if (file.open("custom_", driver->name, "_filter.ini") == FILERR_NONE)
-	{
-		char buffer[MAX_CHAR_INFO];
-
-		// get number of filters
-		file.gets(buffer, MAX_CHAR_INFO);
-		char *pb = strchr(buffer, '=');
-		sw_custfltr::numother = atoi(++pb) - 1;
-
-		// get main filter
-		file.gets(buffer, MAX_CHAR_INFO);
-		pb = strchr(buffer, '=') + 2;
-
-		for (int y = 0; y < mewui_globals::sw_filter_len; y++)
-			if (!strncmp(pb, mewui_globals::sw_filter_text[y], strlen(mewui_globals::sw_filter_text[y])))
-			{
-				sw_custfltr::main_filter = y;
-				break;
-			}
-
-		for (int x = 1; x <= sw_custfltr::numother; x++)
-		{
-			file.gets(buffer, MAX_CHAR_INFO);
-			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < mewui_globals::sw_filter_len; y++)
-				if (!strncmp(cb, mewui_globals::sw_filter_text[y], strlen(mewui_globals::sw_filter_text[y])))
-				{
-					sw_custfltr::other[x] = y;
-					if (y == MEWUI_SW_PUBLISHERS)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_publisher.ui.size(); z++)
-							if (!strncmp(ab, m_publisher.ui[z].c_str(), m_publisher.ui[z].length()))
-								sw_custfltr::mnfct[x] = z;
-					}
-					else if (y == MEWUI_SW_YEARS)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_year.ui.size(); z++)
-							if (!strncmp(db, m_year.ui[z].c_str(), m_year.ui[z].length()))
-								sw_custfltr::year[x] = z;
-					}
-					else if (y == MEWUI_SW_TYPE)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *fb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_type.ui.size(); z++)
-							if (!strncmp(fb, m_type.ui[z].c_str(), m_type.ui[z].length()))
-								sw_custfltr::type[x] = z;
-					}
-					else if (y == MEWUI_SW_REGION)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *eb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_region.ui.size(); z++)
-							if (!strncmp(eb, m_region.ui[z].c_str(), m_region.ui[z].length()))
-								sw_custfltr::region[x] = z;
-					}
-				}
-		}
-		file.close();
-	}
-
-}

@@ -1,9 +1,11 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /*****************************************
         MEWUI SECTION
 *****************************************/
 public:
 	int  visible_items;
-	bool    ui_error;
+	bool ui_error;
 
 	// draw UME box
 	void draw_ume_box(float x1, float y1, float x2, float y2);
@@ -21,9 +23,10 @@ public:
 	template <typename _T1, typename _T2, typename _T3>
 	UINT32 get_arrow_flags(_T1 min, _T2 max, _T3 actual)
 	{
-		if (actual < min) actual = min;
-		if (actual > max) actual = max;
-		return ((actual == min) ? MENU_FLAG_RIGHT_ARROW : (actual == max ? MENU_FLAG_LEFT_ARROW : (MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW)));
+		if (max == 0)
+			return 0;
+		else
+			return ((actual <= min) ? MENU_FLAG_RIGHT_ARROW : (actual >= max ? MENU_FLAG_LEFT_ARROW : (MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW)));
 	}
 
 protected:
@@ -40,10 +43,10 @@ private:
 	static bitmap_argb32 *icons_bitmap[40];
 
 	// toolbar
-	static render_texture *toolbar_texture[7];
-	static bitmap_argb32 *toolbar_bitmap[7];
-	static render_texture *sw_toolbar_texture[7];
-	static bitmap_argb32 *sw_toolbar_bitmap[7];
+	static render_texture *toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
+	static bitmap_argb32 *toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
+	static render_texture *sw_toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
+	static bitmap_argb32 *sw_toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
 
 	// mouse handling
 	bool mouse_hit, mouse_button;
@@ -60,7 +63,7 @@ private:
 	int totallines;
 
 	// draw game list
-	void draw_select_game();
+	void draw_select_game(bool noinput);
 
 	// draw game list
 	void draw_palette_menu();

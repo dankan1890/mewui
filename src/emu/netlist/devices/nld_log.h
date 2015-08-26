@@ -18,10 +18,11 @@
 #ifndef NLD_LOG_H_
 #define NLD_LOG_H_
 
-#include "../nl_base.h"
+#include "nl_base.h"
+#include "plib/pstream.h"
 
-#define LOG(_name, _I)                                                       \
-		NET_REGISTER_DEV(ÖPG, _name)                                         \
+#define LOG(_name, _I)                                                        \
+		NET_REGISTER_DEV(??PG, _name)                                         \
 		NET_CONNECT(_name, I, _I)
 
 NETLIB_NAMESPACE_DEVICES_START()
@@ -30,7 +31,7 @@ NETLIB_DEVICE(log,
 	~NETLIB_NAME(log)();
 	analog_input_t m_I;
 protected:
-	void * m_file;
+	pofilestream *m_strm;
 );
 
 #define LOGD(_name, _I, _I2)                                                 \

@@ -1,8 +1,10 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /*********************************************************************
 
     mewui/optsmenu.c
 
-    Internal MEWUI user interface.
+    MEWUI main options menu manager.
 
 *********************************************************************/
 
@@ -50,6 +52,8 @@ void ui_menu_game_options::handle()
 	bool changed = false;
 
 	// process the menu
+//	ui_menu::menu_stack->parent->process(UI_MENU_PROCESS_NOINPUT);
+//	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT | UI_MENU_PROCESS_NOIMAGE);
 	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
 
 	if (menu_event != NULL && menu_event->itemref != NULL)
@@ -218,21 +222,12 @@ void ui_menu_game_options::populate()
 	{
 		int actual_file = machine().inifile().current_file;
 
-		if (machine().inifile().ini_index.size() == 1)
-			arrow_flags = 0;
-		else
-			arrow_flags = get_arrow_flags(0, machine().inifile().ini_index.size() - 1, actual_file);
-
+		arrow_flags = get_arrow_flags(0, machine().inifile().ini_index.size() - 1, actual_file);
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), machine().inifile().ini_index[actual_file].name.c_str(), arrow_flags, (void *)FILE_CATEGORY_FILTER);
 
 		int actual_category = machine().inifile().current_category;
-
-		if (machine().inifile().ini_index[actual_file].category.size() == 1)
-			arrow_flags = 0;
-		else
-			arrow_flags = get_arrow_flags(0, machine().inifile().ini_index[actual_file].category.size() - 1, actual_category);
-
+		arrow_flags = get_arrow_flags(0, machine().inifile().ini_index[actual_file].category.size() - 1, actual_category);
 		fbuff.assign(" ^!Category");
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), machine().inifile().ini_index[actual_file].category[actual_category].name.c_str(), arrow_flags, (void *)CATEGORY_FILTER);
@@ -240,11 +235,7 @@ void ui_menu_game_options::populate()
 	// add manufacturer subitem
 	else if (mewui_globals::actual_filter == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
 	{
-		if (c_mnfct::ui.size() == 1)
-			arrow_flags = 0;
-		else
-			arrow_flags = get_arrow_flags(0, c_mnfct::ui.size() - 1, c_mnfct::actual);
-
+		arrow_flags = get_arrow_flags(0, c_mnfct::ui.size() - 1, c_mnfct::actual);
 		fbuff.assign("^!Manufacturer");
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), c_mnfct::ui[c_mnfct::actual].c_str(), arrow_flags, (void *)MANUFACT_CAT_FILTER);
@@ -252,11 +243,7 @@ void ui_menu_game_options::populate()
 	// add year subitem
 	else if (mewui_globals::actual_filter == FILTER_YEAR && c_year::ui.size() > 0)
 	{
-		if (c_year::ui.size() == 1)
-			arrow_flags = 0;
-		else
-			arrow_flags = get_arrow_flags(0, c_year::ui.size() - 1, c_year::actual);
-
+		arrow_flags = get_arrow_flags(0, c_year::ui.size() - 1, c_year::actual);
 		fbuff.assign("^!Year");
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), c_year::ui[c_year::actual].c_str(), arrow_flags, (void *)YEAR_CAT_FILTER);
@@ -313,4 +300,23 @@ void ui_menu_game_options::custom_render(void *selectedref, float top, float bot
 	// draw the text within it
 	machine().ui().draw_text_full(container, "Settings", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+}
+
+//-------------------------------------------------
+//  save game options
+//-------------------------------------------------
+
+void save_game_options(running_machine &machine)
+{
+	// attempt to open the output file
+	emu_file file(machine.options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+	if (file.open(emulator_info::get_configname(), ".ini") == FILERR_NONE)
+	{
+		// generate the updated INI
+		std::string initext;
+		file.puts(machine.options().output_ini(initext));
+		file.close();
+	}
+	else
+		popmessage("**Error to save %s.ini**", emulator_info::get_configname());
 }

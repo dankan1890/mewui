@@ -278,26 +278,27 @@ const ui_menu_event *ui_menu::process(UINT32 flags)
 	menu_event.iptkey = IPT_INVALID;
 
 	// first make sure our selection is valid
-	validate_selection(1);
+//	if (!(flags & UI_MENU_PROCESS_NOINPUT))
+		validate_selection(1);
 
 	// draw the menu
 	if (item.size() > 1 && (item[0].flags & MENU_FLAG_MULTILINE) != 0)
 		draw_text_box();
 	else if ((item[0].flags & MENU_FLAG_MEWUI ) != 0 || (item[0].flags & MENU_FLAG_MEWUI_SWLIST ) != 0)
-		draw_select_game();
+		draw_select_game(flags & UI_MENU_PROCESS_NOINPUT);
 	else if ((item[0].flags & MENU_FLAG_MEWUI_PALETTE ) != 0)
 		draw_palette_menu();
 	else
-		draw(flags & UI_MENU_PROCESS_CUSTOM_ONLY);
+		draw(flags & UI_MENU_PROCESS_CUSTOM_ONLY, flags & UI_MENU_PROCESS_NOIMAGE, flags & UI_MENU_PROCESS_NOINPUT);
 
 	// process input
-	if (!(flags & UI_MENU_PROCESS_NOKEYS))
+	if (!(flags & UI_MENU_PROCESS_NOKEYS) && !(flags & UI_MENU_PROCESS_NOINPUT))
 	{
 		// read events
 		if ((item[0].flags & MENU_FLAG_MEWUI ) != 0 || (item[0].flags & MENU_FLAG_MEWUI_SWLIST ) != 0)
 			handle_main_events(flags);
 		else
-			handle_events();
+			handle_events(flags);
 
 		// handle the keys if we don't already have an menu_event
 		if (menu_event.iptkey == IPT_INVALID)
@@ -399,7 +400,7 @@ void ui_menu::set_selection(void *selected_itemref)
 //  draw - draw a menu
 //-------------------------------------------------
 
-void ui_menu::draw(bool customonly)
+void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 {
 	float line_height = machine().ui().get_line_height();
 	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
@@ -412,7 +413,7 @@ void ui_menu::draw(bool customonly)
 	float mouse_x = -1, mouse_y = -1;
 	bool history_flag = ((item[0].flags & MENU_FLAG_MEWUI_HISTORY) != 0);
 
-	if (machine().options().use_background_image() && machine().options().system() == NULL && bgrnd_bitmap->valid())
+	if (machine().options().use_background_image() && machine().options().system() == NULL && bgrnd_bitmap->valid() && !noimage)
 		container->add_quad(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, bgrnd_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 	// compute the width and height of the full menu
@@ -485,7 +486,7 @@ void ui_menu::draw(bool customonly)
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	if (!customonly)
+	if (!customonly && !noinput)
 	{
 		INT32 mouse_target_x, mouse_target_y;
 		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
@@ -526,7 +527,8 @@ void ui_menu::draw(bool customonly)
 			}
 
 			// else if the mouse is over this item, draw with a different background
-			else if (itemnum == hover && (pitem.flags & MENU_FLAG_MEWUI_HISTORY) == 0)
+			else if (itemnum == hover && (((pitem.flags & MENU_FLAG_MEWUI_HISTORY) == 0) || (linenum == 0 && top_line != 0)
+			         || (linenum == visible_lines - 1 && itemnum != item.size() - 1)))
 			{
 				fgcolor = UI_MOUSEOVER_COLOR;
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
@@ -753,7 +755,7 @@ void ui_menu::draw_text_box()
 //  input events for a menu
 //-------------------------------------------------
 
-void ui_menu::handle_events()
+void ui_menu::handle_events(UINT32 flags)
 {
 	int stop = FALSE;
 	ui_event local_menu_event;
@@ -765,35 +767,66 @@ void ui_menu::handle_events()
 		{
 			// if we are hovering over a valid item, select it with a single click
 			case UI_EVENT_MOUSE_DOWN:
-				if (hover >= 0 && hover < item.size())
-					selected = hover;
-				else if (hover == HOVER_ARROW_UP)
+				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
 				{
-					selected -= visitems - 1;
-					validate_selection(1);
-				}
-				else if (hover == HOVER_ARROW_DOWN)
-				{
-					selected += visitems - 1;
-					validate_selection(1);
+					if (hover >= 0 && hover < item.size())
+						selected = hover;
+					else if (hover == HOVER_ARROW_UP)
+					{
+						selected -= visitems - 1;
+						validate_selection(1);
+					}
+					else if (hover == HOVER_ARROW_DOWN)
+					{
+						selected += visitems - 1;
+						validate_selection(1);
+					}
 				}
 				break;
 
 			// if we are hovering over a valid item, fake a UI_SELECT with a double-click
 			case UI_EVENT_MOUSE_DOUBLE_CLICK:
-				if (hover >= 0 && hover < item.size())
+				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
 				{
-					selected = hover;
-					if (local_menu_event.event_type == UI_EVENT_MOUSE_DOUBLE_CLICK)
+					if (hover >= 0 && hover < item.size())
 					{
-						menu_event.iptkey = IPT_UI_SELECT;
-						if (selected == item.size() - 1)
+						selected = hover;
+						if (local_menu_event.event_type == UI_EVENT_MOUSE_DOUBLE_CLICK)
 						{
-							menu_event.iptkey = IPT_UI_CANCEL;
-							ui_menu::stack_pop(machine());
+							menu_event.iptkey = IPT_UI_SELECT;
+							if (selected == item.size() - 1)
+							{
+								menu_event.iptkey = IPT_UI_CANCEL;
+								ui_menu::stack_pop(machine());
+							}
 						}
+						stop = TRUE;
 					}
-					stop = TRUE;
+				}
+				break;
+
+			// caught scroll event
+			case UI_EVENT_MOUSE_SCROLL:
+				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
+				{
+					if (local_menu_event.zdelta > 0)
+					{
+						if (selected >= visible_items || selected == 0 || ui_error)
+							break;
+						selected -= local_menu_event.num_lines;
+						if (selected < top_line + (top_line != 0))
+							top_line -= local_menu_event.num_lines;
+					}
+					else
+					{
+						if (selected >= visible_items - 1 || ui_error)
+							break;
+						selected += local_menu_event.num_lines;
+						if (selected > visible_items - 1)
+							selected = visible_items - 1;
+						if (selected >= top_line + visitems + (top_line != 0))
+							top_line += local_menu_event.num_lines;
+					}
 				}
 				break;
 

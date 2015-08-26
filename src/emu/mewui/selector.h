@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/selector.h
@@ -37,11 +39,11 @@ public:
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
 	char                       m_search[40];
-	UINT16                     *selector;
-	int                        p_category, hover;
-	bool                       first_pass;
-	std::vector<std::string>   str_items;
-	std::string                *searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
+	UINT16                     *m_selector;
+	int                        m_category, m_hover;
+	bool                       m_first_pass;
+	std::vector<std::string>   m_str_items;
+	std::string                *m_searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
 
 	void find_matches(const char *str);
 };

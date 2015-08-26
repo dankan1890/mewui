@@ -17,7 +17,7 @@ NETLIST_START(opamp_layout_4_4_11)
 		B.PLUS,   /*   |5           10|   */ C.PLUS,
 		B.MINUS,  /*   |6            9|   */ C.MINUS,
 		B.OUT,    /*   |7            8|   */ C.OUT
-				  /*   +--------------+   */
+					/*   +--------------+   */
 	)
 	NET_C(A.GND, B.GND, C.GND, D.GND)
 	NET_C(A.VCC, B.VCC, C.VCC, D.VCC)
@@ -33,7 +33,7 @@ NETLIST_START(opamp_layout_2_8_4)
 		A.MINUS,  /*   |2            7|   */ B.OUT,
 		A.PLUS,   /*   |3            6|   */ B.MINUS,
 		A.GND,    /*   |4            5|   */ B.PLUS
-				  /*   +--------------+   */
+					/*   +--------------+   */
 	)
 	NET_C(A.GND, B.GND)
 	NET_C(A.VCC, B.VCC)
@@ -73,8 +73,7 @@ NETLIST_START(OPAMP_lib)
 
 	NET_MODEL("LM324       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.00075)")
 	NET_MODEL("LM358       OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.3M RI=1000k RO=50 DAB=0.001)")
-	NET_MODEL("MB3614      OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=500k SLEW=0.6M RI=1000k RO=50 DAB=0.002)")
-	NET_MODEL("MB3614_SLOW OPAMP(TYPE=3 VLH=2.0 VLL=0.2 FPF=5 UGF=11k  SLEW=0.6M RI=1000k RO=50 DAB=0.002)")
+	NET_MODEL("MB3614      OPAMP(TYPE=3 VLH=1.4 VLL=0.02 FPF=2 UGF=500k SLEW=0.6M RI=1000k RO=50 DAB=0.0002)")
 
 	LOCAL_LIB_ENTRY(MB3614_DIP)
 	LOCAL_LIB_ENTRY(LM324_DIP)

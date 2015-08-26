@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/auditmenu.h
@@ -29,7 +31,7 @@ private:
 	std::vector<const game_driver *> &m_availablesorted;
 	std::vector<const game_driver *> &m_unavailablesorted;
 
-	int m_audit_mode, x;
+	int m_audit_mode, m_x;
 	size_t m_size;
 	void save_available_machines();
 };

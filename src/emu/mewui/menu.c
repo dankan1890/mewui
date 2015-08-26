@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/menu.c
@@ -13,7 +15,8 @@
 #include "rendfont.h"
 #include "mewui/custmenu.h"
 #include "mewui/icorender.h"
-#include "mewui/toolbar.h"
+
+#define MAX_ICONS_RENDER         40
 
 /***************************************************************************
     GLOBAL VARIABLES
@@ -162,7 +165,7 @@ void ui_menu::init_mewui(running_machine &machine)
 //  draw main menu
 //-------------------------------------------------
 
-void ui_menu::draw_select_game()
+void ui_menu::draw_select_game(bool noinput)
 {
 	float line_height = machine().ui().get_line_height();
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
@@ -187,10 +190,13 @@ void ui_menu::draw_select_game()
 	// locate mouse
 	mouse_hit = FALSE;
 	mouse_button = FALSE;
-	mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
-	if (mouse_target != NULL)
-		if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
-			mouse_hit = TRUE;
+	if (!noinput)
+	{
+		mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+		if (mouse_target != NULL)
+			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
+				mouse_hit = TRUE;
+	}
 
 	// account for extra space at the top and bottom
 	float visible_main_menu_height = 1.0f - 2.0f * UI_BOX_TB_BORDER - visible_extra_menu_height;
@@ -443,7 +449,7 @@ void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float o
 	{
 		float line_height = machine().ui().get_line_height();
 		if (mewui_globals::default_image)
-			((driver->flags & GAME_TYPE_ARCADE) == 0) ? mewui_globals::curimage_view = CABINETS_VIEW : mewui_globals::curimage_view = SNAPSHOT_VIEW;
+			((driver->flags & MACHINE_TYPE_ARCADE) == 0) ? mewui_globals::curimage_view = CABINETS_VIEW : mewui_globals::curimage_view = SNAPSHOT_VIEW;
 
 		std::string searchstr;
 		searchstr = arts_render_common(origx1, origy1, origx2, origy2);
@@ -483,7 +489,7 @@ void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float o
 				if (cloneof)
 				{
 					int cx = driver_list::find(driver->parent);
-					if (cx != -1 && ((driver_list::driver(cx).flags & GAME_IS_BIOS_ROOT) != 0))
+					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
 
@@ -872,7 +878,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 					menu_event.iptkey = IPT_OTHER;
 					stop = true;
 				}
-				else if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
+				else
 				{
 					if (hover >= 0 && hover < item.size())
 						selected = hover;
@@ -962,46 +968,39 @@ void ui_menu::handle_main_events(UINT32 flags)
 
 			// if we are hovering over a valid item, fake a UI_SELECT with a double-click
 			case UI_EVENT_MOUSE_DOUBLE_CLICK:
-				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
+				if (hover >= 0 && hover < item.size())
 				{
-					if (hover >= 0 && hover < item.size())
-					{
-						selected = hover;
-						menu_event.iptkey = IPT_UI_SELECT;
-					}
-
-					if (selected == item.size() - 1)
-					{
-						menu_event.iptkey = IPT_UI_CANCEL;
-						ui_menu::stack_pop(machine());
-					}
-					stop = true;
+					selected = hover;
+					menu_event.iptkey = IPT_UI_SELECT;
 				}
 
+				if (selected == item.size() - 1)
+				{
+					menu_event.iptkey = IPT_UI_CANCEL;
+					ui_menu::stack_pop(machine());
+				}
+				stop = true;
 				break;
 
 			// caught scroll event
 			case UI_EVENT_MOUSE_SCROLL:
-				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
+				if (local_menu_event.zdelta > 0)
 				{
-					if (local_menu_event.zdelta > 0)
-					{
-						if (selected >= visible_items || selected == 0 || ui_error)
-							break;
-						selected -= local_menu_event.num_lines;
-						if (selected < top_line + (top_line != 0))
-							top_line -= local_menu_event.num_lines;
-					}
-					else
-					{
-						if (selected >= visible_items - 1 || ui_error)
-							break;
-						selected += local_menu_event.num_lines;
-						if (selected > visible_items - 1)
-							selected = visible_items - 1;
-						if (selected >= top_line + visitems + (top_line != 0))
-							top_line += local_menu_event.num_lines;
-					}
+					if (selected >= visible_items || selected == 0 || ui_error)
+						break;
+					selected -= local_menu_event.num_lines;
+					if (selected < top_line + (top_line != 0))
+						top_line -= local_menu_event.num_lines;
+				}
+				else
+				{
+					if (selected >= visible_items - 1 || ui_error)
+						break;
+					selected += local_menu_event.num_lines;
+					if (selected > visible_items - 1)
+						selected = visible_items - 1;
+					if (selected >= top_line + visitems + (top_line != 0))
+						top_line += local_menu_event.num_lines;
 				}
 				break;
 
@@ -1349,10 +1348,10 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), &totallines,
+			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
 			                         xstart, xend, text_size);
 		else
-			machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), &totallines, xstart, xend, text_size);
+			machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 
 		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
 		if (totallines < r_visible_lines)
@@ -1499,7 +1498,7 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 			return;
 		}
 		else
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), &totallines,
+			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
 			                         xstart, xend, text_size);
 
 		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
@@ -1783,7 +1782,7 @@ void ui_menu::draw_icon(render_container *container, int linenum, void *selected
 		if (cloneof)
 		{
 			int cx = driver_list::find(driver->parent);
-			if (cx != -1 && ((driver_list::driver(cx).flags & GAME_IS_BIOS_ROOT) != 0))
+			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 				cloneof = false;
 		}
 

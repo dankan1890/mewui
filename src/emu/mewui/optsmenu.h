@@ -1,8 +1,10 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/optsmenu.h
 
-    Internal MEWUI user interface.
+    MEWUI main options menu manager.
 
 ***************************************************************************/
 
@@ -41,5 +43,8 @@ private:
 		UME_SYSTEM
 	};
 };
+
+// save options to file
+void save_game_options(running_machine &machine);
 
 #endif /* __MEWUI_OPTSMENU_H__ */

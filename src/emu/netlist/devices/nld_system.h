@@ -9,10 +9,10 @@
 #ifndef NLD_SYSTEM_H_
 #define NLD_SYSTEM_H_
 
-#include "../nl_setup.h"
-#include "../nl_base.h"
-#include "../nl_factory.h"
-#include "../analog/nld_twoterm.h"
+#include "nl_setup.h"
+#include "nl_base.h"
+#include "nl_factory.h"
+#include "analog/nld_twoterm.h"
 
 // -----------------------------------------------------------------------------
 // Macros
@@ -24,7 +24,7 @@
 
 #define LOGIC_INPUT(_name, _v, _family)                                        \
 		NET_REGISTER_DEV(LOGIC_INPUT, _name)                                   \
-		PARAM(_name.IN, _v)													   \
+		PARAM(_name.IN, _v)                                                    \
 		PARAM(_name.FAMILY, _family)
 
 #define ANALOG_INPUT(_name, _v)                                                \
@@ -70,9 +70,9 @@
 #define PARAMETERS(_name)                                                      \
 		NET_REGISTER_DEV(PARAMETERS, _name)
 
-#define AFUNC(_name, _N, _F)			                                       \
+#define AFUNC(_name, _N, _F)                                                   \
 		NET_REGISTER_DEV(AFUNC, _name)                                      \
-		PARAM(_name.N, _N)													   \
+		PARAM(_name.N, _N)                                                     \
 		PARAM(_name.FUNC, _F)
 
 NETLIB_NAMESPACE_DEVICES_START()
@@ -403,7 +403,6 @@ protected:
 
 	ATTR_HOT void update()
 	{
-		//printf("%s: %f\n", name().cstr(), m_I.Q_Analog());
 		if (m_I.Q_Analog() > logic_family().m_high_thresh_V)
 			OUTLOGIC(m_Q, 1, NLTIME_FROM_NS(1));
 		else if (m_I.Q_Analog() < logic_family().m_low_thresh_V)
@@ -478,7 +477,7 @@ public:
 
 	ATTR_COLD factory_lib_entry_t(setup_t &setup, const pstring &name, const pstring &classname,
 			const pstring &def_param)
-	: base_factory_t(name, classname, def_param), m_setup(setup) { }
+	: base_factory_t(name, classname, def_param), m_setup(setup) {  }
 
 	class dummy : public device_t
 	{

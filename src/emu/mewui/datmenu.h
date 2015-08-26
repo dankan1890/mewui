@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/datmenu.h
@@ -27,8 +29,9 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	const game_driver *ui_driver;
-	int               flags;
+	const game_driver  *m_driver;
+	int                m_flags;
+
 	bool get_data(const game_driver *driver, int flags);
 };
 
@@ -46,7 +49,7 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	const game_driver   *ui_driver;
+	const game_driver *m_driver;
 };
 
 //-------------------------------------------------
@@ -63,9 +66,9 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	const game_driver   *ui_driver;
-	FPTR                param;
-	std::string         title;
+	const game_driver   *m_driver;
+	FPTR                m_param;
+	std::string         m_title;
 };
 
 //-------------------------------------------------
@@ -83,8 +86,8 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	const char *listname, *shortname, *longname;
-	const game_driver *ui_driver;
+	const char *m_list, *m_short, *m_long;
+	const game_driver *m_driver;
 };
 
 #endif  /* __MEWUI_DATMENU_H__ */

@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Dankan1890
 /***************************************************************************
 
     mewui/utils.h
@@ -17,18 +19,10 @@
 #include <algorithm>
 #include "drivenum.h"
 
-#define MENU_FLAG_MEWUI          (1 << 6)
-#define MENU_FLAG_MEWUI_HISTORY  (1 << 7)
-#define MENU_FLAG_MEWUI_SWLIST   (1 << 8)
-#define MENU_FLAG_MEWUI_FAVORITE (1 << 9)
-#define MENU_FLAG_MEWUI_PALETTE  (1 << 10)
 #define MAX_CHAR_INFO            256
 #define CR                       0x0d   //  '\n' and '\r' meanings are swapped in some
 #define LF                       0x0a   //  compilers (e.g., Mac compilers)
-#define UI_MENU_PROCESS_ONLYCHAR 8
 #define MAX_CUST_FILTER          8
-#define MAX_ICONS_RENDER         40
-#define MEWUI_TOOLBAR_BUTTONS    7
 
 #define MEWUI_VERSION_TAG        "# MEWUI INFO "
 
@@ -122,6 +116,7 @@ enum
 	MEWUI_SW_UNSUPPORTED,
 	MEWUI_SW_REGION,
 	MEWUI_SW_TYPE,
+	MEWUI_SW_LIST,
 	MEWUI_SW_CUSTOM,
 	MEWUI_SW_LAST = MEWUI_SW_CUSTOM
 };
@@ -190,11 +185,6 @@ struct cache_info
 	UINT8 b_vector, b_stereo, b_samples, b_chd;
 };
 
-struct reselect_last
-{
-	static std::string driver, software, swlist;
-};
-
 // Manufacturers
 struct c_mnfct
 {
@@ -210,40 +200,6 @@ struct c_year
 	static void set(const char *str);
 	static std::vector<std::string> ui;
 	static UINT16 actual;
-};
-
-// Software region
-struct c_sw_region
-{
-	std::vector<std::string> ui;
-	UINT16 actual;
-	void set(const char *str);
-	std::string getname(const char *str);
-};
-
-// Software publishers
-struct c_sw_publisher
-{
-	std::vector<std::string> ui;
-	UINT16 actual;
-	void set(const char *str);
-	std::string getname(const char *str);
-};
-
-// Software device type
-struct c_sw_type
-{
-	std::vector<std::string> ui;
-	UINT16 actual;
-	void set(const char *str);
-};
-
-// Software years
-struct c_sw_year
-{
-	std::vector<std::string> ui;
-	UINT16 actual;
-	void set(const char *str);
 };
 
 // GLOBAL CLASS
@@ -279,26 +235,17 @@ struct sw_custfltr
 	static UINT16  year[MAX_CUST_FILTER];
 	static UINT16  region[MAX_CUST_FILTER];
 	static UINT16  type[MAX_CUST_FILTER];
+	static UINT16  list[MAX_CUST_FILTER];
 };
 
 // GLOBAL FUNCTIONS
-
-// save options to file
-void save_game_options(running_machine &machine);
 
 // General info
 void general_info(running_machine &machine, const game_driver *driver, std::string &buffer);
 
 // advanced search function
 int fuzzy_substring(const char *needle, const char *haystack);
-
-// custom filter load and save
-void load_custom_filters(running_machine &machine);
-void save_custom_filters(running_machine &machine);
-
-// custom software filter load and save
-void load_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &_region, c_sw_publisher &_publisher, c_sw_year &_year, c_sw_type &_type);
-void save_sw_custom_filters(running_machine &machine, const game_driver *driver, c_sw_region &_region, c_sw_publisher &_publisher, c_sw_year &_year, c_sw_type &_type);
+int fuzzy_substring2(const char *needle, const char *haystack);
 
 // jpeg loader
 template <typename _T>

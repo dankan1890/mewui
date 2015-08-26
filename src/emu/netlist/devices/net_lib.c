@@ -10,7 +10,7 @@
 
 #include "net_lib.h"
 #include "nld_system.h"
-#include "../nl_factory.h"
+#include "nl_factory.h"
 
 NETLIST_START(diode_models)
 	NET_MODEL("D _(IS=1e-15 N=1)")
@@ -72,12 +72,12 @@ void initialize_factory(factory_list_t &factory)
 	ENTRY(VCCS,                 VCCS,                   "-")
 	ENTRY(CCCS,                 CCCS,                   "-")
 	ENTRY(LVCCS,                LVCCS,                  "-")
-	ENTRY(VS,	                VS,                     "V")
+	ENTRY(VS,                   VS,                     "V")
 	ENTRY(CS,                   CS,                     "I")
 	ENTRY(OPAMP,                OPAMP,                  "MODEL")
 	ENTRY(dummy_input,          DUMMY_INPUT,            "-")
 	ENTRY(frontier,             FRONTIER_DEV,           "+I,G,Q")   // not intended to be used directly
-	ENTRY(function,             AFUNC, 		            "N,FUNC")   // only for macro devices - NO FEEDBACK loops
+	ENTRY(function,             AFUNC,                  "N,FUNC")   // only for macro devices - NO FEEDBACK loops
 	ENTRY(QBJT_EB,              QBJT_EB,                "MODEL")
 	ENTRY(QBJT_switch,          QBJT_SW,                "MODEL")
 	ENTRY(logic_input,          TTL_INPUT,              "IN")

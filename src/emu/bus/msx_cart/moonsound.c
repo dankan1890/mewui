@@ -20,7 +20,7 @@ const device_type MSX_CART_MOONSOUND = &device_creator<msx_cart_moonsound>;
 
 
 msx_cart_moonsound::msx_cart_moonsound(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-	: device_t(mconfig, MSX_CART_MOONSOUND, "MSX Cartridge - MoonSound", tag, owner, clock, "msx_cart_moonsound", __FILE__)
+	: device_t(mconfig, MSX_CART_MOONSOUND, "MSX Cartridge - MoonSound", tag, owner, clock, "msx_moonsound", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 	, m_ymf278b(*this, "ymf278b")
 {
@@ -41,10 +41,10 @@ static MACHINE_CONFIG_FRAGMENT( moonsound )
 	MCFG_YMF278B_IRQ_HANDLER(WRITELINE(msx_cart_moonsound,irq_w))
 	MCFG_SOUND_ROUTE(0, "lspeaker", 0.50)
 	MCFG_SOUND_ROUTE(1, "rspeaker", 0.50)
-    MCFG_SOUND_ROUTE(2, "lspeaker", 0.40)
-    MCFG_SOUND_ROUTE(3, "rspeaker", 0.40)
-    MCFG_SOUND_ROUTE(4, "lspeaker", 0.40)
-    MCFG_SOUND_ROUTE(5, "rspeaker", 0.40)
+	MCFG_SOUND_ROUTE(2, "lspeaker", 0.40)
+	MCFG_SOUND_ROUTE(3, "rspeaker", 0.40)
+	MCFG_SOUND_ROUTE(4, "lspeaker", 0.40)
+	MCFG_SOUND_ROUTE(5, "rspeaker", 0.40)
 MACHINE_CONFIG_END
 
 
@@ -124,4 +124,3 @@ READ8_MEMBER(msx_cart_moonsound::read_c0)
 	LOG(("moonsound: read 0xc0\n"));
 	return 0x00;
 }
-

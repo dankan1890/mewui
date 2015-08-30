@@ -1,0 +1,38 @@
+@keyframes slidy {
+0% { left: 0%; }
+10% { left: 0%; }
+15% { left: -100%; }
+25% { left: -100%; }
+30% { left: -200%; }
+40% { left: -200%; }
+45% { left: -300%; }
+55% { left: -300%; }
+60% { left: -400%; }
+70% { left: -400%; }
+75% { left: -500%; }
+85% { left: -500%; }
+100% { left: 0%; }
+}
+
+div#slider {
+	width: 80%;
+	max-width: 400px;
+	overflow: hidden;
+	margin: auto;
+	}
+
+div#slider figure img {
+	width: 16.66%;
+	float: left;
+	}
+
+div#slider figure {
+  position: relative;
+  width: 600%;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  text-align: left;
+  font-size: 0;
+  animation: 30s slidy infinite;
+}

@@ -6,22 +6,22 @@
 		margin: auto;
 	}
 	.image_main {
-		background-image: url('images/mewui1_200.png');
+		background-image: url('images/mewui1_200.jpg');
 	}
 	.image_info {
-		background-image: url('images/mewui2_200.png');
+		background-image: url('images/mewui2_200.jpg');
 	}
 	.image_systems {
-		background-image: url('images/mewui3_200.png');
+		background-image: url('images/mewui3_200.jpg');
 	}
 	.image_hystory {
-		background-image: url('images/mewui4_200.png');
+		background-image: url('images/mewui4_200.jpg');
 	}
 	.image_mameinfo {
-		background-image: url('images/mewui5_200.png');
+		background-image: url('images/mewui5_200.jpg');
 	}
 	.image_swhystory {
-		background-image: url('images/mewui6_200.png');
+		background-image: url('images/mewui6_200.jpg');
 	}
 }
 

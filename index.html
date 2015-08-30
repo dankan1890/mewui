@@ -9,6 +9,8 @@
 		<link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
 		<link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
 		<link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+		<link rel="stylesheet" type="text/css" href="stylesheets/lightbox.min.css">
+		<link rel="stylesheet" type="text/css" href="stylesheets/slider.css">
 		<!--[if lt IE 9]>
 		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
@@ -18,7 +20,7 @@
 		<header>
 			<div class="inner">
 				<h1>MEWUI</h1>
-				<h2>MEWUI -  MAME Front end</h2>
+				<h2>MAME Front end</h2>
 				<a href="https://github.com/dankan1890/mewui" class="button"><small>View project on</small> GitHub</a>
 			</div>
 		</header>
@@ -27,9 +29,32 @@
 				<section id="main-content">
 					<h1><a id="what-is-mewui" class="anchor" href="#what-is-mewui" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is MEWUI?</h1>
 					<p>MEWUI stands for MAME Extended Windows User Interface.</p>
-					<p>MAME's purpose is to preserve decades of video-game history. As gaming technology continues to rush forward, MAME prevents these important "vintage" games from being lost and forgotten. This is achieved by documenting the hardware and how it functions. The source code to MAME serves as this documentation. The fact that the games are playable serves primarily to validate the accuracy of the documentation (how else can you prove that you have recreated the hardware faithfully?).</p>
-					<p>MESS (Multi Emulator Super System) is the sister project of MAME. MESS documents the hardware for a wide variety of (mostly vintage) computers, video game consoles, and calculators, as MAME does for arcade games.</p>
-					<p>The MESS and MAME projects live in the same source repository and share much of the same code, but are different build targets.</p>
+					<p>MEWUI is a frontend for MAME, which unlike the other uses its internal graphics interface.</p>
+					<p>The benefit is that it is cross-platform, can be compiled in any OS supported by MAME itself, always keeping the same look.</p>
+					<!-- Link to the image -->
+					<h1><a id="screenshots" class="anchor" href="#screenshots" aria-hidden="true"><span class="octicon octicon-link"></span></a>Screenshots</h1>
+					<div id="slider">
+						<figure class="gallery">
+							<a href="images/mewui1.png" data-caption="Main">
+								<img src="images/mewui1_400.png" alt="Image Main">
+							</a>
+							<a href="images/mewui3.png" data-caption="General info">
+								<img src="images/mewui3_400.png" alt="Image General info">
+							</a>
+							<a href="images/mewui2.png" data-caption="Main systems">
+								<img src="images/mewui2_400.png" alt="Image Main systems">
+							</a>
+							<a href="images/mewui4.png" data-caption="History.dat info">
+								<img src="images/mewui4_400.png" alt="Image History.dat info">
+							</a>
+							<a href="images/mewui5.png" data-caption="Mameinfo.dat info">
+								<img src="images/mewui5_400.png" alt="Image Mameinfo.dat info">
+							</a>
+							<a href="images/mewui6.png" data-caption="History.dat software info">
+								<img src="images/mewui6_400.png" alt="Image History.dat software info">
+							</a>
+						</figure>
+					</div>
 					<h1><a id="how-to-compile" class="anchor" href="#how-to-compile" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to compile?</h1>
 					<p>If you're on a *nix system, it could be as easy as typing</p>
 					<pre><code>make</code></pre>
@@ -47,5 +72,13 @@
 				</aside>
 			</div>
 		</div>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script type="text/javascript" src="javascripts/lightbox.min.js"></script>
+		<script>
+		// Initiate Lightbox
+		$(function(){
+			$('.gallery a').lightbox();
+		});
+		</script>
 	</body>
 </html>

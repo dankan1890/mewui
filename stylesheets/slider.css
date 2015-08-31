@@ -1,30 +1,3 @@
-@media only screen and (max-width: 479px) {
-	div#slider {
-		width: 80%;
-		max-width: 213px;
-		overflow: hidden;
-		margin: auto;
-	}
-	.image_main {
-		background-image: url('../images/mewui1_200.jpg');
-	}
-	.image_info {
-		background-image: url('../images/mewui2_200.jpg');
-	}
-	.image_systems {
-		background-image: url('../images/mewui3_200.jpg');
-	}
-	.image_hystory {
-		background-image: url('../images/mewui4_200.jpg');
-	}
-	.image_mameinfo {
-		background-image: url('../images/mewui5_200.jpg');
-	}
-	.image_swhystory {
-		background-image: url('../images/mewui6_200.jpg');
-	}
-}
-
 @keyframes slidy {
 	0% { left: 0%; }
 	10% { left: 0%; }
@@ -57,16 +30,81 @@
 	100% { left: 0%; }
 }
 
-div#slider {
-	width: 80%;
-	max-width: 400px;
-	overflow: hidden;
-	margin: auto;
-}
+@media only screen and (max-width: 479px) {
+	div#slider {
+		width: 80%;
+		max-width: 213px;
+		overflow: hidden;
+		margin: auto;
+	}
 
-div#slider figure img {
-	width: 16.66%;
-	float: left;
+	div#slider figure a {
+		float: left;
+		width: 16.66%;
+		height: 120px;
+	}
+
+	a.image_main {
+		background: url(../images/mewui1_200.jpg) 0 0 no-repeat;
+	}
+
+	a.image_info {
+		background: url(../images/mewui3_200.jpg) 0 0 no-repeat;
+	}
+
+	a.image_systems {
+		background: url(../images/mewui2_200.jpg) 0 0 no-repeat;
+	}
+
+	a.image_hystory {
+		background: url(../images/mewui4_200.jpg) 0 0 no-repeat;
+	}
+
+	a.image_mameinfo {
+		background: url(../images/mewui5_200.jpg) 0 0 no-repeat;
+	}
+
+	a.image_swhystory {
+		background: url(../images/mewui6_200.jpg) 0 0 no-repeat;
+	}
+}
+@media only screen and (min-width: 480px) {
+	div#slider {
+		width: 80%;
+		max-width: 400px;
+		overflow: hidden;
+		margin: auto;
+	}
+
+	div#slider figure a {
+		float: left;
+		width: 16.66%;
+		height: 225px;
+	}
+
+	a.image_main {
+		background: url(../images/mewui1_400.jpg) 0 0 no-repeat;
+	}
+
+	a.image_info {
+		background: url(../images/mewui3_400.jpg) 0 0 no-repeat;
+	}
+
+	a.image_systems {
+		background: url(../images/mewui2_400.jpg) 0 0 no-repeat;
+	}
+
+	a.image_hystory {
+		background: url(../images/mewui4_400.jpg) 0 0 no-repeat;
+	}
+
+	a.image_mameinfo {
+		background: url(../images/mewui5_400.jpg) 0 0 no-repeat;
+	}
+
+	a.image_swhystory {
+		background: url(../images/mewui6_400.jpg) 0 0 no-repeat;
+	}
 }
 
 div#slider figure {
@@ -80,3 +118,4 @@ div#slider figure {
   animation: 30s slidy infinite;
   -webkit-animation: 30s slidy infinite;
 }
+

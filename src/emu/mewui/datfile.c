@@ -263,7 +263,7 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 	}
 
 	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str());
+	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 
 	myfile.seekg(idx[x].offset, myfile.beg);
 	while (myfile.good())
@@ -301,7 +301,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 		return;
 
 	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str());
+	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 
 	myfile.seekg(idx[index].offset, myfile.beg);
 	buffer.append("--- DRIVER INFO ---\n\0").append("Driver: ").append(s).append("\n\n");

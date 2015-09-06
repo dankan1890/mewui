@@ -46,7 +46,7 @@ void ui_menu_command::populate()
 			item_append(text[menu_items].c_str(), NULL, 0, (void *)(FPTR)menu_items);
 	}
 	else
-		item_append("No available command info for this game.", NULL, MENU_FLAG_DISABLE, NULL);
+		item_append("No available Command for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
@@ -318,7 +318,7 @@ void ui_menu_history_sw::populate()
 		}
 	}
 	else
-		item_append("No available history info for this software.", NULL, MENU_FLAG_DISABLE, NULL);
+		item_append("No available History for this software.", NULL, MENU_FLAG_DISABLE, NULL);
 
 	if (!game_paused)
 		machine().resume();
@@ -428,80 +428,28 @@ void ui_menu_dats::populate()
 	switch (m_flags)
 	{
 		case MEWUI_HISTORY_LOAD:
-			if (get_data(m_driver, m_flags))
-			{
-				// determine which drivers to output
-				driver_enumerator drivlist(machine().options(), *m_driver);
-				std::string tempstr, headstr;
-				while (drivlist.next())
-				{
-					item_append(" ", NULL, MENU_FLAG_MEWUI_HISTORY, NULL);
-					item_append("Game's / System's ROMs:", NULL, MENU_FLAG_MEWUI_HISTORY, NULL);
-					strprintf(headstr, "%-30s %-20s %-s", "Name", "Size", "Status");
-					item_append(headstr.c_str(), NULL, MENU_FLAG_MEWUI_HISTORY, NULL);
-
-					device_iterator deviter(drivlist.config().root_device());
-					for (device_t *device = deviter.first(); device != NULL; device = deviter.next())
-						for (const rom_entry *region = rom_first_region(*device); region; region = rom_next_region(region))
-							for (const rom_entry *rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-							{
-								// accumulate the total length of all chunks
-								int length = -1;
-
-								if (ROMREGION_ISROMDATA(region))
-									length = rom_file_size(rom);
-
-								// start with the name
-								const char *name = ROM_GETNAME(rom);
-								strprintf(tempstr, "%-30s ", name);
-
-								// output the length next
-								if (length >= 0)
-									strcatprintf(tempstr, "%-20d ", length);
-								else
-									strcatprintf(tempstr, "%-20s ", " ");
-
-								// output the hash data
-								hash_collection hashes(ROM_GETHASHDATA(rom));
-
-								if (!hashes.flag(hash_collection::FLAG_NO_DUMP))
-								{
-									if (hashes.flag(hash_collection::FLAG_BAD_DUMP))
-										tempstr.append("BAD");
-									else
-										tempstr.append("OK");
-								}
-
-								else
-									tempstr.append("NO GOOD DUMP KNOWN");
-
-								// add item to the end
-								item_append(tempstr.c_str(), NULL, MENU_FLAG_MEWUI_HISTORY, NULL);
-							}
-				}
-			}
-			else
-				item_append("No available history info for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
+			if (!get_data(m_driver, m_flags))
+				item_append("No available History for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 			break;
 
 		case MEWUI_MAMEINFO_LOAD:
 			if (!get_data(m_driver, m_flags))
-				item_append("No available MameInfo for this game.", NULL, MENU_FLAG_DISABLE, NULL);
+				item_append("No available MameInfo for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 			break;
 
 		case MEWUI_MESSINFO_LOAD:
 			if (!get_data(m_driver, m_flags))
-				item_append("No available MessInfo for this system.", NULL, MENU_FLAG_DISABLE, NULL);
+				item_append("No available MessInfo for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 			break;
 
 		case MEWUI_STORY_LOAD:
 			if (!get_data(m_driver, MEWUI_STORY_LOAD))
-				item_append("No available mamescore for this game.", NULL, MENU_FLAG_DISABLE, NULL);
+				item_append("No available Mamescore for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 			break;
 
 		case MEWUI_SYSINFO_LOAD:
 			if (!get_data(m_driver, MEWUI_SYSINFO_LOAD))
-				item_append("No available sysinfo for this system.", NULL, MENU_FLAG_DISABLE, NULL);
+				item_append("No available Sysinfo for this machine.", NULL, MENU_FLAG_DISABLE, NULL);
 			break;
 	}
 

@@ -494,7 +494,7 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	if (!customonly && !noinput && !history_flag)
+	if (!customonly && !noinput)
 	{
 		INT32 mouse_target_x, mouse_target_y;
 		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
@@ -522,7 +522,8 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 			float line_y1 = line_y + line_height;
 
 			// set the hover if this is our item
-			if (mouse_hit && line_x0 <= mouse_x && line_x1 > mouse_x && line_y0 <= mouse_y && line_y1 > mouse_y && pitem.is_selectable())
+			if (mouse_hit && line_x0 <= mouse_x && line_x1 > mouse_x && line_y0 <= mouse_y && line_y1 > mouse_y && pitem.is_selectable()
+			    && (pitem.flags & MENU_FLAG_MEWUI_HISTORY) == 0)
 				hover = itemnum;
 
 			// if we're selected, draw with a different background

@@ -476,8 +476,16 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	int top_line = selected - visible_lines / 2;
 	if (top_line < 0)
 		top_line = 0;
+
 	if (top_line + visible_lines >= item.size())
+	{
+		if (history_flag)
+			selected = item.size() - 1;
 		top_line = item.size() - visible_lines;
+	}
+
+	if (history_flag && selected != item.size() - 1)
+		selected = top_line + visible_lines / 2;
 
 	// determine effective positions taking into account the hilighting arrows
 	float effective_width = visible_width - 2.0f * gutter_width;
@@ -486,7 +494,7 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	if (!customonly && !noinput)
+	if (!customonly && !noinput && !history_flag)
 	{
 		INT32 mouse_target_x, mouse_target_y;
 		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
@@ -677,8 +685,8 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 
 	// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
 	visitems = visible_lines - (top_line != 0) - (top_line + visible_lines != item.size());
-	if (history_flag && (top_line + visible_lines >= item.size()))
-		selected = item.size() - 1;
+//	if (history_flag && (top_line + visible_lines >= item.size()))
+//		selected = item.size() - 1;
 }
 
 void ui_menu::custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2)
@@ -759,6 +767,7 @@ void ui_menu::handle_events(UINT32 flags)
 {
 	int stop = FALSE;
 	ui_event local_menu_event;
+	bool historyflag = ((item[0].flags & MENU_FLAG_MEWUI_HISTORY) != 0);
 
 	// loop while we have interesting events
 	while (!stop && ui_input_pop_event(machine(), &local_menu_event))
@@ -811,21 +820,16 @@ void ui_menu::handle_events(UINT32 flags)
 				{
 					if (local_menu_event.zdelta > 0)
 					{
-						if (selected >= visible_items || selected == 0 || ui_error)
-							break;
-						selected -= local_menu_event.num_lines;
-						if (selected < top_line + (top_line != 0))
-							top_line -= local_menu_event.num_lines;
+						if (historyflag && selected == item.size() - 1)
+							selected -= visitems + 1;
+						else
+							selected -= local_menu_event.num_lines;
+						validate_selection(-1);
 					}
 					else
 					{
-						if (selected >= visible_items - 1 || ui_error)
-							break;
 						selected += local_menu_event.num_lines;
-						if (selected > visible_items - 1)
-							selected = visible_items - 1;
-						if (selected >= top_line + visitems + (top_line != 0))
-							top_line += local_menu_event.num_lines;
+						validate_selection(1);
 					}
 				}
 				break;

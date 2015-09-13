@@ -30,7 +30,7 @@ struct sDataDrvIndex
 
 struct tMenuIndex
 {
-	UINT64 offset;
+	UINT64      offset;
 	std::string menuitem;
 };
 
@@ -43,7 +43,7 @@ struct SoftwareItem
 struct SoftwareListIndex
 {
 	std::string               listname;
-	std::vector<SoftwareItem> item_list;
+	std::vector<SoftwareItem> items;
 };
 
 //-------------------------------------------------
@@ -60,10 +60,10 @@ public:
 	running_machine &machine() const { return m_machine; }
 
 	// actions
-	void load_data_info(const game_driver *drv, std::string &buffer, int hm_type);
-	void load_command_info(std::string &buffer, const int menu_sel);
-	void load_software_info(const char *soft_list, std::string &buffer, const char *soft_name);
-	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menu_item);
+	void load_data_info(const game_driver *drv, std::string &buffer, int type);
+	void load_command_info(std::string &buffer, const int sel);
+	void load_software_info(const char *softlist, std::string &buffer, const char *softname);
+	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
 
 	std::string rev_history() const { return m_history_rev; }
 	std::string rev_mameinfo() const { return m_mame_rev; }
@@ -74,10 +74,10 @@ public:
 private:
 
 	// global index
-	std::vector<tDatafileIndex> hist_idx, mame_idx, mess_idx, cmd_idx, sysi_idx, story_idx;
-	std::vector<sDataDrvIndex> drv_idx, drvmess_idx;
-	std::vector<tMenuIndex> menu_idx;
-	std::vector<SoftwareListIndex> sListIndex;
+	std::vector<tDatafileIndex> m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
+	std::vector<sDataDrvIndex> m_drvidx, m_messdrvidx;
+	std::vector<tMenuIndex> m_menuidx;
+	std::vector<SoftwareListIndex> m_swindex;
 
 	// internal helpers
 	void init_history();
@@ -91,9 +91,8 @@ private:
 
 	int index_mame_mess_info(std::vector<tDatafileIndex> &index, std::vector<sDataDrvIndex> &index_drv, int &drvcount);
 	int index_datafile(std::vector<tDatafileIndex> &index, int &swcount);
-	void index_menuidx(const game_driver *drv, std::vector<tDatafileIndex> &d_idx, std::vector<tMenuIndex> &index);
+	void index_menuidx(const game_driver *drv, std::vector<tDatafileIndex> &idx, std::vector<tMenuIndex> &index);
 
-	void load_command_text(std::string &buffer, std::vector<tMenuIndex> &m_idx, const int menu_sel);
 	void load_data_text(const game_driver *drv, std::string &buffer, std::vector<tDatafileIndex> &idx, const char *tag);
 	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<sDataDrvIndex> &idx, const char *tag);
 
@@ -102,7 +101,7 @@ private:
 	// internal state
 	running_machine     &m_machine;             // reference to our machine
 	std::string         m_fullpath;
-	static std::string  m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
+	std::string         m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
 };
 
 

@@ -199,13 +199,13 @@ function createProjects_mame_test(_target, _subtarget)
 	includedirs {
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/emu",
+		MAME_DIR .. "src/devices",
 		MAME_DIR .. "src/mess",
 		MAME_DIR .. "src/mame",
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "src/lib/netlist",
 		MAME_DIR .. "3rdparty",
-		MAME_DIR .. "3rdparty/zlib",
 		GEN_DIR  .. "mess/layout",
 		GEN_DIR  .. "mame/layout",
 	}

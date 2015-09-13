@@ -469,7 +469,6 @@ int datfile_manager::index_datafile(std::vector<tDatafileIndex> &index, int &swc
 							name.erase(found+1);
 
 						int game_index = driver_list::find(name.c_str());
-
 						if (game_index != -1)
 						{
 							tDatafileIndex idx;
@@ -544,7 +543,6 @@ int datfile_manager::index_datafile(std::vector<tDatafileIndex> &index, int &swc
 								t_temp.offset = myfile.tellg();
 								m_swindex[list_index].items.push_back(t_temp);
 
-
 								// update current point
 								cpoint = found + 1;
 								swcount++;
@@ -569,7 +567,7 @@ int datfile_manager::index_datafile(std::vector<tDatafileIndex> &index, int &swc
 
 								// update current point
 								cpoint = cends;
-								count++;
+								swcount++;
 							}
 						}
 					}

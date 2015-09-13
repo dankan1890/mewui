@@ -620,7 +620,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<tDatafil
 		const game_driver *gdrv = &driver_list::driver(cl);
 		for (x = 0; x < idx.size() && idx[x].driver != gdrv; ++x) ;
 
-		if (x == d_idx.size())
+		if (x == idx.size())
 			return;
 	}
 

@@ -14,16 +14,24 @@
 #include "mewui/selector.h"
 #include "mewui/utils.h"
 
-// SDL
 #ifdef MEWUI_WINDOWS
 #include "../osd/windows/winmain.h"
-const char *ui_menu_display_options::video_modes[] = { "auto", "d3d", "gdi", "ddraw", "opengl" };
-const char *ui_menu_display_options::video_modes_label[] = { "Auto", "Direct3D", "GDI", "DirectDraw", "OpenGL" };
 #else
 #include "../osd/modules/lib/osdobj_common.h"
-const char *ui_menu_display_options::video_modes[] = { "auto", "opengl", "soft", "accel" };
-const char *ui_menu_display_options::video_modes_label[] = { "Auto", "OpenGL", "Software", "SDL2 Accelerated" };
 #endif
+
+video_modes ui_menu_display_options::m_video[] = {
+	{ "auto",    "Auto" },
+	{ "opengl",  "OpenGL" },
+#ifdef MEWUI_WINDOWS
+	{ "d3d",     "Direct3D" },
+	{ "gdi",     "GDI" },
+	{ "ddraw",   "DirectDraw" }
+#else
+	{ "soft",    "Software" },
+	{ "accel",   "SDL2 Accelerated" }
+#endif
+};
 
 dspl_option ui_menu_display_options::m_options[] = {
 	{ 0, NULL, NULL },
@@ -63,8 +71,8 @@ ui_menu_display_options::ui_menu_display_options(running_machine &machine, rende
 		m_options[d].status = options.int_value(m_options[d].option);
 
 	m_options[1].status = 0;
-	for (int cur = 0; cur < ARRAY_LENGTH(video_modes); ++cur)
-		if (!core_stricmp(options.video(), video_modes[cur]))
+	for (int cur = 0; cur < ARRAY_LENGTH(m_video); ++cur)
+		if (!core_stricmp(options.video(), m_video[cur].option))
 		{
 			m_options[1].status = cur;
 			break;
@@ -81,7 +89,7 @@ ui_menu_display_options::~ui_menu_display_options()
 	for (int d = 2; d < ARRAY_LENGTH(m_options); ++d)
 		machine().options().set_value(m_options[d].option, m_options[d].status, OPTION_PRIORITY_CMDLINE, error_string);
 
-	machine().options().set_value(m_options[1].option, video_modes[m_options[1].status], OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(m_options[1].option, m_video[m_options[1].status].option, OPTION_PRIORITY_CMDLINE, error_string);
 	mewui_globals::force_reset_main = true;
 }
 
@@ -108,10 +116,10 @@ void ui_menu_display_options::handle()
 			}
 			else if (menu_event->iptkey == IPT_UI_SELECT && !strcmp(m_options[value].option, OSDOPTION_VIDEO))
 			{
-				int total = ARRAY_LENGTH(video_modes_label);
+				int total = ARRAY_LENGTH(m_video);
 				std::vector<std::string> s_sel(total);
 				for (int index = 0; index < total; index++)
-					s_sel[index].assign(video_modes_label[index]);
+					s_sel[index].assign(m_video[index].label);
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
 			}
@@ -134,8 +142,8 @@ void ui_menu_display_options::handle()
 void ui_menu_display_options::populate()
 {
 	// add video mode option
-	std::string v_text(video_modes_label[m_options[1].status]);
-	UINT32 arrow_flags = get_arrow_flags(0, ARRAY_LENGTH(video_modes) - 1, m_options[1].status);
+	std::string v_text(m_video[m_options[1].status].label);
+	UINT32 arrow_flags = get_arrow_flags(0, ARRAY_LENGTH(m_video) - 1, m_options[1].status);
 	item_append(m_options[1].description, v_text.c_str(), arrow_flags, (void *)1);
 
 	// add options items

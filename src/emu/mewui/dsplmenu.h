@@ -19,7 +19,11 @@ struct dspl_option
 	const char  *description;
 	const char  *option;
 };
-
+struct video_modes
+{
+	const char  *option;
+	const char  *label;
+};
 //-------------------------------------------------
 //  class display options menu
 //-------------------------------------------------
@@ -33,7 +37,7 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	static const char *video_modes[], *video_modes_label[];
+	static video_modes m_video[];
 	static dspl_option m_options[];
 };
 

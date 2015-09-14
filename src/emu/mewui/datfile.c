@@ -493,10 +493,8 @@ int datfile_manager::index_datafile(std::vector<tDatafileIndex> &index, int &swc
 				if (readbuf_2.compare(0, t_bio, TAG_BIO) == 0)
 				{
 					size_t eq_sign = readbuf.find("=");
-					std::string s_list(readbuf.substr(0, eq_sign));
+					std::string s_list(readbuf.substr(1, eq_sign - 1));
 					std::string s_roms(readbuf.substr(eq_sign + 1));
-
-					s_list.erase(0, 1);
 					int ends = s_list.length();
 					int curpoint = 0;
 

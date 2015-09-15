@@ -295,7 +295,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 
 	myfile.seekg(idx[index].offset, myfile.beg);
-	buffer.append("--- DRIVER INFO ---\n\0").append("Driver: ").append(s).append("\n\n");
+	buffer.append("\n--- DRIVER INFO ---\n").append("Driver: ").append(s).append("\n\n");
 	while (myfile.good())
 	{
 		// read from datafile

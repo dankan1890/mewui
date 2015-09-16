@@ -14,9 +14,6 @@
 #include "mewui/selector.h"
 #include "mewui/custui.h"
 
-/***************************************************************************
-    CUSTOM UI CLASS
-***************************************************************************/
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -101,10 +98,6 @@ void ui_menu_custom_ui::custom_render(void *selectedref, float top, float bottom
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }
 
-
-/***************************************************************************
-    FONT UI CLASS
-***************************************************************************/
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -155,7 +148,7 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 //  fonts enumerator CALLBACK
 //-------------------------------------------------
 
-int CALLBACK EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam)
+int CALLBACK ui_menu_font_ui::EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam)
 {
 	c_uifonts *lpc = (c_uifonts*)lParam;
 	std::string utf((char *)lpelfe->lfFaceName);
@@ -375,10 +368,6 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 	}
 }
 
-
-/***************************************************************************
-    COLORS UI CLASS
-***************************************************************************/
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -650,9 +639,6 @@ void ui_menu_colors_ui::restore_colors()
 		m_color_table[index].color = rgb_t((UINT32)strtoul(options.value(m_color_table[index].option), NULL, 16));
 }
 
-/***************************************************************************
-    RGB UI CLASS
-***************************************************************************/
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -973,10 +959,7 @@ void ui_menu_rgb_ui::inkey_special(const ui_menu_event *menu_event)
 	m_search[buflen] = 0;
 }
 
-/***************************************************************************
-    PALETTE UI CLASS
-***************************************************************************/
-static const palcolor m_palette[] = {
+ui_menu_palette_sel::palcolor ui_menu_palette_sel::m_palette[] = {
 	{ "White",  "FFFFFFFF" },
 	{ "Silver", "FFC0C0C0" },
 	{ "Gray",   "FF808080" },

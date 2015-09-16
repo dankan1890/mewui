@@ -52,9 +52,7 @@ ui_menu_display_options::dspl_option ui_menu_display_options::m_options[] = {
 	{ 0, "Wait Vertical Sync",       OSDOPTION_WAITVSYNC }
 };
 
-/**************************************************
-    MENU DISPLAY OPTIONS
-**************************************************/
+
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------

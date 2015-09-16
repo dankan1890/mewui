@@ -61,7 +61,6 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-
 	ui_software_info          *m_uiinfo;
 	std::vector<std::string>  m_nameparts, m_descpart;
 };

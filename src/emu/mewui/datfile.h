@@ -13,38 +13,6 @@
 #ifndef __MEWUI_DATFILE_H__
 #define __MEWUI_DATFILE_H__
 
-//-------------------------------------------------
-//  STRUCTURES
-//-------------------------------------------------
-struct tDatafileIndex
-{
-	long              offset;
-	const game_driver *driver;
-};
-
-struct sDataDrvIndex
-{
-	long        offset;
-	std::string name;
-};
-
-struct tMenuIndex
-{
-	UINT64      offset;
-	std::string menuitem;
-};
-
-struct SoftwareItem
-{
-	std::string softname;
-	long        offset;
-};
-
-struct SoftwareListIndex
-{
-	std::string               listname;
-	std::vector<SoftwareItem> items;
-};
 
 //-------------------------------------------------
 //  Datafile Manager
@@ -52,7 +20,6 @@ struct SoftwareListIndex
 class datfile_manager
 {
 public:
-
 	// construction/destruction
 	datfile_manager(running_machine &machine);
 
@@ -72,11 +39,27 @@ public:
 	std::string rev_storyinfo() const { return m_story_rev; }
 
 private:
+	struct Drvindex
+	{
+		long offset;
+		const game_driver *driver;
+	};
+
+	struct Itemsindex
+	{
+		UINT64 offset;
+		std::string name;
+	};
+
+	struct SoftwareListIndex
+	{
+		std::string listname;
+		std::vector<Itemsindex> items;
+	};
 
 	// global index
-	std::vector<tDatafileIndex> m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
-	std::vector<sDataDrvIndex> m_drvidx, m_messdrvidx;
-	std::vector<tMenuIndex> m_menuidx;
+	std::vector<Drvindex> m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
+	std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
 	std::vector<SoftwareListIndex> m_swindex;
 
 	// internal helpers
@@ -89,12 +72,12 @@ private:
 
 	bool ParseOpen(const char *filename);
 
-	int index_mame_mess_info(std::vector<tDatafileIndex> &index, std::vector<sDataDrvIndex> &index_drv, int &drvcount);
-	int index_datafile(std::vector<tDatafileIndex> &index, int &swcount);
-	void index_menuidx(const game_driver *drv, std::vector<tDatafileIndex> &idx, std::vector<tMenuIndex> &index);
+	int index_mame_mess_info(std::vector<Drvindex> &index, std::vector<Itemsindex> &index_drv, int &drvcount);
+	int index_datafile(std::vector<Drvindex> &index, int &swcount);
+	void index_menuidx(const game_driver *drv, std::vector<Drvindex> &idx, std::vector<Itemsindex> &index);
 
-	void load_data_text(const game_driver *drv, std::string &buffer, std::vector<tDatafileIndex> &idx, const char *tag);
-	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<sDataDrvIndex> &idx, const char *tag);
+	void load_data_text(const game_driver *drv, std::string &buffer, std::vector<Drvindex> &idx, const char *tag);
+	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, const char *tag);
 
 	int find_or_allocate(std::string name);
 

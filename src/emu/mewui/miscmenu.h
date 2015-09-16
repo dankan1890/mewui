@@ -12,13 +12,6 @@
 #ifndef __MEWUI_MISCMENU_H__
 #define __MEWUI_MISCMENU_H__
 
-struct misc_option
-{
-	bool        status;
-	const char  *description;
-	const char  *option;
-};
-
 //-------------------------------------------------
 //  class miscellaneous options menu
 //-------------------------------------------------
@@ -32,6 +25,13 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
+	struct misc_option
+	{
+		bool        status;
+		const char  *description;
+		const char  *option;
+	};
+
 	static misc_option m_options[];
 };
 

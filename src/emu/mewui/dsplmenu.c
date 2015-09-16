@@ -20,7 +20,7 @@
 #include "../osd/modules/lib/osdobj_common.h"
 #endif
 
-video_modes ui_menu_display_options::m_video[] = {
+ui_menu_display_options::video_modes ui_menu_display_options::m_video[] = {
 	{ "auto",    "Auto" },
 	{ "opengl",  "OpenGL" },
 #ifdef MEWUI_WINDOWS
@@ -33,7 +33,7 @@ video_modes ui_menu_display_options::m_video[] = {
 #endif
 };
 
-dspl_option ui_menu_display_options::m_options[] = {
+ui_menu_display_options::dspl_option ui_menu_display_options::m_options[] = {
 	{ 0, NULL, NULL },
 	{ 0, "Video Mode",               OSDOPTION_VIDEO },
 #ifdef MEWUI_WINDOWS

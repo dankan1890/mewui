@@ -123,6 +123,7 @@ MACHINES["PLA"] = true
 MACHINES["R64H156"] = true
 MACHINES["RP5C01"] = true
 MACHINES["RP5H01"] = true
+MACHINES["S2636"] = true
 MACHINES["STEPPERS"] = true
 MACHINES["TIMEKPR"] = true
 MACHINES["TMS6100"] = true
@@ -462,7 +463,6 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/video/chihiro.c",
 		MAME_DIR .. "src/mame/machine/xbox.c",
 
-
 		-- Neogeo
 		MAME_DIR .. "src/mame/drivers/neogeo.c",
 		MAME_DIR .. "src/mame/video/neogeo.c",
@@ -470,6 +470,14 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/video/neogeo_spr.c",
 		MAME_DIR .. "src/mame/machine/neocrypt.c",
 		MAME_DIR .. "src/mame/machine/ng_memcard.c",
+
+		-- CVS
+		MAME_DIR .. "src/mame/drivers/cvs.c",
+		MAME_DIR .. "src/mame/video/cvs.c",
+		MAME_DIR .. "src/mame/drivers/galaxia.c",
+		MAME_DIR .. "src/mame/video/galaxia.c",
+		MAME_DIR .. "src/mame/drivers/quasar.c",
+		MAME_DIR .. "src/mame/video/quasar.c",
 
 	}
 end

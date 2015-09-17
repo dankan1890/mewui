@@ -55,7 +55,6 @@ bool compare_software(ui_software_info a, ui_software_info b)
 
 	if (!clonex && !cloney)
 		return (strmakelower(x->longname) < strmakelower(y->longname));
-
 	else if (clonex && cloney)
 	{
 		if (!core_stricmp(x->parentname.c_str(), y->parentname.c_str()) && !core_stricmp(x->instance.c_str(), y->instance.c_str()))
@@ -63,7 +62,6 @@ bool compare_software(ui_software_info a, ui_software_info b)
 		else
 			return (strmakelower(cx) < strmakelower(cy));
 	}
-
 	else if (!clonex && cloney)
 	{
 		if (!core_stricmp(x->shortname.c_str(), y->parentname.c_str()) && !core_stricmp(x->instance.c_str(), y->instance.c_str()))
@@ -71,7 +69,6 @@ bool compare_software(ui_software_info a, ui_software_info b)
 		else
 			return (strmakelower(x->longname) < strmakelower(cy));
 	}
-
 	else
 	{
 		if (!core_stricmp(x->parentname.c_str(), y->shortname.c_str()) && !core_stricmp(x->instance.c_str(), y->instance.c_str()))
@@ -961,6 +958,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 			file.gets(buffer, MAX_CHAR_INFO);
 			char *cb = strchr(buffer, '=') + 2;
 			for (int y = 0; y < mewui_globals::sw_filter_len; y++)
+			{
 				if (!strncmp(cb, mewui_globals::sw_filter_text[y], strlen(mewui_globals::sw_filter_text[y])))
 				{
 					sw_custfltr::other[x] = y;
@@ -1005,10 +1003,10 @@ void ui_menu_select_software::load_sw_custom_filters()
 								sw_custfltr::region[x] = z;
 					}
 				}
+			}
 		}
 		file.close();
 	}
-
 }
 
 //-------------------------------------------------

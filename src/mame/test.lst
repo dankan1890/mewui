@@ -53,6 +53,7 @@ gunsmoke        // 11/1985 (c) 1985 (World)
 gunsmokeb
 gunsmokeu       // 11/1985 (c) 1985 + Romstar (US)
 gunsmokeua      // 11/1985 (c) 1985 (US)
+gunsmokeub      // 11/1985 (c) 1985 (US)
 gunsmokej       // 11/1985 (c) 1985 (Japan)
 sectionz        // 12/1985 (c) 1985
 sectionza       // 12/1985 (c) 1985
@@ -73,20 +74,24 @@ sidearms        // 12/1986 (c) 1986 (World)
 sidearmsu       // 12/1986 (c) 1986 + Romstar license (US)
 sidearmsur1     // 12/1986 (c) 1986 + Romstar license (US)
 sidearmsj       // 12/1986 (c) 1986 (Japan)
-turtship        // (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
-turtshipj       // (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
-turtshipk       // (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
-dyger           // (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
-dygera          // (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+turtship        // (c) 1988 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+turtshipj       // (c) 1988 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+turtshipk       // (c) 1988 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+turtshipko      // (c) 1988 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+turtshipkn      // (c) 1989 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+dyger           // (c) 1989 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+dygera          // (c) 1989 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
 twinfalc        // (c) 1989 Philko (Poara Enterprises license) (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
-whizz           // (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
+whizz           // (c) 1989 Philko (NOT A CAPCOM GAME but runs on modified Sidearms hardware)
 avengers        //  2/1987 (c) 1987 (US)
 avengers2       //  2/1987 (c) 1987 (US)
 buraiken        //  2/1987 (c) 1987 (Japan)
+buraikenb       //  2/1987 (c) 1987 (Japan)
 bionicc         //  3/1987 (c) 1987 (Euro)
 bionicc1        //  3/1987 (c) 1987 (US)
 bionicc2        //  3/1987 (c) 1987 (US)
 topsecrt        //  3/1987 (c) 1987 (Japan)
+bioniccbl       //  bootleg
 supduck         // (c) Comad
 1943            //  6/1987 (c) 1987 (Euro)
 1943u           //  6/1987 (c) 1987 (US) Rev C
@@ -287,6 +292,7 @@ varth           // 14/07/1992 (c) 1992 (World)
 varthr1         // 12/06/1992 (c) 1992 (World)
 varthu          // 12/06/1992 (c) 1992 (USA)
 varthj          // 14/07/1992 (c) 1992 (Japan)
+varthjr         // 14/07/1992 (c) 1992 (Japan)
 qad             // 01/07/1992 (c) 1992 (USA)
 qadjr           // 21/09/1994 (c) 1994 (Japan)
 wof             // 31/10/1992 (c) 1992 (World) (CPS1 + QSound)
@@ -331,6 +337,7 @@ megamana        // 06/10/1995 (c) 1995 (Asia)
 rockmanj        // 22/09/1995 (c) 1995 (Japan)
 fcrash          // bootleg of Final Fight
 ffightbl        // bootleg
+ffightbla       // bootleg
 ganbare         // 11/04/2000 (c) 2000 (Japan)
 
 
@@ -497,6 +504,7 @@ xmvsf           // 04/10/1996 (c) 1996 (Euro)
 xmvsfr1         // 10/09/1996 (c) 1996 (Euro)
 xmvsfu          // 23/10/1996 (c) 1996 (USA)
 xmvsfur1        // 04/10/1996 (c) 1996 (USA)
+xmvsfur2        // 10/09/1996 (c) 1996 (USA)
 xmvsfj          // 04/10/1996 (c) 1996 (Japan)
 xmvsfjr1        // 10/09/1996 (c) 1996 (Japan)
 xmvsfjr2        // 09/09/1996 (c) 1996 (Japan)
@@ -552,6 +560,7 @@ mvscb           // 23/01/1998 (c) 1998 (Brazil)
 sfa3            // 04/09/1998 (c) 1998 (USA)
 sfa3u           // 04/09/1998 (c) 1998 (USA)
 sfa3ur1         // 29/06/1998 (c) 1998 (USA)
+sfa3us          // 16/06/1998 (c) 1998 (USA)
 sfa3h           // 04/09/1998 (c) 1998 (Hispanic)
 sfa3hr1         // 29/06/1998 (c) 1998 (Hispanic)
 sfa3b           // 29/06/1998 (c) 1998 (Brazil)
@@ -672,6 +681,7 @@ marioo          // (c) 1983 Nintendo of America
 marioj          // (c) 1983 Nintendo
 masao           // bootleg
 mariobl         // bootleg
+mmagic          // (c) 1979 Nintendo
 dkong3abl       //
 pestplce        // bootleg on donkey kong hw
 spclforc        // (c) 1985 Senko Industries (Magic Eletronics Inc. license)
@@ -986,6 +996,7 @@ orlegendc       //
 orlegendca      //
 orlegend111c    //
 orlegend111t    //
+orlegend111k    //
 orlegend105k    //
 drgw2           // (c) 1997 Dragon World 2
 dw2v100x        //
@@ -1119,6 +1130,7 @@ cbm4032b
 pet8032
 cbm8032
 cbm8032_de
+cbm8032_fr
 cbm8032_se
 superpet
 mmf9000

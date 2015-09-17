@@ -66,8 +66,7 @@ private:
 		render_texture *    texture;            // pointer to a texture for rendering and sizing
 		bitmap_argb32       bitmap;             // pointer to the bitmap containing the raw data
 
-		//mamep: for color glyph
-		rgb_t color;
+		rgb_t               color;
 
 	};
 
@@ -89,6 +88,8 @@ private:
 	bool load_cached_cmd(emu_file &file, UINT32 hash);
 	bool save_cached(const char *filename, UINT32 hash);
 
+	void render_font_command_glyph();
+
 	// internal state
 	render_manager &    m_manager;
 	format              m_format;           // format of font data
@@ -100,14 +101,10 @@ private:
 	UINT64              m_rawsize;          // size of the raw font data
 	osd_font            *m_osdfont;          // handle to the OSD font
 
-	//mamep: for command glyph
 	int                 m_height_cmd;       // height of the font, from ascent to descent
 	int                 m_yoffs_cmd;        // y offset from baseline to descent
 	glyph               *m_glyphs_cmd[256];  // array of glyph subtables
 	std::vector<char>   m_rawdata_cmd;      // pointer to the raw data for the font
-
-	//mamep: allocate command glyph font
-	void render_font_command_glyph();
 
 	// constants
 	static const int CACHED_CHAR_SIZE       = 12;
@@ -115,7 +112,6 @@ private:
 	static const int CACHED_BDF_HASH_SIZE   = 1024;
 };
 
-//mamep: convert command glyph
 void convert_command_glyph(std::string &s);
 
 #endif  /* __RENDFONT_H__ */

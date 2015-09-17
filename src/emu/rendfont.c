@@ -221,11 +221,9 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 	rgb_t color = rgb_t(0xff,0xff,0xff,0xff);
 	bool is_cmd = (chnum >= COMMAND_UNICODE && chnum < COMMAND_UNICODE + MAX_GLYPH_FONT);
 
-	//mamep: for color glyph
 	if (gl.color)
-		color = get_rgb_color(gl.color);
+		color = gl.color;
 
-	//mamep: command glyph support
 	if (is_cmd)
 	{
 		// punt if nothing there

@@ -13,10 +13,6 @@
 #ifndef __MEWUI_UTILS_H__
 #define __MEWUI_UTILS_H__
 
-#ifndef NO_MEM_TRACKING
-#define NO_MEM_TRACKING
-#endif
-
 #include "osdepend.h"
 #include "render.h"
 #include "libjpeg/jpeglib.h"

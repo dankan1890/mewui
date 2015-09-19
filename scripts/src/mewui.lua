@@ -1,6 +1,7 @@
 if (_OPTIONS["targetos"] == "windows") then
 	defines {
 		"MEWUI_WINDOWS",
+		"NO_MEM_TRACKING"
 	}
 end
 

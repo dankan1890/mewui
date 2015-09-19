@@ -12,7 +12,6 @@
 #include "drivenum.h"
 #include "mewui/datfile.h"
 #include "mewui/utils.h"
-#include <fstream>
 
 //-------------------------------------------------
 //  TAGS

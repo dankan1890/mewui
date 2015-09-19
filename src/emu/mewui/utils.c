@@ -13,7 +13,6 @@
 #include "mewui/inifile.h"
 #include "sound/samples.h"
 #include "audit.h"
-#include <fstream>
 
 // Years index
 UINT16 c_year::actual = 0;

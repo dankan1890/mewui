@@ -27,7 +27,6 @@
 #include "unzip.h"
 #include "mewui/custmenu.h"
 #include "info.h"
-#include <fstream>
 #include "mewui/utils.h"
 #include "mewui/auditmenu.h"
 

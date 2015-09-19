@@ -17,6 +17,7 @@
 #include "render.h"
 #include "libjpeg/jpeglib.h"
 #include <algorithm>
+#include <fstream>
 #include "drivenum.h"
 
 #define MAX_CHAR_INFO            256

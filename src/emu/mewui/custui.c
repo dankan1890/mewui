@@ -28,7 +28,7 @@ ui_menu_custom_ui::ui_menu_custom_ui(running_machine &machine, render_container 
 
 ui_menu_custom_ui::~ui_menu_custom_ui()
 {
-	mewui_globals::force_reset_main = true;
+	mewui_globals::reset = true;
 }
 
 //-------------------------------------------------

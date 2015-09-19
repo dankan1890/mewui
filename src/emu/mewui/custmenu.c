@@ -51,7 +51,7 @@ void ui_menu_custom_filter::handle()
 			case MAIN_FILTER:
 				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? custfltr::main_filter++ : custfltr::main_filter--;
+					(menu_event->iptkey == IPT_UI_RIGHT) ? custfltr::main++ : custfltr::main--;
 					changed = true;
 				}
 				break;
@@ -94,13 +94,13 @@ void ui_menu_custom_filter::handle()
 			}
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = mewui_globals::s_filter_text;
+				int total = main_filters::length;
 				std::vector<std::string> s_sel(total);
 				for (int index = 0; index < total; index++)
 					if (index <= FILTER_UNAVAILABLE || index == FILTER_CATEGORY || index == FILTER_FAVORITE_GAME || index == FILTER_CUSTOM)
 						s_sel[index].assign("_skip_");
 					else
-						s_sel[index].assign(mewui_globals::filter_text[index]);
+						s_sel[index].assign(main_filters::text[index]);
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::other[pos])));
 			}
@@ -113,17 +113,17 @@ void ui_menu_custom_filter::handle()
 				custfltr::screen[pos]--;
 				changed = true;
 			}
-			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::screen[pos] < mewui_globals::s_screen_text - 1)
+			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::screen[pos] < c_screen::length - 1)
 			{
 				custfltr::screen[pos]++;
 				changed = true;
 			}
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = mewui_globals::s_screen_text;
+				int total = c_screen::length;
 				std::vector<std::string> s_sel(total);
 				for (int index = 0; index < total; index++)
-					s_sel[index].assign(mewui_globals::screen_text[index]);
+					s_sel[index].assign(c_screen::text[index]);
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::screen[pos])));
 			}
@@ -174,8 +174,8 @@ void ui_menu_custom_filter::handle()
 void ui_menu_custom_filter::populate()
 {
 	// add main filter
-	UINT32 arrow_flags = get_arrow_flags((int)FILTER_ALL, (int)FILTER_UNAVAILABLE, custfltr::main_filter);
-	item_append("Main filter", mewui_globals::filter_text[custfltr::main_filter], arrow_flags, (void *)MAIN_FILTER);
+	UINT32 arrow_flags = get_arrow_flags((int)FILTER_ALL, (int)FILTER_UNAVAILABLE, custfltr::main);
+	item_append("Main filter", main_filters::text[custfltr::main], arrow_flags, (void *)MAIN_FILTER);
 
 	// add other filters
 	for (int x = 1; x <= custfltr::numother; x++)
@@ -184,7 +184,7 @@ void ui_menu_custom_filter::populate()
 
 		// add filter items
 		arrow_flags = get_arrow_flags((int)FILTER_UNAVAILABLE + 1, (int)FILTER_LAST - 1, custfltr::other[x]);
-		item_append("Other filter", mewui_globals::filter_text[custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
+		item_append("Other filter", main_filters::text[custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
 
 		if (m_added)
 			selected = item.size() - 2;
@@ -210,10 +210,10 @@ void ui_menu_custom_filter::populate()
 		// add screen subitem
 		else if (custfltr::other[x] == FILTER_SCREEN)
 		{
-			arrow_flags = get_arrow_flags(0,  mewui_globals::s_screen_text - 1, custfltr::screen[x]);
+			arrow_flags = get_arrow_flags(0,  c_screen::length - 1, custfltr::screen[x]);
 			std::string fbuff("^!Screen type");
 			convert_command_glyph(fbuff);
-			item_append(fbuff.c_str(), mewui_globals::screen_text[custfltr::screen[x]], arrow_flags, (void *)(FPTR)(SCREEN_FILTER + x));
+			item_append(fbuff.c_str(), c_screen::text[custfltr::screen[x]], arrow_flags, (void *)(FPTR)(SCREEN_FILTER + x));
 		}
 
 	}
@@ -276,17 +276,17 @@ void ui_menu_custom_filter::save_custom_filters()
 		// generate custom filters info
 		std::string cinfo;
 		strprintf(cinfo, "Total filters = %d\n", (custfltr::numother + 1));
-		cinfo.append("Main filter = ").append(mewui_globals::filter_text[custfltr::main_filter]).append("\n");
+		cinfo.append("Main filter = ").append(main_filters::text[custfltr::main]).append("\n");
 
 		for (int x = 1; x <= custfltr::numother; x++)
 		{
-			cinfo.append("Other filter = ").append(mewui_globals::filter_text[custfltr::other[x]]).append("\n");
+			cinfo.append("Other filter = ").append(main_filters::text[custfltr::other[x]]).append("\n");
 			if (custfltr::other[x] == FILTER_MANUFACTURER)
 				cinfo.append("  Manufacturer filter = ").append(c_mnfct::ui[custfltr::mnfct[x]]).append("\n");
 			else if (custfltr::other[x] == FILTER_YEAR)
 				cinfo.append("  Year filter = ").append(c_year::ui[custfltr::year[x]]).append("\n");
 			else if (custfltr::other[x] == FILTER_SCREEN)
-				cinfo.append("  Screen filter = ").append(mewui_globals::screen_text[custfltr::screen[x]]).append("\n");
+				cinfo.append("  Screen filter = ").append(c_screen::text[custfltr::screen[x]]).append("\n");
 		}
 		file.puts(cinfo.c_str());
 		file.close();
@@ -327,7 +327,7 @@ void ui_menu_swcustom_filter::handle()
 			case MAIN_FILTER:
 				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? sw_custfltr::main_filter++ : sw_custfltr::main_filter--;
+					(menu_event->iptkey == IPT_UI_RIGHT) ? sw_custfltr::main++ : sw_custfltr::main--;
 					changed = true;
 				}
 				break;
@@ -366,13 +366,13 @@ void ui_menu_swcustom_filter::handle()
 			}
 			else if (menu_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = mewui_globals::sw_filter_len;
+				int total = sw_filters::length;
 				std::vector<std::string> s_sel(total);
 				for (int index = 0; index < total; index++)
 					if (index <= MEWUI_SW_UNAVAILABLE|| index == MEWUI_SW_CUSTOM)
 						s_sel[index].assign("_skip_");
 					else
-						s_sel[index].assign(mewui_globals::sw_filter_text[index]);
+						s_sel[index].assign(sw_filters::text[index]);
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &sw_custfltr::other[pos])));
 			}
@@ -471,8 +471,8 @@ void ui_menu_swcustom_filter::handle()
 void ui_menu_swcustom_filter::populate()
 {
 	// add main filter
-	UINT32 arrow_flags = get_arrow_flags((int)MEWUI_SW_ALL, (int)MEWUI_SW_UNAVAILABLE, sw_custfltr::main_filter);
-	item_append("Main filter", mewui_globals::sw_filter_text[sw_custfltr::main_filter], arrow_flags, (void *)MAIN_FILTER);
+	UINT32 arrow_flags = get_arrow_flags((int)MEWUI_SW_ALL, (int)MEWUI_SW_UNAVAILABLE, sw_custfltr::main);
+	item_append("Main filter", sw_filters::text[sw_custfltr::main], arrow_flags, (void *)MAIN_FILTER);
 
 	// add other filters
 	for (int x = 1; x <= sw_custfltr::numother; x++)
@@ -481,7 +481,7 @@ void ui_menu_swcustom_filter::populate()
 
 		// add filter items
 		arrow_flags = get_arrow_flags((int)MEWUI_SW_UNAVAILABLE + 1, (int)MEWUI_SW_LAST - 1, sw_custfltr::other[x]);
-		item_append("Other filter", mewui_globals::sw_filter_text[sw_custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
+		item_append("Other filter", sw_filters::text[sw_custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
 
 		if (m_added)
 			selected = item.size() - 2;
@@ -590,11 +590,11 @@ void ui_menu_swcustom_filter::save_sw_custom_filters()
 		// generate custom filters info
 		std::string cinfo;
 		strprintf(cinfo, "Total filters = %d\n", (sw_custfltr::numother + 1));
-		cinfo.append("Main filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::main_filter]).append("\n");
+		cinfo.append("Main filter = ").append(sw_filters::text[sw_custfltr::main]).append("\n");
 
 		for (int x = 1; x <= sw_custfltr::numother; x++)
 		{
-			cinfo.append("Other filter = ").append(mewui_globals::sw_filter_text[sw_custfltr::other[x]]).append("\n");
+			cinfo.append("Other filter = ").append(sw_filters::text[sw_custfltr::other[x]]).append("\n");
 			if (sw_custfltr::other[x] == MEWUI_SW_PUBLISHERS)
 				cinfo.append("  Manufacturer filter = ").append(m_filter.publisher.ui[sw_custfltr::mnfct[x]]).append("\n");
 			else if (sw_custfltr::other[x] == MEWUI_SW_YEARS)

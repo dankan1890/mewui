@@ -23,25 +23,45 @@ std::vector<std::string> c_year::ui;
 UINT16 c_mnfct::actual = 0;
 std::vector<std::string> c_mnfct::ui;
 
+// Main filters
+UINT16 main_filters::actual = 0;
+const char *main_filters::text[] = { "All", "Available", "Unavailable", "Working", "Not Mechanical", "Category", "Favorites", "BIOS",
+                                     "Originals", "Clones", "Not Working", "Mechanical", "Manufacturers", "Years", "Support Save",
+                                     "Not Support Save", "CHD", "No CHD", "Use Samples", "Not Use Samples", "Stereo", "Vertical",
+                                     "Horizontal", "Screen Type", "Custom" };
+size_t main_filters::length = ARRAY_LENGTH(main_filters::text);
+
+// Software filters
+UINT16 sw_filters::actual = 0;
+const char *sw_filters::text[] = { "All", "Available", "Unavailable", "Originals", "Clones", "Years", "Publishers", "Supported",
+                                   "Partial Supported", "Unsupported", "Region", "Device Type", "Software List", "Custom" };
+size_t sw_filters::length = ARRAY_LENGTH(sw_filters::text);
+
+// Screens
+UINT16 c_screen::actual = 0;
+const char *c_screen::text[] = { "<none>", "Raster", "Vector", "LCD" };
+size_t c_screen::length = ARRAY_LENGTH(c_screen::text);
+
+// UME
+UINT16 ume_filters::actual = 0;
+const char *ume_filters::text[] = { "ALL", "ARCADES", "SYSTEMS" };
+size_t ume_filters::length = ARRAY_LENGTH(ume_filters::text);
+
 // Globals
-UINT16 mewui_globals::actual_filter = 0;
-UINT16 mewui_globals::actual_sw_filter = 0;
-UINT8 mewui_globals::rpanel_infos = 0;
+UINT8 mewui_globals::rpanel = 0;
 UINT8 mewui_globals::curimage_view = 0;
 UINT8 mewui_globals::curdats_view = 0;
 UINT8 mewui_globals::cur_sw_dats_view = 0;
-UINT8 mewui_globals::ume_system = 0;
-UINT16 mewui_globals::m_screen = 0;
 bool mewui_globals::switch_image = false;
 bool mewui_globals::default_image = true;
-bool mewui_globals::force_reselect_software = false;
-bool mewui_globals::force_reset_main = false;
+bool mewui_globals::reselect = false;
+bool mewui_globals::reset = false;
 bool mewui_globals::redraw_icon = false;
 int mewui_globals::visible_main_lines = 0;
 int mewui_globals::visible_sw_lines = 0;
 
 // Custom filter
-UINT16 custfltr::main_filter = 0;
+UINT16 custfltr::main = 0;
 UINT16 custfltr::numother = 0;
 UINT16 custfltr::other[MAX_CUST_FILTER];
 UINT16 custfltr::mnfct[MAX_CUST_FILTER];
@@ -49,7 +69,7 @@ UINT16 custfltr::year[MAX_CUST_FILTER];
 UINT16 custfltr::screen[MAX_CUST_FILTER];
 
 // Custom filter
-UINT16 sw_custfltr::main_filter = 0;
+UINT16 sw_custfltr::main = 0;
 UINT16 sw_custfltr::numother = 0;
 UINT16 sw_custfltr::other[MAX_CUST_FILTER];
 UINT16 sw_custfltr::mnfct[MAX_CUST_FILTER];
@@ -59,22 +79,6 @@ UINT16 sw_custfltr::type[MAX_CUST_FILTER];
 UINT16 sw_custfltr::list[MAX_CUST_FILTER];
 
 std::vector<cache_info> mewui_globals::driver_cache(driver_list::total() + 1);
-
-const char *mewui_globals::filter_text[] = { "All", "Available", "Unavailable", "Working", "Not Mechanical", "Category", "Favorites", "BIOS",
-                                             "Originals", "Clones", "Not Working", "Mechanical", "Manufacturers", "Years", "Support Save",
-                                             "Not Support Save", "CHD", "No CHD", "Use Samples", "Not Use Samples", "Stereo", "Vertical",
-                                             "Horizontal", "Screen Type", "Custom" };
-
-const char *mewui_globals::sw_filter_text[] = { "All", "Available", "Unavailable", "Originals", "Clones", "Years", "Publishers", "Supported",
-                                                "Partial Supported", "Unsupported", "Region", "Device Type", "Software List", "Custom" };
-
-const char *mewui_globals::ume_text[] = { "ALL", "ARCADES", "SYSTEMS" };
-const char *mewui_globals::screen_text[] = { "<none>", "Raster", "Vector", "LCD" };
-
-size_t mewui_globals::s_filter_text = ARRAY_LENGTH(mewui_globals::filter_text);
-size_t mewui_globals::sw_filter_len = ARRAY_LENGTH(mewui_globals::sw_filter_text);
-size_t mewui_globals::s_ume_text = ARRAY_LENGTH(mewui_globals::ume_text);
-size_t mewui_globals::s_screen_text = ARRAY_LENGTH(mewui_globals::screen_text);
 
 //-------------------------------------------------
 //  generate general info
@@ -124,7 +128,7 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & MACHINE_SUPPORTS_SAVE) ? "Yes" : "No"));
 
 	int idx = driver_list::find(driver->name);
-	strcatprintf(buffer, "Screen Type: %s\n", (mewui_globals::driver_cache[idx].b_vector ? "Vector" : "Raster"));
+	strcatprintf(buffer, "Screen Type: %s\n", (mewui_globals::driver_cache[idx].b_screen ? "Vector" : "Raster"));
 	strcatprintf(buffer, "Screen Orentation: %s\n", ((driver->flags & ORIENTATION_SWAP_XY) ? "Vertical" : "Horizontal"));
 	strcatprintf(buffer, "Requires Samples: %s\n", (mewui_globals::driver_cache[idx].b_samples ? "Yes" : "No"));
 	strcatprintf(buffer, "Sound Channel: %s\n", (mewui_globals::driver_cache[idx].b_stereo ? "Stereo" : "Mono"));

@@ -63,17 +63,17 @@ void ui_menu_game_options::handle()
 			{
 				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::actual_filter++ : mewui_globals::actual_filter--;
+					(menu_event->iptkey == IPT_UI_RIGHT) ? main_filters::actual++ : main_filters::actual--;
 					changed = true;
 				}
 				else if (menu_event->iptkey == IPT_UI_SELECT)
 				{
-					int total = mewui_globals::s_filter_text;
+					int total = main_filters::length;
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; index++)
-						s_sel[index].assign(mewui_globals::filter_text[index]);
+						s_sel[index].assign(main_filters::text[index]);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::actual_filter)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &main_filters::actual)));
 				}
 				break;
 			}
@@ -155,16 +155,16 @@ void ui_menu_game_options::handle()
 			case SCREEN_CAT_FILTER:
 				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::m_screen++ : mewui_globals::m_screen--;
+					(menu_event->iptkey == IPT_UI_RIGHT) ? c_screen::actual++ : c_screen::actual--;
 					changed = true;
 				}
 				else if (menu_event->iptkey == IPT_UI_SELECT)
 				{
-					std::vector<std::string> text(mewui_globals::s_screen_text);
-					for (int x = 0; x < mewui_globals::s_screen_text; ++x)
-						text[x].assign(mewui_globals::screen_text[x]);
+					std::vector<std::string> text(c_screen::length);
+					for (int x = 0; x < c_screen::length; ++x)
+						text[x].assign(c_screen::text[x]);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &mewui_globals::m_screen)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &c_screen::actual)));
 				}
 
 				break;
@@ -207,7 +207,7 @@ void ui_menu_game_options::handle()
 			case UME_SYSTEM:
 				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::ume_system++ : mewui_globals::ume_system--;
+					(menu_event->iptkey == IPT_UI_RIGHT) ? ume_filters::actual++ : ume_filters::actual--;
 					changed = true;
 				}
 				break;
@@ -227,15 +227,15 @@ void ui_menu_game_options::populate()
 	std::string fbuff("^!File");
 
 	// add filter item
-	UINT32 arrow_flags = get_arrow_flags(0, mewui_globals::s_ume_text - 1, mewui_globals::ume_system);
-	item_append("Machine", mewui_globals::ume_text[mewui_globals::ume_system], arrow_flags, (void *)UME_SYSTEM);
+	UINT32 arrow_flags = get_arrow_flags(0, ume_filters::length - 1, ume_filters::actual);
+	item_append("Machine", ume_filters::text[ume_filters::actual], arrow_flags, (void *)UME_SYSTEM);
 
 	// add filter item
-	arrow_flags = get_arrow_flags((int)FILTER_FIRST, (int)FILTER_LAST, mewui_globals::actual_filter);
-	item_append("Filter", mewui_globals::filter_text[mewui_globals::actual_filter], arrow_flags, (void *)FILTER_MENU);
+	arrow_flags = get_arrow_flags((int)FILTER_FIRST, (int)FILTER_LAST, main_filters::actual);
+	item_append("Filter", main_filters::text[main_filters::actual], arrow_flags, (void *)FILTER_MENU);
 
 	// add category subitem
-	if (mewui_globals::actual_filter == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
+	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
 	{
 		int actual_file = machine().inifile().current_file;
 
@@ -250,7 +250,7 @@ void ui_menu_game_options::populate()
 		item_append(fbuff.c_str(), machine().inifile().ini_index[actual_file].category[actual_category].name.c_str(), arrow_flags, (void *)CATEGORY_FILTER);
 	}
 	// add manufacturer subitem
-	else if (mewui_globals::actual_filter == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
+	else if (main_filters::actual == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
 	{
 		arrow_flags = get_arrow_flags(0, c_mnfct::ui.size() - 1, c_mnfct::actual);
 		fbuff.assign("^!Manufacturer");
@@ -258,7 +258,7 @@ void ui_menu_game_options::populate()
 		item_append(fbuff.c_str(), c_mnfct::ui[c_mnfct::actual].c_str(), arrow_flags, (void *)MANUFACT_CAT_FILTER);
 	}
 	// add year subitem
-	else if (mewui_globals::actual_filter == FILTER_YEAR && c_year::ui.size() > 0)
+	else if (main_filters::actual == FILTER_YEAR && c_year::ui.size() > 0)
 	{
 		arrow_flags = get_arrow_flags(0, c_year::ui.size() - 1, c_year::actual);
 		fbuff.assign("^!Year");
@@ -266,15 +266,15 @@ void ui_menu_game_options::populate()
 		item_append(fbuff.c_str(), c_year::ui[c_year::actual].c_str(), arrow_flags, (void *)YEAR_CAT_FILTER);
 	}
 	// add screen subitem
-	else if (mewui_globals::actual_filter == FILTER_SCREEN)
+	else if (main_filters::actual == FILTER_SCREEN)
 	{
-		arrow_flags = get_arrow_flags(0, mewui_globals::s_screen_text - 1, mewui_globals::m_screen);
+		arrow_flags = get_arrow_flags(0, c_screen::length - 1, c_screen::actual);
 		fbuff.assign("^!Screen type");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), mewui_globals::screen_text[mewui_globals::m_screen], arrow_flags, (void *)SCREEN_CAT_FILTER);
+		item_append(fbuff.c_str(), c_screen::text[c_screen::actual], arrow_flags, (void *)SCREEN_CAT_FILTER);
 	}
 	// add custom subitem
-	else if (mewui_globals::actual_filter == FILTER_CUSTOM)
+	else if (main_filters::actual == FILTER_CUSTOM)
 	{
 		fbuff.assign("^!Setup custom filter");
 		convert_command_glyph(fbuff);

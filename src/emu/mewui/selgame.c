@@ -127,7 +127,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	mewui_globals::switch_image = false;
 	mewui_globals::default_image = true;
 	l_sw_hover = -1;
-	mewui_globals::ume_system = machine.options().start_filter();
+	ume_filters::actual = machine.options().start_filter();
 }
 
 //-------------------------------------------------
@@ -137,7 +137,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 ui_mewui_select_game::~ui_mewui_select_game()
 {
 	std::string error_string;
-	machine().options().set_value(OPTION_START_FILTER, mewui_globals::ume_system, OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
 	save_game_options(machine());
 }
 
@@ -150,16 +150,16 @@ void ui_mewui_select_game::handle()
 	bool check_filter = false;
 
 	// if i have to load datfile, performe an hard reset
-	if (mewui_globals::force_reset_main)
+	if (mewui_globals::reset)
 	{
-		mewui_globals::force_reset_main = false;
+		mewui_globals::reset = false;
 		machine().schedule_hard_reset();
 		ui_menu::stack_reset(machine());
 		return;
 	}
 
 	// if i have to reselect a software, force software list submenu
-	if (mewui_globals::force_reselect_software)
+	if (mewui_globals::reselect)
 	{
 		const game_driver *driver = (const game_driver *)item[selected].ref;
 		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_select_software(machine(), container, driver)));
@@ -180,7 +180,7 @@ void ui_mewui_select_game::handle()
 		// handle selections
 		else if (menu_event->iptkey == IPT_UI_SELECT)
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 				inkey_select(menu_event);
 			else
 				inkey_select_favorite(menu_event);
@@ -190,7 +190,7 @@ void ui_mewui_select_game::handle()
 		else if (menu_event->iptkey == IPT_UI_LEFT)
 		{
 			// Images
-			if (mewui_globals::rpanel_infos == RP_IMAGES && mewui_globals::curimage_view > FIRST_VIEW)
+			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view > FIRST_VIEW)
 			{
 				mewui_globals::curimage_view--;
 				mewui_globals::switch_image = true;
@@ -198,7 +198,7 @@ void ui_mewui_select_game::handle()
 			}
 
 			// Infos
-			else if (mewui_globals::rpanel_infos == RP_INFOS && mewui_globals::curdats_view > MEWUI_FIRST_LOAD)
+			else if (mewui_globals::rpanel == RP_INFOS && mewui_globals::curdats_view > MEWUI_FIRST_LOAD)
 			{
 				mewui_globals::curdats_view--;
 				topline_datsview = 0;
@@ -209,7 +209,7 @@ void ui_mewui_select_game::handle()
 		else if (menu_event->iptkey == IPT_UI_RIGHT)
 		{
 			// Images
-			if (mewui_globals::rpanel_infos == RP_IMAGES && mewui_globals::curimage_view < LAST_VIEW)
+			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view < LAST_VIEW)
 			{
 				mewui_globals::curimage_view++;
 				mewui_globals::switch_image = true;
@@ -217,7 +217,7 @@ void ui_mewui_select_game::handle()
 			}
 
 			// Infos
-			else if (mewui_globals::rpanel_infos == RP_INFOS && mewui_globals::curdats_view < MEWUI_LAST_LOAD)
+			else if (mewui_globals::rpanel == RP_INFOS && mewui_globals::curdats_view < MEWUI_LAST_LOAD)
 			{
 				mewui_globals::curdats_view++;
 				topline_datsview = 0;
@@ -225,26 +225,26 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && mewui_globals::actual_filter > FILTER_FIRST)
+		else if (menu_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
 		{
-			l_hover = mewui_globals::actual_filter - 1;
+			l_hover = main_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && mewui_globals::actual_filter < FILTER_LAST)
+		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
 		{
-			l_hover = mewui_globals::actual_filter + 1;
+			l_hover = main_filters::actual + 1;
 			check_filter = true;
 		}
 
 		// handle UI_LEFT_PANEL
 		else if (menu_event->iptkey == IPT_UI_LEFT_PANEL)
-			mewui_globals::rpanel_infos = RP_IMAGES;
+			mewui_globals::rpanel = RP_IMAGES;
 
 		// handle UI_RIGHT_PANEL
 		else if (menu_event->iptkey == IPT_UI_RIGHT_PANEL)
-			mewui_globals::rpanel_infos = RP_INFOS;
+			mewui_globals::rpanel = RP_INFOS;
 
 		// escape pressed with non-empty text clears the text
 		else if (menu_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
@@ -256,7 +256,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_HISTORY
 		else if (menu_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -279,7 +279,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_MAMEINFO
 		else if (menu_event->iptkey == IPT_UI_MAMEINFO && machine().options().enabled_dats())
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -307,7 +307,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_STORY
 		else if (menu_event->iptkey == IPT_UI_STORY && machine().options().enabled_dats())
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -325,7 +325,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_SYSINFO
 		else if (menu_event->iptkey == IPT_UI_SYSINFO && machine().options().enabled_dats())
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -343,7 +343,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_COMMAND
 		else if (menu_event->iptkey == IPT_UI_COMMAND && machine().options().enabled_dats())
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -361,7 +361,7 @@ void ui_mewui_select_game::handle()
 		// handle UI_FAVORITES
 		else if (menu_event->iptkey == IPT_UI_FAVORITES)
 		{
-			if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
 				const game_driver *driver = (const game_driver *)menu_event->itemref;
 				if ((FPTR)driver > 2)
@@ -417,16 +417,16 @@ void ui_mewui_select_game::handle()
 			selected = m_prev_selected;
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && mewui_globals::actual_filter > FILTER_FIRST)
+		else if (menu_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
 		{
-			l_hover = mewui_globals::actual_filter - 1;
+			l_hover = main_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && mewui_globals::actual_filter < FILTER_LAST)
+		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
 		{
-			l_hover = mewui_globals::actual_filter + 1;
+			l_hover = main_filters::actual + 1;
 			check_filter = true;
 		}
 		else if (menu_event->iptkey == IPT_OTHER)
@@ -447,13 +447,13 @@ void ui_mewui_select_game::handle()
 
 		if (l_hover == FILTER_CATEGORY)
 		{
-			mewui_globals::actual_filter = l_hover;
+			main_filters::actual = l_hover;
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_game_options(machine(), container)));
 		}
 
 		else if (l_hover == FILTER_CUSTOM)
 		{
-			mewui_globals::actual_filter = l_hover;
+			main_filters::actual = l_hover;
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_custom_filter(machine(), container, true)));
 		}
 
@@ -465,17 +465,17 @@ void ui_mewui_select_game::handle()
 												&c_year::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_SCREEN)
 		{
-			std::vector<std::string> text(mewui_globals::s_screen_text);
-			for (int x = 0; x < mewui_globals::s_screen_text; ++x)
-				text[x].assign(mewui_globals::screen_text[x]);
+			std::vector<std::string> text(c_screen::length);
+			for (int x = 0; x < c_screen::length; ++x)
+				text[x].assign(c_screen::text[x]);
 
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text,
-												&mewui_globals::m_screen, SELECTOR_GAME, l_hover)));
+												&c_screen::actual, SELECTOR_GAME, l_hover)));
 		}
 		else
 		{
 			if (l_hover >= FILTER_ALL)
-				mewui_globals::actual_filter = l_hover;
+				main_filters::actual = l_hover;
 			reset(UI_MENU_RESET_SELECT_FIRST);
 		}
 	}
@@ -492,7 +492,7 @@ void ui_mewui_select_game::populate()
 	int old_item_selected = -1;
 	UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
 
-	if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+	if (main_filters::actual != FILTER_FAVORITE_GAME)
 	{
 		// if search is not empty, find approximate matches
 		if (m_search[0] != 0 && !no_active_search())
@@ -505,7 +505,7 @@ void ui_mewui_select_game::populate()
 			m_tmp.clear();
 
 			// if filter is set on category, build category list
-			switch (mewui_globals::actual_filter)
+			switch (main_filters::actual)
 			{
 				case FILTER_CATEGORY:
 					build_category();
@@ -525,7 +525,7 @@ void ui_mewui_select_game::populate()
 				case FILTER_NOSAMPLES:
 				case FILTER_CHD:
 				case FILTER_NOCHD:
-					build_from_cache(m_tmp, mewui_globals::m_screen);
+					build_from_cache(m_tmp, c_screen::actual);
 					break;
 
 				case FILTER_CUSTOM:
@@ -606,14 +606,14 @@ void ui_mewui_select_game::populate()
 		selected = old_item_selected;
 		top_line = selected - (mewui_globals::visible_main_lines / 2);
 		if (reselect_last::software.empty())
-			mewui_globals::force_reselect_software = false;
+			mewui_globals::reselect = false;
 	}
 	else
 	{
 		reselect_last::driver.clear();
 		reselect_last::software.clear();
 		reselect_last::swlist.clear();
-		mewui_globals::force_reselect_software = false;
+		mewui_globals::reselect = false;
 	}
 }
 
@@ -695,33 +695,33 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	rgb_t color = UI_BACKGROUND_COLOR;
 	bool isstar = false;
 
-	if (mewui_globals::ume_system == MEWUI_MAME)
+	if (ume_filters::actual == MEWUI_MAME)
 		strprintf(tempbuf[0], "MEWUI %s ( %d / %d machines (%d BIOS) )", mewui_version, visible_items, (driver_list::total() - 1), m_isabios + m_issbios);
-	else if (mewui_globals::ume_system == MEWUI_ARCADES)
+	else if (ume_filters::actual == MEWUI_ARCADES)
 		strprintf(tempbuf[0], "MEWUI %s ( %d / %d arcades (%d BIOS) )", mewui_version, visible_items, m_isarcades, m_isabios);
-	else if (mewui_globals::ume_system == MEWUI_SYSTEMS)
+	else if (ume_filters::actual == MEWUI_SYSTEMS)
 		strprintf(tempbuf[0], "MEWUI %s ( %d / %d systems (%d BIOS) )", mewui_version, visible_items, m_issystems, m_issbios);
 
 	std::string filtered;
 
-	if (mewui_globals::actual_filter == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
+	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
 	{
 		int c_file = machine().inifile().current_file;
 		int c_cat = machine().inifile().current_category;
 		std::string s_file = machine().inifile().ini_index[c_file].name;
 		std::string s_category = machine().inifile().ini_index[c_file].category[c_cat].name;
-		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(s_file)
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(s_file)
 						.append(" - ").append(s_category).append(") -");
 	}
 
-	else if (mewui_globals::actual_filter == FILTER_MANUFACTURER)
-		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(c_mnfct::ui[c_mnfct::actual]).append(") -");
+	else if (main_filters::actual == FILTER_MANUFACTURER)
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(c_mnfct::ui[c_mnfct::actual]).append(") -");
 
-	else if (mewui_globals::actual_filter == FILTER_YEAR)
-		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(c_year::ui[c_year::actual]).append(") -");
+	else if (main_filters::actual == FILTER_YEAR)
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(c_year::ui[c_year::actual]).append(") -");
 
-	else if (mewui_globals::actual_filter == FILTER_SCREEN)
-		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(mewui_globals::screen_text[mewui_globals::m_screen]).append(") -");
+	else if (main_filters::actual == FILTER_SCREEN)
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(c_screen::text[c_screen::actual]).append(") -");
 
 	// display the current typeahead
 	if (no_active_search())
@@ -766,7 +766,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	draw_ume_box(x1, y1, x2, y2);
 
 	// determine the text to render below
-	if (mewui_globals::actual_filter != FILTER_FAVORITE_GAME)
+	if (main_filters::actual != FILTER_FAVORITE_GAME)
 		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
 	else
 	{
@@ -1042,7 +1042,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *menu_event
 				reselect_last::driver.assign(ui_swinfo->driver->name);
 				reselect_last::software.clear();
 				reselect_last::swlist.clear();
-				mewui_globals::force_reselect_software = true;
+				mewui_globals::reselect = true;
 				machine().manager().schedule_new_driver(*ui_swinfo->driver);
 				machine().schedule_hard_reset();
 				ui_menu::stack_reset(machine());
@@ -1119,7 +1119,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *menu_event
 
 bool ui_mewui_select_game::no_active_search()
 {
-	return (mewui_globals::actual_filter == FILTER_FAVORITE_GAME);
+	return (main_filters::actual == FILTER_FAVORITE_GAME);
 }
 
 //-------------------------------------------------
@@ -1172,7 +1172,7 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 
 	if (s_drivers.empty())
 	{
-		filter = mewui_globals::actual_filter;
+		filter = main_filters::actual;
 
 		if (filter == FILTER_AVAILABLE)
 			s_drivers = m_availsortedlist;
@@ -1187,10 +1187,10 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_SYSTEMS)
+		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_ARCADES)
+		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
 		switch (filter)
@@ -1288,19 +1288,19 @@ void ui_mewui_select_game::build_custom()
 	std::vector<const game_driver *> s_drivers;
 	bool bioscheck = false;
 
-	if (custfltr::main_filter == FILTER_AVAILABLE)
+	if (custfltr::main == FILTER_AVAILABLE)
 		s_drivers = m_availsortedlist;
-	else if (custfltr::main_filter == FILTER_UNAVAILABLE)
+	else if (custfltr::main == FILTER_UNAVAILABLE)
 		s_drivers = m_unavailsortedlist;
 	else
 		s_drivers = m_sortedlist;
 
 	for (size_t index = 0; index < s_drivers.size(); ++index)
 	{
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_SYSTEMS)
+		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_ARCADES)
+		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
 		m_displaylist.push_back(s_drivers[index]);
@@ -1371,7 +1371,7 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 	if (s_drivers.empty())
 	{
 		s_drivers = m_sortedlist;
-		filter = mewui_globals::actual_filter;
+		filter = main_filters::actual;
 	}
 
 	for (size_t index = 0; index < s_drivers.size(); ++index)
@@ -1379,10 +1379,10 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_SYSTEMS)
+		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && mewui_globals::ume_system == MEWUI_ARCADES)
+		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
 		int idx = driver_list::find(s_drivers[index]->name);
@@ -1390,7 +1390,7 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 		switch (filter)
 		{
 			case FILTER_SCREEN:
-				if (mewui_globals::driver_cache[idx].b_vector == screens)
+				if (mewui_globals::driver_cache[idx].b_screen == screens)
 					m_displaylist.push_back(s_drivers[index]);
 				break;
 
@@ -1598,7 +1598,7 @@ void ui_mewui_select_game::save_cache_info()
 			infos.b_samples = (iter.first() != NULL) ? 1 : 0;
 
 			const screen_device *screen = config.first_screen();
-			infos.b_vector = (screen != NULL) ? screen->screen_type() : 0;
+			infos.b_screen = (screen != NULL) ? screen->screen_type() : 0;
 
 			speaker_device_iterator siter(config.root_device());
 			sound_interface_iterator snditer(config.root_device());
@@ -1610,8 +1610,8 @@ void ui_mewui_select_game::save_cache_info()
 					infos.b_chd = 1;
 					break;
 				}
-			mewui_globals::driver_cache[x].b_vector = infos.b_vector;
-			myfile << infos.b_vector;
+			mewui_globals::driver_cache[x].b_screen = infos.b_screen;
+			myfile << infos.b_screen;
 			mewui_globals::driver_cache[x].b_samples = infos.b_samples;
 			myfile << infos.b_samples;
 			mewui_globals::driver_cache[x].b_stereo = infos.b_stereo;
@@ -1677,7 +1677,7 @@ void ui_mewui_select_game::load_cache_info()
 		m_fulllist.push_back(driver);
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
-		myfile >> mewui_globals::driver_cache[x].b_vector;
+		myfile >> mewui_globals::driver_cache[x].b_screen;
 		myfile >> mewui_globals::driver_cache[x].b_samples;
 		myfile >> mewui_globals::driver_cache[x].b_stereo;
 		myfile >> mewui_globals::driver_cache[x].b_chd;
@@ -1818,10 +1818,10 @@ void ui_mewui_select_game::load_custom_filters()
 		file.gets(buffer, MAX_CHAR_INFO);
 		pb = strchr(buffer, '=') + 2;
 
-		for (int y = 0; y < mewui_globals::s_filter_text; y++)
-			if (!strncmp(pb, mewui_globals::filter_text[y], strlen(mewui_globals::filter_text[y])))
+		for (int y = 0; y < main_filters::length; y++)
+			if (!strncmp(pb, main_filters::text[y], strlen(main_filters::text[y])))
 			{
-				custfltr::main_filter = y;
+				custfltr::main = y;
 				break;
 			}
 
@@ -1829,8 +1829,8 @@ void ui_mewui_select_game::load_custom_filters()
 		{
 			file.gets(buffer, MAX_CHAR_INFO);
 			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < mewui_globals::s_filter_text; y++)
-				if (!strncmp(cb, mewui_globals::filter_text[y], strlen(mewui_globals::filter_text[y])))
+			for (int y = 0; y < main_filters::length; y++)
+				if (!strncmp(cb, main_filters::text[y], strlen(main_filters::text[y])))
 				{
 					custfltr::other[x] = y;
 					if (y == FILTER_MANUFACTURER)
@@ -1853,8 +1853,8 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < mewui_globals::s_screen_text; z++)
-							if (!strncmp(db, mewui_globals::screen_text[z], strlen(mewui_globals::screen_text[z])))
+						for (size_t z = 0; z < c_screen::length; z++)
+							if (!strncmp(db, c_screen::text[z], strlen(c_screen::text[z])))
 								custfltr::screen[x] = z;
 					}
 				}

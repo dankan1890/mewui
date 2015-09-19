@@ -20,10 +20,7 @@
 #include "drivenum.h"
 
 #define MAX_CHAR_INFO            256
-#define CR                       0x0d   //  '\n' and '\r' meanings are swapped in some
-#define LF                       0x0a   //  compilers (e.g., Mac compilers)
 #define MAX_CUST_FILTER          8
-
 #define MEWUI_VERSION_TAG        "# MEWUI INFO "
 
 // GLOBAL ENUMERATORS
@@ -181,7 +178,7 @@ struct ui_software_info
 
 struct cache_info
 {
-	UINT8 b_vector, b_stereo, b_samples, b_chd;
+	UINT8 b_screen, b_stereo, b_samples, b_chd;
 };
 
 // Manufacturers
@@ -204,19 +201,48 @@ struct c_year
 // GLOBAL CLASS
 struct mewui_globals
 {
-	static UINT16       actual_filter, actual_sw_filter, m_screen;
-	static const char   *filter_text[], *sw_filter_text[], *ume_text[], *screen_text[];
-	static size_t       s_filter_text, sw_filter_len, s_ume_text, s_screen_text;
-	static UINT8        curimage_view, curdats_view, ume_system, cur_sw_dats_view, rpanel_infos;
-	static bool         switch_image, redraw_icon, default_image, force_reselect_software, force_reset_main;
+	static UINT8        curimage_view, curdats_view, cur_sw_dats_view, rpanel;
+	static bool         switch_image, redraw_icon, default_image, reselect, reset;
 	static int          visible_main_lines, visible_sw_lines;
 	static std::vector<cache_info> driver_cache;
 };
 
-// Custom filter class
+// Main filters
+struct main_filters
+{
+	static UINT16 actual;
+	static const char *text[];
+	static size_t length;
+};
+
+// Software filters
+struct sw_filters
+{
+	static UINT16 actual;
+	static const char *text[];
+	static size_t length;
+};
+
+// UME filters
+struct ume_filters
+{
+	static UINT16 actual;
+	static const char *text[];
+	static size_t length;
+};
+
+// Screens
+struct c_screen
+{
+	static UINT16 actual;
+	static const char *text[];
+	static size_t length;
+};
+
+// Custom filter
 struct custfltr
 {
-	static UINT16  main_filter;
+	static UINT16  main;
 	static UINT16  numother;
 	static UINT16  other[MAX_CUST_FILTER];
 	static UINT16  mnfct[MAX_CUST_FILTER];
@@ -224,10 +250,10 @@ struct custfltr
 	static UINT16  year[MAX_CUST_FILTER];
 };
 
-// Custom filter class
+// Software custom filter
 struct sw_custfltr
 {
-	static UINT16  main_filter;
+	static UINT16  main;
 	static UINT16  numother;
 	static UINT16  other[MAX_CUST_FILTER];
 	static UINT16  mnfct[MAX_CUST_FILTER];

@@ -5,6 +5,10 @@ compiler:
 os:
   - linux
   - osx
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
 env:
   - SUBTARGET=test   MAME=mametest64
 script:
@@ -14,10 +18,7 @@ script:
     else make -j2 linux_x64 && ./$MAME -validate;
     fi
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    if [ $CC == 'clang' ]; then
-    make -j2 macosx_x64_clang MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
-    else make -j2 macosx_x64 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
-    fi
+    make -j2 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
     fi
 sudo: required
 before_install:

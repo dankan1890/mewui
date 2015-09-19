@@ -1561,14 +1561,13 @@ void ui_mewui_select_game::save_cache_info()
 			c_mnfct::set(driver->manufacturer);
 			c_year::set(driver->year);
 		}
-osd_printf_info("1° step = %I64u\n", osd_ticks());
 		m_sortedlist = m_fulllist;
 
 		// sort manufacturers - years and driver
 		std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 		std::stable_sort(c_year::ui.begin(), c_year::ui.end());
 		std::stable_sort(m_sortedlist.begin(), m_sortedlist.end(), sort_game_list);
-osd_printf_info("2° step = %I64u\n", osd_ticks());
+
 		int index = 0;
 		m_isabios = 0;
 		m_issbios = 0;
@@ -1622,7 +1621,7 @@ osd_printf_info("2° step = %I64u\n", osd_ticks());
 			int find = driver_list::find(m_sortedlist[index++]->name);
 			myfile << find;
 		}
-osd_printf_info("3° step = %I64u\n", osd_ticks());
+
 		UINT8 space = 0;
 		myfile << space << m_isabios;
 		myfile << space << m_issbios;
@@ -1645,14 +1644,7 @@ void ui_mewui_select_game::load_cache_info()
 	// file not exist ? save and exit
 	if (filerr != FILERR_NONE)
 	{
-		osd_ticks_t start, end, tps;
-		start = osd_ticks();
-		tps = osd_ticks_per_second();
 		save_cache_info();
-		end = osd_ticks();
-		float tc = (float)(end - start) / tps;
-		osd_printf_info("Ticks %I64u - %I64u - %I64u\n", start, end, tps);
-		osd_printf_info("Cache time = %f", tc);
 		return;
 	}
 

@@ -1122,6 +1122,10 @@ configuration { "linux-*" }
 
 
 configuration { "osx*" }
+		buildoptions {
+			"-DNO_MEM_TRACKING"
+		}
+
 		links {
 			"pthread",
 		}

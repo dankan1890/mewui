@@ -463,6 +463,15 @@ void ui_mewui_select_game::handle()
 		else if (l_hover == FILTER_YEAR)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_year::ui,
 												&c_year::actual, SELECTOR_GAME, l_hover)));
+		else if (l_hover == FILTER_SCREEN)
+		{
+			std::vector<std::string> text(mewui_globals::s_screen_text);
+			for (int x = 0; x < mewui_globals::s_screen_text; ++x)
+				text[x].assign(mewui_globals::screen_text[x]);
+
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text,
+												&mewui_globals::m_screen, SELECTOR_GAME, l_hover)));
+		}
 		else
 		{
 			if (l_hover >= FILTER_ALL)
@@ -510,14 +519,13 @@ void ui_mewui_select_game::populate()
 					build_list(m_tmp, c_year::ui[c_year::actual].c_str());
 					break;
 
-				case FILTER_VECTOR:
+				case FILTER_SCREEN:
 				case FILTER_STEREO:
 				case FILTER_SAMPLES:
 				case FILTER_NOSAMPLES:
-				case FILTER_RASTER:
 				case FILTER_CHD:
 				case FILTER_NOCHD:
-					build_from_cache(m_tmp);
+					build_from_cache(m_tmp, mewui_globals::m_screen);
 					break;
 
 				case FILTER_CUSTOM:
@@ -711,6 +719,9 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	else if (mewui_globals::actual_filter == FILTER_YEAR)
 		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(c_year::ui[c_year::actual]).append(") -");
+
+	else if (mewui_globals::actual_filter == FILTER_SCREEN)
+		filtered.assign(mewui_globals::filter_text[mewui_globals::actual_filter]).append(" (").append(mewui_globals::screen_text[mewui_globals::m_screen]).append(") -");
 
 	// display the current typeahead
 	if (no_active_search())
@@ -1316,14 +1327,15 @@ void ui_mewui_select_game::build_custom()
 			case FILTER_MANUFACTURER:
 				build_list(s_drivers, c_mnfct::ui[custfltr::mnfct[count]].c_str(), filter, bioscheck);
 				break;
-			case FILTER_VECTOR:
-			case FILTER_RASTER:
+			case FILTER_SCREEN:
+				build_from_cache(s_drivers, custfltr::screen[count], filter, bioscheck);
+				break;
 			case FILTER_CHD:
 			case FILTER_NOCHD:
 			case FILTER_SAMPLES:
 			case FILTER_NOSAMPLES:
 			case FILTER_STEREO:
-				build_from_cache(s_drivers, filter, bioscheck);
+				build_from_cache(s_drivers, 0, filter, bioscheck);
 				break;
 			default:
 				build_list(s_drivers, NULL, filter, bioscheck);
@@ -1354,7 +1366,7 @@ void ui_mewui_select_game::build_category()
 //  build list from cache
 //-------------------------------------------------
 
-void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_drivers, int filter, bool bioscheck)
+void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_drivers, int screens, int filter, bool bioscheck)
 {
 	if (s_drivers.empty())
 	{
@@ -1377,13 +1389,8 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 
 		switch (filter)
 		{
-			case FILTER_VECTOR:
-				if (mewui_globals::driver_cache[idx].b_vector)
-					m_displaylist.push_back(s_drivers[index]);
-				break;
-
-			case FILTER_RASTER:
-				if (!mewui_globals::driver_cache[idx].b_vector)
+			case FILTER_SCREEN:
+				if (mewui_globals::driver_cache[idx].b_vector == screens)
 					m_displaylist.push_back(s_drivers[index]);
 				break;
 
@@ -1554,14 +1561,14 @@ void ui_mewui_select_game::save_cache_info()
 			c_mnfct::set(driver->manufacturer);
 			c_year::set(driver->year);
 		}
-
+osd_printf_info("1° step = %I64u\n", osd_ticks());
 		m_sortedlist = m_fulllist;
 
 		// sort manufacturers - years and driver
 		std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 		std::stable_sort(c_year::ui.begin(), c_year::ui.end());
 		std::stable_sort(m_sortedlist.begin(), m_sortedlist.end(), sort_game_list);
-
+osd_printf_info("2° step = %I64u\n", osd_ticks());
 		int index = 0;
 		m_isabios = 0;
 		m_issbios = 0;
@@ -1585,7 +1592,6 @@ void ui_mewui_select_game::save_cache_info()
 					m_issbios++;
 				m_issystems++;
 			}
-
 			cache_info infos;
 			machine_config config(*driver, machine().options());
 
@@ -1593,12 +1599,11 @@ void ui_mewui_select_game::save_cache_info()
 			infos.b_samples = (iter.first() != NULL) ? 1 : 0;
 
 			const screen_device *screen = config.first_screen();
-			infos.b_vector = (screen != NULL && screen->screen_type() == SCREEN_TYPE_VECTOR) ? 1 : 0;
+			infos.b_vector = (screen != NULL) ? screen->screen_type() : 0;
 
 			speaker_device_iterator siter(config.root_device());
 			sound_interface_iterator snditer(config.root_device());
 			infos.b_stereo = (snditer.first() != NULL && siter.count() > 1) ? 1 : 0;
-
 			infos.b_chd = 0;
 			for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
 				if (ROMENTRY_ISREGION(rom) && ROMREGION_ISDISKDATA(rom))
@@ -1606,7 +1611,6 @@ void ui_mewui_select_game::save_cache_info()
 					infos.b_chd = 1;
 					break;
 				}
-
 			mewui_globals::driver_cache[x].b_vector = infos.b_vector;
 			myfile << infos.b_vector;
 			mewui_globals::driver_cache[x].b_samples = infos.b_samples;
@@ -1618,6 +1622,7 @@ void ui_mewui_select_game::save_cache_info()
 			int find = driver_list::find(m_sortedlist[index++]->name);
 			myfile << find;
 		}
+osd_printf_info("3° step = %I64u\n", osd_ticks());
 		UINT8 space = 0;
 		myfile << space << m_isabios;
 		myfile << space << m_issbios;
@@ -1640,7 +1645,14 @@ void ui_mewui_select_game::load_cache_info()
 	// file not exist ? save and exit
 	if (filerr != FILERR_NONE)
 	{
+		osd_ticks_t start, end, tps;
+		start = osd_ticks();
+		tps = osd_ticks_per_second();
 		save_cache_info();
+		end = osd_ticks();
+		float tc = (float)(end - start) / tps;
+		osd_printf_info("Ticks %I64u - %I64u - %I64u\n", start, end, tps);
+		osd_printf_info("Cache time = %f", tc);
 		return;
 	}
 
@@ -1844,6 +1856,14 @@ void ui_mewui_select_game::load_custom_filters()
 						for (size_t z = 0; z < c_year::ui.size(); z++)
 							if (!strncmp(db, c_year::ui[z].c_str(), c_year::ui[z].length()))
 								custfltr::year[x] = z;
+					}
+					else if (y == FILTER_SCREEN)
+					{
+						file.gets(buffer, MAX_CHAR_INFO);
+						char *db = strchr(buffer, '=') + 2;
+						for (size_t z = 0; z < mewui_globals::s_screen_text; z++)
+							if (!strncmp(db, mewui_globals::screen_text[z], strlen(mewui_globals::screen_text[z])))
+								custfltr::screen[x] = z;
 					}
 				}
 		}

@@ -152,6 +152,23 @@ void ui_menu_game_options::handle()
 
 				break;
 
+			case SCREEN_CAT_FILTER:
+				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				{
+					(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::m_screen++ : mewui_globals::m_screen--;
+					changed = true;
+				}
+				else if (menu_event->iptkey == IPT_UI_SELECT)
+				{
+					std::vector<std::string> text(mewui_globals::s_screen_text);
+					for (int x = 0; x < mewui_globals::s_screen_text; ++x)
+						text[x].assign(mewui_globals::screen_text[x]);
+
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &mewui_globals::m_screen)));
+				}
+
+				break;
+
 			case MISC_MENU:
 				if (menu_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_misc_options(machine(), container)));
@@ -247,6 +264,14 @@ void ui_menu_game_options::populate()
 		fbuff.assign("^!Year");
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), c_year::ui[c_year::actual].c_str(), arrow_flags, (void *)YEAR_CAT_FILTER);
+	}
+	// add screen subitem
+	else if (mewui_globals::actual_filter == FILTER_SCREEN)
+	{
+		arrow_flags = get_arrow_flags(0, mewui_globals::s_screen_text - 1, mewui_globals::m_screen);
+		fbuff.assign("^!Screen type");
+		convert_command_glyph(fbuff);
+		item_append(fbuff.c_str(), mewui_globals::screen_text[mewui_globals::m_screen], arrow_flags, (void *)SCREEN_CAT_FILTER);
 	}
 	// add custom subitem
 	else if (mewui_globals::actual_filter == FILTER_CUSTOM)

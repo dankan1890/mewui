@@ -105,6 +105,29 @@ void ui_menu_custom_filter::handle()
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::other[pos])));
 			}
 		}
+		else if ((FPTR)menu_event->itemref >= SCREEN_FILTER && (FPTR)menu_event->itemref < SCREEN_FILTER + MAX_CUST_FILTER)
+		{
+			int pos = (int)((FPTR)menu_event->itemref - SCREEN_FILTER);
+			if (menu_event->iptkey == IPT_UI_LEFT && custfltr::screen[pos] > 0)
+			{
+				custfltr::screen[pos]--;
+				changed = true;
+			}
+			else if (menu_event->iptkey == IPT_UI_RIGHT && custfltr::screen[pos] < mewui_globals::s_screen_text - 1)
+			{
+				custfltr::screen[pos]++;
+				changed = true;
+			}
+			else if (menu_event->iptkey == IPT_UI_SELECT)
+			{
+				int total = mewui_globals::s_screen_text;
+				std::vector<std::string> s_sel(total);
+				for (int index = 0; index < total; index++)
+					s_sel[index].assign(mewui_globals::screen_text[index]);
+
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::screen[pos])));
+			}
+		}
 		else if ((FPTR)menu_event->itemref >= YEAR_FILTER && (FPTR)menu_event->itemref < YEAR_FILTER + MAX_CUST_FILTER)
 		{
 			int pos = (int)((FPTR)menu_event->itemref - YEAR_FILTER);
@@ -183,6 +206,16 @@ void ui_menu_custom_filter::populate()
 			convert_command_glyph(fbuff);
 			item_append(fbuff.c_str(), c_year::ui[custfltr::year[x]].c_str(), arrow_flags, (void *)(FPTR)(YEAR_FILTER + x));
 		}
+
+		// add screen subitem
+		else if (custfltr::other[x] == FILTER_SCREEN)
+		{
+			arrow_flags = get_arrow_flags(0,  mewui_globals::s_screen_text - 1, custfltr::screen[x]);
+			std::string fbuff("^!Screen type");
+			convert_command_glyph(fbuff);
+			item_append(fbuff.c_str(), mewui_globals::screen_text[custfltr::screen[x]], arrow_flags, (void *)(FPTR)(SCREEN_FILTER + x));
+		}
+
 	}
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
@@ -252,6 +285,8 @@ void ui_menu_custom_filter::save_custom_filters()
 				cinfo.append("  Manufacturer filter = ").append(c_mnfct::ui[custfltr::mnfct[x]]).append("\n");
 			else if (custfltr::other[x] == FILTER_YEAR)
 				cinfo.append("  Year filter = ").append(c_year::ui[custfltr::year[x]]).append("\n");
+			else if (custfltr::other[x] == FILTER_SCREEN)
+				cinfo.append("  Screen filter = ").append(mewui_globals::screen_text[custfltr::screen[x]]).append("\n");
 		}
 		file.puts(cinfo.c_str());
 		file.close();

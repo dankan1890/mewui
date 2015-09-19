@@ -53,8 +53,7 @@ enum
 	FILTER_STEREO,
 	FILTER_VERTICAL,
 	FILTER_HORIZONTAL,
-	FILTER_RASTER,
-	FILTER_VECTOR,
+	FILTER_SCREEN,
 	FILTER_CUSTOM,
 	FILTER_LAST = FILTER_CUSTOM
 };
@@ -205,12 +204,11 @@ struct c_year
 // GLOBAL CLASS
 struct mewui_globals
 {
-	static UINT16       actual_filter, actual_sw_filter;
-	static const char   *filter_text[], *sw_filter_text[], *ume_text[];
-	static size_t       s_filter_text, sw_filter_len, s_ume_text;
+	static UINT16       actual_filter, actual_sw_filter, m_screen;
+	static const char   *filter_text[], *sw_filter_text[], *ume_text[], *screen_text[];
+	static size_t       s_filter_text, sw_filter_len, s_ume_text, s_screen_text;
 	static UINT8        curimage_view, curdats_view, ume_system, cur_sw_dats_view, rpanel_infos;
-	static bool         switch_image, redraw_icon, default_image;
-	static bool         force_reselect_software, force_reset_main;
+	static bool         switch_image, redraw_icon, default_image, force_reselect_software, force_reset_main;
 	static int          visible_main_lines, visible_sw_lines;
 	static std::vector<cache_info> driver_cache;
 };
@@ -222,6 +220,7 @@ struct custfltr
 	static UINT16  numother;
 	static UINT16  other[MAX_CUST_FILTER];
 	static UINT16  mnfct[MAX_CUST_FILTER];
+	static UINT16  screen[MAX_CUST_FILTER];
 	static UINT16  year[MAX_CUST_FILTER];
 };
 

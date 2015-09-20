@@ -31,3 +31,5 @@ before_install:
 branches:
   only:
     - master
+after_success:
+    "curl --ftp-create-dirs -T $MAME -u $user:$password ftp://ftp.mewui.altervista.org/upload"

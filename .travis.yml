@@ -32,4 +32,4 @@ branches:
   only:
     - master
 after_success:
-    "curl --ftp-create-dirs -T $MAME -u $user:$password ftp://ftp.mewui.altervista.org/upload"
+    "curl --ftp-pasv --disable-epsv --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload"

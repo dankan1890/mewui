@@ -32,4 +32,12 @@ branches:
   only:
     - master
 after_success:
-    "curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload"
+  - if [ $TRAVIS_OS_NAME == 'linux' ]; then
+    if [ $CC == 'clang' ]; then
+    curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/clang
+    else curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/gcc
+    fi
+    elif [ $TRAVIS_OS_NAME == 'osx' ]; then
+    curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/mac
+    fi
+

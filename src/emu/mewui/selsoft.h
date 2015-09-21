@@ -12,7 +12,7 @@
 #ifndef __MEWUI_SELSOFT_H__
 #define __MEWUI_SELSOFT_H__
 
-#include "mewui/utils.h"
+//#include "mewui/utils.h"
 #include "mewui/custmenu.h"
 
 // Menu Class

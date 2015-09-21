@@ -13,14 +13,6 @@
 #ifndef __MEWUI_DIRMENU_H__
 #define __MEWUI_DIRMENU_H__
 
-// GLOBAL
-
-struct folders_entry
-{
-	const char *name;
-	const char *option;
-};
-
 //-------------------------------------------------
 //  class directory menu
 //-------------------------------------------------

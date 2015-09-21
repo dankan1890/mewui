@@ -19,6 +19,7 @@
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "mewui/selector.h"
+#include "mewui/custmenu.h"
 
 std::string reselect_last::driver;
 std::string reselect_last::software;

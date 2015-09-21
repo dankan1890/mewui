@@ -14,6 +14,7 @@
 #include "rendfont.h"
 #include "mewui/datfile.h"
 #include "mewui/datmenu.h"
+#include "mewui/utils.h"
 
 /**************************************************
     MENU COMMAND

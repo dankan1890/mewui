@@ -14,7 +14,8 @@
 #ifndef __MEWUI_DATMENU_H__
 #define __MEWUI_DATMENU_H__
 
-#include "mewui/utils.h"
+class ui_software_info;
+
 //-------------------------------------------------
 //  class dats menu
 //-------------------------------------------------

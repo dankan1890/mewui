@@ -14,7 +14,7 @@
 #ifndef __MEWUI_DATMENU_H__
 #define __MEWUI_DATMENU_H__
 
-class ui_software_info;
+struct ui_software_info;
 
 //-------------------------------------------------
 //  class dats menu

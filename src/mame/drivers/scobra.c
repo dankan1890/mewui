@@ -199,6 +199,87 @@ static ADDRESS_MAP_START( mimonkey_map, AS_PROGRAM, 8, scobra_state )
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
+// weird address map like anteateruk in galaxian.c (also a free enterprise set)
+static ADDRESS_MAP_START( rescuefe_map, AS_PROGRAM, 8, scobra_state )
+	AM_RANGE(0x0000, 0x05ff) AM_ROM
+	AM_RANGE(0x0600, 0x0fff) AM_RAM // sets stack here
+	AM_RANGE(0x1000, 0x13ff) AM_RAM_WRITE(galaxold_videoram_w) AM_SHARE("videoram")
+	AM_RANGE(0x1400, 0x143f) AM_RAM_WRITE(galaxold_attributesram_w) AM_SHARE("attributesram")
+	AM_RANGE(0x1440, 0x145f) AM_RAM AM_SHARE("spriteram")
+	AM_RANGE(0x1460, 0x147f) AM_RAM AM_SHARE("bulletsram")
+	AM_RANGE(0x1480, 0x14ff) AM_RAM
+
+
+	AM_RANGE(0x4400, 0x5dff) AM_ROM
+	AM_RANGE(0x5e00, 0x6bff) AM_ROM // some right?
+	
+	AM_RANGE(0x8200, 0x93ff) AM_ROM // wrong? (maybe some correct?)
+
+	AM_RANGE(0xa600, 0xa6ff) AM_ROM // wrong (taunt string) jumps to around a600 so something must map in this area?
+
+	AM_RANGE(0xEA01, 0xEA01) AM_WRITE(galaxold_nmi_enable_w)
+	AM_RANGE(0xEA93, 0xEA93) AM_WRITE(scrambold_background_enable_w)
+	AM_RANGE(0xEA86, 0xEA86) AM_WRITE(galaxold_flip_screen_x_w)
+	AM_RANGE(0xEA87, 0xEA87) AM_WRITE(galaxold_flip_screen_y_w)
+
+	// does it have a real ppi8255?
+	AM_RANGE(0xC190, 0xC193) AM_DEVREAD("ppi8255_0", i8255_device, read) // ?
+	AM_RANGE(0xC160, 0xC163) AM_DEVREAD("ppi8255_0", i8255_device, read) // ?
+
+	AM_RANGE(0xC4Ac, 0xC4AF) AM_DEVREAD("ppi8255_1", i8255_device, read) // ?
+	
+	AM_RANGE(0xc180, 0xc183) AM_DEVWRITE("ppi8255_0", i8255_device, write) // correct based on main set?
+	AM_RANGE(0xc220, 0xc223) AM_DEVWRITE("ppi8255_1", i8255_device, write) // ^	
+
+	// addresses below are WRONG, just moved to keep things out the way while the rom mapping is figured out
+//	AM_RANGE(0xf802, 0xf802) AM_WRITE(galaxold_coin_counter_w)
+//	AM_RANGE(0xf000, 0xf000) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( minefldfe_map, AS_PROGRAM, 8, scobra_state )
+	AM_RANGE(0x0000, 0x0bff) AM_ROM // ok
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM // ok? stack
+
+	AM_RANGE(0x2200, 0x35ff) AM_ROM // ok
+
+	AM_RANGE(0x3B00, 0x3cff) AM_ROM // ok
+
+//	AM_RANGE(0x3600, 0x37ff) AM_ROM // ok?
+//	AM_RANGE(0x5800, 0x7fff) AM_ROM // wrong
+	AM_RANGE(0x8a00, 0x8eff) AM_ROM // 8a-8f ok?
+
+	AM_RANGE(0x5800, 0x5800) AM_ROM // ? (just put a ret here for now)
+
+	AM_RANGE(0x5e00, 0x5fff) AM_ROM //
+
+
+	AM_RANGE(0x6000, 0x68ff) AM_ROM // ok
+
+	AM_RANGE(0x4200, 0x45ff) AM_RAM_WRITE(galaxold_videoram_w) AM_SHARE("videoram") // ok
+
+	// wrong?
+	AM_RANGE(0x1000, 0x103f) AM_RAM_WRITE(galaxold_attributesram_w) AM_SHARE("attributesram")
+	AM_RANGE(0x1040, 0x105f) AM_RAM AM_SHARE("spriteram")
+	AM_RANGE(0x1060, 0x107f) AM_RAM AM_SHARE("bulletsram")
+	AM_RANGE(0x1080, 0x17ff) AM_RAM
+
+	AM_RANGE(0x7621, 0x7621) AM_WRITE(galaxold_nmi_enable_w)
+
+
+
+
+
+	// addresses below are WRONG, just moved to keep things out the way while the rom mapping is figured out
+	AM_RANGE(0xf800, 0xf803) AM_DEVREADWRITE("ppi8255_0", i8255_device, read, write)
+	AM_RANGE(0xf000, 0xf003) AM_DEVREADWRITE("ppi8255_1", i8255_device, read, write)
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(galaxold_nmi_enable_w)
+	AM_RANGE(0xf802, 0xf802) AM_WRITE(galaxold_coin_counter_w)
+	AM_RANGE(0xf804, 0xf804) AM_WRITE(galaxold_stars_enable_w)
+	AM_RANGE(0xf806, 0xf806) AM_WRITE(galaxold_flip_screen_x_w)
+	AM_RANGE(0xf807, 0xf807) AM_WRITE(galaxold_flip_screen_y_w)
+	AM_RANGE(0xf000, 0xf000) AM_READ(watchdog_reset_r)
+ADDRESS_MAP_END
+
 
 READ8_MEMBER(scobra_state::scobra_soundram_r)
 {
@@ -711,6 +792,13 @@ static MACHINE_CONFIG_DERIVED( rescue, type1 )
 	MCFG_VIDEO_START_OVERRIDE(scobra_state,rescue)
 MACHINE_CONFIG_END
 
+static MACHINE_CONFIG_DERIVED( rescuefe, rescue )
+	/* basic machine hardware */
+	MCFG_CPU_MODIFY("maincpu")  
+	MCFG_CPU_PROGRAM_MAP(rescuefe_map)	
+MACHINE_CONFIG_END
+
+
 
 static MACHINE_CONFIG_DERIVED( minefld, type1 )
 
@@ -723,6 +811,11 @@ static MACHINE_CONFIG_DERIVED( minefld, type1 )
 
 	MCFG_PALETTE_INIT_OWNER(scobra_state,minefld)
 	MCFG_VIDEO_START_OVERRIDE(scobra_state,minefld)
+MACHINE_CONFIG_END
+
+static MACHINE_CONFIG_DERIVED( minefldfe, minefld )
+	MCFG_CPU_MODIFY("maincpu")  
+	MCFG_CPU_PROGRAM_MAP(minefldfe_map)	
 MACHINE_CONFIG_END
 
 
@@ -1061,6 +1154,72 @@ ROM_START( minefld )
 	ROM_LOAD( "minefld.clr",  0x0000, 0x0020, CRC(1877368e) SHA1(5850e03debe572f72abd91c756c0f8613018a962) )
 ROM_END
 
+/*
+
+This is a bootleg by Free Enterprise Games.
+The host board is common Scramble hardware.
+There is a small sub-board containing a Z80, the 3 'sub' eproms, a 2kx8 SRAM and an unknown
+DIP24 chip by AMD(C)1979. I'm sure there is some obfuscation going on with this sub board.
+There's a taunt in one of the EPROMs telling people they won't be able to copy it and get
+it working ;-)
+There are 2 GFX ROMs on the main board and 2 program ROMs and a color PROM.
+There's also another small sub board plugged in at position 5L and 5M replacing 2 logic chips
+with 8 logic chips and it's also wired to various logic chips on the main board.
+The games are possibly Minefield and Scramble together on one board although both boards could
+be running different games.
+One board is missing the 2 sound ROMs (possibly on purpose, don't know)
+Both are missing the top sound PCB.
+
+*/
+
+
+ROM_START( minefldfe )
+	ROM_REGION( 0x10000, "subboard", 0 )
+	ROM_LOAD( "sub-1.bin",        0x0000, 0x2000, CRC(0511df9f) SHA1(e4b93e70a070a8f42442c8329478b98cba387971) ) // all used
+	ROM_LOAD( "sub-2.bin",        0x2000, 0x2000, CRC(00205e04) SHA1(f8e8399a1aaa548ae2448ebc96fb3e68625f9260) ) // 2500 - 2700 used 3000 - 3b00 used
+	ROM_LOAD( "sub-3.bin",        0x4000, 0x0800, CRC(98c05d8d) SHA1(9c89504421df754bb0228ca08c7bfae5f6dc3e91) ) // all used
+
+	ROM_REGION( 0x10000, "maincpu", 0 )
+	ROM_COPY( "subboard", 0x0000, 0x0000, 0x0c00 ) // definitely OK
+	ROM_COPY( "subboard", 0x0c00, 0x2200, 0x1400 ) // definitely OK
+	ROM_COPY( "subboard", 0x2500, 0x3b00, 0x0200 ) // ok
+	ROM_COPY( "subboard", 0x3000, 0x5e00, 0x0b00 ) // ok
+	ROM_COPY( "subboard", 0x4000, 0x8a00, 0x0800 ) // some of this is ok at least
+
+	ROM_FILL( 0x5800, 0x01, 0xc9 )
+
+	ROM_REGION( 0x10000, "audiocpu", ROMREGION_ERASEFF )
+	ROM_LOAD( "snd.2l",        0x0000, 0x0800, CRC(8bef736b) SHA1(c5c7ce9c40e6fe60a4914b6bbd646ba6853c9043) )
+	ROM_LOAD( "snd.2m",        0x0800, 0x0800, CRC(f67b3f97) SHA1(bb15f95eab6594508b5c02af60ed9fff3abd23ee) )
+
+	ROM_REGION( 0x1000, "gfx1", 0 )
+	ROM_LOAD( "gfx.5f",        0x0000, 0x0800, CRC(8b5e187a) SHA1(3afd348a2ade9fc01fd1fc6a5ce9b148e0a1ead1) )
+	ROM_LOAD( "gfx.5h",        0x0800, 0x0800, CRC(4b7e1fbc) SHA1(334c09f380a3750874c4bef8e987112e7a50fdbd) )
+
+	ROM_REGION( 0x0020, "proms", 0 )
+	ROM_LOAD( "82s123.6e",  0x0000, 0x0020, CRC(1877368e) SHA1(5850e03debe572f72abd91c756c0f8613018a962) )
+ROM_END
+
+ROM_START( rescuefe )
+	ROM_REGION( 0x10000, "maincpu", 0 )
+	ROM_LOAD( "sub-1.bin",        0x0000, 0x0600, CRC(7a6e813e) SHA1(5f9fff576f6a8d8e09f11404ca49b1011d17fa36) ) // correct?
+	ROM_CONTINUE( 0x4400, 0x1a00 ) // seems to be correct at least for the majority of blocks
+	ROM_LOAD( "sub-2.bin",        0x5e00, 0x0e00, CRC(28fcec83) SHA1(f2b2b2c8f65450b627587cf5f16620b95d7fe4e2) ) // correct at least mapping of 6903?
+	ROM_CONTINUE(0x8200, 0x1200) // some of this seems to be in the right place
+	ROM_LOAD( "sub-3.bin",        0xa000, 0x0800, CRC(6fbeb239) SHA1(cb81719e8bb6b99ad4e46d9404c61c09db8475c3) ) // strange size, contains nothing except a taunt message which seems to be cut off at the start??
+
+	ROM_REGION( 0x10000, "audiocpu", ROMREGION_ERASEFF ) // audio CPU code was missing, assuming the same as regular Rescue due to sound code on the minefield bootleg matching.
+	ROM_LOAD( "rb15csnd.2l", 0x0000, 0x0800, CRC(8b24bf17) SHA1(cc49fef3c629c12f1a7eb9886fdc2df4b08f4b37) )
+	ROM_LOAD( "rb15dsnd.2m", 0x0800, 0x0800, CRC(d96e4fb3) SHA1(8bb023c7c668f93d2333d648fc3cefdbd66f92db) )
+
+	ROM_REGION( 0x1000, "gfx1", 0 )
+	ROM_LOAD( "gfx.5f",        0x0000, 0x0800, CRC(60f49e88) SHA1(92ea21715b2d4d28a0509a31b35b43354be7b75f) )
+	ROM_LOAD( "gfx.5h",        0x0800, 0x0800, CRC(9486e09e) SHA1(a8c2b48a3a2633c2eae19bb40299c4da1499c15c) )
+
+	ROM_REGION( 0x0020, "proms", 0 )
+	ROM_LOAD( "82s123.6e",  0x0000, 0x0020, CRC(40c6bcbd) SHA1(cb0c058eadc37eba4b1a99be095da81a14099d8d) )
+ROM_END
+
 ROM_START( hustler )
 	ROM_REGION( 0x10000, "maincpu", 0 )
 	ROM_LOAD( "hustler.1",    0x0000, 0x1000, CRC(94479a3e) SHA1(ea3a1a3f6bee3d35a6a0fb0ba689a25f6b919e5d) )
@@ -1243,8 +1402,10 @@ GAME( 1982, tazmani2,  tazmania, type2,     tazmania,  scramble_state,  tazmani2
 GAME( 1982, rescue,    0,        rescue,    rescue,    scramble_state,  rescue,       ROT90,  "Stern Electronics",                  "Rescue", MACHINE_SUPPORTS_SAVE )
 GAME( 1982, rescueb,   rescue,   rescue,    rescue,    scramble_state,  rescue,       ROT90,  "bootleg (Videl Games)",              "Rescue (bootleg)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
 GAME( 1982, aponow,    rescue,   rescue,    rescue,    scramble_state,  rescue,       ROT90,  "bootleg",                            "Apocaljpse Now (bootleg of Rescue)", MACHINE_SUPPORTS_SAVE )
+GAME( 1982, rescuefe,  rescue,   rescuefe,  rescue,    driver_device,   0,            ROT90,  "bootleg (Free Enterprise Games)",    "Rescue (Free Enterprise Games, bootleg)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
 
 GAME( 1983, minefld,   0,        minefld,   minefld,   scramble_state,  minefld,      ROT90,  "Stern Electronics",                  "Minefield", MACHINE_SUPPORTS_SAVE )
+GAME( 1983, minefldfe, minefld,  minefldfe, minefld,   driver_device,   0,            ROT90,  "bootleg (The LogicShop)",            "Minefield (The LogicShop, bootleg)", MACHINE_SUPPORTS_SAVE | MACHINE_NOT_WORKING ) // The LogicShop aka Free Enterprise Games?
 
 GAME( 1981, hustler,   0,        hustler,   hustler,   scramble_state,  hustler,      ROT90,  "Konami",                             "Video Hustler", MACHINE_SUPPORTS_SAVE )
 GAME( 1981, hustlerd,  hustler,  hustler,   hustler,   scramble_state,  hustlerd,     ROT90,  "Konami (Dynamo Games license)",      "Video Hustler (Dynamo Games)", MACHINE_SUPPORTS_SAVE )

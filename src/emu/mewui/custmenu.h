@@ -42,7 +42,7 @@ struct c_sw_type
 	void set(const char *str);
 };
 
-// Software device type
+// Software list
 struct c_sw_list
 {
 	std::vector<std::string> name;

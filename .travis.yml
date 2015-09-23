@@ -4,18 +4,11 @@ compiler:
 os:
   - linux
   - osx
-matrix:
-  exclude:
-    - os: osx
-      compiler: gcc
 env:
-  - MAME=mame
+  - MAME=mame64
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    if [ $CC == 'clang' ]; then
     make -j2 linux_x64_clang && ./$MAME -validate;
-    else make -j2 linux_x64 && ./$MAME -validate;
-    fi
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
     make -j2 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
     fi
@@ -32,10 +25,7 @@ branches:
     - master
 after_success:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    if [ $CC == 'clang' ]; then
     curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/clang/;
-    else curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/gcc/;
-    fi
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
     curl --ftp-create-dirs -T $MAME -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/mac/;
     fi

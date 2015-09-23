@@ -1,6 +1,5 @@
 language: cpp
 compiler:
-  - gcc
   - clang
 os:
   - linux
@@ -10,7 +9,7 @@ matrix:
     - os: osx
       compiler: gcc
 env:
-  - SUBTARGET=test   MAME=mametest64
+  - MAME=mame
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
     if [ $CC == 'clang' ]; then

@@ -8,9 +8,9 @@ env:
   - MAME=mame64
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 LTO=1 linux_x64_clang && ./$MAME -validate;
+    make -j2 linux_x64_clang && ./$MAME -validate;
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    make -j2 LTO=1 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
+    make -j2 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
     fi
 sudo: required
 before_install:

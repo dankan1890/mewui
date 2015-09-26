@@ -6,7 +6,6 @@ os:
   - osx
 env:
   - MAME=mame64
-  - MEWUI=mewui64
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
     make -j2 OPTIMIZE=0 linux_x64_clang && ./$MAME -validate;
@@ -26,8 +25,8 @@ branches:
     - master
 after_success:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    mv &MAME &MEWUI && zip -r mewui64-linux.zip $MEWUI docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-linux.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/clang/;
+    mv $MAME mewui64 && zip -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-linux.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/clang/;
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    mv &MAME &MEWUI && zip -r mewui64-mac.zip $MEWUI docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-mac.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/mac/;
+    mv $MAME mewui64 && zip -r mewui64-mac.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-mac.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/mac/;
     fi
 

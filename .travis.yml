@@ -1,23 +1,16 @@
 language: cpp
 compiler:
-  - gcc
   - clang
 os:
   - linux
   - osx
-matrix:
-  exclude:
-    - os: osx
-      compiler: gcc
-    - os: linux
-      compiler: clang
 env:
-  - MAME=mame64
+  - MAME=mame64 LDOPTS="-Wl,-no-keep-memory"
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 OPTIMIZE=0 linux_x64 && ./$MAME -validate;
+    make -j2 linux_x64_clang && ./$MAME -validate;
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    make -j2 OPTIMIZE=0 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
+    unset LDOPTS && make -j2 OPTIMIZE=0 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
     fi
 sudo: required
 before_install:

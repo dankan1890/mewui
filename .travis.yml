@@ -1,16 +1,23 @@
 language: cpp
 compiler:
+  - gcc
   - clang
 os:
   - linux
   - osx
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
+    - os: linux
+      compiler: clang
 env:
-  - MAME=mame64 LDOPTS="-Wl,-no-keep-memory"
+  - MAME=mame64
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 OPTIMIZE=0 linux_x64_clang && ./$MAME -validate;
+    make -j2 OPTIMIZE=0 linux_x64 && ./$MAME -validate;
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    unset LDOPTS && make -j2 OPTIMIZE=0 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
+    make -j2 OPTIMIZE=0 MACOSX_USE_LIBSDL=1 && ./$MAME -validate;
     fi
 sudo: required
 before_install:
@@ -25,7 +32,7 @@ branches:
     - master
 after_success:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    mv $MAME mewui64 && zip -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-linux.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/clang/;
+    mv $MAME mewui64 && zip -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-linux.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/linux/;
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
     mv $MAME mewui64 && zip -r mewui64-mac.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ && curl --ftp-create-dirs -T mewui64-mac.zip -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/upload/mac/;
     fi

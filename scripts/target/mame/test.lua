@@ -277,6 +277,7 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/drivers/igs009.c",
 		MAME_DIR .. "src/mame/drivers/igs011.c",
 		MAME_DIR .. "src/mame/drivers/igs017.c",
+		MAME_DIR .. "src/mame/video/igs017_igs031.c",
 		MAME_DIR .. "src/mame/drivers/igs_fear.c",
 		MAME_DIR .. "src/mame/drivers/igs_m027.c",
 		MAME_DIR .. "src/mame/drivers/igs_m036.c",
@@ -330,6 +331,7 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mess/drivers/vic10.c",
 		MAME_DIR .. "src/mess/drivers/vic20.c",
 		MAME_DIR .. "src/mess/machine/cbm_snqk.c",
+		MAME_DIR .. "src/mess/drivers/mps1230.c",
 
 		-- Amiga
 		MAME_DIR .. "src/mess/drivers/amiga.c",

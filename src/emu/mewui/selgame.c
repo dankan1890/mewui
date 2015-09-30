@@ -30,6 +30,8 @@
 #include "mewui/utils.h"
 #include "mewui/auditmenu.h"
 
+static bool first_start = true;
+
 //-------------------------------------------------
 //  sort
 //-------------------------------------------------
@@ -100,6 +102,8 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 
 ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : ui_menu(machine, container)
 {
+	std::string error_string, last_filter;
+
 	// load drivers cache
 	load_cache_info();
 
@@ -110,6 +114,24 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	// load custom filter
 	load_custom_filters();
 
+	if (first_start)
+	{
+		reselect_last::driver.assign(machine.options().last_used_machine());
+		ume_filters::actual = machine.options().start_filter();
+		first_start = false;
+
+		if (main_filters::actual != FILTER_CATEGORY && main_filters::actual != FILTER_MANUFACTURER && main_filters::actual != FILTER_YEAR)
+		{
+			last_filter.assign(machine.options().last_used_filter());
+			for (size_t ind = 0; ind < main_filters::length; ++ind)
+			if (last_filter == main_filters::text[ind])
+			{
+				main_filters::actual = ind;
+				break;
+			}
+		}
+	}
+
 	if (!machine.options().remember_last())
 	{
 		reselect_last::driver.clear();
@@ -117,7 +139,6 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 		reselect_last::swlist.clear();
 	}
 
-	std::string error_string;
 	machine.options().set_value(OPTION_SNAPNAME, "%g/%i", OPTION_PRIORITY_CMDLINE, error_string);
 	machine.options().set_value(OPTION_SOFTWARENAME, "", OPTION_PRIORITY_CMDLINE, error_string);
 
@@ -126,7 +147,6 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	mewui_globals::switch_image = false;
 	mewui_globals::default_image = true;
 	l_sw_hover = -1;
-	ume_filters::actual = machine.options().start_filter();
 }
 
 //-------------------------------------------------
@@ -135,8 +155,14 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 
 ui_mewui_select_game::~ui_mewui_select_game()
 {
-	std::string error_string;
+	std::string error_string, last_driver;
+	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : NULL;
+	if ((FPTR)driver > 2)
+		last_driver.assign(driver->name);
+
 	machine().options().set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(OPTION_LAST_USED_FILTER, main_filters::text[main_filters::actual], OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	save_game_options(machine());
 }
 
@@ -603,7 +629,10 @@ void ui_mewui_select_game::populate()
 	if (old_item_selected != -1)
 	{
 		selected = old_item_selected;
-		top_line = selected - (mewui_globals::visible_main_lines / 2);
+		if (mewui_globals::visible_main_lines == 0)
+			top_line = (selected != 0) ? selected - 1 : 0;
+		else
+			top_line = selected - (mewui_globals::visible_main_lines / 2);
 		if (reselect_last::software.empty())
 			mewui_globals::reselect = false;
 	}
@@ -869,7 +898,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		tempbuf[1].assign(copyright.substr(0, found));
 		tempbuf[2].assign(copyright.substr(found + 1));
 		tempbuf[3].clear();
-		tempbuf[4].assign("MEWUI by dankan1890 http://sourceforge.net/projects/mewui");
+		tempbuf[4].assign("MEWUI by dankan1890 http://dankan1890.github.io/mewui/");
 	}
 
 	// compute our bounds

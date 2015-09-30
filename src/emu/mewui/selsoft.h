@@ -12,7 +12,6 @@
 #ifndef __MEWUI_SELSOFT_H__
 #define __MEWUI_SELSOFT_H__
 
-#include "mewui/utils.h"
 #include "mewui/custmenu.h"
 
 // Menu Class
@@ -61,7 +60,6 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-
 	ui_software_info          *m_uiinfo;
 	std::vector<std::string>  m_nameparts, m_descpart;
 };

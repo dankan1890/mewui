@@ -13,9 +13,9 @@
 #include "mewui/miscmenu.h"
 #include "mewui/utils.h"
 
-misc_option ui_menu_misc_options::m_options[] = {
+ui_menu_misc_options::misc_option ui_menu_misc_options::m_options[] = {
 	{ 0, NULL, NULL },
-	{ 0, "Re-select last game / system played",             OPTION_REMEMBER_LAST },
+	{ 0, "Re-select last machine played",                   OPTION_REMEMBER_LAST },
 	{ 0, "Enlarge images in the right panel",               OPTION_ENLARGE_SNAPS },
 	{ 0, "DATs info",                                       OPTION_DATS_ENABLED },
 	{ 0, "Cheats",                                          OPTION_CHEAT },
@@ -43,7 +43,7 @@ ui_menu_misc_options::~ui_menu_misc_options()
 	std::string error_string;
 	for (int d = 1; d < ARRAY_LENGTH(m_options); ++d)
 		machine().options().set_value(m_options[d].option, m_options[d].status, OPTION_PRIORITY_CMDLINE, error_string);
-	mewui_globals::force_reset_main = true;
+	mewui_globals::reset = true;
 }
 
 //-------------------------------------------------

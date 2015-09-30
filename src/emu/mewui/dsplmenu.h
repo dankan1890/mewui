@@ -13,13 +13,6 @@
 #ifndef __MEWUI_DSPLMENU_H__
 #define __MEWUI_DSPLMENU_H__
 
-struct dspl_option
-{
-	UINT16      status;
-	const char  *description;
-	const char  *option;
-};
-
 //-------------------------------------------------
 //  class display options menu
 //-------------------------------------------------
@@ -33,7 +26,20 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-	static const char *video_modes[], *video_modes_label[];
+	struct dspl_option
+	{
+		UINT16      status;
+		const char  *description;
+		const char  *option;
+	};
+
+	struct video_modes
+	{
+		const char  *option;
+		const char  *label;
+	};
+
+	static video_modes m_video[];
 	static dspl_option m_options[];
 };
 

@@ -62,12 +62,12 @@ void ui_menu_selector::handle()
 					break;
 
 				case SELECTOR_GAME:
-					mewui_globals::actual_filter = m_hover;
+					main_filters::actual = m_hover;
 					ui_menu::menu_stack->parent->reset(UI_MENU_RESET_SELECT_FIRST);
 					break;
 
 				case SELECTOR_SOFTWARE:
-					mewui_globals::actual_sw_filter = m_hover;
+					sw_filters::actual = m_hover;
 					ui_menu::menu_stack->parent->reset(UI_MENU_RESET_SELECT_FIRST);
 					break;
 

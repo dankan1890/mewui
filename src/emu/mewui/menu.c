@@ -398,7 +398,7 @@ void ui_menu::draw_select_game(bool noinput)
 	// draw right box
 	float origy1 = draw_right_box_title(x1, y1, x2, y2);
 
-	if (mewui_globals::rpanel_infos == RP_IMAGES)
+	if (mewui_globals::rpanel == RP_IMAGES)
 		arts_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, origy1, x2, y2, (is_swlist || is_favorites));
 	else
 		infos_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, origy1, x2, y2, (is_swlist || is_favorites));
@@ -943,7 +943,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 					}
 					else if (r_hover >= RP_FIRST && r_hover <= RP_LAST)
 					{
-						mewui_globals::rpanel_infos = r_hover;
+						mewui_globals::rpanel = r_hover;
 						stop = true;
 					}
 					else if (l_sw_hover >= MEWUI_SW_FIRST && l_sw_hover <= MEWUI_SW_LAST)
@@ -953,7 +953,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 					}
 					else if (ume_hover >= MEWUI_MAME_FIRST && ume_hover <= MEWUI_MAME_LAST)
 					{
-						mewui_globals::ume_system = ume_hover;
+						ume_filters::actual = ume_hover;
 						menu_event.iptkey = IPT_OTHER;
 						stop = true;
 					}
@@ -1027,10 +1027,10 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 	float text_size = 0.75f;
 	float line_height = machine().ui().get_line_height() * text_size;
 	float left_width = 0.0f;
-	int text_lenght = (software) ? mewui_globals::sw_filter_len : mewui_globals::s_filter_text;
-	int afilter = (software) ? mewui_globals::actual_sw_filter : mewui_globals::actual_filter;
+	int text_lenght = (software) ? sw_filters::length : main_filters::length;
+	int afilter = (software) ? sw_filters::actual : main_filters::actual;
 	int *hover = (software) ? &l_sw_hover : &l_hover;
-	const char **text = (software) ? mewui_globals::sw_filter_text : mewui_globals::filter_text;
+	const char **text = (software) ? sw_filters::text : main_filters::text;
 	float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
 
 	if ((text_lenght * line_height) > sc)
@@ -1084,7 +1084,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		float x1t = x1 + text_sign;
 		if (!software && afilter == FILTER_CUSTOM)
 		{
-			if (filter == custfltr::main_filter)
+			if (filter == custfltr::main)
 			{
 				str.assign("@custom1 ").append(text[filter]);
 				x1t -= text_sign;
@@ -1107,7 +1107,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 
 		if (software && afilter == MEWUI_SW_CUSTOM)
 		{
-			if (filter == sw_custfltr::main_filter)
+			if (filter == sw_custfltr::main)
 			{
 				str.assign("@custom1 ").append(text[filter]);
 				x1t -= text_sign;
@@ -1146,11 +1146,11 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 	float line_height = machine().ui().get_line_height() * text_size;
 	float maxwidth = 0.0f;
 
-	for (int x = 0; x < mewui_globals::s_ume_text; x++)
+	for (int x = 0; x < ume_filters::length; x++)
 	{
 		float width;
 		// compute width of left hand side
-		machine().ui().draw_text_full(container, mewui_globals::ume_text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		machine().ui().draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, UI_TEXT_COLOR, ARGB_BLACK, &width, NULL, text_size);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -1168,7 +1168,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 
 	ume_hover = -1;
 
-	for (int filter = 0; filter < mewui_globals::s_ume_text; filter++)
+	for (int filter = 0; filter < ume_filters::length; filter++)
 	{
 		rgb_t bgcolor = UI_TEXT_BG_COLOR;
 
@@ -1178,13 +1178,13 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 			ume_hover = filter;
 		}
 
-		if (mewui_globals::ume_system == filter)
+		if (ume_filters::actual == filter)
 			bgcolor = UI_SELECTED_BG_COLOR;
 
 		if (bgcolor != UI_TEXT_BG_COLOR)
 			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
-		machine().ui().draw_text_full(container, mewui_globals::ume_text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		machine().ui().draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, bgcolor, NULL, NULL, text_size);
 
 		y1 += line_height;
@@ -1219,14 +1219,14 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 
 		if (mouse_hit && x1 <= mouse_x && x1 + midl > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
 		{
-			if (mewui_globals::rpanel_infos != cells)
+			if (mewui_globals::rpanel != cells)
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
 				r_hover = cells;
 			}
 		}
 
-		if (mewui_globals::rpanel_infos != cells)
+		if (mewui_globals::rpanel != cells)
 		{
 			container->add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, UI_LINE_WIDTH,
 			                    UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1267,7 +1267,7 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 	if (software)
 	{
 		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
-		if (mewui_globals::actual_filter == FILTER_FAVORITE_GAME && soft->startempty == 1)
+		if (main_filters::actual == FILTER_FAVORITE_GAME && soft->startempty == 1)
 		{
 			driver = soft->driver;
 			oldsoft = NULL;

@@ -172,7 +172,7 @@ function toolchain(_buildDir, _subDir)
 			if _OPTIONS["distro"]=="ubuntu-intrepid" then
 				premake.gcc.cc   = "@gcc -V 4.2"
 				premake.gcc.cxx  = "@g++-4.2"
-			end		
+			end
 			premake.gcc.ar  = "ar"
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-linux")
 		end
@@ -192,24 +192,35 @@ function toolchain(_buildDir, _subDir)
 		if "mingw32-gcc" == _OPTIONS["gcc"] then
 			if not os.getenv("MINGW32") or not os.getenv("MINGW32") then
 				print("Set MINGW32 envrionment variable.")
-			end		
+			end
 			premake.gcc.cc  = "$(MINGW32)/bin/i686-w64-mingw32-gcc"
 			premake.gcc.cxx = "$(MINGW32)/bin/i686-w64-mingw32-g++"
-			premake.gcc.ar  = "$(MINGW32)/bin/ar"
--- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in windows with the current build tools' copy of gcc-ar.exe
---			premake.gcc.ar  = "$(MINGW32)/bin/gcc-ar"
+-- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in Windows with the current buildtool's version of gcc-ar.exe
+-- if you are using LTO=1 you must have GCC 5.0+
+
+			if _OPTIONS["LTO"]=="1" then
+				premake.gcc.ar  = "$(MINGW32)/bin/i686-w64-mingw32-gcc-ar"
+			else
+				premake.gcc.ar  = "$(MINGW32)/bin/ar"
+			end
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-mingw32-gcc")
 		end
 
 		if "mingw64-gcc" == _OPTIONS["gcc"] then
 			if not os.getenv("MINGW64") or not os.getenv("MINGW64") then
 				print("Set MINGW64 envrionment variable.")
-			end				
+			end
 			premake.gcc.cc  = "$(MINGW64)/bin/x86_64-w64-mingw32-gcc"
 			premake.gcc.cxx = "$(MINGW64)/bin/x86_64-w64-mingw32-g++"
-			premake.gcc.ar  = "$(MINGW64)/bin/ar"
--- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in windows with the current build tools' copy of gcc-ar.exe
---			premake.gcc.ar  = "$(MINGW64)/bin/gcc-ar"
+-- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in Windows with the current buildtool's version of gcc-ar.exe
+-- if you are using LTO=1 you must have GCC 5.0+
+
+			if _OPTIONS["LTO"]=="1" then
+				premake.gcc.ar  = "$(MINGW64)/bin/x86_64-w64-mingw32-gcc-ar"
+			else
+				premake.gcc.ar  = "$(MINGW64)/bin/ar"
+			end
+
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-mingw64-gcc")
 		end
 
@@ -339,14 +350,14 @@ function toolchain(_buildDir, _subDir)
 			platforms { "ARM" }
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-winstore81")
 		end
-		
+
 		if "winstore82" == _OPTIONS["vs"] then
 			premake.vstudio.toolset = "v140"
 			premake.vstudio.storeapp = "8.2"
 			platforms { "ARM" }
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-winstore82")
 		end
-		
+
 		if "intel-14" == _OPTIONS["vs"] then
 			premake.vstudio.toolset = "Intel C++ Compiler XE 14.0"
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-intel")
@@ -361,11 +372,11 @@ function toolchain(_buildDir, _subDir)
 			premake.vstudio.toolset = ("v110_xp")
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-xp")
 		end
-		
+
 		if ("vs2013-xp") == _OPTIONS["vs"] then
 			premake.vstudio.toolset = ("v120_xp")
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-xp")
-		end	
+		end
 	elseif _ACTION == "xcode4" then
 
 		if "osx" == _OPTIONS["xcode"] then
@@ -383,11 +394,11 @@ function toolchain(_buildDir, _subDir)
 	end
 	if (_OPTIONS["CXX"] ~= nil) then
 		premake.gcc.cxx  = _OPTIONS["CXX"]
-	end	
+	end
 	if (_OPTIONS["LD"] ~= nil) then
 		premake.gcc.ld  = _OPTIONS["LD"]
-	end	
-	
+	end
+
 	configuration {} -- reset configuration
 
 
@@ -437,12 +448,12 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "x64", "vs*-clang", "Debug" }
 		targetdir (_buildDir .. _ACTION .. "-clang/bin/x64/Debug")
-	
+
 	configuration { "vs*-clang" }
 		buildoptions {
 			"-Qunused-arguments",
-		} 
-		
+		}
+
 	configuration { "winphone8* or winstore8*" }
 		removeflags {
 			"StaticRuntime",
@@ -466,7 +477,7 @@ function toolchain(_buildDir, _subDir)
 	configuration { "x64", "mingw64-gcc" }
 		objdir (_buildDir .. "mingw-gcc" .. "/obj")
 		buildoptions { "-m64" }
-		
+
 	configuration { "x64", "mingw64-gcc", "Release" }
 		targetdir (_buildDir .. "mingw-gcc" .. "/bin/x64/Release")
 
@@ -494,7 +505,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "x32", "mingw-clang", "Debug" }
 		targetdir (_buildDir .. "win32_mingw-clang/bin/x32/Debug")
-		
+
 	configuration { "x64", "mingw-clang" }
 		objdir (_buildDir .. "mingw-clang/obj")
 		buildoptions { "-m64" }
@@ -502,14 +513,14 @@ function toolchain(_buildDir, _subDir)
 			"-isystem$(MINGW64)/x86_64-w64-mingw32/include/c++",
 			"-isystem$(MINGW64)/x86_64-w64-mingw32/include/c++/x86_64-w64-mingw32",
 			"-isystem$(MINGW64)/x86_64-w64-mingw32/include",
-		}		
+		}
 
 	configuration { "x64", "mingw-clang", "Release" }
 		targetdir (_buildDir .. "mingw-clang/bin/x64/Release")
 
 	configuration { "x64", "mingw-clang", "Debug" }
 		targetdir (_buildDir .. "mingw-clang/bin/x64/Debug")
-		
+
 	configuration { "linux-gcc", "x32" }
 		objdir (_buildDir .. "linux_gcc" .. "/obj")
 		buildoptions {
@@ -530,7 +541,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "linux-gcc", "x64", "Release" }
 		targetdir (_buildDir .. "linux_gcc" .. "/bin/x64/Release")
-	
+
 	configuration { "linux-gcc", "x64", "Debug" }
 		targetdir (_buildDir .. "linux_gcc" .. "/bin/x64/Debug")
 
@@ -557,7 +568,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "linux-clang", "x64", "Debug" }
 		targetdir (_buildDir .. "linux_clang" .. "/bin/x64/Debug")
-		
+
 	configuration { "solaris", "x32" }
 		objdir (_buildDir .. "solaris" .. "/obj")
 		buildoptions {
@@ -566,7 +577,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "solaris", "x32", "Release" }
 		targetdir (_buildDir .. "solaris" .. "/bin/x32/Release")
-	
+
 	configuration { "solaris", "x32", "Debug" }
 		targetdir (_buildDir .. "solaris" .. "/bin/x32/Debug")
 
@@ -578,7 +589,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "solaris", "x64", "Release" }
 		targetdir (_buildDir .. "solaris" .. "/bin/x64/Release")
-	
+
 	configuration { "solaris", "x64", "Debug" }
 		targetdir (_buildDir .. "solaris" .. "/bin/x64/Debug")
 
@@ -590,7 +601,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "freebsd", "x32", "Release" }
 		targetdir (_buildDir .. "freebsd" .. "/bin/x32/Release")
-	
+
 	configuration { "freebsd", "x32", "Debug" }
 		targetdir (_buildDir .. "freebsd" .. "/bin/x32/Debug")
 
@@ -601,7 +612,7 @@ function toolchain(_buildDir, _subDir)
 		}
 	configuration { "freebsd", "x64", "Release" }
 		targetdir (_buildDir .. "freebsd" .. "/bin/x64/Release")
-	
+
 	configuration { "freebsd", "x64", "Debug" }
 		targetdir (_buildDir .. "freebsd" .. "/bin/x64/Debug")
 
@@ -765,7 +776,7 @@ function toolchain(_buildDir, _subDir)
 			"-fdiagnostics-show-option",
 			"-fdata-sections",
 			"-ffunction-sections",
-			"-Wunused-value",			
+			"-Wunused-value",
 		}
 	configuration { "nacl or nacl-arm" }
 		includedirs {
@@ -773,10 +784,10 @@ function toolchain(_buildDir, _subDir)
 			"$(NACL_SDK_ROOT)/include/newlib",
 		}
 
-	configuration { "pnacl" }		
+	configuration { "pnacl" }
 		buildoptions {
 			"-Wno-tautological-undefined-compare",
-			"-Wno-cast-align",			
+			"-Wno-cast-align",
 		}
 		includedirs {
 			"$(NACL_SDK_ROOT)/include",
@@ -833,7 +844,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "osx*", "x32", "Debug" }
 		targetdir (_buildDir .. "osx_clang" .. "/bin/x32/Debug")
-		
+
 	configuration { "osx*", "x64" }
 		objdir (_buildDir .. "osx_clang" .. "/obj")
 		buildoptions {
@@ -845,7 +856,7 @@ function toolchain(_buildDir, _subDir)
 
 	configuration { "osx*", "x64", "Debug" }
 		targetdir (_buildDir .. "osx_clang" .. "/bin/x64/Debug")
-		
+
 	configuration { "ios-arm" }
 		targetdir (_buildDir .. "ios-arm" .. "/bin")
 		objdir (_buildDir .. "ios-arm" .. "/obj")

@@ -16,6 +16,13 @@
 #include "mewui/utils.h"
 #include "mewui/optsmenu.h"
 
+struct folders_entry
+{
+	const char *name;
+	const char *option;
+};
+
+
 static const folders_entry s_folders_entry[] =
 {
 	{ "ROMs",                OPTION_MEDIAPATH },
@@ -322,7 +329,7 @@ ui_menu_directory::ui_menu_directory(running_machine &machine, render_container 
 ui_menu_directory::~ui_menu_directory()
 {
 	save_game_options(machine());
-	mewui_globals::force_reset_main = true;
+	mewui_globals::reset = true;
 }
 
 //-------------------------------------------------

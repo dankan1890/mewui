@@ -8,7 +8,7 @@
 
 ***************************************************************************/
 
-#define BARE_BUILD_VERSION "0.165"
+#define BARE_BUILD_VERSION "0.166"
 
 extern const char bare_build_version[];
 extern const char build_version[];
@@ -17,4 +17,4 @@ const char build_version[] = BARE_BUILD_VERSION " (" __DATE__")";
 
 // MEWUI version
 extern const char mewui_version[];
-const char mewui_version[] = "1.65a";
+const char mewui_version[] = "1.66";

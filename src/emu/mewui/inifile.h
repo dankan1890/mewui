@@ -15,9 +15,6 @@
 
 #include "mewui/utils.h"
 
-/**************************************************************************
-    CONSTANTS AND STRUCTURES
-**************************************************************************/
 // category structure
 struct IniCategoryIndex
 {
@@ -32,14 +29,13 @@ struct IniFileIndex
 	std::vector<IniCategoryIndex> category;
 };
 
-/**************************************************************************
-    INIFILE MANAGER
-**************************************************************************/
+//-------------------------------------------------
+//  INIFILE MANAGER
+//-------------------------------------------------
 
 class inifile_manager
 {
 public:
-
 	// construction/destruction
 	inifile_manager(running_machine &machine);
 
@@ -54,7 +50,6 @@ public:
 	static UINT16 current_file, current_category;
 
 private:
-
 	// init category index
 	void init_category(std::vector<IniCategoryIndex> &index, std::string &filename);
 
@@ -69,14 +64,13 @@ private:
 	std::string     m_fullpath;
 };
 
-/**************************************************************************
-    FAVORITE MANAGER
-**************************************************************************/
+//-------------------------------------------------
+//  FAVORITE MANAGER
+//-------------------------------------------------
 
 class favorite_manager
 {
 public:
-
 	// construction/destruction
 	favorite_manager(running_machine &machine);
 
@@ -104,7 +98,6 @@ public:
 	void remove_favorite_game(ui_software_info &swinfo);
 
 private:
-
 	// current
 	int m_current_favorite;
 

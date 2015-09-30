@@ -13,8 +13,6 @@
 #include "audit.h"
 #include "mewui/auditmenu.h"
 #include "mewui/utils.h"
-#include <algorithm>
-#include <fstream>
 
 //-------------------------------------------------
 //  sort

@@ -4,6 +4,12 @@ if (_OPTIONS["targetos"] == "windows") then
 	}
 end
 
+if (_OPTIONS["targetos"] == "macosx") then
+	defines {
+		"NO_MEM_TRACKING",
+	}
+end
+
 files {
 	MAME_DIR .. "src/emu/mewui/auditmenu.c",
 	MAME_DIR .. "src/emu/mewui/auditmenu.h",

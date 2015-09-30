@@ -40,9 +40,6 @@ enum
 #define COMMAND_UNICODE (0xe000)
 #define MAX_GLYPH_FONT  (150)
 
-// for color glyph
-#define COLOR_BUTTONS   (90)
-
 // Define Game Command Font Converting Conditions
 #define COMMAND_DEFAULT_TEXT    '_'
 
@@ -53,7 +50,7 @@ enum
 #define COMMAND_CONVERT_TEXT    '@'
 
 // Defined Game Command Font Color Array
-static rgb_t color_table[COLOR_BUTTONS] =
+static rgb_t color_table[] =
 {
 	0,                   // dummy
 	BUTTON_COLOR_RED,    // BTN_A
@@ -145,6 +142,9 @@ static rgb_t color_table[COLOR_BUTTONS] =
 	BUTTON_COLOR_AQUA,   // 7 Player Lever
 	BUTTON_COLOR_SILVER  // 8 Player Lever
 };
+
+// for color glyph
+#define COLOR_BUTTONS   ARRAY_LENGTH(color_table)
 
 // Follow Varialbe Defined Arraies for Game Command Tag
 struct fix_command_t
@@ -400,15 +400,5 @@ static fix_strings_t convert_text[] =
 	{ "button",  133 }, // Any Button
 	{ 0, 0 }    // end of array
 };
-
-static rgb_t uifont_colortable[MAX_COLORTABLE];
-
-rgb_t get_rgb_color(rgb_t color)
-{
-	if (color < MAX_COLORTABLE)
-		return uifont_colortable[color];
-
-	return color;
-}
 
 #endif /* __MEWUI_CMDDATA_H__ */

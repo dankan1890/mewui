@@ -12,7 +12,7 @@
 #include "rendfont.h"
 #include "rendutil.h"
 #include "emuopts.h"
-#include <zlib.h>
+#include "coreutil.h"
 
 #include "osdepend.h"
 #include "uismall.fh"
@@ -221,11 +221,9 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 	rgb_t color = rgb_t(0xff,0xff,0xff,0xff);
 	bool is_cmd = (chnum >= COMMAND_UNICODE && chnum < COMMAND_UNICODE + MAX_GLYPH_FONT);
 
-	//mamep: for color glyph
 	if (gl.color)
-		color = get_rgb_color(gl.color);
+		color = gl.color;
 
-	//mamep: command glyph support
 	if (is_cmd)
 	{
 		// punt if nothing there
@@ -491,7 +489,7 @@ bool render_font::load_cached_bdf(const char *filename)
 		return false;
 
 	// has the chunk
-	UINT32 hash = crc32(0, (const UINT8 *)&m_rawdata[0], bytes) ^ (UINT32)m_rawsize;
+	UINT32 hash = core_crc32(0, (const UINT8 *)&m_rawdata[0], bytes) ^ (UINT32)m_rawsize;
 
 	// create the cached filename, changing the 'F' to a 'C' on the extension
 	std::string cachedname(filename);

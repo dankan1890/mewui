@@ -44,6 +44,8 @@
 #define OPTION_SKIP_BIOS_MENU         "skip_biosmenu"
 #define OPTION_SKIP_PARTS_MENU        "skip_partsmenu"
 #define OPTION_START_FILTER           "start_filter"
+#define OPTION_LAST_USED_FILTER       "last_used_filter"
+#define OPTION_LAST_USED_MACHINE      "last_used_machine"
 
 // core UI options
 #define OPTION_INFOS_SIZE             "infos_text_size"
@@ -101,6 +103,8 @@ public:
 	bool skip_bios_menu() const { return bool_value(OPTION_SKIP_BIOS_MENU); }
 	bool skip_parts_menu() const { return bool_value(OPTION_SKIP_PARTS_MENU); }
 	int start_filter() const { return int_value(OPTION_START_FILTER); }
+	const char *last_used_machine() const { return value(OPTION_LAST_USED_MACHINE); }
+	const char *last_used_filter() const { return value(OPTION_LAST_USED_FILTER); }
 
 	// UI options
 	float infos_size() const { return float_value(OPTION_INFOS_SIZE); }

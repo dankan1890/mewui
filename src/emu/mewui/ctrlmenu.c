@@ -14,7 +14,7 @@
 
 const char *ui_menu_controller_mapping::m_device_status[] = { "none", "keyboard", "mouse", "lightgun", "joystick" };
 
-ctrl_option ui_menu_controller_mapping::m_options[] = {
+ui_menu_controller_mapping::ctrl_option ui_menu_controller_mapping::m_options[] = {
 	{ 0, NULL, NULL },
 	{ 0, "Lightgun Device Assignment",   OPTION_LIGHTGUN_DEVICE },
 	{ 0, "Trackball Device Assignment",  OPTION_TRACKBALL_DEVICE },

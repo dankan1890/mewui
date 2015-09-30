@@ -16,8 +16,6 @@
 #ifdef MEWUI_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <tchar.h>
-#include "strconv.h"
 #endif
 
 struct s_color_table
@@ -26,30 +24,10 @@ struct s_color_table
 	const char  *option;
 };
 
-enum
-{
-	MUI_BACKGROUND_COLOR = 1,
-	MUI_BORDER_COLOR,
-	MUI_CLONE_COLOR,
-	MUI_DIPSW_COLOR,
-	MUI_GFXVIEWER_BG_COLOR,
-	MUI_MOUSEDOWN_BG_COLOR,
-	MUI_MOUSEDOWN_COLOR,
-	MUI_MOUSEOVER_BG_COLOR,
-	MUI_MOUSEOVER_COLOR,
-	MUI_SELECTED_BG_COLOR,
-	MUI_SELECTED_COLOR,
-	MUI_SLIDER_COLOR,
-	MUI_SUBITEM_COLOR,
-	MUI_TEXT_BG_COLOR,
-	MUI_TEXT_COLOR,
-	MUI_UNAVAILABLE_COLOR,
-	MUI_RESTORE
-};
+//-------------------------------------------------
+//  Custom UI menu
+//-------------------------------------------------
 
-/***************************************************************************
-    CUSTOM UI CLASS
-***************************************************************************/
 class ui_menu_custom_ui : public ui_menu
 {
 public:
@@ -67,18 +45,10 @@ private:
 	};
 };
 
-#ifdef MEWUI_WINDOWS
-// Fonts struct
-struct c_uifonts
-{
-	std::vector<std::string> ui;
-	UINT16 actual;
-};
-#endif
+//-------------------------------------------------
+//  Font UI menu
+//-------------------------------------------------
 
-/***************************************************************************
-    FONT UI CLASS
-***************************************************************************/
 class ui_menu_font_ui : public ui_menu
 {
 public:
@@ -99,19 +69,26 @@ private:
 	};
 
 #ifdef MEWUI_WINDOWS
-	c_uifonts m_class;
-	bool      m_bold, m_italic;
+	struct c_uifonts
+	{
+		std::vector<std::string> ui;
+		UINT16 actual;
+	} m_class;
 
+	bool      m_bold, m_italic;
 	void      list();
+	static int CALLBACK EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam);
+
 #endif
 
 	float m_info_min, m_info_max, m_info_size;
 	int m_font_min, m_font_max, m_font_size;
 };
 
-/***************************************************************************
-    COLORS UI CLASS
-***************************************************************************/
+//-------------------------------------------------
+//  Colors UI menu
+//-------------------------------------------------
+
 class ui_menu_colors_ui : public ui_menu
 {
 public:
@@ -122,14 +99,35 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
+	enum
+	{
+		MUI_BACKGROUND_COLOR = 1,
+		MUI_BORDER_COLOR,
+		MUI_CLONE_COLOR,
+		MUI_DIPSW_COLOR,
+		MUI_GFXVIEWER_BG_COLOR,
+		MUI_MOUSEDOWN_BG_COLOR,
+		MUI_MOUSEDOWN_COLOR,
+		MUI_MOUSEOVER_BG_COLOR,
+		MUI_MOUSEOVER_COLOR,
+		MUI_SELECTED_BG_COLOR,
+		MUI_SELECTED_COLOR,
+		MUI_SLIDER_COLOR,
+		MUI_SUBITEM_COLOR,
+		MUI_TEXT_BG_COLOR,
+		MUI_TEXT_COLOR,
+		MUI_UNAVAILABLE_COLOR,
+		MUI_RESTORE
+	};
 
 	s_color_table m_color_table[MUI_RESTORE];
 	void restore_colors();
 };
 
-/***************************************************************************
-    RGB UI CLASS
-***************************************************************************/
+//-------------------------------------------------
+//  ARGB UI menu
+//-------------------------------------------------
+
 class ui_menu_rgb_ui : public ui_menu
 {
 public:
@@ -140,7 +138,6 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
-
 	rgb_t           *m_color;
 	char            m_search[4];
 	bool            m_key_active;
@@ -159,15 +156,9 @@ private:
 	void inkey_special(const ui_menu_event *menu_event);
 };
 
-/***************************************************************************
-    PALETTE UI CLASS
-***************************************************************************/
-
-struct palcolor
-{
-	const char *name;
-	const char *argb;
-};
+//-------------------------------------------------
+//  Palette UI menu
+//-------------------------------------------------
 
 class ui_menu_palette_sel : public ui_menu
 {
@@ -179,6 +170,13 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 private:
+	struct palcolor
+	{
+		const char *name;
+		const char *argb;
+	};
+
+	static palcolor m_palette[];
 	rgb_t &m_original;
 };
 

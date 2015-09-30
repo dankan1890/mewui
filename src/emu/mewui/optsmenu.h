@@ -13,8 +13,6 @@
 #ifndef __MEWUI_OPTSMENU_H__
 #define __MEWUI_OPTSMENU_H__
 
-#include "mewui/utils.h"
-
 class ui_menu_game_options : public ui_menu
 {
 public:
@@ -31,6 +29,7 @@ private:
 		FILE_CATEGORY_FILTER,
 		MANUFACT_CAT_FILTER,
 		YEAR_CAT_FILTER,
+		SCREEN_CAT_FILTER,
 		CATEGORY_FILTER,
 		MISC_MENU,
 		DISPLAY_MENU,

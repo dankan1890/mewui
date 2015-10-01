@@ -3,9 +3,9 @@
 
 ---------------------------------------------------------------------------
 --
---   mewuitest.lua
+--   test.lua
 --
---   Mewui test target makefile
+--   MEWUI TEST target makefile
 --
 ---------------------------------------------------------------------------
 
@@ -59,6 +59,7 @@ CPUS["MCS48"] = true
 CPUS["MCS51"] = true
 CPUS["MINX"] = true
 CPUS["MIPS"] = true
+CPUS["NEC"] = true
 CPUS["S2650"] = true
 CPUS["SPC700"] = true
 CPUS["SUPERFX"] = true
@@ -201,7 +202,6 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/emu",
 		MAME_DIR .. "src/devices",
-		MAME_DIR .. "src/mame",
 		MAME_DIR .. "src/mame",
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",

@@ -10,17 +10,20 @@
     Improvements by Pierpaolo Prazzoli, David Haywood, Angelo Salese
 
     todo:
-    finish
+    both games
         - correct roz rotation;
-        - make cntsteer work, comms looks awkward and probably different than Zero Target;
         - flip screen support;
         - according to a side-by-side test, sound should be "darker" by some octaves,
           likely that a sound filter is needed;
+    cntsteer specific:
+    	- proper bus request support, starting from understanding the role of DP register in M6809 core 
+	  (having that returning non-zero in NMI for subcpu forces a reset?);
+	- Understand how irq communication works between CPUs. Buffer $415-6 seems involved in the protocol.
+	- understand who's master and who's slave between "back" and "mix" CPUs (order might be actually inverted);
+	- understand why background mirroring causes wrong gfxs on title screen (wrong tilemap paging);
     cleanup
         - split into driver/video;
 
-    note: To boot cntsteer, set a CPU #1 breakpoint on c225 and then 'do pc=c230'.
-          Protection maybe?
 
 ***************************************************************************************/
 
@@ -509,20 +512,24 @@ WRITE8_MEMBER(cntsteer_state::zerotrgt_ctrl_w)
 
 WRITE8_MEMBER(cntsteer_state::cntsteer_sub_irq_w)
 {
-	m_subcpu->set_input_line(M6809_IRQ_LINE, ASSERT_LINE);
+	//m_subcpu->set_input_line(M6809_IRQ_LINE, ASSERT_LINE);
 //  printf("%02x IRQ\n", data);
 }
 
 WRITE8_MEMBER(cntsteer_state::cntsteer_sub_nmi_w)
 {
 //  if (data)
-//  m_subcpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
+	machine().scheduler().synchronize(); // force resync
+
+	m_subcpu->set_input_line(M6809_IRQ_LINE, ASSERT_LINE);
+	m_maincpu->set_input_line(M6809_IRQ_LINE, CLEAR_LINE);
 //  popmessage("%02x", data);
 }
 
 WRITE8_MEMBER(cntsteer_state::cntsteer_main_irq_w)
 {
-	m_maincpu->set_input_line(M6809_IRQ_LINE, HOLD_LINE);
+	machine().scheduler().synchronize(); // force resync
+	m_maincpu->set_input_line(M6809_IRQ_LINE, ASSERT_LINE);
 }
 
 /* Convert weird input handling with MAME standards.*/

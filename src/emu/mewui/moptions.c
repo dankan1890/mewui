@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /***************************************************************************
 
-    mewui/options.c
+    mewui/moptions.c
 
     MEWUI main options manager.
 
@@ -45,12 +45,12 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_REMEMBER_LAST,                  "1",  OPTION_BOOLEAN, "reselect in main menu last played game" },
 	{ OPTION_ENLARGE_SNAPS,                  "1",  OPTION_BOOLEAN, "enlarge arts (snapshot, title, etc...) in right panel (keeping aspect ratio)" },
 	{ OPTION_FORCED4X3,                      "1",  OPTION_BOOLEAN, "force the appearance of the snapshot in the list software to 4:3" },
-	{ OPTION_USE_BACKGROUND,                 "0",  OPTION_BOOLEAN, "enable background image in main view" },
+	{ OPTION_USE_BACKGROUND,                 "1",  OPTION_BOOLEAN, "enable background image in main view" },
 	{ OPTION_SKIP_BIOS_MENU,                 "0",  OPTION_BOOLEAN, "skip bios submenu, start with configured or default" },
 	{ OPTION_SKIP_PARTS_MENU,                "0",  OPTION_BOOLEAN, "skip parts submenu, start with first part" },
 	{ OPTION_START_FILTER,                   "0",  OPTION_INTEGER, "startup filter (0 = ALL, 1 = ARCADES, 2 = SYSTEMS)" },
-	{ OPTION_LAST_USED_FILTER,               "0",  OPTION_STRING,  "latest used filter" },
-	{ OPTION_LAST_USED_MACHINE,              "",   OPTION_STRING,  "latest used machine" },
+	{ OPTION_LAST_USED_FILTER,               "0",   OPTION_STRING, "latest used filter" },
+	{ OPTION_LAST_USED_MACHINE,               "",   OPTION_STRING, "latest used machine" },
 
 	// UI options
 	{ NULL,                                 NULL,   OPTION_HEADER, "MEWUI UI OPTIONS" },
@@ -74,12 +74,6 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_UI_UNAVAILABLE_COLOR,    "ff404040",   OPTION_STRING, "UI unavailable color (ARGB)" },
 	{ NULL }
 };
-
-
-
-//**************************************************************************
-//  EMU OPTIONS
-//**************************************************************************
 
 //-------------------------------------------------
 //  mewui_options - constructor

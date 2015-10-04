@@ -56,6 +56,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ NULL,                                 NULL,   OPTION_HEADER, "MEWUI UI OPTIONS" },
 	{ OPTION_INFOS_SIZE "(0.05-1.00)",    "0.75",    OPTION_FLOAT, "UI right panel infos text size (0.05 - 1.00)" },
 	{ OPTION_FONT_ROWS "(25-40)",           "30",  OPTION_INTEGER, "UI font text size (25 - 40)" },
+	{ OPTION_HIDE_PANELS "(0-3)",            "0",  OPTION_INTEGER, "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
 	{ OPTION_UI_BORDER_COLOR,         "ffffffff",   OPTION_STRING, "UI border color (ARGB)" },
 	{ OPTION_UI_BACKGROUND_COLOR,     "ef101030",   OPTION_STRING, "UI background color (ARGB)" },
 	{ OPTION_UI_CLONE_COLOR,          "ff808080",   OPTION_STRING, "UI clone color (ARGB)" },

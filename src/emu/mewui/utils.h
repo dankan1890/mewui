@@ -87,6 +87,14 @@ enum
 
 enum
 {
+	SHOW_PANELS = 0,
+	HIDE_LEFT_PANEL,
+	HIDE_RIGHT_PANEL,
+	HIDE_BOTH
+};
+
+enum
+{
 	MEWUI_FIRST_LOAD = 0,
 	MEWUI_GENERAL_LOAD = MEWUI_FIRST_LOAD,
 	MEWUI_HISTORY_LOAD,
@@ -141,7 +149,9 @@ enum
 	HOVER_B_MAMEINFO,
 	HOVER_B_COMMAND,
 	HOVER_B_FOLDERS,
-	HOVER_B_SETTINGS
+	HOVER_B_SETTINGS,
+	HOVER_RPANEL_ARROW,
+	HOVER_LPANEL_ARROW
 };
 
 // GLOBAL STRUCTURES
@@ -205,6 +215,7 @@ struct mewui_globals
 	static UINT8        curimage_view, curdats_view, cur_sw_dats_view, rpanel;
 	static bool         switch_image, redraw_icon, default_image, reselect, reset;
 	static int          visible_main_lines, visible_sw_lines;
+	static UINT16       panels_status;
 	static std::vector<cache_info> driver_cache;
 };
 

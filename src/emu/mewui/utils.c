@@ -58,6 +58,7 @@ bool mewui_globals::reset = false;
 bool mewui_globals::redraw_icon = false;
 int mewui_globals::visible_main_lines = 0;
 int mewui_globals::visible_sw_lines = 0;
+UINT16 mewui_globals::panels_status = 0;
 
 // Custom filter
 UINT16 custfltr::main = 0;

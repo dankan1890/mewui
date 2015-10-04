@@ -118,6 +118,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	{
 		reselect_last::driver.assign(machine.options().last_used_machine());
 		ume_filters::actual = machine.options().start_filter();
+		mewui_globals::panels_status = machine.options().hide_panels();
 		first_start = false;
 
 		if (main_filters::actual != FILTER_CATEGORY && main_filters::actual != FILTER_MANUFACTURER && main_filters::actual != FILTER_YEAR)
@@ -163,6 +164,7 @@ ui_mewui_select_game::~ui_mewui_select_game()
 	machine().options().set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
 	machine().options().set_value(OPTION_LAST_USED_FILTER, main_filters::text[main_filters::actual], OPTION_PRIORITY_CMDLINE, error_string);
 	machine().options().set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(OPTION_HIDE_PANELS, mewui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
 	save_game_options(machine());
 }
 

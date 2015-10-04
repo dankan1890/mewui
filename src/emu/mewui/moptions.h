@@ -50,6 +50,7 @@
 // core UI options
 #define OPTION_INFOS_SIZE             "infos_text_size"
 #define OPTION_FONT_ROWS              "font_rows"
+#define OPTION_HIDE_PANELS            "hide_main_panel"
 
 #define OPTION_UI_BORDER_COLOR        "ui_border_color"
 #define OPTION_UI_BACKGROUND_COLOR    "ui_bg_color"
@@ -109,6 +110,7 @@ public:
 	// UI options
 	float infos_size() const { return float_value(OPTION_INFOS_SIZE); }
 	int font_rows() const { return int_value(OPTION_FONT_ROWS); }
+	int hide_panels() const { return int_value(OPTION_HIDE_PANELS); }
 
 	const char *ui_border_color() const { return value(OPTION_UI_BORDER_COLOR); }
 	const char *ui_bg_color() const { return value(OPTION_UI_BACKGROUND_COLOR); }

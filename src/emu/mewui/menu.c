@@ -903,6 +903,28 @@ void ui_menu::handle_main_events(UINT32 flags)
 						topline_datsview += right_visible_lines - 1;
 					else if (hover == HOVER_DAT_UP)
 						topline_datsview -= right_visible_lines - 1;
+					else if (hover == HOVER_LPANEL_ARROW)
+					{
+						if (mewui_globals::panels_status == HIDE_LEFT_PANEL)
+							mewui_globals::panels_status = SHOW_PANELS;
+						else if (mewui_globals::panels_status == HIDE_BOTH)
+							mewui_globals::panels_status = HIDE_RIGHT_PANEL;
+						else if (mewui_globals::panels_status == SHOW_PANELS)
+							mewui_globals::panels_status = HIDE_LEFT_PANEL;
+						else if (mewui_globals::panels_status == HIDE_RIGHT_PANEL)
+							mewui_globals::panels_status = HIDE_BOTH;
+					}
+					else if (hover == HOVER_RPANEL_ARROW)
+					{
+						if (mewui_globals::panels_status == HIDE_LEFT_PANEL)
+							mewui_globals::panels_status = SHOW_PANELS;
+						else if (mewui_globals::panels_status == HIDE_BOTH)
+							mewui_globals::panels_status = HIDE_RIGHT_PANEL;
+						else if (mewui_globals::panels_status == SHOW_PANELS)
+							mewui_globals::panels_status = HIDE_LEFT_PANEL;
+						else if (mewui_globals::panels_status == HIDE_RIGHT_PANEL)
+							mewui_globals::panels_status = HIDE_BOTH;
+					}
 					else if (hover == HOVER_B_FAV)
 					{
 						menu_event.iptkey = IPT_UI_FAVORITES;
@@ -1023,113 +1045,165 @@ void ui_menu::handle_main_events(UINT32 flags)
 
 float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool software)
 {
-	float text_size = 0.75f;
-	float line_height = machine().ui().get_line_height() * text_size;
-	float left_width = 0.0f;
-	int text_lenght = (software) ? sw_filters::length : main_filters::length;
-	int afilter = (software) ? sw_filters::actual : main_filters::actual;
-	int *hover = (software) ? &l_sw_hover : &l_hover;
-	const char **text = (software) ? sw_filters::text : main_filters::text;
-	float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
-
-	if ((text_lenght * line_height) > sc)
+	if (mewui_globals::panels_status == SHOW_PANELS || mewui_globals::panels_status == HIDE_RIGHT_PANEL)
 	{
-		float lm = sc / (text_lenght);
-		text_size = lm / machine().ui().get_line_height();
-		line_height = machine().ui().get_line_height() * text_size;
-	}
+		float center_arrow = (x2 - x1);
+		float origy1 = y1;
+		float origy2 = y2;
+		float text_size = 0.75f;
+		float line_height = machine().ui().get_line_height() * text_size;
+		float left_width = 0.0f;
+		int text_lenght = (software) ? sw_filters::length : main_filters::length;
+		int afilter = (software) ? sw_filters::actual : main_filters::actual;
+		int *phover = (software) ? &l_sw_hover : &l_hover;
+		const char **text = (software) ? sw_filters::text : main_filters::text;
+		float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
 
-	float text_sign = machine().ui().get_string_width_ex("_# ", text_size);
-	for (int x = 0; x < text_lenght; x++)
-	{
-		float total_width;
-
-		// compute width of left hand side
-		total_width = machine().ui().get_string_width_ex(text[x], text_size);
-		total_width += text_sign;
-
-		// track the maximum
-		if (total_width > left_width)
-			left_width = total_width;
-	}
-
-	x2 += left_width;
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-
-	// take off the borders
-	x1 += UI_BOX_LR_BORDER;
-	x2 -= UI_BOX_LR_BORDER;
-	y1 += UI_BOX_TB_BORDER;
-	y2 -= UI_BOX_TB_BORDER;
-
-	*hover = -1;
-	for (int filter = 0; filter < text_lenght; filter++)
-	{
-		std::string str(text[filter]);
-		rgb_t bgcolor = UI_TEXT_BG_COLOR;
-
-		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
+		if ((text_lenght * line_height) > sc)
 		{
-			bgcolor = UI_MOUSEOVER_BG_COLOR;
-			*hover = filter;
+			float lm = sc / (text_lenght);
+			text_size = lm / machine().ui().get_line_height();
+			line_height = machine().ui().get_line_height() * text_size;
 		}
 
-		if (afilter == filter)
-			bgcolor = UI_SELECTED_BG_COLOR;
-
-		if (bgcolor != UI_TEXT_BG_COLOR)
-			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
-
-		float x1t = x1 + text_sign;
-		if (!software && afilter == FILTER_CUSTOM)
+		float text_sign = machine().ui().get_string_width_ex("_# ", text_size);
+		for (int x = 0; x < text_lenght; x++)
 		{
-			if (filter == custfltr::main)
+			float total_width;
+
+			// compute width of left hand side
+			total_width = machine().ui().get_string_width_ex(text[x], text_size);
+			total_width += text_sign;
+
+			// track the maximum
+			if (total_width > left_width)
+				left_width = total_width;
+		}
+
+		x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+
+		// take off the borders
+		x1 += UI_BOX_LR_BORDER;
+		x2 -= UI_BOX_LR_BORDER;
+		y1 += UI_BOX_TB_BORDER;
+		y2 -= UI_BOX_TB_BORDER;
+
+		*phover = -1;
+		for (int filter = 0; filter < text_lenght; filter++)
+		{
+			std::string str(text[filter]);
+			rgb_t bgcolor = UI_TEXT_BG_COLOR;
+
+			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
 			{
-				str.assign("@custom1 ").append(text[filter]);
-				x1t -= text_sign;
+				bgcolor = UI_MOUSEOVER_BG_COLOR;
+				*phover = filter;
 			}
-			else
+
+			if (afilter == filter)
+				bgcolor = UI_SELECTED_BG_COLOR;
+
+			if (bgcolor != UI_TEXT_BG_COLOR)
+				container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
+
+			float x1t = x1 + text_sign;
+			if (!software && afilter == FILTER_CUSTOM)
 			{
-				for (int count = 1; count <= custfltr::numother; count++)
+				if (filter == custfltr::main)
 				{
-					int cfilter = custfltr::other[count];
-					if (cfilter == filter)
+					str.assign("@custom1 ").append(text[filter]);
+					x1t -= text_sign;
+				}
+				else
+				{
+					for (int count = 1; count <= custfltr::numother; count++)
 					{
-						strprintf(str, "@custom%d %s", count + 1, text[filter]);
-						x1t -= text_sign;
-						break;
+						int cfilter = custfltr::other[count];
+						if (cfilter == filter)
+						{
+							strprintf(str, "@custom%d %s", count + 1, text[filter]);
+							x1t -= text_sign;
+							break;
+						}
 					}
 				}
+				convert_command_glyph(str);
 			}
-			convert_command_glyph(str);
-		}
 
-		if (software && afilter == MEWUI_SW_CUSTOM)
-		{
-			if (filter == sw_custfltr::main)
+			if (software && afilter == MEWUI_SW_CUSTOM)
 			{
-				str.assign("@custom1 ").append(text[filter]);
-				x1t -= text_sign;
-			}
-			else
-			{
-				for (int count = 1; count <= sw_custfltr::numother; count++)
+				if (filter == sw_custfltr::main)
 				{
-					int cfilter = sw_custfltr::other[count];
-					if (cfilter == filter)
+					str.assign("@custom1 ").append(text[filter]);
+					x1t -= text_sign;
+				}
+				else
+				{
+					for (int count = 1; count <= sw_custfltr::numother; count++)
 					{
-						strprintf(str, "@custom%d %s", count + 1, text[filter]);
-						x1t -= text_sign;
-						break;
+						int cfilter = sw_custfltr::other[count];
+						if (cfilter == filter)
+						{
+							strprintf(str, "@custom%d %s", count + 1, text[filter]);
+							x1t -= text_sign;
+							break;
+						}
 					}
 				}
+				convert_command_glyph(str);
 			}
-			convert_command_glyph(str);
+
+			machine().ui().draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
+			                              DRAW_NORMAL, UI_TEXT_COLOR, bgcolor, NULL, NULL, text_size);
+			y1 += line_height;
 		}
 
-		machine().ui().draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, bgcolor, NULL, NULL, text_size);
-		y1 += line_height;
+		x1 = x2 + UI_BOX_LR_BORDER;
+		x2 = x1 + center_arrow - UI_BOX_LR_BORDER;
+		y1 = origy1;
+		y2 = origy2;
+		line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		// set left-right arrows dimension
+		float ar_x0 = 0.5f * (x2 + x1) - lr_arrow_width;
+		float ar_y0 = 0.5f * (y2 + y1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_LPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		return x2 + UI_BOX_LR_BORDER;
+	}
+	else
+	{
+		float line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		// set left-right arrows dimension
+		float ar_x0 = 0.5f * (x2 + x1) - lr_arrow_width;
+		float ar_y0 = 0.5f * (y2 + y1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_LPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+		return x2 + UI_BOX_LR_BORDER;
 	}
 
 	return x2 + 2.0f * UI_BOX_LR_BORDER;

@@ -171,7 +171,7 @@ void ui_menu::draw_select_game(bool noinput)
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
 	float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 	mouse_x = -1, mouse_y = -1;
-	float right_panel_size = 0.3f;
+	float right_panel_size = (mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_RIGHT_PANEL) ? 2.0f * UI_BOX_LR_BORDER: 0.3f;
 	float visible_width = 1.0f - 4.0f * UI_BOX_LR_BORDER;
 	float primary_left = (1.0f - visible_width) * 0.5f;
 	float primary_width = visible_width;
@@ -218,12 +218,12 @@ void ui_menu::draw_select_game(bool noinput)
 	// compute left box size
 	float x1 = visible_left - UI_BOX_LR_BORDER;
 	float y1 = visible_top - UI_BOX_TB_BORDER;
-	float x2 = visible_left + 2 * UI_BOX_LR_BORDER;
+	float x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
 	float y2 = visible_top + visible_main_menu_height + UI_BOX_TB_BORDER + extra_height;
 
 	// add left box
 	visible_left = draw_left_box(x1, y1, x2, y2, is_swlist);
-	visible_width -= right_panel_size + visible_left - 2 * UI_BOX_LR_BORDER;
+	visible_width -= right_panel_size + visible_left - 2.0f * UI_BOX_LR_BORDER;
 
 	// compute and add main a box
 	x1 = visible_left - UI_BOX_LR_BORDER;
@@ -394,13 +394,10 @@ void ui_menu::draw_select_game(bool noinput)
 	x1 = x2;
 	x2 += right_panel_size;
 
-	// draw right box
-	float origy1 = draw_right_box_title(x1, y1, x2, y2);
-
 	if (mewui_globals::rpanel == RP_IMAGES)
-		arts_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, origy1, x2, y2, (is_swlist || is_favorites));
+		arts_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, y1, x2, y2, (is_swlist || is_favorites));
 	else
-		infos_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, origy1, x2, y2, (is_swlist || is_favorites));
+		infos_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, y1, x2, y2, (is_swlist || is_favorites));
 
 	x1 = primary_left - UI_BOX_LR_BORDER;
 	x2 = primary_left + primary_width + UI_BOX_LR_BORDER;
@@ -422,6 +419,54 @@ void ui_menu::draw_select_game(bool noinput)
 
 void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
 {
+	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	{
+		float line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		// set left-right arrows dimension
+		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
+		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_RPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		return;
+	}
+	else
+	{
+		float line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+		// set left-right arrows dimension
+		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_RPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+		origx1 = x2;
+	}
+
+	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
+
 	static ui_software_info *oldsoft = NULL;
 	static const game_driver *olddriver = NULL;
 	const game_driver *driver = NULL;
@@ -645,9 +690,7 @@ void ui_menu::get_title_search(std::string &snaptext, std::string &searchstr)
 
 void ui_menu::handle_main_keys(UINT32 flags)
 {
-	int ignorepause = ui_menu::stack_has_special_main_menu();
-	int ignoreright = FALSE;
-	int ignoreleft = FALSE;
+	bool ignorepause = ui_menu::stack_has_special_main_menu();
 
 	// bail if no items
 	if (item.size() == 0)
@@ -678,8 +721,10 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	validate_selection(1);
 
 	// swallow left/right keys if they are not appropriate
-	ignoreleft = ((item[selected].flags & MENU_FLAG_LEFT_ARROW) == 0);
-	ignoreright = ((item[selected].flags & MENU_FLAG_RIGHT_ARROW) == 0);
+	bool ignoreleft = ((item[selected].flags & MENU_FLAG_LEFT_ARROW) == 0 || mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_RIGHT_PANEL);
+	bool ignoreright = ((item[selected].flags & MENU_FLAG_RIGHT_ARROW) == 0 || mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_RIGHT_PANEL);
+	bool ignoreup = (mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_LEFT_PANEL);
+	bool ignoredown = (mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_LEFT_PANEL);
 
 	// accept left/right keys as-is with repeat
 	if (!ignoreleft && exclusive_input_pressed(IPT_UI_LEFT, (flags & UI_MENU_PROCESS_LR_REPEAT) ? 6 : 0))
@@ -702,14 +747,14 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_UP, 6))
 	{
 		// Filter
-		if (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2))
+		if (!ignoreup && (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2)))
 		{
 			menu_event.iptkey = IPT_UI_UP_FILTER;
 			return;
 		}
 
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_UP_PANEL;
 			topline_datsview--;
@@ -729,14 +774,14 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_DOWN, 6))
 	{
 		// Filter
-		if (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2))
+		if (!ignoredown && (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_FILTER;
 			return;
 		}
 
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreright && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview++;
@@ -756,7 +801,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_PAGE_UP, 6))
 	{
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview -= right_visible_lines - 1;
@@ -778,7 +823,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_PAGE_DOWN, 6))
 	{
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview += right_visible_lines - 1;
@@ -800,7 +845,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_HOME, 0))
 	{
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview = 0;
@@ -818,7 +863,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_END, 0))
 	{
 		// Infos
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview = totallines;
@@ -916,13 +961,13 @@ void ui_menu::handle_main_events(UINT32 flags)
 					}
 					else if (hover == HOVER_RPANEL_ARROW)
 					{
-						if (mewui_globals::panels_status == HIDE_LEFT_PANEL)
+						if (mewui_globals::panels_status == HIDE_RIGHT_PANEL)
 							mewui_globals::panels_status = SHOW_PANELS;
 						else if (mewui_globals::panels_status == HIDE_BOTH)
-							mewui_globals::panels_status = HIDE_RIGHT_PANEL;
-						else if (mewui_globals::panels_status == SHOW_PANELS)
 							mewui_globals::panels_status = HIDE_LEFT_PANEL;
-						else if (mewui_globals::panels_status == HIDE_RIGHT_PANEL)
+						else if (mewui_globals::panels_status == SHOW_PANELS)
+							mewui_globals::panels_status = HIDE_RIGHT_PANEL;
+						else if (mewui_globals::panels_status == HIDE_LEFT_PANEL)
 							mewui_globals::panels_status = HIDE_BOTH;
 					}
 					else if (hover == HOVER_B_FAV)
@@ -1047,7 +1092,6 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 {
 	if (mewui_globals::panels_status == SHOW_PANELS || mewui_globals::panels_status == HIDE_RIGHT_PANEL)
 	{
-		float center_arrow = (x2 - x1);
 		float origy1 = y1;
 		float origy2 = y2;
 		float text_size = 0.75f;
@@ -1081,7 +1125,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		}
 
 		x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		// take off the borders
 		x1 += UI_BOX_LR_BORDER;
@@ -1160,7 +1204,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		}
 
 		x1 = x2 + UI_BOX_LR_BORDER;
-		x2 = x1 + center_arrow - UI_BOX_LR_BORDER;
+		x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
 		y1 = origy1;
 		y2 = origy2;
 		line_height = machine().ui().get_line_height();
@@ -1168,7 +1212,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
 		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (x2 + x1) - lr_arrow_width;
+		float ar_x0 = 0.5f * (x2 + x1) - 0.5f * lr_arrow_width;
 		float ar_y0 = 0.5f * (y2 + y1) + 0.1f * line_height;
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
@@ -1190,7 +1234,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
 		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (x2 + x1) - lr_arrow_width;
+		float ar_x0 = 0.5f * (x2 + x1) - 0.5f * lr_arrow_width;
 		float ar_y0 = 0.5f * (y2 + y1) + 0.1f * line_height;
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
@@ -1274,7 +1318,7 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 	float midl = (x2 - x1) * 0.5f;
 
 	// add outlined box for options
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 	// add separator line
 	container->add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1324,6 +1368,53 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 
 void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
 {
+	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	{
+		float line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		// set left-right arrows dimension
+		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
+		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_RPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		return;
+	}
+	else
+	{
+		float line_height = machine().ui().get_line_height();
+		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		rgb_t fgcolor = UI_TEXT_COLOR;
+
+		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+		float ar_x1 = ar_x0 + lr_arrow_width;
+		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+		machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
+		{
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_RPANEL_ARROW;
+		}
+
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+		origx1 = x2;
+	}
+
+	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
+
 	static std::string buffer;
 	std::vector<int> xstart;
 	std::vector<int> xend;

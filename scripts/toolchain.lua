@@ -195,13 +195,13 @@ function toolchain(_buildDir, _subDir)
 			end
 			premake.gcc.cc  = "$(MINGW32)/bin/i686-w64-mingw32-gcc"
 			premake.gcc.cxx = "$(MINGW32)/bin/i686-w64-mingw32-g++"
--- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in Windows with the current buildtool's version of gcc-ar.exe
--- if you are using LTO=1 you must have GCC 5.0+
-
-			if _OPTIONS["LTO"]=="1" then
-				premake.gcc.ar  = "$(MINGW32)/bin/i686-w64-mingw32-gcc-ar"
-			else
+-- work around GCC 4.9.2 not having proper linker for LTO=1 usage
+			local version_4_ar = str_to_version(_OPTIONS["gcc_version"])
+			if (version_4_ar < 50000) then
 				premake.gcc.ar  = "$(MINGW32)/bin/ar"
+			end
+			if (version_4_ar >= 50000) then
+				premake.gcc.ar  = "$(MINGW32)/bin/gcc-ar"
 			end
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-mingw32-gcc")
 		end
@@ -212,15 +212,14 @@ function toolchain(_buildDir, _subDir)
 			end
 			premake.gcc.cc  = "$(MINGW64)/bin/x86_64-w64-mingw32-gcc"
 			premake.gcc.cxx = "$(MINGW64)/bin/x86_64-w64-mingw32-g++"
--- lto docs say to use gcc-ar so that plugin is completely setup, but this doesn't work in Windows with the current buildtool's version of gcc-ar.exe
--- if you are using LTO=1 you must have GCC 5.0+
-
-			if _OPTIONS["LTO"]=="1" then
-				premake.gcc.ar  = "$(MINGW64)/bin/x86_64-w64-mingw32-gcc-ar"
-			else
+-- work around GCC 4.9.2 not having proper linker for LTO=1 usage
+			local version_4_ar = str_to_version(_OPTIONS["gcc_version"])
+			if (version_4_ar < 50000) then
 				premake.gcc.ar  = "$(MINGW64)/bin/ar"
 			end
-
+			if (version_4_ar >= 50000) then
+				premake.gcc.ar  = "$(MINGW64)/bin/gcc-ar"
+			end
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-mingw64-gcc")
 		end
 

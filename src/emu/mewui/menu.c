@@ -225,7 +225,7 @@ void ui_menu::draw_select_game(bool noinput)
 	visible_left = draw_left_box(x1, y1, x2, y2, is_swlist);
 	visible_width -= right_panel_size + visible_left - 2.0f * UI_BOX_LR_BORDER;
 
-	// compute and add main a box
+	// compute and add main box
 	x1 = visible_left - UI_BOX_LR_BORDER;
 	x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
 	float line = visible_top + (float)(visible_lines * line_height);

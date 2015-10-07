@@ -1019,13 +1019,15 @@ void ui_menu::handle_main_events(UINT32 flags)
 						mewui_globals::rpanel = r_hover;
 						stop = true;
 					}
-					else if (l_sw_hover >= MEWUI_SW_FIRST && l_sw_hover <= MEWUI_SW_LAST)
+					else if (hover >= HOVER_SW_FILTER_FIRST && hover <= HOVER_SW_FILTER_LAST)
 					{
+						l_sw_hover = (HOVER_SW_FILTER_FIRST - hover) * (-1);
 						menu_event.iptkey = IPT_OTHER;
 						stop = true;
 					}
-					else if (l_hover >= FILTER_FIRST && l_hover <= FILTER_LAST)
+					else if (hover >= HOVER_FILTER_FIRST && hover <= HOVER_FILTER_LAST)
 					{
+						l_hover = (HOVER_FILTER_FIRST - hover) * (-1);
 						menu_event.iptkey = IPT_OTHER;
 						stop = true;
 					}
@@ -1100,7 +1102,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		float left_width = 0.0f;
 		int text_lenght = (software) ? sw_filters::length : main_filters::length;
 		int afilter = (software) ? sw_filters::actual : main_filters::actual;
-		int *phover = (software) ? &l_sw_hover : &l_hover;
+		int phover = (software) ? HOVER_SW_FILTER_FIRST : HOVER_FILTER_FIRST;
 		const char **text = (software) ? sw_filters::text : main_filters::text;
 		float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
 
@@ -1134,7 +1136,6 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		y1 += UI_BOX_TB_BORDER;
 		y2 -= UI_BOX_TB_BORDER;
 
-		*phover = -1;
 		for (int filter = 0; filter < text_lenght; filter++)
 		{
 			std::string str(text[filter]);
@@ -1145,7 +1146,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
 				fgcolor = UI_MOUSEOVER_COLOR;
-				*phover = filter;
+				hover = phover + filter;
 			}
 
 			if (afilter == filter)
@@ -1237,8 +1238,6 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 	{
 		float line_height = machine().ui().get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		int *phover = (software) ? &l_sw_hover : &l_hover;
-		*phover = -1;
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
 		// set left-right arrows dimension

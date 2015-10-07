@@ -439,6 +439,7 @@ void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float o
 		}
 
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		r_hover = -1;
 		return;
 	}
 	else
@@ -1236,6 +1237,8 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 	{
 		float line_height = machine().ui().get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+		int *phover = (software) ? &l_sw_hover : &l_hover;
+		*phover = -1;
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
 		// set left-right arrows dimension
@@ -1254,8 +1257,6 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 		return x2 + UI_BOX_LR_BORDER;
 	}
-
-	return x2 + 2.0f * UI_BOX_LR_BORDER;
 }
 
 //-------------------------------------------------
@@ -1396,6 +1397,7 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 		}
 
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		r_hover = -1;
 		return;
 	}
 	else

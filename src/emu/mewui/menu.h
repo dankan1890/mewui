@@ -56,7 +56,6 @@ private:
 
 	// which item is being hovered over
 	int r_hover;
-	int ume_hover;
 
 	int visible_lines;        // main box visible lines
 	int right_visible_lines;  // right box lines

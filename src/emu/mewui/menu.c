@@ -1007,6 +1007,12 @@ void ui_menu::handle_main_events(UINT32 flags)
 						selected = visible_items + 2;
 						stop = true;
 					}
+					else if (hover >= HOVER_MAME_ALL && hover <= HOVER_MAME_SYSTEMS)
+					{
+						ume_filters::actual = (HOVER_MAME_ALL - hover) * (-1);
+						menu_event.iptkey = IPT_OTHER;
+						stop = true;
+					}
 					else if (r_hover >= RP_FIRST && r_hover <= RP_LAST)
 					{
 						mewui_globals::rpanel = r_hover;
@@ -1014,12 +1020,6 @@ void ui_menu::handle_main_events(UINT32 flags)
 					}
 					else if (l_sw_hover >= MEWUI_SW_FIRST && l_sw_hover <= MEWUI_SW_LAST)
 					{
-						menu_event.iptkey = IPT_OTHER;
-						stop = true;
-					}
-					else if (ume_hover >= MEWUI_MAME_FIRST && ume_hover <= MEWUI_MAME_LAST)
-					{
-						ume_filters::actual = ume_hover;
 						menu_event.iptkey = IPT_OTHER;
 						stop = true;
 					}
@@ -1138,15 +1138,20 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		{
 			std::string str(text[filter]);
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
+			rgb_t fgcolor = UI_TEXT_COLOR;
 
 			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
+				fgcolor = UI_MOUSEOVER_COLOR;
 				*phover = filter;
 			}
 
 			if (afilter == filter)
+			{
 				bgcolor = UI_SELECTED_BG_COLOR;
+				fgcolor = UI_SELECTED_COLOR;
+			}
 
 			if (bgcolor != UI_TEXT_BG_COLOR)
 				container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
@@ -1199,7 +1204,7 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 			}
 
 			machine().ui().draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-			                              DRAW_NORMAL, UI_TEXT_COLOR, bgcolor, NULL, NULL, text_size);
+			                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
 			y1 += line_height;
 		}
 
@@ -1283,26 +1288,29 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 	y1 += UI_BOX_TB_BORDER;
 	y2 -= UI_BOX_TB_BORDER;
 
-	ume_hover = -1;
-
 	for (int filter = 0; filter < ume_filters::length; filter++)
 	{
 		rgb_t bgcolor = UI_TEXT_BG_COLOR;
+		rgb_t fgcolor = UI_TEXT_COLOR;
 
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
 		{
 			bgcolor = UI_MOUSEOVER_BG_COLOR;
-			ume_hover = filter;
+			fgcolor = UI_MOUSEOVER_COLOR;
+			hover = HOVER_MAME_ALL + filter;
 		}
 
 		if (ume_filters::actual == filter)
+		{
 			bgcolor = UI_SELECTED_BG_COLOR;
+			fgcolor = UI_SELECTED_COLOR;
+		}
 
 		if (bgcolor != UI_TEXT_BG_COLOR)
 			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
 		machine().ui().draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, bgcolor, NULL, NULL, text_size);
+		                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
 
 		y1 += line_height;
 	}

@@ -57,5 +57,5 @@ dependency {
 
 custombuildtask {
 	-- MEWUI
-	{ MAME_DIR .. "src/emu/mewui/uicmd14.png"	, GEN_DIR .. "emu/mewui/uicmd14.fh",  {  MAME_DIR.. "src/build/png2bdc.py",  MAME_DIR .. "src/build/file2str.py" }, {"@echo Converting uicmd14.png...", "python $(1) $(<) temp_cmd.bdc", "python $(2) temp_cmd.bdc $(@) font_uicmd14 UINT8" }},
+	{ MAME_DIR .. "src/emu/mewui/uicmd14.png"	, GEN_DIR .. "emu/mewui/uicmd14.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uicmd14.png...", "python $(1) $(<) temp_cmd.bdc", "python $(2) temp_cmd.bdc $(@) font_uicmd14 UINT8" }},
 }

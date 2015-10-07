@@ -117,8 +117,6 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	if (first_start)
 	{
 		reselect_last::driver.assign(machine.options().last_used_machine());
-		ume_filters::actual = machine.options().start_filter();
-		mewui_globals::panels_status = machine.options().hide_panels();
 		first_start = false;
 
 		if (main_filters::actual != FILTER_CATEGORY && main_filters::actual != FILTER_MANUFACTURER && main_filters::actual != FILTER_YEAR)
@@ -147,6 +145,8 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	mewui_globals::curdats_view = MEWUI_FIRST_LOAD;
 	mewui_globals::switch_image = false;
 	mewui_globals::default_image = true;
+	ume_filters::actual = machine.options().start_filter();
+	mewui_globals::panels_status = machine.options().hide_panels();
 	l_sw_hover = -1;
 }
 
@@ -486,10 +486,10 @@ void ui_mewui_select_game::handle()
 
 		else if (l_hover == FILTER_MANUFACTURER)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_mnfct::ui,
-												&c_mnfct::actual, SELECTOR_GAME, l_hover)));
+			                                     &c_mnfct::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_YEAR)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_year::ui,
-												&c_year::actual, SELECTOR_GAME, l_hover)));
+			                                     &c_year::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_SCREEN)
 		{
 			std::vector<std::string> text(c_screen::length);
@@ -497,7 +497,7 @@ void ui_mewui_select_game::handle()
 				text[x].assign(c_screen::text[x]);
 
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text,
-												&c_screen::actual, SELECTOR_GAME, l_hover)));
+			                                     &c_screen::actual, SELECTOR_GAME, l_hover)));
 		}
 		else
 		{

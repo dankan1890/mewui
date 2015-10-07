@@ -244,18 +244,32 @@ if _OPTIONS["FORCE_VERSION_COMPILE"]=="1" then
 		}
 end
 	configuration { "mingw*" }
+<<<<<<< HEAD
 		custombuildtask {
-			{ MAME_DIR .. "src/version.c" ,  GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. rctarget .. "vers.rc" .. "...",    PYTHON .. " $(1)  -r -b " .. rctarget .. " $(<) > $(@)" }},
+			{ MAME_DIR .. "src/version.c" ,  GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc",    {  MAME_DIR .. "src/build/verinfo.py" }, {"@echo Emitting " .. rctarget .. "vers.rc" .. "...",    PYTHON .. " $(1)  -r -b " .. rctarget .. " $(<) > $(@)" }},
 		}
 
+=======
+		custombuildtask {	
+			{ MAME_DIR .. "src/version.c" ,  GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. rctarget .. "vers.rc" .. "...",    PYTHON .. " $(1)  -r -b " .. rctarget .. " $(<) > $(@)" }},
+		}	
+	
+>>>>>>> b13b84da0f192cf4822c4b1d01510b90517356bf
 	configuration { "vs*" }
 		prebuildcommands {
 			"mkdir " .. path.translate(GEN_DIR  .. "/resource/","\\") .. " 2>NUL",
 			"@echo Emitting ".. rctarget .. "vers.rc...",
-			PYTHON .. " " .. path.translate(MAME_DIR .. "scripts/build/verinfo.py","\\") .. " -r -b " .. rctarget .. " " .. path.translate(MAME_DIR .. "src/version.c","\\") .. " > " .. path.translate(GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc", "\\") ,
+<<<<<<< HEAD
+			PYTHON .. " " .. path.translate(MAME_DIR .. "src/build/verinfo.py","\\") .. " -r -b " .. rctarget .. " " .. path.translate(MAME_DIR .. "src/version.c","\\") .. " > " .. path.translate(GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc", "\\") ,
 		}
 
 
+=======
+			PYTHON .. " " .. path.translate(MAME_DIR .. "scripts/build/verinfo.py","\\") .. " -r -b " .. rctarget .. " " .. path.translate(MAME_DIR .. "src/version.c","\\") .. " > " .. path.translate(GEN_DIR  .. "/resource/" .. rctarget .. "vers.rc", "\\") ,
+		}	
+	
+	 
+>>>>>>> b13b84da0f192cf4822c4b1d01510b90517356bf
 	configuration { }
 
 	debugdir (MAME_DIR)

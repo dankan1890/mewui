@@ -7,6 +7,10 @@ os:
 env:
   - MAME=mame64 LDOPTS="-Wl,-no-keep-memory" MACOSX_USE_LIBSDL=0
   - MAME=mame64 LDOPTS="-Wl,-no-keep-memory" MACOSX_USE_LIBSDL=1
+matrix:
+  exclude:
+    - os: linux
+    env: MAME=mame64 LDOPTS="-Wl,-no-keep-memory" MACOSX_USE_LIBSDL=1
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
     unset MACOSX_USE_LIBSDL && make -j2 linux_x64_clang && ./$MAME -validate;

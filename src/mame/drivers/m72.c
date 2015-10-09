@@ -60,12 +60,17 @@ M82 - board made for Major Title, Z80 has a rom, no MCU
 M84 -   2 PCB stack
         functionally same as M82 but without the extra sprite hw??
 		
-		M84-A-A (bottom board)
+		M84-A-A (bottom board) (most games)
 		supports
 		4 program roms
 		8 tile roms
 		1 snd prg, 1 voice rom
 		CPUs and some customs etc.
+
+		M84-D-B (bottom board) (found on lightning swords / kengo)
+		redesigned version of above but 
+		for V35 CPU? (seems to lack the UPD71059C interrupt
+		controller which isn't needed when with the V35)
 
 		M84-C-A (top board) (listed as for Hammering Harry)
 		4 sprite roms (in a row)
@@ -91,6 +96,7 @@ M84 -   2 PCB stack
 
 M85 - Pound for Pound uses this, possibly just M84 with
       a modified sound section?
+	  - most Jamma inputs not connected, trackball only
 
 
                                    Year Board                Protected?
@@ -99,31 +105,34 @@ Battle Chopper / Mr. Heli          1987  M72                 Y
 Ninja Spirit                       1988  M72                 Y
 Image Fight                        1988  M72                 Y
 Legend of Hero Tonma               1989  M72                 Y
-X Multiply                         1989  M81                 N
-X Multiply                         1989  M72(1)              Y
-Dragon Breed                       1989  M81                 N
-Dragon Breed                       1989  M72                 Y
+X Multiply (World)                 1989  M81-A-B + M81-B-B   N
+X Multiply (Japan)                 1989  M72                 Y
+Dragon Breed                       1989  M81-A-B + M81-B-B   N
+Dragon Breed (Japan?)              1989  M72                 Y
 R-Type II                          1989  M84-A-A + M84-B-A   N
 Major Title                        1990  M82-A-A + M82-B-A   N
-Hammerin' Harry (World ver)        1990  M81?                N
+Hammerin' Harry (World ver)        1990  M81-A-B + M81-B-B   N
 Hammerin' H..(US)/ Daiku no Gensan 1990  M84-A-A + M84-C-A   N
-                   Daiku no Gensan 1990  M72(3)              Y
-Pound for Pound                    1990  MM85-A-B + M85-B    N
-Air Duel (World)                   1990  M82                 N
-Air Duel (Japan)                   1990  M72?                Y
-Cosmic Cop /                       1991  M84                 N
+                   Daiku no Gensan 1990  M72                 Y
+Pound for Pound                    1990  M85-A-B + M85-B     N
+Air Duel (World)                   1990  M82-A-A + M82-B-A   N
+Air Duel (Japan)                   1990  M72                 Y
+Cosmic Cop /                       1991  M84-D-B + M84-B-B   N
   Gallop - Armed Police Unit       1991  M72                 Y (sample playback only)
-Ken-Go / Lightning Swords          1991  M84-A-A + M84-B-B   Encrypted
+Ken-Go / Lightning Swords          1991  M84-D-B + M84-B-B   Encrypted
 
-(1) different addressing PALs, so different memory map
-(3) normal M72 memory map, but IRQ vectors and sprite control as in X-Multiply
 
- rtype2 has also been reported as running on M82, is it an official
- conversion or not? we've only seen originals verified as M84, same for
- Hammering Harry
+Rtype / Rtype 2 are often misreported as being M82 games, this is mostly
+due to the unofficial conversions that have become widespread, see:
+http://www.paulswan.me/arcade/m82-m72.htm (Rtype on M82, extensive wiremods)
+http://www.paulswan.me/arcade/m82-m84.htm (Rtype 2 on M82)
+these are supported as 'rtypem82b' and 'rtype2m82b' although the former
+still needs work because the wiremods change same of the behavior to be
+more like an M72 PCB than an M82
+
 
 TODO:
-- majtitle_gfx_ctrl_w is unknown, it seems to be used to disable rowscroll,
+- m82_gfx_ctrl_w is unknown, it seems to be used to disable rowscroll,
   and maybe other things
 
 - Maybe there is a layer enable register, e.g. nspirit shows (for an instant)
@@ -191,6 +200,38 @@ other supported games as well.
 
 /***************************************************************************/
 
+// bchopper doesn't like the proper IRQ controller hookup, title screen jumps around, as does ingame at times
+// like m92.c I think this is because we don't clear things at the right time.
+#define USE_HACKED_IRQS
+
+#ifdef USE_HACKED_IRQS
+
+#define M72_TRIGGER_IRQ0 m_maincpu->set_input_line_and_vector(0, HOLD_LINE, m_upd71059c->HACK_get_base_vector()+0 ); /* VBL interrupt */
+#define M72_TRIGGER_IRQ1 m_maincpu->set_input_line_and_vector(0, HOLD_LINE, m_upd71059c->HACK_get_base_vector()+1 ); /* Sprite buffer complete interrupt */
+#define M72_TRIGGER_IRQ2 m_maincpu->set_input_line_and_vector(0, HOLD_LINE, m_upd71059c->HACK_get_base_vector()+2 ); /* Raster interrupt */
+#define M72_TRIGGER_IRQ3 m_maincpu->set_input_line_and_vector(0, HOLD_LINE, m_upd71059c->HACK_get_base_vector()+3 ); /* Sound cpu->Main cpu interrupt */
+// not used due to HOLD LINE logic
+#define M72_CLEAR_IRQ0 ;
+#define M72_CLEAR_IRQ1 ; 
+#define M72_CLEAR_IRQ2 ;
+#define M72_CLEAR_IRQ3 ;
+
+#else
+
+#define M72_TRIGGER_IRQ0 m_upd71059c->ir0_w(1); 
+#define M72_TRIGGER_IRQ1 m_upd71059c->ir1_w(1); 
+#define M72_TRIGGER_IRQ2 m_upd71059c->ir2_w(1); 
+#define M72_TRIGGER_IRQ3 m_upd71059c->ir3_w(1); 
+// not sure when these should happen, probably the source of our issues
+#define M72_CLEAR_IRQ0 m_upd71059c->ir0_w(0); 
+#define M72_CLEAR_IRQ1 m_upd71059c->ir1_w(0); 
+#define M72_CLEAR_IRQ2 m_upd71059c->ir2_w(0); 
+#define M72_CLEAR_IRQ3 m_upd71059c->ir3_w(0); 
+
+#endif
+
+
+
 void m72_state::machine_start()
 {
 	m_scanline_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(m72_state::scanline_interrupt),this));
@@ -228,20 +269,22 @@ TIMER_CALLBACK_MEMBER(m72_state::scanline_interrupt)
 	/* raster interrupt - visible area only? */
 	if (scanline < 256 && scanline == m_raster_irq_position - 128)
 	{
-		m_screen->update_partial(scanline);
-		m_upd71059c->ir2_w(1);
+		M72_TRIGGER_IRQ2
 	}
 	else
-		m_upd71059c->ir2_w(0);
+	{
+		M72_CLEAR_IRQ2
+	}
 
 	/* VBLANK interrupt */
 	if (scanline == 256)
 	{
-		m_screen->update_partial(scanline);
-		m_upd71059c->ir0_w(1);
+		M72_TRIGGER_IRQ0
 	}
 	else
-		m_upd71059c->ir0_w(0);
+	{
+		M72_CLEAR_IRQ0
+	}
 
 	/* adjust for next scanline */
 	if (++scanline >= m_screen->height())
@@ -882,7 +925,7 @@ READ16_MEMBER(m72_state::poundfor_trackball_r)
 }
 
 
-#define CPU1_MEMORY(NAME,ROMSIZE,WORKRAM)                               \
+#define M72_CPU1_MEMORY(NAME,ROMSIZE,WORKRAM)                               \
 static ADDRESS_MAP_START( NAME##_map, AS_PROGRAM, 16 , m72_state )      \
 	AM_RANGE(0x00000, ROMSIZE-1) AM_ROM                                 \
 	AM_RANGE(WORKRAM, WORKRAM+0x3fff) AM_RAM    /* work RAM */          \
@@ -896,50 +939,55 @@ static ADDRESS_MAP_START( NAME##_map, AS_PROGRAM, 16 , m72_state )      \
 ADDRESS_MAP_END
 
 
-/*                        ROMSIZE  WORKRAM */
-CPU1_MEMORY( m72,         0x80000, 0xa0000 )
-CPU1_MEMORY( rtype,       0x40000, 0x40000 )
-CPU1_MEMORY( xmultiplm72, 0x80000, 0x80000 )
-CPU1_MEMORY( dbreedm72,   0x80000, 0x90000 )
+/*                            ROMSIZE  WORKRAM */
+M72_CPU1_MEMORY( m72,         0x80000, 0xa0000 )
+M72_CPU1_MEMORY( rtype,       0x40000, 0x40000 )
+M72_CPU1_MEMORY( xmultiplm72, 0x80000, 0x80000 )
+M72_CPU1_MEMORY( dbreedm72,   0x80000, 0x90000 )
 
-static ADDRESS_MAP_START( xmultipl_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0x9c000, 0x9ffff) AM_RAM   /* work RAM */
-	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0xc8000, 0xc8bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xcc000, 0xccbff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0xd8000, 0xdbfff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dbreed_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0x88000, 0x8bfff) AM_RAM   /* work RAM */
-	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0xc8000, 0xc8bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xcc000, 0xccbff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0xd8000, 0xdbfff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
+#define M81_CPU1_MEMORY(NAME,WORKRAM)                               \
+	static ADDRESS_MAP_START( NAME##_map, AS_PROGRAM, 16 , m72_state )      \
+	AM_RANGE(0x00000, 0x7ffff) AM_ROM                                 \
+	AM_RANGE(WORKRAM, WORKRAM+0x3fff) AM_RAM    /* work RAM */          \
+	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */ \
+	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram") \
+	AM_RANGE(0xc8000, 0xc8bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram") \
+	AM_RANGE(0xcc000, 0xccbff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2") \
+	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1") \
+	AM_RANGE(0xd8000, 0xdbfff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2") \
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM \
+ADDRESS_MAP_END \
 
-static ADDRESS_MAP_START( rtype2_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0xb0000, 0xb0001) AM_WRITE(irq_line_w)
-	AM_RANGE(0xbc000, 0xbc001) AM_WRITE(dmaon_w)
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0xc8000, 0xc8bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0xd4000, 0xd7fff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xd8000, 0xd8bff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xe0000, 0xe3fff) AM_RAM   /* work RAM */
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
+/*                         WORKRAM */
+M81_CPU1_MEMORY( xmultipl, 0x9c000 )
+M81_CPU1_MEMORY( dbreed,   0x88000 )
+M81_CPU1_MEMORY( hharry,   0xa0000 )
 
-static ADDRESS_MAP_START( majtitle_map, AS_PROGRAM, 16, m72_state )
+
+#define M84_CPU1_MEMORY(NAME,VIDEORAM,PALETTERAM1,PALETTERAM2) \
+	static ADDRESS_MAP_START( NAME##_map, AS_PROGRAM, 16 , m72_state ) \
+	AM_RANGE(0x00000, 0x7ffff) AM_ROM \
+	AM_RANGE(0xb0000, 0xb0001) AM_WRITE(irq_line_w) \
+	AM_RANGE(0xb4000, 0xb4001) AM_WRITENOP  /* ??? */ \
+	AM_RANGE(0xbc000, 0xbc001) AM_WRITE(dmaon_w) \
+	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */ \
+	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram") \
+	AM_RANGE(VIDEORAM+0x0000, VIDEORAM+0x3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1") \
+	AM_RANGE(VIDEORAM+0x4000, VIDEORAM+0x7fff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2") \
+	AM_RANGE(PALETTERAM1, PALETTERAM1+0xbff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram") \
+	AM_RANGE(PALETTERAM2, PALETTERAM2+0xbff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2") \
+	AM_RANGE(0xe0000, 0xe3fff) AM_RAM   /* work RAM */ \
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM \
+ADDRESS_MAP_END \
+
+M84_CPU1_MEMORY( rtype2,  0xd0000, 0xc8000, 0xd8000 )
+M84_CPU1_MEMORY( hharryu, 0xd0000, 0xa0000, 0xa8000 )
+M84_CPU1_MEMORY( kengo,   0x80000, 0xa0000, 0xa8000 )
+
+
+
+static ADDRESS_MAP_START( m82_map, AS_PROGRAM, 16, m72_state )
 	AM_RANGE(0x00000, 0x7ffff) AM_ROM
 	AM_RANGE(0xa0000, 0xa03ff) AM_RAM AM_SHARE("majtitle_rowscr")
 	AM_RANGE(0xa4000, 0xa4bff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
@@ -955,46 +1003,8 @@ static ADDRESS_MAP_START( majtitle_map, AS_PROGRAM, 16, m72_state )
 	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( hharry_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0xa0000, 0xa3fff) AM_RAM   /* work RAM */
-	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0xc8000, 0xc8bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xcc000, 0xccbff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0xd8000, 0xdbfff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hharryu_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0xa0000, 0xa0bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xa8000, 0xa8bff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xb0000, 0xb0001) AM_WRITE(irq_line_w)
-	AM_RANGE(0xbc000, 0xbc001) AM_WRITE(dmaon_w)
-	AM_RANGE(0xb0ffe, 0xb0fff) AM_WRITEONLY /* leftover from protection?? */
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0xd0000, 0xd3fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0xd4000, 0xd7fff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xe0000, 0xe3fff) AM_RAM   /* work RAM */
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( kengo_map, AS_PROGRAM, 16, m72_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM
-	AM_RANGE(0xa0000, 0xa0bff) AM_READWRITE(palette1_r, palette1_w) AM_SHARE("paletteram")
-	AM_RANGE(0xa8000, 0xa8bff) AM_READWRITE(palette2_r, palette2_w) AM_SHARE("paletteram2")
-	AM_RANGE(0xb0000, 0xb0001) AM_WRITE(irq_line_w)
-	AM_RANGE(0xb4000, 0xb4001) AM_WRITENOP  /* ??? */
-	AM_RANGE(0xbc000, 0xbc001) AM_WRITE(dmaon_w)
-	AM_RANGE(0xc0000, 0xc03ff) AM_RAM AM_SHARE("spriteram")
-	AM_RANGE(0x80000, 0x83fff) AM_RAM_WRITE(videoram1_w) AM_SHARE("videoram1")
-	AM_RANGE(0x84000, 0x87fff) AM_RAM_WRITE(videoram2_w) AM_SHARE("videoram2")
-	AM_RANGE(0xe0000, 0xe3fff) AM_RAM   /* work RAM */
-	AM_RANGE(0xffff0, 0xfffff) AM_ROM
-ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( m72_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x00, 0x01) AM_READ_PORT("IN0")
@@ -1012,7 +1022,7 @@ static ADDRESS_MAP_START( m72_portmap, AS_IO, 16, m72_state )
 /*  { 0xc0, 0xc0      trigger sample, filled by init_ function */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( rtype2_portmap, AS_IO, 16, m72_state )
+static ADDRESS_MAP_START( m84_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x00, 0x01) AM_READ_PORT("IN0")
 	AM_RANGE(0x02, 0x03) AM_READ_PORT("IN1")
 	AM_RANGE(0x04, 0x05) AM_READ_PORT("DSW")
@@ -1024,6 +1034,20 @@ static ADDRESS_MAP_START( rtype2_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x84, 0x85) AM_WRITE(scrolly2_w)
 	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
 ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( m84_v33_portmap, AS_IO, 16, m72_state )
+	AM_RANGE(0x00, 0x01) AM_READ_PORT("IN0")
+	AM_RANGE(0x02, 0x03) AM_READ_PORT("IN1")
+	AM_RANGE(0x04, 0x05) AM_READ_PORT("DSW")
+	AM_RANGE(0x00, 0x01) AM_DEVWRITE("m72", m72_audio_device, sound_command_w)
+	AM_RANGE(0x02, 0x03) AM_WRITE(rtype2_port02_w)
+	AM_RANGE(0x80, 0x81) AM_WRITE(scrolly1_w)
+	AM_RANGE(0x82, 0x83) AM_WRITE(scrollx1_w)
+	AM_RANGE(0x84, 0x85) AM_WRITE(scrolly2_w)
+	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
+//  AM_RANGE(0x8c, 0x8f) AM_WRITENOP    /* ??? */
+ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( poundfor_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x02, 0x03) AM_READ_PORT("IN1")
@@ -1038,7 +1062,7 @@ static ADDRESS_MAP_START( poundfor_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( majtitle_portmap, AS_IO, 16, m72_state )
+static ADDRESS_MAP_START( m82_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x00, 0x01) AM_READ_PORT("IN0")
 	AM_RANGE(0x02, 0x03) AM_READ_PORT("IN1")
 	AM_RANGE(0x04, 0x05) AM_READ_PORT("DSW")
@@ -1049,7 +1073,10 @@ static ADDRESS_MAP_START( majtitle_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x82, 0x83) AM_WRITE(scrollx1_w)
 	AM_RANGE(0x84, 0x85) AM_WRITE(scrolly2_w)
 	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
-	AM_RANGE(0x8e, 0x8f) AM_WRITE(majtitle_gfx_ctrl_w)
+
+	// these ports control the tilemap sizes, rowscroll etc. that m82 has, exact bit usage not known (maybe one for each layer?)
+	AM_RANGE(0x8c, 0x8d) AM_WRITE(m82_tm_ctrl_w)
+	AM_RANGE(0x8e, 0x8f) AM_WRITE(m82_gfx_ctrl_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( m81_portmap, AS_IO, 16, m72_state )
@@ -1067,18 +1094,6 @@ static ADDRESS_MAP_START( m81_portmap, AS_IO, 16, m72_state )
 	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( kengo_portmap, AS_IO, 16, m72_state )
-	AM_RANGE(0x00, 0x01) AM_READ_PORT("IN0")
-	AM_RANGE(0x02, 0x03) AM_READ_PORT("IN1")
-	AM_RANGE(0x04, 0x05) AM_READ_PORT("DSW")
-	AM_RANGE(0x00, 0x01) AM_DEVWRITE("m72", m72_audio_device, sound_command_w)
-	AM_RANGE(0x02, 0x03) AM_WRITE(rtype2_port02_w)
-	AM_RANGE(0x80, 0x81) AM_WRITE(scrolly1_w)
-	AM_RANGE(0x82, 0x83) AM_WRITE(scrollx1_w)
-	AM_RANGE(0x84, 0x85) AM_WRITE(scrolly2_w)
-	AM_RANGE(0x86, 0x87) AM_WRITE(scrollx2_w)
-//  AM_RANGE(0x8c, 0x8f) AM_WRITENOP    /* ??? */
-ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_ram_map, AS_PROGRAM, 8, m72_state )
@@ -1876,8 +1891,9 @@ static MACHINE_CONFIG_START( m72_base, m72_state )
 	MCFG_CPU_ADD("maincpu",V30,MASTER_CLOCK/2/2)    /* 16 MHz external freq (8MHz internal) */
 	MCFG_CPU_PROGRAM_MAP(m72_map)
 	MCFG_CPU_IO_MAP(m72_portmap)
+#ifndef USE_HACKED_IRQS
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
-
+#endif
 	MCFG_CPU_ADD("soundcpu",Z80, SOUND_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(sound_ram_map)
 	MCFG_CPU_IO_MAP(sound_portmap)
@@ -1986,8 +2002,10 @@ static MACHINE_CONFIG_START( rtype2, m72_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V30,MASTER_CLOCK/2/2)   /* 16 MHz external freq (8MHz internal) */
 	MCFG_CPU_PROGRAM_MAP(rtype2_map)
-	MCFG_CPU_IO_MAP(rtype2_portmap)
+	MCFG_CPU_IO_MAP(m84_portmap)
+#ifndef USE_HACKED_IRQS
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
+#endif
 
 	MCFG_CPU_ADD("soundcpu", Z80, SOUND_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(sound_rom_map)
@@ -2029,8 +2047,10 @@ static MACHINE_CONFIG_START( cosmccop, m72_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V35,MASTER_CLOCK/2)
 	MCFG_CPU_PROGRAM_MAP(kengo_map)
-	MCFG_CPU_IO_MAP(kengo_portmap)
-	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
+	MCFG_CPU_IO_MAP(m84_v33_portmap)
+//#ifndef USE_HACKED_IRQS
+//	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
+//#endif
 
 	MCFG_CPU_ADD("soundcpu", Z80, SOUND_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(sound_rom_map)
@@ -2038,7 +2058,7 @@ static MACHINE_CONFIG_START( cosmccop, m72_state )
 	MCFG_CPU_PERIODIC_INT_DRIVER(m72_state, nmi_line_pulse, 128*55) /* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 
-	MCFG_PIC8259_ADD( "upd71059c", INPUTLINE("maincpu", 0), VCC, NULL)
+//	MCFG_PIC8259_ADD( "upd71059c", INPUTLINE("maincpu", 0), VCC, NULL)
 								
 	MCFG_MACHINE_START_OVERRIDE(m72_state,kengo)
 	MCFG_MACHINE_RESET_OVERRIDE(m72_state,kengo)
@@ -2071,14 +2091,15 @@ M82-A-A as the top board
 M82-B-A and as the bottom board
 
 */
-static MACHINE_CONFIG_START( m82_large, m72_state )
+static MACHINE_CONFIG_START( m82, m72_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V30,MASTER_CLOCK/2/2)   /* 16 MHz external freq (8MHz internal) */
-	MCFG_CPU_PROGRAM_MAP(majtitle_map)
-	MCFG_CPU_IO_MAP(majtitle_portmap)
+	MCFG_CPU_PROGRAM_MAP(m82_map)
+	MCFG_CPU_IO_MAP(m82_portmap)
+#ifndef USE_HACKED_IRQS
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
-
+#endif
 	MCFG_CPU_ADD("soundcpu", Z80, SOUND_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(sound_rom_map)
 	MCFG_CPU_IO_MAP(rtype2_sound_portmap)
@@ -2093,22 +2114,13 @@ static MACHINE_CONFIG_START( m82_large, m72_state )
 
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_RAW_PARAMS(MASTER_CLOCK/4, 512, 64, 448, 284, 0, 256)
-	MCFG_SCREEN_UPDATE_DRIVER(m72_state, screen_update_majtitle)
+	MCFG_SCREEN_UPDATE_DRIVER(m72_state, screen_update_m82)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_VIDEO_START_OVERRIDE(m72_state,m82_large)
+	MCFG_VIDEO_START_OVERRIDE(m72_state,m82)
 
 	MCFG_FRAGMENT_ADD(m72_audio_chips)
 MACHINE_CONFIG_END
-
-// this is a conversion of Major Title
-static MACHINE_CONFIG_DERIVED( m82_small, m82_large ) // m82
-	MCFG_VIDEO_START_OVERRIDE(m72_state,m82_small)
-MACHINE_CONFIG_END
-
-
-
-
 
 
 /* Pound for Pound uses 
@@ -2121,8 +2133,9 @@ static MACHINE_CONFIG_START( poundfor, m72_state )
 	MCFG_CPU_ADD("maincpu", V30,MASTER_CLOCK/2/2)   /* 16 MHz external freq (8MHz internal) */
 	MCFG_CPU_PROGRAM_MAP(rtype2_map)
 	MCFG_CPU_IO_MAP(poundfor_portmap)
+#ifndef USE_HACKED_IRQS
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("upd71059c", pic8259_device, inta_cb)
-
+#endif
 	MCFG_CPU_ADD("soundcpu", Z80, SOUND_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(sound_rom_map)
 	MCFG_CPU_IO_MAP(poundfor_sound_portmap)
@@ -3322,6 +3335,76 @@ ROM_START( airduel )
 	ROM_LOAD( "AD_(M82)_A-V0-D.IC12",    0x00000, 0x20000, CRC(339f474d) SHA1(a81bb52598a0e31b2ed6a538755237c5d14d1844) )
 ROM_END
 
+
+ROM_START( rtypem82b )
+	ROM_REGION( 0x100000, "maincpu", 0 )
+	ROM_LOAD16_BYTE( "rt_h0.bin",    0x00001, 0x20000, CRC(5fa5068b) SHA1(b33891d2e0ca7e52226c1318ad657ac6bc7d6df4) )
+	ROM_LOAD16_BYTE( "rt_l0.bin",    0x00000, 0x20000, CRC(aee6fae8) SHA1(22645da3bfeb3a7517bdbf0829fd9d689ddc5368) )
+	ROM_LOAD16_BYTE( "rt_h1.bin",    0x40001, 0x20000, CRC(76389df4) SHA1(20004dd1d058589bdd8ea93a66a6cdf93382c7cc) )
+	ROM_RELOAD(                      0xc0001, 0x20000 )
+	ROM_LOAD16_BYTE( "rt_l1.bin",    0x40000, 0x20000, CRC(6af66a05) SHA1(3c686b4559e4e223e3b03533fe2b2fc4758f4e02) )
+	ROM_RELOAD(                      0xc0000, 0x20000 )
+
+	ROM_REGION( 0x10000, "soundcpu", 0 )
+	ROM_LOAD( "rt_sp.bin",    0x00000, 0x10000, CRC(24fded65) SHA1(34e085ebfc6415a60b7440ac53c8ae7130b5e9d4) )
+
+	ROM_REGION( 0x80000, "sprites", 0 )
+	ROM_LOAD( "rt_n0.bin",    0x00000, 0x20000, CRC(236e93ad) SHA1(a168c2f007a7469d8c1d834dc5247d99d13fd36d) )  /* sprites #1 */
+	ROM_LOAD( "rt_n1.bin",    0x20000, 0x20000, CRC(94e0da50) SHA1(0e8aef07b2a4a60bb6faa9ea3d02869d30dff84c) )
+	ROM_LOAD( "rt_n2.bin",    0x40000, 0x20000, CRC(6310dd0e) SHA1(4e4a50ef64cdfddea10d415a4b2d2490c1364074) )
+	ROM_LOAD( "rt_n3.bin",    0x60000, 0x20000, CRC(dd9674fb) SHA1(925bbd64015ec9109a74ce80747bea2bfdb0cde6) )
+
+	ROM_REGION( 0x100000, "gfx2", 0 )
+	ROM_LOAD( "rt_c0.bin",    0x00000, 0x40000, CRC(c2511272) SHA1(138dd131f827215f13ba0761cacc0f383b5e5a48) )  /* tiles */
+	ROM_LOAD( "rt_c1.bin",    0x40000, 0x40000, CRC(6da33dae) SHA1(2b5f686c5c8e45a896ab115818066d03af767cb5) )
+	ROM_LOAD( "rt_c2.bin",    0x80000, 0x40000, CRC(29322d6e) SHA1(b553d46f1270dcc4754800e65c21b5e418994fcd) )
+	ROM_LOAD( "rt_c3.bin",    0xc0000, 0x40000, CRC(0ab3a8db) SHA1(7f4f5c18b5df0f5fdcb471db4e87c1be393aca92) )
+
+	ROM_REGION( 0x080000, "sprites2", 0 ) // leftover from Major Title
+	ROM_LOAD( "mt_f0.bin",    0x00000, 0x20000, CRC(2d5e05d5) SHA1(18bdc9c561dbf0f91642161ca985d2154bd58b5d) )  /* sprites #2 */
+	ROM_LOAD( "mt_f1.bin",    0x20000, 0x20000, CRC(c68cd65f) SHA1(8999b558b4af0f453ada9e4ef705163df96844e6) )
+	ROM_LOAD( "mt_f2.bin",    0x40000, 0x20000, CRC(a71feb2d) SHA1(47e366b422772bed08ee4d1c338970687d6c3b4c) )
+	ROM_LOAD( "mt_f3.bin",    0x60000, 0x20000, CRC(179f7562) SHA1(6d28b199daffc62e8fa9009878ac0bb976ccbb2a) )
+
+	ROM_REGION( 0x20000, "samples", 0 ) /* samples */  // leftover from Major Title
+	ROM_LOAD( "mt_vo.bin",    0x00000, 0x20000, CRC(eb24bb2c) SHA1(9fca04fba0249e8213dd164eb6829e1a5acbee65) )
+ROM_END
+
+ROM_START( rtype2m82b )
+	ROM_REGION( 0x100000, "maincpu", 0 )
+	ROM_LOAD16_BYTE( "rt2_h0.bin",    0x00001, 0x20000, CRC(47639a78) SHA1(d7dd851fed96d46c850e5c8f24d9d1a081f6b297) )
+	ROM_LOAD16_BYTE( "rt2_l0.bin",    0x00000, 0x20000, CRC(a1661cdf) SHA1(d209328d678fc2fc405bd20f5134bd85b4cd4802) )
+	ROM_LOAD16_BYTE( "rt2_h1.bin",    0x40001, 0x20000, CRC(4b79840c) SHA1(6cf8c8cf4bcf5e2acdaa05b8dca2f2a969edc2c5) )
+	ROM_RELOAD(                      0xc0001, 0x20000 )
+	ROM_LOAD16_BYTE( "rt2_l1.bin",    0x40000, 0x20000, CRC(6ab3ae42) SHA1(d3d7c35e1583b55cc668aa011471c3bf04a541af) )
+	ROM_RELOAD(                      0xc0000, 0x20000 )
+
+	ROM_REGION( 0x10000, "soundcpu", 0 )
+	ROM_LOAD( "rt2_sp.bin",    0x00000, 0x10000, CRC(73ffecb4) SHA1(4795bf0d6263060c3d3759b659bdb189a4087600) )
+
+	ROM_REGION( 0x80000, "sprites", 0 )
+	ROM_LOAD( "rt2_n0.bin",    0x00000, 0x20000, CRC(2cd8f913) SHA1(a53752b35da95b420dd29a09176d265d292b3938) )  /* sprites #1 */
+	ROM_LOAD( "rt2_n1.bin",    0x20000, 0x20000, CRC(5033066d) SHA1(e125127f0610c63f9e59a585db547be5d49ed863) )
+	ROM_LOAD( "rt2_n2.bin",    0x40000, 0x20000, CRC(ec3a0450) SHA1(632bdd397f1bc67f6970faf7d09ab8d911e105fe) )
+	ROM_LOAD( "rt2_n3.bin",    0x60000, 0x20000, CRC(db6176fc) SHA1(1eaf72af0322490c98461aded202288e387caac1) )
+
+	ROM_REGION( 0x100000, "gfx2", 0 )
+	ROM_LOAD( "rt2_c0.bin",    0x00000, 0x40000, CRC(f5bad5f2) SHA1(dc86b93f62e8947e3551f07e393e740e5dc43f5e))  /* tiles */
+	ROM_LOAD( "rt2_c1.bin",    0x40000, 0x40000, CRC(71451778) SHA1(52ca7aa8522b988a19556313041450c767dad054) )
+	ROM_LOAD( "rt2_c2.bin",    0x80000, 0x40000, CRC(c6b0c352) SHA1(eec4fa88c27815960106881e7ccb23e62556bf1c) )
+	ROM_LOAD( "rt2_c3.bin",    0xc0000, 0x40000, CRC(6d530a32) SHA1(4e4100e5e5d88e65fb5494474d3692ecd8f44343) )
+
+	ROM_REGION( 0x080000, "sprites2", 0 ) // leftover from Major Title
+	ROM_LOAD( "mt_f0.bin",    0x00000, 0x20000, CRC(2d5e05d5) SHA1(18bdc9c561dbf0f91642161ca985d2154bd58b5d) )  /* sprites #2 */
+	ROM_LOAD( "mt_f1.bin",    0x20000, 0x20000, CRC(c68cd65f) SHA1(8999b558b4af0f453ada9e4ef705163df96844e6) )
+	ROM_LOAD( "mt_f2.bin",    0x40000, 0x20000, CRC(a71feb2d) SHA1(47e366b422772bed08ee4d1c338970687d6c3b4c) )
+	ROM_LOAD( "mt_f3.bin",    0x60000, 0x20000, CRC(179f7562) SHA1(6d28b199daffc62e8fa9009878ac0bb976ccbb2a) )
+
+	ROM_REGION( 0x20000, "samples", 0 ) /* samples */
+	ROM_LOAD( "rt2_vo.bin",    0x00000, 0x20000, CRC(637172d5) SHA1(9dd0dc409306287238826bf301e2a7a12d6cd9ce) )
+ROM_END
+
+
 /*****************************
   M84 sets
 ******************************/
@@ -3691,6 +3774,8 @@ ROM_END
 // the program roms failing their tests.  This is why we still have simulation code for many games
 // despite having Japanese version MCU roms for several of them.  See notes next to the sets
 
+/* M72 */
+
 GAME( 1987, rtype,       0,        rtype,       rtype,    driver_device, 0,           ROT0,   "Irem", "R-Type (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1987, rtypej,      rtype,    rtype,       rtype,    driver_device, 0,           ROT0,   "Irem", "R-Type (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1987, rtypejp,     rtype,    rtype,       rtypep,   driver_device, 0,           ROT0,   "Irem", "R-Type (Japan prototype)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
@@ -3709,37 +3794,52 @@ GAME( 1988, imgfightj,   imgfight, m72_8751,    imgfight, m72_state,     m72_875
 GAME( 1989, loht,        0,        m72,         loht,     m72_state,     loht,        ROT0,   "Irem", "Legend of Hero Tonma", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )         // fails rom check if used with Japan MCU rom (World version?)
 GAME( 1989, lohtj,       loht,     m72_8751,    loht,     m72_state,     m72_8751,    ROT0,   "Irem", "Legend of Hero Tonma (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // waits for japan warning screen, works with our mcu dump (Japan Version)
 GAME( 1989, lohtb2,      loht,     m72_8751,    loht,     m72_state,     m72_8751,    ROT0,   "bootleg", "Legend of Hero Tonma (Japan, bootleg with i8751)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // works like above, mcu code is the same as the real code, probably just an alt revision on a bootleg board
-GAME( 1989, lohtb,       loht,     m72,         loht,     driver_device, 0,           ROT0,   "bootleg", "Legend of Hero Tonma (unprotected bootleg)", MACHINE_NOT_WORKING| MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 
-GAME( 1989, xmultipl,    0,        m81_xmultipl,m81_xmultipl,driver_device,0,         ROT0,   "Irem", "X Multiply (World, M81)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1989, xmultiplm72, xmultipl, m72_xmultipl,xmultipl, m72_state,     m72_8751,    ROT0,   "Irem", "X Multiply (Japan, M72)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 
-GAME( 1989, dbreed,      0,        m81_dbreed,   m81_dbreed,driver_device,0,           ROT0,   "Irem", "Dragon Breed (M81 PCB version)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1989, dbreedm72,   dbreed,   m72_dbreed,   dbreed,   m72_state,     dbreedm72,   ROT0,   "Irem", "Dragon Breed (M72 PCB version)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // probably Japan version
 
+GAME( 1991, gallop,      cosmccop, m72,         gallop,   m72_state,     gallop,      ROT0,   "Irem", "Gallop - Armed Police Unit (Japan, M72)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+
+GAME( 1990, airduelm72,  airduel,  m72,         airduel,  m72_state,     airduelm72,  ROT270, "Irem", "Air Duel (Japan, M72)", MACHINE_SUPPORTS_SAVE )
+
+GAME( 1990, dkgensanm72, hharry,   m72,         hharry,   m72_state,     dkgenm72,    ROT0,   "Irem", "Daiku no Gensan (Japan, M72)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+
+/* M81 */
+GAME( 1989, xmultipl,    0,        m81_xmultipl,m81_xmultipl,driver_device,0,         ROT0,   "Irem", "X Multiply (World, M81)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1989, dbreed,      0,        m81_dbreed,   m81_dbreed,driver_device,0,           ROT0,   "Irem", "Dragon Breed (M81 PCB version)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1990, hharry,      0,        m81_hharry,  m81_hharry,driver_device,0,           ROT0,   "Irem", "Hammerin' Harry (World, M81)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+
+/* M82 */
+GAME( 1990, majtitle,    0,        m82,         rtype2,   driver_device, 0,           ROT0,   "Irem", "Major Title (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // M82-A-A + M82-B-A
+GAME( 1990, majtitlej,   majtitle, m82,         rtype2,   driver_device, 0,           ROT0,   "Irem", "Major Title (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // ^
+
+GAME( 1990, airduel,     0,        m82,         airduel,  driver_device, 0,           ROT270, "Irem", "Air Duel (World, M82-A-A + M82-B-A)", MACHINE_SUPPORTS_SAVE ) // Major Title conversion
+
+GAME( 2009, rtypem82b,   rtype,    m82,         rtype,    driver_device, 0,           ROT0,   "bootleg", "R-Type (Japan, bootleg Major Title conversion, M82)", MACHINE_NOT_WORKING | MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // unofficial conversion of Major Title, extensive wiremods, made in 2009 by Paul Swan
+
+GAME( 1997, rtype2m82b,  rtype2,   m82,         rtype2,   driver_device, 0,           ROT0,   "bootleg", "R-Type II (Japan, bootleg Major Title conversion, M82)", MACHINE_NOT_WORKING | MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // made in 1997 by Chris Hardy
+
+/* M84 */
+
+GAME( 1990, hharryu,     hharry,   hharryu,     hharry,   driver_device, 0,           ROT0,   "Irem America", "Hammerin' Harry (US, M84)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1990, dkgensan,    hharry,   hharryu,     hharry,   driver_device, 0,           ROT0,   "Irem", "Daiku no Gensan (Japan, M84)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 
 GAME( 1989, rtype2,      0,        rtype2,      rtype2,   driver_device, 0,           ROT0,   "Irem", "R-Type II", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1989, rtype2j,     rtype2,   rtype2,      rtype2,   driver_device, 0,           ROT0,   "Irem", "R-Type II (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 GAME( 1989, rtype2jc,    rtype2,   rtype2,      rtype2,   driver_device, 0,           ROT0,   "Irem", "R-Type II (Japan, revision C)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 
-GAME( 1990, majtitle,    0,        m82_large,   rtype2,   driver_device, 0,           ROT0,   "Irem", "Major Title (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // M82-A-A + M82-B-A
-GAME( 1990, majtitlej,   majtitle, m82_large,   rtype2,   driver_device, 0,           ROT0,   "Irem", "Major Title (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // ^
+GAME( 1991, cosmccop,    0,        cosmccop,    gallop,   driver_device, 0,           ROT0,   "Irem", "Cosmic Cop (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
 
-GAME( 1990, hharry,      0,        m81_hharry,  m81_hharry,driver_device,0,           ROT0,   "Irem", "Hammerin' Harry (World, M81)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-GAME( 1990, hharryu,     hharry,   hharryu,     hharry,   driver_device, 0,           ROT0,   "Irem America", "Hammerin' Harry (US, M84)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-GAME( 1990, dkgensan,    hharry,   hharryu,     hharry,   driver_device, 0,           ROT0,   "Irem", "Daiku no Gensan (Japan, M84)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-GAME( 1990, dkgensanm72, hharry,   m72,         hharry,   m72_state,     dkgenm72,    ROT0,   "Irem", "Daiku no Gensan (Japan, M72)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1991, ltswords,    0,        kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Lightning Swords", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1991, kengo,       ltswords, kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Ken-Go (set 1)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1991, kengoa,      ltswords, kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Ken-Go (set 2)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // has 'for use in Japan' message, above set doesn't
+
+/* M85 */
 
 GAME( 1990, poundfor,    0,        poundfor,    poundfor, driver_device, 0,           ROT270, "Irem", "Pound for Pound (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )      // M85-A-B / M85-B
 GAME( 1990, poundforj,   poundfor, poundfor,    poundfor, driver_device, 0,           ROT270, "Irem", "Pound for Pound (Japan)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )      // ^
 GAME( 1990, poundforu,   poundfor, poundfor,    poundfor, driver_device, 0,           ROT270, "Irem America", "Pound for Pound (US)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // ^
 
-GAME( 1990, airduel,     0,        m82_small,   airduel,  driver_device, 0,           ROT270, "Irem", "Air Duel (World, M82-A-A + M82-B-A)", MACHINE_SUPPORTS_SAVE ) // Major Title conversion
-GAME( 1990, airduelm72,  airduel,  m72,         airduel,  m72_state,     airduelm72,  ROT270, "Irem", "Air Duel (Japan, M72)", MACHINE_SUPPORTS_SAVE )
-
-GAME( 1991, cosmccop,    0,        cosmccop,    gallop,   driver_device, 0,           ROT0,   "Irem", "Cosmic Cop (World)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-GAME( 1991, gallop,      cosmccop, m72,         gallop,   m72_state,     gallop,      ROT0,   "Irem", "Gallop - Armed Police Unit (Japan, M72)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-
-GAME( 1991, ltswords,    0,        kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Lightning Swords", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
-GAME( 1991, kengo,       ltswords, kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Ken-Go (set 1)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE ) // M84-B-B ?
-GAME( 1991, kengoa,      ltswords, kengo,       kengo,    driver_device, 0,           ROT0,   "Irem", "Ken-Go (set 2)", MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+/* bootlegs, unique hw */
+GAME( 1989, lohtb,       loht,     m72,         loht,     driver_device, 0,           ROT0,   "bootleg", "Legend of Hero Tonma (unprotected bootleg)", MACHINE_NOT_WORKING| MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )

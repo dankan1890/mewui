@@ -147,7 +147,6 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	mewui_globals::default_image = true;
 	ume_filters::actual = machine.options().start_filter();
 	mewui_globals::panels_status = machine.options().hide_panels();
-	l_sw_hover = -1;
 }
 
 //-------------------------------------------------

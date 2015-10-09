@@ -80,8 +80,15 @@ void ui_menu::init_mewui(running_machine &machine)
 {
 	// create a texture for hilighting items in main menu
 	hilight_main_bitmap = auto_bitmap_rgb32_alloc(machine, 1, 26);
+	int r1 = 0, g1 = 169, b1 = 255; //Any start color
+	int r2 = 0, g2 = 39, b2 = 130; //Any stop color
 	for (int y = 0; y < 26; y++)
-		hilight_main_bitmap->pix32(y, 0) = rgb_t(0xff, 0, 169 - (y * 5), 255 - (y * 5));
+	{
+		int r = r1 + (y * (r2 - r1) / 26);
+		int g = g1 + (y * (g2 - g1) / 26);
+		int b = b1 + (y * (b2 - b1) / 26);
+		hilight_main_bitmap->pix32(y, 0) = rgb_t(0xff, r, g, b);
+	}
 
 	hilight_main_texture = machine.render().texture_alloc();
 	hilight_main_texture->set_bitmap(*hilight_main_bitmap, hilight_main_bitmap->cliprect(), TEXFORMAT_ARGB32);
@@ -230,7 +237,8 @@ void ui_menu::draw_select_game(bool noinput)
 	x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
 	float line = visible_top + (float)(visible_lines * line_height);
 
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+	//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	if (visible_items < visible_lines)
 		visible_lines = visible_items;
@@ -431,7 +439,9 @@ void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float o
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
@@ -455,7 +465,9 @@ void ui_menu::arts_render(void *selectedref, float origx1, float origy1, float o
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
@@ -1128,7 +1140,8 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		}
 
 		x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 		// take off the borders
 		x1 += UI_BOX_LR_BORDER;
@@ -1224,7 +1237,9 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
@@ -1246,7 +1261,9 @@ float ui_menu::draw_left_box(float x1, float y1, float x2, float y2, bool softwa
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
@@ -1326,7 +1343,8 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 	float midl = (x2 - x1) * 0.5f;
 
 	// add outlined box for options
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+	//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// add separator line
 	container->add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1388,7 +1406,9 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
@@ -1411,7 +1431,9 @@ void ui_menu::infos_render(void *selectedref, float origx1, float origy1, float 
 		float ar_x1 = ar_x0 + lr_arrow_width;
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
-		machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
+		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
 		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;

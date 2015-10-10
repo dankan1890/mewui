@@ -29,6 +29,7 @@ before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then hdiutil attach SDL2-2.0.3.dmg; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then mkdir -p ~/Library/Frameworks; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then cp -R /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/; fi"
+  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then ls ~/Library/Frameworks/; fi"
 branches:
   only:
     - master

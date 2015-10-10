@@ -27,9 +27,7 @@ before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg'; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then hdiutil attach SDL2-2.0.3.dmg; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then mkdir -p ~/Library/Frameworks; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then cp -R /Volumes/SDL2/SDL2.framework ~/Library/Frameworks/; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then ls /Library/Frameworks/; fi"
+  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; fi"
 branches:
   only:
     - master

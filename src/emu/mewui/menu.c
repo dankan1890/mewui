@@ -1334,7 +1334,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 }
 
 //-------------------------------------------------
-//  draw right box
+//  draw right box title
 //-------------------------------------------------
 
 float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
@@ -1365,6 +1365,7 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 			if (mewui_globals::rpanel != cells)
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
+				fgcolor = UI_MOUSEOVER_COLOR;
 				r_hover = cells;
 			}
 		}
@@ -1373,7 +1374,8 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 		{
 			container->add_line(x1, y1 + line_height, x1 + midl, y1 + line_height, UI_LINE_WIDTH,
 			                    UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-			fgcolor = UI_CLONE_COLOR;
+			if (fgcolor != UI_MOUSEOVER_COLOR)
+				fgcolor = UI_CLONE_COLOR;
 		}
 
 		if (bgcolor != UI_TEXT_BG_COLOR)

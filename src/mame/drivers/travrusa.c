@@ -318,7 +318,6 @@ static MACHINE_CONFIG_START( travrusa, travrusa_state )
 	MCFG_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
 	MCFG_SCREEN_UPDATE_DRIVER(travrusa_state, screen_update_travrusa)
 	MCFG_SCREEN_PALETTE("palette")
-	MCFG_SCREEN_ORIENTATION(ROT270)
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", travrusa)
 
@@ -338,9 +337,6 @@ static MACHINE_CONFIG_DERIVED( shtrider, travrusa )
 	MCFG_GFXDECODE_MODIFY("gfxdecode", shtrider)
 	MCFG_PALETTE_MODIFY("palette")
 	MCFG_PALETTE_INIT_OWNER(travrusa_state,shtrider)
-	
-	MCFG_SCREEN_MODIFY("screen")
-	MCFG_SCREEN_ORIENTATION(ROT270 | ORIENTATION_FLIP_X)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( shtriderb, travrusa )

@@ -125,7 +125,8 @@ lastduelb       // bootleg
 madgear         //  2/1989 (c) 1989 (US)
 madgearj        //  2/1989 (c) 1989 (Japan)
 ledstorm        //  1988 (c) 1988 (US)
-ledstorm2       //  1988 (c) 1988 (US)
+leds2011        //  1988 (c) 1988 (World)
+leds2011u		//  1988 (c) 1988 (US)
 //  3/1989 Dokaben (baseball) - see below among "Mitchell" games
 //  8/1989 Dokaben 2 (baseball) - see below among "Mitchell" games
 // 10/1989 Capcom Baseball - see below among "Mitchell" games
@@ -170,7 +171,8 @@ ffighta         // 12/1989 (c) 1989 (World)
 ffightu         // 12/1989 (c) 1989 (USA)
 ffightu1        // 12/1989 (c) 1989 (USA)
 ffightua        // 12/01/1990 (c) 1989 (USA)
-ffightub        // 13/06/1990 (c) 1989 (USA)
+ffightub        // 24/04/1990 (c) 1989 (USA)
+ffightuc        // 12/06/1990 (c) 1989 (USA)
 ffightj         // 12/1989 (c) 1989 (Japan)
 ffightj1        // 12/01/1990 (c) 1989 (Japan)
 ffightj2        // 05/03/1990 (c) 1989 (Japan)
@@ -640,6 +642,9 @@ snespal   // Nintendo Super Nintendo PAL
 n64       // Nintendo N64
 n64dd     // Nintendo N64 (64DD Attachment)
 pokemini  // Nintendo Pokemon Mini
+
+megaduck  // Megaduck
+
 
 // Nintendo games
 spacefev        // (c) 1979 Nintendo
@@ -1241,6 +1246,10 @@ a4000tn
 
 c65    // 1991 C65 / C64DX (Prototype, NTSC)
 c64dx    // 1991 C65 / C64DX (Prototype, German PAL)
+
+mps1000 // 1986 Commodore MPS-1000 (dot matrix printer)
+mps1230 // 1988 Commodore MPS-1230 near-letter-quality dot matrix printer
+
 
 // CVS games
 cosmos          // (c) 1981 Century

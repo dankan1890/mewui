@@ -54,6 +54,7 @@ static const ui_arts_info arts_info[] =
 	{ "PCBs",            OPTION_PCBS_PATH,           "pcb" },
 	{ "Flyers",          OPTION_FLYERS_PATH,         "flyers" },
 	{ "Titles",          OPTION_TITLES_PATH,         "titles" },
+	{ "Ends",            OPTION_ENDS_PATH,           "ends" },
 	{ "Artwork Preview", OPTION_ARTPREV_PATH,        "artwork preview" },
 	{ "Bosses",          OPTION_BOSSES_PATH,         "bosses" },
 	{ "Logos",           OPTION_LOGOS_PATH,          "logo" },

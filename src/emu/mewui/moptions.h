@@ -23,6 +23,7 @@
 #define OPTION_PCBS_PATH              "pcbs_directory"
 #define OPTION_FLYERS_PATH            "flyers_directory"
 #define OPTION_TITLES_PATH            "titles_directory"
+#define OPTION_ENDS_PATH              "ends_directory"
 #define OPTION_MARQUEES_PATH          "marquees_directory"
 #define OPTION_ARTPREV_PATH           "artwork_preview_directory"
 #define OPTION_BOSSES_PATH            "bosses_directory"
@@ -83,6 +84,7 @@ public:
 	const char *pcbs_directory() const { return value(OPTION_PCBS_PATH); }
 	const char *flyers_directory() const { return value(OPTION_FLYERS_PATH); }
 	const char *titles_directory() const { return value(OPTION_TITLES_PATH); }
+	const char *ends_directory() const { return value(OPTION_ENDS_PATH); }
 	const char *marquees_directory() const { return value(OPTION_MARQUEES_PATH); }
 	const char *artprev_directory() const { return value(OPTION_ARTPREV_PATH); }
 	const char *bosses_directory() const { return value(OPTION_BOSSES_PATH); }

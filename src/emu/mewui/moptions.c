@@ -27,6 +27,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_PCBS_PATH,                    "pcb",  OPTION_STRING,  "path to pcbs image" },
 	{ OPTION_FLYERS_PATH,               "flyers",  OPTION_STRING,  "path to flyers image" },
 	{ OPTION_TITLES_PATH,               "titles",  OPTION_STRING,  "path to titles image" },
+	{ OPTION_ENDS_PATH,                   "ends",  OPTION_STRING,  "path to ends image" },
 	{ OPTION_MARQUEES_PATH,           "marquees",  OPTION_STRING,  "path to marquees image" },
 	{ OPTION_ARTPREV_PATH,     "artwork preview",  OPTION_STRING,  "path to artwork preview image" },
 	{ OPTION_BOSSES_PATH,               "bosses",  OPTION_STRING,  "path to bosses image" },

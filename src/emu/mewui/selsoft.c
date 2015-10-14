@@ -83,7 +83,7 @@ bool compare_software(ui_software_info a, ui_software_info b)
 //  get bios count
 //-------------------------------------------------
 
-int get_bios_count(const game_driver *driver, std::vector<std::string> &biosname)
+int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 {
 	if (driver->rom == NULL)
 		return 0;
@@ -95,19 +95,31 @@ int get_bios_count(const game_driver *driver, std::vector<std::string> &biosname
 
 	int bios_count = 0;
 	for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
+	{
 		if (ROMENTRY_ISSYSTEM_BIOS(rom))
 		{
 			bios_count++;
 			std::string name(ROM_GETHASHDATA(rom));
 			std::string bname(ROM_GETNAME(rom));
+			int bios_flags = ROM_GETBIOSFLAGS(rom);
+
 			if (bname == default_name)
 			{
 				name.append(" (default)");
-				biosname.insert(biosname.begin(), name);
+				s_bios tmp;
+				tmp.name.assign(name);
+				tmp.id = bios_flags - 1;
+				biosname.insert(biosname.begin(), tmp);
 			}
 			else
-				biosname.push_back(name);
+			{
+				s_bios tmp;
+				tmp.name.assign(name);
+				tmp.id = bios_flags - 1;
+				biosname.push_back(tmp);
+			}
 		}
+	}
 	return bios_count;
 }
 
@@ -827,7 +839,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 
 	if (ui_swinfo->startempty == 1)
 	{
-		std::vector<std::string> biosname;
+		std::vector<s_bios> biosname;
 		if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, true)));
 		else
@@ -855,7 +867,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
-			std::vector<std::string> biosname;
+			std::vector<s_bios> biosname;
 			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
@@ -1358,7 +1370,7 @@ void ui_mewui_software_parts::custom_render(void *selectedref, float top, float 
 //  ctor
 //-------------------------------------------------
 
-ui_mewui_bios_selection::ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<std::string> biosname, void *_driver, bool _software, bool _inlist) : ui_menu(machine, container)
+ui_mewui_bios_selection::ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<s_bios> biosname, void *_driver, bool _software, bool _inlist) : ui_menu(machine, container)
 {
 	m_bios = biosname;
 	m_driver = _driver;
@@ -1381,7 +1393,7 @@ ui_mewui_bios_selection::~ui_mewui_bios_selection()
 void ui_mewui_bios_selection::populate()
 {
 	for (size_t index = 0; index < m_bios.size(); index++)
-		item_append(m_bios[index].c_str(), NULL, 0, (void *)&m_bios[index]);
+		item_append(m_bios[index].name.c_str(), NULL, 0, (void *)&m_bios[index].name);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
@@ -1397,7 +1409,7 @@ void ui_mewui_bios_selection::handle()
 	const ui_menu_event *event = process(0);
 	if (event != NULL && event->iptkey == IPT_UI_SELECT && event->itemref != NULL)
 		for (size_t idx = 0; idx < m_bios.size(); idx++)
-			if ((void*)&m_bios[idx] == event->itemref)
+			if ((void*)&m_bios[idx].name == event->itemref)
 			{
 				if (!m_software)
 				{
@@ -1410,7 +1422,7 @@ void ui_mewui_bios_selection::handle()
 					reselect_last::swlist.clear();
 					mewui_globals::reselect = true;
 					std::string error;
-					machine().options().set_value("bios", (int)idx, OPTION_PRIORITY_CMDLINE, error);
+					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
 					machine().manager().schedule_new_driver(*s_driver);
 					machine().schedule_hard_reset();
 					ui_menu::stack_reset(machine());
@@ -1419,7 +1431,7 @@ void ui_mewui_bios_selection::handle()
 				{
 					ui_software_info *ui_swinfo = (ui_software_info *)m_driver;
 					std::string error;
-					machine().options().set_value("bios", (int)idx, OPTION_PRIORITY_CMDLINE, error);
+					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
 					driver_enumerator drivlist(machine().options(), *ui_swinfo->driver);
 					drivlist.next();
 					software_list_device *swlist = software_list_device::find_by_name(drivlist.config(), ui_swinfo->listname.c_str());

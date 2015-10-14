@@ -14,6 +14,12 @@
 
 #include "mewui/custmenu.h"
 
+struct s_bios
+{
+	std::string name;
+	int id;
+};
+
 // Menu Class
 class ui_menu_select_software : public ui_menu
 {
@@ -67,7 +73,7 @@ private:
 class ui_mewui_bios_selection : public ui_menu
 {
 public:
-	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<std::string> biosname, void *driver, bool software, bool inlist);
+	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<s_bios> biosname, void *driver, bool software, bool inlist);
 	virtual ~ui_mewui_bios_selection();
 	virtual void populate();
 	virtual void handle();
@@ -77,7 +83,7 @@ private:
 
 	void                      *m_driver;
 	bool m_software,          m_inlist;
-	std::vector<std::string>  m_bios;
+	std::vector<s_bios>       m_bios;
 };
 
 struct reselect_last
@@ -86,7 +92,7 @@ struct reselect_last
 };
 
 // Getter
-int get_bios_count(const game_driver *driver, std::vector<std::string> &biosname);
+int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname);
 
 
 #endif /* __MEWUI_SELSOFT_H__ */

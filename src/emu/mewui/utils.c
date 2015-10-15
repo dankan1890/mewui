@@ -53,7 +53,6 @@ UINT8 mewui_globals::curdats_view = 0;
 UINT8 mewui_globals::cur_sw_dats_view = 0;
 bool mewui_globals::switch_image = false;
 bool mewui_globals::default_image = true;
-bool mewui_globals::reselect = false;
 bool mewui_globals::reset = false;
 bool mewui_globals::redraw_icon = false;
 int mewui_globals::visible_main_lines = 0;

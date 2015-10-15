@@ -24,6 +24,7 @@
 std::string reselect_last::driver;
 std::string reselect_last::software;
 std::string reselect_last::swlist;
+bool reselect_last::m_reselect = false;
 
 static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
                                       "ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
@@ -129,8 +130,8 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 
 ui_menu_select_software::ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver) : ui_menu(machine, container)
 {
-	if (mewui_globals::reselect)
-		mewui_globals::reselect = false;
+	if (reselect_last::get())
+		reselect_last::set(false);
 
 	sw_filters::actual = 0;
 
@@ -448,9 +449,7 @@ void ui_menu_select_software::populate()
 		top_line = selected - (mewui_globals::visible_sw_lines / 2);
 	}
 
-	reselect_last::driver.clear();
-	reselect_last::software.clear();
-	reselect_last::swlist.clear();
+	reselect_last::reset();
 }
 
 //-------------------------------------------------
@@ -847,7 +846,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 			reselect_last::driver.assign(ui_swinfo->driver->name);
 			reselect_last::software.assign("[Start empty]");
 			reselect_last::swlist.clear();
-			mewui_globals::reselect = true;
+			reselect_last::set(true);
 			machine().manager().schedule_new_driver(*ui_swinfo->driver);
 			machine().schedule_hard_reset();
 			ui_menu::stack_reset(machine());
@@ -890,8 +889,6 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
 				return;
 			}
-
-			mewui_globals::reselect = true;
 			std::string error_string;
 			std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
 			machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
@@ -900,6 +897,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 			reselect_last::driver.assign(drivlist.driver().name);
 			reselect_last::software.assign(ui_swinfo->shortname);
 			reselect_last::swlist.assign(ui_swinfo->listname);
+			reselect_last::set(true);
 			machine().manager().schedule_new_driver(drivlist.driver());
 			machine().schedule_hard_reset();
 			ui_menu::stack_reset(machine());
@@ -1324,7 +1322,7 @@ void ui_mewui_software_parts::handle()
 				reselect_last::driver.assign(m_uiinfo->driver->name);
 				reselect_last::software.assign(m_uiinfo->shortname);
 				reselect_last::swlist.assign(m_uiinfo->listname);
-				mewui_globals::reselect = true;
+				reselect_last::set(true);
 
 				std::string snap_list = std::string(m_uiinfo->listname).append("/").append(m_uiinfo->shortname);
 				machine().options().set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
@@ -1420,7 +1418,8 @@ void ui_mewui_bios_selection::handle()
 					else
 						reselect_last::software.clear();
 					reselect_last::swlist.clear();
-					mewui_globals::reselect = true;
+					reselect_last::set(true);
+
 					std::string error;
 					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
 					machine().manager().schedule_new_driver(*s_driver);
@@ -1453,8 +1452,6 @@ void ui_mewui_bios_selection::handle()
 						ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
 						return;
 					}
-
-					mewui_globals::reselect = true;
 					std::string error_string;
 					std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
 					machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
@@ -1463,12 +1460,10 @@ void ui_mewui_bios_selection::handle()
 					reselect_last::driver.assign(drivlist.driver().name);
 					reselect_last::software.assign(ui_swinfo->shortname);
 					reselect_last::swlist.assign(ui_swinfo->listname);
+					reselect_last::set(true);
 					machine().manager().schedule_new_driver(drivlist.driver());
 					machine().schedule_hard_reset();
 					ui_menu::stack_reset(machine());
-
-
-
 				}
 			}
 }

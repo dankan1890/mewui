@@ -221,7 +221,7 @@ struct c_year
 struct mewui_globals
 {
 	static UINT8        curimage_view, curdats_view, cur_sw_dats_view, rpanel;
-	static bool         switch_image, redraw_icon, default_image, reselect, reset;
+	static bool         switch_image, redraw_icon, default_image, reset;
 	static int          visible_main_lines, visible_sw_lines;
 	static UINT16       panels_status;
 	static std::vector<cache_info> driver_cache;

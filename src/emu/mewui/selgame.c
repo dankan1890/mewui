@@ -132,11 +132,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	}
 
 	if (!machine.options().remember_last())
-	{
-		reselect_last::driver.clear();
-		reselect_last::software.clear();
-		reselect_last::swlist.clear();
-	}
+		reselect_last::reset();
 
 	machine.options().set_value(OPTION_SNAPNAME, "%g/%i", OPTION_PRIORITY_CMDLINE, error_string);
 	machine.options().set_value(OPTION_SOFTWARENAME, "", OPTION_PRIORITY_CMDLINE, error_string);
@@ -185,7 +181,7 @@ void ui_mewui_select_game::handle()
 	}
 
 	// if i have to reselect a software, force software list submenu
-	if (mewui_globals::reselect)
+	if (reselect_last::get())
 	{
 		const game_driver *driver = (const game_driver *)item[selected].ref;
 		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_select_software(machine(), container, driver)));
@@ -635,15 +631,10 @@ void ui_mewui_select_game::populate()
 		else
 			top_line = selected - (mewui_globals::visible_main_lines / 2);
 		if (reselect_last::software.empty())
-			mewui_globals::reselect = false;
+			reselect_last::reset();
 	}
 	else
-	{
-		reselect_last::driver.clear();
-		reselect_last::software.clear();
-		reselect_last::swlist.clear();
-		mewui_globals::reselect = false;
-	}
+		reselect_last::reset();
 }
 
 //-------------------------------------------------
@@ -1071,7 +1062,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *menu_event
 				reselect_last::driver.assign(ui_swinfo->driver->name);
 				reselect_last::software.clear();
 				reselect_last::swlist.clear();
-				mewui_globals::reselect = true;
+				reselect_last::set(true);
 				machine().manager().schedule_new_driver(*ui_swinfo->driver);
 				machine().schedule_hard_reset();
 				ui_menu::stack_reset(machine());

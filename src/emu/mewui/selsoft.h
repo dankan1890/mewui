@@ -89,6 +89,12 @@ private:
 struct reselect_last
 {
 	static std::string driver, software, swlist;
+	static void set(bool value) { m_reselect = value; }
+	static bool get() { return m_reselect; }
+	static void reset() { driver.clear(); software.clear(); swlist.clear(); set(false); }
+
+private:
+	static bool m_reselect;
 };
 
 // Getter

@@ -287,7 +287,6 @@ void ui_mewui_select_game::handle()
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
-
 				if ((FPTR)swinfo > 2)
 				{
 					if (swinfo->startempty == 1)
@@ -315,7 +314,6 @@ void ui_mewui_select_game::handle()
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
-
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 				{
 					if ((swinfo->driver->flags & MACHINE_TYPE_ARCADE) != 0)
@@ -338,7 +336,6 @@ void ui_mewui_select_game::handle()
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
-
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_STORY_LOAD, swinfo->driver)));
 			}
@@ -356,7 +353,6 @@ void ui_mewui_select_game::handle()
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
-
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_SYSINFO_LOAD, swinfo->driver)));
 			}
@@ -374,7 +370,6 @@ void ui_mewui_select_game::handle()
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
-
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command(machine(), container, swinfo->driver)));
 			}
@@ -458,9 +453,9 @@ void ui_mewui_select_game::handle()
 	// if we're in an error state, overlay an error message
 	if (ui_error)
 		machine().ui().draw_text_box(container,
-									"The selected game is missing one or more required ROM or CHD images. "
-									"Please select a different game.\n\nPress any key (except ESC) to continue.",
-									JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
+		                             "The selected game is missing one or more required ROM or CHD images. "
+		                             "Please select a different game.\n\nPress any key (except ESC) to continue.",
+		                             JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
 
 	// handle filters selection from key shortcuts
 	if (check_filter)
@@ -574,7 +569,7 @@ void ui_mewui_select_game::populate()
 				}
 
 				item_append(m_displaylist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-							(void *)m_displaylist[curitem]);
+				            (void *)m_displaylist[curitem]);
 			}
 		}
 	}
@@ -601,14 +596,14 @@ void ui_mewui_select_game::populate()
 				}
 
 				item_append(machine().favorite().m_favorite_list[x].longname.c_str(), NULL,
-							(cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui,
-							(void *)&machine().favorite().m_favorite_list[x]);
+				            (cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui,
+				            (void *)&machine().favorite().m_favorite_list[x]);
 			}
 			else
 				item_append(machine().favorite().m_favorite_list[x].longname.c_str(),
-							machine().favorite().m_favorite_list[x].devicetype.c_str(),
-							machine().favorite().m_favorite_list[x].parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-							(void *)&machine().favorite().m_favorite_list[x]);
+				            machine().favorite().m_favorite_list[x].devicetype.c_str(),
+				            machine().favorite().m_favorite_list[x].parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+				            (void *)&machine().favorite().m_favorite_list[x]);
 		}
 	}
 
@@ -730,8 +725,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		int c_cat = machine().inifile().current_category;
 		std::string s_file = machine().inifile().ini_index[c_file].name;
 		std::string s_category = machine().inifile().ini_index[c_file].category[c_cat].name;
-		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(s_file)
-						.append(" - ").append(s_category).append(") -");
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(s_file).append(" - ").append(s_category).append(") -");
 	}
 
 	else if (main_filters::actual == FILTER_MANUFACTURER)
@@ -837,7 +831,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		color = UI_GREEN_COLOR;
 
 		if ((driver->flags & (MACHINE_IMPERFECT_GRAPHICS | MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS
-												| MACHINE_NO_SOUND | MACHINE_IMPERFECT_SOUND)) != 0)
+		    | MACHINE_NO_SOUND | MACHINE_IMPERFECT_SOUND)) != 0)
 			color = UI_YELLOW_COLOR;
 
 		if ((driver->flags & (MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION)) != 0)
@@ -1489,7 +1483,7 @@ void ui_mewui_select_game::populate_search()
 				cloneof = false;
 		}
 		item_append(m_searchlist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-					(void *)m_searchlist[curitem]);
+		            (void *)m_searchlist[curitem]);
 	}
 }
 

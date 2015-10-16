@@ -944,7 +944,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 {
 	// attempt to open the output file
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
-	if (file.open("custom_", m_driver->name, "_m_filter.ini") == FILERR_NONE)
+	if (file.open("custom_", m_driver->name, "_filter.ini") == FILERR_NONE)
 	{
 		char buffer[MAX_CHAR_INFO];
 

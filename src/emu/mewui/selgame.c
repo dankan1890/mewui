@@ -119,16 +119,18 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 		reselect_last::driver.assign(machine.options().last_used_machine());
 		first_start = false;
 
-		if (main_filters::actual != FILTER_CATEGORY && main_filters::actual != FILTER_MANUFACTURER && main_filters::actual != FILTER_YEAR)
+		last_filter.assign(machine.options().last_used_filter());
+		for (size_t ind = 0; ind < main_filters::length; ++ind)
+		if (last_filter == main_filters::text[ind])
 		{
-			last_filter.assign(machine.options().last_used_filter());
-			for (size_t ind = 0; ind < main_filters::length; ++ind)
-			if (last_filter == main_filters::text[ind])
-			{
-				main_filters::actual = ind;
-				break;
-			}
+			main_filters::actual = ind;
+			break;
 		}
+
+		if (main_filters::actual == FILTER_CATEGORY || main_filters::actual == FILTER_MANUFACTURER
+		    || main_filters::actual != FILTER_YEAR || main_filters::actual == FILTER_SCREEN)
+			main_filters::actual = FILTER_ALL;
+
 	}
 
 	if (!machine.options().remember_last())

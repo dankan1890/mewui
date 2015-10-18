@@ -50,7 +50,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_SKIP_BIOS_MENU,                 "0",  OPTION_BOOLEAN, "skip bios submenu, start with configured or default" },
 	{ OPTION_SKIP_PARTS_MENU,                "0",  OPTION_BOOLEAN, "skip parts submenu, start with first part" },
 	{ OPTION_START_FILTER,                   "0",  OPTION_INTEGER, "startup filter (0 = ALL, 1 = ARCADES, 2 = SYSTEMS)" },
-	{ OPTION_LAST_USED_FILTER,               "0",   OPTION_STRING, "latest used filter" },
+	{ OPTION_LAST_USED_FILTER,                "",   OPTION_STRING, "latest used filter" },
 	{ OPTION_LAST_USED_MACHINE,               "",   OPTION_STRING, "latest used machine" },
 
 	// UI options

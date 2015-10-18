@@ -102,7 +102,7 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 
 ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : ui_menu(machine, container)
 {
-	std::string error_string, last_filter;
+	std::string error_string, last_filter, sub_filter;
 
 	// load drivers cache
 	load_cache_info();
@@ -117,20 +117,44 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 	if (first_start)
 	{
 		reselect_last::driver.assign(machine.options().last_used_machine());
-		first_start = false;
-
-		last_filter.assign(machine.options().last_used_filter());
-		for (size_t ind = 0; ind < main_filters::length; ++ind)
-		if (last_filter == main_filters::text[ind])
+		std::string tmp(machine.options().last_used_filter());
+		std::size_t found = tmp.find_first_of(",");
+		if (found == std::string::npos)
+			last_filter = tmp;
+		else
 		{
-			main_filters::actual = ind;
-			break;
+			last_filter = tmp.substr(0, found);
+			sub_filter = tmp.substr(found + 1);
 		}
 
-		if (main_filters::actual == FILTER_CATEGORY || main_filters::actual == FILTER_MANUFACTURER
-		    || main_filters::actual != FILTER_YEAR || main_filters::actual == FILTER_SCREEN)
-			main_filters::actual = FILTER_ALL;
+		for (size_t ind = 0; ind < main_filters::length; ++ind)
+			if (last_filter == main_filters::text[ind])
+			{
+				main_filters::actual = ind;
+				break;
+			}
 
+		if (main_filters::actual == FILTER_CATEGORY)
+			main_filters::actual = FILTER_ALL;
+		else if (main_filters::actual == FILTER_MANUFACTURER)
+		{
+			for (size_t id = 0; id < c_mnfct::ui.size(); ++id)
+				if (sub_filter == c_mnfct::ui[id])
+					c_mnfct::actual = id;
+		}
+		else if (main_filters::actual == FILTER_YEAR)
+		{
+			for (size_t id = 0; id < c_year::ui.size(); ++id)
+				if (sub_filter == c_year::ui[id])
+					c_year::actual = id;
+		}
+		else if (main_filters::actual == FILTER_SCREEN)
+		{
+			for (size_t id = 0; id < c_screen::length; ++id)
+				if (sub_filter == c_screen::text[id])
+					c_screen::actual = id;
+		}
+		first_start = false;
 	}
 
 	if (!machine.options().remember_last())
@@ -158,8 +182,16 @@ ui_mewui_select_game::~ui_mewui_select_game()
 	if ((FPTR)driver > 2)
 		last_driver.assign(driver->name);
 
+	std::string filter(main_filters::text[main_filters::actual]);
+	if (main_filters::actual == FILTER_MANUFACTURER)
+		filter.append(",").append(c_mnfct::ui[c_mnfct::actual]);
+	if (main_filters::actual == FILTER_YEAR)
+		filter.append(",").append(c_year::ui[c_year::actual]);
+	if (main_filters::actual == FILTER_SCREEN)
+		filter.append(",").append(c_screen::text[c_screen::actual]);
+
 	machine().options().set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
-	machine().options().set_value(OPTION_LAST_USED_FILTER, main_filters::text[main_filters::actual], OPTION_PRIORITY_CMDLINE, error_string);
+	machine().options().set_value(OPTION_LAST_USED_FILTER, filter.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	machine().options().set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	machine().options().set_value(OPTION_HIDE_PANELS, mewui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
 	save_game_options(machine());

@@ -187,8 +187,10 @@ SOUNDS["YM2608"] = true
 SOUNDS["YM2610"] = true
 SOUNDS["YM3526"] = true
 
+dofile("mess.lua")
 
 function createProjects_mame_test(_target, _subtarget)
+	createProjects_mame_mess(_target, _subtarget)
 	project ("mame_test")
 	targetsubdir(_target .."_" .. _subtarget)
 	kind "StaticLib"
@@ -302,69 +304,7 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/machine/igs022.c",
 		MAME_DIR .. "src/mame/machine/igs028.c",
 
-		-- Amstrad
-		MAME_DIR .. "src/mame/drivers/amstrad.c",
-		MAME_DIR .. "src/mame/machine/amstrad.c",
-		MAME_DIR .. "src/mame/drivers/amstr_pc.c",
-		MAME_DIR .. "src/mame/drivers/nc.c",
-		MAME_DIR .. "src/mame/machine/nc.c",
-		MAME_DIR .. "src/mame/video/nc.c",
-		MAME_DIR .. "src/mame/drivers/pc1512.c",
-		MAME_DIR .. "src/mame/machine/pc1512kb.c",
-		MAME_DIR .. "src/mame/video/pc1512.c",
-		MAME_DIR .. "src/mame/drivers/pcw.c",
-		MAME_DIR .. "src/mame/video/pcw.c",
-		MAME_DIR .. "src/mame/drivers/pcw16.c",
-		MAME_DIR .. "src/mame/video/pcw16.c",
-		MAME_DIR .. "src/mame/drivers/pda600.c",
-
-		-- CBM
-		MAME_DIR .. "src/mame/drivers/c128.c",
-		MAME_DIR .. "src/mame/drivers/c64.c",
-		MAME_DIR .. "src/mame/drivers/c64dtv.c",
-		MAME_DIR .. "src/mame/drivers/c65.c",
-		MAME_DIR .. "src/mame/drivers/c900.c",
-		MAME_DIR .. "src/mame/drivers/cbm2.c",
-		MAME_DIR .. "src/mame/drivers/clcd.c",
-		MAME_DIR .. "src/mame/drivers/pet.c",
-		MAME_DIR .. "src/mame/drivers/plus4.c",
-		MAME_DIR .. "src/mame/drivers/vic10.c",
-		MAME_DIR .. "src/mame/drivers/vic20.c",
-		MAME_DIR .. "src/mame/machine/cbm_snqk.c",
-		MAME_DIR .. "src/mame/drivers/mps1230.c",
-
-		-- Amiga
-		MAME_DIR .. "src/mame/drivers/amiga.c",
-		MAME_DIR .. "src/mame/machine/amigakbd.c",
-
-		-- Rockwell
-		MAME_DIR .. "src/mame/drivers/aim65.c",
-		MAME_DIR .. "src/mame/machine/aim65.c",
-		MAME_DIR .. "src/mame/drivers/aim65_40.c",
-
-		-- MOS
-		MAME_DIR .. "src/mame/drivers/kim1.c",
-
-		-- Synertec
-		MAME_DIR .. "src/mame/drivers/sym1.c",
-
 		-- Nintendo
-		MAME_DIR .. "src/mame/drivers/gb.c",
-		MAME_DIR .. "src/mame/audio/gb.c",
-		MAME_DIR .. "src/mame/machine/gb.c",
-		MAME_DIR .. "src/mame/video/gb_lcd.c",
-		MAME_DIR .. "src/mame/drivers/gba.c",
-		MAME_DIR .. "src/mame/video/gba.c",
-		MAME_DIR .. "src/mame/drivers/n64.c",
-		MAME_DIR .. "src/mame/drivers/nes.c",
-		MAME_DIR .. "src/mame/machine/nes.c",
-		MAME_DIR .. "src/mame/video/nes.c",
-		MAME_DIR .. "src/mame/drivers/pokemini.c",
-		MAME_DIR .. "src/mame/drivers/snes.c",
-		MAME_DIR .. "src/mame/machine/snescx4.c",
-		MAME_DIR .. "src/mame/drivers/vboy.c",
-		MAME_DIR .. "src/mame/audio/vboy.c",
-
 		MAME_DIR .. "src/mame/drivers/cham24.c",
 		MAME_DIR .. "src/mame/drivers/dkong.c",
 		MAME_DIR .. "src/mame/audio/dkong.c",
@@ -397,6 +337,22 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/machine/vsnes.c",
 		MAME_DIR .. "src/mame/video/vsnes.c",
 		MAME_DIR .. "src/mame/video/ppu2c0x.c",
+
+		-- Neogeo
+		MAME_DIR .. "src/mame/drivers/neogeo.c",
+		MAME_DIR .. "src/mame/video/neogeo.c",
+		MAME_DIR .. "src/mame/drivers/neogeo_noslot.c",
+		MAME_DIR .. "src/mame/video/neogeo_spr.c",
+		MAME_DIR .. "src/mame/machine/neocrypt.c",
+		MAME_DIR .. "src/mame/machine/ng_memcard.c",
+
+		-- CVS
+		MAME_DIR .. "src/mame/drivers/cvs.c",
+		MAME_DIR .. "src/mame/video/cvs.c",
+		MAME_DIR .. "src/mame/drivers/galaxia.c",
+		MAME_DIR .. "src/mame/video/galaxia.c",
+		MAME_DIR .. "src/mame/drivers/quasar.c",
+		MAME_DIR .. "src/mame/video/quasar.c",
 
 		-- MAME shared
 		MAME_DIR .. "src/mame/machine/archimds.c",
@@ -466,26 +422,11 @@ function createProjects_mame_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/video/chihiro.c",
 		MAME_DIR .. "src/mame/machine/xbox.c",
 
-		-- Neogeo
-		MAME_DIR .. "src/mame/drivers/neogeo.c",
-		MAME_DIR .. "src/mame/video/neogeo.c",
-		MAME_DIR .. "src/mame/drivers/neogeo_noslot.c",
-		MAME_DIR .. "src/mame/video/neogeo_spr.c",
-		MAME_DIR .. "src/mame/machine/neocrypt.c",
-		MAME_DIR .. "src/mame/machine/ng_memcard.c",
-
-		-- CVS
-		MAME_DIR .. "src/mame/drivers/cvs.c",
-		MAME_DIR .. "src/mame/video/cvs.c",
-		MAME_DIR .. "src/mame/drivers/galaxia.c",
-		MAME_DIR .. "src/mame/video/galaxia.c",
-		MAME_DIR .. "src/mame/drivers/quasar.c",
-		MAME_DIR .. "src/mame/video/quasar.c",
-
 	}
 end
 
 function linkProjects_mame_test(_target, _subtarget)
+	linkProjects_mame_mess(_target, _subtarget)
 	links {
 		"mame_test",
 	}

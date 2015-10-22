@@ -127,22 +127,7 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & MACHINE_SUPPORTS_SAVE) ? "Yes" : "No"));
 
 	int idx = driver_list::find(driver->name);
-	buffer.append("Screen Type: ");
-	switch (mewui_globals::driver_cache[idx].b_screen)
-	{
-		case SCREEN_TYPE_RASTER:
-			buffer.append("Raster\n");
-			break;
-		case SCREEN_TYPE_VECTOR:
-			buffer.append("Vector\n");
-			break;
-		case SCREEN_TYPE_LCD:
-			buffer.append("LCD\n");
-			break;
-		default:
-			buffer.append("None\n");
-			break;
-	}
+	strcatprintf(buffer, "Screen Type: %s\n", c_screen::text[mewui_globals::driver_cache[idx].b_screen]);
 	strcatprintf(buffer, "Screen Orentation: %s\n", ((driver->flags & ORIENTATION_SWAP_XY) ? "Vertical" : "Horizontal"));
 	strcatprintf(buffer, "Requires Samples: %s\n", (mewui_globals::driver_cache[idx].b_samples ? "Yes" : "No"));
 	strcatprintf(buffer, "Sound Channel: %s\n", (mewui_globals::driver_cache[idx].b_stereo ? "Stereo" : "Mono"));

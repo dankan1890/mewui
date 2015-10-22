@@ -130,9 +130,6 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 	buffer.append("Screen Type: ");
 	switch (mewui_globals::driver_cache[idx].b_screen)
 	{
-		case SCREEN_TYPE_INVALID:
-			buffer.append("Invalid\n");
-			break;
 		case SCREEN_TYPE_RASTER:
 			buffer.append("Raster\n");
 			break;
@@ -143,7 +140,7 @@ void general_info(running_machine &machine, const game_driver *driver, std::stri
 			buffer.append("LCD\n");
 			break;
 		default:
-			buffer.append("Unknown\n");
+			buffer.append("None\n");
 			break;
 	}
 	strcatprintf(buffer, "Screen Orentation: %s\n", ((driver->flags & ORIENTATION_SWAP_XY) ? "Vertical" : "Horizontal"));

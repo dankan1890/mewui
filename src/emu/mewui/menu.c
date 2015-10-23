@@ -114,7 +114,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	for (int i = 0; i < MAX_ICONS_RENDER; i++)
 	{
 		icons_bitmap[i] = auto_alloc(machine, bitmap_argb32(32, 32));
-		icons_texture[i] = machine.render().texture_alloc();
+		icons_texture[i] = machine.render().texture_alloc(render_texture::hq_scale);
 	}
 
 	// create a texture for main menu background
@@ -1964,7 +1964,7 @@ void ui_menu::draw_common_arrow(float origx1, float origy1, float origx2, float 
 void ui_menu::draw_icon(render_container *container, int linenum, void *selectedref, float x0, float y0)
 {
 	static const game_driver *olddriver[MAX_ICONS_RENDER] = { NULL };
-	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect();
+	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect(container);
 	float y1 = y0 + machine().ui().get_line_height();
 	const game_driver *driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
 
@@ -2002,13 +2002,13 @@ void ui_menu::draw_icon(render_container *container, int linenum, void *selected
 			fullname.assign(driver->parent).append(".ico");
 			render_load_ico(*icons_bitmap[linenum], snapfile, NULL, fullname.c_str());
 		}
+
+		if (icons_bitmap[linenum]->valid())
+			icons_texture[linenum]->set_bitmap(*icons_bitmap[linenum], icons_bitmap[linenum]->cliprect(), TEXFORMAT_ARGB32);
 	}
 
 	if (icons_bitmap[linenum]->valid())
-	{
-		icons_texture[linenum]->set_bitmap(*icons_bitmap[linenum], icons_bitmap[linenum]->cliprect(), TEXFORMAT_ARGB32);
 		container->add_quad(x0, y0, x1, y1, ARGB_WHITE, icons_texture[linenum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	}
 }
 
 //-------------------------------------------------

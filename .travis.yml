@@ -52,7 +52,7 @@ after_success:
     zip -9 -r mewui64-mac-sdllib.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac/commit.txt' -Q 'RNTO upload/Mac/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac/mewui64-mac-sdllib.zip.zip' -Q 'RNTO upload/Mac/mewui64-mac-sdllib.zip.zip' -u $FTP_USER:$FTP_PASSWORD;
+    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
     elif [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&

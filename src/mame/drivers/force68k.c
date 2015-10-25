@@ -86,7 +86,7 @@
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
 
-#define LOG(x) /* x */
+#define LOG(x) x
 
 #define BAUDGEN_CLOCK XTAL_1_8432MHz
 /*

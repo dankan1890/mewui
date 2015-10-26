@@ -13,6 +13,8 @@ end
 files {
 	MAME_DIR .. "src/emu/mewui/auditmenu.c",
 	MAME_DIR .. "src/emu/mewui/auditmenu.h",
+	MAME_DIR .. "src/emu/mewui/cmddata.h",
+	MAME_DIR .. "src/emu/mewui/cmdrender.h",
 	MAME_DIR .. "src/emu/mewui/ctrlmenu.c",
 	MAME_DIR .. "src/emu/mewui/ctrlmenu.h",
 	MAME_DIR .. "src/emu/mewui/custmenu.c",
@@ -28,6 +30,7 @@ files {
 	MAME_DIR .. "src/emu/mewui/dirmenu.h",
 	MAME_DIR .. "src/emu/mewui/dsplmenu.c",
 	MAME_DIR .. "src/emu/mewui/dsplmenu.h",
+	MAME_DIR .. "src/emu/mewui/icorender.h",
 	MAME_DIR .. "src/emu/mewui/inifile.c",
 	MAME_DIR .. "src/emu/mewui/inifile.h",
 	MAME_DIR .. "src/emu/mewui/miscmenu.c",

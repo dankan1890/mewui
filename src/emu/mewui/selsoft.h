@@ -57,8 +57,8 @@ private:
 	void find_matches(const char *str, int count);
 	void load_sw_custom_filters();
 
-	void arts_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
-	void infos_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
+	void arts_render(void *selectedref, float x1, float y1, float x2, float y2);
+	void infos_render(void *selectedref, float x1, float y1, float x2, float y2);
 
 	// handlers
 	void inkey_select(const ui_menu_event *menu_event);

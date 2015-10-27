@@ -1432,7 +1432,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 //  draw infos
 //-------------------------------------------------
 
-void ui_menu_select_software::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
+void ui_menu_select_software::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
 	{
@@ -1490,289 +1490,113 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	std::vector<int> xend;
 
 	float text_size = machine().options().infos_size();
-	const game_driver *driver = NULL;
 	ui_software_info *soft = NULL;
-
 	static ui_software_info *oldsoft = NULL;
-	static const game_driver *olddriver = NULL;
-	static int oldview = -1;
 	static int old_sw_view = -1;
 
-	if (software)
+	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+
+	float line_height = machine().ui().get_line_height();
+	float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
+	float ud_arrow_width = line_height * machine().render().ui_aspect();
+	float oy1 = origy1 + line_height;
+
+	// apply title to right panel
+	if (soft->usage.empty())
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
-		if (main_filters::actual == FILTER_FAVORITE_GAME && soft->startempty == 1)
-		{
-			driver = soft->driver;
-			oldsoft = NULL;
-		}
-		else
-			olddriver = NULL;
+		machine().ui().draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		mewui_globals::cur_sw_dats_view = 0;
 	}
 	else
 	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
-		oldsoft = NULL;
-	}
-
-	if (driver)
-	{
-		float line_height = machine().ui().get_line_height();
-		float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
-		float ud_arrow_width = line_height * machine().render().ui_aspect();
-		float oy1 = origy1 + line_height;
-
-		// MAMESCORE? Full size text
-		if (mewui_globals::curdats_view == MEWUI_STORY_LOAD)
-			text_size = 1.0f;
-
-		std::string snaptext(dats_info[mewui_globals::curdats_view]);
-
-		// apply title to right panel
 		float title_size = 0.0f;
 		float txt_lenght = 0.0f;
+		std::string t_text[2];
+		t_text[0].assign("History");
+		t_text[1].assign("Usage");
 
-		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; x++)
+		for (int x = 0; x < 2; x++)
 		{
-			machine().ui().draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+			machine().ui().draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+			                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
-		machine().ui().draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		machine().ui().draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
+		                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+		                              NULL, NULL);
 
-		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curdats_view, MEWUI_FIRST_LOAD, MEWUI_LAST_LOAD, title_size);
+		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::cur_sw_dats_view, 0, 1, title_size);
+	}
 
-		if (driver != olddriver || mewui_globals::curdats_view != oldview)
+	if (oldsoft != soft || old_sw_view != mewui_globals::cur_sw_dats_view)
+	{
+		if (mewui_globals::cur_sw_dats_view == 0)
 		{
 			buffer.clear();
-			olddriver = driver;
-			oldview = mewui_globals::curdats_view;
-			topline_datsview = 0;
-			totallines = 0;
-			std::vector<std::string> m_item;
-
-			if (mewui_globals::curdats_view == MEWUI_GENERAL_LOAD)
-				mewui_globals::curdats_view++;
-
-			if (mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-				machine().datfile().load_data_info(driver, buffer, mewui_globals::curdats_view);
+			old_sw_view = mewui_globals::cur_sw_dats_view;
+			oldsoft = soft;
+			if (soft->startempty == 1)
+				machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 			else
-				machine().datfile().command_sub_menu(driver, m_item);
-
-			if (!m_item.empty() && mewui_globals::curdats_view == MEWUI_COMMAND_LOAD)
-			{
-				for (size_t x = 0; x < m_item.size(); x++)
-				{
-					std::string t_buffer;
-					machine().datfile().load_command_info(t_buffer, x);
-					buffer.append(m_item[x]).append("\n");
-					if (!t_buffer.empty())
-						buffer.append(t_buffer).append("\n");
-				}
-				convert_command_glyph(buffer);
-			}
+				machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
 		}
-
-		if (buffer.empty())
-		{
-			machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-			return;
-		}
-		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
-			                         xstart, xend, text_size);
 		else
-			machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
+		{
+			old_sw_view = mewui_globals::cur_sw_dats_view;
+			oldsoft = soft;
+			buffer.assign(soft->usage);
+		}
+	}
 
-		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
-		if (totallines < r_visible_lines)
-			r_visible_lines = totallines;
-		if (topline_datsview < 0)
+	if (buffer.empty())
+	{
+		machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
+		                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		return;
+	}
+	else
+		machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
+		                         xstart, xend, text_size);
+
+	int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
+	if (totallines < r_visible_lines)
+		r_visible_lines = totallines;
+	if (topline_datsview < 0)
 			topline_datsview = 0;
-		if (topline_datsview + r_visible_lines >= totallines)
+	if (topline_datsview + r_visible_lines >= totallines)
 			topline_datsview = totallines - r_visible_lines;
 
-		for (int r = 0; r < r_visible_lines; r++)
-		{
-			int itemline = r + topline_datsview;
-			std::string tempbuf;
-			tempbuf.assign(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
-
-			// up arrow
-			if (r == 0 && topline_datsview != 0)
-				info_arrow(0, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
-			// bottom arrow
-			else if (r == r_visible_lines - 1 && itemline != totallines - 1)
-				info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
-			// special case for mamescore
-			else if (mewui_globals::curdats_view == MEWUI_STORY_LOAD)
-			{
-				int last_underscore = tempbuf.find_last_of('_');
-				if (last_underscore == -1)
-					machine().ui().draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
-					                              text_size);
-				else
-				{
-					float effective_width = origx2 - origx1 - gutter_width;
-					float effective_left = origx1 + gutter_width;
-					std::string last_part(tempbuf.substr(last_underscore + 1));
-					int primary = tempbuf.find("___");
-					std::string first_part(tempbuf.substr(0, primary));
-					float item_width;
-
-					machine().ui().draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              &item_width, NULL, text_size);
-
-					machine().ui().draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
-					                              origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
-					}
-			}
-
-			// special case for command
-			else if (mewui_globals::curdats_view == MEWUI_COMMAND_LOAD || mewui_globals::curdats_view == MEWUI_GENERAL_LOAD)
-			{
-				int first_dspace = (mewui_globals::curdats_view == MEWUI_COMMAND_LOAD) ? tempbuf.find("  ") : tempbuf.find(":");
-				if (first_dspace > 0)
-				{
-					float effective_width = origx2 - origx1 - gutter_width;
-					float effective_left = origx1 + gutter_width;
-					std::string first_part(tempbuf.substr(0, first_dspace));
-					std::string last_part(tempbuf.substr(first_dspace + 1));
-					strtrimspace(last_part);
-					machine().ui().draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
-
-					machine().ui().draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
-					                              JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
-				}
-				else
-					machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
-			}
-			else
-				machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
-
-			oy1 += (line_height * text_size);
-		}
-
-		// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
-		right_visible_lines = r_visible_lines - (topline_datsview != 0) - (topline_datsview + r_visible_lines != totallines);
-	}
-	else if (soft)
+	for (int r = 0; r < r_visible_lines; r++)
 	{
-		float line_height = machine().ui().get_line_height();
-		float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
-		float ud_arrow_width = line_height * machine().render().ui_aspect();
-		float oy1 = origy1 + line_height;
+		int itemline = r + topline_datsview;
+		std::string tempbuf;
+		tempbuf.assign(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
 
-		// apply title to right panel
-		if (soft->usage.empty())
-		{
-			machine().ui().draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-			mewui_globals::cur_sw_dats_view = 0;
-		}
+		// up arrow
+		if (r == 0 && topline_datsview != 0)
+			info_arrow(0, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
+		// bottom arrow
+		else if (r == r_visible_lines - 1 && itemline != totallines - 1)
+			info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
 		else
-		{
-			float title_size = 0.0f;
-			float txt_lenght = 0.0f;
-			std::string t_text[2];
-			t_text[0].assign("History");
-			t_text[1].assign("Usage");
-
-			for (int x = 0; x < 2; x++)
-			{
-				machine().ui().draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
-				txt_lenght += 0.01f;
-				title_size = MAX(txt_lenght, title_size);
-			}
-
-			machine().ui().draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
-			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-			                              NULL, NULL);
-
-			draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::cur_sw_dats_view, 0, 1, title_size);
-		}
-
-		if (oldsoft != soft || old_sw_view != mewui_globals::cur_sw_dats_view)
-		{
-			if (mewui_globals::cur_sw_dats_view == 0)
-			{
-				buffer.clear();
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
-				if (soft->startempty == 1)
-					machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
-				else
-					machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
-			}
-			else
-			{
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
-				buffer.assign(soft->usage);
-			}
-		}
-
-		if (buffer.empty())
-		{
-			machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-			return;
-		}
-		else
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
-			                         xstart, xend, text_size);
-
-		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
-		if (totallines < r_visible_lines)
-			r_visible_lines = totallines;
-		if (topline_datsview < 0)
-				topline_datsview = 0;
-		if (topline_datsview + r_visible_lines >= totallines)
-				topline_datsview = totallines - r_visible_lines;
-
-		for (int r = 0; r < r_visible_lines; r++)
-		{
-			int itemline = r + topline_datsview;
-			std::string tempbuf;
-			tempbuf.assign(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
-
-			// up arrow
-			if (r == 0 && topline_datsview != 0)
-				info_arrow(0, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
-			// bottom arrow
-			else if (r == r_visible_lines - 1 && itemline != totallines - 1)
-				info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
-			else
-				machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
-				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-				                              NULL, NULL, text_size);
-			oy1 += (line_height * text_size);
-		}
-
-		// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
-		right_visible_lines = r_visible_lines - (topline_datsview != 0) - (topline_datsview + r_visible_lines != totallines);
+			machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
+			                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+			                              NULL, NULL, text_size);
+		oy1 += (line_height * text_size);
 	}
+
+	// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
+	right_visible_lines = r_visible_lines - (topline_datsview != 0) - (topline_datsview + r_visible_lines != totallines);
 }
 
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
 
-void ui_menu_select_software::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
+void ui_menu_select_software::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
 	{
@@ -1831,22 +1655,14 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 	const game_driver *driver = NULL;
 	ui_software_info *soft = NULL;
 
-	if (software)
+	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+	if (soft && soft->startempty == 1)
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
-		if (soft && soft->startempty == 1)
-		{
-			driver = soft->driver;
-			oldsoft = NULL;
-		}
-		else
-			olddriver = NULL;
-	}
-	else
-	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
+		driver = soft->driver;
 		oldsoft = NULL;
 	}
+	else
+		olddriver = NULL;
 
 	if (driver)
 	{
@@ -2021,13 +1837,10 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 
 void ui_menu_select_software::draw_right_panel(void *selectedref, float x1, float y1, float x2, float y2)
 {
-	bool is_swlist = ((item[0].flags & MENU_FLAG_MEWUI_SWLIST) != 0);
-	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-
 	if (mewui_globals::rpanel == RP_IMAGES)
-		arts_render(selectedref, x1, y1, x2, y2, (is_swlist || is_favorites));
+		arts_render(selectedref, x1, y1, x2, y2);
 	else
-		infos_render(selectedref, x1, y1, x2, y2, (is_swlist || is_favorites));
+		infos_render(selectedref, x1, y1, x2, y2);
 }
 
 //-------------------------------------------------

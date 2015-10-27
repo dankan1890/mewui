@@ -32,6 +32,12 @@ public:
 
 	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
 
+	// draw left panel
+	virtual float draw_left_panel(float x1, float y1, float x2, float y2);
+
+	// draw right panel
+	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2);
+
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
 	char                m_search[40];
@@ -50,6 +56,9 @@ private:
 	void build_custom();
 	void find_matches(const char *str, int count);
 	void load_sw_custom_filters();
+
+	void arts_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
+	void infos_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
 
 	// handlers
 	void inkey_select(const ui_menu_event *menu_event);

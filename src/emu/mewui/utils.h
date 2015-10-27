@@ -159,7 +159,9 @@ enum
 	HOVER_FILTER_FIRST,
 	HOVER_FILTER_LAST = (HOVER_FILTER_FIRST) + 1 + FILTER_LAST,
 	HOVER_SW_FILTER_FIRST,
-	HOVER_SW_FILTER_LAST = (HOVER_SW_FILTER_FIRST) + 1 + MEWUI_SW_LAST
+	HOVER_SW_FILTER_LAST = (HOVER_SW_FILTER_FIRST) + 1 + MEWUI_SW_LAST,
+	HOVER_RP_FIRST,
+	HOVER_RP_LAST = (HOVER_RP_FIRST) + 1 + RP_LAST
 };
 
 // GLOBAL STRUCTURES
@@ -195,11 +197,6 @@ struct ui_software_info
 	}
 };
 
-struct cache_info
-{
-	UINT8 b_screen, b_stereo, b_samples, b_chd;
-};
-
 // Manufacturers
 struct c_mnfct
 {
@@ -224,7 +221,6 @@ struct mewui_globals
 	static bool         switch_image, redraw_icon, default_image, reset;
 	static int          visible_main_lines, visible_sw_lines;
 	static UINT16       panels_status;
-	static std::vector<cache_info> driver_cache;
 };
 
 // Main filters
@@ -284,9 +280,6 @@ struct sw_custfltr
 };
 
 // GLOBAL FUNCTIONS
-
-// General info
-void general_info(running_machine &machine, const game_driver *driver, std::string &buffer);
 
 // advanced search function
 int fuzzy_substring(const char *needle, const char *haystack);

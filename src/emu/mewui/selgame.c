@@ -2150,7 +2150,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 //  draw infos
 //-------------------------------------------------
 
-void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
+void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
 	{
@@ -2210,16 +2210,16 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	float text_size = machine().options().infos_size();
 	const game_driver *driver = NULL;
 	ui_software_info *soft = NULL;
-
+	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
 	static ui_software_info *oldsoft = NULL;
 	static const game_driver *olddriver = NULL;
 	static int oldview = -1;
 	static int old_sw_view = -1;
 
-	if (software)
+	if (is_favorites)
 	{
 		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
-		if (main_filters::actual == FILTER_FAVORITE_GAME && soft->startempty == 1)
+		if (soft->startempty == 1)
 		{
 			driver = soft->driver;
 			oldsoft = NULL;
@@ -2487,20 +2487,17 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 void ui_mewui_select_game::draw_right_panel(void *selectedref, float x1, float y1, float x2, float y2)
 {
-	bool is_swlist = ((item[0].flags & MENU_FLAG_MEWUI_SWLIST) != 0);
-	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-
 	if (mewui_globals::rpanel == RP_IMAGES)
-		arts_render(selectedref, x1, y1, x2, y2, (is_swlist || is_favorites));
+		arts_render(selectedref, x1, y1, x2, y2);
 	else
-		infos_render(selectedref, x1, y1, x2, y2, (is_swlist || is_favorites));
+		infos_render(selectedref, x1, y1, x2, y2);
 }
 
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
 
-void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2, bool software)
+void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
 	{
@@ -2554,12 +2551,13 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 
 	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
 
+	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
 	static ui_software_info *oldsoft = NULL;
 	static const game_driver *olddriver = NULL;
 	const game_driver *driver = NULL;
 	ui_software_info *soft = NULL;
 
-	if (software)
+	if (is_favorites)
 	{
 		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
 		if (soft && soft->startempty == 1)

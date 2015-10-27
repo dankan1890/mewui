@@ -75,8 +75,8 @@ private:
 	// General info
 	void general_info(const game_driver *driver, std::string &buffer);
 
-	void arts_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
-	void infos_render(void *selectedref, float x1, float y1, float x2, float y2, bool software = false);
+	void arts_render(void *selectedref, float x1, float y1, float x2, float y2);
+	void infos_render(void *selectedref, float x1, float y1, float x2, float y2);
 
 	// handlers
 	void inkey_select(const ui_menu_event *menu_event);

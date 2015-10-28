@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /*********************************************************************
 
@@ -146,7 +146,7 @@ void ui_menu_display_options::populate()
 
 	// add options items
 	for (int opt = 2; opt < ARRAY_LENGTH(m_options); ++opt)
-		if (strcmp(m_options[opt].option, OSDOPTION_PRESCALE))
+		if (strcmp(m_options[opt].option, OSDOPTION_PRESCALE) != 0)
 			item_append(m_options[opt].description, m_options[opt].status ? "On" : "Off",
 			            m_options[opt].status ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)opt);
 		else

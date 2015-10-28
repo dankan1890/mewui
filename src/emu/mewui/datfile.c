@@ -160,13 +160,14 @@ void datfile_manager::load_software_info(const char *softlist, std::string &buff
 
 			std::ifstream myfile(m_fullpath.c_str());
 			myfile.seekg(s_offset, myfile.beg);
+			size_t tend = strlen(TAG_END);
 			while (myfile.good())
 			{
 				// read from datafile
 				std::getline(myfile, readbuf);
 
 				// end entry when a end tag is encountered
-				if (!core_strnicmp(TAG_END, readbuf.c_str(), strlen(TAG_END)))
+				if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
 					break;
 
 				// add this string to the buffer
@@ -256,17 +257,19 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 
 	myfile.seekg(idx[x].offset, myfile.beg);
+	size_t tend = strlen(TAG_END);
+	size_t ttag = strlen(tag);
 	while (myfile.good())
 	{
 		// read from datafile
 		std::getline(myfile, readbuf);
 
 		// end entry when a end tag is encountered
-		if (!core_strnicmp(TAG_END, readbuf.c_str(), strlen(TAG_END)))
+		if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
 			break;
 
 		// continue if a specific tag is encountered
-		if (!core_strnicmp(tag, readbuf.c_str(), strlen(tag)))
+		if (!core_strnicmp(tag, readbuf.c_str(), ttag))
 			continue;
 
 		// add this string to the buffer
@@ -292,7 +295,8 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 
 	std::string readbuf;
 	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
-
+	size_t tend = strlen(TAG_END);
+	size_t ttag = strlen(tag);
 	myfile.seekg(idx[index].offset, myfile.beg);
 	buffer.append("\n--- DRIVER INFO ---\n").append("Driver: ").append(s).append("\n\n");
 	while (myfile.good())
@@ -301,11 +305,11 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 		std::getline(myfile, readbuf);
 
 		// end entry when a end tag is encountered
-		if (!core_strnicmp(TAG_END, readbuf.c_str(), strlen(TAG_END)))
+		if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
 			break;
 
 		// continue if a specific tag is encountered
-		if (!core_strnicmp(tag, readbuf.c_str(), strlen(tag)))
+		if (!core_strnicmp(tag, readbuf.c_str(), ttag))
 			continue;
 
 		// add this string to the buffer
@@ -622,13 +626,15 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<Drvindex
 	// seek to correct point in datafile
 	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 	myfile.seekg(idx[x].offset, myfile.beg);
+	size_t tinfo = strlen(TAG_INFO);
+	size_t tcommand = strlen(TAG_COMMAND);
 	while (std::getline(myfile, readbuf))
 	{
-		if (!core_strnicmp(TAG_INFO, readbuf.c_str(), strlen(TAG_INFO)))
+		if (!core_strnicmp(TAG_INFO, readbuf.c_str(), tinfo))
 			break;
 
 		// TAG_COMMAND identifies the driver
-		if (!core_strnicmp(TAG_COMMAND, readbuf.c_str(), strlen(TAG_COMMAND)))
+		if (!core_strnicmp(TAG_COMMAND, readbuf.c_str(), tcommand))
 		{
 			std::getline(myfile, readbuf);
 			Itemsindex m_idx;
@@ -653,14 +659,14 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 		// open and seek to correct point in datafile
 		std::ifstream myfile(m_fullpath.c_str());
 		myfile.seekg(m_menuidx[sel].offset, myfile.beg);
-
+		size_t tend = strlen(TAG_END);
 		while (myfile.good())
 		{
 			// read from datafile
 			std::getline(myfile, readbuf);
 
 			// end entry when a tag is encountered
-			if (!core_strnicmp(TAG_END, readbuf.c_str(), strlen(TAG_END)))
+			if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
 				break;
 
 			// add this string to the buffer

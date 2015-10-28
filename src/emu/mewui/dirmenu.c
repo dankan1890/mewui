@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /*********************************************************************
 
@@ -84,13 +84,13 @@ ui_menu_add_change_folder::~ui_menu_add_change_folder()
 void ui_menu_add_change_folder::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		if (menu_event->iptkey == IPT_UI_SELECT)
+		if (m_event->iptkey == IPT_UI_SELECT)
 		{
-			int index = (FPTR)menu_event->itemref - 1;
+			int index = (FPTR)m_event->itemref - 1;
 			const ui_menu_item &pitem = item[index];
 
 			// go up to the parent path
@@ -108,7 +108,7 @@ void ui_menu_add_change_folder::handle()
 			else
 			{
 				// if isn't a drive, appends the directory
-				if (strcmp(pitem.subtext, "[DRIVE]"))
+				if (strcmp(pitem.subtext, "[DRIVE]") != 0)
 				{
 					if (m_current_path[m_current_path.length() - 1] == PATH_SEPARATOR[0])
 						m_current_path.append(pitem.text);
@@ -125,26 +125,26 @@ void ui_menu_add_change_folder::handle()
 
 			reset(UI_MENU_RESET_SELECT_FIRST);
 		}
-		else if (menu_event->iptkey == IPT_SPECIAL)
+		else if (m_event->iptkey == IPT_SPECIAL)
 		{
 			int buflen = strlen(m_search);
 			bool update_selected = FALSE;
 
 			// if it's a backspace and we can handle it, do so
-			if ((menu_event->unichar == 8 || menu_event->unichar == 0x7f) && buflen > 0)
+			if ((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0)
 			{
 				*(char *)utf8_previous_char(&m_search[buflen]) = 0;
 				update_selected = TRUE;
 			}
 			// if it's any other key and we're not maxed out, update
-			else if (menu_event->unichar >= ' ' && menu_event->unichar < 0x7f)
+			else if (m_event->unichar >= ' ' && m_event->unichar < 0x7f)
 			{
-				buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, menu_event->unichar);
+				buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
 				m_search[buflen] = 0;
 				update_selected = TRUE;
 			}
 			// Tab key, save current path
-			else if (menu_event->unichar == 0x09)
+			else if (m_event->unichar == 0x09)
 			{
 				std::string error_string;
 				if (m_change)
@@ -206,7 +206,7 @@ void ui_menu_add_change_folder::handle()
 				}
 			}
 		}
-		else if (menu_event->iptkey == IPT_UI_CANCEL)
+		else if (m_event->iptkey == IPT_UI_CANCEL)
 		{
 			// reset the char buffer also in this case
 			if (m_search[0] != 0)
@@ -234,7 +234,7 @@ void ui_menu_add_change_folder::populate()
 	// add the directories
 	while ((dirent = path.next()) != NULL)
 	{
-		if (dirent->type == ENTTYPE_DIR && strcmp(dirent->name, "."))
+		if (dirent->type == ENTTYPE_DIR && strcmp(dirent->name, ".") != 0)
 			item_append(dirent->name, "[DIR]", 0, (void *)(FPTR)++folders_count);
 	}
 
@@ -340,11 +340,11 @@ ui_menu_directory::~ui_menu_directory()
 void ui_menu_directory::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL && menu_event->iptkey == IPT_UI_SELECT)
+	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
 	{
-		int ref = (FPTR)menu_event->itemref;
+		int ref = (FPTR)m_event->itemref;
 		bool change = (ref == HISTORY_FOLDERS || ref == EXTRAINI_FOLDERS || ref == MEWUI_FOLDERS);
 		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_display_actual(machine(), container, ref, change)));
 	}
@@ -445,10 +445,10 @@ ui_menu_display_actual::~ui_menu_display_actual()
 void ui_menu_display_actual::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL && menu_event->iptkey == IPT_UI_SELECT)
-		switch ((FPTR)menu_event->itemref)
+	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
+		switch ((FPTR)m_event->itemref)
 		{
 			case REMOVE_FOLDER:
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_remove_folder(machine(), container, m_ref)));
@@ -579,11 +579,11 @@ ui_menu_remove_folder::~ui_menu_remove_folder()
 void ui_menu_remove_folder::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL && menu_event->iptkey == IPT_UI_SELECT)
+	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
 	{
-		int index = (FPTR)menu_event->itemref - 1;
+		int index = (FPTR)m_event->itemref - 1;
 		std::string tmppath;
 
 		for (size_t i = 0; i < item.size() - 2; i++)

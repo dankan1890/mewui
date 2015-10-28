@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /*********************************************************************
 
@@ -197,20 +197,20 @@ void ui_menu_audit::save_available_machines()
 		int find = 0;
 
 		// generate available list
-		for (size_t m_x = 0; m_x < m_available.size(); ++m_x)
+		for (size_t x = 0; x < m_available.size(); ++x)
 		{
-			find = driver_list::find(m_available[m_x]->name);
+			find = driver_list::find(m_available[x]->name);
 			myfile << find << space;
-			find = driver_list::find(m_availablesorted[m_x]->name);
+			find = driver_list::find(m_availablesorted[x]->name);
 			myfile << find << space;
 		}
 
 		// generate unavailable list
-		for (size_t m_x = 0; m_x < m_unavailable.size(); ++m_x)
+		for (size_t x = 0; x < m_unavailable.size(); ++x)
 		{
-			find = driver_list::find(m_unavailable[m_x]->name);
+			find = driver_list::find(m_unavailable[x]->name);
 			myfile << find << space;
-			find = driver_list::find(m_unavailablesorted[m_x]->name);
+			find = driver_list::find(m_unavailablesorted[x]->name);
 			myfile << find << space;
 		}
 		myfile.close();

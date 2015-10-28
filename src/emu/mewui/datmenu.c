@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /*********************************************************************
 
@@ -179,8 +179,7 @@ void ui_menu_command_content::populate()
 	if (!game_paused)
 		machine().resume();
 
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	customtop = custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------
@@ -210,7 +209,6 @@ void ui_menu_command_content::custom_render(void *selectedref, float top, float 
 	x1 += UI_BOX_LR_BORDER;
 	x2 -= UI_BOX_LR_BORDER;
 	y1 += UI_BOX_TB_BORDER;
-	y2 -= UI_BOX_TB_BORDER;
 
 	// draw the text within it
 	machine().ui().draw_text_full(container, m_title.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
@@ -325,8 +323,7 @@ void ui_menu_history_sw::populate()
 		machine().resume();
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	customtop = custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------
@@ -458,8 +455,7 @@ void ui_menu_dats::populate()
 		machine().resume();
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	customtop = custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------
@@ -551,10 +547,10 @@ void ui_menu_dats::custom_render(void *selectedref, float top, float bottom, flo
 //  load data from DATs
 //-------------------------------------------------
 
-bool ui_menu_dats::get_data(const game_driver *m_driver, int m_flags)
+bool ui_menu_dats::get_data(const game_driver *driver, int flags)
 {
 	std::string buffer;
-	machine().datfile().load_data_info(m_driver, buffer, m_flags);
+	machine().datfile().load_data_info(driver, buffer, flags);
 
 	if (!buffer.empty())
 	{
@@ -563,15 +559,15 @@ bool ui_menu_dats::get_data(const game_driver *m_driver, int m_flags)
 		float gutter_width = lr_arrow_width * 1.3f;
 		std::vector<int> xstart;
 		std::vector<int> xend;
-		int totallines;
+		int tlines;
 
-		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), totallines, xstart, xend);
-		for (int r = 0; r < totallines; r++)
+		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), tlines, xstart, xend);
+		for (int r = 0; r < tlines; r++)
 		{
 			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
 
 			// special case for mamescore
-			if (m_flags == MEWUI_STORY_LOAD && tempbuf.find_last_of('_') != -1)
+			if (flags == MEWUI_STORY_LOAD && tempbuf.find_last_of('_') != -1)
 			{
 				int last_underscore = tempbuf.find_last_of('_');
 				std::string last_part(tempbuf.substr(last_underscore + 1));

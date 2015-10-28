@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /*********************************************************************
 
@@ -334,8 +334,7 @@ void ui_menu_font_ui::populate()
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	custombottom = customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------
@@ -509,8 +508,7 @@ void ui_menu_colors_ui::populate()
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	item_append("Restore originals colors", NULL, 0, (void *)MUI_RESTORE);
 
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	custombottom = customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------
@@ -858,8 +856,7 @@ void ui_menu_rgb_ui::populate()
 	item_append("Choose from palette", NULL, 0, (void *)PALETTE_CHOOSE);
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	custombottom = customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
 //-------------------------------------------------

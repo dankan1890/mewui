@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:Dankan1890
 /***************************************************************************
 
@@ -589,7 +589,7 @@ void ui_menu_select_software::build_software_list()
 				std::string name;
 				if (dir->type == ENTTYPE_FILE)
 					core_filename_extract_base(name, dir->name, true);
-				else if (dir->type == ENTTYPE_DIR && strcmp(dir->name, "."))
+				else if (dir->type == ENTTYPE_DIR && strcmp(dir->name, ".") != 0)
 					name = dir->name;
 				else
 					continue;
@@ -724,14 +724,13 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		else
 			tempbuf[4].append("Sound: OK");
 
-		if (driver != NULL)
-			color = UI_GREEN_COLOR;
+		color = UI_GREEN_COLOR;
 
-		if (driver != NULL && (driver->flags & (MACHINE_IMPERFECT_GRAPHICS | MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS
-												| MACHINE_NO_SOUND | MACHINE_IMPERFECT_SOUND)) != 0)
+		if ((driver->flags & (MACHINE_IMPERFECT_GRAPHICS | MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS
+							| MACHINE_NO_SOUND | MACHINE_IMPERFECT_SOUND)) != 0)
 			color = UI_YELLOW_COLOR;
 
-		if (driver != NULL && (driver->flags & (MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION)) != 0)
+		if ((driver->flags & (MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION)) != 0)
 			color = UI_RED_COLOR;
 
 	}

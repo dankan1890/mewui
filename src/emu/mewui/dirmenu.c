@@ -37,6 +37,7 @@ static const folders_entry s_folders_entry[] =
 	{ "Cabinets",            OPTION_CABINETS_PATH },
 	{ "Flyers",              OPTION_FLYERS_PATH },
 	{ "Titles",              OPTION_TITLES_PATH },
+	{ "Ends",                OPTION_ENDS_PATH },
 	{ "PCBs",                OPTION_PCBS_PATH },
 	{ "Marquees",            OPTION_MARQUEES_PATH },
 	{ "Controls Panels",     OPTION_CPANELS_PATH },
@@ -368,6 +369,7 @@ void ui_menu_directory::populate()
 	item_append("Cabinets", NULL, 0, (void *)CABINET_FOLDERS);
 	item_append("Flyers", NULL, 0, (void *)FLYER_FOLDERS);
 	item_append("Titles", NULL, 0, (void *)TITLE_FOLDERS);
+	item_append("Ends", NULL, 0, (void *)ENDS_FOLDERS);
 	item_append("PCBs", NULL, 0, (void *)PCB_FOLDERS);
 	item_append("Marquees", NULL, 0, (void *)MARQUEES_FOLDERS);
 	item_append("Control Panels", NULL, 0, (void *)CPANEL_FOLDERS);

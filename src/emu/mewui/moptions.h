@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /***************************************************************************
 
-    mewui/options.h
+    mewui/moptions.h
 
     MEWUI main options manager.
 
@@ -23,6 +23,7 @@
 #define OPTION_PCBS_PATH              "pcbs_directory"
 #define OPTION_FLYERS_PATH            "flyers_directory"
 #define OPTION_TITLES_PATH            "titles_directory"
+#define OPTION_ENDS_PATH              "ends_directory"
 #define OPTION_MARQUEES_PATH          "marquees_directory"
 #define OPTION_ARTPREV_PATH           "artwork_preview_directory"
 #define OPTION_BOSSES_PATH            "bosses_directory"
@@ -50,6 +51,7 @@
 // core UI options
 #define OPTION_INFOS_SIZE             "infos_text_size"
 #define OPTION_FONT_ROWS              "font_rows"
+#define OPTION_HIDE_PANELS            "hide_main_panel"
 
 #define OPTION_UI_BORDER_COLOR        "ui_border_color"
 #define OPTION_UI_BACKGROUND_COLOR    "ui_bg_color"
@@ -82,6 +84,7 @@ public:
 	const char *pcbs_directory() const { return value(OPTION_PCBS_PATH); }
 	const char *flyers_directory() const { return value(OPTION_FLYERS_PATH); }
 	const char *titles_directory() const { return value(OPTION_TITLES_PATH); }
+	const char *ends_directory() const { return value(OPTION_ENDS_PATH); }
 	const char *marquees_directory() const { return value(OPTION_MARQUEES_PATH); }
 	const char *artprev_directory() const { return value(OPTION_ARTPREV_PATH); }
 	const char *bosses_directory() const { return value(OPTION_BOSSES_PATH); }
@@ -109,6 +112,7 @@ public:
 	// UI options
 	float infos_size() const { return float_value(OPTION_INFOS_SIZE); }
 	int font_rows() const { return int_value(OPTION_FONT_ROWS); }
+	int hide_panels() const { return int_value(OPTION_HIDE_PANELS); }
 
 	const char *ui_border_color() const { return value(OPTION_UI_BORDER_COLOR); }
 	const char *ui_bg_color() const { return value(OPTION_UI_BACKGROUND_COLOR); }

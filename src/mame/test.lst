@@ -2,7 +2,7 @@
 // copyright-holders:Aaron Giles
 /******************************************************************************
 
-    dummy.lst
+    test.lst
 
     List of all enabled drivers in the system. This file is parsed by
     makelist.exe, sorted, and output as C code describing the drivers.
@@ -125,7 +125,8 @@ lastduelb       // bootleg
 madgear         //  2/1989 (c) 1989 (US)
 madgearj        //  2/1989 (c) 1989 (Japan)
 ledstorm        //  1988 (c) 1988 (US)
-ledstorm2       //  1988 (c) 1988 (US)
+leds2011        //  1988 (c) 1988 (World)
+leds2011u		//  1988 (c) 1988 (US)
 //  3/1989 Dokaben (baseball) - see below among "Mitchell" games
 //  8/1989 Dokaben 2 (baseball) - see below among "Mitchell" games
 // 10/1989 Capcom Baseball - see below among "Mitchell" games
@@ -170,7 +171,8 @@ ffighta         // 12/1989 (c) 1989 (World)
 ffightu         // 12/1989 (c) 1989 (USA)
 ffightu1        // 12/1989 (c) 1989 (USA)
 ffightua        // 12/01/1990 (c) 1989 (USA)
-ffightub        // 13/06/1990 (c) 1989 (USA)
+ffightub        // 24/04/1990 (c) 1989 (USA)
+ffightuc        // 12/06/1990 (c) 1989 (USA)
 ffightj         // 12/1989 (c) 1989 (Japan)
 ffightj1        // 12/01/1990 (c) 1989 (Japan)
 ffightj2        // 05/03/1990 (c) 1989 (Japan)
@@ -596,50 +598,6 @@ choko           // 20/08/2001 (c) 2001 Mitchell (Japan)
 hsf2            // 02/02/2004 (c) 2003, 2004 (USA)
 hsf2j           // 22/12/2003 (c) 2003, 2004 (Japan)
 hsf2a           // 02/02/2004 (c) 2003, 2004 (Asia)
-
-// Amstrad / Schneider
-cpc464  // Amstrad (Schneider in Germany) 1984
-cpc664  // Amstrad (Schneider in Germany) 1985
-cpc6128   // Amstrad (Schneider in Germany) 1985
-cpc6128s  // Amstrad (Schneider in Germany) 1985
-cpc6128f  // Amstrad (Schneider in Germany) 1985 (AZERTY)
-cpc464p   // Amstrad CPC464  Plus - 1990
-cpc6128p  // Amstrad CPC6128 Plus - 1990
-gx4000  // Amstrad GX4000 - 1990
-kccomp  // VEB KC compact
-al520ex   // Patisonic Aleste 520EX (1993)
-pcw8256   // 198? PCW8256
-pcw8512   // 198? PCW8512
-pcw9256   // 198? PCW9256
-pcw9512   // 198? PCW9512 (+)
-pcw10    // 198? PCW10
-pcw16    // 1995 PCW16
-nc100    // 1992 NC100
-dw225
-nc150    // 1992 NC150
-nc200    // 1993 NC200
-
-// Nintendo
-nes       // Nintendo Entertainment System
-nespal    // Nintendo Entertainment System PAL
-m82       // Nintendo M82 Display Unit
-famicom   // Nintendo Family Computer (a.k.a. Famicom)
-fds       // Nintendo Family Computer (a.k.a. Famicom) + Disk System add-on
-famitwin  // Sharp Famicom Twin System
-drpcjr    // Bung Doctor PC Jr
-dendy     // Dendy (Classic russian famiclone)
-gchinatv  // Golden China TV Game Centre (Chinese famiclone)
-gameboy   // Nintendo Game Boy Handheld
-supergb   // Nintendo Super Game Boy SNES Cartridge
-supergb2
-gbpocket  // Nintendo Game Boy Pocket Handheld
-gbcolor   // Nintendo Game Boy Color Handheld
-gba       // Nintendo Game Boy Advance Handheld
-snes      // Nintendo Super Nintendo NTSC
-snespal   // Nintendo Super Nintendo PAL
-n64       // Nintendo N64
-n64dd     // Nintendo N64 (64DD Attachment)
-pokemini  // Nintendo Pokemon Mini
 
 // Nintendo games
 spacefev        // (c) 1979 Nintendo
@@ -1102,146 +1060,6 @@ ddpdojblk       //
 ddpdojblka      //
 espgal          // (c) 2003 Espgaluda
 
-// Commodore
-kim1      // Commodore (MOS) KIM-1 1975
-sym1      // Synertek SYM-1
-aim65    // Rockwell AIM65
-aim65_40  // Rockwell AIM65/40
-
-pet2001
-pet20018
-pet2001n
-pet2001n16
-pet2001n32
-cbm3008
-cbm3016
-cbm3032
-pet2001b
-pet2001b16
-pet2001b32
-cbm3032b
-pet4016
-pet4032
-pet4032f
-cbm4016
-cbm4032
-cbm4032f
-pet4032b
-cbm4032b
-pet8032
-cbm8032
-cbm8032_de
-cbm8032_fr
-cbm8032_se
-superpet
-mmf9000
-mmf9000_se
-cbm8096
-cbm8296
-cbm8296ed
-cbm8296d
-cbm8296d_de
-cbm8296gd
-cbm8296dgv_de
-
-vic1001   // Commodore VIC-1001 (Japan)
-vic20    // Commodore VIC 20 (NTSC)
-vic20p  // Commodore VIC 20 (PAL)
-vic20_se    // Commodore VIC 20 (Swedish Expanson Kit)
-
-vic10      // Commodore Max Machine (Japan)
-c64
-c64p    // Commodore 64 (PAL)
-c64_jp  // Commodore 64 (Japan)
-c64_se  // Commodore 64 (Sweden)
-pet64    // Commodore PET 64
-edu64    // Commodore Educator 64
-//clipper  // C64 in a briefcase with 3" floppy, electroluminescent flat screen, thermal printer - roms needed - not in driver
-sx64
-sx64p
-vip64    // Commodore VIP64 (SX64, PAL, Swedish)
-dx64    // Commodore DX-64 - Prototype
-tesa6240
-c64c
-c64cp   // Commodore 64C (PAL)
-c64c_es
-c64c_se
-c64g      // Commodore 64G (PAL)
-c64gs    // Commodore 64 Games System
-c64dtv   // Commodore 64 Direct-to-TV
-clcd      // Commodore LCD
-
-b500      // Commodore B500
-b128      // Commodore B128
-b256      // Commodore B256
-cbm610  // Commodore CBM 610
-cbm620  // Commodore CBM 620
-cbm620_hu  // Commodore CBM 620 (Hungary)
-b128hp  // Commodore B128HP
-b256hp  // Commodore B256HP
-bx256hp   // Commodore BX256HP
-cbm710  // Commodore CBM 710
-cbm720  // Commodore CBM 720
-cbm720_de
-cbm720_se  // Commodore CBM 720 (Sweden / Finland)
-cbm730
-p500      // Commodore P500 (proto, a.k.a. C128-40, PET-II)
-p500p
-
-c264
-plus4
-plus4p
-c16
-c16p
-c16_hu
-c116
-c232
-v364
-
-c128
-c128p
-c128_de
-//c128_fr
-//c128_no
-c128_se
-c128d
-c128dp
-c128cr
-c128dcr
-c128dcrp
-c128dcr_de
-//c128dcr_it
-c128dcr_se
-c128d81
-
-a1000       // Commodore Amiga 1000
-a1000n
-a2000       // Commodore Amiga 2000
-a2000n
-a500        // Commodore Amiga 500
-a500n
-cdtv        // Commodore CDTV
-cdtvn
-a3000       // Commodore Amiga 3000
-a3000n
-a500p       // Commodore Amiga 500 Plus
-a500pn
-a600        // Commodore Amiga 600
-a600n
-a1200       // Commodore Amiga 1200
-a1200n
-a4000       // Commodore Amiga 4000/040
-a4000n
-a400030     // Commodore Amiga 4000/030
-a400030n
-cd32        // Commodore Amiga CD32
-cd32n
-a4000t      // Commodore Amiga 4000T
-a4000tn
-
-c65    // 1991 C65 / C64DX (Prototype, NTSC)
-c64dx    // 1991 C65 / C64DX (Prototype, German PAL)
-
 // CVS games
 cosmos          // (c) 1981 Century
 darkwar         // (c) 1981 Century
@@ -1266,3 +1084,4 @@ raidersr3       // (c) 1983 Century Electronics UK
 hero            // (c) 1983 Seatongrove (c) 1984 CVS
 huncholy        // (c) 1984 Seatongrove (c) CVS
 
+#../../../../../src/mame/mess.lst

@@ -41,8 +41,10 @@ private:
 	enum
 	{
 		FONT_MENU = 1,
-		COLORS_MENU
+		COLORS_MENU,
+		HIDE_MENU
 	};
+	static const char *hide_status[];
 };
 
 //-------------------------------------------------

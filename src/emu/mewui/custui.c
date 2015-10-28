@@ -14,6 +14,8 @@
 #include "mewui/selector.h"
 #include "mewui/custui.h"
 
+const char *ui_menu_custom_ui::hide_status[] = { "Show All", "Hide Filters", "Hide Info/Image", "Hide Both" };
+
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
@@ -28,6 +30,8 @@ ui_menu_custom_ui::ui_menu_custom_ui(running_machine &machine, render_container 
 
 ui_menu_custom_ui::~ui_menu_custom_ui()
 {
+	std::string error_string;
+	machine().options().set_value(OPTION_HIDE_PANELS, mewui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
 	mewui_globals::reset = true;
 }
 
@@ -37,20 +41,46 @@ ui_menu_custom_ui::~ui_menu_custom_ui()
 
 void ui_menu_custom_ui::handle()
 {
+	bool changed = false;
+
 	// process the menu
 	const ui_menu_event *menu_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL && menu_event->iptkey == IPT_UI_SELECT)
-		switch ((FPTR)menu_event->itemref)
+	if (menu_event != NULL && menu_event->itemref != NULL)
+	{
+		if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
 		{
-			case FONT_MENU:
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_font_ui(machine(), container)));
-				break;
-
-			case COLORS_MENU:
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_colors_ui(machine(), container)));
-				break;
+			changed = true;
+			(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::panels_status++ : mewui_globals::panels_status--;
 		}
+
+
+		else if (menu_event->iptkey == IPT_UI_SELECT)
+		{
+			switch ((FPTR)menu_event->itemref)
+			{
+				case FONT_MENU:
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_font_ui(machine(), container)));
+					break;
+
+				case COLORS_MENU:
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_colors_ui(machine(), container)));
+					break;
+				case HIDE_MENU:
+				{
+					int total = ARRAY_LENGTH(hide_status);
+					std::vector<std::string> s_sel(total);
+					for (int index = 0; index < total; index++)
+						s_sel[index].assign(hide_status[index]);
+
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::panels_status)));
+				}
+			}
+		}
+	}
+
+	if (changed)
+		reset(UI_MENU_RESET_REMEMBER_REF);
 }
 
 //-------------------------------------------------
@@ -61,8 +91,11 @@ void ui_menu_custom_ui::populate()
 {
 	item_append("Fonts", NULL, 0, (void *)FONT_MENU);
 	item_append("Colors", NULL, 0, (void *)COLORS_MENU);
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
+	UINT32 arrow_flags = get_arrow_flags(0, (int)HIDE_BOTH, mewui_globals::panels_status);
+	item_append("Filters and Info/Image", hide_status[mewui_globals::panels_status], arrow_flags, (void *)HIDE_MENU);
+
+	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 

@@ -53,11 +53,11 @@ UINT8 mewui_globals::curdats_view = 0;
 UINT8 mewui_globals::cur_sw_dats_view = 0;
 bool mewui_globals::switch_image = false;
 bool mewui_globals::default_image = true;
-bool mewui_globals::reselect = false;
 bool mewui_globals::reset = false;
 bool mewui_globals::redraw_icon = false;
 int mewui_globals::visible_main_lines = 0;
 int mewui_globals::visible_sw_lines = 0;
+UINT16 mewui_globals::panels_status = 0;
 
 // Custom filter
 UINT16 custfltr::main = 0;
@@ -76,83 +76,6 @@ UINT16 sw_custfltr::year[MAX_CUST_FILTER];
 UINT16 sw_custfltr::region[MAX_CUST_FILTER];
 UINT16 sw_custfltr::type[MAX_CUST_FILTER];
 UINT16 sw_custfltr::list[MAX_CUST_FILTER];
-
-std::vector<cache_info> mewui_globals::driver_cache(driver_list::total() + 1);
-
-//-------------------------------------------------
-//  generate general info
-//-------------------------------------------------
-
-void general_info(running_machine &machine, const game_driver *driver, std::string &buffer)
-{
-	strprintf(buffer, "Romset: %-.100s\n", driver->name);
-	buffer.append("Year: ").append(driver->year).append("\n");
-	strcatprintf(buffer, "Manufacturer: %-.100s\n", driver->manufacturer);
-
-	int cloneof = driver_list::non_bios_clone(*driver);
-	if (cloneof != -1)
-		strcatprintf(buffer, "Driver is Clone of: %-.100s\n", driver_list::driver(cloneof).description);
-	else
-		buffer.append("Driver is Parent\n");
-
-	if (driver->flags & MACHINE_NOT_WORKING)
-		buffer.append("Overall: NOT WORKING\n");
-	else if (driver->flags & MACHINE_UNEMULATED_PROTECTION)
-		buffer.append("Overall: Unemulated Protection\n");
-	else
-		buffer.append("Overall: Working\n");
-
-	if (driver->flags & MACHINE_IMPERFECT_COLORS)
-		buffer.append("Graphics: Imperfect Colors\n");
-	else if (driver->flags & MACHINE_WRONG_COLORS)
-		buffer.append("Graphics: Wrong Colors\n");
-	else if (driver->flags & MACHINE_IMPERFECT_GRAPHICS)
-		buffer.append("Graphics: Imperfect\n");
-	else
-		buffer.append("Graphics: OK\n");
-
-	if (driver->flags & MACHINE_NO_SOUND)
-		buffer.append("Sound: Unimplemented\n");
-	else if (driver->flags & MACHINE_IMPERFECT_SOUND)
-		buffer.append("Sound: Imperfect\n");
-	else
-		buffer.append("Sound: OK\n");
-
-	strcatprintf(buffer, "Driver is Skeleton: %s\n", ((driver->flags & MACHINE_IS_SKELETON) ? "Yes" : "No"));
-	strcatprintf(buffer, "Game is Mechanical: %s\n", ((driver->flags & MACHINE_MECHANICAL) ? "Yes" : "No"));
-	strcatprintf(buffer, "Requires Artwork: %s\n", ((driver->flags & MACHINE_REQUIRES_ARTWORK) ? "Yes" : "No"));
-	strcatprintf(buffer, "Requires Clickable Artwork: %s\n", ((driver->flags & MACHINE_CLICKABLE_ARTWORK) ? "Yes" : "No"));
-	strcatprintf(buffer, "Support Cocktail: %s\n", ((driver->flags & MACHINE_NO_COCKTAIL) ? "Yes" : "No"));
-	strcatprintf(buffer, "Driver is Bios: %s\n", ((driver->flags & MACHINE_IS_BIOS_ROOT) ? "Yes" : "No"));
-	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & MACHINE_SUPPORTS_SAVE) ? "Yes" : "No"));
-
-	int idx = driver_list::find(driver->name);
-	strcatprintf(buffer, "Screen Type: %s\n", (mewui_globals::driver_cache[idx].b_screen ? "Vector" : "Raster"));
-	strcatprintf(buffer, "Screen Orentation: %s\n", ((driver->flags & ORIENTATION_SWAP_XY) ? "Vertical" : "Horizontal"));
-	strcatprintf(buffer, "Requires Samples: %s\n", (mewui_globals::driver_cache[idx].b_samples ? "Yes" : "No"));
-	strcatprintf(buffer, "Sound Channel: %s\n", (mewui_globals::driver_cache[idx].b_stereo ? "Stereo" : "Mono"));
-	strcatprintf(buffer, "Requires CHD: %s\n", (mewui_globals::driver_cache[idx].b_chd ? "Yes" : "No"));
-
-	// audit the game first to see if we're going to work
-	driver_enumerator enumerator(machine.options(), *driver);
-	enumerator.next();
-	media_auditor auditor(enumerator);
-	media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
-	media_auditor::summary summary_samples = auditor.audit_samples();
-
-	// if everything looks good, schedule the new driver
-	if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
-		buffer.append("Roms Audit Pass: OK\n");
-	else
-		buffer.append("Roms Audit Pass: BAD\n");
-
-	if (summary_samples == media_auditor::NONE_NEEDED)
-		buffer.append("Samples Audit Pass: None Needed\n");
-	else if (summary_samples == media_auditor::CORRECT || summary_samples == media_auditor::BEST_AVAILABLE)
-		buffer.append("Samples Audit Pass: OK\n");
-	else
-		buffer.append("Samples Audit Pass: BAD\n");
-}
 
 //-------------------------------------------------
 //  search a substring with even partial matching

@@ -14,6 +14,12 @@
 
 #include "mewui/custmenu.h"
 
+struct s_bios
+{
+	std::string name;
+	int id;
+};
+
 // Menu Class
 class ui_menu_select_software : public ui_menu
 {
@@ -25,6 +31,12 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
 
 	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
+
+	// draw left panel
+	virtual float draw_left_panel(float x1, float y1, float x2, float y2);
+
+	// draw right panel
+	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2);
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
@@ -44,6 +56,9 @@ private:
 	void build_custom();
 	void find_matches(const char *str, int count);
 	void load_sw_custom_filters();
+
+	void arts_render(void *selectedref, float x1, float y1, float x2, float y2);
+	void infos_render(void *selectedref, float x1, float y1, float x2, float y2);
 
 	// handlers
 	void inkey_select(const ui_menu_event *menu_event);
@@ -67,7 +82,7 @@ private:
 class ui_mewui_bios_selection : public ui_menu
 {
 public:
-	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<std::string> biosname, void *driver, bool software, bool inlist);
+	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<s_bios> biosname, void *driver, bool software, bool inlist);
 	virtual ~ui_mewui_bios_selection();
 	virtual void populate();
 	virtual void handle();
@@ -77,16 +92,22 @@ private:
 
 	void                      *m_driver;
 	bool m_software,          m_inlist;
-	std::vector<std::string>  m_bios;
+	std::vector<s_bios>       m_bios;
 };
 
 struct reselect_last
 {
 	static std::string driver, software, swlist;
+	static void set(bool value) { m_reselect = value; }
+	static bool get() { return m_reselect; }
+	static void reset() { driver.clear(); software.clear(); swlist.clear(); set(false); }
+
+private:
+	static bool m_reselect;
 };
 
 // Getter
-int get_bios_count(const game_driver *driver, std::vector<std::string> &biosname);
+int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname);
 
 
 #endif /* __MEWUI_SELSOFT_H__ */

@@ -107,6 +107,7 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : ui_menu(machine, container)
 {
 	std::string error_string, last_filter, sub_filter;
+	emu_options &moptions = machine.options();
 
 	// load drivers cache
 	load_cache_info();
@@ -120,8 +121,8 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 
 	if (first_start)
 	{
-		reselect_last::driver.assign(machine.options().last_used_machine());
-		std::string tmp(machine.options().last_used_filter());
+		reselect_last::driver.assign(moptions.last_used_machine());
+		std::string tmp(moptions.last_used_filter());
 		std::size_t found = tmp.find_first_of(",");
 		if (found == std::string::npos)
 			last_filter = tmp;
@@ -161,18 +162,18 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 		first_start = false;
 	}
 
-	if (!machine.options().remember_last())
+	if (!moptions.remember_last())
 		reselect_last::reset();
 
-	machine.options().set_value(OPTION_SNAPNAME, "%g/%i", OPTION_PRIORITY_CMDLINE, error_string);
-	machine.options().set_value(OPTION_SOFTWARENAME, "", OPTION_PRIORITY_CMDLINE, error_string);
+	moptions.set_value(OPTION_SNAPNAME, "%g/%i", OPTION_PRIORITY_CMDLINE, error_string);
+	moptions.set_value(OPTION_SOFTWARENAME, "", OPTION_PRIORITY_CMDLINE, error_string);
 
 	mewui_globals::curimage_view = FIRST_VIEW;
 	mewui_globals::curdats_view = MEWUI_FIRST_LOAD;
 	mewui_globals::switch_image = false;
 	mewui_globals::default_image = true;
-	ume_filters::actual = machine.options().start_filter();
-	mewui_globals::panels_status = machine.options().hide_panels();
+	ume_filters::actual = moptions.start_filter();
+	mewui_globals::panels_status = moptions.hide_panels();
 }
 
 //-------------------------------------------------
@@ -230,24 +231,24 @@ void ui_mewui_select_game::handle()
 	ui_input_pressed(machine(), IPT_UI_PAUSE);
 
 	// process the menu
-	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		// reset the error on any future menu_event
+		// reset the error on any future m_event
 		if (ui_error)
 			ui_error = false;
 
 		// handle selections
-		else if (menu_event->iptkey == IPT_UI_SELECT)
+		else if (m_event->iptkey == IPT_UI_SELECT)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
-				inkey_select(menu_event);
+				inkey_select(m_event);
 			else
-				inkey_select_favorite(menu_event);
+				inkey_select_favorite(m_event);
 		}
 
 		// handle UI_LEFT
-		else if (menu_event->iptkey == IPT_UI_LEFT)
+		else if (m_event->iptkey == IPT_UI_LEFT)
 		{
 			// Images
 			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view > FIRST_VIEW)
@@ -266,7 +267,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_RIGHT
-		else if (menu_event->iptkey == IPT_UI_RIGHT)
+		else if (m_event->iptkey == IPT_UI_RIGHT)
 		{
 			// Images
 			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view < LAST_VIEW)
@@ -285,46 +286,46 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
+		else if (m_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
 		{
 			l_hover = main_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
+		else if (m_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
 		{
 			l_hover = main_filters::actual + 1;
 			check_filter = true;
 		}
 
 		// handle UI_LEFT_PANEL
-		else if (menu_event->iptkey == IPT_UI_LEFT_PANEL)
+		else if (m_event->iptkey == IPT_UI_LEFT_PANEL)
 			mewui_globals::rpanel = RP_IMAGES;
 
 		// handle UI_RIGHT_PANEL
-		else if (menu_event->iptkey == IPT_UI_RIGHT_PANEL)
+		else if (m_event->iptkey == IPT_UI_RIGHT_PANEL)
 			mewui_globals::rpanel = RP_INFOS;
 
 		// escape pressed with non-empty text clears the text
-		else if (menu_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
+		else if (m_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
 		{
 			m_search[0] = '\0';
 			reset(UI_MENU_RESET_SELECT_FIRST);
 		}
 
 		// handle UI_HISTORY
-		else if (menu_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_HISTORY_LOAD, driver)));
 			}
 			else
 			{
-				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2)
 				{
 					if (swinfo->startempty == 1)
@@ -336,11 +337,11 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_MAMEINFO
-		else if (menu_event->iptkey == IPT_UI_MAMEINFO && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_MAMEINFO && machine().options().enabled_dats())
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 				{
 					if ((driver->flags & MACHINE_TYPE_ARCADE) != 0)
@@ -351,7 +352,7 @@ void ui_mewui_select_game::handle()
 			}
 			else
 			{
-				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 				{
 					if ((swinfo->driver->flags & MACHINE_TYPE_ARCADE) != 0)
@@ -363,62 +364,62 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_STORY
-		else if (menu_event->iptkey == IPT_UI_STORY && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_STORY && machine().options().enabled_dats())
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_STORY_LOAD, driver)));
 			}
 			else
 			{
-				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_STORY_LOAD, swinfo->driver)));
 			}
 		}
 
 		// handle UI_SYSINFO
-		else if (menu_event->iptkey == IPT_UI_SYSINFO && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_SYSINFO && machine().options().enabled_dats())
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_SYSINFO_LOAD, driver)));
 			}
 			else
 			{
-				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_dats(machine(), container, MEWUI_SYSINFO_LOAD, swinfo->driver)));
 			}
 		}
 
 		// handle UI_COMMAND
-		else if (menu_event->iptkey == IPT_UI_COMMAND && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_COMMAND && machine().options().enabled_dats())
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command(machine(), container, driver)));
 			}
 			else
 			{
-				ui_software_info *swinfo  = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command(machine(), container, swinfo->driver)));
 			}
 		}
 
 		// handle UI_FAVORITES
-		else if (menu_event->iptkey == IPT_UI_FAVORITES)
+		else if (m_event->iptkey == IPT_UI_FAVORITES)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
+				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
 				{
 					if (!machine().favorite().isgame_favorite(driver))
@@ -436,7 +437,7 @@ void ui_mewui_select_game::handle()
 			}
 			else
 			{
-				ui_software_info *swinfo = (ui_software_info *)menu_event->itemref;
+				ui_software_info *swinfo = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2)
 				{
 					popmessage("%s\n removed from favorites list.", swinfo->longname.c_str());
@@ -447,44 +448,44 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_EXPORT
-		else if (menu_event->iptkey == IPT_UI_EXPORT)
+		else if (m_event->iptkey == IPT_UI_EXPORT)
 			inkey_export();
 
 		// handle UI_AUDIT_FAST
-		else if (menu_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailablelist.empty())
+		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailablelist.empty())
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 1)));
 
 		// handle UI_AUDIT_ALL
-		else if (menu_event->iptkey == IPT_UI_AUDIT_ALL)
+		else if (m_event->iptkey == IPT_UI_AUDIT_ALL)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 2)));
 
 		// typed characters append to the buffer
-		else if (menu_event->iptkey == IPT_SPECIAL)
-			inkey_special(menu_event);
+		else if (m_event->iptkey == IPT_SPECIAL)
+			inkey_special(m_event);
 
-		else if (menu_event->iptkey == IPT_OTHER)
+		else if (m_event->iptkey == IPT_OTHER)
 			check_filter = true;
 	}
 
-	if (menu_event != NULL && menu_event->itemref == NULL)
+	if (m_event != NULL && m_event->itemref == NULL)
 	{
-		if (menu_event->iptkey == IPT_SPECIAL && menu_event->unichar == 0x09)
+		if (m_event->iptkey == IPT_SPECIAL && m_event->unichar == 0x09)
 			selected = m_prev_selected;
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
+		else if (m_event->iptkey == IPT_UI_UP_FILTER && main_filters::actual > FILTER_FIRST)
 		{
 			l_hover = main_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
+		else if (m_event->iptkey == IPT_UI_DOWN_FILTER && main_filters::actual < FILTER_LAST)
 		{
 			l_hover = main_filters::actual + 1;
 			check_filter = true;
 		}
-		else if (menu_event->iptkey == IPT_OTHER)
+		else if (m_event->iptkey == IPT_OTHER)
 			check_filter = true;
 	}
 
@@ -999,9 +1000,9 @@ void ui_mewui_select_game::force_game_select(running_machine &machine, render_co
 //  handle select key event
 //-------------------------------------------------
 
-void ui_mewui_select_game::inkey_select(const ui_menu_event *menu_event)
+void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 {
-	const game_driver *driver = (const game_driver *)menu_event->itemref;
+	const game_driver *driver = (const game_driver *)m_event->itemref;
 
 	// special case for configure options
 	if ((FPTR)driver == 1)
@@ -1063,9 +1064,9 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *menu_event)
 //  handle select key event for favorites menu
 //-------------------------------------------------
 
-void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *menu_event)
+void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 {
-	ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;
+	ui_software_info *ui_swinfo = (ui_software_info *)m_event->itemref;
 
 	// special case for configure options
 	if ((FPTR)ui_swinfo == 1)
@@ -1178,27 +1179,27 @@ bool ui_mewui_select_game::no_active_search()
 //  handle special key event
 //-------------------------------------------------
 
-void ui_mewui_select_game::inkey_special(const ui_menu_event *menu_event)
+void ui_mewui_select_game::inkey_special(const ui_menu_event *m_event)
 {
 	int buflen = strlen(m_search);
 
 	// if it's a backspace and we can handle it, do so
-	if (((menu_event->unichar == 8 || menu_event->unichar == 0x7f) && buflen > 0) && !no_active_search())
+	if (((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0) && !no_active_search())
 	{
 		*(char *)utf8_previous_char(&m_search[buflen]) = 0;
 		reset(UI_MENU_RESET_SELECT_FIRST);
 	}
 
 	// if it's any other key and we're not maxed out, update
-	else if ((menu_event->unichar >= ' ' && menu_event->unichar < 0x7f) && !no_active_search())
+	else if ((m_event->unichar >= ' ' && m_event->unichar < 0x7f) && !no_active_search())
 	{
-		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, menu_event->unichar);
+		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
 		m_search[buflen] = 0;
 		reset(UI_MENU_RESET_SELECT_FIRST);
 	}
 
 	// Tab key
-	else if (menu_event->unichar == 0x09)
+	else if (m_event->unichar == 0x09)
 	{
 		// if the selection is in the main screen, save and go to submenu
 		if (selected <= visible_items)
@@ -2687,26 +2688,26 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			else if (mewui_globals::curimage_view == TITLES_VIEW)
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname.c_str()).append("_titles");
-				fullname.assign(soft->shortname.c_str()).append(".png");
+				pathname.assign(soft->listname).append("_titles");
+				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
-					fullname.assign(soft->shortname.c_str()).append(".jpg");
+					fullname.assign(soft->shortname).append(".jpg");
 					render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 				}
 			}
 			else
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname.c_str());
-				fullname.assign(soft->shortname.c_str()).append(".png");
+				pathname.assign(soft->listname);
+				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
-					fullname.assign(soft->shortname.c_str()).append(".jpg");
+					fullname.assign(soft->shortname).append(".jpg");
 					render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 				}
 
@@ -2714,12 +2715,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 				{
 					// Second attempt from driver name + part name
 					pathname.assign(soft->driver->name).append(soft->part.c_str());
-					fullname.assign(soft->shortname.c_str()).append(".png");
+					fullname.assign(soft->shortname).append(".png");
 					render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 					if (!tmp_bitmap->valid())
 					{
-						fullname.assign(soft->shortname.c_str()).append(".jpg");
+						fullname.assign(soft->shortname).append(".jpg");
 						render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 					}
 				}

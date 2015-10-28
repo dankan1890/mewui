@@ -61,12 +61,12 @@ void ui_menu_command::populate()
 void ui_menu_command::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->iptkey == IPT_UI_SELECT)
+	if (m_event != NULL && m_event->iptkey == IPT_UI_SELECT)
 	{
 		std::string m_title(item[selected].text);
-		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command_content(machine(), container, (FPTR)menu_event->itemref, m_title, m_driver)));
+		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command_content(machine(), container, (FPTR)m_event->itemref, m_title, m_driver)));
 	}
 }
 

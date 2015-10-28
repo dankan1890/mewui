@@ -100,19 +100,19 @@ void ui_menu_display_options::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		int value = (FPTR)menu_event->itemref;
+		int value = (FPTR)m_event->itemref;
 		if (!strcmp(m_options[value].option, OSDOPTION_VIDEO) || !strcmp(m_options[value].option, OSDOPTION_PRESCALE))
 		{
-			if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+			if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 			{
 				changed = true;
-				(menu_event->iptkey == IPT_UI_LEFT) ? m_options[value].status-- : m_options[value].status++;
+				(m_event->iptkey == IPT_UI_LEFT) ? m_options[value].status-- : m_options[value].status++;
 			}
-			else if (menu_event->iptkey == IPT_UI_SELECT && !strcmp(m_options[value].option, OSDOPTION_VIDEO))
+			else if (m_event->iptkey == IPT_UI_SELECT && !strcmp(m_options[value].option, OSDOPTION_VIDEO))
 			{
 				int total = ARRAY_LENGTH(m_video);
 				std::vector<std::string> s_sel(total);
@@ -122,7 +122,7 @@ void ui_menu_display_options::handle()
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
 			}
 		}
-		else if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT || menu_event->iptkey == IPT_UI_SELECT)
+		else if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT || m_event->iptkey == IPT_UI_SELECT)
 		{
 			changed = true;
 			m_options[value].status = !m_options[value].status;

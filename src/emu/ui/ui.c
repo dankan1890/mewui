@@ -2678,15 +2678,11 @@ rgb_t decode_ui_color(int id, running_machine *machine)
 	static rgb_t color[ARRAY_LENGTH(s_color_list)];
 
 	if (machine) {
-		std::string option_errors;
 		emu_options option;
-
 		for (int x = 0; x < ARRAY_LENGTH(s_color_list); x++) {
 			const char *o_default = option.value(s_color_list[x]);
 			const char *s_option = machine->options().value(s_color_list[x]);
-
 			int len = strlen(s_option);
-
 			if (len != 8)
 				color[x] = rgb_t((UINT32)strtoul(o_default, NULL, 16));
 			else

@@ -56,14 +56,14 @@ void ui_menu_controller_mapping::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	const ui_menu_event *m_event = process(0);
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+		if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 		{
 			changed = true;
-			int value = (FPTR)menu_event->itemref;
-			(menu_event->iptkey == IPT_UI_RIGHT) ? m_options[value].status++ : m_options[value].status--;
+			int value = (FPTR)m_event->itemref;
+			(m_event->iptkey == IPT_UI_RIGHT) ? m_options[value].status++ : m_options[value].status--;
 		}
 	}
 

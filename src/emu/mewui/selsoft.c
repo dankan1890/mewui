@@ -173,20 +173,20 @@ void ui_menu_select_software::handle()
 	ui_input_pressed(machine(), IPT_UI_PAUSE);
 
 	// process the menu
-	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		// reset the error on any future menu_event
+		// reset the error on any future m_event
 		if (ui_error)
 			ui_error = false;
 
 		// handle selections
-		else if (menu_event->iptkey == IPT_UI_SELECT)
-			inkey_select(menu_event);
+		else if (m_event->iptkey == IPT_UI_SELECT)
+			inkey_select(m_event);
 
 		// handle UI_LEFT
-		else if (menu_event->iptkey == IPT_UI_LEFT)
+		else if (m_event->iptkey == IPT_UI_LEFT)
 		{
 			// Images
 			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view > FIRST_VIEW)
@@ -205,7 +205,7 @@ void ui_menu_select_software::handle()
 		}
 
 		// handle UI_RIGHT
-		else if (menu_event->iptkey == IPT_UI_RIGHT)
+		else if (m_event->iptkey == IPT_UI_RIGHT)
 		{
 			// Images
 			if (mewui_globals::rpanel == RP_IMAGES && mewui_globals::curimage_view < LAST_VIEW)
@@ -224,47 +224,47 @@ void ui_menu_select_software::handle()
 		}
 
 		// handle UI_HISTORY
-		else if (menu_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
 		{
-			ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;
+			ui_software_info *ui_swinfo = (ui_software_info *)m_event->itemref;
 
 			if ((FPTR)ui_swinfo > 1)
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_history_sw(machine(), container, ui_swinfo, m_driver)));
 		}
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && sw_filters::actual > MEWUI_SW_FIRST)
+		else if (m_event->iptkey == IPT_UI_UP_FILTER && sw_filters::actual > MEWUI_SW_FIRST)
 		{
 			l_sw_hover = sw_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && sw_filters::actual < MEWUI_SW_LAST)
+		else if (m_event->iptkey == IPT_UI_DOWN_FILTER && sw_filters::actual < MEWUI_SW_LAST)
 		{
 			l_sw_hover = sw_filters::actual + 1;
 			check_filter = true;
 		}
 
 		// handle UI_LEFT_PANEL
-		else if (menu_event->iptkey == IPT_UI_LEFT_PANEL)
+		else if (m_event->iptkey == IPT_UI_LEFT_PANEL)
 			mewui_globals::rpanel = RP_IMAGES;
 
 		// handle UI_RIGHT_PANEL
-		else if (menu_event->iptkey == IPT_UI_RIGHT_PANEL)
+		else if (m_event->iptkey == IPT_UI_RIGHT_PANEL)
 			mewui_globals::rpanel = RP_INFOS;
 
 		// escape pressed with non-empty text clears the text
-		else if (menu_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
+		else if (m_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
 		{
 			m_search[0] = '\0';
 			reset(UI_MENU_RESET_SELECT_FIRST);
 		}
 
 		// handle UI_FAVORITES
-		else if (menu_event->iptkey == IPT_UI_FAVORITES)
+		else if (m_event->iptkey == IPT_UI_FAVORITES)
 		{
-			ui_software_info *swinfo = (ui_software_info *)menu_event->itemref;
+			ui_software_info *swinfo = (ui_software_info *)m_event->itemref;
 
 			if ((FPTR)swinfo > 2)
 			{
@@ -283,31 +283,31 @@ void ui_menu_select_software::handle()
 		}
 
 		// typed characters append to the buffer
-		else if (menu_event->iptkey == IPT_SPECIAL)
-			inkey_special(menu_event);
+		else if (m_event->iptkey == IPT_SPECIAL)
+			inkey_special(m_event);
 
-		else if (menu_event->iptkey == IPT_OTHER)
+		else if (m_event->iptkey == IPT_OTHER)
 			check_filter = true;
 	}
 
-	if (menu_event != NULL && menu_event->itemref == NULL)
+	if (m_event != NULL && m_event->itemref == NULL)
 	{
-		// reset the error on any future menu_event
+		// reset the error on any future m_event
 		if (ui_error)
 			ui_error = false;
 
-		else if (menu_event->iptkey == IPT_OTHER)
+		else if (m_event->iptkey == IPT_OTHER)
 			check_filter = true;
 
 		// handle UI_UP_FILTER
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && sw_filters::actual > MEWUI_SW_FIRST)
+		else if (m_event->iptkey == IPT_UI_UP_FILTER && sw_filters::actual > MEWUI_SW_FIRST)
 		{
 			l_sw_hover = sw_filters::actual - 1;
 			check_filter = true;
 		}
 
 		// handle UI_DOWN_FILTER
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && sw_filters::actual < MEWUI_SW_LAST)
+		else if (m_event->iptkey == IPT_UI_DOWN_FILTER && sw_filters::actual < MEWUI_SW_LAST)
 		{
 			l_sw_hover = sw_filters::actual + 1;
 			check_filter = true;
@@ -835,9 +835,9 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 //  handle select key event
 //-------------------------------------------------
 
-void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
+void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 {
-	ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;
+	ui_software_info *ui_swinfo = (ui_software_info *)m_event->itemref;
 
 	if (ui_swinfo->startempty == 1)
 	{
@@ -919,21 +919,21 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *menu_event)
 //  handle special key event
 //-------------------------------------------------
 
-void ui_menu_select_software::inkey_special(const ui_menu_event *menu_event)
+void ui_menu_select_software::inkey_special(const ui_menu_event *m_event)
 {
 	int buflen = strlen(m_search);
 
 	// if it's a backspace and we can handle it, do so
-	if ((menu_event->unichar == 8 || menu_event->unichar == 0x7f) && buflen > 0)
+	if ((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0)
 	{
 		*(char *)utf8_previous_char(&m_search[buflen]) = 0;
 		reset(UI_MENU_RESET_SELECT_FIRST);
 	}
 
 	// if it's any other key and we're not maxed out, update
-	else if (menu_event->unichar >= ' ' && menu_event->unichar < 0x7f)
+	else if (m_event->unichar >= ' ' && m_event->unichar < 0x7f)
 	{
-		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, menu_event->unichar);
+		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
 		m_search[buflen] = 0;
 		reset(UI_MENU_RESET_SELECT_FIRST);
 	}
@@ -1776,26 +1776,26 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 			else if (mewui_globals::curimage_view == TITLES_VIEW)
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname.c_str()).append("_titles");
-				fullname.assign(soft->shortname.c_str()).append(".png");
+				pathname.assign(soft->listname).append("_titles");
+				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
-					fullname.assign(soft->shortname.c_str()).append(".jpg");
+					fullname.assign(soft->shortname).append(".jpg");
 					render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 				}
 			}
 			else
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname.c_str());
-				fullname.assign(soft->shortname.c_str()).append(".png");
+				pathname.assign(soft->listname);
+				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
-					fullname.assign(soft->shortname.c_str()).append(".jpg");
+					fullname.assign(soft->shortname).append(".jpg");
 					render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 				}
 
@@ -1803,12 +1803,12 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 				{
 					// Second attempt from driver name + part name
 					pathname.assign(soft->driver->name).append(soft->part.c_str());
-					fullname.assign(soft->shortname.c_str()).append(".png");
+					fullname.assign(soft->shortname).append(".png");
 					render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
 					if (!tmp_bitmap->valid())
 					{
-						fullname.assign(soft->shortname.c_str()).append(".jpg");
+						fullname.assign(soft->shortname).append(".jpg");
 						render_load_jpeg(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 					}
 				}

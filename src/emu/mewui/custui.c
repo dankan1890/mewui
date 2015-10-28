@@ -44,20 +44,20 @@ void ui_menu_custom_ui::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+		if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 		{
 			changed = true;
-			(menu_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::panels_status++ : mewui_globals::panels_status--;
+			(m_event->iptkey == IPT_UI_RIGHT) ? mewui_globals::panels_status++ : mewui_globals::panels_status--;
 		}
 
 
-		else if (menu_event->iptkey == IPT_UI_SELECT)
+		else if (m_event->iptkey == IPT_UI_SELECT)
 		{
-			switch ((FPTR)menu_event->itemref)
+			switch ((FPTR)m_event->itemref)
 			{
 				case FONT_MENU:
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_font_ui(machine(), container)));
@@ -247,23 +247,23 @@ void ui_menu_font_ui::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
-		switch ((FPTR)menu_event->itemref)
+	if (m_event != NULL && m_event->itemref != NULL)
+		switch ((FPTR)m_event->itemref)
 		{
 			case INFOS_SIZE:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? m_info_size += 0.05f : m_info_size -= 0.05f;
+					(m_event->iptkey == IPT_UI_RIGHT) ? m_info_size += 0.05f : m_info_size -= 0.05f;
 					changed = true;
 				}
 				break;
 
 			case FONT_SIZE:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? m_font_size++ : m_font_size--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? m_font_size++ : m_font_size--;
 					changed = true;
 				}
 				break;
@@ -271,12 +271,12 @@ void ui_menu_font_ui::handle()
 #ifdef MEWUI_WINDOWS
 
 			case MUI_FNT:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? m_class.actual++ : m_class.actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? m_class.actual++ : m_class.actual--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_class.ui, &m_class.actual)));
 					changed = true;
 
@@ -284,9 +284,9 @@ void ui_menu_font_ui::handle()
 
 			case MUI_BOLD:
 			case MUI_ITALIC:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT || menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT || m_event->iptkey == IPT_UI_SELECT)
 				{
-					((FPTR)menu_event->itemref == MUI_BOLD) ? m_bold = !m_bold : m_italic = !m_italic;
+					((FPTR)m_event->itemref == MUI_BOLD) ? m_bold = !m_bold : m_italic = !m_italic;
 					changed = true;
 				}
 				break;
@@ -465,12 +465,12 @@ void ui_menu_colors_ui::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL && menu_event->iptkey == IPT_UI_SELECT)
+	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
 	{
-		if ((FPTR)menu_event->itemref != MUI_RESTORE)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_rgb_ui(machine(), container, &m_color_table[(FPTR)menu_event->itemref].color, item[selected].text)));
+		if ((FPTR)m_event->itemref != MUI_RESTORE)
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_rgb_ui(machine(), container, &m_color_table[(FPTR)m_event->itemref].color, item[selected].text)));
 		else
 		{
 			changed = true;
@@ -699,103 +699,103 @@ void ui_menu_rgb_ui::handle()
 	bool changed = false;
 
 	// process the menu
-	const ui_menu_event *menu_event;
+	const ui_menu_event *m_event;
 
 	if (!m_key_active)
-		menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
+		m_event = process(UI_MENU_PROCESS_LR_REPEAT);
 	else
-		menu_event = process(UI_MENU_PROCESS_ONLYCHAR);
+		m_event = process(UI_MENU_PROCESS_ONLYCHAR);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		switch ((FPTR)menu_event->itemref)
+		switch ((FPTR)m_event->itemref)
 		{
 			case RGB_ALPHA:
-				if (menu_event->iptkey == IPT_UI_LEFT && m_color->a() > 1)
+				if (m_event->iptkey == IPT_UI_LEFT && m_color->a() > 1)
 				{
 					m_color->set_a(m_color->a() - 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_RIGHT && m_color->a() < 255)
+				else if (m_event->iptkey == IPT_UI_RIGHT && m_color->a() < 255)
 				{
 					m_color->set_a(m_color->a() + 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_SELECT || menu_event->iptkey == IPT_SPECIAL)
+				else if (m_event->iptkey == IPT_UI_SELECT || m_event->iptkey == IPT_SPECIAL)
 				{
-					inkey_special(menu_event);
+					inkey_special(m_event);
 					changed = true;
 				}
 
 				break;
 
 			case RGB_RED:
-				if (menu_event->iptkey == IPT_UI_LEFT && m_color->r() > 1)
+				if (m_event->iptkey == IPT_UI_LEFT && m_color->r() > 1)
 				{
 					m_color->set_r(m_color->r() - 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_RIGHT && m_color->r() < 255)
+				else if (m_event->iptkey == IPT_UI_RIGHT && m_color->r() < 255)
 				{
 					m_color->set_r(m_color->r() + 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_SELECT || menu_event->iptkey == IPT_SPECIAL)
+				else if (m_event->iptkey == IPT_UI_SELECT || m_event->iptkey == IPT_SPECIAL)
 				{
-					inkey_special(menu_event);
+					inkey_special(m_event);
 					changed = true;
 				}
 
 				break;
 
 			case RGB_GREEN:
-				if (menu_event->iptkey == IPT_UI_LEFT && m_color->g() > 1)
+				if (m_event->iptkey == IPT_UI_LEFT && m_color->g() > 1)
 				{
 					m_color->set_g(m_color->g() - 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_RIGHT && m_color->g() < 255)
+				else if (m_event->iptkey == IPT_UI_RIGHT && m_color->g() < 255)
 				{
 					m_color->set_g(m_color->g() + 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_SELECT || menu_event->iptkey == IPT_SPECIAL)
+				else if (m_event->iptkey == IPT_UI_SELECT || m_event->iptkey == IPT_SPECIAL)
 				{
-					inkey_special(menu_event);
+					inkey_special(m_event);
 					changed = true;
 				}
 
 				break;
 
 			case RGB_BLUE:
-				if (menu_event->iptkey == IPT_UI_LEFT && m_color->b() > 1)
+				if (m_event->iptkey == IPT_UI_LEFT && m_color->b() > 1)
 				{
 					m_color->set_b(m_color->b() - 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_RIGHT && m_color->b() < 255)
+				else if (m_event->iptkey == IPT_UI_RIGHT && m_color->b() < 255)
 				{
 					m_color->set_b(m_color->b() + 1);
 					changed = true;
 				}
 
-				else if (menu_event->iptkey == IPT_UI_SELECT || menu_event->iptkey == IPT_SPECIAL)
+				else if (m_event->iptkey == IPT_UI_SELECT || m_event->iptkey == IPT_SPECIAL)
 				{
-					inkey_special(menu_event);
+					inkey_special(m_event);
 					changed = true;
 				}
 
 				break;
 
 			case PALETTE_CHOOSE:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_palette_sel(machine(), container, *m_color)));
 				break;
 		}
@@ -930,19 +930,19 @@ void ui_menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, f
 //  handle special key event
 //-------------------------------------------------
 
-void ui_menu_rgb_ui::inkey_special(const ui_menu_event *menu_event)
+void ui_menu_rgb_ui::inkey_special(const ui_menu_event *m_event)
 {
-	if (menu_event->iptkey == IPT_UI_SELECT)
+	if (m_event->iptkey == IPT_UI_SELECT)
 	{
 		m_key_active = !m_key_active;
-		m_lock_ref = (FPTR)menu_event->itemref;
+		m_lock_ref = (FPTR)m_event->itemref;
 
 		if (!m_key_active)
 		{
 			int val = atoi(m_search);
 			val = m_color->clamp(val);
 
-			switch ((FPTR)menu_event->itemref)
+			switch ((FPTR)m_event->itemref)
 			{
 				case RGB_ALPHA:
 					m_color->set_a(val);
@@ -976,15 +976,15 @@ void ui_menu_rgb_ui::inkey_special(const ui_menu_event *menu_event)
 	int buflen = strlen(m_search);
 
 	// if it's a backspace and we can handle it, do so
-	if (((menu_event->unichar == 8 || menu_event->unichar == 0x7f) && buflen > 0))
+	if (((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0))
 		*(char *)utf8_previous_char(&m_search[buflen]) = 0;
 
 	else if (buflen >= 3)
 		return;
 
 	// if it's any other key and we're not maxed out, update
-	else if ((menu_event->unichar >= '0' && menu_event->unichar <= '9'))
-		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, menu_event->unichar);
+	else if ((m_event->unichar >= '0' && m_event->unichar <= '9'))
+		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
 
 	m_search[buflen] = 0;
 }
@@ -1026,10 +1026,10 @@ ui_menu_palette_sel::~ui_menu_palette_sel()
 void ui_menu_palette_sel::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(MENU_FLAG_MEWUI_PALETTE);
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	const ui_menu_event *m_event = process(MENU_FLAG_MEWUI_PALETTE);
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		if (menu_event->iptkey == IPT_UI_SELECT)
+		if (m_event->iptkey == IPT_UI_SELECT)
 		{
 			m_original = rgb_t((UINT32)strtoul(item[selected].subtext, NULL, 16));
 			ui_menu::menu_stack->parent->reset(UI_MENU_RESET_SELECT_FIRST);

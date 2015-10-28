@@ -241,6 +241,7 @@ void favorite_manager::add_favorite_game()
 		if (image->exists() && image->software_entry())
 		{
 			const software_info *swinfo = image->software_entry();
+			const software_part *part = image->part_entry();
 			ui_software_info tmpmatches;
 			if (swinfo->shortname()) tmpmatches.shortname.assign(swinfo->shortname());
 			if (image->longname()) tmpmatches.longname.assign(image->longname());
@@ -248,10 +249,10 @@ void favorite_manager::add_favorite_game()
 			if (image->year()) tmpmatches.year.assign(image->year());
 			if (image->manufacturer()) tmpmatches.publisher.assign(image->manufacturer());
 			tmpmatches.supported = image->supported();
-			if (image->part_entry()->name()) tmpmatches.part.assign(image->part_entry()->name());
+			if (part->name()) tmpmatches.part.assign(part->name());
 			tmpmatches.driver = &machine().system();
 			if (image->software_list_name()) tmpmatches.listname.assign(image->software_list_name());
-			if (image->part_entry()->interface()) tmpmatches.interface.assign(image->part_entry()->interface());
+			if (part->interface()) tmpmatches.interface.assign(part->interface());
 			if (image->instance_name()) tmpmatches.instance.assign(image->instance_name());
 			tmpmatches.startempty = 0;
 			tmpmatches.parentlongname.clear();

@@ -1377,7 +1377,7 @@ void cheat_manager::load_cheats(const char *filename)
 {
 	xml_data_node *rootnode = NULL;
 	std::string searchstr(machine().options().cheat_path());
-	path_iterator path(machine().options().cheat_path());
+	path_iterator path(searchstr.c_str());
 	std::string curpath;
 	while (path.next(curpath))
 	{

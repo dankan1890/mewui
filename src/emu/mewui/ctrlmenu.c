@@ -94,8 +94,9 @@ void ui_menu_controller_mapping::populate()
 void ui_menu_controller_mapping::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width, maxwidth = origx2 - origx1;
+	ui_manager &mui = machine().ui();
 
-	machine().ui().draw_text_full(container, "Device Mapping", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Device Mapping", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
@@ -107,7 +108,7 @@ void ui_menu_controller_mapping::custom_render(void *selectedref, float top, flo
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -115,7 +116,7 @@ void ui_menu_controller_mapping::custom_render(void *selectedref, float top, flo
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, "Device Mapping", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Device Mapping", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 }

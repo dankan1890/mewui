@@ -77,6 +77,7 @@ static const char *hover_msg[] = { "Add or remove favorites", "Export displayed 
 
 void ui_menu::init_mewui(running_machine &machine)
 {
+	render_manager &mrender = machine.render();
 	// create a texture for hilighting items in main menu
 	hilight_main_bitmap = auto_bitmap_rgb32_alloc(machine, 1, 26);
 	int r1 = 0, g1 = 169, b1 = 255; //Any start color
@@ -89,12 +90,12 @@ void ui_menu::init_mewui(running_machine &machine)
 		hilight_main_bitmap->pix32(y, 0) = rgb_t(0xff, r, g, b);
 	}
 
-	hilight_main_texture = machine.render().texture_alloc();
+	hilight_main_texture = mrender.texture_alloc();
 	hilight_main_texture->set_bitmap(*hilight_main_bitmap, hilight_main_bitmap->cliprect(), TEXFORMAT_ARGB32);
 
 	// create a texture for snapshot
 	snapx_bitmap = auto_alloc(machine, bitmap_argb32);
-	snapx_texture = machine.render().texture_alloc(render_texture::hq_scale);
+	snapx_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	// allocates and sets the default "no available" image
 	no_avail_bitmap = auto_alloc(machine, bitmap_argb32(256, 256));
@@ -105,19 +106,19 @@ void ui_menu::init_mewui(running_machine &machine)
 	star_bitmap = auto_alloc(machine, bitmap_argb32(32, 32));
 	dst = &star_bitmap->pix32(0);
 	memcpy(dst, favorite_star_bmp, 32*32*sizeof(UINT32));
-	star_texture = machine.render().texture_alloc();
+	star_texture = mrender.texture_alloc();
 	star_texture->set_bitmap(*star_bitmap, star_bitmap->cliprect(), TEXFORMAT_ARGB32);
 
 	// allocates icons bitmap and texture
 	for (int i = 0; i < MAX_ICONS_RENDER; i++)
 	{
 		icons_bitmap[i] = auto_alloc(machine, bitmap_argb32(32, 32));
-		icons_texture[i] = machine.render().texture_alloc(render_texture::hq_scale);
+		icons_texture[i] = mrender.texture_alloc(render_texture::hq_scale);
 	}
 
 	// create a texture for main menu background
 	bgrnd_bitmap = auto_alloc(machine, bitmap_argb32);
-	bgrnd_texture = machine.render().texture_alloc(render_texture::hq_scale);
+	bgrnd_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	if (machine.options().use_background_image() && (machine.options().system() == &GAME_NAME(___empty) || machine.options().system() == NULL))
 	{
@@ -140,7 +141,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	for (int x = 0; x < MEWUI_TOOLBAR_BUTTONS; ++x)
 	{
 		toolbar_bitmap[x] = auto_alloc(machine, bitmap_argb32(32, 32));
-		toolbar_texture[x] = machine.render().texture_alloc();
+		toolbar_texture[x] = mrender.texture_alloc();
 		UINT32 *dst = &toolbar_bitmap[x]->pix32(0);
 		memcpy(dst, toolbar_bitmap_bmp[x], 32 * 32 * sizeof(UINT32));
 		if (toolbar_bitmap[x]->valid())
@@ -153,7 +154,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	for (int x = 0; x < MEWUI_TOOLBAR_BUTTONS; ++x)
 	{
 		sw_toolbar_bitmap[x] = auto_alloc(machine, bitmap_argb32(32, 32));
-		sw_toolbar_texture[x] = machine.render().texture_alloc();
+		sw_toolbar_texture[x] = mrender.texture_alloc();
 		UINT32 *dst;
 		if (x == 0 || x == 2)
 		{

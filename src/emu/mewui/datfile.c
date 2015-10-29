@@ -287,7 +287,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 	std::string s;
 	core_filename_extract_base(s, drv->source_file);
 	size_t index = 0;
-	for (index = 0; index < idx.size() && idx[index].name.compare(s.c_str()) != 0; ++index) ;
+	for (index = 0; index < idx.size() && idx[index].name != s; ++index) ;
 
 	// if driver not found, return
 	if (index == idx.size())
@@ -691,7 +691,7 @@ void datfile_manager::command_sub_menu(const game_driver *drv, std::vector<std::
 	}
 }
 
-int datfile_manager::find_or_allocate(std::string name)
+int datfile_manager::find_or_allocate(std::string &name)
 {
 	int x = 0;
 	for (; x < m_swindex.size(); x++)

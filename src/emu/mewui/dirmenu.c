@@ -65,6 +65,7 @@ ui_menu_add_change_folder::ui_menu_add_change_folder(running_machine &machine, r
 {
 	m_ref = ref - 1;
 	m_change = _change;
+	m_search[0] = '\0';
 
 	// configure the starting's path
 	char *dst = NULL;
@@ -252,6 +253,7 @@ void ui_menu_add_change_folder::populate()
 void ui_menu_add_change_folder::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width, maxwidth = origx2 - origx1;
+	ui_manager &mui = machine().ui();
 	std::string tempbuf[2];
 	const char *s_change = (m_change) ? "Change" : "Add";
 	tempbuf[0].assign(s_change).append(" ").append(s_folders_entry[m_ref].name).append(" Folder - Search: ").append(m_search).append("_");
@@ -260,7 +262,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	// get the size of the text
 	for (int i = 0; i < 2; i++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[i].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[i].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(width, maxwidth);
@@ -273,7 +275,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -283,15 +285,15 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	// draw the text within it
 	for (int i = 0; i < 2; i++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[i].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[i].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-		y1 = y1 + machine().ui().get_line_height();
+		y1 = y1 + mui.get_line_height();
 	}
 
 	// bottom text
 	tempbuf[0].assign("Press TAB to set");
 
-	machine().ui().draw_text_full(container, tempbuf[0].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, tempbuf[0].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
@@ -303,7 +305,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	y2 = origy2 + bottom;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_RED_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_RED_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -311,7 +313,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, tempbuf[0].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, tempbuf[0].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 }
@@ -496,19 +498,20 @@ void ui_menu_display_actual::populate()
 
 void ui_menu_display_actual::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
-	float width, maxwidth;
-	maxwidth = origx2 - origx1;
+	float width, maxwidth = origx2 - origx1;
+	ui_manager &mui = machine().ui();
+	float lineh = mui.get_line_height();
 
 	for (size_t line = 0; line < m_folders.size(); line++)
 	{
-		machine().ui().draw_text_full(container, m_folders[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		mui.draw_text_full(container, m_folders[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(maxwidth, width);
 	}
 
 	// get the size of the text
-	machine().ui().draw_text_full(container, m_tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, m_tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	maxwidth = MAX(width, maxwidth);
@@ -517,10 +520,10 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	float x1 = 0.5f - 0.5f * maxwidth;
 	float x2 = x1 + maxwidth;
 	float y1 = origy1 - top;
-	float y2 = y1 + (machine().ui().get_line_height() + 2.0f * UI_BOX_TB_BORDER);
+	float y2 = y1 + lineh + 2.0f * UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -528,7 +531,7 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, m_tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, m_tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 	// compute our bounds
@@ -538,7 +541,7 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -548,9 +551,9 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	// draw the text within it
 	for (size_t line = 0; line < m_folders.size(); line++)
 	{
-		machine().ui().draw_text_full(container, m_folders[line].c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		mui.draw_text_full(container, m_folders[line].c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-		y1 += machine().ui().get_line_height();
+		y1 += lineh;
 	}
 
 }

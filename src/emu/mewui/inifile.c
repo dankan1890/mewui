@@ -182,6 +182,7 @@ bool inifile_manager::ParseOpen(const char *filename)
 favorite_manager::favorite_manager(running_machine &machine)
 	: m_machine(machine)
 {
+	m_current_favorite = -1;
 	parse_favorite();
 }
 

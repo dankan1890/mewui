@@ -53,20 +53,20 @@ void ui_menu_game_options::handle()
 
 	// process the menu
 //	ui_menu::menu_stack->parent->process(UI_MENU_PROCESS_NOINPUT);
-//	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT | UI_MENU_PROCESS_NOIMAGE);
-	const ui_menu_event *menu_event = process(UI_MENU_PROCESS_LR_REPEAT);
+//	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT | UI_MENU_PROCESS_NOIMAGE);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
-		switch ((FPTR)menu_event->itemref)
+	if (m_event != NULL && m_event->itemref != NULL)
+		switch ((FPTR)m_event->itemref)
 		{
 			case FILTER_MENU:
 			{
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? main_filters::actual++ : main_filters::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? main_filters::actual++ : main_filters::actual--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
 					int total = main_filters::length;
 					std::vector<std::string> s_sel(total);
@@ -80,85 +80,87 @@ void ui_menu_game_options::handle()
 
 			case FILE_CATEGORY_FILTER:
 			{
-				if (menu_event->iptkey == IPT_UI_LEFT)
+				if (m_event->iptkey == IPT_UI_LEFT)
 				{
 					machine().inifile().current_file--;
 					machine().inifile().current_category = 0;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_RIGHT)
+				else if (m_event->iptkey == IPT_UI_RIGHT)
 				{
 					machine().inifile().current_file++;
 					machine().inifile().current_category = 0;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					int total = machine().inifile().ini_index.size();
+					inifile_manager &ifile = machine().inifile();
+					int total = ifile.ini_index.size();
 					std::vector<std::string> s_sel(total);
 					machine().inifile().current_category = 0;
 					for (size_t index = 0; index < total; ++index)
-						s_sel[index].assign(machine().inifile().ini_index[index].name);
+						s_sel[index].assign(ifile.ini_index[index].name);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &machine().inifile().current_file, SELECTOR_INIFILE)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &ifile.current_file, SELECTOR_INIFILE)));
 				}
 				break;
 			}
 
 			case CATEGORY_FILTER:
 			{
-				if (menu_event->iptkey == IPT_UI_LEFT)
+				if (m_event->iptkey == IPT_UI_LEFT)
 				{
 					machine().inifile().current_category--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_RIGHT)
+				else if (m_event->iptkey == IPT_UI_RIGHT)
 				{
 					machine().inifile().current_category++;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					int cfile = machine().inifile().current_file;
-					int total = machine().inifile().ini_index[cfile].category.size();
+					inifile_manager &ifile = machine().inifile();
+					int cfile = ifile.current_file;
+					int total = ifile.ini_index[cfile].category.size();
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; ++index)
-						s_sel[index].assign(machine().inifile().ini_index[cfile].category[index].name);
+						s_sel[index].assign(ifile.ini_index[cfile].category[index].name);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &machine().inifile().current_category, SELECTOR_CATEGORY)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &ifile.current_category, SELECTOR_CATEGORY)));
 				}
 				break;
 			}
 
 			case MANUFACT_CAT_FILTER:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? c_mnfct::actual++ : c_mnfct::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? c_mnfct::actual++ : c_mnfct::actual--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_mnfct::ui, &c_mnfct::actual)));
 
 				break;
 
 			case YEAR_CAT_FILTER:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? c_year::actual++ : c_year::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? c_year::actual++ : c_year::actual--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, c_year::ui, &c_year::actual)));
 
 				break;
 
 			case SCREEN_CAT_FILTER:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? c_screen::actual++ : c_screen::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? c_screen::actual++ : c_screen::actual--;
 					changed = true;
 				}
-				else if (menu_event->iptkey == IPT_UI_SELECT)
+				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
 					std::vector<std::string> text(c_screen::length);
 					for (int x = 0; x < c_screen::length; ++x)
@@ -170,44 +172,44 @@ void ui_menu_game_options::handle()
 				break;
 
 			case MISC_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_misc_options(machine(), container)));
 				break;
 
 			case SOUND_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_sound_options(machine(), container)));
 				break;
 
 			case DISPLAY_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_display_options(machine(), container)));
 				break;
 
 			case CUSTOM_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_custom_ui(machine(), container)));
 				break;
 
 			case CONTROLLER_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_controller_mapping(machine(), container)));
 				break;
 
 			case CGI_MENU:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_input_groups(machine(), container)));
 				break;
 
 			case CUSTOM_FILTER:
-				if (menu_event->iptkey == IPT_UI_SELECT)
+				if (m_event->iptkey == IPT_UI_SELECT)
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_custom_filter(machine(), container)));
 				break;
 
 			case UME_SYSTEM:
-				if (menu_event->iptkey == IPT_UI_LEFT || menu_event->iptkey == IPT_UI_RIGHT)
+				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(menu_event->iptkey == IPT_UI_RIGHT) ? ume_filters::actual++ : ume_filters::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? ume_filters::actual++ : ume_filters::actual--;
 					changed = true;
 				}
 				break;

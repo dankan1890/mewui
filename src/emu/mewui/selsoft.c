@@ -1502,7 +1502,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	float oy1 = origy1 + line_height;
 
 	// apply title to right panel
-	if (soft->usage.empty())
+	if (soft && soft->usage.empty())
 	{
 		machine().ui().draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);

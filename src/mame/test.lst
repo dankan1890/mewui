@@ -126,7 +126,7 @@ madgear         //  2/1989 (c) 1989 (US)
 madgearj        //  2/1989 (c) 1989 (Japan)
 ledstorm        //  1988 (c) 1988 (US)
 leds2011        //  1988 (c) 1988 (World)
-leds2011u		//  1988 (c) 1988 (US)
+leds2011u       //  1988 (c) 1988 (US)
 //  3/1989 Dokaben (baseball) - see below among "Mitchell" games
 //  8/1989 Dokaben 2 (baseball) - see below among "Mitchell" games
 // 10/1989 Capcom Baseball - see below among "Mitchell" games
@@ -141,6 +141,7 @@ leds2011u		//  1988 (c) 1988 (US)
 
 // Capcom CPS1 games
 forgottn        //  7/1988 (c) 1988 (World)
+forgottna       //  7/1988 (c) 1988 (World)
 forgottnu       //  7/1988 (c) 1988 (USA)
 forgottnu1      //  7/1988 (c) 1988 (USA)
 forgottnua      //  7/1988 (c) 1988 (USA)
@@ -199,7 +200,7 @@ cawingj         // 12/10/1990 (c) 1990 (Japan)
 cawingbl        // bootleg
 cawingb2        // bootleg
 nemo            // 30/11/1990 (c) 1990 (World)
-nemor1      // 09/11/1990 (c) 1990 (World)
+nemor1          // 09/11/1990 (c) 1990 (World)
 nemoj           // 20/11/1990 (c) 1990 (Japan)
 sf2             // 22/05/1991 (c) 1991 (World)
 sf2eb           // 14/02/1991 (c) 1991 (World)
@@ -266,7 +267,7 @@ sf2red          // hack
 sf2v004         // hack
 sf2acc          // hack
 sf2acca         // hack
-sf2ceblp            // hack
+sf2ceblp        // hack
 sf2accp2        // hack
 sf2amf          // bootleg
 sf2amf2         // bootleg
@@ -621,6 +622,7 @@ dkongj          // (c) 1981 Nintendo
 dkongjo         // (c) 1981 Nintendo
 dkongjo1        // (c) 1981 Nintendo
 dkongf          // hack from Jeff's Romhack
+dkongpe         // hack Pauline Edition
 dkongx          // hack
 dkongx11        // hack
 dkongjr         // (c) 1982 Nintendo of America
@@ -1051,8 +1053,16 @@ svg             // (c) 2003 Spectral vs Generation
 svgtw
 svgpcb          //
 ket             // (c) 2002 Ketsui
+ket1            //
 keta            //
 ketb            //
+ketarr          // hack
+ketarr151       // hack
+ketarr15        // hack
+ketarr10        // hack
+ketarrs151      // hack
+ketarrs15       // hack
+ketarrf         // hack
 ddpdoj          // (c) 2002 DoDonPachi Dai-Ou-Jou
 ddpdoja         //
 ddpdojb         //

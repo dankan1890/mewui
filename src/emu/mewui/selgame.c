@@ -63,14 +63,14 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 	if (clonex)
 	{
 		cx = driver_list::find(x->parent);
-		if (cx == -1 || (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0)))
+		if (cx == -1 || (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0)
 			clonex = false;
 	}
 
 	if (cloney)
 	{
 		cy = driver_list::find(y->parent);
-		if (cy == -1 || (cy != -1 && ((driver_list::driver(cy).flags & MACHINE_IS_BIOS_ROOT) != 0)))
+		if (cy == -1 || (driver_list::driver(cy).flags & MACHINE_IS_BIOS_ROOT) != 0)
 			cloney = false;
 	}
 
@@ -1901,7 +1901,7 @@ bool ui_mewui_select_game::load_available_machines()
 	std::getline(myfile, readbuf);
 
 	UINT8 space = 0;
-	int avsize, unavsize;
+	int avsize = 0, unavsize = 0;
 	myfile >> avsize >> space >> unavsize >> space;
 	int find = 0;
 
@@ -2220,7 +2220,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	if (is_favorites)
 	{
 		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
-		if (soft->startempty == 1)
+		if (soft && soft->startempty == 1)
 		{
 			driver = soft->driver;
 			oldsoft = NULL;

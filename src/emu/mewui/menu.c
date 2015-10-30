@@ -137,7 +137,6 @@ void ui_menu::init_mewui(running_machine &machine)
 		bgrnd_bitmap->reset();
 
 	// create a texture for toolbar
-	emu_file toolfile(machine.options().mewui_path(), OPEN_FLAG_READ);
 	for (int x = 0; x < MEWUI_TOOLBAR_BUTTONS; ++x)
 	{
 		toolbar_bitmap[x] = auto_alloc(machine, bitmap_argb32(32, 32));
@@ -155,9 +154,9 @@ void ui_menu::init_mewui(running_machine &machine)
 	{
 		sw_toolbar_bitmap[x] = auto_alloc(machine, bitmap_argb32(32, 32));
 		sw_toolbar_texture[x] = mrender.texture_alloc();
-		UINT32 *dst;
 		if (x == 0 || x == 2)
 		{
+			UINT32 *dst;
 			dst = &sw_toolbar_bitmap[x]->pix32(0);
 			memcpy(dst, toolbar_bitmap_bmp[x], 32 * 32 * sizeof(UINT32));
 			sw_toolbar_texture[x]->set_bitmap(*sw_toolbar_bitmap[x], sw_toolbar_bitmap[x]->cliprect(), TEXFORMAT_ARGB32);
@@ -1362,8 +1361,6 @@ void ui_menu::draw_palette_menu()
 		const char *itemtext = pitem.text;
 		rgb_t fgcolor = UI_TEXT_COLOR;
 		rgb_t bgcolor = UI_TEXT_BG_COLOR;
-		rgb_t fgcolor2 = UI_SUBITEM_COLOR;
-		rgb_t fgcolor3 = UI_CLONE_COLOR;
 		float line_y0 = line_y;
 		float line_y1 = line_y + line_height;
 
@@ -1376,8 +1373,6 @@ void ui_menu::draw_palette_menu()
 		{
 			fgcolor = UI_SELECTED_COLOR;
 			bgcolor = UI_SELECTED_BG_COLOR;
-			fgcolor2 = UI_SELECTED_COLOR;
-			fgcolor3 = UI_SELECTED_COLOR;
 		}
 
 		// else if the mouse is over this item, draw with a different background
@@ -1385,8 +1380,6 @@ void ui_menu::draw_palette_menu()
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
 			bgcolor = UI_MOUSEOVER_BG_COLOR;
-			fgcolor2 = UI_MOUSEOVER_COLOR;
-			fgcolor3 = UI_MOUSEOVER_COLOR;
 		}
 
 		// if we have some background hilighting to do, add a quad behind everything else

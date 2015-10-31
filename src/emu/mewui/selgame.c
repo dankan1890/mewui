@@ -183,6 +183,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 ui_mewui_select_game::~ui_mewui_select_game()
 {
 	std::string error_string, last_driver;
+	emu_options &mopt = machine().options();
 	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : NULL;
 	if ((FPTR)driver > 2)
 		last_driver.assign(driver->name);
@@ -195,10 +196,10 @@ ui_mewui_select_game::~ui_mewui_select_game()
 	if (main_filters::actual == FILTER_SCREEN)
 		filter.append(",").append(c_screen::text[c_screen::actual]);
 
-	machine().options().set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
-	machine().options().set_value(OPTION_LAST_USED_FILTER, filter.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-	machine().options().set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-	machine().options().set_value(OPTION_HIDE_PANELS, mewui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
+	mopt.set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
+	mopt.set_value(OPTION_LAST_USED_FILTER, filter.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+	mopt.set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+	mopt.set_value(OPTION_HIDE_PANELS, mewui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
 	save_game_options(machine());
 }
 
@@ -748,6 +749,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	std::string tempbuf[5];
 	rgb_t color = UI_BACKGROUND_COLOR;
 	bool isstar = false;
+	ui_manager &mui = machine().ui();
 
 	if (ume_filters::actual == MEWUI_MAME)
 		strprintf(tempbuf[0], "MEWUI %s ( %d / %d machines (%d BIOS) )", mewui_version, visible_items, (driver_list::total() - 1), m_isabios + m_issbios);
@@ -760,10 +762,11 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
 	{
-		int c_file = machine().inifile().current_file;
-		int c_cat = machine().inifile().current_category;
-		std::string s_file = machine().inifile().ini_index[c_file].name;
-		std::string s_category = machine().inifile().ini_index[c_file].category[c_cat].name;
+		inifile_manager &inif = machine().inifile();
+		int c_file = inif.current_file;
+		int c_cat = inif.current_category;
+		std::string s_file = inif.ini_index[c_file].name;
+		std::string s_category = inif.ini_index[c_file].category[c_cat].name;
 		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(s_file).append(" - ").append(s_category).append(") -");
 	}
 
@@ -785,7 +788,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// get the size of the text
 	for (int line = 0; line < 2; line++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(width, maxwidth);
@@ -798,7 +801,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	float y2 = origy1 - 3.0f * UI_BOX_TB_BORDER - tbarspace;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -808,9 +811,9 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// draw the text within it
 	for (int line = 0; line < 2; line++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-		y1 += machine().ui().get_line_height();
+		y1 += mui.get_line_height();
 	}
 
 	// draw ume box
@@ -940,7 +943,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	for (int line = 0; line < 5; line++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -953,7 +956,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	y2 = origy2 + bottom;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, color);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, color);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -967,9 +970,9 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// draw all lines
 	for (int line = 0; line < 5; line++)
 	{
-		machine().ui().draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
-		y1 += machine().ui().get_line_height();
+		y1 += mui.get_line_height();
 	}
 }
 

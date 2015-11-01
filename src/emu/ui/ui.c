@@ -2518,7 +2518,6 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 	float wrapwidth = origwrapwidth;
 	const char *s = origs;
 	const char *linestart;
-	float cury = y;
 	float maxwidth = 0;
 	float aspect = machine().render().ui_aspect(container);
 	count = 0;
@@ -2531,7 +2530,6 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 		int scharcount;
 		float lastbreak_width = 0;
 		float curwidth = 0;
-		float curx = x;
 
 		// get the current character
 		scharcount = uchar_from_utf8(&schar, s, ends - s);
@@ -2601,9 +2599,6 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 			}
 		}
 
-		// align according to the justfication
-		curx += (origwrapwidth - curwidth) * 0.5f;
-
 		// track the maximum width of any given line
 		if (curwidth > maxwidth)
 			maxwidth = curwidth;
@@ -2623,7 +2618,6 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 		}
 
 		// advance by a row
-		cury += lineheight;
 		count++;
 
 		// skip past any spaces at the beginning of the next line

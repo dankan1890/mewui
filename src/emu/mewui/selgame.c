@@ -426,13 +426,13 @@ void ui_mewui_select_game::handle()
 					if (!machine().favorite().isgame_favorite(driver))
 					{
 						machine().favorite().add_favorite_game(driver);
-						popmessage("%s\n added to favorites list.", driver->description);
+						machine().popmessage("%s\n added to favorites list.", driver->description);
 					}
 
 					else
 					{
 						machine().favorite().remove_favorite_game();
-						popmessage("%s\n removed from favorites list.", driver->description);
+						machine().popmessage("%s\n removed from favorites list.", driver->description);
 					}
 				}
 			}
@@ -441,7 +441,7 @@ void ui_mewui_select_game::handle()
 				ui_software_info *swinfo = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2)
 				{
-					popmessage("%s\n removed from favorites list.", swinfo->longname.c_str());
+					machine().popmessage("%s\n removed from favorites list.", swinfo->longname.c_str());
 					machine().favorite().remove_favorite_game(*swinfo);
 					reset(UI_MENU_RESET_SELECT_FIRST);
 				}
@@ -625,25 +625,26 @@ void ui_mewui_select_game::populate()
 		// iterate over entries
 		for (size_t x = 0; x < machine().favorite().m_favorite_list.size(); x++)
 		{
-			if (machine().favorite().m_favorite_list[x].startempty == 1)
+			ui_software_info &mfavorite = machine().favorite().m_favorite_list[x];
+			if (mfavorite.startempty == 1)
 			{
-				bool cloneof = strcmp(machine().favorite().m_favorite_list[x].driver->parent, "0");
+				bool cloneof = strcmp(mfavorite.driver->parent, "0");
 				if (cloneof)
 				{
-					int cx = driver_list::find(machine().favorite().m_favorite_list[x].driver->parent);
+					int cx = driver_list::find(mfavorite.driver->parent);
 					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
 
-				item_append(machine().favorite().m_favorite_list[x].longname.c_str(), NULL,
+				item_append(mfavorite.longname.c_str(), NULL,
 				            (cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui,
-				            (void *)&machine().favorite().m_favorite_list[x]);
+							(void *)&mfavorite);
 			}
 			else
-				item_append(machine().favorite().m_favorite_list[x].longname.c_str(),
-				            machine().favorite().m_favorite_list[x].devicetype.c_str(),
-				            machine().favorite().m_favorite_list[x].parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-				            (void *)&machine().favorite().m_favorite_list[x]);
+				item_append(mfavorite.longname.c_str(),
+							mfavorite.devicetype.c_str(),
+							mfavorite.parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+							(void *)&mfavorite);
 		}
 	}
 
@@ -728,7 +729,7 @@ void ui_mewui_select_game::build_available_list()
 
 	// now build the unavailable list
 	for (int x = 0; x < m_total; ++x)
-		if (!m_included[x] && strcmp("___empty", driver_list::driver(x).name))
+		if (!m_included[x] && strcmp("___empty", driver_list::driver(x).name) != 0)
 			m_unavailablelist.push_back(&driver_list::driver(x));
 
 	// sort
@@ -1657,7 +1658,7 @@ void ui_mewui_select_game::inkey_export()
 		info_xml_creator creator(drivlist);
 		creator.output(pfile);
 		fclose(pfile);
-		popmessage("%s.xml saved under mewui folder.", filename.c_str());
+		machine().popmessage("%s.xml saved under mewui folder.", filename.c_str());
 	}
 }
 

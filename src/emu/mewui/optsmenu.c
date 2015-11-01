@@ -345,5 +345,5 @@ void save_game_options(running_machine &machine)
 		file.close();
 	}
 	else
-		popmessage("**Error to save %s.ini**", emulator_info::get_configname());
+		machine.popmessage("**Error to save %s.ini**", emulator_info::get_configname());
 }

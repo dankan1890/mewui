@@ -271,12 +271,12 @@ void ui_menu_select_software::handle()
 				if (!machine().favorite().isgame_favorite(*swinfo))
 				{
 					machine().favorite().add_favorite_game(*swinfo);
-					popmessage("%s\n added to favorites list.", swinfo->longname.c_str());
+					machine().popmessage("%s\n added to favorites list.", swinfo->longname.c_str());
 				}
 
 				else
 				{
-					popmessage("%s\n removed from favorites list.", swinfo->longname.c_str());
+					machine().popmessage("%s\n removed from favorites list.", swinfo->longname.c_str());
 					machine().favorite().remove_favorite_game();
 				}
 			}
@@ -1913,7 +1913,8 @@ void ui_mewui_software_parts::handle()
 void ui_mewui_software_parts::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
-	machine().ui().draw_text_full(container, "Software part selection:", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	ui_manager &mui = machine().ui();
+	mui.draw_text_full(container, "Software part selection:", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
@@ -1925,7 +1926,7 @@ void ui_mewui_software_parts::custom_render(void *selectedref, float top, float 
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -1933,7 +1934,7 @@ void ui_mewui_software_parts::custom_render(void *selectedref, float top, float 
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, "Software part selection:", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Software part selection:", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }
 
@@ -1978,6 +1979,7 @@ void ui_mewui_bios_selection::handle()
 {
 	// process the menu
 	const ui_menu_event *event = process(0);
+	emu_options &moptions = machine().options();
 	if (event != NULL && event->iptkey == IPT_UI_SELECT && event->itemref != NULL)
 		for (size_t idx = 0; idx < m_bios.size(); idx++)
 			if ((void*)&m_bios[idx].name == event->itemref)
@@ -1990,11 +1992,11 @@ void ui_mewui_bios_selection::handle()
 						reselect_last::software.assign("[Start empty]");
 					else
 						reselect_last::software.clear();
-					reselect_last::swlist.clear();
-					reselect_last::set(true);
+						reselect_last::swlist.clear();
+						reselect_last::set(true);
 
 					std::string error;
-					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
+					moptions.set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
 					machine().manager().schedule_new_driver(*s_driver);
 					machine().schedule_hard_reset();
 					ui_menu::stack_reset(machine());
@@ -2004,7 +2006,7 @@ void ui_mewui_bios_selection::handle()
 					ui_software_info *ui_swinfo = (ui_software_info *)m_driver;
 					std::string error;
 					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
-					driver_enumerator drivlist(machine().options(), *ui_swinfo->driver);
+					driver_enumerator drivlist(moptions, *ui_swinfo->driver);
 					drivlist.next();
 					software_list_device *swlist = software_list_device::find_by_name(drivlist.config(), ui_swinfo->listname.c_str());
 					software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
@@ -2027,9 +2029,9 @@ void ui_mewui_bios_selection::handle()
 					}
 					std::string error_string;
 					std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
-					machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+					moptions.set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 					std::string snap_list = std::string(ui_swinfo->listname).append(PATH_SEPARATOR).append(ui_swinfo->shortname);
-					machine().options().set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+					moptions.set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 					reselect_last::driver.assign(drivlist.driver().name);
 					reselect_last::software.assign(ui_swinfo->shortname);
 					reselect_last::swlist.assign(ui_swinfo->listname);
@@ -2048,7 +2050,8 @@ void ui_mewui_bios_selection::handle()
 void ui_mewui_bios_selection::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
-	machine().ui().draw_text_full(container, "Bios selection:", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	ui_manager &mui = machine().ui();
+	mui.draw_text_full(container, "Bios selection:", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
@@ -2060,7 +2063,7 @@ void ui_mewui_bios_selection::custom_render(void *selectedref, float top, float 
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -2068,6 +2071,6 @@ void ui_mewui_bios_selection::custom_render(void *selectedref, float top, float 
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, "Bios selection:", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Bios selection:", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }

@@ -25,6 +25,8 @@ ui_menu_selector::ui_menu_selector(running_machine &machine, render_container *c
 	m_first_pass = true;
 	m_hover = _hover;
 	m_str_items = s_sel;
+	m_search[0] = '\0';
+	m_searchlist[0] = NULL;
 }
 
 ui_menu_selector::~ui_menu_selector()

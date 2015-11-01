@@ -1434,9 +1434,10 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 
 void ui_menu_select_software::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
+	ui_manager &mui = machine().ui();
 	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
 	{
-		float line_height = machine().ui().get_line_height();
+		float line_height = mui.get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -1447,7 +1448,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
@@ -1460,7 +1461,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
+		float line_height = mui.get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -1471,7 +1472,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 		{
@@ -1496,7 +1497,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
 
-	float line_height = machine().ui().get_line_height();
+	float line_height = mui.get_line_height();
 	float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
 	float oy1 = origy1 + line_height;
@@ -1504,7 +1505,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	// apply title to right panel
 	if (soft && soft->usage.empty())
 	{
-		machine().ui().draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 		mewui_globals::cur_sw_dats_view = 0;
 	}
@@ -1518,13 +1519,13 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 		for (int x = 0; x < 2; x++)
 		{
-			machine().ui().draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+			mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 			                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
-		machine().ui().draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
+		mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
 		                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 		                              NULL, NULL);
 
@@ -1553,12 +1554,12 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 	if (buffer.empty())
 	{
-		machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
+		mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
 		                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 		return;
 	}
 	else
-		machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
+		mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
 		                         xstart, xend, text_size);
 
 	int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
@@ -1582,7 +1583,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 		else if (r == r_visible_lines - 1 && itemline != totallines - 1)
 			info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
 		else
-			machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
+			mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
 			                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 			                              NULL, NULL, text_size);
 		oy1 += (line_height * text_size);

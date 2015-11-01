@@ -483,11 +483,12 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	bool ignoreup = (mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_LEFT_PANEL);
 	bool ignoredown = (mewui_globals::panels_status == HIDE_BOTH || mewui_globals::panels_status == HIDE_LEFT_PANEL);
 
+	input_manager &minput = machine().input();
 	// accept left/right keys as-is with repeat
 	if (!ignoreleft && exclusive_input_pressed(IPT_UI_LEFT, (flags & UI_MENU_PROCESS_LR_REPEAT) ? 6 : 0))
 	{
 		// Swap the right panel
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1))
 			menu_event.iptkey = IPT_UI_LEFT_PANEL;
 		return;
 	}
@@ -495,7 +496,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (!ignoreright && exclusive_input_pressed(IPT_UI_RIGHT, (flags & UI_MENU_PROCESS_LR_REPEAT) ? 6 : 0))
 	{
 		// Swap the right panel
-		if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1))
+		if (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1))
 			menu_event.iptkey = IPT_UI_RIGHT_PANEL;
 		return;
 	}
@@ -504,14 +505,14 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_UP, 6))
 	{
 		// Filter
-		if (!ignoreup && (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2)))
+		if (!ignoreup && (minput.code_pressed(KEYCODE_LALT) || minput.code_pressed(JOYCODE_BUTTON2)))
 		{
 			menu_event.iptkey = IPT_UI_UP_FILTER;
 			return;
 		}
 
 		// Infos
-		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreleft && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_UP_PANEL;
 			topline_datsview--;
@@ -531,14 +532,14 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_DOWN, 6))
 	{
 		// Filter
-		if (!ignoredown && (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(JOYCODE_BUTTON2)))
+		if (!ignoredown && (minput.code_pressed(KEYCODE_LALT) || minput.code_pressed(JOYCODE_BUTTON2)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_FILTER;
 			return;
 		}
 
 		// Infos
-		if (!ignoreright && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreright && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview++;
@@ -558,7 +559,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_PAGE_UP, 6))
 	{
 		// Infos
-		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreleft && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview -= right_visible_lines - 1;
@@ -580,7 +581,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_PAGE_DOWN, 6))
 	{
 		// Infos
-		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreleft && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview += right_visible_lines - 1;
@@ -602,7 +603,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_HOME, 0))
 	{
 		// Infos
-		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreleft && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview = 0;
@@ -620,7 +621,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (exclusive_input_pressed(IPT_UI_END, 0))
 	{
 		// Infos
-		if (!ignoreleft && (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(JOYCODE_BUTTON1)))
+		if (!ignoreleft && (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1)))
 		{
 			menu_event.iptkey = IPT_UI_DOWN_PANEL;
 			topline_datsview = totallines;
@@ -1268,8 +1269,6 @@ void ui_menu::draw_palette_menu()
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
 	float gutter_width = lr_arrow_width * 1.3f;
 	int itemnum, linenum;
-	bool mouse_hit, mouse_button;
-	float mouse_x = -1, mouse_y = -1;
 
 	if (machine().options().use_background_image() && machine().options().system() == NULL && bgrnd_bitmap->valid())
 		container->add_quad(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, bgrnd_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1342,8 +1341,7 @@ void ui_menu::draw_palette_menu()
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	INT32 mouse_target_x, mouse_target_y;
-	render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+	mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
 	if (mouse_target != NULL)
 		if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 			mouse_hit = true;

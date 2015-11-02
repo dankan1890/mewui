@@ -867,7 +867,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"zvt",
 		"messshared",
 	}
-	if (_subtarget=="mess") then
+	if (_subtarget=="mess" or _subtarget=="test") then
 	links {
 		"mameshared",
 	}
@@ -922,7 +922,7 @@ function createProjects_mame_mess(_target, _subtarget)
 -- vectrex.c (MESS + MAME)
 -- cps1.c (MESS + MAME)
 --------------------------------------------------
-if (_subtarget=="mess") then
+if (_subtarget=="mess" or _subtarget=="test") then
 createMESSProjects(_target, _subtarget, "mameshared")
 files {
 	MAME_DIR .. "src/mame/machine/archimds.c",

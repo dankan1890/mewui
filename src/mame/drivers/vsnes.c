@@ -144,7 +144,6 @@ Changes:
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
 #include "rendlay.h"
-#include "sound/dac.h"
 #include "includes/vsnes.h"
 
 /******************************************************************************/
@@ -192,44 +191,13 @@ WRITE8_MEMBER(vsnes_state::vsnes_coin_counter_1_w)
 }
 /******************************************************************************/
 
-READ8_MEMBER(vsnes_state::psg1_4015_r)
-{
-	return m_nesapu1->read(space, 0x15);
-}
 
-WRITE8_MEMBER(vsnes_state::psg1_4015_w)
-{
-	m_nesapu1->write(space, 0x15, data);
-}
-
-WRITE8_MEMBER(vsnes_state::psg1_4017_w)
-{
-	m_nesapu1->write(space, 0x17, data);
-}
-
-READ8_MEMBER(vsnes_state::psg2_4015_r)
-{
-	return m_nesapu2->read(space, 0x15);
-}
-
-WRITE8_MEMBER(vsnes_state::psg2_4015_w)
-{
-	m_nesapu2->write(space, 0x15, data);
-}
-
-WRITE8_MEMBER(vsnes_state::psg2_4017_w)
-{
-	m_nesapu2->write(space, 0x17, data);
-}
 static ADDRESS_MAP_START( vsnes_cpu1_map, AS_PROGRAM, 8, vsnes_state )
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM AM_SHARE("work_ram")
 	AM_RANGE(0x2000, 0x3fff) AM_DEVREADWRITE("ppu1", ppu2c0x_device, read, write)
-	AM_RANGE(0x4011, 0x4011) AM_DEVWRITE("dac1", dac_device, write_unsigned8)
-	AM_RANGE(0x4000, 0x4013) AM_DEVREADWRITE("nesapu1", nesapu_device, read, write)
 	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_0_w)
-	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg1_4015_r, psg1_4015_w) /* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(vsnes_in0_r, vsnes_in0_w)
-	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_r) AM_WRITE(psg1_4017_w) /* IN1 - input port 2 / PSG second control register */
+	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_r) /* IN1 - input port 2 / PSG second control register */
 	AM_RANGE(0x4020, 0x4020) AM_READWRITE(vsnes_coin_counter_r, vsnes_coin_counter_w)
 	AM_RANGE(0x6000, 0x7fff) AM_RAMBANK("extra1")
 	AM_RANGE(0x8000, 0xffff) AM_ROM
@@ -238,29 +206,50 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( vsnes_cpu2_map, AS_PROGRAM, 8, vsnes_state )
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM AM_SHARE("work_ram_1")
 	AM_RANGE(0x2000, 0x3fff) AM_DEVREADWRITE("ppu2", ppu2c0x_device, read, write)
-	AM_RANGE(0x4011, 0x4011) AM_DEVWRITE("dac2", dac_device, write_unsigned8)
-	AM_RANGE(0x4000, 0x4013) AM_DEVREADWRITE("nesapu2", nesapu_device, read, write)
 	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_1_w)
-	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg2_4015_r, psg2_4015_w) /* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(vsnes_in0_1_r, vsnes_in0_1_w)
-	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_1_r) AM_WRITE(psg2_4017_w)   /* IN1 - input port 2 / PSG second control register */
+	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_1_r)  /* IN1 - input port 2 / PSG second control register */
 	AM_RANGE(0x4020, 0x4020) AM_WRITE(vsnes_coin_counter_1_w)
 	AM_RANGE(0x6000, 0x7fff) AM_RAMBANK("extra2")
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-// likely doesn't have the PSGs
-// they wait on 0x2002 to change, if you toggle that the game runs with no sprites, it does still play music tho
-// but I think the real bootleg board uses the z80 and alt sound hardware instead?
+
+
+READ8_MEMBER(vsnes_state::vsnes_bootleg_z80_address_r)
+{
+	// NMI routine uses the value read here as the low part of an offset from 0x2000 to store a value read at 0x4000
+	// before reading 0x6000 and returning
+
+	// can't really see how to get sound this way tho, maybe the unused rom is acting as lookup table to convert
+	// PSG write offsets to addresses to offsets for use here?
+
+	return m_bootleg_sound_offset;
+}
+
+WRITE8_MEMBER(vsnes_state::bootleg_sound_write)
+{
+	m_bootleg_sound_offset = offset;
+	m_bootleg_sound_data = data;
+	m_subcpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
+}
+
+READ8_MEMBER(vsnes_state::vsnes_bootleg_z80_data_r)
+{
+	return m_bootleg_sound_data;
+}
+
+
+// the bootleg still makes writes to the PSG addresses, it seems the Z80 should interpret them to play the sounds
 static ADDRESS_MAP_START( vsnes_cpu1_bootleg_map, AS_PROGRAM, 8, vsnes_state )
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM AM_SHARE("work_ram")
 	AM_RANGE(0x2000, 0x3fff) AM_DEVREADWRITE("ppu1", ppu2c0x_device, read, write)
-	AM_RANGE(0x4011, 0x4011) AM_DEVWRITE("dac1", dac_device, write_unsigned8)
-	AM_RANGE(0x4000, 0x4013) AM_DEVREADWRITE("nesapu1", nesapu_device, read, write)
 	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_0_w)
-	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg1_4015_r, psg1_4015_w) /* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(vsnes_in0_r, vsnes_in0_w)
-	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_r) AM_WRITE(psg1_4017_w) /* IN1 - input port 2 / PSG second control register */
+	AM_RANGE(0x4017, 0x4017) AM_READ(vsnes_in1_r) /* IN1 - input port 2 / PSG second control register */
+
+	AM_RANGE(0x4000, 0x4017) AM_WRITE(bootleg_sound_write)
+
 	AM_RANGE(0x4020, 0x4020) AM_READWRITE(vsnes_coin_counter_r, vsnes_coin_counter_w)
 	AM_RANGE(0x6000, 0x7fff) AM_RAMBANK("extra1")
 	AM_RANGE(0x8000, 0xffff) AM_ROM
@@ -268,15 +257,23 @@ ADDRESS_MAP_END
 
 READ8_MEMBER( vsnes_state::vsnes_bootleg_z80_latch_r )
 {
-	return 0x00;
+	return 0x00;// rand();
 }
 
 static ADDRESS_MAP_START( vsnes_bootleg_z80_map, AS_PROGRAM, 8, vsnes_state )
 	AM_RANGE(0x0000, 0x1fff) AM_ROM
 	AM_RANGE(0x2000, 0x23ff) AM_RAM
 
-	AM_RANGE(0x4000, 0x4000) AM_READ( vsnes_bootleg_z80_latch_r )
+	AM_RANGE(0x4000, 0x4000) AM_READ( vsnes_bootleg_z80_data_r ) // read in IRQ & NMI
 
+	AM_RANGE(0x6000, 0x6000) AM_READ( vsnes_bootleg_z80_latch_r ) // read in NMI, not explicitly stored (purpose? maybe clear IRQ ?)
+	AM_RANGE(0x6000, 0x6001) AM_READ( vsnes_bootleg_z80_address_r ) // ^
+
+
+	AM_RANGE(0x60FA, 0x60FA) AM_DEVWRITE("sn1", sn76489_device, write)
+	AM_RANGE(0x60F9, 0x60F9) AM_DEVWRITE("sn2", sn76489_device, write)
+	AM_RANGE(0x60FF, 0x60FF) AM_DEVWRITE("sn3", sn76489_device, write)
+	
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -1727,13 +1724,6 @@ static MACHINE_CONFIG_START( vsnes, vsnes_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-
-	MCFG_SOUND_ADD("nesapu1", NES_APU, N2A03_DEFAULTCLOCK)
-	MCFG_NES_APU_CPU("maincpu")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MCFG_DAC_ADD("dac1")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( jajamaru, vsnes )
@@ -1819,35 +1809,22 @@ static MACHINE_CONFIG_START( vsdual, vsnes_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-
-	MCFG_SOUND_ADD("nesapu1", NES_APU, N2A03_DEFAULTCLOCK)
-	MCFG_NES_APU_CPU("maincpu")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MCFG_SOUND_ADD("nesapu2", NES_APU, N2A03_DEFAULTCLOCK)
-	MCFG_NES_APU_CPU("sub")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MCFG_DAC_ADD("dac1")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MCFG_DAC_ADD("dac2")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_CONFIG_END
 
 
 static MACHINE_CONFIG_START( vsnes_bootleg, vsnes_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", M6502,N2A03_DEFAULTCLOCK) // R6502AP
+	MCFG_CPU_ADD("maincpu", M6502,XTAL_16MHz/4) // 4mhz? seems too high but flickers badly otherwise, issue elsewhere?
 	MCFG_CPU_PROGRAM_MAP(vsnes_cpu1_bootleg_map)
 								/* some carts also trigger IRQs */
 	MCFG_MACHINE_RESET_OVERRIDE(vsnes_state,vsnes)
 	MCFG_MACHINE_START_OVERRIDE(vsnes_state,vsnes)
 
-	MCFG_CPU_ADD("subcpu", Z80,4000000)         /* ? MHz */ // Z8400APS-Z80CPU
+	MCFG_CPU_ADD("sub", Z80,XTAL_16MHz/4)         /* ? MHz */ // Z8400APS-Z80CPU
 	MCFG_CPU_PROGRAM_MAP(vsnes_bootleg_z80_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen1", vsnes_state,  irq0_line_hold)
+//	MCFG_CPU_PERIODIC_INT_DRIVER(vsnes_state, nmi_line_pulse) 
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen1", RASTER)
@@ -1866,20 +1843,20 @@ static MACHINE_CONFIG_START( vsnes_bootleg, vsnes_state )
 	MCFG_PPU2C0X_CPU("maincpu")
 	MCFG_PPU2C0X_SET_SCREEN("screen1")
 	MCFG_PPU2C0X_SET_NMI(vsnes_state, ppu_irq_1)
+	MCFG_PPU2C0X_IGNORE_SPRITE_WRITE_LIMIT // bootleg seems to need this - code to set the sprite address is replaced with complete copy loops??
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_SOUND_ADD("nesapu1", NES_APU, N2A03_DEFAULTCLOCK)
-	MCFG_NES_APU_CPU("maincpu")
+	// PCB has 2, code accesses 3? which 2 really exist?
+	MCFG_SOUND_ADD("sn1", SN76489, XTAL_16MHz/4)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MCFG_DAC_ADD("dac1")
+	MCFG_SOUND_ADD("sn2", SN76489, XTAL_16MHz/4)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	// instead of the above?
-	MCFG_SOUND_ADD("sn1", SN76489A, 4000000) // ?? Mhz
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MCFG_SOUND_ADD("sn3", SN76489, XTAL_16MHz/4)
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_CONFIG_END
 
 /******************************************************************************/
@@ -1957,13 +1934,13 @@ ROM_START( suprmrioa ) /* Vs. Super Mario Bros. (Set unknown, possibly operator 
 	PALETTE_2C04_0004
 ROM_END
 
-/* I don't know what the Z80 is for on these (located top-left of the PCB with rom 1) */
-/* PCB is also marked for a plain 6502, I can't see from the image what is there tho */
+
+
 ROM_START( suprmriobl2 )
 	ROM_REGION( 0x10000,"maincpu", 0 ) /* 6502 memory */
 	ROM_LOAD( "4-27256.bin",  0x8000, 0x8000, CRC(663b1753) SHA1(b0d2057c4545f2d6534cafb16086826c8ba49f5a) )
 
-	ROM_REGION( 0x10000,"subcpu", 0 ) /* Z80 memory */
+	ROM_REGION( 0x10000,"sub", 0 ) /* Z80 memory */
 	ROM_LOAD( "1-2764.bin",  0x0000, 0x2000, CRC(95856e07) SHA1(c681cfdb656e687bc59080df56c9c38e13be4bb8) )
 
 	ROM_REGION( 0x10000,"unk", 0 ) /* first half is some sort of table */
@@ -1980,7 +1957,7 @@ ROM_START( suprmriobl )
 	ROM_REGION( 0x10000,"maincpu", 0 ) /* 6502 memory */
 	ROM_LOAD( "4.bin",  0x8000, 0x8000, CRC(6f857416) SHA1(05e2df8ac01a03bf09b73e34c30aaf5bf4715809) )
 
-	ROM_REGION( 0x10000,"subcpu", 0 ) /* Z80 memory */
+	ROM_REGION( 0x10000,"sub", 0 ) /* Z80 memory */
 	ROM_LOAD( "1.bin",  0x0000, 0x2000, CRC(9e3557f2) SHA1(11a0de2c0154f7ac120d9774cb5d1051e0156822) )
 
 	ROM_REGION( 0x10000,"unk", 0 ) /* first half is some sort of table */
@@ -2813,8 +2790,8 @@ GAME( 1986, rbibb,    0,        vsnes,   rbibb, vsnes_state,    rbibb,    ROT0, 
 GAME( 1986, rbibba,   rbibb,    vsnes,   rbibb, vsnes_state,    rbibb,    ROT0, "Namco",                  "Vs. Atari R.B.I. Baseball (set 2)", 0 )
 GAME( 1986, suprmrio, 0,        vsnes,   suprmrio, vsnes_state, vsnormal, ROT0, "Nintendo",               "Vs. Super Mario Bros. (set SM4-4 E)", 0 )
 GAME( 1986, suprmrioa,suprmrio, vsnes,   suprmrio, vsnes_state, vsnormal, ROT0, "Nintendo",               "Vs. Super Mario Bros. (set ?, harder)", 0 )
-GAME( 1986, suprmriobl,suprmrio,vsnes_bootleg,suprmrio,vsnes_state,vsnormal, ROT0, "bootleg",             "Vs. Super Mario Bros. (bootleg with Z80, set 1)", MACHINE_NOT_WORKING )
-GAME( 1986, suprmriobl2,suprmrio,vsnes_bootleg,suprmrio,vsnes_state,vsnormal, ROT0, "bootleg",            "Vs. Super Mario Bros. (bootleg with Z80, set 2)", MACHINE_NOT_WORKING )
+GAME( 1986, suprmriobl,suprmrio,vsnes_bootleg,suprmrio,vsnes_state,vsnormal, ROT0, "bootleg",             "Vs. Super Mario Bros. (bootleg with Z80, set 1)", MACHINE_NOT_WORKING ) // timer starts at 200(!)
+GAME( 1986, suprmriobl2,suprmrio,vsnes_bootleg,suprmrio,vsnes_state,vsnormal, ROT0, "bootleg",            "Vs. Super Mario Bros. (bootleg with Z80, set 2)", MACHINE_NOT_WORKING ) // timer starts at 300
 GAME( 1988, skatekds, suprmrio, vsnes,   suprmrio, vsnes_state, vsnormal, ROT0, "hack (Two-Bit Score)",   "Vs. Skate Kids. (Graphic hack of Super Mario Bros.)", 0 )
 GAME( 1985, vsskykid, 0,        vsnes,   vsskykid, vsnes_state, MMC3,     ROT0, "Namco",                  "Vs. Super SkyKid" , 0 )
 GAME( 1987, tkoboxng, 0,        vsnes,   tkoboxng, vsnes_state, tkoboxng, ROT0, "Namco / Data East USA",  "Vs. T.K.O. Boxing", 0 )

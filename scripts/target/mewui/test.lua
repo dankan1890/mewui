@@ -187,7 +187,7 @@ SOUNDS["YM2608"] = true
 SOUNDS["YM2610"] = true
 SOUNDS["YM3526"] = true
 
-dofile("mess.lua")
+dofile("../mame/mess.lua")
 
 function createProjects_mewui_test(_target, _subtarget)
 	createProjects_mame_mess(_target, _subtarget)
@@ -209,7 +209,7 @@ function createProjects_mewui_test(_target, _subtarget)
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "src/lib/netlist",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. "mewui/layout",
+		GEN_DIR  .. _target .. "/layout",
 	}
 
 	files{

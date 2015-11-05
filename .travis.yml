@@ -5,17 +5,17 @@ os:
   - linux
   - osx
 env:
-  - MAME=mame64 LDOPTS="-Wl,-no-keep-memory"
-  - MAME=mame64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
-  - MAME=mame64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
+  - TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
+  - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
+  - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
 matrix:
   exclude:
     - os: linux
-      env: MAME=mame64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
+      env: TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
     - os: linux
-      env: MAME=mame64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
+      env: TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
     - os: osx
-      env: MAME=mame64 LDOPTS="-Wl,-no-keep-memory"
+      env: TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
     make -j2 linux_x64_clang && ./$MAME -validate;
@@ -40,24 +40,21 @@ after_success:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
-    mv $MAME mewui64 &&
-    zip -9 -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ &&
+    zip -9 -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-linux.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Linux/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Linux/commit.txt' -Q 'RNTO upload/Linux/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Linux/mewui64-linux.zip' -Q 'RNTO upload/Linux/mewui64-linux.zip' -u $FTP_USER:$FTP_PASSWORD;
     elif [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
-    mv $MAME mewui64 &&
-    zip -9 -r mewui64-mac-sdllib.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ &&
+    zip -9 -r mewui64-mac-sdllib.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Lib/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/commit.txt' -Q 'RNTO upload/Mac-Lib/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac-Lib/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
     elif [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
-    mv $MAME mewui64 &&
-    zip -9 -r mewui64-mac-sdlframework.zip mewui64 docs/ hash/ hlsl/ web/ nl_examples/ samples/ &&
+    zip -9 -r mewui64-mac-sdlframework.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-mac-sdlframework.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Framework/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/commit.txt' -Q 'RNTO upload/Mac-Framework/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/mewui64-mac-sdlframework.zip' -Q 'RNTO upload/Mac-Framework/mewui64-mac-sdlframework.zip' -u $FTP_USER:$FTP_PASSWORD;

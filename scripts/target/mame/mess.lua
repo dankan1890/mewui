@@ -893,8 +893,7 @@ function createMESSProjects(_target, _subtarget, _name)
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "src/lib/netlist",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. "mess/layout",
-		GEN_DIR  .. "mame/layout",
+		GEN_DIR  .. _target .. "/layout",
 	}
 end
 

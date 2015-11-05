@@ -9,8 +9,8 @@
 --
 ---------------------------------------------------------------------------
 
-dofile("arcade.lua")
-dofile("mess.lua")
+dofile("../mame/arcade.lua")
+dofile("../mame/mess.lua")
 
 function createProjects_mewui_mewui(_target, _subtarget)
 	createProjects_mame_arcade(_target, _subtarget)

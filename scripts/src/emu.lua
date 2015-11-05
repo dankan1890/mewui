@@ -10,7 +10,10 @@ options {
 }
 
 -- MEWUI
-dofile("mewui.lua")
+--if (_OPTIONS["target"]=="mewui") then
+	dofile("mewui.lua")
+--end
+
 includedirs {
 	MAME_DIR .. "src/osd",
 	MAME_DIR .. "src/emu",

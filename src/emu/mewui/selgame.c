@@ -10,7 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
-#include "ui/menu.h"
+//#include "ui/menu.h"
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "mewui/selgame.h"

@@ -13,6 +13,8 @@
 #ifndef __MEWUI_MAIN_H__
 #define __MEWUI_MAIN_H__
 
+#include "ui/menu.h"
+
 class ui_mewui_select_game : public ui_menu
 {
 public:

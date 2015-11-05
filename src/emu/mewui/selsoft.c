@@ -11,6 +11,7 @@
 #include "emu.h"
 #include "emuopts.h"
 #include "ui/ui.h"
+#include "ui/menu.h"
 #include "uiinput.h"
 #include "audit.h"
 #include "mewui/utils.h"
@@ -22,6 +23,7 @@
 #include "mewui/custmenu.h"
 #include "rendfont.h"
 #include "rendutil.h"
+#include "softlist.h"
 
 std::string reselect_last::driver;
 std::string reselect_last::software;

@@ -10,6 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
+#include "ui/menu.h"
 #include "drivenum.h"
 #include "rendfont.h"
 #include "mewui/datfile.h"

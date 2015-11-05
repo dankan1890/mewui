@@ -10,6 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
+#include "ui/menu.h"
 #include "mewui/dirmenu.h"
 #include "mewui/inifile.h"
 #include "mewui/datfile.h"

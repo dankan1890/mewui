@@ -10,6 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
+#include "ui/menu.h"
 #include "mewui/ctrlmenu.h"
 
 const char *ui_menu_controller_mapping::m_device_status[] = { "none", "keyboard", "mouse", "lightgun", "joystick" };

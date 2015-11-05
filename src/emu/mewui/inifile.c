@@ -13,6 +13,7 @@
 #include "drivenum.h"
 #include "mewui/inifile.h"
 #include "mewui/utils.h"
+#include "softlist.h"
 
 //-------------------------------------------------
 //  GLOBAL VARIABLES

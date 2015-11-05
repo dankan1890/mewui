@@ -10,6 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
+#include "ui/menu.h"
 #include "audit.h"
 #include "mewui/auditmenu.h"
 #include "mewui/utils.h"

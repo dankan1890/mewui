@@ -84,7 +84,8 @@
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "debug/debugvw.h"
-
+#include "image.h"
+#include "luaengine.h"
 #include <time.h>
 
 #if defined(EMSCRIPTEN)

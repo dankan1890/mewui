@@ -83,7 +83,7 @@ void inifile_manager::init_category(std::vector<IniCategoryIndex> &index, std::s
 {
 	std::string readbuf;
 	std::ifstream myfile(filename.c_str(), std::ifstream::binary);
-	while (std::getline(myfile, readbuf))
+	while (clean_getline(myfile, readbuf))
 	{
 		if (!readbuf.empty() && readbuf[0] == '[')
 		{
@@ -116,7 +116,6 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 	bool search_clones = false;
 	std::string file_name(ini_index[current_file].name);
 	long offset = ini_index[current_file].category[current_category].offset;
-	std::string carriage("\r\n");
 
 	if (!core_stricmp(file_name.c_str(), "category.ini") || !core_stricmp(file_name.c_str(), "alltime.ini"))
 		search_clones = true;
@@ -127,14 +126,10 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		int num_game = driver_list::total();
 		std::string readbuf;
 		myfile.seekg(offset, myfile.beg);
-		while (std::getline(myfile, readbuf))
+		while (clean_getline(myfile, readbuf))
 		{
-			if (readbuf[0] == '[') break;
-			std::string name;
-			size_t found = readbuf.find_last_not_of(carriage);
-			name.assign(readbuf.substr(0, found + 1));
-			if (name.empty()) break;
-			int dfind = driver_list::find(name.c_str());
+			if (readbuf.empty() || readbuf[0] == '[') break;
+			int dfind = driver_list::find(readbuf.c_str());
 			if (dfind != -1 && search_clones)
 			{
 				temp_filter.push_back(dfind);
@@ -142,7 +137,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 				if (clone_of == -1)
 				{
 					for (int x = 0; x < num_game; x++)
-						if (name.compare(driver_list::driver(x).parent) == 0 && name.compare(driver_list::driver(x).name) != 0)
+						if (readbuf.compare(driver_list::driver(x).parent) == 0 && readbuf.compare(driver_list::driver(x).name) != 0)
 							temp_filter.push_back(x);
 				}
 			}

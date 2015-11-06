@@ -29,6 +29,7 @@ static const char *TAG_MESSINFO_R = "#     MESSINFO.DAT";
 static const char *TAG_SYSINFO_R = "# This file was generated on";
 static const char *TAG_STORY_R = "# version";
 static const char *DATAFILE_TAG = "$";
+static const char *TAG_COMMAND_SEPARATOR = "-----------------------------------------------";
 
 //-------------------------------------------------
 // ctor
@@ -164,7 +165,7 @@ void datfile_manager::load_software_info(const char *softlist, std::string &buff
 			while (myfile.good())
 			{
 				// read from datafile
-				std::getline(myfile, readbuf);
+				clean_getline(myfile, readbuf);
 
 				// end entry when a end tag is encountered
 				if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
@@ -227,6 +228,11 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 		// load driver info
 		if (!driver_idx.empty())
 			load_driver_text(drv, buffer, driver_idx, TAG_DRIVER);
+
+		// cleanup mameinfo double line spacing
+		if (tag == TAG_MAME)
+			strreplace(buffer, "\n\n", "\n");
+
 	}
 }
 
@@ -262,7 +268,7 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 	while (myfile.good())
 	{
 		// read from datafile
-		std::getline(myfile, readbuf);
+		clean_getline(myfile, readbuf);
 
 		// end entry when a end tag is encountered
 		if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
@@ -302,7 +308,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 	while (myfile.good())
 	{
 		// read from datafile
-		std::getline(myfile, readbuf);
+		clean_getline(myfile, readbuf);
 
 		// end entry when a end tag is encountered
 		if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
@@ -331,7 +337,6 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 	int          t_drv = strlen(TAG_DRIVER);
 	int          t_tag = strlen(TAG_MAME);
 	int          t_info = strlen(TAG_INFO);
-	std::string  carriage("\r\n");
 
 	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 	if (myfile.is_open())
@@ -339,7 +344,7 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 		// loop through datafile
 		while (myfile.good())
 		{
-			std::getline(myfile, readbuf);
+			clean_getline(myfile, readbuf);
 
 			if (m_mame_rev.empty() && readbuf.compare(0, t_mame, TAG_MAMEINFO_R) == 0)
 			{
@@ -355,13 +360,9 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 			else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 			{
 				std::string xid;
-				std::getline(myfile, xid);
+				clean_getline(myfile, xid);
 
-				size_t found = readbuf.find_last_not_of(carriage);
-				if (found != std::string::npos)
-					name = readbuf.substr(t_info + 1, found - t_info);
-				else
-					name = readbuf.substr(t_info + 1);
+				name = readbuf.substr(t_info + 1);
 
 				if (xid.compare(0, t_tag, TAG_MAME) == 0)
 				{
@@ -413,7 +414,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 		// loop through datafile
 		while (myfile.good())
 		{
-			std::getline(myfile, readbuf);
+			clean_getline(myfile, readbuf);
 
 			if (m_history_rev.empty() && readbuf.compare(0, t_hist, TAG_HISTORY_R) == 0)
 			{
@@ -490,7 +491,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 			else if (!readbuf.empty() && readbuf[0] == DATAFILE_TAG[0])
 			{
 				std::string readbuf_2;
-				std::getline(myfile, readbuf_2);
+				clean_getline(myfile, readbuf_2);
 
 				// TAG_BIO identifies software list
 				if (readbuf_2.compare(0, t_bio, TAG_BIO) == 0)
@@ -628,7 +629,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<Drvindex
 	myfile.seekg(idx[x].offset, myfile.beg);
 	size_t tinfo = strlen(TAG_INFO);
 	size_t tcommand = strlen(TAG_COMMAND);
-	while (std::getline(myfile, readbuf))
+	while (clean_getline(myfile, readbuf))
 	{
 		if (!core_strnicmp(TAG_INFO, readbuf.c_str(), tinfo))
 			break;
@@ -636,7 +637,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<Drvindex
 		// TAG_COMMAND identifies the driver
 		if (!core_strnicmp(TAG_COMMAND, readbuf.c_str(), tcommand))
 		{
-			std::getline(myfile, readbuf);
+			clean_getline(myfile, readbuf);
 			Itemsindex m_idx;
 			m_idx.name = readbuf;
 			m_idx.offset = myfile.tellg();
@@ -663,7 +664,11 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 		while (myfile.good())
 		{
 			// read from datafile
-			std::getline(myfile, readbuf);
+			clean_getline(myfile, readbuf);
+
+			// skip separator lines
+			if (!core_strnicmp(TAG_COMMAND_SEPARATOR, readbuf.c_str(), strlen(TAG_COMMAND_SEPARATOR)))
+				continue;
 
 			// end entry when a tag is encountered
 			if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))

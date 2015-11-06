@@ -86,6 +86,7 @@
 #include "debug/debugvw.h"
 #include "image.h"
 #include "luaengine.h"
+#include "network.h"
 #include <time.h>
 
 #if defined(EMSCRIPTEN)

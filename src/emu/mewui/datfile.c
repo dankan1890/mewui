@@ -227,6 +227,11 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 		// load driver info
 		if (!driver_idx.empty())
 			load_driver_text(drv, buffer, driver_idx, TAG_DRIVER);
+
+		// cleanup mameinfo double line spacing
+		if (tag == TAG_MAME)
+			strreplace(buffer, "\n\n", "\n");
+
 	}
 }
 

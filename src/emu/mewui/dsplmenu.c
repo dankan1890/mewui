@@ -168,8 +168,8 @@ void ui_menu_display_options::populate()
 void ui_menu_display_options::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
-
-	machine().ui().draw_text_full(container, "Display Options", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	ui_manager &mui = machine().ui();
+	mui.draw_text_full(container, "Display Options", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
@@ -181,7 +181,7 @@ void ui_menu_display_options::custom_render(void *selectedref, float top, float 
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -189,6 +189,6 @@ void ui_menu_display_options::custom_render(void *selectedref, float top, float 
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, "Display Options", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Display Options", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }

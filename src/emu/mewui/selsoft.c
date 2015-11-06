@@ -1437,51 +1437,39 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 void ui_menu_select_software::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	ui_manager &mui = machine().ui();
-	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	float line_height = mui.get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+	float x2 = 0.0f;
+	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
+
+	if (hide)
+		x2 = origx2;
+	else
+		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 	{
-		float line_height = mui.get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_RPANEL_ARROW;
+	}
 
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-		mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
+	if (hide)
+	{
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return;
 	}
 	else
 	{
-		float line_height = mui.get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
-
-		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
-		mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 		origx1 = x2;
 	}
@@ -1491,7 +1479,6 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	static std::string buffer;
 	std::vector<int> xstart;
 	std::vector<int> xend;
-
 	float text_size = machine().options().infos_size();
 	ui_software_info *soft = NULL;
 	static ui_software_info *oldsoft = NULL;
@@ -1499,7 +1486,6 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
 
-	float line_height = mui.get_line_height();
 	float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
 	float oy1 = origy1 + line_height;
@@ -1601,52 +1587,40 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 void ui_menu_select_software::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
-	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+	float x2 = 0.0f;
+	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
+
+	if (hide)
+		x2 = origx2;
+	else
+		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_RPANEL_ARROW;
+	}
 
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
+	if (hide)
+	{
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return;
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
-
-		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 		origx1 = x2;
 	}
@@ -1669,7 +1643,6 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 
 	if (driver)
 	{
-		float line_height = machine().ui().get_line_height();
 		if (mewui_globals::default_image)
 			((driver->flags & MACHINE_TYPE_ARCADE) == 0) ? mewui_globals::curimage_view = CABINETS_VIEW : mewui_globals::curimage_view = SNAPSHOT_VIEW;
 
@@ -1748,9 +1721,7 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 	}
 	else if (soft)
 	{
-		float line_height = machine().ui().get_line_height();
 		std::string fullname, pathname;
-
 		if (mewui_globals::default_image)
 			(soft->startempty == 0) ? mewui_globals::curimage_view = SNAPSHOT_VIEW : mewui_globals::curimage_view = CABINETS_VIEW;
 
@@ -1993,9 +1964,11 @@ void ui_mewui_bios_selection::handle()
 					if (m_inlist)
 						reselect_last::software.assign("[Start empty]");
 					else
+					{
 						reselect_last::software.clear();
 						reselect_last::swlist.clear();
 						reselect_last::set(true);
+					}
 
 					std::string error;
 					moptions.set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);

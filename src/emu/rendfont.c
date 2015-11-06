@@ -253,10 +253,8 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 			}
 		}
 	}
-	else
-
 	// if we're an OSD font, query the info
-	if (m_format == FF_OSD)
+	else if (m_format == FF_OSD)
 	{
 		// we set bmwidth to -1 if we've previously queried and failed
 		if (gl.bmwidth == -1)
@@ -274,7 +272,6 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 		gl.bmwidth = gl.bitmap.width();
 		gl.bmheight = gl.bitmap.height();
 	}
-
 	// other formats need to parse their data
 	else
 	{

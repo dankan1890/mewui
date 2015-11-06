@@ -240,17 +240,18 @@ void ui_menu_game_options::populate()
 	// add category subitem
 	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
 	{
-		int actual_file = machine().inifile().current_file;
+		inifile_manager &inif = machine().inifile();
+		int afile = inif.current_file;
+		int acategory = inif.current_category;
 
-		arrow_flags = get_arrow_flags(0, machine().inifile().ini_index.size() - 1, actual_file);
+		arrow_flags = get_arrow_flags(0, inif.ini_index.size() - 1, afile);
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), machine().inifile().ini_index[actual_file].name.c_str(), arrow_flags, (void *)FILE_CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.ini_index[afile].name.c_str(), arrow_flags, (void *)FILE_CATEGORY_FILTER);
 
-		int actual_category = machine().inifile().current_category;
-		arrow_flags = get_arrow_flags(0, machine().inifile().ini_index[actual_file].category.size() - 1, actual_category);
+		arrow_flags = get_arrow_flags(0, inif.ini_index[afile].category.size() - 1, acategory);
 		fbuff.assign(" ^!Category");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), machine().inifile().ini_index[actual_file].category[actual_category].name.c_str(), arrow_flags, (void *)CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.ini_index[afile].category[acategory].name.c_str(), arrow_flags, (void *)CATEGORY_FILTER);
 	}
 	// add manufacturer subitem
 	else if (main_filters::actual == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
@@ -306,7 +307,8 @@ void ui_menu_game_options::populate()
 void ui_menu_game_options::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
-	machine().ui().draw_text_full(container, "Settings", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	ui_manager &mui = machine().ui();
+	mui.draw_text_full(container, "Settings", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
@@ -318,7 +320,7 @@ void ui_menu_game_options::custom_render(void *selectedref, float top, float bot
 	float y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -326,7 +328,7 @@ void ui_menu_game_options::custom_render(void *selectedref, float top, float bot
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	machine().ui().draw_text_full(container, "Settings", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+	mui.draw_text_full(container, "Settings", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 }
 

@@ -41,14 +41,14 @@ ui_menu_selector::~ui_menu_selector()
 void ui_menu_selector::handle()
 {
 	// process the menu
-	const ui_menu_event *menu_event = process(0);
+	const ui_menu_event *m_event = process(0);
 
-	if (menu_event != NULL && menu_event->itemref != NULL)
+	if (m_event != NULL && m_event->itemref != NULL)
 	{
-		if (menu_event->iptkey == IPT_UI_SELECT)
+		if (m_event->iptkey == IPT_UI_SELECT)
 		{
 			for (size_t idx = 0; idx < m_str_items.size(); idx++)
-				if ((void*)&m_str_items[idx] == menu_event->itemref)
+				if ((void*)&m_str_items[idx] == m_event->itemref)
 					*m_selector = idx;
 
 			switch (m_category)
@@ -82,28 +82,28 @@ void ui_menu_selector::handle()
 			mewui_globals::switch_image = true;
 			ui_menu::stack_pop(machine());
 		}
-		else if (menu_event->iptkey == IPT_SPECIAL)
+		else if (m_event->iptkey == IPT_SPECIAL)
 		{
 			int buflen = strlen(m_search);
 
 			// if it's a backspace and we can handle it, do so
-			if ((menu_event->unichar == 8 || menu_event->unichar == 0x7f) && buflen > 0)
+			if ((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0)
 			{
 				*(char *)utf8_previous_char(&m_search[buflen]) = 0;
 				reset(UI_MENU_RESET_SELECT_FIRST);
 			}
 
 			// if it's any other key and we're not maxed out, update
-			else if (menu_event->unichar >= ' ' && menu_event->unichar < 0x7f)
+			else if (m_event->unichar >= ' ' && m_event->unichar < 0x7f)
 			{
-				buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, menu_event->unichar);
+				buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
 				m_search[buflen] = 0;
 				reset(UI_MENU_RESET_SELECT_FIRST);
 			}
 		}
 
 		// escape pressed with non-empty text clears the text
-		else if (menu_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
+		else if (m_event->iptkey == IPT_UI_CANCEL && m_search[0] != 0)
 		{
 			m_search[0] = '\0';
 			reset(UI_MENU_RESET_SELECT_FIRST);
@@ -138,8 +138,7 @@ void ui_menu_selector::populate()
 	}
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-	custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
+	customtop = custombottom = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 	m_first_pass = false;
 }
 
@@ -224,8 +223,6 @@ void ui_menu_selector::find_matches(const char *str)
 
 		// pick the best match between driver name and description
 		int curpenalty = fuzzy_substring(str, m_str_items[index].c_str());
-		int tmp = fuzzy_substring(str, m_str_items[index].c_str());
-		curpenalty = MIN(curpenalty, tmp);
 
 		// insert into the sorted table of matches
 		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; matchnum--)

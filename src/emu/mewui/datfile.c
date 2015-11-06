@@ -656,18 +656,19 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 	if (ParseOpen("command.dat"))
 	{
 		std::string readbuf;
+		size_t tcs = strlen(TAG_COMMAND_SEPARATOR);
+		size_t tend = strlen(TAG_END);
 
 		// open and seek to correct point in datafile
 		std::ifstream myfile(m_fullpath.c_str());
 		myfile.seekg(m_menuidx[sel].offset, myfile.beg);
-		size_t tend = strlen(TAG_END);
 		while (myfile.good())
 		{
 			// read from datafile
 			clean_getline(myfile, readbuf);
 
 			// skip separator lines
-			if (!core_strnicmp(TAG_COMMAND_SEPARATOR, readbuf.c_str(), strlen(TAG_COMMAND_SEPARATOR)))
+			if (!core_strnicmp(TAG_COMMAND_SEPARATOR, readbuf.c_str(), tcs))
 				continue;
 
 			// end entry when a tag is encountered

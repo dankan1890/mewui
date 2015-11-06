@@ -120,7 +120,8 @@ void ui_menu::init_mewui(running_machine &machine)
 	bgrnd_bitmap = auto_alloc(machine, bitmap_argb32);
 	bgrnd_texture = mrender.texture_alloc(render_texture::hq_scale);
 
-	if (machine.options().use_background_image() && (machine.options().system() == &GAME_NAME(___empty) || machine.options().system() == NULL))
+	emu_options &mopt = machine.options();
+	if (mopt.use_background_image() && (mopt.system() == &GAME_NAME(___empty) || mopt.system() == NULL))
 	{
 		emu_file backgroundfile(".", OPEN_FLAG_READ);
 		render_load_jpeg(*bgrnd_bitmap, backgroundfile, NULL, "background.jpg");
@@ -183,6 +184,7 @@ void ui_menu::draw_select_game(bool noinput)
 	float primary_width = visible_width;
 	bool is_swlist = ((item[0].flags & MENU_FLAG_MEWUI_SWLIST) != 0);
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
+	ui_manager &mui = machine().ui();
 
 	// draw background image if available
 	if (machine().options().use_background_image() && bgrnd_bitmap->valid())
@@ -237,7 +239,7 @@ void ui_menu::draw_select_game(bool noinput)
 	float line = visible_top + (float)(visible_lines * line_height);
 
 	//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	if (visible_items < visible_lines)
 		visible_lines = visible_items;
@@ -280,14 +282,13 @@ void ui_menu::draw_select_game(bool noinput)
 		// else if the mouse is over this item, draw with a different background
 		else if (itemnum == hover)
 		{
-			fgcolor = UI_MOUSEOVER_COLOR;
+			fgcolor = fgcolor3 = UI_MOUSEOVER_COLOR;
 			bgcolor = UI_MOUSEOVER_BG_COLOR;
-			fgcolor3 = UI_MOUSEOVER_COLOR;
 		}
 
 		// if we have some background hilighting to do, add a quad behind everything else
 		if (bgcolor != UI_TEXT_BG_COLOR)
-			machine().ui().draw_textured_box(container, line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1,
+			mui.draw_textured_box(container, line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1,
 			                                 bgcolor, rgb_t(255, 43, 43, 43), hilight_main_texture,
 			                                 PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
@@ -330,9 +331,9 @@ void ui_menu::draw_select_game(bool noinput)
 				else
 					draw_icon(container, linenum, item[itemnum].ref, effective_left, line_y);
 
-				space = machine().ui().get_line_height() * container->manager().ui_aspect() * 1.5f;
+				space = mui.get_line_height() * container->manager().ui_aspect() * 1.5f;
 			}
-			machine().ui().draw_text_full(container, itemtext, effective_left + space, line_y, effective_width - space,
+			mui.draw_text_full(container, itemtext, effective_left + space, line_y, effective_width - space,
 			                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor,
 			                              bgcolor, NULL, NULL);
 		}
@@ -343,16 +344,16 @@ void ui_menu::draw_select_game(bool noinput)
 			float item_width, subitem_width;
 
 			// compute right space for subitem
-			machine().ui().draw_text_full(container, subitem_text, effective_left, line_y, machine().ui().get_string_width(pitem.subtext),
+			mui.draw_text_full(container, subitem_text, effective_left, line_y, machine().ui().get_string_width(pitem.subtext),
 			                              JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NONE, item_invert ? fgcolor3 : fgcolor, bgcolor, &subitem_width, NULL);
 			subitem_width += gutter_width;
 
 			// draw the item left-justified
-			machine().ui().draw_text_full(container, itemtext, effective_left, line_y, effective_width - subitem_width,
+			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width - subitem_width,
 			                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, &item_width, NULL);
 
 			// draw the subitem right-justified
-			machine().ui().draw_text_full(container, subitem_text, effective_left + item_width, line_y, effective_width - item_width,
+			mui.draw_text_full(container, subitem_text, effective_left + item_width, line_y, effective_width - item_width,
 			                              JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, NULL, NULL);
 		}
 	}
@@ -386,14 +387,14 @@ void ui_menu::draw_select_game(bool noinput)
 
 		// if we have some background hilighting to do, add a quad behind everything else
 		if (bgcolor != UI_TEXT_BG_COLOR)
-			machine().ui().draw_textured_box(container, line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, rgb_t(255, 43, 43, 43),
+			mui.draw_textured_box(container, line_x0 + 0.01f, line_y0, line_x1 - 0.01f, line_y1, bgcolor, rgb_t(255, 43, 43, 43),
 			                                 hilight_main_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
 		if (strcmp(itemtext, MENU_SEPARATOR_ITEM) == 0)
 			container->add_line(visible_left, line + 0.5f * line_height, visible_left + visible_width, line + 0.5f * line_height,
 			                    UI_LINE_WIDTH, UI_TEXT_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 		else
-			machine().ui().draw_text_full(container, itemtext, effective_left, line, effective_width,
+			mui.draw_text_full(container, itemtext, effective_left, line, effective_width,
 			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
 		line += line_height;
 	}
@@ -664,7 +665,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 
 void ui_menu::handle_main_events(UINT32 flags)
 {
-	int stop = false;
+	bool stop = false;
 	ui_event local_menu_event;
 
 	// loop while we have interesting events
@@ -1003,8 +1004,9 @@ void ui_menu::draw_star(render_container *container, float x0, float y0)
 
 void ui_menu::draw_toolbar(render_container *container, float x1, float y1, float x2, float y2, bool software)
 {
+	ui_manager &mui = machine().ui();
 	// draw a box
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+	mui.draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -1034,7 +1036,7 @@ void ui_menu::draw_toolbar(render_container *container, float x1, float y1, floa
 				hover = HOVER_B_FAV + z;
 				color = ARGB_WHITE;
 				float ypos = y2 + machine().ui().get_line_height() + 2.0f * UI_BOX_TB_BORDER;
-				machine().ui().draw_text_box(container, hover_msg[z], JUSTIFY_CENTER, 0.5f, ypos, UI_BACKGROUND_COLOR);
+				mui.draw_text_box(container, hover_msg[z], JUSTIFY_CENTER, 0.5f, ypos, UI_BACKGROUND_COLOR);
 			}
 
 			container->add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -1264,7 +1266,8 @@ void ui_menu::info_arrow(int ub, float origx1, float origx2, float oy1, float li
 
 void ui_menu::draw_palette_menu()
 {
-	float line_height = machine().ui().get_line_height();
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
 	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
 	float gutter_width = lr_arrow_width * 1.3f;
@@ -1281,11 +1284,11 @@ void ui_menu::draw_palette_menu()
 		const ui_menu_item &pitem = item[itemnum];
 
 		// compute width of left hand side
-		float total_width = gutter_width + machine().ui().get_string_width(pitem.text) + gutter_width;
+		float total_width = gutter_width + mui.get_string_width(pitem.text) + gutter_width;
 
 		// add in width of right hand side
 		if (pitem.subtext)
-			total_width += 2.0f * gutter_width + machine().ui().get_string_width(pitem.subtext);
+			total_width += 2.0f * gutter_width + mui.get_string_width(pitem.subtext);
 
 		// track the maximum
 		if (total_width > visible_width)
@@ -1325,7 +1328,7 @@ void ui_menu::draw_palette_menu()
 	float y1 = visible_top - UI_BOX_TB_BORDER;
 	float x2 = visible_left + visible_width + UI_BOX_LR_BORDER;
 	float y2 = visible_top + visible_main_menu_height + UI_BOX_TB_BORDER;
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// determine the first visible line based on the current selection
 	int top_line = selected - visible_lines / 2;
@@ -1418,7 +1421,7 @@ void ui_menu::draw_palette_menu()
 
 		// if we don't have a subitem, just draw the string centered
 		else if (pitem.subtext == NULL)
-			machine().ui().draw_text_full(container, itemtext, effective_left, line_y, effective_width,
+			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width,
 			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
 
 		// otherwise, draw the item on the left and the subitem text on the right
@@ -1428,13 +1431,13 @@ void ui_menu::draw_palette_menu()
 			rgb_t color = rgb_t((UINT32)strtoul(subitem_text, NULL, 16));
 
 			// draw the left-side text
-			machine().ui().draw_text_full(container, itemtext, effective_left, line_y, effective_width,
+			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width,
 			                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
 
 			// give 2 spaces worth of padding
-			float subitem_width = machine().ui().get_string_width("FF00FF00");
+			float subitem_width = mui.get_string_width("FF00FF00");
 
-			machine().ui().draw_outlined_box(container, effective_left + effective_width - subitem_width, line_y0,
+			mui.draw_outlined_box(container, effective_left + effective_width - subitem_width, line_y0,
 			                                 effective_left + effective_width, line_y1, color);
 		}
 	}

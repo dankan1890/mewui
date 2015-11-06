@@ -2006,12 +2006,15 @@ void ui_mewui_select_game::load_custom_filters()
 
 float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float y2)
 {
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
+
 	if (mewui_globals::panels_status == SHOW_PANELS || mewui_globals::panels_status == HIDE_RIGHT_PANEL)
 	{
 		float origy1 = y1;
 		float origy2 = y2;
 		float text_size = 0.75f;
-		float line_height = machine().ui().get_line_height() * text_size;
+		float line_height_max = line_height * text_size;
 		float left_width = 0.0f;
 		int text_lenght = main_filters::length;
 		int afilter = main_filters::actual;
@@ -2019,20 +2022,20 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		const char **text = main_filters::text;
 		float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
 
-		if ((text_lenght * line_height) > sc)
+		if ((text_lenght * line_height_max) > sc)
 		{
 			float lm = sc / (text_lenght);
-			text_size = lm / machine().ui().get_line_height();
-			line_height = machine().ui().get_line_height() * text_size;
+			text_size = lm / line_height;
+			line_height_max = line_height * text_size;
 		}
 
-		float text_sign = machine().ui().get_string_width_ex("_# ", text_size);
+		float text_sign = mui.get_string_width_ex("_# ", text_size);
 		for (int x = 0; x < text_lenght; x++)
 		{
 			float total_width;
 
 			// compute width of left hand side
-			total_width = machine().ui().get_string_width_ex(text[x], text_size);
+			total_width = mui.get_string_width_ex(text[x], text_size);
 			total_width += text_sign;
 
 			// track the maximum
@@ -2042,7 +2045,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 
 		x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 		// take off the borders
 		x1 += UI_BOX_LR_BORDER;
@@ -2056,7 +2059,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
 			rgb_t fgcolor = UI_TEXT_COLOR;
 
-			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
+			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height_max > mouse_y)
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
 				fgcolor = UI_MOUSEOVER_COLOR;
@@ -2070,7 +2073,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 			}
 
 			if (bgcolor != UI_TEXT_BG_COLOR)
-				container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
+				container->add_rect(x1, y1, x2, y1 + line_height_max, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
 			float x1t = x1 + text_sign;
 			if (afilter == FILTER_CUSTOM)
@@ -2096,16 +2099,15 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 				convert_command_glyph(str);
 			}
 
-			machine().ui().draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
+			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
 			                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
-			y1 += line_height;
+			y1 += line_height_max;
 		}
 
 		x1 = x2 + UI_BOX_LR_BORDER;
 		x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
 		y1 = origy1;
 		y2 = origy2;
-		line_height = machine().ui().get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -2116,7 +2118,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{
@@ -2129,7 +2131,6 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -2140,7 +2141,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{
@@ -2159,61 +2160,49 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 
 void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
-	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+	float x2 = 0.0f;
+	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
+
+	if (hide)
+		x2 = origx2;
+	else
+		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_RPANEL_ARROW;
+	}
 
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
+	if (hide)
+	{
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return;
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
-
-		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 		origx1 = x2;
 	}
 
 	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
-
+	
 	static std::string buffer;
 	std::vector<int> xstart;
 	std::vector<int> xend;
-
 	float text_size = machine().options().infos_size();
 	const game_driver *driver = NULL;
 	ui_software_info *soft = NULL;
@@ -2242,7 +2231,6 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 	if (driver)
 	{
-		float line_height = machine().ui().get_line_height();
 		float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 		float ud_arrow_width = line_height * machine().render().ui_aspect();
 		float oy1 = origy1 + line_height;
@@ -2259,13 +2247,13 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; x++)
 		{
-			machine().ui().draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
+			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
 			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
-		machine().ui().draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
+		mui.draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
 		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 
 		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curdats_view, MEWUI_FIRST_LOAD, MEWUI_LAST_LOAD, title_size);
@@ -2302,15 +2290,15 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		if (buffer.empty())
 		{
-			machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
+			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
 			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
+			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
 			                         xstart, xend, text_size);
 		else
-			machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
+			mui.wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 
 		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
 		if (totallines < r_visible_lines)
@@ -2337,7 +2325,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			{
 				int last_underscore = tempbuf.find_last_of('_');
 				if (last_underscore == -1)
-					machine().ui().draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
+					mui.draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
 					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
 					                              text_size);
 				else
@@ -2349,11 +2337,11 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					std::string first_part(tempbuf.substr(0, primary));
 					float item_width;
 
-					machine().ui().draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
+					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
 					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 					                              &item_width, NULL, text_size);
 
-					machine().ui().draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
+					mui.draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
 					                              origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
 					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 					                              NULL, NULL, text_size);
@@ -2371,20 +2359,20 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					std::string first_part(tempbuf.substr(0, first_dspace));
 					std::string last_part(tempbuf.substr(first_dspace + 1));
 					strtrimspace(last_part);
-					machine().ui().draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
+					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
 					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 					                              NULL, NULL, text_size);
 
-					machine().ui().draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
+					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
 					                              JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 					                              NULL, NULL, text_size);
 				}
 				else
-					machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
+					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
 					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
 			}
 			else
-				machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
+				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
 				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
 
 			oy1 += (line_height * text_size);
@@ -2395,7 +2383,6 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	}
 	else if (soft)
 	{
-		float line_height = machine().ui().get_line_height();
 		float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 		float ud_arrow_width = line_height * machine().render().ui_aspect();
 		float oy1 = origy1 + line_height;
@@ -2403,7 +2390,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		// apply title to right panel
 		if (soft->usage.empty())
 		{
-			machine().ui().draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+			mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 			mewui_globals::cur_sw_dats_view = 0;
 		}
@@ -2417,13 +2404,13 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 			for (int x = 0; x < 2; x++)
 			{
-				machine().ui().draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+				mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
 				txt_lenght += 0.01f;
 				title_size = MAX(txt_lenght, title_size);
 			}
 
-			machine().ui().draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
+			mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
 			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 			                              NULL, NULL);
 
@@ -2452,12 +2439,12 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		if (buffer.empty())
 		{
-			machine().ui().draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
+			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
 			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
 			return;
 		}
 		else
-			machine().ui().wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
+			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
 			                         xstart, xend, text_size);
 
 		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
@@ -2481,7 +2468,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			else if (r == r_visible_lines - 1 && itemline != totallines - 1)
 				info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
 			else
-				machine().ui().draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
+				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
 				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
 				                              NULL, NULL, text_size);
 			oy1 += (line_height * text_size);
@@ -2506,52 +2493,40 @@ void ui_mewui_select_game::draw_right_panel(void *selectedref, float x1, float y
 
 void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
-	if (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH)
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+	float x2 = 0.0f;
+	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
+
+	if (hide)
+		x2 = origx2;
+	else
+		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_RPANEL_ARROW;
+	}
 
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (origx2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && origx2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
+	if (hide)
+	{
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return;
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
-
-		float x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-		//machine().ui().draw_outlined_box(container, origx1, origy1, x2, origy2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_RPANEL_ARROW;
-		}
-
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
 		origx1 = x2;
 	}
@@ -2583,7 +2558,6 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 
 	if (driver)
 	{
-		float line_height = machine().ui().get_line_height();
 		if (mewui_globals::default_image)
 			((driver->flags & MACHINE_TYPE_ARCADE) == 0) ? mewui_globals::curimage_view = CABINETS_VIEW : mewui_globals::curimage_view = SNAPSHOT_VIEW;
 
@@ -2662,7 +2636,6 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 	}
 	else if (soft)
 	{
-		float line_height = machine().ui().get_line_height();
 		std::string fullname, pathname;
 
 		if (mewui_globals::default_image)

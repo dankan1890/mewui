@@ -29,6 +29,7 @@ static const char *TAG_MESSINFO_R = "#     MESSINFO.DAT";
 static const char *TAG_SYSINFO_R = "# This file was generated on";
 static const char *TAG_STORY_R = "# version";
 static const char *DATAFILE_TAG = "$";
+static const char *TAG_COMMAND_SEPARATOR = "-----------------------------------------------";
 
 //-------------------------------------------------
 // ctor
@@ -664,6 +665,10 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 		{
 			// read from datafile
 			clean_getline(myfile, readbuf);
+
+			// skip separator lines
+			if (!core_strnicmp(TAG_COMMAND_SEPARATOR, readbuf.c_str(), strlen(TAG_COMMAND_SEPARATOR)))
+				continue;
 
 			// end entry when a tag is encountered
 			if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))

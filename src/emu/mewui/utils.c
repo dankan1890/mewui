@@ -220,3 +220,14 @@ void c_year::set(const char *str)
 	ui.push_back(name);
 }
 
+std::ifstream &clean_getline(std::ifstream &is, std::string &line)
+{
+	if (std::getline(is, line)) {
+		size_t epos = line.find_last_not_of("\r\n");
+		if ( std::string::npos != epos )
+			line.erase(epos+1);
+		else
+			line.clear();
+	}
+	return is;
+}

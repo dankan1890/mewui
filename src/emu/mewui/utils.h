@@ -374,4 +374,7 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	global_free_array(jpg_buffer);
 }
 
+// std::getline consistent line endings replacement
+std::ifstream &clean_getline(std::ifstream &is, std::string &line);
+
 #endif /* __MEWUI_UTILS_H__ */

@@ -115,17 +115,17 @@ void ui_menu_custom_filter::handle()
 				custfltr::screen[pos]--;
 				changed = true;
 			}
-			else if (m_event->iptkey == IPT_UI_RIGHT && custfltr::screen[pos] < c_screen::length - 1)
+			else if (m_event->iptkey == IPT_UI_RIGHT && custfltr::screen[pos] < screen_filters::length - 1)
 			{
 				custfltr::screen[pos]++;
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = c_screen::length;
+				int total = screen_filters::length;
 				std::vector<std::string> s_sel(total);
 				for (int index = 0; index < total; index++)
-					s_sel[index].assign(c_screen::text[index]);
+					s_sel[index].assign(screen_filters::text[index]);
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &custfltr::screen[pos])));
 			}
@@ -212,10 +212,10 @@ void ui_menu_custom_filter::populate()
 		// add screen subitem
 		else if (custfltr::other[x] == FILTER_SCREEN)
 		{
-			arrow_flags = get_arrow_flags(0,  c_screen::length - 1, custfltr::screen[x]);
+			arrow_flags = get_arrow_flags(0, screen_filters::length - 1, custfltr::screen[x]);
 			std::string fbuff("^!Screen type");
 			convert_command_glyph(fbuff);
-			item_append(fbuff.c_str(), c_screen::text[custfltr::screen[x]], arrow_flags, (void *)(FPTR)(SCREEN_FILTER + x));
+			item_append(fbuff.c_str(), screen_filters::text[custfltr::screen[x]], arrow_flags, (void *)(FPTR)(SCREEN_FILTER + x));
 		}
 
 	}
@@ -289,7 +289,7 @@ void ui_menu_custom_filter::save_custom_filters()
 			else if (custfltr::other[x] == FILTER_YEAR)
 				cinfo.append("  Year filter = ").append(c_year::ui[custfltr::year[x]]).append("\n");
 			else if (custfltr::other[x] == FILTER_SCREEN)
-				cinfo.append("  Screen filter = ").append(c_screen::text[custfltr::screen[x]]).append("\n");
+				cinfo.append("  Screen filter = ").append(screen_filters::text[custfltr::screen[x]]).append("\n");
 		}
 		file.puts(cinfo.c_str());
 		file.close();

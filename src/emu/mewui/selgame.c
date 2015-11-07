@@ -10,7 +10,7 @@
 
 #include "emu.h"
 #include "ui/ui.h"
-//#include "ui/menu.h"
+#include "ui/menu.h"
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "mewui/selgame.h"
@@ -157,9 +157,9 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 		}
 		else if (main_filters::actual == FILTER_SCREEN)
 		{
-			for (size_t id = 0; id < c_screen::length; ++id)
-				if (sub_filter == c_screen::text[id])
-					c_screen::actual = id;
+			for (size_t id = 0; id < screen_filters::length; ++id)
+				if (sub_filter == screen_filters::text[id])
+					screen_filters::actual = id;
 		}
 		first_start = false;
 	}
@@ -196,7 +196,7 @@ ui_mewui_select_game::~ui_mewui_select_game()
 	if (main_filters::actual == FILTER_YEAR)
 		filter.append(",").append(c_year::ui[c_year::actual]);
 	if (main_filters::actual == FILTER_SCREEN)
-		filter.append(",").append(c_screen::text[c_screen::actual]);
+		filter.append(",").append(screen_filters::text[screen_filters::actual]);
 
 	mopt.set_value(OPTION_START_FILTER, ume_filters::actual, OPTION_PRIORITY_CMDLINE, error_string);
 	mopt.set_value(OPTION_LAST_USED_FILTER, filter.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
@@ -524,12 +524,12 @@ void ui_mewui_select_game::handle()
 			                                     &c_year::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_SCREEN)
 		{
-			std::vector<std::string> text(c_screen::length);
-			for (int x = 0; x < c_screen::length; ++x)
-				text[x].assign(c_screen::text[x]);
+			std::vector<std::string> text(screen_filters::length);
+			for (int x = 0; x < screen_filters::length; ++x)
+				text[x].assign(screen_filters::text[x]);
 
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text,
-			                                     &c_screen::actual, SELECTOR_GAME, l_hover)));
+				&screen_filters::actual, SELECTOR_GAME, l_hover)));
 		}
 		else
 		{
@@ -584,7 +584,7 @@ void ui_mewui_select_game::populate()
 				case FILTER_NOSAMPLES:
 				case FILTER_CHD:
 				case FILTER_NOCHD:
-					build_from_cache(m_tmp, c_screen::actual);
+					build_from_cache(m_tmp, screen_filters::actual);
 					break;
 
 				case FILTER_CUSTOM:
@@ -780,7 +780,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(c_year::ui[c_year::actual]).append(") -");
 
 	else if (main_filters::actual == FILTER_SCREEN)
-		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(c_screen::text[c_screen::actual]).append(") -");
+		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(screen_filters::text[screen_filters::actual]).append(") -");
 
 	// display the current typeahead
 	if (no_active_search())
@@ -1580,7 +1580,7 @@ void ui_mewui_select_game::general_info(const game_driver *driver, std::string &
 	strcatprintf(buffer, "Support Save: %s\n", ((driver->flags & MACHINE_SUPPORTS_SAVE) ? "Yes" : "No"));
 
 	int idx = driver_list::find(driver->name);
-	strcatprintf(buffer, "Screen Type: %s\n", c_screen::text[driver_cache[idx].b_screen]);
+	strcatprintf(buffer, "Screen Type: %s\n", screen_filters::text[driver_cache[idx].b_screen]);
 	strcatprintf(buffer, "Screen Orentation: %s\n", ((driver->flags & ORIENTATION_SWAP_XY) ? "Vertical" : "Horizontal"));
 	strcatprintf(buffer, "Requires Samples: %s\n", (driver_cache[idx].b_samples ? "Yes" : "No"));
 	strcatprintf(buffer, "Sound Channel: %s\n", (driver_cache[idx].b_stereo ? "Stereo" : "Mono"));
@@ -1988,8 +1988,8 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_screen::length; z++)
-							if (!strncmp(db, c_screen::text[z], strlen(c_screen::text[z])))
+						for (size_t z = 0; z < screen_filters::length; z++)
+							if (!strncmp(db, screen_filters::text[z], strlen(screen_filters::text[z])))
 								custfltr::screen[x] = z;
 					}
 				}
@@ -2162,44 +2162,6 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 {
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
-	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-	rgb_t fgcolor = UI_TEXT_COLOR;
-	float x2 = 0.0f;
-	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
-
-	if (hide)
-		x2 = origx2;
-	else
-		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-
-	// set left-right arrows dimension
-	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-	float ar_x1 = ar_x0 + lr_arrow_width;
-	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-	{
-		fgcolor = UI_MOUSEOVER_COLOR;
-		hover = HOVER_RPANEL_ARROW;
-	}
-
-	if (hide)
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
-		return;
-	}
-	else
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
-		origx1 = x2;
-	}
-
-	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
-	
 	static std::string buffer;
 	std::vector<int> xstart;
 	std::vector<int> xend;
@@ -2479,31 +2441,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	}
 }
 
-void ui_mewui_select_game::draw_right_panel(void *selectedref, float x1, float y1, float x2, float y2)
-{
-	if (mewui_globals::rpanel == RP_IMAGES)
-		arts_render(selectedref, x1, y1, x2, y2);
-	else
-		infos_render(selectedref, x1, y1, x2, y2);
-}
-
-//-------------------------------------------------
-//  perform our special rendering
-//-------------------------------------------------
-
-void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
+void ui_mewui_select_game::draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
 	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 	rgb_t fgcolor = UI_TEXT_COLOR;
-	float x2 = 0.0f;
 	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
-
-	if (hide)
-		x2 = origx2;
-	else
-		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
+	float x2 = (hide) ? origx2 : origx1 + 2.0f * UI_BOX_LR_BORDER;
 
 	// set left-right arrows dimension
 	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
@@ -2525,14 +2470,25 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return;
 	}
-	else
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
-		origx1 = x2;
-	}
 
+	draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+	origx1 = x2;
 	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
 
+	if (mewui_globals::rpanel == RP_IMAGES)
+		arts_render(selectedref, origx1, origy1, origx2, origy2);
+	else
+		infos_render(selectedref, origx1, origy1, origx2, origy2);
+}
+
+//-------------------------------------------------
+//  perform our special rendering
+//-------------------------------------------------
+
+void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float origy1, float origx2, float origy2)
+{
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
 	static ui_software_info *oldsoft = NULL;
 	static const game_driver *olddriver = NULL;

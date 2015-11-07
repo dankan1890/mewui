@@ -158,16 +158,16 @@ void ui_menu_game_options::handle()
 			case SCREEN_CAT_FILTER:
 				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(m_event->iptkey == IPT_UI_RIGHT) ? c_screen::actual++ : c_screen::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? screen_filters::actual++ : screen_filters::actual--;
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					std::vector<std::string> text(c_screen::length);
-					for (int x = 0; x < c_screen::length; ++x)
-						text[x].assign(c_screen::text[x]);
+					std::vector<std::string> text(screen_filters::length);
+					for (int x = 0; x < screen_filters::length; ++x)
+						text[x].assign(screen_filters::text[x]);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &c_screen::actual)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &screen_filters::actual)));
 				}
 
 				break;
@@ -272,10 +272,10 @@ void ui_menu_game_options::populate()
 	// add screen subitem
 	else if (main_filters::actual == FILTER_SCREEN)
 	{
-		arrow_flags = get_arrow_flags(0, c_screen::length - 1, c_screen::actual);
+		arrow_flags = get_arrow_flags(0, screen_filters::length - 1, screen_filters::actual);
 		fbuff.assign("^!Screen type");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), c_screen::text[c_screen::actual], arrow_flags, (void *)SCREEN_CAT_FILTER);
+		item_append(fbuff.c_str(), screen_filters::text[screen_filters::actual], arrow_flags, (void *)SCREEN_CAT_FILTER);
 	}
 	// add custom subitem
 	else if (main_filters::actual == FILTER_CUSTOM)

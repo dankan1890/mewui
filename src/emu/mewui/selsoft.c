@@ -1435,44 +1435,6 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 {
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
-	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-	rgb_t fgcolor = UI_TEXT_COLOR;
-	float x2 = 0.0f;
-	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
-
-	if (hide)
-		x2 = origx2;
-	else
-		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-
-	// set left-right arrows dimension
-	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-	float ar_x1 = ar_x0 + lr_arrow_width;
-	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-	{
-		fgcolor = UI_MOUSEOVER_COLOR;
-		hover = HOVER_RPANEL_ARROW;
-	}
-
-	if (hide)
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
-		return;
-	}
-	else
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
-		origx1 = x2;
-	}
-
-	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
-
 	static std::string buffer;
 	std::vector<int> xstart;
 	std::vector<int> xend;
@@ -1586,44 +1548,6 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 {
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
-	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-	rgb_t fgcolor = UI_TEXT_COLOR;
-	float x2 = 0.0f;
-	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
-
-	if (hide)
-		x2 = origx2;
-	else
-		x2 = origx1 + 2.0f * UI_BOX_LR_BORDER;
-
-	// set left-right arrows dimension
-	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
-	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
-	float ar_x1 = ar_x0 + lr_arrow_width;
-	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
-
-	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
-	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
-	{
-		fgcolor = UI_MOUSEOVER_COLOR;
-		hover = HOVER_RPANEL_ARROW;
-	}
-
-	if (hide)
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
-		return;
-	}
-	else
-	{
-		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
-		origx1 = x2;
-	}
-
-	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
-
 	static ui_software_info *oldsoft = NULL;
 	static const game_driver *olddriver = NULL;
 	const game_driver *driver = NULL;
@@ -1806,12 +1730,44 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 	}
 }
 
-void ui_menu_select_software::draw_right_panel(void *selectedref, float x1, float y1, float x2, float y2)
+void ui_menu_select_software::draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2)
 {
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+	bool hide = (mewui_globals::panels_status == HIDE_RIGHT_PANEL || mewui_globals::panels_status == HIDE_BOTH);
+	float x2 = (hide) ? origx2 : origx1 + 2.0f * UI_BOX_LR_BORDER;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + origx1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (origy2 + origy1) + 0.1f * line_height;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (origy2 + origy1) + 0.9f * line_height;
+
+	//machine().ui().draw_outlined_box(container, origx1, origy1, origx2, origy2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, origx1, origy1, origx2, origy2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && origx1 <= mouse_x && x2 > mouse_x && origy1 <= mouse_y && origy2 > mouse_y)
+	{
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_RPANEL_ARROW;
+	}
+
+	if (hide)
+	{
+		draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
+		return;
+	}
+
+	draw_arrow(container, ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+	origx1 = x2;
+	origy1 = draw_right_box_title(origx1, origy1, origx2, origy2);
+
 	if (mewui_globals::rpanel == RP_IMAGES)
-		arts_render(selectedref, x1, y1, x2, y2);
+		arts_render(selectedref, origx1, origy1, origx2, origy2);
 	else
-		infos_render(selectedref, x1, y1, x2, y2);
+		infos_render(selectedref, origx1, origy1, origx2, origy2);
 }
 
 //-------------------------------------------------

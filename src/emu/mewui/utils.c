@@ -37,9 +37,9 @@ const char *sw_filters::text[] = { "All", "Available", "Unavailable", "Originals
 size_t sw_filters::length = ARRAY_LENGTH(sw_filters::text);
 
 // Screens
-UINT16 c_screen::actual = 0;
-const char *c_screen::text[] = { "<none>", "Raster", "Vector", "LCD" };
-size_t c_screen::length = ARRAY_LENGTH(c_screen::text);
+UINT16 screen_filters::actual = 0;
+const char *screen_filters::text[] = { "<none>", "Raster", "Vector", "LCD" };
+size_t screen_filters::length = ARRAY_LENGTH(screen_filters::text);
 
 // UME
 UINT16 ume_filters::actual = 0;

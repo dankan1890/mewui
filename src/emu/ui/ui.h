@@ -22,6 +22,7 @@
 
 /* preferred font height; use ui_get_line_height() to get actual height */
 #define UI_TARGET_FONT_ROWS     get_font_rows()
+
 #define UI_TARGET_FONT_HEIGHT   (1.0f / (float)UI_TARGET_FONT_ROWS)
 #define UI_MAX_FONT_HEIGHT      (1.0f / 15.0f)
 
@@ -38,7 +39,6 @@
 #define UI_GREEN_COLOR          rgb_t(0xef,0x10,0x60,0x10)
 #define UI_YELLOW_COLOR         rgb_t(0xef,0x60,0x60,0x10)
 #define UI_RED_COLOR            rgb_t(0xf0,0x60,0x10,0x10)
-
 #define UI_BORDER_COLOR         decode_ui_color(0)
 #define UI_BACKGROUND_COLOR     decode_ui_color(1)
 #define UI_GFXVIEWER_BG_COLOR   decode_ui_color(2)
@@ -136,8 +136,8 @@ public:
     void draw_outlined_box(render_container *container, float x0, float y0, float x1, float y1, rgb_t backcolor);
     void draw_outlined_box(render_container *container, float x0, float y0, float x1, float y1, rgb_t fgcolor, rgb_t bgcolor);
     void draw_text(render_container *container, const char *buf, float x, float y);
-    void draw_text_full(render_container *container, const char *origs, float x, float y, float origwrapwidth, int justify, int wrap, int draw, rgb_t fgcolor, rgb_t bgcolor, float *totalwidth = NULL, float *totalheight = NULL, float text_size = 1.0f);
-    void draw_text_box(render_container *container, const char *text, int justify, float xpos, float ypos, rgb_t backcolor);
+	void draw_text_full(render_container *container, const char *origs, float x, float y, float origwrapwidth, int justify, int wrap, int draw, rgb_t fgcolor, rgb_t bgcolor, float *totalwidth = NULL, float *totalheight = NULL, float text_size = 1.0f);
+	void draw_text_box(render_container *container, const char *text, int justify, float xpos, float ypos, rgb_t backcolor);
     void draw_message_window(render_container *container, const char *text);
 
     void CLIB_DECL popup_time(int seconds, const char *text, ...) ATTR_PRINTF(3,4);
@@ -168,7 +168,7 @@ public:
     // other
     void process_natural_keyboard();
 
-    // MEWUI word wrap
+	// MEWUI word wrap
     void wrap_text(render_container *container, const char *origs, float x, float y, float origwrapwidth, int &totallines, std::vector<int> &xstart, std::vector<int> &xend, float text_size = 1.0f);
 
     // draw an outlined box with given line color and filled with a texture
@@ -215,5 +215,4 @@ private:
 ***************************************************************************/
 rgb_t decode_ui_color(int id, running_machine *machine = NULL);
 int get_font_rows(running_machine *machine = NULL);
-
 #endif  /* __USRINTRF_H__ */

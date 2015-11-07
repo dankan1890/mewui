@@ -26,7 +26,6 @@
 #include "ui/viewgfx.h"
 #include "imagedev/cassette.h"
 #include "image.h"
-//#include "mewui/selgame.h"
 
 
 /***************************************************************************
@@ -485,7 +484,6 @@ void ui_manager::update_and_render(render_container *container)
 				float x_pixel = 1.0f / container->manager().ui_target().width();
 				float y_pixel = 1.0f / container->manager().ui_target().height();
 				container->add_quad(mouse_x, mouse_y, mouse_x + x_pixel*32, mouse_y + y_pixel*32, ARGB_WHITE, m_mouse_arrow_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-//				container->add_quad(mouse_x,mouse_y,mouse_x + 0.05f*container->manager().ui_aspect(container),mouse_y + 0.05f,UI_TEXT_COLOR,m_mouse_arrow_texture,PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 			}
 		}
 	}

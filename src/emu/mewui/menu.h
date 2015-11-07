@@ -74,10 +74,10 @@ private:
 	static bitmap_argb32 *icons_bitmap[];
 
 	// toolbar
-	static render_texture *toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
-	static bitmap_argb32 *toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
-	static render_texture *sw_toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
-	static bitmap_argb32 *sw_toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
+	static render_texture *toolbar_texture[];
+	static bitmap_argb32 *toolbar_bitmap[];
+	static render_texture *sw_toolbar_texture[];
+	static bitmap_argb32 *sw_toolbar_bitmap[];
 
 	// draw game list
 	void draw_select_game(bool noinput);

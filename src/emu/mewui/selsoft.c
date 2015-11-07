@@ -540,10 +540,10 @@ void ui_menu_select_software::build_software_list()
 						tmpmatches.usage.assign(flist->value());
 
 				m_swinfo.push_back(tmpmatches);
-				m_filter.region.set(tmpmatches.longname.c_str());
-				m_filter.publisher.set(tmpmatches.publisher.c_str());
-				m_filter.year.set(tmpmatches.year.c_str());
-				m_filter.type.set(tmpmatches.devicetype.c_str());
+				m_filter.region.set(tmpmatches.longname);
+				m_filter.publisher.set(tmpmatches.publisher);
+				m_filter.year.set(tmpmatches.year);
+				m_filter.type.set(tmpmatches.devicetype);
 			}
 		}
 	}
@@ -1030,7 +1030,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 //  set software regions
 //-------------------------------------------------
 
-void c_sw_region::set(const char *str)
+void c_sw_region::set(std::string &str)
 {
 	std::string name = getname(str);
 	if (std::find(ui.begin(), ui.end(), name) != ui.end())
@@ -1039,9 +1039,9 @@ void c_sw_region::set(const char *str)
 	ui.push_back(name);
 }
 
-std::string c_sw_region::getname(const char *str)
+std::string c_sw_region::getname(std::string &str)
 {
-	std::string fullname(str), name(str);
+	std::string fullname(str);
 	strmakelower(fullname);
 	size_t found = fullname.find("(");
 
@@ -1052,7 +1052,7 @@ std::string c_sw_region::getname(const char *str)
 
 		for (int x = 0; x < ARRAY_LENGTH(region_lists); x++)
 			if (temp.compare(region_lists[x]) == 0)
-				return (name.substr(found + 1, ends - found - 1));
+				return (str.substr(found + 1, ends - found - 1));
 	}
 	return std::string("<none>");
 }
@@ -1061,33 +1061,31 @@ std::string c_sw_region::getname(const char *str)
 //  set software device type
 //-------------------------------------------------
 
-void c_sw_type::set(const char *str)
+void c_sw_type::set(std::string &str)
 {
-	std::string name(str);
-	if (std::find(ui.begin(), ui.end(), name) != ui.end())
+	if (std::find(ui.begin(), ui.end(), str) != ui.end())
 		return;
 
-	ui.push_back(name);
+	ui.push_back(str);
 }
 
 //-------------------------------------------------
 //  set software years
 //-------------------------------------------------
 
-void c_sw_year::set(const char *str)
+void c_sw_year::set(std::string &str)
 {
-	std::string name(str);
-	if (std::find(ui.begin(), ui.end(), name) != ui.end())
+	if (std::find(ui.begin(), ui.end(), str) != ui.end())
 		return;
 
-	ui.push_back(name);
+	ui.push_back(str);
 }
 
 //-------------------------------------------------
 //  set software publishers
 //-------------------------------------------------
 
-void c_sw_publisher::set(const char *str)
+void c_sw_publisher::set(std::string &str)
 {
 	std::string name = getname(str);
 	if (std::find(ui.begin(), ui.end(), name) != ui.end())
@@ -1096,15 +1094,14 @@ void c_sw_publisher::set(const char *str)
 	ui.push_back(name);
 }
 
-std::string c_sw_publisher::getname(const char *str)
+std::string c_sw_publisher::getname(std::string &str)
 {
-	std::string name(str);
-	size_t found = name.find("(");
+	size_t found = str.find("(");
 
 	if (found != std::string::npos)
-		return (name.substr(0, found - 1));
+		return (str.substr(0, found - 1));
 	else
-		return name;
+		return str;
 }
 
 //-------------------------------------------------
@@ -1161,7 +1158,7 @@ void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_driv
 
 			case MEWUI_SW_REGION:
 			{
-				std::string name = m_filter.region.getname(s_drivers[x]->longname.c_str());
+				std::string name = m_filter.region.getname(s_drivers[x]->longname);
 
 				if(!name.empty() && name.compare(filter_text) == 0)
 					m_displaylist.push_back(s_drivers[x]);
@@ -1170,7 +1167,7 @@ void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_driv
 
 			case MEWUI_SW_PUBLISHERS:
 			{
-				std::string name = m_filter.publisher.getname(s_drivers[x]->publisher.c_str());
+				std::string name = m_filter.publisher.getname(s_drivers[x]->publisher);
 
 				if(!name.empty() && name.compare(filter_text) == 0)
 					m_displaylist.push_back(s_drivers[x]);

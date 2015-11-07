@@ -21,8 +21,8 @@ struct c_sw_region
 {
 	std::vector<std::string> ui;
 	UINT16 actual;
-	void set(const char *str);
-	std::string getname(const char *str);
+	void set(std::string &str);
+	std::string getname(std::string &str);
 };
 
 // Software publishers
@@ -30,8 +30,8 @@ struct c_sw_publisher
 {
 	std::vector<std::string> ui;
 	UINT16 actual;
-	void set(const char *str);
-	std::string getname(const char *str);
+	void set(std::string &str);
+	std::string getname(std::string &str);
 };
 
 // Software device type
@@ -39,7 +39,7 @@ struct c_sw_type
 {
 	std::vector<std::string> ui;
 	UINT16 actual;
-	void set(const char *str);
+	void set(std::string &str);
 };
 
 // Software list
@@ -55,7 +55,7 @@ struct c_sw_year
 {
 	std::vector<std::string> ui;
 	UINT16 actual;
-	void set(const char *str);
+	void set(std::string &str);
 };
 
 struct s_filter

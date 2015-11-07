@@ -70,8 +70,8 @@ private:
 	static bitmap_argb32 *no_avail_bitmap, *bgrnd_bitmap, *star_bitmap;
 	static bitmap_rgb32 *hilight_main_bitmap;
 	static render_texture *hilight_main_texture, *bgrnd_texture, *star_texture;
-	static render_texture *icons_texture[40];
-	static bitmap_argb32 *icons_bitmap[40];
+	static render_texture *icons_texture[];
+	static bitmap_argb32 *icons_bitmap[];
 
 	// toolbar
 	static render_texture *toolbar_texture[MEWUI_TOOLBAR_BUTTONS];

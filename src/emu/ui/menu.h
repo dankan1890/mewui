@@ -193,7 +193,7 @@ private:
 	static void clear_free_list(running_machine &machine);
 	static void render_triangle(bitmap_argb32 &dest, bitmap_argb32 &source, const rectangle &sbounds, void *param);
 
-#include "mewui/menu.h"
+#include "mewui/menuhead.inc"
 
 };
 

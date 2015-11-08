@@ -113,7 +113,8 @@ void ui_menu::init_mewui(running_machine &machine)
 	for (int i = 0; i < MAX_ICONS_RENDER; i++)
 	{
 		icons_bitmap[i] = auto_alloc(machine, bitmap_argb32);
-		icons_texture[i] = mrender.texture_alloc(render_texture::hq_scale);
+		//icons_texture[i] = mrender.texture_alloc(render_texture::hq_scale);
+		icons_texture[i] = mrender.texture_alloc();
 	}
 
 	// create a texture for main menu background
@@ -1198,7 +1199,7 @@ void ui_menu::draw_icon(render_container *container, int linenum, void *selected
 
 	if (driver == NULL)
 		return;
-
+	mewui_globals::redraw_icon = true;
 	if (olddriver[linenum] != driver || mewui_globals::redraw_icon)
 	{
 		olddriver[linenum] = driver;

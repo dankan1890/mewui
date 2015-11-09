@@ -2385,7 +2385,7 @@ void ui_menu::draw_icon(render_container *container, int linenum, void *selected
 
 	if (driver == NULL)
 		return;
-	mewui_globals::redraw_icon = true;
+
 	if (olddriver[linenum] != driver || mewui_globals::redraw_icon)
 	{
 		olddriver[linenum] = driver;
@@ -2408,18 +2408,68 @@ void ui_menu::draw_icon(render_container *container, int linenum, void *selected
 		while (path.next(curpath))
 			searchstr.append(";").append(curpath.c_str()).append(PATH_SEPARATOR).append("icons");
 
+		bitmap_argb32 *tmp = auto_alloc(machine(), bitmap_argb32);
 		emu_file snapfile(searchstr.c_str(), OPEN_FLAG_READ);
 		std::string fullname = std::string(driver->name).append(".ico");
-		render_load_ico(*icons_bitmap[linenum], snapfile, NULL, fullname.c_str());
+		render_load_ico(*tmp, snapfile, NULL, fullname.c_str());
 
-		if (!icons_bitmap[linenum]->valid() && cloneof)
+		if (!tmp->valid() && cloneof)
 		{
 			fullname.assign(driver->parent).append(".ico");
-			render_load_ico(*icons_bitmap[linenum], snapfile, NULL, fullname.c_str());
+			render_load_ico(*tmp, snapfile, NULL, fullname.c_str());
 		}
 
-		if (icons_bitmap[linenum]->valid())
+		if (tmp->valid())
+		{
+			float panel_width = x1 - x0;
+			float panel_height = y1 - y0;
+			int screen_width = machine().render().ui_target().width();
+			int screen_height = machine().render().ui_target().height();
+			int panel_width_pixel = panel_width * screen_width;
+			int panel_height_pixel = panel_height * screen_height;
+
+			// Calculate resize ratios for resizing
+			float ratioW = (float)panel_width_pixel / tmp->width();
+			float ratioH = (float)panel_height_pixel / tmp->height();
+			int dest_xPixel = tmp->width();
+			int dest_yPixel = tmp->height();
+
+			if (ratioW < 1 || ratioH < 1)
+			{
+				// smaller ratio will ensure that the image fits in the view
+				float ratio = MIN(ratioW, ratioH);
+				dest_xPixel = tmp->width() * ratio;
+				dest_yPixel = tmp->height() * ratio;
+			}
+
+			bitmap_argb32 *dest_bitmap;
+			dest_bitmap = auto_alloc(machine(), bitmap_argb32);
+
+			// resample if necessary
+			if (dest_xPixel != tmp->width() || dest_yPixel != tmp->height())
+			{
+				dest_bitmap->allocate(dest_xPixel, dest_yPixel);
+				render_color color = { 1.0f, 1.0f, 1.0f, 1.0f };
+				render_resample_argb_bitmap_hq(*dest_bitmap, *tmp, color, true);
+			}
+			else
+				dest_bitmap = tmp;
+
+			icons_bitmap[linenum]->reset();
+			icons_bitmap[linenum]->allocate(panel_width_pixel, panel_height_pixel);
+
+			for (int x = 0; x < dest_xPixel; x++)
+				for (int y = 0; y < dest_yPixel; y++)
+					icons_bitmap[linenum]->pix32(y, x) = dest_bitmap->pix32(y, x);
+
+			auto_free(machine(), dest_bitmap);
+
 			icons_texture[linenum]->set_bitmap(*icons_bitmap[linenum], icons_bitmap[linenum]->cliprect(), TEXFORMAT_ARGB32);
+		}
+		else
+			icons_bitmap[linenum]->reset();
+
+		auto_free(machine(), tmp);
 	}
 
 	if (icons_bitmap[linenum]->valid())

@@ -43,15 +43,20 @@ SOUNDS["HC55516"] = true
 SOUNDS["YM3812"] = true
 SOUNDS["CEM3394"] = true
 SOUNDS["VOTRAX"] = true
+SOUNDS["WAVE"] = true
+SOUNDS["SN76477"] = true
 
 --------------------------------------------------
 -- specify available video cores
 --------------------------------------------------
 
+VIDEOS["FIXFREQ"] = true
+
 --------------------------------------------------
 -- specify available machine cores
 --------------------------------------------------
 
+MACHINES["NETLIST"] = true
 MACHINES["6821PIA"] = true
 MACHINES["TTL74148"] = true
 MACHINES["TTL74153"] = true
@@ -61,13 +66,19 @@ MACHINES["PIT8253"] = true
 MACHINES["Z80CTC"] = true
 MACHINES["68681"] = true
 MACHINES["BANKDEV"] = true
-
+MACHINES["Z80PIO"] = true
+MACHINES["Z80DART"] = true
+MACHINES["Z80DMA"] = true
+MACHINES["WD_FDC"] = true
 
 --------------------------------------------------
 -- specify available bus cores
 --------------------------------------------------
 
 BUSES["CENTRONICS"] = true
+BUSES["RS232"] = true
+BUSES["ABCBUS"] = true
+BUSES["SCSI"] = true
 
 --------------------------------------------------
 -- This is the list of files that are necessary
@@ -85,6 +96,7 @@ function createProjects_mewui_test(_target, _subtarget)
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/emu",
 		MAME_DIR .. "src/devices",
+		MAME_DIR .. "src/lib/netlist",
 		MAME_DIR .. "src/mame",
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
@@ -131,6 +143,13 @@ function createProjects_mewui_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/video/wrally.cpp",
 		MAME_DIR .. "src/mame/drivers/looping.cpp",
 		MAME_DIR .. "src/mame/drivers/supertnk.cpp",
+		MAME_DIR .. "src/mame/drivers/pong.cpp",
+		MAME_DIR .. "src/mame/drivers/nl_pong.cpp",
+		MAME_DIR .. "src/mame/drivers/nl_pongd.cpp",
+		MAME_DIR .. "src/mame/drivers/nl_breakout.cpp",
+		MAME_DIR .. "src/mame/drivers/abc80.cpp",
+		MAME_DIR .. "src/mame/machine/abc80kb.cpp",
+		MAME_DIR .. "src/mame/video/abc80.cpp",
 	}
 end
 

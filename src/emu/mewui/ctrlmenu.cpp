@@ -63,7 +63,7 @@ void ui_menu_controller_mapping::handle()
 		if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 		{
 			changed = true;
-			int value = (FPTR)m_event->itemref;
+			FPTR value = (FPTR)m_event->itemref;
 			(m_event->iptkey == IPT_UI_RIGHT) ? m_options[value].status++ : m_options[value].status--;
 		}
 	}

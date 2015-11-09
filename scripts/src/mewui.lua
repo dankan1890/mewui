@@ -33,8 +33,6 @@ files {
 	MAME_DIR .. "src/emu/mewui/icorender.h",
 	MAME_DIR .. "src/emu/mewui/inifile.cpp",
 	MAME_DIR .. "src/emu/mewui/inifile.h",
-	MAME_DIR .. "src/emu/mewui/menuhead.inc",
-	MAME_DIR .. "src/emu/mewui/menucpp.inc",
 	MAME_DIR .. "src/emu/mewui/miscmenu.cpp",
 	MAME_DIR .. "src/emu/mewui/miscmenu.h",
 	MAME_DIR .. "src/emu/mewui/moptions.cpp",

@@ -186,7 +186,6 @@ private:
 	void draw_text_box();
 	void handle_events(UINT32 flags);
 	void handle_keys(UINT32 flags);
-	void clear_free_list();
 
 	inline bool exclusive_input_pressed(int key, int repeat);
 	static void clear_free_list(running_machine &machine);

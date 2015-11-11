@@ -75,12 +75,9 @@
 #include "debugger.h"
 #include "render.h"
 #include "cheat.h"
-#include "mewui/selgame.h"
 #include "uiinput.h"
 #include "crsshair.h"
-#include "validity.h"
 #include "unzip.h"
-#include "debug/debugcon.h"
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "debug/debugvw.h"
@@ -333,9 +330,9 @@ device_t &running_machine::add_dynamic_device(device_t &owner, device_type type,
 
 	// notify this device and all its subdevices that they are now configured
 	device_iterator iter(root_device());
-	for (device_t *device = iter.first(); device != NULL; device = iter.next())
-		if (!device->configured())
-			device->config_complete();
+	for (device_t *dev = iter.first(); dev != NULL; dev = iter.next())
+		if (!dev->configured())
+			dev->config_complete();
 	return *device;
 }
 
@@ -589,7 +586,7 @@ std::string running_machine::get_statename(const char *option)
 			// find length of the device name
 			int end1 = statename_str.find("/", pos + 3);
 			int end2 = statename_str.find("%", pos + 3);
-			int end = -1;
+			int end;
 
 			if ((end1 != -1) && (end2 != -1))
 				end = MIN(end1, end2);
@@ -1234,7 +1231,7 @@ void running_machine::postload_all_devices()
 
 
 /***************************************************************************
-	NVRAM MANAGEMENT
+    NVRAM MANAGEMENT
 ***************************************************************************/
 
 const char *running_machine::image_parent_basename(device_t *device)
@@ -1253,8 +1250,8 @@ const char *running_machine::image_parent_basename(device_t *device)
 }
 
 /*-------------------------------------------------
-	nvram_filename - returns filename of system's
-	NVRAM depending of selected BIOS
+    nvram_filename - returns filename of system's
+    NVRAM depending of selected BIOS
 -------------------------------------------------*/
 
 std::string &running_machine::nvram_filename(std::string &result, device_t &device)
@@ -1282,7 +1279,7 @@ std::string &running_machine::nvram_filename(std::string &result, device_t &devi
 }
 
 /*-------------------------------------------------
-	nvram_load - load a system's NVRAM
+    nvram_load - load a system's NVRAM
 -------------------------------------------------*/
 
 void running_machine::nvram_load()
@@ -1304,7 +1301,7 @@ void running_machine::nvram_load()
 
 
 /*-------------------------------------------------
-	nvram_save - save a system's NVRAM
+    nvram_save - save a system's NVRAM
 -------------------------------------------------*/
 
 void running_machine::nvram_save()

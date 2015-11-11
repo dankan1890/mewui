@@ -285,7 +285,7 @@ private:
 	// handle mouse
 	void handle_main_events(UINT32 flags);
 
-	void draw_icon(render_container *container, int linenum, void *selectedref, float x1, float y1);
+	void draw_icon(int linenum, void *selectedref, float x1, float y1);
 
 
 };

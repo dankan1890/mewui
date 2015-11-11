@@ -1513,10 +1513,10 @@ void ui_menu::draw_select_game(bool noinput)
 				{
 					ui_software_info *soft = (ui_software_info *)item[itemnum].ref;
 					if (soft->startempty == 1)
-						draw_icon(container, linenum, (void *)soft->driver, effective_left, line_y);
+						draw_icon(linenum, (void *)soft->driver, effective_left, line_y);
 				}
 				else
-					draw_icon(container, linenum, item[itemnum].ref, effective_left, line_y);
+					draw_icon(linenum, item[itemnum].ref, effective_left, line_y);
 
 				space = mui.get_line_height() * container->manager().ui_aspect() * 1.5f;
 			}
@@ -2376,7 +2376,7 @@ void ui_menu::draw_common_arrow(float origx1, float origy1, float origx2, float 
 //  draw icons
 //-------------------------------------------------
 
-void ui_menu::draw_icon(render_container *container, int linenum, void *selectedref, float x0, float y0)
+void ui_menu::draw_icon(int linenum, void *selectedref, float x0, float y0)
 {
 	static const game_driver *olddriver[MAX_ICONS_RENDER] = { NULL };
 	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect(container);

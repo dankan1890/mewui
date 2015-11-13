@@ -106,7 +106,7 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 //  ctor
 //-------------------------------------------------
 
-ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : ui_menu(machine, container)
+ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : mewui_menu(machine, container)
 {
 	std::string error_string, last_filter, sub_filter;
 	emu_options &moptions = machine.options();
@@ -939,7 +939,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw toolbar
-	draw_toolbar(container, x1, y1, x2, y2);
+	draw_toolbar(x1, y1, x2, y2);
 
 	// get the size of the text
 	maxwidth = origx2 - origx1;
@@ -968,7 +968,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	// is favorite? draw the star
 	if (isstar)
-		draw_star(container, x1, y1);
+		draw_star(x1, y1);
 
 	// draw all lines
 	for (int line = 0; line < 5; line++)

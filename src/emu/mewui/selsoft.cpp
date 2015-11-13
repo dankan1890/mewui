@@ -134,7 +134,7 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 //  ctor
 //-------------------------------------------------
 
-ui_menu_select_software::ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver) : ui_menu(machine, container)
+ui_menu_select_software::ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver) : mewui_menu(machine, container)
 {
 	if (reselect_last::get())
 		reselect_last::set(false);
@@ -794,7 +794,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	y2 = origy1 - UI_BOX_TB_BORDER;
 
 	// draw toolbar
-	draw_toolbar(container, x1, y1, x2, y2, true);
+	draw_toolbar(x1, y1, x2, y2, true);
 
 	// get the size of the text
 	maxwidth = origx2 - origx1;
@@ -823,7 +823,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 
 	// is favorite? draw the star
 	if (isstar)
-		draw_star(container, x1, y1);
+		draw_star(x1, y1);
 
 	// draw all lines
 	for (int line = 0; line < 5; line++)

@@ -21,7 +21,7 @@ struct s_bios
 };
 
 // Menu Class
-class ui_menu_select_software : public ui_menu
+class ui_menu_select_software : public mewui_menu
 {
 public:
 	ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver);

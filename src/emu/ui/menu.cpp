@@ -2176,7 +2176,7 @@ std::string ui_menu::arts_render_common(float origx1, float origy1, float origx2
 //  draw favorites star
 //-------------------------------------------------
 
-void ui_menu::draw_star(render_container *container, float x0, float y0)
+void mewui_menu::draw_star(float x0, float y0)
 {
 	float y1 = y0 + machine().ui().get_line_height();
 	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect();
@@ -2187,7 +2187,7 @@ void ui_menu::draw_star(render_container *container, float x0, float y0)
 //  draw toolbar
 //-------------------------------------------------
 
-void ui_menu::draw_toolbar(render_container *container, float x1, float y1, float x2, float y2, bool software)
+void ui_menu::draw_toolbar(float x1, float y1, float x2, float y2, bool software)
 {
 	ui_manager &mui = machine().ui();
 	// draw a box

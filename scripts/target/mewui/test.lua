@@ -6,14 +6,14 @@
 --   test.lua
 --
 --   Small driver-specific example makefile
---   Use make SUBTARGET=tiny to build
+--   Use make SUBTARGET=test to build
 --
 ---------------------------------------------------------------------------
 
 
 --------------------------------------------------
 -- Specify all the CPU cores necessary for the
--- drivers referenced in tiny.lst.
+-- drivers referenced in test.lst.
 --------------------------------------------------
 
 CPUS["Z80"] = true
@@ -28,7 +28,7 @@ CPUS["COP400"] = true
 
 --------------------------------------------------
 -- Specify all the sound cores necessary for the
--- drivers referenced in tiny.lst.
+-- drivers referenced in test.lst.
 --------------------------------------------------
 
 SOUNDS["SAMPLES"] = true
@@ -83,7 +83,7 @@ BUSES["SCSI"] = true
 --------------------------------------------------
 -- This is the list of files that are necessary
 -- for building all of the drivers referenced
--- in tiny.lst
+-- in test.lst
 --------------------------------------------------
 
 function createProjects_mewui_test(_target, _subtarget)
@@ -106,39 +106,54 @@ function createProjects_mewui_test(_target, _subtarget)
 
 	files{
 		MAME_DIR .. "src/mame/machine/ticket.cpp",
+	MAME_DIR .. "src/mame/machine/ticket.h",
 		MAME_DIR .. "src/mame/drivers/carpolo.cpp",
+	MAME_DIR .. "src/mame/includes/carpolo.h",
 		MAME_DIR .. "src/mame/machine/carpolo.cpp",
 		MAME_DIR .. "src/mame/video/carpolo.cpp",
 		MAME_DIR .. "src/mame/drivers/circus.cpp",
+	MAME_DIR .. "src/mame/includes/circus.h",
 		MAME_DIR .. "src/mame/audio/circus.cpp",
 		MAME_DIR .. "src/mame/video/circus.cpp",
 		MAME_DIR .. "src/mame/drivers/exidy.cpp",
+	MAME_DIR .. "src/mame/includes/exidy.h",
 		MAME_DIR .. "src/mame/audio/exidy.cpp",
+	MAME_DIR .. "src/mame/audio/exidy.h",
 		MAME_DIR .. "src/mame/video/exidy.cpp",
 		MAME_DIR .. "src/mame/audio/exidy440.cpp",
+	MAME_DIR .. "src/mame/audio/exidy440.h",
 		MAME_DIR .. "src/mame/drivers/starfire.cpp",
+	MAME_DIR .. "src/mame/includes/starfire.h",
 		MAME_DIR .. "src/mame/video/starfire.cpp",
 		MAME_DIR .. "src/mame/drivers/vertigo.cpp",
+	MAME_DIR .. "src/mame/includes/vertigo.h",
 		MAME_DIR .. "src/mame/machine/vertigo.cpp",
 		MAME_DIR .. "src/mame/video/vertigo.cpp",
 		MAME_DIR .. "src/mame/drivers/victory.cpp",
+	MAME_DIR .. "src/mame/includes/victory.h",
 		MAME_DIR .. "src/mame/video/victory.cpp",
 		MAME_DIR .. "src/mame/audio/targ.cpp",
 		MAME_DIR .. "src/mame/drivers/astrocde.cpp",
+	MAME_DIR .. "src/mame/includes/astrocde.h",
 		MAME_DIR .. "src/mame/video/astrocde.cpp",
 		MAME_DIR .. "src/mame/drivers/gridlee.cpp",
+	MAME_DIR .. "src/mame/includes/gridlee.h",
 		MAME_DIR .. "src/mame/audio/gridlee.cpp",
 		MAME_DIR .. "src/mame/video/gridlee.cpp",
 		MAME_DIR .. "src/mame/drivers/williams.cpp",
+	MAME_DIR .. "src/mame/includes/williams.h",
 		MAME_DIR .. "src/mame/machine/williams.cpp",
 		MAME_DIR .. "src/mame/audio/williams.cpp",
+	MAME_DIR .. "src/mame/audio/williams.h",
 		MAME_DIR .. "src/mame/video/williams.cpp",
 		MAME_DIR .. "src/mame/audio/gorf.cpp",
 		MAME_DIR .. "src/mame/audio/wow.cpp",
 		MAME_DIR .. "src/mame/drivers/gaelco.cpp",
+	MAME_DIR .. "src/mame/includes/gaelco.h",
 		MAME_DIR .. "src/mame/video/gaelco.cpp",
 		MAME_DIR .. "src/mame/machine/gaelcrpt.cpp",
 		MAME_DIR .. "src/mame/drivers/wrally.cpp",
+	MAME_DIR .. "src/mame/includes/wrally.h",
 		MAME_DIR .. "src/mame/machine/wrally.cpp",
 		MAME_DIR .. "src/mame/video/wrally.cpp",
 		MAME_DIR .. "src/mame/drivers/looping.cpp",

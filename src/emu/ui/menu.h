@@ -208,7 +208,7 @@ public:
 	void draw_ume_box(float x1, float y1, float x2, float y2);
 
 	// draw toolbar
-	void draw_toolbar(render_container *container, float x1, float y1, float x2, float y2, bool software = false);
+	void draw_toolbar(float x1, float y1, float x2, float y2, bool software = false);
 
 	// draw left panel
 	virtual float draw_left_panel(float x1, float y1, float x2, float y2) { return 0; }
@@ -217,7 +217,7 @@ public:
 	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2) { };
 
 	// draw star
-	void draw_star(render_container *container, float x0, float y0);
+//	void draw_star(float x0, float y0);
 
 	// Global initialization
 	static void init_mewui(running_machine &machine);
@@ -231,6 +231,9 @@ public:
 		else
 			return ((actual <= min) ? MENU_FLAG_RIGHT_ARROW : (actual >= max ? MENU_FLAG_LEFT_ARROW : (MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW)));
 	}
+
+	static bitmap_argb32 *star_bitmap;
+	static render_texture *star_texture;
 
 protected:
 	int topline_datsview;      // right box top line
@@ -258,9 +261,11 @@ protected:
 	static bitmap_argb32 *snapx_bitmap;
 
 private:
-	static bitmap_argb32 *no_avail_bitmap, *bgrnd_bitmap, *star_bitmap;
+//	static bitmap_argb32 *no_avail_bitmap, *bgrnd_bitmap, *star_bitmap;
+	static bitmap_argb32 *no_avail_bitmap, *bgrnd_bitmap;
 	static bitmap_rgb32 *hilight_main_bitmap;
-	static render_texture *hilight_main_texture, *bgrnd_texture, *star_texture;
+//	static render_texture *hilight_main_texture, *bgrnd_texture, *star_texture;
+	static render_texture *hilight_main_texture, *bgrnd_texture;
 	static render_texture *icons_texture[];
 	static bitmap_argb32 *icons_bitmap[];
 
@@ -270,11 +275,8 @@ private:
 	static render_texture *sw_toolbar_texture[];
 	static bitmap_argb32 *sw_toolbar_bitmap[];
 
-	// draw game list
+	// draw machine menu
 	void draw_select_game(bool noinput);
-
-	// draw game list
-	void draw_palette_menu();
 
 	void get_title_search(std::string &title, std::string &search);
 
@@ -286,6 +288,19 @@ private:
 
 	void draw_icon(int linenum, void *selectedref, float x1, float y1);
 
+	// draw palette menu
+	void draw_palette_menu();
+
+
+};
+class mewui_menu : public ui_menu
+{
+public:
+	mewui_menu(running_machine &machine, render_container *container) : ui_menu(machine, container) { };
+
+	void draw_star(float x0, float y0);
+
+private:
 
 };
 

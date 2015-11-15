@@ -134,7 +134,7 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 //  ctor
 //-------------------------------------------------
 
-ui_menu_select_software::ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver) : mewui_menu(machine, container)
+ui_menu_select_software::ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver) : ui_menu(machine, container)
 {
 	if (reselect_last::get())
 		reselect_last::set(false);

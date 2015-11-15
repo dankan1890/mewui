@@ -2176,7 +2176,7 @@ std::string ui_menu::arts_render_common(float origx1, float origy1, float origx2
 //  draw favorites star
 //-------------------------------------------------
 
-void mewui_menu::draw_star(float x0, float y0)
+void ui_menu::draw_star(float x0, float y0)
 {
 	float y1 = y0 + machine().ui().get_line_height();
 	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect();

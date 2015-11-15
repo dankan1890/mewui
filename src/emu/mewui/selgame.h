@@ -15,7 +15,7 @@
 
 #include "ui/menu.h"
 
-class ui_mewui_select_game : public mewui_menu
+class ui_mewui_select_game : public ui_menu
 {
 public:
 	ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename);

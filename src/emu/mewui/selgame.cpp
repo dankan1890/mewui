@@ -106,7 +106,7 @@ bool sort_game_list(const game_driver *x, const game_driver *y)
 //  ctor
 //-------------------------------------------------
 
-ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : mewui_menu(machine, container)
+ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_container *container, const char *gamename) : ui_menu(machine, container)
 {
 	std::string error_string, last_filter, sub_filter;
 	emu_options &moptions = machine.options();

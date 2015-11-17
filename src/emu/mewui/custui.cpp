@@ -90,11 +90,11 @@ void ui_menu_custom_ui::handle()
 
 void ui_menu_custom_ui::populate()
 {
-	item_append("Fonts", NULL, 0, (void *)FONT_MENU);
-	item_append("Colors", NULL, 0, (void *)COLORS_MENU);
+	item_append("Fonts", NULL, 0, (void *)(FPTR)FONT_MENU);
+	item_append("Colors", NULL, 0, (void *)(FPTR)COLORS_MENU);
 
 	UINT32 arrow_flags = get_arrow_flags(0, (int)HIDE_BOTH, mewui_globals::panels_status);
-	item_append("Filters and Info/Image", hide_status[mewui_globals::panels_status], arrow_flags, (void *)HIDE_MENU);
+	item_append("Filters and Info/Image", hide_status[mewui_globals::panels_status], arrow_flags, (void *)(FPTR)HIDE_MENU);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
@@ -315,18 +315,18 @@ void ui_menu_font_ui::populate()
 	// add fonts option
 	arrow_flags = get_arrow_flags(0, m_class.ui.size() - 1, m_class.actual);
 	std::string name(m_class.ui[m_class.actual]);
-	item_append("UI Font", name.c_str(), arrow_flags, (void *)MUI_FNT);
+	item_append("UI Font", name.c_str(), arrow_flags, (void *)(FPTR)MUI_FNT);
 
 	if (name.compare("default") != 0)
 	{
-		item_append("Bold", m_bold ? "On" : "Off", m_bold ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)MUI_BOLD);
-		item_append("Italic", m_italic ? "On" : "Off", m_italic ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)MUI_ITALIC);
+		item_append("Bold", m_bold ? "On" : "Off", m_bold ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_BOLD);
+		item_append("Italic", m_italic ? "On" : "Off", m_italic ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_ITALIC);
 	}
 #endif
 
 	arrow_flags = get_arrow_flags(m_font_min, m_font_max, m_font_size);
 	strprintf(tmptxt, "%2d", m_font_size);
-	item_append("Lines", tmptxt.c_str(), arrow_flags, (void *)FONT_SIZE);
+	item_append("Lines", tmptxt.c_str(), arrow_flags, (void *)(FPTR)FONT_SIZE);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
@@ -334,7 +334,7 @@ void ui_menu_font_ui::populate()
 	tmptxt.clear();
 	strprintf(tmptxt, "%3.2f", m_info_size);
 	arrow_flags = get_arrow_flags(m_info_min, m_info_max, m_info_size);
-	item_append("Infos text size", tmptxt.c_str(), arrow_flags, (void *)INFOS_SIZE);
+	item_append("Infos text size", tmptxt.c_str(), arrow_flags, (void *)(FPTR)INFOS_SIZE);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
@@ -493,25 +493,25 @@ void ui_menu_colors_ui::handle()
 
 void ui_menu_colors_ui::populate()
 {
-	item_append("Normal text", NULL, 0, (void *)MUI_TEXT_COLOR);
-	item_append("Selected m_color", NULL, 0, (void *)MUI_SELECTED_COLOR);
-	item_append("Normal text background", NULL, 0, (void *)MUI_TEXT_BG_COLOR);
-	item_append("Selected background m_color", NULL, 0, (void *)MUI_SELECTED_BG_COLOR);
-	item_append("Subitem m_color", NULL, 0, (void *)MUI_SUBITEM_COLOR);
-	item_append("Clone", NULL, 0, (void *)MUI_CLONE_COLOR);
-	item_append("Border", NULL, 0, (void *)MUI_BORDER_COLOR);
-	item_append("Background", NULL, 0, (void *)MUI_BACKGROUND_COLOR);
-	item_append("Dipswitch", NULL, 0, (void *)MUI_DIPSW_COLOR);
-	item_append("Unavailable m_color", NULL, 0, (void *)MUI_UNAVAILABLE_COLOR);
-	item_append("Slider m_color", NULL, 0, (void *)MUI_SLIDER_COLOR);
-	item_append("Gfx viewer background", NULL, 0, (void *)MUI_GFXVIEWER_BG_COLOR);
-	item_append("Mouse over m_color", NULL, 0, (void *)MUI_MOUSEOVER_COLOR);
-	item_append("Mouse over background m_color", NULL, 0, (void *)MUI_MOUSEOVER_BG_COLOR);
-	item_append("Mouse down m_color", NULL, 0, (void *)MUI_MOUSEDOWN_COLOR);
-	item_append("Mouse down background m_color", NULL, 0, (void *)MUI_MOUSEDOWN_BG_COLOR);
+	item_append("Normal text", NULL, 0, (void *)(FPTR)MUI_TEXT_COLOR);
+	item_append("Selected m_color", NULL, 0, (void *)(FPTR)MUI_SELECTED_COLOR);
+	item_append("Normal text background", NULL, 0, (void *)(FPTR)MUI_TEXT_BG_COLOR);
+	item_append("Selected background m_color", NULL, 0, (void *)(FPTR)MUI_SELECTED_BG_COLOR);
+	item_append("Subitem m_color", NULL, 0, (void *)(FPTR)MUI_SUBITEM_COLOR);
+	item_append("Clone", NULL, 0, (void *)(FPTR)MUI_CLONE_COLOR);
+	item_append("Border", NULL, 0, (void *)(FPTR)MUI_BORDER_COLOR);
+	item_append("Background", NULL, 0, (void *)(FPTR)MUI_BACKGROUND_COLOR);
+	item_append("Dipswitch", NULL, 0, (void *)(FPTR)MUI_DIPSW_COLOR);
+	item_append("Unavailable m_color", NULL, 0, (void *)(FPTR)MUI_UNAVAILABLE_COLOR);
+	item_append("Slider m_color", NULL, 0, (void *)(FPTR)MUI_SLIDER_COLOR);
+	item_append("Gfx viewer background", NULL, 0, (void *)(FPTR)MUI_GFXVIEWER_BG_COLOR);
+	item_append("Mouse over m_color", NULL, 0, (void *)(FPTR)MUI_MOUSEOVER_COLOR);
+	item_append("Mouse over background m_color", NULL, 0, (void *)(FPTR)MUI_MOUSEOVER_BG_COLOR);
+	item_append("Mouse down m_color", NULL, 0, (void *)(FPTR)MUI_MOUSEDOWN_COLOR);
+	item_append("Mouse down background m_color", NULL, 0, (void *)(FPTR)MUI_MOUSEDOWN_BG_COLOR);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-	item_append("Restore originals colors", NULL, 0, (void *)MUI_RESTORE);
+	item_append("Restore originals colors", NULL, 0, (void *)(FPTR)MUI_RESTORE);
 
 	custombottom = customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
@@ -827,40 +827,40 @@ void ui_menu_rgb_ui::populate()
 	{
 		arrow_flags = get_arrow_flags(0, 255, m_color->a());
 		strprintf(text, "%3d", m_color->a());
-		item_append("Alpha", text.c_str(), arrow_flags, (void *)RGB_ALPHA);
+		item_append("Alpha", text.c_str(), arrow_flags, (void *)(FPTR)RGB_ALPHA);
 	}
 	else
-		item_append("Alpha", s_text.c_str(), 0, (void *)RGB_ALPHA);
+		item_append("Alpha", s_text.c_str(), 0, (void *)(FPTR)RGB_ALPHA);
 
 	if (m_lock_ref != RGB_RED)
 	{
 		arrow_flags = get_arrow_flags(0, 255, m_color->r());
 		strprintf(text, "%3d", m_color->r());
-		item_append("Red", text.c_str(), arrow_flags, (void *)RGB_RED);
+		item_append("Red", text.c_str(), arrow_flags, (void *)(FPTR)RGB_RED);
 	}
 	else
-		item_append("Red", s_text.c_str(), 0, (void *)RGB_RED);
+		item_append("Red", s_text.c_str(), 0, (void *)(FPTR)RGB_RED);
 
 	if (m_lock_ref != RGB_GREEN)
 	{
 		arrow_flags = get_arrow_flags(0, 255, m_color->g());
 		strprintf(text, "%3d", m_color->g());
-		item_append("Green", text.c_str(), arrow_flags, (void *)RGB_GREEN);
+		item_append("Green", text.c_str(), arrow_flags, (void *)(FPTR)RGB_GREEN);
 	}
 	else
-		item_append("Green", s_text.c_str(), 0, (void *)RGB_GREEN);
+		item_append("Green", s_text.c_str(), 0, (void *)(FPTR)RGB_GREEN);
 
 	if (m_lock_ref != RGB_BLUE)
 	{
 		arrow_flags = get_arrow_flags(0, 255, m_color->b());
 		strprintf(text, "%3d", m_color->b());
-		item_append("Blue", text.c_str(), arrow_flags, (void *)RGB_BLUE);
+		item_append("Blue", text.c_str(), arrow_flags, (void *)(FPTR)RGB_BLUE);
 	}
 	else
-		item_append("Blue", s_text.c_str(), 0, (void *)RGB_BLUE);
+		item_append("Blue", s_text.c_str(), 0, (void *)(FPTR)RGB_BLUE);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-	item_append("Choose from palette", NULL, 0, (void *)PALETTE_CHOOSE);
+	item_append("Choose from palette", NULL, 0, (void *)(FPTR)PALETTE_CHOOSE);
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	custombottom = customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;

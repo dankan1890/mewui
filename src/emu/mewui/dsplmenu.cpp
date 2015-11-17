@@ -143,7 +143,7 @@ void ui_menu_display_options::populate()
 	// add video mode option
 	std::string v_text(m_video[m_options[1].status].label);
 	UINT32 arrow_flags = get_arrow_flags(0, ARRAY_LENGTH(m_video) - 1, m_options[1].status);
-	item_append(m_options[1].description, v_text.c_str(), arrow_flags, (void *)1);
+	item_append(m_options[1].description, v_text.c_str(), arrow_flags, (void *)(FPTR)1);
 
 	// add options items
 	for (int opt = 2; opt < ARRAY_LENGTH(m_options); ++opt)

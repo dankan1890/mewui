@@ -652,8 +652,8 @@ void ui_mewui_select_game::populate()
 
 	// add special items
 	item_append(MENU_SEPARATOR_ITEM, NULL, MENU_FLAG_MEWUI, NULL);
-	item_append("Configure Options", NULL, MENU_FLAG_MEWUI, (void *)1);
-	item_append("Configure Directories", NULL, MENU_FLAG_MEWUI, (void *)2);
+	item_append("Configure Options", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)1);
+	item_append("Configure Directories", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)2);
 
 	// configure the custom rendering
 	float y_pixel = 1.0f / container->manager().ui_target().height();

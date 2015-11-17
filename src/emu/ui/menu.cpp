@@ -1297,7 +1297,6 @@ void ui_menu::init_mewui(running_machine &machine)
 	for (int i = 0; i < MAX_ICONS_RENDER; i++)
 	{
 		icons_bitmap[i] = auto_alloc(machine, bitmap_argb32);
-		//icons_texture[i] = mrender.texture_alloc(render_texture::hq_scale);
 		icons_texture[i] = mrender.texture_alloc();
 	}
 

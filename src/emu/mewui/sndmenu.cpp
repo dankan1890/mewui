@@ -133,9 +133,9 @@ void ui_menu_sound_options::populate()
 	strprintf(s_text, "%d", m_sample_rate);
 
 	// add options items
-	item_append("Sound", m_sound ? "On" : "Off", m_sound ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)ENABLE_SOUND);
-	item_append("Sample Rate", s_text.c_str(), arrow_flags, (void *)SAMPLE_RATE);
-	item_append("Use External Samples", m_samples ? "On" : "Off", m_samples ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)ENABLE_SAMPLES);
+	item_append("Sound", m_sound ? "On" : "Off", m_sound ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)ENABLE_SOUND);
+	item_append("Sample Rate", s_text.c_str(), arrow_flags, (void *)(FPTR)SAMPLE_RATE);
+	item_append("Use External Samples", m_samples ? "On" : "Off", m_samples ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)ENABLE_SAMPLES);
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);

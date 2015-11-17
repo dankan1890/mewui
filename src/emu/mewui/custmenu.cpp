@@ -177,7 +177,7 @@ void ui_menu_custom_filter::populate()
 {
 	// add main filter
 	UINT32 arrow_flags = get_arrow_flags((int)FILTER_ALL, (int)FILTER_UNAVAILABLE, custfltr::main);
-	item_append("Main filter", main_filters::text[custfltr::main], arrow_flags, (void *)MAIN_FILTER);
+	item_append("Main filter", main_filters::text[custfltr::main], arrow_flags, (void *)(FPTR)MAIN_FILTER);
 
 	// add other filters
 	for (int x = 1; x <= custfltr::numother; x++)
@@ -223,10 +223,10 @@ void ui_menu_custom_filter::populate()
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	if (custfltr::numother > 0)
-		item_append("Remove last filter", NULL, 0, (void *)REMOVE_FILTER);
+		item_append("Remove last filter", NULL, 0, (void *)(FPTR)REMOVE_FILTER);
 
 	if (custfltr::numother < MAX_CUST_FILTER - 2)
-		item_append("Add filter", NULL, 0, (void *)ADD_FILTER);
+		item_append("Add filter", NULL, 0, (void *)(FPTR)ADD_FILTER);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
@@ -475,7 +475,7 @@ void ui_menu_swcustom_filter::populate()
 {
 	// add main filter
 	UINT32 arrow_flags = get_arrow_flags((int)MEWUI_SW_ALL, (int)MEWUI_SW_UNAVAILABLE, sw_custfltr::main);
-	item_append("Main filter", sw_filters::text[sw_custfltr::main], arrow_flags, (void *)MAIN_FILTER);
+	item_append("Main filter", sw_filters::text[sw_custfltr::main], arrow_flags, (void *)(FPTR)MAIN_FILTER);
 
 	// add other filters
 	for (int x = 1; x <= sw_custfltr::numother; x++)
@@ -538,10 +538,10 @@ void ui_menu_swcustom_filter::populate()
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	if (sw_custfltr::numother > 0)
-		item_append("Remove last filter", NULL, 0, (void *)REMOVE_FILTER);
+		item_append("Remove last filter", NULL, 0, (void *)(FPTR)REMOVE_FILTER);
 
 	if (sw_custfltr::numother < MAX_CUST_FILTER - 2)
-		item_append("Add filter", NULL, 0, (void *)ADD_FILTER);
+		item_append("Add filter", NULL, 0, (void *)(FPTR)ADD_FILTER);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 

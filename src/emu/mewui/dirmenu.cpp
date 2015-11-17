@@ -359,35 +359,34 @@ void ui_menu_directory::handle()
 
 void ui_menu_directory::populate()
 {
-	item_append("Roms", NULL, 0, (void *)ROM_FOLDERS);
-	item_append("MEWUI", NULL, 0, (void *)MEWUI_FOLDERS);
-	item_append("Samples", NULL, 0, (void *)SAMPLE_FOLDERS);
-	item_append("INIs", NULL, 0, (void *)INI_FOLDERS);
-	item_append("Artwork", NULL, 0, (void *)ARTWORK_FOLDERS);
-	item_append("DATs (History, Mameinfo, etc...)", NULL, 0, (void *)HISTORY_FOLDERS);
-	item_append("Extra INI (Category, etc...)", NULL, 0, (void *)EXTRAINI_FOLDERS);
-	item_append("Icons", NULL, 0, (void *)ICON_FOLDERS);
-	item_append("Cheats", NULL, 0, (void *)CHEAT_FOLDERS);
-	item_append("Snapshots", NULL, 0, (void *)SNAPSHOT_FOLDERS);
-	item_append("Cabinets", NULL, 0, (void *)CABINET_FOLDERS);
-	item_append("Flyers", NULL, 0, (void *)FLYER_FOLDERS);
-	item_append("Titles", NULL, 0, (void *)TITLE_FOLDERS);
-	item_append("Ends", NULL, 0, (void *)ENDS_FOLDERS);
-	item_append("PCBs", NULL, 0, (void *)PCB_FOLDERS);
-	item_append("Marquees", NULL, 0, (void *)MARQUEES_FOLDERS);
-	item_append("Control Panels", NULL, 0, (void *)CPANEL_FOLDERS);
-	item_append("Bosses", NULL, 0, (void *)BOSSES_FOLDERS);
-	item_append("Versus", NULL, 0, (void *)VERSUS_FOLDERS);
-	item_append("Game Over", NULL, 0, (void *)GAMEOVER_FOLDERS);
-	item_append("How To", NULL, 0, (void *)HOWTO_FOLDERS);
-	item_append("Select", NULL, 0, (void *)SELECT_FOLDERS);
-	item_append("Artwork Preview", NULL, 0, (void *)ARTPREV_FOLDERS);
-	item_append("Scores", NULL, 0, (void *)SCORES_FOLDERS);
-	item_append("Logos", NULL, 0, (void *)LOGO_FOLDERS);
-	item_append("Crosshairs", NULL, 0, (void *)CROSSHAIR_FOLDERS);
+	item_append("Roms", NULL, 0, (void *)(FPTR)ROM_FOLDERS);
+	item_append("MEWUI", NULL, 0, (void *)(FPTR)MEWUI_FOLDERS);
+	item_append("Samples", NULL, 0, (void *)(FPTR)SAMPLE_FOLDERS);
+	item_append("INIs", NULL, 0, (void *)(FPTR)INI_FOLDERS);
+	item_append("Artwork", NULL, 0, (void *)(FPTR)ARTWORK_FOLDERS);
+	item_append("DATs (History, Mameinfo, etc...)", NULL, 0, (void *)(FPTR)HISTORY_FOLDERS);
+	item_append("Extra INI (Category, etc...)", NULL, 0, (void *)(FPTR)EXTRAINI_FOLDERS);
+	item_append("Icons", NULL, 0, (void *)(FPTR)ICON_FOLDERS);
+	item_append("Cheats", NULL, 0, (void *)(FPTR)CHEAT_FOLDERS);
+	item_append("Snapshots", NULL, 0, (void *)(FPTR)SNAPSHOT_FOLDERS);
+	item_append("Cabinets", NULL, 0, (void *)(FPTR)CABINET_FOLDERS);
+	item_append("Flyers", NULL, 0, (void *)(FPTR)FLYER_FOLDERS);
+	item_append("Titles", NULL, 0, (void *)(FPTR)TITLE_FOLDERS);
+	item_append("Ends", NULL, 0, (void *)(FPTR)ENDS_FOLDERS);
+	item_append("PCBs", NULL, 0, (void *)(FPTR)PCB_FOLDERS);
+	item_append("Marquees", NULL, 0, (void *)(FPTR)MARQUEES_FOLDERS);
+	item_append("Control Panels", NULL, 0, (void *)(FPTR)CPANEL_FOLDERS);
+	item_append("Bosses", NULL, 0, (void *)(FPTR)BOSSES_FOLDERS);
+	item_append("Versus", NULL, 0, (void *)(FPTR)VERSUS_FOLDERS);
+	item_append("Game Over", NULL, 0, (void *)(FPTR)GAMEOVER_FOLDERS);
+	item_append("How To", NULL, 0, (void *)(FPTR)HOWTO_FOLDERS);
+	item_append("Select", NULL, 0, (void *)(FPTR)SELECT_FOLDERS);
+	item_append("Artwork Preview", NULL, 0, (void *)(FPTR)ARTPREV_FOLDERS);
+	item_append("Scores", NULL, 0, (void *)(FPTR)SCORES_FOLDERS);
+	item_append("Logos", NULL, 0, (void *)(FPTR)LOGO_FOLDERS);
+	item_append("Crosshairs", NULL, 0, (void *)(FPTR)CROSSHAIR_FOLDERS);
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
-
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 

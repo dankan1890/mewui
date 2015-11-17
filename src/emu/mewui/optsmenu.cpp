@@ -231,11 +231,11 @@ void ui_menu_game_options::populate()
 
 	// add filter item
 	UINT32 arrow_flags = get_arrow_flags(0, ume_filters::length - 1, ume_filters::actual);
-	item_append("Machine", ume_filters::text[ume_filters::actual], arrow_flags, (void *)UME_SYSTEM);
+	item_append("Machine", ume_filters::text[ume_filters::actual], arrow_flags, (void *)(FPTR)UME_SYSTEM);
 
 	// add filter item
 	arrow_flags = get_arrow_flags((int)FILTER_FIRST, (int)FILTER_LAST, main_filters::actual);
-	item_append("Filter", main_filters::text[main_filters::actual], arrow_flags, (void *)FILTER_MENU);
+	item_append("Filter", main_filters::text[main_filters::actual], arrow_flags, (void *)(FPTR)FILTER_MENU);
 
 	// add category subitem
 	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
@@ -246,12 +246,12 @@ void ui_menu_game_options::populate()
 
 		arrow_flags = get_arrow_flags(0, inif.ini_index.size() - 1, afile);
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), inif.ini_index[afile].name.c_str(), arrow_flags, (void *)FILE_CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.ini_index[afile].name.c_str(), arrow_flags, (void *)(FPTR)FILE_CATEGORY_FILTER);
 
 		arrow_flags = get_arrow_flags(0, inif.ini_index[afile].category.size() - 1, acategory);
 		fbuff.assign(" ^!Category");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), inif.ini_index[afile].category[acategory].name.c_str(), arrow_flags, (void *)CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.ini_index[afile].category[acategory].name.c_str(), arrow_flags, (void *)(FPTR)CATEGORY_FILTER);
 	}
 	// add manufacturer subitem
 	else if (main_filters::actual == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
@@ -259,7 +259,7 @@ void ui_menu_game_options::populate()
 		arrow_flags = get_arrow_flags(0, c_mnfct::ui.size() - 1, c_mnfct::actual);
 		fbuff.assign("^!Manufacturer");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), c_mnfct::ui[c_mnfct::actual].c_str(), arrow_flags, (void *)MANUFACT_CAT_FILTER);
+		item_append(fbuff.c_str(), c_mnfct::ui[c_mnfct::actual].c_str(), arrow_flags, (void *)(FPTR)MANUFACT_CAT_FILTER);
 	}
 	// add year subitem
 	else if (main_filters::actual == FILTER_YEAR && c_year::ui.size() > 0)
@@ -267,7 +267,7 @@ void ui_menu_game_options::populate()
 		arrow_flags = get_arrow_flags(0, c_year::ui.size() - 1, c_year::actual);
 		fbuff.assign("^!Year");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), c_year::ui[c_year::actual].c_str(), arrow_flags, (void *)YEAR_CAT_FILTER);
+		item_append(fbuff.c_str(), c_year::ui[c_year::actual].c_str(), arrow_flags, (void *)(FPTR)YEAR_CAT_FILTER);
 	}
 	// add screen subitem
 	else if (main_filters::actual == FILTER_SCREEN)
@@ -275,25 +275,25 @@ void ui_menu_game_options::populate()
 		arrow_flags = get_arrow_flags(0, screen_filters::length - 1, screen_filters::actual);
 		fbuff.assign("^!Screen type");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), screen_filters::text[screen_filters::actual], arrow_flags, (void *)SCREEN_CAT_FILTER);
+		item_append(fbuff.c_str(), screen_filters::text[screen_filters::actual], arrow_flags, (void *)(FPTR)SCREEN_CAT_FILTER);
 	}
 	// add custom subitem
 	else if (main_filters::actual == FILTER_CUSTOM)
 	{
 		fbuff.assign("^!Setup custom filter");
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), NULL, 0, (void *)CUSTOM_FILTER);
+		item_append(fbuff.c_str(), NULL, 0, (void *)(FPTR)CUSTOM_FILTER);
 	}
 
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	// add options items
-	item_append("Customize UI", NULL, 0, (void *)CUSTOM_MENU);
-	item_append("Display Options", NULL, 0, (void *)DISPLAY_MENU);
-	item_append("Sound Options", NULL, 0, (void *)SOUND_MENU);
-	item_append("Miscellaneous Options", NULL, 0, (void *)MISC_MENU);
-	item_append("Device Mapping", NULL, 0, (void *)CONTROLLER_MENU);
-	item_append("General Inputs", NULL, 0, (void *)CGI_MENU);
+	item_append("Customize UI", NULL, 0, (void *)(FPTR)CUSTOM_MENU);
+	item_append("Display Options", NULL, 0, (void *)(FPTR)DISPLAY_MENU);
+	item_append("Sound Options", NULL, 0, (void *)(FPTR)SOUND_MENU);
+	item_append("Miscellaneous Options", NULL, 0, (void *)(FPTR)MISC_MENU);
+	item_append("Device Mapping", NULL, 0, (void *)(FPTR)CONTROLLER_MENU);
+	item_append("General Inputs", NULL, 0, (void *)(FPTR)CGI_MENU);
 	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
 
 	custombottom = 2.0f * machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;

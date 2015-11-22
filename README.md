@@ -7,11 +7,9 @@ What is MEWUI?
 
 MEWUI stands for MAME Extended Windows User Interface.
 
-MAME's purpose is to preserve decades of video-game history. As gaming technology continues to rush forward, MAME prevents these important "vintage" games from being lost and forgotten. This is achieved by documenting the hardware and how it functions. The source code to MAME serves as this documentation. The fact that the games are playable serves primarily to validate the accuracy of the documentation (how else can you prove that you have recreated the hardware faithfully?).
+MEWUI is a frontend for MAME, which unlike the other uses its internal graphics interface.
 
-MESS (Multi Emulator Super System) is the sister project of MAME. MESS documents the hardware for a wide variety of (mostly vintage) computers, video game consoles, and calculators, as MAME does for arcade games.
-
-The MESS and MAME projects live in the same source repository and share much of the same code, but are different build targets.
+The benefit is that it is cross-platform, can be compiled in any OS supported by MAME itself, always keeping the same look.
 
 
 How to compile?

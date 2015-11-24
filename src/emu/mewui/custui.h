@@ -18,12 +18,6 @@
 #include <windows.h>
 #endif
 
-struct s_color_table
-{
-	rgb_t       color;
-	const char  *option;
-};
-
 //-------------------------------------------------
 //  Custom UI menu
 //-------------------------------------------------
@@ -120,6 +114,12 @@ private:
 		MUI_TEXT_COLOR,
 		MUI_UNAVAILABLE_COLOR,
 		MUI_RESTORE
+	};
+
+	struct s_color_table
+	{
+		rgb_t       color;
+		const char  *option;
 	};
 
 	s_color_table m_color_table[MUI_RESTORE];

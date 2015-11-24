@@ -29,58 +29,49 @@ void convert_command_glyph(std::string &str)
 			break;
 		else if (ucharcount != 1)
 			goto process_next;
-
-		if (s[i] == '\n')
-		{
+		else if (s[i] == '\n')
 			uchar = '\n';
-			goto process_next;
-		}
-
-		if (s[i] == COMMAND_CONVERT_TEXT)
+		else if (s[i] == COMMAND_CONVERT_TEXT)
 		{
 			fix_strings_t *fixtext = convert_text;
 
 			if (s[i] == s[i + 1])
-			{
 				i++;
-				goto process_next;
-			}
-
-			for (; fixtext->glyph_code; fixtext++)
+			else
 			{
-				if (!fixtext->glyph_str_len)
-					fixtext->glyph_str_len = strlen(fixtext->glyph_str);
-
-				if (strncmp(fixtext->glyph_str, s + i + 1, fixtext->glyph_str_len) == 0)
+				for (; fixtext->glyph_code; fixtext++)
 				{
-					uchar = fixtext->glyph_code + COMMAND_UNICODE;
-					i += strlen(fixtext->glyph_str);
-					goto process_next;
+					if (!fixtext->glyph_str_len)
+						fixtext->glyph_str_len = strlen(fixtext->glyph_str);
+
+					if (strncmp(fixtext->glyph_str, s + i + 1, fixtext->glyph_str_len) == 0)
+					{
+						uchar = fixtext->glyph_code + COMMAND_UNICODE;
+						i += strlen(fixtext->glyph_str);
+						break;
+					}
 				}
 			}
 		}
-
-		if (s[i] == COMMAND_DEFAULT_TEXT)
+		else if (s[i] == COMMAND_DEFAULT_TEXT)
 			fixcmd = default_text;
-
 		else if (s[i] == COMMAND_EXPAND_TEXT)
 			fixcmd = expand_text;
 
 		if (fixcmd)
 		{
 			if (s[i] == s[i + 1])
-			{
 				i++;
-				goto process_next;
+			else
+			{
+				for (; fixcmd->glyph_code; fixcmd++)
+					if (s[i + 1] == fixcmd->glyph_char)
+					{
+						uchar = fixcmd->glyph_code + COMMAND_UNICODE;
+						i++;
+						break;
+					}
 			}
-
-			for (; fixcmd->glyph_code; fixcmd++)
-				if (s[i + 1] == fixcmd->glyph_char)
-				{
-					uchar = fixcmd->glyph_code + COMMAND_UNICODE;
-					i++;
-					goto process_next;
-				}
 		}
 
 process_next:

@@ -223,37 +223,18 @@ struct mewui_globals
 	static UINT16       panels_status;
 };
 
-// Main filters
-struct main_filters
-{
-	static UINT16 actual;
-	static const char *text[];
-	static size_t length;
+#define main_struct(name) \
+struct name##_filters \
+{ \
+	static UINT16 actual; \
+	static const char *text[]; \
+	static size_t length; \
 };
 
-// Software filters
-struct sw_filters
-{
-	static UINT16 actual;
-	static const char *text[];
-	static size_t length;
-};
-
-// UME filters
-struct ume_filters
-{
-	static UINT16 actual;
-	static const char *text[];
-	static size_t length;
-};
-
-// Screens
-struct c_screen
-{
-	static UINT16 actual;
-	static const char *text[];
-	static size_t length;
-};
+main_struct(main);
+main_struct(sw);
+main_struct(ume);
+main_struct(screen);
 
 // Custom filter
 struct custfltr
@@ -373,5 +354,8 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	free(buffer);
 	global_free_array(jpg_buffer);
 }
+
+// std::getline consistent line endings replacement
+std::ifstream &clean_getline(std::ifstream &is, std::string &line);
 
 #endif /* __MEWUI_UTILS_H__ */

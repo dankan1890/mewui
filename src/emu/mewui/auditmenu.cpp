@@ -112,7 +112,6 @@ void ui_menu_audit::handle()
 
 	if (m_x == m_size)
 	{
-		process(UI_MENU_PROCESS_CUSTOM_ONLY);
 		machine().ui().draw_text_box(container, "Audit in progress...", JUSTIFY_CENTER, 0.5f, 0.5f, UI_GREEN_COLOR);
 		m_x = m_size - 1;
 		return;
@@ -140,7 +139,7 @@ void ui_menu_audit::handle()
 		for (; m_x >= 0; --m_x)
 		{
 			const game_driver *driver = &driver_list::driver(m_x);
-			if (!strcmp("___empty", driver->name))
+			if (driver == &GAME_NAME(___empty))
 				continue;
 
 			driver_enumerator enumerator(machine().options(), driver->name);

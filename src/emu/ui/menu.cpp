@@ -464,7 +464,7 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	float mouse_x = -1, mouse_y = -1;
 	bool history_flag = ((item[0].flags & MENU_FLAG_MEWUI_HISTORY) != 0);
 
-	if (machine().options().use_background_image() && machine().options().system() == NULL && bgrnd_bitmap->valid() && !noimage)
+	if (machine().options().use_background_image() && &machine().system() == &GAME_NAME(___empty) && bgrnd_bitmap->valid() && !noimage)
 		container->add_quad(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, bgrnd_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 	// compute the width and height of the full menu
@@ -1305,7 +1305,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	bgrnd_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	emu_options &mopt = machine.options();
-	if (mopt.use_background_image() && (mopt.system() == &GAME_NAME(___empty) || mopt.system() == NULL))
+	if (mopt.use_background_image() && &machine.system() == &GAME_NAME(___empty))
 	{
 		emu_file backgroundfile(".", OPEN_FLAG_READ);
 		render_load_jpeg(*bgrnd_bitmap, backgroundfile, NULL, "background.jpg");

@@ -552,13 +552,14 @@ void ui_menu_select_software::build_software_list()
 	// retrieve and set the long name of software for parents
 	for (size_t y = 1; y < m_swinfo.size(); y++)
 	{
-		if (!m_swinfo[y].parentname.empty())
+		std::string parent(m_swinfo[y].parentname);
+		if (!parent.empty())
 		{
 			bool found = false;
 
 			// first scan backward
 			for (int x = y; x > 0; x--)
-				if (!m_swinfo[y].parentname.compare(m_swinfo[x].shortname) && !m_swinfo[y].instance.compare(m_swinfo[x].instance))
+				if (parent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					found = true;
@@ -567,7 +568,7 @@ void ui_menu_select_software::build_software_list()
 
 			// not found? then scan forward
 			for (size_t x = y; !found && x < m_swinfo.size(); x++)
-				if (!m_swinfo[y].parentname.compare(m_swinfo[x].shortname) && !m_swinfo[y].instance.compare(m_swinfo[x].instance))
+				if (parent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					break;
@@ -841,11 +842,12 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 {
 	ui_software_info *ui_swinfo = (ui_software_info *)m_event->itemref;
+	emu_options &mopt = machine().options();
 
 	if (ui_swinfo->startempty == 1)
 	{
 		std::vector<s_bios> biosname;
-		if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
+		if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, true)));
 		else
 		{
@@ -873,12 +875,12 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
+			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
-			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !machine().options().skip_parts_menu())
+			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
 				std::vector<std::string> partname, partdesc;
 				for (const software_part *swpart = swinfo->first_part(); swpart != NULL; swpart = swpart->next())
@@ -897,9 +899,9 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 			}
 			std::string error_string;
 			std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
-			machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+			mopt.set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 			std::string snap_list = std::string(ui_swinfo->listname).append(PATH_SEPARATOR).append(ui_swinfo->shortname);
-			machine().options().set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+			mopt.set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 			reselect_last::driver.assign(drivlist.driver().name);
 			reselect_last::software.assign(ui_swinfo->shortname);
 			reselect_last::swlist.assign(ui_swinfo->listname);
@@ -1280,12 +1282,15 @@ void ui_menu_select_software::build_custom()
 
 float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, float y2)
 {
+	ui_manager &mui = machine().ui();
+
 	if (mewui_globals::panels_status == SHOW_PANELS || mewui_globals::panels_status == HIDE_RIGHT_PANEL)
 	{
 		float origy1 = y1;
 		float origy2 = y2;
 		float text_size = 0.75f;
-		float line_height = machine().ui().get_line_height() * text_size;
+		float l_height = mui.get_line_height();
+		float line_height = l_height * text_size;
 		float left_width = 0.0f;
 		int text_lenght = sw_filters::length;
 		int afilter = sw_filters::actual;
@@ -1296,17 +1301,17 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		if ((text_lenght * line_height) > sc)
 		{
 			float lm = sc / (text_lenght);
-			text_size = lm / machine().ui().get_line_height();
-			line_height = machine().ui().get_line_height() * text_size;
+			text_size = lm / l_height;
+			line_height = l_height * text_size;
 		}
 
-		float text_sign = machine().ui().get_string_width_ex("_# ", text_size);
+		float text_sign = mui.get_string_width_ex("_# ", text_size);
 		for (int x = 0; x < text_lenght; x++)
 		{
 			float total_width;
 
 			// compute width of left hand side
-			total_width = machine().ui().get_string_width_ex(text[x], text_size);
+			total_width = mui.get_string_width_ex(text[x], text_size);
 			total_width += text_sign;
 
 			// track the maximum
@@ -1316,7 +1321,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 
 		x2 = x1 + left_width + 2.0f * UI_BOX_LR_BORDER;
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+		mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 		// take off the borders
 		x1 += UI_BOX_LR_BORDER;
@@ -1370,8 +1375,8 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 				convert_command_glyph(str);
 			}
 
-			machine().ui().draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-			                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
+			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
+			                   DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
 			y1 += line_height;
 		}
 
@@ -1379,7 +1384,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		x2 = x1 + 2.0f * UI_BOX_LR_BORDER;
 		y1 = origy1;
 		y2 = origy2;
-		line_height = machine().ui().get_line_height();
+		line_height = mui.get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -1390,7 +1395,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{
@@ -1403,7 +1408,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 	}
 	else
 	{
-		float line_height = machine().ui().get_line_height();
+		float line_height = mui.get_line_height();
 		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -1414,7 +1419,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * line_height;
 
 		//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
-		machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+		mui.draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
 		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 		{

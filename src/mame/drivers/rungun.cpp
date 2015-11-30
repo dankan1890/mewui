@@ -80,10 +80,14 @@ READ16_MEMBER(rungun_state::rng_sysregs_r)
 			/*
 			    bit0-7: coin mechs and services
 			    bit8 : freeze
-			    bit9 : joysticks layout(auto detect???)
+			    bit9 : screen output select
 			*/
-			return ioport("SYSTEM")->read();
-
+			{
+				UINT8 field_bit = machine().first_screen()->frame_number() & 1; 
+				if(m_single_screen_mode == true)
+					field_bit = 1;
+				return (ioport("SYSTEM")->read() & 0xfdff) | (field_bit << 9);
+			}
 		case 0x06/2:
 			if (ACCESSING_BITS_0_7)
 			{
@@ -106,15 +110,25 @@ WRITE16_MEMBER(rungun_state::rng_sysregs_w)
 			    bit0  : eeprom_di_write
 			    bit1  : eeprom_cs_write
 			    bit2  : eeprom_clk_write
-			    bit3  : coin counter?
-			    bit7  : set before massive memory writes
+				bit3  : coin counter #1
+				bit4  : coin counter #2 (when coin slot "common" is selected)
+			    bit7  : set before massive memory writes (video chip select?)
 			    bit10 : IRQ5 ACK
+				bit12 : if set, forces screen output to 1 monitor.
+				bit14 : (0) sprite on top of PSAC2 layer (1) other way around (title screen) 
 			*/
 			if (ACCESSING_BITS_0_7)
+			{
+				membank("spriteram_bank")->set_entry((data & 0x80) >> 7);
 				ioport("EEPROMOUT")->write(data, 0xff);
-
-			if (!(data & 0x40))
-				m_maincpu->set_input_line(M68K_IRQ_5, CLEAR_LINE);
+			}
+			if (ACCESSING_BITS_8_15)
+			{
+				m_single_screen_mode = (data & 0x1000) == 0x1000;
+				m_video_priority_mode = (data & 0x4000) == 0x4000;
+				if (!(data & 0x400)) // actually a 0 -> 1 transition
+					m_maincpu->set_input_line(M68K_IRQ_5, CLEAR_LINE);
+			}
 		break;
 
 		case 0x0c/2:
@@ -188,7 +202,7 @@ static ADDRESS_MAP_START( rungun_map, AS_PROGRAM, 16, rungun_state )
 	AM_RANGE(0x5c0000, 0x5c000f) AM_DEVREAD("k055673", k055673_device, k055673_rom_word_r)                       // 246A ROM readback window
 	AM_RANGE(0x5c0010, 0x5c001f) AM_DEVWRITE("k055673", k055673_device, k055673_reg_word_w)
 	AM_RANGE(0x600000, 0x600fff) AM_DEVREADWRITE("k055673", k055673_device, k053247_word_r, k053247_word_w)  // OBJ RAM
-	AM_RANGE(0x601000, 0x601fff) AM_RAM                                         // communication? second monitor buffer?
+	AM_RANGE(0x601000, 0x601fff) AM_RAMBANK("spriteram_bank")                                        	     // OBJ RAM, actually used as work RAM banked buffer 
 	AM_RANGE(0x640000, 0x640007) AM_DEVWRITE("k055673", k055673_device, k053246_word_w)                      // '246A registers
 	AM_RANGE(0x680000, 0x68001f) AM_DEVWRITE("k053936", k053936_device, ctrl_w)          // '936 registers
 	AM_RANGE(0x6c0000, 0x6cffff) AM_RAM_WRITE(rng_936_videoram_w) AM_SHARE("936_videoram")  // PSAC2 ('936) RAM (34v + 35v)
@@ -266,7 +280,9 @@ static INPUT_PORTS_START( rng )
 	PORT_DIPNAME( 0x0100, 0x0000, "Freeze" )
 	PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x0100, DEF_STR( On ) )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0200, 0x0200, "Field Bit (DEBUG)" )
+	PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x0200, DEF_STR( On ) )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -337,6 +353,10 @@ void rungun_state::machine_start()
 	m_roz_rom = memregion("gfx1")->base();
 	membank("bank2")->configure_entries(0, 8, &ROM[0x10000], 0x4000);
 
+	m_banked_ram = auto_alloc_array_clear(machine(), UINT16, 0x2000);
+	membank("spriteram_bank")->configure_entries(0,2,&m_banked_ram[0],0x1000);
+
+	
 	save_item(NAME(m_sound_ctrl));
 	save_item(NAME(m_sound_status));
 	save_item(NAME(m_sound_nmi_clk));

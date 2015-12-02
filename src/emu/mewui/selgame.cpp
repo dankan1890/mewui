@@ -2287,11 +2287,19 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			// special case for mamescore
 			else if (mewui_globals::curdats_view == MEWUI_STORY_LOAD)
 			{
-				int last_underscore = tempbuf.find_last_of('_');
-				if (last_underscore == -1)
+				size_t last_underscore = tempbuf.find_last_of("_");
+				if (last_underscore == std::string::npos)
+				{
+					// check size
+					float sc = origx2 - origx1 - (2.0f * UI_BOX_LR_BORDER);
+					float textlen = mui.get_string_width_ex(tempbuf.c_str(), text_size);
+					if (textlen > sc)
+						text_size = sc / textlen;
+
 					mui.draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
-					                              text_size);
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
+						text_size);
+				}
 				else
 				{
 					float effective_width = origx2 - origx1 - gutter_width;
@@ -2302,14 +2310,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					float item_width;
 
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              &item_width, NULL, text_size);
+						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+						&item_width, NULL, text_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
-					                              origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
-					}
+						origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
+					    WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+					    NULL, NULL, text_size);
+				}
 			}
 
 			// special case for command

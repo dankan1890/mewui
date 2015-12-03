@@ -34,7 +34,7 @@ dist: trusty
 before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo apt-get update -qq; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo apt-get install -y --force-yes libsdl2-dev libsdl2-ttf-dev libasound2-dev libqt4-dev libqt4-dev-bin; fi"
+  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo apt-get install -y --force-yes libsdl2-dev libsdl2-ttf-dev libasound2-dev libqt4-dev libqt4-dev-bin libxinerama-dev; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then brew update; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg'; fi"

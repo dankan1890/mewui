@@ -30,7 +30,6 @@ script:
     make -j2 && ./$MAME -validate;
     fi
 sudo: required
-dist: trusty
 before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:shahar-evron/qt-backports -y; fi"

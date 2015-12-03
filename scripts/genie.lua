@@ -306,15 +306,6 @@ newoption {
 }
 
 newoption {
-	trigger = "CPP11",
-	description = "Compile c++ code as C++11.",
-	allowed = {
-		{ "0",   "Disabled" 	},
-		{ "1",   "Enabled"      },
-	}
-}
-
-newoption {
 	trigger = "FASTDEBUG",
 	description = "Fast DEBUG.",
 	allowed = {
@@ -532,11 +523,6 @@ else
 	os.outputof( PYTHON .. " " .. MAME_DIR .. "scripts/build/makedep.py " .. MAME_DIR .. " " .. _OPTIONS["SOURCES"] .. " drivers " .. _OPTIONS["subtarget"] .. " > ".. GEN_DIR  .. _OPTIONS["target"] .. "/" .. _OPTIONS["subtarget"].."/drivlist.cpp")
 end
 configuration { "gmake" }
-if _OPTIONS["CPP11"]~="1" then
-	defines {
-		"nullptr=NULL" -- getting ready for C++11
-	}
-end
 	flags {
 		"SingleOutputDir",
 	}
@@ -733,46 +719,32 @@ if (_OPTIONS["targetos"]=="solaris") then
 	}
 else
 	buildoptions_c {
---		"-std=gnu99",
 		"-std=gnu89",
---		"-Wpedantic",
---		"-pedantic",
---		"-Wno-variadic-macros",
---		"-Wno-long-long",
 	}
 end
 
-
-if _OPTIONS["CPP11"]=="1" then
+local version = str_to_version(_OPTIONS["gcc_version"])
+if string.find(_OPTIONS["gcc"], "clang") and ((version < 30500) or (_OPTIONS["targetos"]=="macosx" and (version <= 60000))) then
 	buildoptions_cpp {
 		"-x c++",
-		"-std=gnu++11",
---		"-std=c++11",
---		"-Wpedantic",
---		"-pedantic",
---		"-Wno-variadic-macros",
---		"-Wno-long-long",
-
+		"-std=c++1y",
 	}
-else
-	--we compile C++ code to C++98 standard with GNU extensions
-	buildoptions_cpp {
-		"-x c++",
---		"-Wpedantic",
---		"-pedantic",
-		"-std=gnu++98",
-		"-Wno-variadic-macros",
-		"-Wno-long-long",
-		"-Wno-variadic-macros",
---		"-std=c++98",
-	}
-end
 
 	buildoptions_objc {
 		"-x objective-c++",
+		"-std=c++1y",
+	}
+else
+	buildoptions_cpp {
+		"-x c++",
+		"-std=c++14",
 	}
 
-
+	buildoptions_objc {
+		"-x objective-c++",
+		"-std=c++14",
+	}
+end
 -- this speeds it up a bit by piping between the preprocessor/compiler/assembler
 	if not ("pnacl" == _OPTIONS["gcc"]) then
 		buildoptions {
@@ -993,18 +965,20 @@ end
 
 		local version = str_to_version(_OPTIONS["gcc_version"])
 		if string.find(_OPTIONS["gcc"], "clang") then
+			if (version < 30400) then
+				print("Clang version 3.4 or later needed")
+				os.exit(-1)
+			end
 			buildoptions {
 				"-Wno-cast-align",
 				"-Wno-tautological-compare",
 				"-Wno-dynamic-class-memaccess",
+				"-Wno-unused-value",
+				"-Wno-c++11-narrowing",
+				"-Wno-inline-new-delete",
+				"-Wno-constant-logical-operand",
+				"-Wno-deprecated-register",
 			}
-			if (version >= 30000) then
-				buildoptions {
-					"-Wno-unused-value",
-					"-Wno-inline-new-delete",
-					"-Wno-constant-logical-operand",
-				}
-			end
 			if (version >= 30500) then
 				buildoptions {
 					"-Wno-absolute-value",
@@ -1012,53 +986,23 @@ end
 					"-Wno-extern-c-compat",
 				}
 			end
- 			if (version >= 70000) then
+			if (version >= 70000) then
 				buildoptions {
 					"-Wno-tautological-undefined-compare",
 				}
 			end
 		else
-			if (version == 40201) then
-				buildoptions {
-					"-Wno-cast-align"
-				}
+			if (version < 40900) then
+				print("GCC version 4.9 or later needed")
+				os.exit(-1)
 			end
-			if (version >= 40400) then
 				buildoptions {
 					"-Wno-unused-result",
-				}
-			end
-
-			if (version >= 40700) then
-				buildoptions {
 					"-Wno-narrowing",
-					"-Wno-attributes"
+					"-Wno-attributes",
+					-- array bounds checking seems to be buggy in 4.8.1 (try it on video/stvvdp1.c and video/model1.c without -Wno-array-bounds)
+					"-Wno-array-bounds",
 				}
-			end
-			if (version >= 40800) then
--- grr.. array-bounds works on GCC5.2 linux, but fails in sqllite3.c on MingW GCC 5.1.1 for now
---				if (version < 50000) then
---					-- array bounds checking seems to be buggy in 4.8.1 (try it on video/stvvdp1.c and video/model1.c without -Wno-array-bounds)
-					buildoptions {
-						"-Wno-array-bounds"
-					}
---				end
-			end
-			if (version >= 50000) then
-				buildoptions {
---					"-D__USE_MINGW_ANSI_STDIO=1", -- required or lua won't compile linux ignores this but Windows needs it
-					"-freport-bug",
-					"-D_GLIBCXX_USE_CXX11_ABI=0", -- does not seem to matter in linux, mingw needs to link printf,etc
---					"-DNO_MEM_TRACKING",          -- must comment out for mingw GCC 5.2 pedantic or get new/delete redef error
--- next two should work, but compiler complains about end conditions that are int when loop variable is unsigned. maybe these can be fixed
---					"-funsafe-loop-optimizations",
---					"-Wunsafe-loop-optimizations",
--- this six flag combo lets MAME compile with LTO=1 on linux with no errors and ~2% speed boost, but compile time is much longer
---					"-fdevirtualize-at-ltrans","-fgcse-sm","-fgcse-las",
---					"-fipa-pta","-fipa-icf","-fvariable-expansion-in-unroller",
-
-				}
-			end
 		end
 	end
 --ifeq ($(findstring arm,$(UNAME)),arm)
@@ -1083,7 +1027,7 @@ configuration { "asmjs" }
 	}
 	buildoptions_cpp {
 		"-x c++",
-		"-std=gnu++98",
+		"-std=c++14",
 	}
 	archivesplit_size "20"
 
@@ -1093,7 +1037,7 @@ configuration { "android*" }
 	}
 	buildoptions_cpp {
 		"-x c++",
-		"-std=gnu++98",
+		"-std=c++14",
 	}
 	archivesplit_size "20"
 
@@ -1104,14 +1048,14 @@ configuration { "pnacl" }
 	}
 	buildoptions_cpp {
 		"-x c++",
-		"-std=gnu++98",
+		"-std=c++14",
 	}
 	archivesplit_size "20"
 
 configuration { "nacl*" }
 	buildoptions_cpp {
 		"-x c++",
-		"-std=gnu++98",
+		"-std=c++14",
 	}
 	archivesplit_size "20"
 
@@ -1278,11 +1222,6 @@ configuration { "vs2015" }
 			"/wd4297", -- warning C4297: 'xxx::~xxx': function assumed not to throw an exception but does
 			"/wd4319", -- warning C4319: 'operator' : zero extending 'type' to 'type' of greater size
 		}
-configuration { "vs2010" }
-		buildoptions {
-			"/wd4481", -- warning C4481: nonstandard extension used: override specifier 'override'
-		}
-
 configuration { "winphone8* or winstore8*" }
 	removelinks {
 		"DelayImp",

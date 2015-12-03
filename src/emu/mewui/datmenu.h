@@ -23,7 +23,7 @@ struct ui_software_info;
 class ui_menu_dats : public ui_menu
 {
 public:
-	ui_menu_dats(running_machine &machine, render_container *container, int _flags, const game_driver *driver = NULL);
+	ui_menu_dats(running_machine &machine, render_container *container, int _flags, const game_driver *driver = nullptr);
 	virtual ~ui_menu_dats();
 	virtual void populate();
 	virtual void handle();
@@ -43,7 +43,7 @@ private:
 class ui_menu_command : public ui_menu
 {
 public:
-	ui_menu_command(running_machine &machine, render_container *container, const game_driver *driver = NULL);
+	ui_menu_command(running_machine &machine, render_container *container, const game_driver *driver = nullptr);
 	virtual ~ui_menu_command();
 	virtual void populate();
 	virtual void handle();
@@ -60,7 +60,7 @@ private:
 class ui_menu_command_content : public ui_menu
 {
 public:
-	ui_menu_command_content(running_machine &machine, render_container *container, FPTR p_param, std::string title, const game_driver *driver = NULL);
+	ui_menu_command_content(running_machine &machine, render_container *container, FPTR p_param, std::string title, const game_driver *driver = nullptr);
 	virtual ~ui_menu_command_content();
 	virtual void populate();
 	virtual void handle();
@@ -79,8 +79,8 @@ private:
 class ui_menu_history_sw : public ui_menu
 {
 public:
-	ui_menu_history_sw(running_machine &machine, render_container *container, ui_software_info *swinfo, const game_driver *driver = NULL);
-	ui_menu_history_sw(running_machine &machine, render_container *container, const game_driver *driver = NULL);
+	ui_menu_history_sw(running_machine &machine, render_container *container, ui_software_info *swinfo, const game_driver *driver = nullptr);
+	ui_menu_history_sw(running_machine &machine, render_container *container, const game_driver *driver = nullptr);
 	virtual ~ui_menu_history_sw();
 	virtual void populate();
 	virtual void handle();

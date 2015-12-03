@@ -63,7 +63,7 @@ private:
 	void build_custom();
 	void build_category();
 	void build_available_list();
-	void build_list(std::vector<const game_driver *> &vec, const char *filter_text = NULL, int filter = 0, bool bioscheck = false);
+	void build_list(std::vector<const game_driver *> &vec, const char *filter_text = nullptr, int filter = 0, bool bioscheck = false);
 	void build_from_cache(std::vector<const game_driver *> &vec, int screens = 0, int filter = 0, bool bioscheck = false);
 
 	bool no_active_search();

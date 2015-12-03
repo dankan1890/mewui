@@ -168,9 +168,9 @@ public:
 	ioport_manager &ioport() { return m_ioport; }
 	parameters_manager &parameters() { return m_parameters; }
 	cheat_manager &cheat() const { assert(m_cheat != nullptr); return *m_cheat; }
-	datfile_manager &datfile() const { assert(m_datfile != NULL); return *m_datfile; }
-	inifile_manager &inifile() const { assert(m_inifile != NULL); return *m_inifile; }
-	favorite_manager &favorite() const { assert(m_favorite != NULL); return *m_favorite; }
+	datfile_manager &datfile() const { assert(m_datfile != nullptr); return *m_datfile; }
+	inifile_manager &inifile() const { assert(m_inifile != nullptr); return *m_inifile; }
+	favorite_manager &favorite() const { assert(m_favorite != nullptr); return *m_favorite; }
 	render_manager &render() const { assert(m_render != nullptr); return *m_render; }
 	input_manager &input() const { assert(m_input != nullptr); return *m_input; }
 	sound_manager &sound() const { assert(m_sound != nullptr); return *m_sound; }

@@ -232,7 +232,7 @@ void running_machine::start()
 	m_manager.osd().init(*this);
 
 	// start the inifile manager
-	m_inifile.reset(global_alloc(inifile_manager(*this)));
+	m_inifile = std::make_unique<inifile_manager>(*this);
 
 	// create the video manager
 	m_video = std::make_unique<video_manager>(*this);
@@ -310,10 +310,10 @@ void running_machine::start()
 	m_autoboot_timer = scheduler().timer_alloc(timer_expired_delegate(FUNC(running_machine::autoboot_callback), this));
 
 	// start datfile manager
-	m_datfile.reset(global_alloc(datfile_manager(*this)));
+	m_datfile = std::make_unique<datfile_manager>(*this);
 
 	// start favorite manager
-	m_favorite.reset(global_alloc(favorite_manager(*this)));
+	m_favorite = std::make_unique<favorite_manager>(*this);
 
 	manager().update_machine();
 }

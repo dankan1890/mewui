@@ -186,7 +186,7 @@ ui_mewui_select_game::~ui_mewui_select_game()
 {
 	std::string error_string, last_driver;
 	emu_options &mopt = machine().options();
-	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : NULL;
+	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : nullptr;
 	if ((FPTR)driver > 2)
 		last_driver.assign(driver->name);
 
@@ -236,7 +236,7 @@ void ui_mewui_select_game::handle()
 
 	// process the menu
 	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		// reset the error on any future m_event
 		if (ui_error)
@@ -471,7 +471,7 @@ void ui_mewui_select_game::handle()
 			check_filter = true;
 	}
 
-	if (m_event != NULL && m_event->itemref == NULL)
+	if (m_event != nullptr && m_event->itemref == nullptr)
 	{
 		if (m_event->iptkey == IPT_SPECIAL && m_event->unichar == 0x09)
 			selected = m_prev_selected;
@@ -611,7 +611,7 @@ void ui_mewui_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(m_displaylist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+				item_append(m_displaylist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
 				            (void *)m_displaylist[curitem]);
 			}
 		}
@@ -639,7 +639,7 @@ void ui_mewui_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(mfavorite.longname.c_str(), NULL,
+				item_append(mfavorite.longname.c_str(), nullptr,
 				            (cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui,
 							(void *)&mfavorite);
 			}
@@ -652,9 +652,9 @@ void ui_mewui_select_game::populate()
 	}
 
 	// add special items
-	item_append(MENU_SEPARATOR_ITEM, NULL, MENU_FLAG_MEWUI, NULL);
-	item_append("Configure Options", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)1);
-	item_append("Configure Directories", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)2);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, MENU_FLAG_MEWUI, nullptr);
+	item_append("Configure Options", nullptr, MENU_FLAG_MEWUI, (void *)(FPTR)1);
+	item_append("Configure Directories", nullptr, MENU_FLAG_MEWUI, (void *)(FPTR)2);
 
 	// configure the custom rendering
 	float y_pixel = 1.0f / container->manager().ui_target().height();
@@ -690,7 +690,7 @@ void ui_mewui_select_game::build_available_list()
 	const osd_directory_entry *dir;
 
 	// iterate while we get new objects
-	while ((dir = path.next()) != NULL)
+	while ((dir = path.next()) != nullptr)
 	{
 		char drivername[50];
 		char *dst = drivername;
@@ -747,8 +747,8 @@ void ui_mewui_select_game::build_available_list()
 void ui_mewui_select_game::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float tbarspace = (1.0f / container->manager().ui_target().height()) * 32;
-	const game_driver *driver = NULL;
-	ui_software_info *swinfo = NULL;
+	const game_driver *driver = nullptr;
+	ui_software_info *swinfo = nullptr;
 	float width, maxwidth = origx2 - origx1;
 	std::string tempbuf[5];
 	rgb_t color = UI_BACKGROUND_COLOR;
@@ -793,7 +793,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	for (int line = 0; line < 2; line++)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(width, maxwidth);
 	}
@@ -816,7 +816,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	for (int line = 0; line < 2; line++)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
 
@@ -827,10 +827,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	// determine the text to render below
 	if (main_filters::actual != FILTER_FAVORITE_GAME)
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
 	else
 	{
-		swinfo = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		swinfo = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (swinfo && swinfo->startempty == 1)
 			driver = swinfo->driver;
 	}
@@ -948,7 +948,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	for (int line = 0; line < 5; line++)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -975,7 +975,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	for (int line = 0; line < 5; line++)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
 }
@@ -994,7 +994,7 @@ void ui_mewui_select_game::force_game_select(running_machine &machine, render_co
 	ui_menu *quit = auto_alloc_clear(machine, ui_menu_quit_game(machine, container));
 	quit->set_special_main_menu(true);
 	ui_menu::stack_push(quit);
-	ui_menu::stack_push(auto_alloc_clear(machine, ui_mewui_select_game(machine, container, NULL)));
+	ui_menu::stack_push(auto_alloc_clear(machine, ui_mewui_select_game(machine, container, nullptr)));
 
 	// force the menus on
 	machine.ui().show_menu();
@@ -1033,8 +1033,8 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 			if ((driver->flags & MACHINE_TYPE_ARCADE) == 0)
 			{
 				software_list_device_iterator iter(enumerator.config().root_device());
-				for (software_list_device *swlistdev = iter.first(); swlistdev != NULL; swlistdev = iter.next())
-					if (swlistdev->first_software_info() != NULL)
+				for (software_list_device *swlistdev = iter.first(); swlistdev != nullptr; swlistdev = iter.next())
+					if (swlistdev->first_software_info() != nullptr)
 					{
 						ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_select_software(machine(), container, driver)));
 						has_swlist = true;
@@ -1138,13 +1138,13 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
 				std::vector<std::string> partname, partdesc;
-				for (const software_part *swpart = swinfo->first_part(); swpart != NULL; swpart = swpart->next())
+				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
 					{
 						partname.push_back(swpart->name());
 						std::string menu_part_name(swpart->name());
-						if (swpart->feature("part_id") != NULL)
+						if (swpart->feature("part_id") != nullptr)
 							menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
 						partdesc.push_back(menu_part_name);
 					}
@@ -1399,7 +1399,7 @@ void ui_mewui_select_game::build_custom()
 				build_from_cache(s_drivers, 0, filter, bioscheck);
 				break;
 			default:
-				build_list(s_drivers, NULL, filter, bioscheck);
+				build_list(s_drivers, nullptr, filter, bioscheck);
 				break;
 		}
 	}
@@ -1518,7 +1518,7 @@ void ui_mewui_select_game::populate_search()
 		}
 	}
 
-	(index < VISIBLE_GAMES_IN_SEARCH) ? m_searchlist[index] = NULL : m_searchlist[VISIBLE_GAMES_IN_SEARCH] = NULL;
+	(index < VISIBLE_GAMES_IN_SEARCH) ? m_searchlist[index] = nullptr : m_searchlist[VISIBLE_GAMES_IN_SEARCH] = nullptr;
 	UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
 	for (int curitem = 0; m_searchlist[curitem]; curitem++)
 	{
@@ -1529,7 +1529,7 @@ void ui_mewui_select_game::populate_search()
 			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 				cloneof = false;
 		}
-		item_append(m_searchlist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+		item_append(m_searchlist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
 		            (void *)m_searchlist[curitem]);
 	}
 }
@@ -1730,14 +1730,14 @@ void ui_mewui_select_game::save_cache_info()
 			machine_config config(*driver, machine().options());
 
 			samples_device_iterator iter(config.root_device());
-			infos.b_samples = (iter.first() != NULL) ? 1 : 0;
+			infos.b_samples = (iter.first() != nullptr) ? 1 : 0;
 
 			const screen_device *screen = config.first_screen();
-			infos.b_screen = (screen != NULL) ? screen->screen_type() : 0;
+			infos.b_screen = (screen != nullptr) ? screen->screen_type() : 0;
 
 			speaker_device_iterator siter(config.root_device());
 			sound_interface_iterator snditer(config.root_device());
-			infos.b_stereo = (snditer.first() != NULL && siter.count() > 1) ? 1 : 0;
+			infos.b_stereo = (snditer.first() != nullptr && siter.count() > 1) ? 1 : 0;
 			infos.b_chd = 0;
 			for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
 				if (ROMENTRY_ISREGION(rom) && ROMREGION_ISDISKDATA(rom))
@@ -2102,7 +2102,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 			}
 
 			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-			                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
+			                              DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 			y1 += line_height_max;
 		}
 
@@ -2168,29 +2168,29 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	std::vector<int> xstart;
 	std::vector<int> xend;
 	float text_size = machine().options().infos_size();
-	const game_driver *driver = NULL;
-	ui_software_info *soft = NULL;
+	const game_driver *driver = nullptr;
+	ui_software_info *soft = nullptr;
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-	static ui_software_info *oldsoft = NULL;
-	static const game_driver *olddriver = NULL;
+	static ui_software_info *oldsoft = nullptr;
+	static const game_driver *olddriver = nullptr;
 	static int oldview = -1;
 	static int old_sw_view = -1;
 
 	if (is_favorites)
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (soft && soft->startempty == 1)
 		{
 			driver = soft->driver;
-			oldsoft = NULL;
+			oldsoft = nullptr;
 		}
 		else
-			olddriver = NULL;
+			olddriver = nullptr;
 	}
 	else
 	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
-		oldsoft = NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
+		oldsoft = nullptr;
 	}
 
 	if (driver)
@@ -2212,13 +2212,13 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; x++)
 		{
 			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
 		mui.draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curdats_view, MEWUI_FIRST_LOAD, MEWUI_LAST_LOAD, title_size);
 
@@ -2255,7 +2255,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (buffer.empty())
 		{
 			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
@@ -2297,7 +2297,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 						text_size = sc / textlen;
 
 					mui.draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
-						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr,
 						text_size);
 				}
 				else
@@ -2311,12 +2311,12 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
 						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-						&item_width, NULL, text_size);
+						&item_width, nullptr, text_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
 						origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
 					    WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					    NULL, NULL, text_size);
+					    nullptr, nullptr, text_size);
 				}
 			}
 
@@ -2333,19 +2333,19 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					strtrimspace(last_part);
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
 					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
+					                              nullptr, nullptr, text_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
 					                              JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
+					                              nullptr, nullptr, text_size);
 				}
 				else
 					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
+					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 			}
 			else
 				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
+				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 
 			oy1 += (line_height * text_size);
 		}
@@ -2363,7 +2363,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (soft->usage.empty())
 		{
 			mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			mewui_globals::cur_sw_dats_view = 0;
 		}
 		else
@@ -2377,14 +2377,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			for (int x = 0; x < 2; x++)
 			{
 				mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 				txt_lenght += 0.01f;
 				title_size = MAX(txt_lenght, title_size);
 			}
 
 			mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
 			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-			                              NULL, NULL);
+			                              nullptr, nullptr);
 
 			draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::cur_sw_dats_view, 0, 1, title_size);
 		}
@@ -2412,7 +2412,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (buffer.empty())
 		{
 			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else
@@ -2442,7 +2442,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			else
 				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
 				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-				                              NULL, NULL, text_size);
+				                              nullptr, nullptr, text_size);
 			oy1 += (line_height * text_size);
 		}
 
@@ -2500,26 +2500,26 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-	static ui_software_info *oldsoft = NULL;
-	static const game_driver *olddriver = NULL;
-	const game_driver *driver = NULL;
-	ui_software_info *soft = NULL;
+	static ui_software_info *oldsoft = nullptr;
+	static const game_driver *olddriver = nullptr;
+	const game_driver *driver = nullptr;
+	ui_software_info *soft = nullptr;
 
 	if (is_favorites)
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (soft && soft->startempty == 1)
 		{
 			driver = soft->driver;
-			oldsoft = NULL;
+			oldsoft = nullptr;
 		}
 		else
-			olddriver = NULL;
+			olddriver = nullptr;
 	}
 	else
 	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
-		oldsoft = NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
+		oldsoft = nullptr;
 	}
 
 	if (driver)
@@ -2548,12 +2548,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			if (!tmp_bitmap->valid())
 			{
 				fullname.assign(driver->name).append(".png");
-				render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+				render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
 					fullname.assign(driver->name).append(".jpg");
-					render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 				}
 			}
 
@@ -2572,12 +2572,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 				if (cloneof)
 				{
 					fullname.assign(driver->parent).append(".png");
-					render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 					if (!tmp_bitmap->valid())
 					{
 						fullname.assign(driver->parent).append(".jpg");
-						render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+						render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 					}
 				}
 			}
@@ -2622,12 +2622,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			{
 				// Load driver snapshot
 				fullname.assign(soft->driver->name).append(".png");
-				render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+				render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
 					fullname.assign(soft->driver->name).append(".jpg");
-					render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 				}
 			}
 			else if (mewui_globals::curimage_view == TITLES_VIEW)

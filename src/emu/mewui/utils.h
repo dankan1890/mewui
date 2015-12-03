@@ -276,7 +276,7 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	bitmap_format format = bitmap.format();
 
 	UINT64 jpg_size = 0;
-	unsigned char *jpg_buffer = NULL;
+	unsigned char *jpg_buffer = nullptr;
 
 	// define file's full name
 	std::string fname;

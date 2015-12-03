@@ -187,7 +187,7 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 {
 	std::vector<Drvindex> index_idx;
 	std::vector<Itemsindex> driver_idx;
-	const char *tag = NULL;
+	const char *tag = nullptr;
 	std::string filename;
 
 	switch (type)

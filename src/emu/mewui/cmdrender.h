@@ -21,7 +21,7 @@ void convert_command_glyph(std::string &str)
 
 	for (int i = j = 0; i < len;)
 	{
-		fix_command_t *fixcmd = NULL;
+		fix_command_t *fixcmd = nullptr;
 		unicode_char uchar;
 
 		int ucharcount = uchar_from_utf8(&uchar, s + i, len - i);

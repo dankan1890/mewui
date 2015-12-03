@@ -45,7 +45,7 @@ void inifile_manager::directory_scan()
 	const osd_directory_entry *dir;
 
 	// loop into folder's file
-	while ((dir = path.next()) != NULL)
+	while ((dir = path.next()) != nullptr)
 	{
 		int length = strlen(dir->name);
 		std::string file_name(dir->name);
@@ -233,7 +233,7 @@ void favorite_manager::add_favorite_game()
 
 	bool software_avail = false;
 	image_interface_iterator iter(machine().root_device());
-	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 	{
 		if (image->exists() && image->software_entry())
 		{
@@ -256,7 +256,7 @@ void favorite_manager::add_favorite_game()
 			if (swinfo->parentname())
 			{
 				software_list_device *swlist = software_list_device::find_by_name(machine().config(), image->software_list_name());
-				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != NULL; c_swinfo = c_swinfo->next())
+				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != nullptr; c_swinfo = c_swinfo->next())
 				{
 					std::string c_parent(c_swinfo->parentname());
 					if (!c_parent.empty() && !c_parent.compare(swinfo->shortname()))
@@ -268,7 +268,7 @@ void favorite_manager::add_favorite_game()
 			}
 
 			tmpmatches.usage.clear();
-			for (feature_list_item *flist = swinfo->other_info(); flist != NULL; flist = flist->next())
+			for (feature_list_item *flist = swinfo->other_info(); flist != nullptr; flist = flist->next())
 				if (!strcmp(flist->name(), "usage"))
 					tmpmatches.usage.assign(flist->value());
 
@@ -322,7 +322,7 @@ bool favorite_manager::isgame_favorite()
 	image_interface_iterator iter(machine().root_device());
 	bool image_loaded = false;
 
-	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 	{
 		if (image->exists() && image->software_entry())
 		{

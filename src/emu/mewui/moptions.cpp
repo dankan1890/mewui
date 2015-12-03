@@ -19,7 +19,7 @@
 const options_entry mewui_options::s_option_entries[] =
 {
 	// seach path options
-	{ NULL,                                 NULL,  OPTION_HEADER,  "MEWUI SEARCH PATH OPTIONS" },
+	{ nullptr,                                 nullptr,  OPTION_HEADER,  "MEWUI SEARCH PATH OPTIONS" },
 	{ OPTION_HISTORY_PATH,             "history",  OPTION_STRING,  "path to history files" },
 	{ OPTION_EXTRAINI_PATH,            "folders",  OPTION_STRING,  "path to extra ini files" },
 	{ OPTION_CABINETS_PATH,   "cabinets;cabdevs",  OPTION_STRING,  "path to cabinets / devices image" },
@@ -41,7 +41,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_MEWUI_PATH,                 "mewui",  OPTION_STRING,  "path to MEWUI files" },
 
 	// misc options
-	{ NULL,                                 NULL,   OPTION_HEADER, "MEWUI MISC OPTIONS" },
+	{ nullptr,                                 nullptr,   OPTION_HEADER, "MEWUI MISC OPTIONS" },
 	{ OPTION_DATS_ENABLED,                   "1",  OPTION_BOOLEAN, "enable DATs support" },
 	{ OPTION_REMEMBER_LAST,                  "1",  OPTION_BOOLEAN, "reselect in main menu last played game" },
 	{ OPTION_ENLARGE_SNAPS,                  "1",  OPTION_BOOLEAN, "enlarge arts (snapshot, title, etc...) in right panel (keeping aspect ratio)" },
@@ -54,7 +54,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_LAST_USED_MACHINE,               "",   OPTION_STRING, "latest used machine" },
 
 	// UI options
-	{ NULL,                                 NULL,   OPTION_HEADER, "MEWUI UI OPTIONS" },
+	{ nullptr,                                 nullptr,   OPTION_HEADER, "MEWUI UI OPTIONS" },
 	{ OPTION_INFOS_SIZE "(0.05-1.00)",    "0.75",    OPTION_FLOAT, "UI right panel infos text size (0.05 - 1.00)" },
 	{ OPTION_FONT_ROWS "(25-40)",           "30",  OPTION_INTEGER, "UI font text size (25 - 40)" },
 	{ OPTION_HIDE_PANELS "(0-3)",            "0",  OPTION_INTEGER, "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
@@ -74,7 +74,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_UI_TEXT_BG_COLOR,        "ef000000",   OPTION_STRING, "UI text bg color (ARGB)" },
 	{ OPTION_UI_TEXT_COLOR,           "ffffffff",   OPTION_STRING, "UI text color (ARGB)" },
 	{ OPTION_UI_UNAVAILABLE_COLOR,    "ff404040",   OPTION_STRING, "UI unavailable color (ARGB)" },
-	{ NULL }
+	{ nullptr }
 };
 
 //-------------------------------------------------

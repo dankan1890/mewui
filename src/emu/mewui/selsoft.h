@@ -52,7 +52,7 @@ private:
 	std::vector<ui_software_info *>   m_sortedlist;
 
 	void build_software_list();
-	void build_list(std::vector<ui_software_info *> &vec, const char *filter_text = NULL, int filter = -1);
+	void build_list(std::vector<ui_software_info *> &vec, const char *filter_text = nullptr, int filter = -1);
 	void build_custom();
 	void find_matches(const char *str, int count);
 	void load_sw_custom_filters();

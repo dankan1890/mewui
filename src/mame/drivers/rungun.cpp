@@ -164,7 +164,7 @@ INTERRUPT_GEN_MEMBER(rungun_state::rng_interrupt)
 	address_space &space = m_maincpu->space(AS_PROGRAM);
 
 	for(int i=0;i<0x1000;i+=2)
-		m_k055673->k053247_word_w(space,i/2,m_banked_ram[(i + m_current_frame_number*0x2000) /2],0xffff);
+		m_k055673->k053247_word_w(space,i/2,m_banked_ram[(i + m_current_display_bank*0x2000) /2],0xffff);
 	
 	if (m_sysreg[0x0c / 2] & 0x09)
 		device.execute().set_input_line(M68K_IRQ_5, ASSERT_LINE);
@@ -200,7 +200,7 @@ WRITE16_MEMBER(rungun_state::palette_write)
 
 static ADDRESS_MAP_START( rungun_map, AS_PROGRAM, 16, rungun_state )
 	AM_RANGE(0x000000, 0x2fffff) AM_ROM                                         // main program + data
-	AM_RANGE(0x300000, 0x3007ff) AM_READWRITE(palette_read,palette_write) AM_SHARE("palette")
+	AM_RANGE(0x300000, 0x3007ff) AM_READWRITE(palette_read,palette_write) 
 	AM_RANGE(0x380000, 0x39ffff) AM_RAM                                         // work RAM
 	AM_RANGE(0x400000, 0x43ffff) AM_READ8(rng_53936_rom_r,0x00ff)			    // '936 ROM readback window
 	AM_RANGE(0x480000, 0x48001f) AM_READWRITE(rng_sysregs_r, rng_sysregs_w) AM_SHARE("sysreg")

@@ -578,12 +578,12 @@ void ui_menu_select_software::build_software_list()
 
 	std::string searchstr, curpath;
 	const osd_directory_entry *dir;
-	for (size_t x = 0; x < m_filter.swlist.name.size(); ++x)
+	for (auto & elem : m_filter.swlist.name)
 	{
 		path_iterator path(machine().options().media_path());
 		while (path.next(curpath))
 		{
-			searchstr.assign(curpath).append(PATH_SEPARATOR).append(m_filter.swlist.name[x]).append(";");
+			searchstr.assign(curpath).append(PATH_SEPARATOR).append(elem).append(";");
 			file_enumerator fpath(searchstr.c_str());
 
 			// iterate while we get new objects
@@ -598,10 +598,10 @@ void ui_menu_select_software::build_software_list()
 					continue;
 
 				strmakelower(name);
-				for (size_t y = 0; y < m_swinfo.size(); ++y)
-					if (m_swinfo[y].shortname == name && m_swinfo[y].listname == m_filter.swlist.name[x])
+				for (auto & yelem : m_swinfo)
+					if (yelem.shortname == name && yelem.listname == elem)
 					{
-						m_swinfo[y].available = true;
+						yelem.available = true;
 						break;
 					}
 			}
@@ -800,9 +800,9 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	// get the size of the text
 	maxwidth = origx2 - origx1;
 
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -827,9 +827,9 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		draw_star(x1, y1);
 
 	// draw all lines
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += machine().ui().get_line_height();
 	}
@@ -1469,9 +1469,9 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 		t_text[0].assign("History");
 		t_text[1].assign("Usage");
 
-		for (int x = 0; x < 2; x++)
+		for (auto & elem : t_text)
 		{
-			mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+			mui.draw_text_full(container, elem.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 			                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
@@ -1816,11 +1816,11 @@ void ui_mewui_software_parts::handle()
 	// process the menu
 	const ui_menu_event *event = process(0);
 	if (event != nullptr && event->iptkey == IPT_UI_SELECT && event->itemref != nullptr)
-		for (size_t idx = 0; idx < m_nameparts.size(); idx++)
-			if ((void*)&m_nameparts[idx] == event->itemref)
+		for (auto & elem : m_nameparts)
+			if ((void*)&elem == event->itemref)
 			{
 				std::string error_string;
-				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(m_nameparts[idx]).append(":").append(m_uiinfo->instance);
+				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(elem).append(":").append(m_uiinfo->instance);
 				machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 
 				reselect_last::driver.assign(m_uiinfo->driver->name);
@@ -1895,8 +1895,8 @@ ui_mewui_bios_selection::~ui_mewui_bios_selection()
 
 void ui_mewui_bios_selection::populate()
 {
-	for (size_t index = 0; index < m_bios.size(); index++)
-		item_append(m_bios[index].name.c_str(), nullptr, 0, (void *)&m_bios[index].name);
+	for (auto & elem : m_bios)
+		item_append(elem.name.c_str(), nullptr, 0, (void *)&elem.name);
 
 	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
@@ -1912,8 +1912,8 @@ void ui_mewui_bios_selection::handle()
 	const ui_menu_event *event = process(0);
 	emu_options &moptions = machine().options();
 	if (event != nullptr && event->iptkey == IPT_UI_SELECT && event->itemref != nullptr)
-		for (size_t idx = 0; idx < m_bios.size(); idx++)
-			if ((void*)&m_bios[idx].name == event->itemref)
+		for (auto & elem : m_bios)
+			if ((void*)&elem.name == event->itemref)
 			{
 				if (!m_software)
 				{
@@ -1929,7 +1929,7 @@ void ui_mewui_bios_selection::handle()
 					}
 
 					std::string error;
-					moptions.set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
+					moptions.set_value("bios", elem.id, OPTION_PRIORITY_CMDLINE, error);
 					machine().manager().schedule_new_driver(*s_driver);
 					machine().schedule_hard_reset();
 					ui_menu::stack_reset(machine());
@@ -1938,7 +1938,7 @@ void ui_mewui_bios_selection::handle()
 				{
 					ui_software_info *ui_swinfo = (ui_software_info *)m_driver;
 					std::string error;
-					machine().options().set_value("bios", m_bios[idx].id, OPTION_PRIORITY_CMDLINE, error);
+					machine().options().set_value("bios", elem.id, OPTION_PRIORITY_CMDLINE, error);
 					driver_enumerator drivlist(moptions, *ui_swinfo->driver);
 					drivlist.next();
 					software_list_device *swlist = software_list_device::find_by_name(drivlist.config(), ui_swinfo->listname.c_str());

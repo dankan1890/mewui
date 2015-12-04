@@ -945,9 +945,9 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// get the size of the text
 	maxwidth = origx2 - origx1;
 
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -972,9 +972,9 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		draw_star(x1, y1);
 
 	// draw all lines
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
@@ -1356,15 +1356,15 @@ void ui_mewui_select_game::build_custom()
 	else
 		s_drivers = m_sortedlist;
 
-	for (size_t index = 0; index < s_drivers.size(); ++index)
+	for (auto & elem : s_drivers)
 	{
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((elem->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(elem->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
-		m_displaylist.push_back(s_drivers[index]);
+		m_displaylist.push_back(elem);
 	}
 
 	for (int count = 1; count <= custfltr::numother; count++)
@@ -1414,11 +1414,9 @@ void ui_mewui_select_game::build_category()
 	std::vector<int> temp_filter;
 	machine().inifile().load_ini_category(temp_filter);
 
-	for (size_t index = 0; index < temp_filter.size(); ++index)
-	{
-		int actual = temp_filter[index];
+	for (auto actual : temp_filter)
 		m_tmp.push_back(&driver_list::driver(actual));
-	}
+
 	std::stable_sort(m_tmp.begin(), m_tmp.end(), sort_game_list);
 	m_displaylist = m_tmp;
 }
@@ -1651,9 +1649,9 @@ void ui_mewui_select_game::inkey_export()
 		else
 		{
 			// iterate over entries
-			for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
+			for (auto & elem : m_displaylist)
 			{
-				int f = driver_list::find(m_displaylist[curitem]->name);
+				int f = driver_list::find(elem->name);
 				drivlist.include(f);
 			}
 		}
@@ -2374,9 +2372,9 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			t_text[0].assign("History");
 			t_text[1].assign("Usage");
 
-			for (int x = 0; x < 2; x++)
+			for (auto & elem: t_text)
 			{
-				mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+				mui.draw_text_full(container, elem.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
 				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 				txt_lenght += 0.01f;
 				title_size = MAX(txt_lenght, title_size);

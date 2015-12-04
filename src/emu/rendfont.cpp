@@ -92,7 +92,7 @@ inline render_font::glyph &render_font::get_char(unicode_char chnum)
 			clip.min_x = clip.min_y = 0;
 			clip.max_x = glyph_ch.bitmap.width() - 1;
 			clip.max_y = glyph_ch.bitmap.height() - 1;
-			render_texture::hq_scale(gl.bitmap, glyph_ch.bitmap, clip, NULL);
+			render_texture::hq_scale(gl.bitmap, glyph_ch.bitmap, clip, nullptr);
 
 			/* wrap a texture around the bitmap */
 			gl.texture = m_manager.texture_alloc(render_texture::hq_scale);
@@ -225,7 +225,7 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 	if (is_cmd)
 	{
 		// punt if nothing there
-		if (gl.bmwidth == 0 || gl.bmheight == 0 || gl.rawdata == NULL)
+		if (gl.bmwidth == 0 || gl.bmheight == 0 || gl.rawdata == nullptr)
 			return;
 
 		// allocate a new bitmap of the size we need
@@ -238,13 +238,13 @@ void render_font::char_expand(unicode_char chnum, glyph &gl)
 		for (int y = 0; y < gl.bmheight; y++)
 		{
 			int desty = y + m_height_cmd + m_yoffs_cmd - gl.yoffs - gl.bmheight;
-			UINT32 *dest = (desty >= 0 && desty < m_height_cmd) ? &gl.bitmap.pix32(desty, 0) : NULL;
+			UINT32 *dest = (desty >= 0 && desty < m_height_cmd) ? &gl.bitmap.pix32(desty, 0) : nullptr;
 			{
 				for (int x = 0; x < gl.bmwidth; x++)
 				{
 					if (accumbit == 7)
 						accum = *ptr++;
-					if (dest != NULL)
+					if (dest != nullptr)
 						*dest++ = (accum & (1 << accumbit)) ? color : rgb_t(0x00,0xff,0xff,0xff);
 					accumbit = (accumbit - 1) & 7;
 				}

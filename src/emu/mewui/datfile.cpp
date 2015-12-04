@@ -692,8 +692,8 @@ void datfile_manager::command_sub_menu(const game_driver *drv, std::vector<std::
 	{
 		m_menuidx.clear();
 		index_menuidx(drv, m_cmdidx, m_menuidx);
-		for (size_t x = 0; x < m_menuidx.size(); ++x)
-			menuitems.push_back(m_menuidx[x].name);
+		for (auto & elem : m_menuidx)
+			menuitems.push_back(elem.name);
 	}
 }
 

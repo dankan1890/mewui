@@ -56,7 +56,7 @@ static const ui_arts_info arts_info[] =
 	{ "Scores", OPTION_SCORES_PATH, "scores" },
 	{ "Select", OPTION_SELECT_PATH, "select" },
 	{ "Marquees", OPTION_MARQUEES_PATH, "marquees" },
-	{ NULL }
+	{ nullptr }
 };
 
 static const char *hover_msg[] = { "Add or remove favorites", "Export displayed list to file", "Show history.dat info",
@@ -175,8 +175,8 @@ void ui_menu::exit(running_machine &machine)
 	machine.render().texture_free(bgrnd_texture);
 	machine.render().texture_free(star_texture);
 
-	for (int i = 0; i < MAX_ICONS_RENDER; i++)
-		machine.render().texture_free(icons_texture[i]);
+	for (auto & elem : icons_texture)
+		machine.render().texture_free(elem);
 
 	for (int i = 0; i < MEWUI_TOOLBAR_BUTTONS; i++)
 	{
@@ -633,14 +633,14 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 				container->add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 			// draw the subitem left-justified
-			else if (pitem.subtext == NULL && (pitem.flags & MENU_FLAG_MEWUI_HISTORY) != 0)
+			else if (pitem.subtext == nullptr && (pitem.flags & MENU_FLAG_MEWUI_HISTORY) != 0)
 				machine().ui().draw_text_full(container, itemtext, effective_left, line_y, effective_width,
-				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
+					JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 
 			// if we don't have a subitem, just draw the string centered
 			else if (pitem.subtext == nullptr)
 				machine().ui().draw_text_full(container, itemtext, effective_left, line_y, effective_width,
-				                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
+					JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 
 			// otherwise, draw the item on the left and the subitem text on the right
 			else
@@ -1308,10 +1308,10 @@ void ui_menu::init_mewui(running_machine &machine)
 	if (mopt.use_background_image() && &machine.system() == &GAME_NAME(___empty))
 	{
 		emu_file backgroundfile(".", OPEN_FLAG_READ);
-		render_load_jpeg(*bgrnd_bitmap, backgroundfile, NULL, "background.jpg");
+		render_load_jpeg(*bgrnd_bitmap, backgroundfile, nullptr, "background.jpg");
 
 		if (!bgrnd_bitmap->valid())
-			render_load_png(*bgrnd_bitmap, backgroundfile, NULL, "background.png");
+			render_load_png(*bgrnd_bitmap, backgroundfile, nullptr, "background.png");
 
 		if (bgrnd_bitmap->valid())
 			bgrnd_texture->set_bitmap(*bgrnd_bitmap, bgrnd_bitmap->cliprect(), TEXFORMAT_ARGB32);
@@ -1385,7 +1385,7 @@ void ui_menu::draw_select_game(bool noinput)
 	if (!noinput)
 	{
 		mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
-		if (mouse_target != NULL)
+		if (mouse_target != nullptr)
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 				mouse_hit = TRUE;
 	}
@@ -1499,7 +1499,7 @@ void ui_menu::draw_select_game(bool noinput)
 			container->add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height,
 			UI_LINE_WIDTH, UI_TEXT_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 		// draw the item centered
-		else if (pitem.subtext == NULL)
+		else if (pitem.subtext == nullptr)
 		{
 			int item_invert = pitem.flags & MENU_FLAG_INVERT;
 			float space = 0.0f;
@@ -1519,7 +1519,7 @@ void ui_menu::draw_select_game(bool noinput)
 			}
 			mui.draw_text_full(container, itemtext, effective_left + space, line_y, effective_width - space,
 				JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor,
-				bgcolor, NULL, NULL);
+				bgcolor, nullptr, nullptr);
 		}
 		else
 		{
@@ -1529,16 +1529,16 @@ void ui_menu::draw_select_game(bool noinput)
 
 			// compute right space for subitem
 			mui.draw_text_full(container, subitem_text, effective_left, line_y, machine().ui().get_string_width(pitem.subtext),
-				JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NONE, item_invert ? fgcolor3 : fgcolor, bgcolor, &subitem_width, NULL);
+				JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NONE, item_invert ? fgcolor3 : fgcolor, bgcolor, &subitem_width, nullptr);
 			subitem_width += gutter_width;
 
 			// draw the item left-justified
 			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width - subitem_width,
-				JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, &item_width, NULL);
+				JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, &item_width, nullptr);
 
 			// draw the subitem right-justified
 			mui.draw_text_full(container, subitem_text, effective_left + item_width, line_y, effective_width - item_width,
-				JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, NULL, NULL);
+				JUSTIFY_RIGHT, WRAP_NEVER, DRAW_NORMAL, item_invert ? fgcolor3 : fgcolor, bgcolor, nullptr, nullptr);
 		}
 	}
 
@@ -1579,20 +1579,20 @@ void ui_menu::draw_select_game(bool noinput)
 			UI_LINE_WIDTH, UI_TEXT_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 		else
 			mui.draw_text_full(container, itemtext, effective_left, line, effective_width,
-			JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
+			JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 		line += line_height;
 	}
 
 	x1 = x2;
 	x2 += right_panel_size;
 
-	draw_right_panel((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, x1, y1, x2, y2);
+	draw_right_panel((selected >= 0 && selected < item.size()) ? item[selected].ref : nullptr, x1, y1, x2, y2);
 
 	x1 = primary_left - UI_BOX_LR_BORDER;
 	x2 = primary_left + primary_width + UI_BOX_LR_BORDER;
 
 	// if there is something special to add, do it by calling the virtual method
-	custom_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, customtop, custombottom, x1, y1, x2, y2);
+	custom_render((selected >= 0 && selected < item.size()) ? item[selected].ref : nullptr, customtop, custombottom, x1, y1, x2, y2);
 
 	// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
 	visitems = visible_lines - (top_line != 0) - (top_line + visible_lines != visible_items);
@@ -2044,7 +2044,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 		float width;
 		// compute width of left hand side
 		machine().ui().draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-			DRAW_NONE, UI_TEXT_COLOR, ARGB_BLACK, &width, NULL, text_size);
+			DRAW_NONE, UI_TEXT_COLOR, ARGB_BLACK, &width, nullptr, text_size);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -2081,7 +2081,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
 		machine().ui().draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-			DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
+			DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 
 		y1 += line_height;
 	}
@@ -2135,7 +2135,7 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 			bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
 		machine().ui().draw_text_full(container, buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
-			JUSTIFY_CENTER, WRAP_NEVER, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
+			JUSTIFY_CENTER, WRAP_NEVER, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 		x1 = x1 + midl;
 	}
 
@@ -2158,13 +2158,13 @@ std::string ui_menu::arts_render_common(float origx1, float origy1, float origx2
 	for (int x = FIRST_VIEW; x < LAST_VIEW; x++)
 	{
 		machine().ui().draw_text_full(container, arts_info[x].title, origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-			WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+			WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 		txt_lenght += 0.01f;
 		title_size = MAX(txt_lenght, title_size);
 	}
 
 	machine().ui().draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 	draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curimage_view, FIRST_VIEW, LAST_VIEW, title_size);
 
@@ -2375,12 +2375,12 @@ void ui_menu::draw_common_arrow(float origx1, float origy1, float origx2, float 
 
 void ui_menu::draw_icon(int linenum, void *selectedref, float x0, float y0)
 {
-	static const game_driver *olddriver[MAX_ICONS_RENDER] = { NULL };
+	static const game_driver *olddriver[MAX_ICONS_RENDER] = { nullptr };
 	float x1 = x0 + machine().ui().get_line_height() * container->manager().ui_aspect(container);
 	float y1 = y0 + machine().ui().get_line_height();
-	const game_driver *driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
+	const game_driver *driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
 
-	if (driver == NULL)
+	if (driver == nullptr)
 		return;
 
 	if (olddriver[linenum] != driver || mewui_globals::redraw_icon)
@@ -2408,12 +2408,12 @@ void ui_menu::draw_icon(int linenum, void *selectedref, float x0, float y0)
 		bitmap_argb32 *tmp = auto_alloc(machine(), bitmap_argb32);
 		emu_file snapfile(searchstr.c_str(), OPEN_FLAG_READ);
 		std::string fullname = std::string(driver->name).append(".ico");
-		render_load_ico(*tmp, snapfile, NULL, fullname.c_str());
+		render_load_ico(*tmp, snapfile, nullptr, fullname.c_str());
 
 		if (!tmp->valid() && cloneof)
 		{
 			fullname.assign(driver->parent).append(".ico");
-			render_load_ico(*tmp, snapfile, NULL, fullname.c_str());
+			render_load_ico(*tmp, snapfile, nullptr, fullname.c_str());
 		}
 
 		if (tmp->valid())
@@ -2507,7 +2507,7 @@ void ui_menu::draw_palette_menu()
 	float gutter_width = lr_arrow_width * 1.3f;
 	int itemnum, linenum;
 
-	if (machine().options().use_background_image() && machine().options().system() == NULL && bgrnd_bitmap->valid())
+	if (machine().options().use_background_image() && machine().options().system() == nullptr && bgrnd_bitmap->valid())
 		container->add_quad(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, bgrnd_texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 	// compute the width and height of the full menu
@@ -2579,7 +2579,7 @@ void ui_menu::draw_palette_menu()
 	mouse_hit = false;
 	mouse_button = false;
 	mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
-	if (mouse_target != NULL)
+	if (mouse_target != nullptr)
 		if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 			mouse_hit = true;
 
@@ -2654,19 +2654,19 @@ void ui_menu::draw_palette_menu()
 			container->add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 		// if we don't have a subitem, just draw the string centered
-		else if (pitem.subtext == NULL)
+		else if (pitem.subtext == nullptr)
 			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width,
-			JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
+			JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 
 		// otherwise, draw the item on the left and the subitem text on the right
 		else
 		{
 			const char *subitem_text = pitem.subtext;
-			rgb_t color = rgb_t((UINT32)strtoul(subitem_text, NULL, 16));
+			rgb_t color = rgb_t((UINT32)strtoul(subitem_text, nullptr, 16));
 
 			// draw the left-side text
 			mui.draw_text_full(container, itemtext, effective_left, line_y, effective_width,
-				JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL);
+				JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 
 			// give 2 spaces worth of padding
 			float subitem_width = mui.get_string_width("FF00FF00");
@@ -2677,7 +2677,7 @@ void ui_menu::draw_palette_menu()
 	}
 
 	// if there is something special to add, do it by calling the virtual method
-	custom_render((selected >= 0 && selected < item.size()) ? item[selected].ref : NULL, customtop, custombottom, x1, y1, x2, y2);
+	custom_render((selected >= 0 && selected < item.size()) ? item[selected].ref : nullptr, customtop, custombottom, x1, y1, x2, y2);
 
 	// return the number of visible lines, minus 1 for top arrow and 1 for bottom arrow
 	visitems = visible_lines - (top_line != 0) - (top_line + visible_lines != item.size());

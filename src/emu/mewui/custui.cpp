@@ -596,9 +596,9 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 	sampletxt[3].assign("Mouse Over");
 	sampletxt[4].assign("Clone");
 
-	for (int x = 0; x < 5; x++)
+	for (auto & elem: sampletxt)
 	{
-		mui.draw_text_full(container, sampletxt[x].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);

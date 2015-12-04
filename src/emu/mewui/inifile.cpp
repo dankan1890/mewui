@@ -461,24 +461,24 @@ void favorite_manager::save_favorite_games()
 		// generate the favorite INI
 		std::string text("[ROOT_FOLDER]\n[Favorite]\n\n");
 
-		for (size_t current = 0; current < m_favorite_list.size(); current++)
+		for (auto & elem : m_favorite_list)
 		{
-			text += m_favorite_list[current].shortname + "\n";
-			text += m_favorite_list[current].longname + "\n";
-			text += m_favorite_list[current].parentname + "\n";
-			text += m_favorite_list[current].year + "\n";
-			text += m_favorite_list[current].publisher + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].supported);
-			text += m_favorite_list[current].part + "\n";
-			strcatprintf(text, "%s\n", m_favorite_list[current].driver->name);
-			text += m_favorite_list[current].listname + "\n";
-			text += m_favorite_list[current].interface + "\n";
-			text += m_favorite_list[current].instance + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].startempty);
-			text += m_favorite_list[current].parentlongname + "\n";
-			text += m_favorite_list[current].usage + "\n";
-			text += m_favorite_list[current].devicetype + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].available);
+			text += elem.shortname + "\n";
+			text += elem.longname + "\n";
+			text += elem.parentname + "\n";
+			text += elem.year + "\n";
+			text += elem.publisher + "\n";
+			strcatprintf(text, "%d\n", elem.supported);
+			text += elem.part + "\n";
+			strcatprintf(text, "%s\n", elem.driver->name);
+			text += elem.listname + "\n";
+			text += elem.interface + "\n";
+			text += elem.instance + "\n";
+			strcatprintf(text, "%d\n", elem.startempty);
+			text += elem.parentlongname + "\n";
+			text += elem.usage + "\n";
+			text += elem.devicetype + "\n";
+			strcatprintf(text, "%d\n", elem.available);
 		}
 		file.puts(text.c_str());
 		file.close();

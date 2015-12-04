@@ -137,18 +137,18 @@ void ui_menu_main::populate()
 
 	/* add history menu */
 	if (machine().options().enabled_dats())
-		item_append("History Info", NULL, 0, (void *)HISTORY);
+		item_append("History Info", nullptr, 0, (void *)HISTORY);
 
 	// add software history menu
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0 && machine().options().enabled_dats())
 	{
 		image_interface_iterator iter(machine().root_device());
-		for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+		for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 		{
 			const char *name = image->filename();
-			if (name != NULL)
+			if (name != nullptr)
 			{
-				item_append("Software History Info", NULL, 0, (void *)SW_HISTORY);
+				item_append("Software History Info", nullptr, 0, (void *)SW_HISTORY);
 				break;
 			}
 		}
@@ -158,35 +158,35 @@ void ui_menu_main::populate()
 	if (machine().options().enabled_dats())
 	{
 		if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0)
-			item_append("MameInfo", NULL, 0, (void *)MAMEINFO);
+			item_append("MameInfo", nullptr, 0, (void *)MAMEINFO);
 		else if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0)
-			item_append("MessInfo", NULL, 0, (void *)MAMEINFO);
+			item_append("MessInfo", nullptr, 0, (void *)MAMEINFO);
 	}
 
 	/* add sysinfo menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0 && machine().options().enabled_dats())
-		item_append("SysInfo", NULL, 0, (void *)SYSINFO);
+		item_append("SysInfo", nullptr, 0, (void *)SYSINFO);
 
 	/* add command list menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0 && machine().options().enabled_dats())
-		item_append("Commands Info", NULL, 0, (void *)COMMAND);
+		item_append("Commands Info", nullptr, 0, (void *)COMMAND);
 
 	/* add story menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0 && machine().options().enabled_dats())
-		item_append("Mamescores", NULL, 0, (void *)STORYINFO);
+		item_append("Mamescores", nullptr, 0, (void *)STORYINFO);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	/* add favorite menu */
     if (!machine().favorite().isgame_favorite())
-		item_append("Add To Favorites", NULL, 0, (void *)ADD_FAVORITE);
+		item_append("Add To Favorites", nullptr, 0, (void *)ADD_FAVORITE);
 	else
-		item_append("Remove From Favorites", NULL, 0, (void *)REMOVE_FAVORITE);
+		item_append("Remove From Favorites", nullptr, 0, (void *)REMOVE_FAVORITE);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	menu_text.assign("Quit from ").append(emulator_info::get_capstartgamenoun());
-	item_append(menu_text.c_str(), NULL, 0, (void *)QUIT_GAME);
+	item_append(menu_text.c_str(), nullptr, 0, (void *)QUIT_GAME);
 
 	/* add reset and exit menus */
 //	strprintf(menu_text, "Select New %s", emulator_info::get_capstartgamenoun());

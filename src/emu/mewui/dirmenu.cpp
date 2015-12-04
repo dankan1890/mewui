@@ -261,9 +261,9 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	tempbuf[1].assign(m_current_path.c_str());
 
 	// get the size of the text
-	for (int i = 0; i < 2; i++)
+	for (auto & elem: tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[i].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(width, maxwidth);
@@ -284,9 +284,9 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (int i = 0; i < 2; i++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[i].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 = y1 + mui.get_line_height();
 	}
@@ -503,9 +503,9 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	ui_manager &mui = machine().ui();
 	float lineh = mui.get_line_height();
 
-	for (size_t line = 0; line < m_folders.size(); line++)
+	for (auto & elem : m_folders)
 	{
-		mui.draw_text_full(container, m_folders[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(maxwidth, width);
@@ -550,9 +550,9 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (size_t line = 0; line < m_folders.size(); line++)
+	for (auto & elem : m_folders)
 	{
-		mui.draw_text_full(container, m_folders[line].c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += lineh;
 	}

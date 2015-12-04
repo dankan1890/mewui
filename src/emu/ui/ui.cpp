@@ -2521,7 +2521,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 	// loop over lines
 	while (*s != 0)
 	{
-		const char *lastbreak = NULL;
+		const char *lastbreak = nullptr;
 		unicode_char schar;
 		int scharcount;
 		float lastbreak_width = 0;
@@ -2576,7 +2576,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 		if (curwidth > wrapwidth)
 		{
 			// if we hit a break, back up to there with the appropriate width
-			if (lastbreak != NULL)
+			if (lastbreak != nullptr)
 			{
 				s = lastbreak;
 				curwidth = lastbreak_width;
@@ -2674,9 +2674,9 @@ rgb_t decode_ui_color(int id, running_machine *machine)
 			const char *s_option = machine->options().value(s_color_list[x]);
 			int len = strlen(s_option);
 			if (len != 8)
-				color[x] = rgb_t((UINT32)strtoul(o_default, NULL, 16));
+				color[x] = rgb_t((UINT32)strtoul(o_default, nullptr, 16));
 			else
-				color[x] = rgb_t((UINT32)strtoul(s_option, NULL, 16));
+				color[x] = rgb_t((UINT32)strtoul(s_option, nullptr, 16));
 		}
 	}
 	return color[id];

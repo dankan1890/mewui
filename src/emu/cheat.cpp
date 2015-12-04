@@ -1353,10 +1353,8 @@ void cheat_manager::frame_update()
 	m_lastline = 0;
 	m_numlines = floor(1.0f / machine().ui().get_line_height());
 	m_numlines = MIN(m_numlines, m_output.size());
-//	for (auto & elem : m_output)
-	for (int linenum = 0; linenum < m_output.size(); linenum++)
-		m_output[linenum].clear();
-//		elem.clear();
+	for (auto & elem : m_output)
+		elem.clear();
 
 	// iterate over running cheats and execute them
 	for (cheat_entry *cheat = m_cheatlist.first(); cheat != nullptr; cheat = cheat->next())

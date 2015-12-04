@@ -295,7 +295,7 @@ void ui_menu::item_append(const char *text, const char *subtext, UINT32 flags, v
 
 	// allocate a new item and populate it
 	ui_menu_item pitem;
-	pitem.text = (text != nullptr) ? pool_strdup(text) : nullptr
+	pitem.text = (text != nullptr) ? pool_strdup(text) : nullptr;
 	pitem.subtext = (subtext != nullptr) ? pool_strdup(subtext) : nullptr;
 	pitem.flags = flags;
 	pitem.ref = ref;

@@ -21,9 +21,9 @@ class ui_menu_controller_mapping : public ui_menu
 public:
 	ui_menu_controller_mapping(running_machine &machine, render_container *container);
 	virtual ~ui_menu_controller_mapping();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	struct ctrl_option

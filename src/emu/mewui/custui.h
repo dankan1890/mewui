@@ -27,9 +27,9 @@ class ui_menu_custom_ui : public ui_menu
 public:
 	ui_menu_custom_ui(running_machine &machine, render_container *container);
 	virtual ~ui_menu_custom_ui();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum
@@ -50,9 +50,9 @@ class ui_menu_font_ui : public ui_menu
 public:
 	ui_menu_font_ui(running_machine &machine, render_container *container);
 	virtual ~ui_menu_font_ui();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum
@@ -90,9 +90,9 @@ class ui_menu_colors_ui : public ui_menu
 public:
 	ui_menu_colors_ui(running_machine &machine, render_container *container);
 	virtual ~ui_menu_colors_ui();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum
@@ -135,9 +135,9 @@ class ui_menu_rgb_ui : public ui_menu
 public:
 	ui_menu_rgb_ui(running_machine &machine, render_container *container, rgb_t *_color, std::string _title);
 	virtual ~ui_menu_rgb_ui();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	rgb_t           *m_color;
@@ -167,9 +167,9 @@ class ui_menu_palette_sel : public ui_menu
 public:
 	ui_menu_palette_sel(running_machine &machine, render_container *container, rgb_t &_color);
 	virtual ~ui_menu_palette_sel();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	struct palcolor

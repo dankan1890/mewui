@@ -26,17 +26,17 @@ class ui_menu_select_software : public ui_menu
 public:
 	ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver);
 	virtual ~ui_menu_select_software();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
-	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 	// draw left panel
-	virtual float draw_left_panel(float x1, float y1, float x2, float y2);
+	virtual float draw_left_panel(float x1, float y1, float x2, float y2) override;
 
 	// draw right panel
-	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2);
+	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2) override;
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
@@ -70,9 +70,9 @@ class ui_mewui_software_parts : public ui_menu
 public:
 	ui_mewui_software_parts(running_machine &machine, render_container *container, std::vector<std::string> partname, std::vector<std::string> partdesc, ui_software_info *ui_info);
 	virtual ~ui_mewui_software_parts();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	ui_software_info          *m_uiinfo;
@@ -84,9 +84,9 @@ class ui_mewui_bios_selection : public ui_menu
 public:
 	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<s_bios> biosname, void *driver, bool software, bool inlist);
 	virtual ~ui_mewui_bios_selection();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 

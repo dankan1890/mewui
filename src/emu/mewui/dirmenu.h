@@ -22,9 +22,9 @@ class ui_menu_directory : public ui_menu
 public:
 	ui_menu_directory(running_machine &machine, render_container *container);
 	virtual ~ui_menu_directory();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum
@@ -67,9 +67,9 @@ class ui_menu_display_actual : public ui_menu
 public:
 	ui_menu_display_actual(running_machine &machine, render_container *container, int selectedref, bool _change);
 	virtual ~ui_menu_display_actual();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	std::string              m_tempbuf, m_searchpath;
@@ -94,9 +94,9 @@ class ui_menu_remove_folder : public ui_menu
 public:
 	ui_menu_remove_folder(running_machine &machine, render_container *container, int ref);
 	virtual ~ui_menu_remove_folder();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	std::string  m_searchpath;
@@ -112,11 +112,11 @@ class ui_menu_add_change_folder : public ui_menu
 public:
 	ui_menu_add_change_folder(running_machine &machine, render_container *container, int ref, bool change);
 	virtual ~ui_menu_add_change_folder();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
-	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 private:
 	int          m_ref;

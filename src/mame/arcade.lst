@@ -1435,6 +1435,7 @@ pss64           // 199? Nintendo / Hudson Soft
 
 // SNES-based hacks
 kinstb          // bootleg
+mk3snes			// bootleg
 ffight2b        // bootleg
 sblast2b        // bootleg
 iron            // bootleg
@@ -3727,7 +3728,8 @@ doapp           // Dead Or Alive ++ (JAPAN)
 cbaj            // Cool Boaders Arcade Jam
 shngmtkb        // Shanghai Matekibuyuu
 tondemo         // Tondemo Crisis (JAPAN)
-glpracr3        // Gallop Racer 3 (JAPAN)
+glpracr3		// Gallop Racer 3 (Export)
+glpracr3j       // Gallop Racer 3 (JAPAN)
 flamegun        // Flame Gunner (USA)
 flamegunj       // Flame Gunner (JAPAN)
 lpadv           // Logic Pro Adventure (JAPAN)
@@ -6763,6 +6765,7 @@ xmen2pj         // GX065 (c) 1992 (Japan)
 xmen6p          // GX065 (c) 1992 (World)
 xmen6pu         // GX065 (c) 1992 (US)
 xexex           // GX067 (c) 1991 (World)
+orius			// GX067 (c) 1991 (USA)
 xexexa          // GX067 (c) 1991 (Asia)
 xexexj          // GX067 (c) 1991 (Japan)
 asterix         // GX068 (c) 1992 (World)

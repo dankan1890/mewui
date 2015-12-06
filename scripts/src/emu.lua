@@ -14,6 +14,8 @@ targetsubdir(_OPTIONS["target"] .."_" .. _OPTIONS["subtarget"])
 uuid ("e6fa15e4-a354-4526-acef-13c8e80fcacf")
 kind (LIBTYPE)
 
+addprojectflags()
+
 -- MEWUI
 --if (_OPTIONS["target"]=="mewui") then
 	dofile("mewui.lua")

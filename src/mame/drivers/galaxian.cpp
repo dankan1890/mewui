@@ -1740,24 +1740,39 @@ static ADDRESS_MAP_START( anteateruk_map, AS_PROGRAM, 8, galaxian_state )
 	AM_RANGE(0xc100, 0xc103) AM_MIRROR(0x3efc) AM_DEVREADWRITE("ppi8255_0", i8255_device, read, write)
 ADDRESS_MAP_END
 
-// this is WRONG (a copy of the above) but set does appear to have a similar odd memory map with RAM aronud 0x400 and scrambled ROMs
+
 static ADDRESS_MAP_START( spactrai_map, AS_PROGRAM, 8, galaxian_state )
 	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x03ff) AM_ROM
-	AM_RANGE(0x0400, 0x0bff) AM_RAM
-	AM_RANGE(0x0c00, 0x0fff) AM_RAM_WRITE(galaxian_videoram_w) AM_SHARE("videoram")
-	AM_RANGE(0x1001, 0x1001) AM_MIRROR(0x01f8) AM_WRITE(irq_enable_w)
-	AM_RANGE(0x1002, 0x1002) AM_MIRROR(0x01f8) AM_WRITE(coin_count_0_w)
-	AM_RANGE(0x1003, 0x1003) AM_MIRROR(0x01f8) AM_WRITE(scramble_background_enable_w)
-	AM_RANGE(0x1004, 0x1004) AM_MIRROR(0x01f8) AM_WRITE(galaxian_stars_enable_w)
-	AM_RANGE(0x1005, 0x1005) AM_MIRROR(0x01f8) //POUT2
-	AM_RANGE(0x1006, 0x1006) AM_MIRROR(0x01f8) AM_WRITE(galaxian_flip_screen_x_w)
-	AM_RANGE(0x1007, 0x1007) AM_MIRROR(0x01f8) AM_WRITE(galaxian_flip_screen_y_w)
-	AM_RANGE(0x1200, 0x12ff) AM_MIRROR(0x0100) AM_RAM_WRITE(galaxian_objram_w) AM_SHARE("spriteram")
-	AM_RANGE(0x1400, 0x1400) AM_MIRROR(0x03ff) AM_READ(watchdog_reset_r)
-	AM_RANGE(0x4000, 0xbfff) AM_ROM
-//  AM_RANGE(0xc000, 0xc003) AM_MIRROR(0x3efc) AM_DEVREADWRITE("ppi8255_1", i8255_device, read, write)
-//  AM_RANGE(0xc100, 0xc103) AM_MIRROR(0x3efc) AM_DEVREADWRITE("ppi8255_0", i8255_device, read, write)
+	AM_RANGE(0x0000, 0x01ff) AM_ROM
+	AM_RANGE(0x0200, 0x05ff) AM_RAM // this sits over ROM, does the 0x400 bytes of ROM underneath bank or appear elsewhere?
+	AM_RANGE(0x0600, 0x11ff) AM_ROM
+	AM_RANGE(0x1200, 0x15ff) AM_RAM  AM_RAM_WRITE(galaxian_videoram_w) AM_SHARE("videoram") // see above comment
+	AM_RANGE(0x1600, 0x4fff) AM_ROM
+
+// cleared on startup
+//	AM_RANGE(0x6000, 0x60ff) AM_RAM
+//	AM_RANGE(0x6800, 0x68ff) AM_RAM
+//	AM_RANGE(0x7000, 0x70ff) AM_RAM
+	
+// standard galaxian mapping?
+	AM_RANGE(0x6004, 0x6007) AM_MIRROR(0x07f8) AM_DEVWRITE("cust", galaxian_sound_device, lfo_freq_w)
+	AM_RANGE(0x6800, 0x6807) AM_MIRROR(0x07f8) AM_DEVWRITE("cust", galaxian_sound_device, sound_w)
+	AM_RANGE(0x7800, 0x7800) AM_MIRROR(0x07ff) AM_DEVWRITE("cust", galaxian_sound_device, pitch_w)
+
+	AM_RANGE(0x7001, 0x7001) AM_MIRROR(0x07f8) AM_WRITE(irq_enable_w)
+	AM_RANGE(0x7004, 0x7004) AM_MIRROR(0x07f8) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x7006, 0x7006) AM_MIRROR(0x07f8) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x7007, 0x7007) AM_MIRROR(0x07f8) AM_WRITE(galaxian_flip_screen_y_w)
+
+
+	AM_RANGE(0x6000, 0x6000) AM_READ_PORT("IN0")
+	AM_RANGE(0x6800, 0x6800) AM_READ_PORT("IN1")
+
+	AM_RANGE(0x7000, 0x7000) AM_READ_PORT("IN2")
+	AM_RANGE(0x7800, 0x7800) AM_READ(watchdog_reset_r)
+
+	AM_RANGE(0xfe00, 0xfeff) AM_RAM AM_RAM_WRITE(galaxian_objram_w) AM_SHARE("spriteram")
+
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( anteaterg_map, AS_PROGRAM, 8, galaxian_state )
@@ -2376,6 +2391,45 @@ static INPUT_PORTS_START( warofbug )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "500000" )
 	PORT_DIPSETTING(    0x00, "750000" )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( spactrai )
+	PORT_START("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED ) // no coin 2?
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+
+	PORT_START("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, "2C / 1C (duplicate" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
+
+	PORT_START("IN2")
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "4" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -5392,8 +5446,7 @@ static MACHINE_CONFIG_DERIVED( galaxian, galaxian_base )
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( spactrai, galaxian )
-
-	/* strange memory map, maybe a kind of protection */
+	/* strange memory map with RAM in the middle of ROM, there's a large block on the ROM board */
 	MCFG_CPU_MODIFY("maincpu")
 	MCFG_CPU_PROGRAM_MAP(spactrai_map)
 MACHINE_CONFIG_END
@@ -6166,6 +6219,21 @@ DRIVER_INIT_MEMBER(galaxian_state,nolock)
 
 	/* ...but coin lockout disabled/disconnected */
 	space.unmap_write(0x6002, 0x6002, 0, 0x7f8);
+}
+
+DRIVER_INIT_MEMBER(galaxian_state, warofbugg)
+{
+	UINT8* romdata = memregion("maincpu")->base();
+	assert(memregion("maincpu")->bytes() == 0x4000);
+	UINT8 buf[0x4000];
+	memcpy(buf, romdata, 0x4000);
+
+	// the rom data is at the very least, backwards, but there still seems to be missing code
+	for (int i = 0; i < 0x4000; i++)
+		romdata[i] = buf[i^0x7ff];
+
+	DRIVER_INIT_CALL(nolock);
+
 }
 
 
@@ -7593,7 +7661,7 @@ ROM_START( spactrai )
 
 	ROM_REGION( 0x1000, "gfx1", 0 )
 	ROM_LOAD( "6cen.bin",  0x0000, 0x0800, CRC(a59a9f3f) SHA1(9564f1d013d566dc0b19762aec66119e2ece0b49) ) // MK2716J
-	ROM_LOAD( "7cen.bin",  0x0800, 0x0400, CRC(16cf5a5b) SHA1(0369786902544d31e506fe1ba6a69aa6e8ba9b5c) ) // MM2758A
+	ROM_LOAD( "7cen.bin",  0x0800, 0x0400, BAD_DUMP CRC(16cf5a5b) SHA1(0369786902544d31e506fe1ba6a69aa6e8ba9b5c) ) // MM2758A - seems to be the wrong type of ROM used on the actual PCB?!
 
 	ROM_REGION( 0x0020, "proms", 0 )
 	ROM_LOAD( "stk.bin", 0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
@@ -11096,8 +11164,8 @@ GAME( 19??, omega,       theend,   galaxian,   omega,      galaxian_state, galax
 /* these games require the coin lockout mechanism to be disabled */
 GAME( 1981, warofbug,    0,        galaxian,   warofbug,   galaxian_state, nolock,     ROT90,  "Armenia / Food and Fun Corp", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze", MACHINE_SUPPORTS_SAVE )
 GAME( 1981, warofbugu,   warofbug, galaxian,   warofbug,   galaxian_state, nolock,     ROT90,  "Armenia / Super Video Games", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze (US)", MACHINE_SUPPORTS_SAVE )
-GAME( 1981, warofbugg,   warofbug, galaxian,   warofbug,   galaxian_state, nolock,     ROT90,  "Armenia", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze (German)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
-GAME( 1981, spactrai,    warofbug, spactrai,   warofbug,   galaxian_state, nolock,     ROT90,  "Armenia / Adar", "Space Train", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+GAME( 1981, warofbugg,   warofbug, galaxian,   warofbug,   galaxian_state, warofbugg,  ROT90,  "Armenia", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze (German)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+GAME( 1981, spactrai,    warofbug, spactrai,   spactrai,   galaxian_state, nolock,     ROT90,  "Celv",    "Space Train", MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE )
 GAME( 1981, redufo,      0,        galaxian,   redufo,     galaxian_state, nolock,     ROT270, "Artic", "Defend the Terra Attack on the Red UFO", MACHINE_SUPPORTS_SAVE ) // is this the original?
 GAME( 1981, redufob,     redufo,   galaxian,   redufob,    galaxian_state, nolock,     ROT90,  "bootleg", "Defend the Terra Attack on the Red UFO (bootleg)", MACHINE_SUPPORTS_SAVE ) // rev A?
 GAME( 19??, exodus,      redufo,   galaxian,   redufo,     galaxian_state, nolock,     ROT90,  "bootleg? (Subelectro)", "Exodus (bootleg?)", MACHINE_SUPPORTS_SAVE )

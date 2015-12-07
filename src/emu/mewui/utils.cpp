@@ -100,8 +100,8 @@ int fuzzy_substring(const char *needle, const char *haystack)
 	if (s_haystack.find(s_needle) != std::string::npos)
 		return 0;
 
-	int *row1 = global_alloc_array_clear(int, hlen + 2);
-	int *row2 = global_alloc_array_clear(int, hlen + 2);
+	auto *row1 = global_alloc_array_clear(int, hlen + 2);
+	auto *row2 = global_alloc_array_clear(int, hlen + 2);
 
 	for (int i = 0; i < nlen; ++i)
 	{
@@ -155,7 +155,7 @@ int fuzzy_substring2(const char *needle, const char *haystack)
 	if (it != std::string::npos)
 		return it;
 
-	size_t *costs = global_alloc_array(size_t, n + 1);
+	auto *costs = global_alloc_array(size_t, n + 1);
 	for(size_t k = 0; k <= n; ++k)
 		costs[k] = k;
 	size_t i = 0;

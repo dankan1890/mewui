@@ -626,9 +626,9 @@ void ui_mewui_select_game::populate()
 		flags_mewui |= MENU_FLAG_MEWUI_FAVORITE;
 
 		// iterate over entries
-		for (size_t x = 0; x < machine().favorite().m_favorite_list.size(); x++)
+		for (auto & mfavorite : machine().favorite().m_favorite_list)
 		{
-			ui_software_info &mfavorite = machine().favorite().m_favorite_list[x];
+//			ui_software_info &mfavorite = machine().favorite().m_favorite_list[x];
 			if (mfavorite.startempty == 1)
 			{
 				bool cloneof = strcmp(mfavorite.driver->parent, "0");
@@ -1243,15 +1243,15 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 			s_drivers = m_sortedlist;
 	}
 
-	for (size_t index = 0; index < s_drivers.size(); index++)
+	for (auto & s_driver : s_drivers)
 	{
-		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
+		if (!bioscheck && filter != FILTER_BIOS && (s_driver->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
 		switch (filter)
@@ -1259,81 +1259,81 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 			case FILTER_ALL:
 			case FILTER_AVAILABLE:
 			case FILTER_UNAVAILABLE:
-				m_displaylist.push_back(s_drivers[index]);
+				m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_WORKING:
-				if (!(s_drivers[index]->flags & MACHINE_NOT_WORKING))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_NOT_WORKING))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOT_MECHANICAL:
-				if (!(s_drivers[index]->flags & MACHINE_MECHANICAL))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_MECHANICAL))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_BIOS:
-				if (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_IS_BIOS_ROOT)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_PARENT:
 			case FILTER_CLONES:
-				cloneof = strcmp(s_drivers[index]->parent, "0");
+				cloneof = strcmp(s_driver->parent, "0");
 				if (cloneof)
 				{
-					cx = driver_list::find(s_drivers[index]->parent);
+					cx = driver_list::find(s_driver->parent);
 					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
 
 				if (filter == FILTER_CLONES && cloneof)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				else if (filter == FILTER_PARENT && !cloneof)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOT_WORKING:
-				if (s_drivers[index]->flags & MACHINE_NOT_WORKING)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_NOT_WORKING)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_MECHANICAL:
-				if (s_drivers[index]->flags & MACHINE_MECHANICAL)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_MECHANICAL)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_SAVE:
-				if (s_drivers[index]->flags & MACHINE_SUPPORTS_SAVE)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_SUPPORTS_SAVE)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOSAVE:
-				if (!(s_drivers[index]->flags & MACHINE_SUPPORTS_SAVE))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_SUPPORTS_SAVE))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_YEAR:
-				if (!core_stricmp(filter_text, s_drivers[index]->year))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!core_stricmp(filter_text, s_driver->year))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_VERTICAL:
-				if (s_drivers[index]->flags & ORIENTATION_SWAP_XY)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & ORIENTATION_SWAP_XY)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_HORIZONTAL:
-				if (!(s_drivers[index]->flags & ORIENTATION_SWAP_XY))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & ORIENTATION_SWAP_XY))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_MANUFACTURER:
 			{
-				std::string name = c_mnfct::getname(s_drivers[index]->manufacturer);
+				std::string name = c_mnfct::getname(s_driver->manufacturer);
 
 				if (!core_stricmp(filter_text, name.c_str()))
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 			}
 		}
@@ -1433,49 +1433,49 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 		filter = main_filters::actual;
 	}
 
-	for (size_t index = 0; index < s_drivers.size(); ++index)
+	for (auto & s_driver : s_drivers)
 	{
-		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
+		if (!bioscheck && filter != FILTER_BIOS && (s_driver->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
-		int idx = driver_list::find(s_drivers[index]->name);
+		int idx = driver_list::find(s_driver->name);
 
 		switch (filter)
 		{
 			case FILTER_SCREEN:
 				if (driver_cache[idx].b_screen == screens)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_SAMPLES:
 				if (driver_cache[idx].b_samples)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOSAMPLES:
 				if (!driver_cache[idx].b_samples)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_STEREO:
 				if (driver_cache[idx].b_stereo)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_CHD:
 				if (driver_cache[idx].b_chd)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOCHD:
 				if (!driver_cache[idx].b_chd)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 		}
 	}

@@ -1052,8 +1052,10 @@ std::string c_sw_region::getname(std::string &str)
 		size_t ends = fullname.find_first_not_of("abcdefghijklmnopqrstuvwxyz", found + 1);
 		std::string temp(fullname.substr(found + 1, ends - found - 1));
 
-		for (int x = 0; x < ARRAY_LENGTH(region_lists); x++)
-			if (temp.compare(region_lists[x]) == 0)
+//		for (int x = 0; x < ARRAY_LENGTH(region_lists); x++)
+		for (auto & elem : region_lists)
+//			if (temp.compare(region_lists[x]) == 0)
+			if (temp == elem)
 				return (str.substr(found + 1, ends - found - 1));
 	}
 	return std::string("<none>");
@@ -1119,80 +1121,80 @@ void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_driv
 	}
 
 	// iterate over entries
-	for (size_t x = 0; x < s_drivers.size(); x++)
+	for (auto & s_driver : s_drivers)
 	{
 		switch (filter)
 		{
 			case MEWUI_SW_PARENTS:
-				if (s_drivers[x]->parentname.empty())
-					m_displaylist.push_back(s_drivers[x]);
+				if (s_driver->parentname.empty())
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_CLONES:
-				if (!s_drivers[x]->parentname.empty())
-					m_displaylist.push_back(s_drivers[x]);
+				if (!s_driver->parentname.empty())
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_AVAILABLE:
-				if (s_drivers[x]->available)
-					m_displaylist.push_back(s_drivers[x]);
+				if (s_driver->available)
+					m_displaylist.push_back(s_driver);
 					break;
 
 			case MEWUI_SW_UNAVAILABLE:
-				if (!s_drivers[x]->available)
-					m_displaylist.push_back(s_drivers[x]);
+				if (!s_driver->available)
+					m_displaylist.push_back(s_driver);
 					break;
 
 			case MEWUI_SW_SUPPORTED:
-				if (s_drivers[x]->supported != SOFTWARE_SUPPORTED_NO && s_drivers[x]->supported != SOFTWARE_SUPPORTED_PARTIAL)
-					m_displaylist.push_back(s_drivers[x]);
+				if (s_driver->supported == SOFTWARE_SUPPORTED_YES)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_PARTIAL_SUPPORTED:
-				if (s_drivers[x]->supported == SOFTWARE_SUPPORTED_PARTIAL)
-					m_displaylist.push_back(s_drivers[x]);
+				if (s_driver->supported == SOFTWARE_SUPPORTED_PARTIAL)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_UNSUPPORTED:
-				if (s_drivers[x]->supported == SOFTWARE_SUPPORTED_NO)
-					m_displaylist.push_back(s_drivers[x]);
+				if (s_driver->supported == SOFTWARE_SUPPORTED_NO)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_REGION:
 			{
-				std::string name = m_filter.region.getname(s_drivers[x]->longname);
+				std::string name = m_filter.region.getname(s_driver->longname);
 
 				if(!name.empty() && name.compare(filter_text) == 0)
-					m_displaylist.push_back(s_drivers[x]);
+					m_displaylist.push_back(s_driver);
 				break;
 			}
 
 			case MEWUI_SW_PUBLISHERS:
 			{
-				std::string name = m_filter.publisher.getname(s_drivers[x]->publisher);
+				std::string name = m_filter.publisher.getname(s_driver->publisher);
 
 				if(!name.empty() && name.compare(filter_text) == 0)
-					m_displaylist.push_back(s_drivers[x]);
+					m_displaylist.push_back(s_driver);
 				break;
 			}
 
 			case MEWUI_SW_YEARS:
-				if(s_drivers[x]->year == filter_text)
-					m_displaylist.push_back(s_drivers[x]);
+				if(s_driver->year == filter_text)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_LIST:
-				if(s_drivers[x]->listname == filter_text)
-					m_displaylist.push_back(s_drivers[x]);
+				if(s_driver->listname == filter_text)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case MEWUI_SW_TYPE:
-				if(s_drivers[x]->devicetype == filter_text)
-					m_displaylist.push_back(s_drivers[x]);
+				if(s_driver->devicetype == filter_text)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			default:
-				m_displaylist.push_back(s_drivers[x]);
+				m_displaylist.push_back(s_driver);
 				break;
 		}
 	}

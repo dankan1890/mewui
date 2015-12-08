@@ -1488,22 +1488,18 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 
 	if (oldsoft != soft || old_sw_view != mewui_globals::cur_sw_dats_view)
 	{
+		buffer.clear();
+		old_sw_view = mewui_globals::cur_sw_dats_view;
+		oldsoft = soft;
 		if (mewui_globals::cur_sw_dats_view == 0)
 		{
-			buffer.clear();
-			old_sw_view = mewui_globals::cur_sw_dats_view;
-			oldsoft = soft;
 			if (soft->startempty == 1)
 				machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 			else
 				machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
 		}
 		else
-		{
-			old_sw_view = mewui_globals::cur_sw_dats_view;
-			oldsoft = soft;
 			buffer.assign(soft->usage);
-		}
 	}
 
 	if (buffer.empty())
@@ -1514,7 +1510,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	}
 	else
 		mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
-		                         xstart, xend, text_size);
+			xstart, xend, text_size);
 
 	int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
 	if (totallines < r_visible_lines)

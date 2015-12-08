@@ -281,9 +281,10 @@ void ui_menu_font_ui::handle()
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
+				{
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_class.ui, &m_class.actual)));
 					changed = true;
-
+				}
 				break;
 
 			case MUI_BOLD:
@@ -408,41 +409,26 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
+#define SET_COLOR_UI(var, opt) var[M##opt].color = opt; var[M##opt].option = OPTION_##opt
 
 ui_menu_colors_ui::ui_menu_colors_ui(running_machine &machine, render_container *container) : ui_menu(machine, container)
 {
-	m_color_table[MUI_BACKGROUND_COLOR].color = UI_BACKGROUND_COLOR;
-	m_color_table[MUI_BACKGROUND_COLOR].option = OPTION_UI_BACKGROUND_COLOR;
-	m_color_table[MUI_BORDER_COLOR].color = UI_BORDER_COLOR;
-	m_color_table[MUI_BORDER_COLOR].option = OPTION_UI_BORDER_COLOR;
-	m_color_table[MUI_CLONE_COLOR].color = UI_CLONE_COLOR;
-	m_color_table[MUI_CLONE_COLOR].option = OPTION_UI_CLONE_COLOR;
-	m_color_table[MUI_DIPSW_COLOR].color = UI_DIPSW_COLOR;
-	m_color_table[MUI_DIPSW_COLOR].option = OPTION_UI_DIPSW_COLOR;
-	m_color_table[MUI_GFXVIEWER_BG_COLOR].color = UI_GFXVIEWER_BG_COLOR;
-	m_color_table[MUI_GFXVIEWER_BG_COLOR].option = OPTION_UI_GFXVIEWER_BG_COLOR;
-	m_color_table[MUI_MOUSEDOWN_BG_COLOR].color = UI_MOUSEDOWN_BG_COLOR;
-	m_color_table[MUI_MOUSEDOWN_BG_COLOR].option = OPTION_UI_MOUSEDOWN_BG_COLOR;
-	m_color_table[MUI_MOUSEDOWN_COLOR].color = UI_MOUSEDOWN_COLOR;
-	m_color_table[MUI_MOUSEDOWN_COLOR].option = OPTION_UI_MOUSEDOWN_COLOR;
-	m_color_table[MUI_MOUSEOVER_BG_COLOR].color = UI_MOUSEOVER_BG_COLOR;
-	m_color_table[MUI_MOUSEOVER_BG_COLOR].option = OPTION_UI_MOUSEOVER_BG_COLOR;
-	m_color_table[MUI_MOUSEOVER_COLOR].color = UI_MOUSEOVER_COLOR;
-	m_color_table[MUI_MOUSEOVER_COLOR].option = OPTION_UI_MOUSEOVER_COLOR;
-	m_color_table[MUI_SELECTED_BG_COLOR].color = UI_SELECTED_BG_COLOR;
-	m_color_table[MUI_SELECTED_BG_COLOR].option = OPTION_UI_SELECTED_BG_COLOR;
-	m_color_table[MUI_SELECTED_COLOR].color = UI_SELECTED_COLOR;
-	m_color_table[MUI_SELECTED_COLOR].option = OPTION_UI_SELECTED_COLOR;
-	m_color_table[MUI_SLIDER_COLOR].color = UI_SLIDER_COLOR;
-	m_color_table[MUI_SLIDER_COLOR].option = OPTION_UI_SLIDER_COLOR;
-	m_color_table[MUI_SUBITEM_COLOR].color = UI_SUBITEM_COLOR;
-	m_color_table[MUI_SUBITEM_COLOR].option = OPTION_UI_SUBITEM_COLOR;
-	m_color_table[MUI_TEXT_BG_COLOR].color = UI_TEXT_BG_COLOR;
-	m_color_table[MUI_TEXT_BG_COLOR].option = OPTION_UI_TEXT_BG_COLOR;
-	m_color_table[MUI_TEXT_COLOR].color = UI_TEXT_COLOR;
-	m_color_table[MUI_TEXT_COLOR].option = OPTION_UI_TEXT_COLOR;
-	m_color_table[MUI_UNAVAILABLE_COLOR].color = UI_UNAVAILABLE_COLOR;
-	m_color_table[MUI_UNAVAILABLE_COLOR].option = OPTION_UI_UNAVAILABLE_COLOR;
+	SET_COLOR_UI(m_color_table, UI_BACKGROUND_COLOR);
+	SET_COLOR_UI(m_color_table, UI_BORDER_COLOR);
+	SET_COLOR_UI(m_color_table, UI_CLONE_COLOR);
+	SET_COLOR_UI(m_color_table, UI_DIPSW_COLOR);
+	SET_COLOR_UI(m_color_table, UI_GFXVIEWER_BG_COLOR);
+	SET_COLOR_UI(m_color_table, UI_MOUSEDOWN_BG_COLOR);
+	SET_COLOR_UI(m_color_table, UI_MOUSEDOWN_COLOR);
+	SET_COLOR_UI(m_color_table, UI_MOUSEOVER_BG_COLOR);
+	SET_COLOR_UI(m_color_table, UI_MOUSEOVER_COLOR);
+	SET_COLOR_UI(m_color_table, UI_SELECTED_BG_COLOR);
+	SET_COLOR_UI(m_color_table, UI_SELECTED_COLOR);
+	SET_COLOR_UI(m_color_table, UI_SLIDER_COLOR);
+	SET_COLOR_UI(m_color_table, UI_SUBITEM_COLOR);
+	SET_COLOR_UI(m_color_table, UI_TEXT_BG_COLOR);
+	SET_COLOR_UI(m_color_table, UI_TEXT_COLOR);
+	SET_COLOR_UI(m_color_table, UI_UNAVAILABLE_COLOR);
 }
 
 //-------------------------------------------------

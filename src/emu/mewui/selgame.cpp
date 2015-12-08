@@ -2389,22 +2389,18 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		if (oldsoft != soft || old_sw_view != mewui_globals::cur_sw_dats_view)
 		{
+			buffer.clear();
+			old_sw_view = mewui_globals::cur_sw_dats_view;
+			oldsoft = soft;
 			if (mewui_globals::cur_sw_dats_view == 0)
 			{
-				buffer.clear();
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
 				if (soft->startempty == 1)
 					machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 				else
 					machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
 			}
 			else
-			{
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
 				buffer.assign(soft->usage);
-			}
 		}
 
 		if (buffer.empty())

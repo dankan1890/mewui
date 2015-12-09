@@ -25,9 +25,9 @@ matrix:
       env: TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6" && ./$MAME -validate;
+    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6";
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    make -j2 && ./$MAME -validate;
+    make -j2;
     fi
 sudo: required
 before_install:

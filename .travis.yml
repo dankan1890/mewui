@@ -41,7 +41,7 @@ install:
     ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2
     make
     make install
-    cd ~/dankan1890/mewui 
+    cd ~/dankan1890/mewui; 
     fi
 before_install:
   - "if [ $TRAVIS_OS_NAME == 'osx' ]; then brew update; fi"

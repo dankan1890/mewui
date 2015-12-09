@@ -6,6 +6,11 @@ addons:
             - ubuntu-toolchain-r-test
         packages:
             - clang-3.6
+            - libsdl2-dev
+            - libsdl2-ttf-dev
+            - libasound2-dev
+            - libqt4-dev
+            - libqt4-dev-bin
 compiler:
   - clang
 os:
@@ -29,7 +34,7 @@ script:
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
     make -j2;
     fi
-sudo: required
+sudo: false
 before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:shahar-evron/qt-backports -y; fi"

@@ -34,13 +34,13 @@ script:
 sudo: false
 install:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    wget https://www.libsdl.org/release/SDL2-2.0.3.tar.gz -O ~/SDL2.tar.gz
-    tar -xzvf ~/SDL2.tar.gz -C ~/
-    mkdir ~/sdl-build
-    cd ~/sdl-build
-    ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2
-    make
-    make install
+    wget https://www.libsdl.org/release/SDL2-2.0.3.tar.gz -O ~/SDL2.tar.gz &&
+    tar -xzvf ~/SDL2.tar.gz -C ~/ &&
+    mkdir ~/sdl-build &&
+    cd ~/sdl-build &&
+    ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2 &&
+    make &&
+    make install &&
     cd ~/dankan1890/mewui; 
     fi
 before_install:

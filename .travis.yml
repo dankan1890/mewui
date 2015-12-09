@@ -6,11 +6,8 @@ addons:
             - ubuntu-toolchain-r-test
         packages:
             - clang-3.6
-            - libsdl2-dev
-            - libsdl2-ttf-dev
             - libasound2-dev
             - libqt4-dev
-            - libqt4-dev-bin
 compiler:
   - clang
 os:

@@ -41,6 +41,7 @@ install:
     ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2 &&
     make &&
     make install &&
+    ls ~/ &&
     cd ~/dankan1890/mewui; 
     fi
 before_install:

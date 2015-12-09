@@ -33,13 +33,13 @@ script:
     fi
 sudo: false
 install:
-  - wget https://www.libsdl.org/release/SDL2-2.0.3.tar.gz -O ~/SDL2.tar.gz && 
-  - tar -xzvf ~/SDL2.tar.gz -C ~/ && 
-  - mkdir ~/sdl-build && 
-  - cd ~/sdl-build && 
-  - ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2 &&
-  - make && 
-  - make install;
+  - wget https://www.libsdl.org/release/SDL2-2.0.3.tar.gz -O ~/SDL2.tar.gz
+  - tar -xzvf ~/SDL2.tar.gz -C ~/
+  - mkdir ~/sdl-build
+  - cd ~/sdl-build
+  - ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2
+  - make
+  - make install
 before_install:
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then brew update; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf; fi"

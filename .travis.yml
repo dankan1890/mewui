@@ -27,7 +27,7 @@ matrix:
       env: TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6" SDL_INSTALL_ROOT="$(HOME)/SDL2";
+    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6" SDL_INSTALL_ROOT="$HOME/SDL2";
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
     make -j2;
     fi

@@ -41,7 +41,9 @@ install:
     ~/SDL2-2.0.3/configure --prefix=$HOME/SDL2 &&
     make &&
     make install &&
-    export PATH=$PATH:$HOME/SDL2/bin:$HOME/SDL2/include:$HOME/SDL2/lib &&
+    export PATH=$PATH:$HOME/SDL2/bin &&
+    export INCLUDE=$INCLUDE:$HOME/SDL2/include &&
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/SDL2/lib &&
     cd ~/build/dankan1890/mewui;
     fi
 before_install:

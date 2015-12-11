@@ -370,5 +370,3 @@ custombuildtask {
 	layoutbuildtask("emu/layout", "noscreens"),
 	layoutbuildtask("emu/layout", "snap"),
 }
-
-

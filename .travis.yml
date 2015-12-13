@@ -2,11 +2,12 @@ language: cpp
 addons:
     apt:
         sources:
-            - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
         packages:
-            - clang-3.6
+            - g++-5
+            - gcc-5
 compiler:
+  - gcc
   - clang
 os:
   - linux
@@ -17,6 +18,10 @@ env:
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
 matrix:
   exclude:
+    - os: osx
+      compiler: gcc
+    - os: linux
+      compiler: clang
     - os: linux
       env: TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
     - os: linux
@@ -25,9 +30,12 @@ matrix:
       env: TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
 script:
   - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6";
+    if [ $CC == 'clang' ]; then
+    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6" && ./$MAME -validate;
+    else make -j2 OPTIMIZE=0 OVERRIDE_CC="gcc-5" OVERRIDE_CXX="g++-5" && ./$MAME -validate;
+    fi
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    make -j2;
+    make -j2 OPTIMIZE=0 && ./$MAME -validate;
     fi
 sudo: required
 before_install:

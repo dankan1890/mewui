@@ -1658,7 +1658,7 @@ void ui_mewui_select_game::inkey_export()
 
 		// create the XML and save to file
 		info_xml_creator creator(drivlist);
-		creator.output(pfile);
+		creator.output(pfile, false);
 		fclose(pfile);
 		machine().popmessage("%s.xml saved under mewui folder.", filename.c_str());
 	}

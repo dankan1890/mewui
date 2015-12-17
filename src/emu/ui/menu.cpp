@@ -84,7 +84,7 @@ bitmap_argb32 *ui_menu::no_avail_bitmap;
 bitmap_argb32 *ui_menu::star_bitmap;
 bitmap_argb32 *ui_menu::bgrnd_bitmap;
 bitmap_argb32 *ui_menu::icons_bitmap[MAX_ICONS_RENDER];
-bitmap_rgb32 *ui_menu::hilight_main_bitmap;
+std::unique_ptr<bitmap_rgb32> ui_menu::hilight_main_bitmap;
 bitmap_argb32 *ui_menu::toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
 bitmap_argb32 *ui_menu::sw_toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
 
@@ -1263,7 +1263,7 @@ void ui_menu::init_mewui(running_machine &machine)
 {
 	render_manager &mrender = machine.render();
 	// create a texture for hilighting items in main menu
-	hilight_main_bitmap = auto_bitmap_rgb32_alloc(machine, 1, 26);
+	hilight_main_bitmap = std::make_unique<bitmap_rgb32>(1, 26);
 	int r1 = 0, g1 = 169, b1 = 255; //Any start color
 	int r2 = 0, g2 = 39, b2 = 130; //Any stop color
 	for (int y = 0; y < 26; y++)

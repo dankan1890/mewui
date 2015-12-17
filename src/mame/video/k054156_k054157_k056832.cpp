@@ -1063,10 +1063,12 @@ WRITE16_MEMBER( k056832_device::word_w )
 	{
 		switch(offset)
 		{
-			/* -x-- ---- dotclock select: 0=8Mhz, 1=6Mhz (not used by GX)
-			 * --x- ---- screen flip y
-			 * ---x ---- screen flip x
-			 * ---- --x- external linescroll RAM page enable
+			/* -x-- ---- ---- hardcodes 8bpp when enabled (ignores next field)
+			 * --xx ---- ---- gfx bpp select: n + 4 (1 << n), i.e. from 7bpp to 4bpp
+			 * ---- -x-- ---- dotclock select: 0=8Mhz, 1=6Mhz (not used by GX)
+			 * ---- --x- ---- screen flip y
+			 * ---- ---x ---- screen flip x
+			 * ---- ---- --x- external linescroll RAM page enable
 			 */
 			case 0x00/2:
 				if ((new_data & 0x30) != (old_data & 0x30))

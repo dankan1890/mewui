@@ -69,7 +69,7 @@ static const char *hover_msg[] = { "Add or remove favorites", "Export displayed 
 
 ui_menu *ui_menu::menu_stack;
 ui_menu *ui_menu::menu_free;
-bitmap_rgb32 *ui_menu::hilight_bitmap;
+std::unique_ptr<bitmap_rgb32> ui_menu::hilight_bitmap;
 render_texture *ui_menu::hilight_texture;
 render_texture *ui_menu::arrow_texture;
 render_texture *ui_menu::snapx_texture;
@@ -135,7 +135,7 @@ void ui_menu::init(running_machine &machine)
 	ui_menu::stack_reset(machine);
 
 	// create a texture for hilighting items
-	hilight_bitmap = auto_bitmap_rgb32_alloc(machine, 256, 1);
+	hilight_bitmap = std::make_unique<bitmap_rgb32>(256, 1);
 	for (int x = 0; x < 256; x++)
 	{
 		int alpha = 0xff;

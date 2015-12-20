@@ -771,11 +771,6 @@ void cps3_state::cps3_decrypt_bios()
 
 void cps3_state::init_common(void)
 {
-	/* just some NOPs for the game to execute if it crashes and starts executing unmapped addresses
-	 - this prevents MAME from crashing */
-	m_nops = auto_alloc(machine(), UINT32);
-	m_nops[0] = 0x00090009;
-
 	// flash roms
 	std::string tempstr;
 	for (int simmnum = 0; simmnum < 7; simmnum++)
@@ -903,12 +898,12 @@ void cps3_state::video_start()
 	save_pointer(NAME(m_char_ram.get()), 0x800000 /4);
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(0, global_alloc(gfx_element(m_palette, cps3_tiles8x8_layout, (UINT8 *)m_ss_ram.get(), 0, m_palette->entries() / 16, 0)));
+	m_gfxdecode->set_gfx(0, std::make_unique<gfx_element>(m_palette, cps3_tiles8x8_layout, (UINT8 *)m_ss_ram.get(), 0, m_palette->entries() / 16, 0));
 
 	//decode_ssram();
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(1, global_alloc(gfx_element(m_palette, cps3_tiles16x16_layout, (UINT8 *)m_char_ram.get(), 0, m_palette->entries() / 64, 0)));
+	m_gfxdecode->set_gfx(1, std::make_unique<gfx_element>(m_palette, cps3_tiles16x16_layout, (UINT8 *)m_char_ram.get(), 0, m_palette->entries() / 64, 0));
 	m_gfxdecode->gfx(1)->set_granularity(64);
 
 	//decode_charram();

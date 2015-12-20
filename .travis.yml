@@ -1,48 +1,17 @@
 language: cpp
-addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            - g++-5
-            - gcc-5
 compiler:
-  - gcc
   - clang
 os:
-  - linux
   - osx
 env:
-  - TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
-matrix:
-  exclude:
-    - os: osx
-      compiler: gcc
-    - os: linux
-      compiler: clang
-    - os: linux
-      env: TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
-    - os: linux
-      env: TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
-    - os: osx
-      env: TARGET=mewui MAME=mewui64 LDOPTS="-Wl,-no-keep-memory"
 script:
-  - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    if [ $CC == 'clang' ]; then
-    make -j2 OVERRIDE_CXX="clang++-3.6" OVERRIDE_CC="clang-3.6" && ./$MAME -validate;
-    else make -j2 OPTIMIZE=0 OVERRIDE_CC="gcc-5" OVERRIDE_CXX="g++-5" && ./$MAME -validate;
-    fi
-    elif [ $TRAVIS_OS_NAME == 'osx' ]; then
+  - if [ $TRAVIS_OS_NAME == 'osx' ]; then
     make -j2 OPTIMIZE=0 && ./$MAME -validate;
     fi
 sudo: required
 before_install:
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo add-apt-repository ppa:shahar-evron/qt-backports -y; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo apt-get update -qq; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'linux' ]; then sudo apt-get install -y --force-yes libsdl2-dev libsdl2-ttf-dev libasound2-dev libqt4-dev libqt4-dev-bin; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then brew update; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf; fi"
   - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg'; fi"
@@ -52,14 +21,7 @@ branches:
   only:
     - master
 after_success:
-  - if [ $TRAVIS_OS_NAME == 'linux' ]; then
-    echo $TRAVIS_COMMIT &&
-    echo $TRAVIS_COMMIT > commit.txt &&
-    zip -9 -r mewui64-linux.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
-    curl --ftp-create-dirs -T "{mewui64-linux.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Linux/ &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Linux/commit.txt' -Q 'RNTO upload/Linux/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Linux/mewui64-linux.zip' -Q 'RNTO upload/Linux/mewui64-linux.zip' -u $FTP_USER:$FTP_PASSWORD;
-    elif [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then
+  - if [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdllib.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
@@ -74,4 +36,3 @@ after_success:
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/commit.txt' -Q 'RNTO upload/Mac-Framework/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/mewui64-mac-sdlframework.zip' -Q 'RNTO upload/Mac-Framework/mewui64-mac-sdlframework.zip' -u $FTP_USER:$FTP_PASSWORD;
     fi
-

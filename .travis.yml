@@ -12,7 +12,7 @@ sudo: required
 before_install:
   - brew update
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf;
-    elif [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg' &&
+    else curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg' &&
     hdiutil attach SDL2-2.0.3.dmg &&
     sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
     fi
@@ -27,8 +27,7 @@ after_success:
     curl --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Lib/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/commit.txt' -Q 'RNTO upload/Mac-Lib/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac-Lib/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
-    elif [ $MACOSX_USE_LIBSDL == 0 ]; then
-    echo $TRAVIS_COMMIT &&
+    else echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdlframework.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-mac-sdlframework.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Framework/ &&

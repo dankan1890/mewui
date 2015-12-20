@@ -7,28 +7,27 @@ env:
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
 script:
-  - if [ $TRAVIS_OS_NAME == 'osx' ]; then
-    make -j2 OPTIMIZE=0 && ./$MAME -validate;
-    fi
+  - make -j4 OPTIMIZE=0 && ./$MAME -validate
 sudo: required
 before_install:
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ]; then brew update; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg'; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then hdiutil attach SDL2-2.0.3.dmg; fi"
-  - "if [ ${TRAVIS_OS_NAME:-'linux'} = 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; fi"
+  - brew update
+  - if [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf;
+    elif [ $MACOSX_USE_LIBSDL == 0 ]; then curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg' &&
+    hdiutil attach SDL2-2.0.3.dmg &&
+    sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
+    fi
 branches:
   only:
     - master
 after_success:
-  - if [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 1 ]; then
+  - if [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdllib.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
     curl --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Lib/ &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/commit.txt' -Q 'RNTO upload/Mac-Lib/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
     curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac-Lib/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
-    elif [ $TRAVIS_OS_NAME == 'osx' ] && [ $MACOSX_USE_LIBSDL == 0 ]; then
+    elif [ $MACOSX_USE_LIBSDL == 0 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdlframework.zip mewui64 docs/ hash/ hlsl/ nl_examples/ samples/ &&

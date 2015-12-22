@@ -1534,6 +1534,7 @@ schasera        // RT  Taito
 schaserb        // RT  Taito
 schaserc        // RT  Taito
 schasercv       // RT  Taito
+schaserm		// Model Racing
 lupin3          // LP  (c) 1980 Taito
 lupin3a         // LP  (c) 1980 Taito
 intruder        // (c) 1980 GamePlan (Taito)
@@ -2116,6 +2117,7 @@ knightb         // bootleg
 kicknrun        // A87 (c) 1986 Taito Corporation
 kicknrunu       // A87 (c) 1986 Taito Corporation
 mexico86        // bootleg (Micro Research)
+mexico86a		// bootleg
 darius          // A96 (c) 1986 Taito Corporation Japan (World)
 dariusu         // A96 (c) 1986 Taito America Corporation (US)
 dariusj         // A96 (c) 1986 Taito Corporation (Japan)
@@ -3251,6 +3253,7 @@ sf2v004         // hack
 sf2acc          // hack
 sf2acca         // hack
 sf2ceblp        // hack
+sf2cebltw		// hack
 sf2accp2        // hack
 sf2amf          // bootleg
 sf2amf2         // bootleg
@@ -4130,6 +4133,7 @@ tsurugij        // 2001
 wcombat         // 2002
 wcombatk        // 2002
 wcombatj        // 2002
+wcombatu		// 2002
 xtrial          // 2002
 mfightc         // 2002
 mfightcc        // 2002
@@ -8137,6 +8141,7 @@ vball2pjb       // bootleg (of Japan set)
 ddragon2        // TA-0026 (c) 1988 (World)
 ddragon2u       // TA-0026 (c) 1988 (US)
 ddragon2j       // TA-0026 (c) 1988 (Japan)
+ddragon2b		// bootleg
 toffy           // (c) 1993 Midas
 stoffy          // (c) 1994 Midas
 stoffyu         // (c) 1994 Midas + Unico
@@ -9539,6 +9544,7 @@ sparkman        // (c) 1989 SunA
 sparkmana       // (c) 1989 SunA
 starfigh        // (c) 1990 SunA
 hardhea2        // (c) 1991 SunA
+hardhea2b		// bootleg
 brickzn         // (c) 1992 SunA
 brickznv5       // (c) 1992 SunA
 brickznv4       // (c) 1992 SunA
@@ -9612,6 +9618,7 @@ zipzap          // (c) 1995 Barko Corp
 missw96         // (c) 1996 Comad
 missw96a        // (c) 1996 Comad
 missw96b        // (c) 1996 Comad
+missw96c        // (c) 1996 Comad
 missmw96        // (c) 1996 Comad
 smissw          //
 fantsia2        // (c) 1997 Comad
@@ -10664,6 +10671,7 @@ driblingbr      // bootleg
 ace             // [1976 Allied Leisure]
 clayshoo        // [1979 Allied Leisure]
 pirates         // (c) 1994 NIX
+piratesb		// bootleg?
 genix           // (c) 199? NIX
 fitfight        // bootleg of Art of Fighting
 histryma        // bootleg of Fighter's History

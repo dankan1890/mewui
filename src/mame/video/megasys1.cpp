@@ -415,6 +415,9 @@ WRITE16_MEMBER(megasys1_state::megasys1_vregs_A_w)
 {
 	UINT16 new_data = COMBINE_DATA(&m_vregs[offset]);
 
+	if(((offset*2) & 0x300) == 0)
+		m_screen->update_partial(m_screen->vpos());
+	
 	switch (offset)
 	{
 		case 0x000/2   :    m_active_layers = new_data; break;
@@ -658,7 +661,7 @@ inline void megasys1_state::draw_16x16_priority_sprite(screen_device &screen, bi
 
 //	if (sy >= nScreenHeight || sy < -15 || sx >= nScreenWidth || sx < -15) return;
 	gfx_element *decodegfx = m_gfxdecode->gfx(3);
-	sy = sy + cliprect.min_y;
+	sy = sy + 16;
 
 	const UINT8* gfx = decodegfx->get_data(code);
 

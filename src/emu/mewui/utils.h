@@ -275,9 +275,6 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 
 	bitmap_format format = bitmap.format();
 
-	UINT64 jpg_size = 0;
-	unsigned char *jpg_buffer = nullptr;
-
 	// define file's full name
 	std::string fname;
 
@@ -298,8 +295,8 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	jpeg_create_decompress(&cinfo);
 
 	// allocates a buffer for the image
-	jpg_size = file.size();
-	jpg_buffer = global_alloc_array(unsigned char, jpg_size + 100);
+	UINT64 jpg_size = file.size();
+	unsigned char *jpg_buffer = global_alloc_array(unsigned char, jpg_size + 100);
 
 	// read data from the file and set them in the buffer
 	file.read(jpg_buffer, jpg_size);

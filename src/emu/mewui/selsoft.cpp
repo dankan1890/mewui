@@ -1446,11 +1446,9 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	std::vector<int> xstart;
 	std::vector<int> xend;
 	float text_size = machine().options().infos_size();
-	ui_software_info *soft = nullptr;
+	ui_software_info *soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 	static ui_software_info *oldsoft = nullptr;
 	static int old_sw_view = -1;
-
-	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 
 	float gutter_width = 0.4f * line_height * machine().render().ui_aspect() * 1.3f;
 	float ud_arrow_width = line_height * machine().render().ui_aspect();
@@ -1554,9 +1552,8 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 	static ui_software_info *oldsoft = nullptr;
 	static const game_driver *olddriver = nullptr;
 	const game_driver *driver = nullptr;
-	ui_software_info *soft = nullptr;
+	ui_software_info *soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 
-	soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 	if (soft && soft->startempty == 1)
 	{
 		driver = soft->driver;

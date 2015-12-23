@@ -1,14 +1,15 @@
 language: cpp
+sudo: required
 compiler:
   - clang
 os:
   - osx
+branches:
+  only:
+    - master
 env:
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=0 OPTIMIZE=0
   - TARGET=mewui MAME=mewui64 MACOSX_USE_LIBSDL=1 OPTIMIZE=0
-script:
-  - make -j4 OPTIMIZE=0 && ./$MAME -validate
-sudo: required
 before_install:
   - brew update
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf;
@@ -16,9 +17,8 @@ before_install:
     hdiutil attach SDL2-2.0.3.dmg &&
     sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
     fi
-branches:
-  only:
-    - master
+script:
+  - make -j2 && ./$MAME -validate
 after_success:
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&

@@ -552,14 +552,14 @@ void ui_menu_select_software::build_software_list()
 	// retrieve and set the long name of software for parents
 	for (size_t y = 1; y < m_swinfo.size(); y++)
 	{
-		std::string parent(m_swinfo[y].parentname);
-		if (!parent.empty())
+		if (!m_swinfo[y].parentname.empty())
 		{
+			std::string lparent(m_swinfo[y].parentname);
 			bool found = false;
 
 			// first scan backward
 			for (int x = y; x > 0; x--)
-				if (parent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
+				if (lparent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					found = true;
@@ -568,7 +568,7 @@ void ui_menu_select_software::build_software_list()
 
 			// not found? then scan forward
 			for (size_t x = y; !found && x < m_swinfo.size(); x++)
-				if (parent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
+				if (lparent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					break;

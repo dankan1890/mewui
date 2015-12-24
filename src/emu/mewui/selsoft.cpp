@@ -559,7 +559,7 @@ void ui_menu_select_software::build_software_list()
 
 			// first scan backward
 			for (int x = y; x > 0; x--)
-				if (lparent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
+				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					found = true;
@@ -568,7 +568,7 @@ void ui_menu_select_software::build_software_list()
 
 			// not found? then scan forward
 			for (size_t x = y; !found && x < m_swinfo.size(); x++)
-				if (lparent == m_swinfo[x].shortname && m_swinfo[y].instance == m_swinfo[x].instance)
+				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
 					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
 					break;
@@ -1052,9 +1052,7 @@ std::string c_sw_region::getname(std::string &str)
 		size_t ends = fullname.find_first_not_of("abcdefghijklmnopqrstuvwxyz", found + 1);
 		std::string temp(fullname.substr(found + 1, ends - found - 1));
 
-//		for (int x = 0; x < ARRAY_LENGTH(region_lists); x++)
 		for (auto & elem : region_lists)
-//			if (temp.compare(region_lists[x]) == 0)
 			if (temp == elem)
 				return (str.substr(found + 1, ends - found - 1));
 	}

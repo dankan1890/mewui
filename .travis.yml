@@ -22,7 +22,7 @@ before_install:
     sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
     fi
 script:
-  - make -j2
+  - make -j4
 after_success:
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&

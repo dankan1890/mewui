@@ -31,8 +31,8 @@ private:
 	std::vector<const game_driver *> &m_availablesorted;
 	std::vector<const game_driver *> &m_unavailablesorted;
 
-	int m_audit_mode, m_x;
-	size_t m_size;
+	int m_audit_mode;
+	size_t m_size, m_x;
 	void save_available_machines();
 };
 

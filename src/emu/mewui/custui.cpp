@@ -72,7 +72,7 @@ void ui_menu_custom_ui::handle()
 					int total = ARRAY_LENGTH(hide_status);
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; index++)
-						s_sel[index].assign(hide_status[index]);
+						s_sel[index] = hide_status[index];
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::panels_status)));
 				}
@@ -379,7 +379,7 @@ void ui_menu_font_ui::custom_render(void *selectedref, float top, float bottom, 
 
 	if ((FPTR)selectedref == INFOS_SIZE)
 	{
-		topbuf.assign("Sample text - Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+		topbuf = "Sample text - Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
 
 		mui.draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr, m_info_size);
@@ -568,7 +568,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 	// compute maxwidth
-	topbuf.assign("Menu Preview");
+	topbuf = "Menu Preview";
 
 	mui.draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
@@ -576,11 +576,11 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	std::string sampletxt[5];
 
-	sampletxt[0].assign("Normal");
-	sampletxt[1].assign("Subitem");
-	sampletxt[2].assign("Selected");
-	sampletxt[3].assign("Mouse Over");
-	sampletxt[4].assign("Clone");
+	sampletxt[0] = "Normal";
+	sampletxt[1] = "Subitem";
+	sampletxt[2] = "Selected";
+	sampletxt[3] = "Mouse Over";
+	sampletxt[4] = "Clone";
 
 	for (auto & elem: sampletxt)
 	{
@@ -671,7 +671,7 @@ ui_menu_rgb_ui::ui_menu_rgb_ui(running_machine &machine, render_container *conta
 	m_color = _color;
 	m_key_active = false;
 	m_lock_ref = 0;
-	m_title.assign(_title);
+	m_title = _title;
 	m_search[0] = '\0';
 }
 

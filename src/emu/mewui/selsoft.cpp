@@ -98,7 +98,7 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 	std::string default_name;
 	for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
 		if (ROMENTRY_ISDEFAULT_BIOS(rom))
-			default_name.assign(ROM_GETNAME(rom));
+			default_name = ROM_GETNAME(rom);
 
 	int bios_count = 0;
 	for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
@@ -114,14 +114,14 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 			{
 				name.append(" (default)");
 				s_bios tmp;
-				tmp.name.assign(name);
+				tmp.name = name;
 				tmp.id = bios_flags - 1;
 				biosname.insert(biosname.begin(), tmp);
 			}
 			else
 			{
 				s_bios tmp;
-				tmp.name.assign(name);
+				tmp.name = name;
 				tmp.id = bios_flags - 1;
 				biosname.push_back(tmp);
 			}
@@ -466,8 +466,8 @@ void ui_menu_select_software::build_software_list()
 {
 	// add start empty item
 	ui_software_info first_swlist;
-	first_swlist.shortname.assign(m_driver->name);
-	first_swlist.longname.assign(m_driver->description);
+	first_swlist.shortname = m_driver->name;
+	first_swlist.longname = m_driver->description;
 	first_swlist.parentname.clear();
 	first_swlist.year.clear();
 	first_swlist.publisher.clear();
@@ -508,11 +508,11 @@ void ui_menu_select_software::build_software_list()
 					{
 						instance_name = image->instance_name();
 						if (instance_name != nullptr)
-							tmpmatches.instance.assign(image->instance_name());
+							tmpmatches.instance = image->instance_name();
 
 						type_name = image->image_type_name();
 						if (type_name != nullptr)
-							tmpmatches.devicetype.assign(type_name);
+							tmpmatches.devicetype = type_name;
 						break;
 					}
 				}
@@ -520,16 +520,16 @@ void ui_menu_select_software::build_software_list()
 				if (instance_name == nullptr || type_name == nullptr)
 					continue;
 
-				if (swinfo->shortname()) tmpmatches.shortname.assign(swinfo->shortname());
-				if (swinfo->longname()) tmpmatches.longname.assign(swinfo->longname());
-				if (swinfo->parentname()) tmpmatches.parentname.assign(swinfo->parentname());
-				if (swinfo->year()) tmpmatches.year.assign(swinfo->year());
-				if (swinfo->publisher()) tmpmatches.publisher.assign(swinfo->publisher());
+				if (swinfo->shortname()) tmpmatches.shortname = swinfo->shortname();
+				if (swinfo->longname()) tmpmatches.longname = swinfo->longname();
+				if (swinfo->parentname()) tmpmatches.parentname = swinfo->parentname();
+				if (swinfo->year()) tmpmatches.year = swinfo->year();
+				if (swinfo->publisher()) tmpmatches.publisher = swinfo->publisher();
 				tmpmatches.supported = swinfo->supported();
-				if (part->name()) tmpmatches.part.assign(part->name());
+				if (part->name()) tmpmatches.part = part->name();
 				tmpmatches.driver = m_driver;
-				if (swlist->list_name()) tmpmatches.listname.assign(swlist->list_name());
-				if (part->interface()) tmpmatches.interface.assign(part->interface());
+				if (swlist->list_name()) tmpmatches.listname = swlist->list_name();
+				if (part->interface()) tmpmatches.interface = part->interface();
 				tmpmatches.startempty = 0;
 				tmpmatches.parentlongname.clear();
 				tmpmatches.usage.clear();
@@ -537,7 +537,7 @@ void ui_menu_select_software::build_software_list()
 
 				for (feature_list_item *flist = swinfo->other_info(); flist != nullptr; flist = flist->next())
 					if (!strcmp(flist->name(), "usage"))
-						tmpmatches.usage.assign(flist->value());
+						tmpmatches.usage = flist->value();
 
 				m_swinfo.push_back(tmpmatches);
 				m_filter.region.set(tmpmatches.longname);
@@ -561,7 +561,7 @@ void ui_menu_select_software::build_software_list()
 			for (int x = y; x > 0; x--)
 				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
-					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
+					m_swinfo[y].parentlongname = m_swinfo[x].longname;
 					found = true;
 					break;
 				}
@@ -570,7 +570,7 @@ void ui_menu_select_software::build_software_list()
 			for (size_t x = y; !found && x < m_swinfo.size(); x++)
 				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
-					m_swinfo[y].parentlongname.assign(m_swinfo[x].longname);
+					m_swinfo[y].parentlongname = m_swinfo[x].longname;
 					break;
 				}
 		}
@@ -705,21 +705,21 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		if (cloneof != -1)
 			strprintf(tempbuf[2], "Driver is clone of: %-.100s", driver_list::driver(cloneof).description);
 		else
-			tempbuf[2].assign("Driver is parent");
+			tempbuf[2] = "Driver is parent";
 
 		// next line is overall driver status
 		if (driver->flags & MACHINE_NOT_WORKING)
-			tempbuf[3].assign("Overall: NOT WORKING");
+			tempbuf[3] = "Overall: NOT WORKING";
 		else if (driver->flags & MACHINE_UNEMULATED_PROTECTION)
-			tempbuf[3].assign("Overall: Unemulated Protection");
+			tempbuf[3] = "Overall: Unemulated Protection";
 		else
-			tempbuf[3].assign("Overall: Working");
+			tempbuf[3] = "Overall: Working";
 
 		// next line is graphics, sound status
 		if (driver->flags & (MACHINE_IMPERFECT_GRAPHICS | MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS))
-			tempbuf[4].assign("Graphics: Imperfect, ");
+			tempbuf[4] = "Graphics: Imperfect, ";
 		else
-			tempbuf[4].assign("Graphics: OK, ");
+			tempbuf[4] = "Graphics: OK, ";
 
 		if (driver->flags & MACHINE_NO_SOUND)
 			tempbuf[4].append("Sound: Unimplemented");
@@ -753,22 +753,22 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		if (!swinfo->parentname.empty())
 			strprintf(tempbuf[2], "Software is clone of: %-.100s", !swinfo->parentlongname.empty() ? swinfo->parentlongname.c_str() : swinfo->parentname.c_str());
 		else
-			tempbuf[2].assign("Software is parent");
+			tempbuf[2] = "Software is parent";
 
 		// next line is supported status
 		if (swinfo->supported == SOFTWARE_SUPPORTED_NO)
 		{
-			tempbuf[3].assign("Supported: No");
+			tempbuf[3] = "Supported: No";
 			color = UI_RED_COLOR;
 		}
 		else if (swinfo->supported == SOFTWARE_SUPPORTED_PARTIAL)
 		{
-			tempbuf[3].assign("Supported: Partial");
+			tempbuf[3] = "Supported: Partial";
 			color = UI_YELLOW_COLOR;
 		}
 		else
 		{
-			tempbuf[3].assign("Supported: Yes");
+			tempbuf[3] = "Supported: Yes";
 			color = UI_GREEN_COLOR;
 		}
 
@@ -782,10 +782,10 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		size_t found = copyright.find("\n");
 
 		tempbuf[0].assign(emulator_info::get_applongname()).append(" ").append(build_version);
-		tempbuf[1].assign(copyright.substr(0, found));
-		tempbuf[2].assign(copyright.substr(found + 1));
+		tempbuf[1] = copyright.substr(0, found);
+		tempbuf[2] = copyright.substr(found + 1);
 		tempbuf[3].clear();
-		tempbuf[4].assign("MEWUI by dankan1890 http://sourceforge.net/projects/mewui");
+		tempbuf[4] = "MEWUI by dankan1890 http://sourceforge.net/projects/mewui";
 	}
 
 	// compute our bounds
@@ -851,8 +851,8 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, true)));
 		else
 		{
-			reselect_last::driver.assign(ui_swinfo->driver->name);
-			reselect_last::software.assign("[Start empty]");
+			reselect_last::driver = ui_swinfo->driver->name;
+			reselect_last::software = "[Start empty]";
 			reselect_last::swlist.clear();
 			reselect_last::set(true);
 			machine().manager().schedule_new_driver(*ui_swinfo->driver);
@@ -902,9 +902,9 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 			mopt.set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 			std::string snap_list = std::string(ui_swinfo->listname).append(PATH_SEPARATOR).append(ui_swinfo->shortname);
 			mopt.set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-			reselect_last::driver.assign(drivlist.driver().name);
-			reselect_last::software.assign(ui_swinfo->shortname);
-			reselect_last::swlist.assign(ui_swinfo->listname);
+			reselect_last::driver = drivlist.driver().name;
+			reselect_last::software = ui_swinfo->shortname;
+			reselect_last::swlist = ui_swinfo->listname;
 			reselect_last::set(true);
 			machine().manager().schedule_new_driver(drivlist.driver());
 			machine().schedule_hard_reset();
@@ -1464,8 +1464,8 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 		float title_size = 0.0f;
 		float txt_lenght = 0.0f;
 		std::string t_text[2];
-		t_text[0].assign("History");
-		t_text[1].assign("Usage");
+		t_text[0] = "History";
+		t_text[1] = "Usage";
 
 		for (auto & elem : t_text)
 		{
@@ -1495,7 +1495,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 				machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
 		}
 		else
-			buffer.assign(soft->usage);
+			buffer = soft->usage;
 	}
 
 	if (buffer.empty())
@@ -1683,7 +1683,7 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 			else
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname);
+				pathname = soft->listname;
 				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
@@ -1816,9 +1816,9 @@ void ui_mewui_software_parts::handle()
 				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(elem).append(":").append(m_uiinfo->instance);
 				machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 
-				reselect_last::driver.assign(m_uiinfo->driver->name);
-				reselect_last::software.assign(m_uiinfo->shortname);
-				reselect_last::swlist.assign(m_uiinfo->listname);
+				reselect_last::driver = m_uiinfo->driver->name;
+				reselect_last::software = m_uiinfo->shortname;
+				reselect_last::swlist = m_uiinfo->listname;
 				reselect_last::set(true);
 
 				std::string snap_list = std::string(m_uiinfo->listname).append("/").append(m_uiinfo->shortname);
@@ -1911,9 +1911,9 @@ void ui_mewui_bios_selection::handle()
 				if (!m_software)
 				{
 					const game_driver *s_driver = (const game_driver *)m_driver;
-					reselect_last::driver.assign(s_driver->name);
+					reselect_last::driver = s_driver->name;
 					if (m_inlist)
-						reselect_last::software.assign("[Start empty]");
+						reselect_last::software = "[Start empty]";
 					else
 					{
 						reselect_last::software.clear();
@@ -1958,9 +1958,9 @@ void ui_mewui_bios_selection::handle()
 					moptions.set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 					std::string snap_list = std::string(ui_swinfo->listname).append(PATH_SEPARATOR).append(ui_swinfo->shortname);
 					moptions.set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-					reselect_last::driver.assign(drivlist.driver().name);
-					reselect_last::software.assign(ui_swinfo->shortname);
-					reselect_last::swlist.assign(ui_swinfo->listname);
+					reselect_last::driver = drivlist.driver().name;
+					reselect_last::software = ui_swinfo->shortname;
+					reselect_last::swlist = ui_swinfo->listname;
 					reselect_last::set(true);
 					machine().manager().schedule_new_driver(drivlist.driver());
 					machine().schedule_hard_reset();

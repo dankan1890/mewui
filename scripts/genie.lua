@@ -992,7 +992,6 @@ end
 				"-Wno-inline-new-delete",
 				"-Wno-constant-logical-operand",
 				"-Wno-deprecated-register",
-                                "-Wno-unused-private-field",
 			}
 			if (version >= 30500) then
 				buildoptions {

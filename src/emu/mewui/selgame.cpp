@@ -456,12 +456,12 @@ void ui_mewui_select_game::handle()
 			inkey_export();
 
 		// handle UI_AUDIT_FAST
-		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailablelist.empty())
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 1)));
+		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailsortedlist.empty())
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availsortedlist, m_unavailsortedlist, 1)));
 
 		// handle UI_AUDIT_ALL
 		else if (m_event->iptkey == IPT_UI_AUDIT_ALL)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 2)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availsortedlist, m_unavailsortedlist, 2)));
 
 		// typed characters append to the buffer
 		else if (m_event->iptkey == IPT_SPECIAL)
@@ -705,7 +705,7 @@ void ui_mewui_select_game::build_available_list()
 
 		if (drivnum != -1 && !m_included[drivnum])
 		{
-			m_availablelist.push_back(&driver_list::driver(drivnum));
+			m_availsortedlist.push_back(&driver_list::driver(drivnum));
 			m_included[drivnum] = true;
 		}
 	}
@@ -720,22 +720,20 @@ void ui_mewui_select_game::build_available_list()
 			const rom_entry *rom = driver_list::driver(x).rom;
 			if (ROMENTRY_ISREGION(rom) && ROMENTRY_ISEND(++rom))
 			{
-				m_availablelist.push_back(&driver_list::driver(x));
+				m_availsortedlist.push_back(&driver_list::driver(x));
 				m_included[x] = true;
 			}
 		}
 
 	// sort
-	m_availsortedlist = m_availablelist;
 	std::stable_sort(m_availsortedlist.begin(), m_availsortedlist.end(), sort_game_list);
 
 	// now build the unavailable list
 	for (int x = 0; x < m_total; ++x)
 		if (!m_included[x] && &driver_list::driver(x) != &GAME_NAME(___empty))
-			m_unavailablelist.push_back(&driver_list::driver(x));
+			m_unavailsortedlist.push_back(&driver_list::driver(x));
 
 	// sort
-	m_unavailsortedlist = m_unavailablelist;
 	std::stable_sort(m_unavailsortedlist.begin(), m_unavailsortedlist.end(), sort_game_list);
 }
 
@@ -1846,24 +1844,20 @@ void ui_mewui_select_game::save_available_machines()
 		// generate header
 		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
 		myfile << buffer;
-		myfile << (int)m_availablelist.size() << space;
-		myfile << (int)m_unavailablelist.size() << space;
+		myfile << (int)m_availsortedlist.size() << space;
+		myfile << (int)m_unavailsortedlist.size() << space;
 		int find = 0;
 
 		// generate available list
-		for (size_t x = 0; x < m_availablelist.size(); ++x)
+		for (size_t x = 0; x < m_availsortedlist.size(); ++x)
 		{
-			find = driver_list::find(m_availablelist[x]->name);
-			myfile << find << space;
 			find = driver_list::find(m_availsortedlist[x]->name);
 			myfile << find << space;
 		}
 
 		// generate unavailable list
-		for (size_t x = 0; x < m_unavailablelist.size(); ++x)
+		for (size_t x = 0; x < m_unavailsortedlist.size(); ++x)
 		{
-			find = driver_list::find(m_unavailablelist[x]->name);
-			myfile << find << space;
 			find = driver_list::find(m_unavailsortedlist[x]->name);
 			myfile << find << space;
 		}
@@ -1913,16 +1907,12 @@ bool ui_mewui_select_game::load_available_machines()
 	for (int x = 0; x < avsize; ++x)
 	{
 		myfile >> find >> space;
-		m_availablelist.push_back(&driver_list::driver(find));
-		myfile >> find >> space;
 		m_availsortedlist.push_back(&driver_list::driver(find));
 	}
 
 	// load unavailable list
 	for (int x = 0; x < unavsize; ++x)
 	{
-		myfile >> find >> space;
-		m_unavailablelist.push_back(&driver_list::driver(find));
 		myfile >> find >> space;
 		m_unavailsortedlist.push_back(&driver_list::driver(find));
 	}

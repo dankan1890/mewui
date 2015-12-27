@@ -48,12 +48,10 @@ private:
 	int  m_prev_selected;
 	int  m_isabios, m_issbios, m_isarcades, m_issystems;
 
-	std::vector<const game_driver *> m_availablelist;
 	std::vector<const game_driver *> m_fulllist;
 	std::vector<const game_driver *> m_sortedlist;
 	std::vector<const game_driver *> m_availsortedlist;
 	std::vector<const game_driver *> m_unavailsortedlist;
-	std::vector<const game_driver *> m_unavailablelist;
 	std::vector<const game_driver *> m_displaylist;
 	std::vector<const game_driver *> m_tmp;
 

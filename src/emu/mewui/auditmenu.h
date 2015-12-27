@@ -26,13 +26,10 @@ public:
 	virtual void handle() override;
 
 private:
-//	std::vector<const game_driver *> &m_available;
-//	std::vector<const game_driver *> &m_unavailable;
 	std::vector<const game_driver *> &m_availablesorted;
 	std::vector<const game_driver *> &m_unavailablesorted;
 
 	int m_audit_mode;
-	size_t m_size, m_x;
 	void save_available_machines();
 	bool m_first;
 };

@@ -1827,45 +1827,6 @@ void ui_mewui_select_game::load_cache_info()
 }
 
 //-------------------------------------------------
-//  save drivers infos to file
-//-------------------------------------------------
-
-void ui_mewui_select_game::save_available_machines()
-{
-	// attempt to open the output file
-	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-	if (file.open(emulator_info::get_configname(), "_avail.ini") == FILERR_NONE)
-	{
-		std::string filename(file.fullpath());
-		file.close();
-		std::ofstream myfile(filename.c_str());
-		UINT8 space = 0;
-
-		// generate header
-		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
-		myfile << buffer;
-		myfile << (int)m_availsortedlist.size() << space;
-		myfile << (int)m_unavailsortedlist.size() << space;
-		int find = 0;
-
-		// generate available list
-		for (size_t x = 0; x < m_availsortedlist.size(); ++x)
-		{
-			find = driver_list::find(m_availsortedlist[x]->name);
-			myfile << find << space;
-		}
-
-		// generate unavailable list
-		for (size_t x = 0; x < m_unavailsortedlist.size(); ++x)
-		{
-			find = driver_list::find(m_unavailsortedlist[x]->name);
-			myfile << find << space;
-		}
-		myfile.close();
-	}
-}
-
-//-------------------------------------------------
 //  load drivers infos from file
 //-------------------------------------------------
 

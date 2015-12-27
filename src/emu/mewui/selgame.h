@@ -68,7 +68,6 @@ private:
 	void populate_search();
 	void load_cache_info();
 	void save_cache_info();
-	void save_available_machines();
 	bool load_available_machines();
 	void load_custom_filters();
 

@@ -85,13 +85,10 @@ bool sorted_game_list(const game_driver *x, const game_driver *y)
 ui_menu_audit::ui_menu_audit(running_machine &machine, render_container *container, std::vector<const game_driver *> &availablesorted, std::vector<const game_driver *> &unavailablesorted,  int _audit_mode)
 	: ui_menu(machine, container), m_availablesorted(availablesorted), m_unavailablesorted(unavailablesorted), m_audit_mode(_audit_mode), m_first(true)
 {
-	if (m_audit_mode == 1)
-		m_size = m_unavailablesorted.size();
-	else
+	if (m_audit_mode == 2)
 	{
 		m_availablesorted.clear();
 		m_unavailablesorted.clear();
-		m_size = driver_list::total();
 	}
 }
 
@@ -116,9 +113,10 @@ void ui_menu_audit::handle()
 
 	if (m_audit_mode == 1)
 	{
-		for (; m_x < m_size; ++m_x)
+		std::vector<const game_driver *>::iterator iter = m_unavailablesorted.begin();
+		while (iter != m_unavailablesorted.end())
 		{
-			driver_enumerator enumerator(machine().options(), m_unavailablesorted[m_x]->name);
+			driver_enumerator enumerator(machine().options(), (*iter)->name);
 			enumerator.next();
 			media_auditor auditor(enumerator);
 			media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
@@ -126,14 +124,16 @@ void ui_menu_audit::handle()
 			// if everything looks good, include the driver
 			if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 			{
-				m_availablesorted.push_back(m_unavailablesorted[m_x]);
-				m_unavailablesorted.erase(m_unavailablesorted.begin() + m_x);
+				m_availablesorted.push_back((*iter));
+				iter = m_unavailablesorted.erase(iter);
 			}
+			else
+				iter++;
 		}
 	}
 	else
 	{
-		for (; m_x < m_size; ++m_x)
+		for (int m_x = 0; m_x < driver_list::total(); ++m_x)
 		{
 			const game_driver *driver = &driver_list::driver(m_x);
 			if (driver == &GAME_NAME(___empty))

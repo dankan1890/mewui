@@ -46,10 +46,8 @@ private:
 	s_filter            m_filter;
 
 	ui_software_info                  *m_searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
-	std::vector<ui_software_info *>   m_displaylist;
+	std::vector<ui_software_info *>   m_displaylist, m_tmp, m_sortedlist;
 	std::vector<ui_software_info>     m_swinfo;
-	std::vector<ui_software_info *>   m_tmp;
-	std::vector<ui_software_info *>   m_sortedlist;
 
 	void build_software_list();
 	void build_list(std::vector<ui_software_info *> &vec, const char *filter_text = nullptr, int filter = -1);
@@ -68,15 +66,15 @@ private:
 class ui_mewui_software_parts : public ui_menu
 {
 public:
-	ui_mewui_software_parts(running_machine &machine, render_container *container, std::vector<std::string> partname, std::vector<std::string> partdesc, ui_software_info *ui_info);
+	ui_mewui_software_parts(running_machine &machine, render_container *container, std::map<std::string, std::string> parts, ui_software_info *ui_info);
 	virtual ~ui_mewui_software_parts();
 	virtual void populate() override;
 	virtual void handle() override;
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	ui_software_info          *m_uiinfo;
-	std::vector<std::string>  m_nameparts, m_descpart;
+	ui_software_info *m_uiinfo;
+	std::map<std::string, std::string> m_parts;
 };
 
 class ui_mewui_bios_selection : public ui_menu
@@ -91,7 +89,7 @@ public:
 private:
 
 	void                      *m_driver;
-	bool m_software,          m_inlist;
+	bool                      m_software, m_inlist;
 	std::vector<s_bios>       m_bios;
 };
 

@@ -18,6 +18,7 @@
 // category structure
 struct IniCategoryIndex
 {
+	IniCategoryIndex(std::string _name, long _offset) { name = _name; offset = _offset; }
 	std::string name;
 	long offset;
 };
@@ -25,6 +26,7 @@ struct IniCategoryIndex
 // ini file structure
 struct IniFileIndex
 {
+	IniFileIndex(std::string _name, std::vector<IniCategoryIndex> _category) { name = _name; category = _category; }
 	std::string name;
 	std::vector<IniCategoryIndex> category;
 };
@@ -51,7 +53,7 @@ public:
 
 private:
 	// init category index
-	void init_category(std::vector<IniCategoryIndex> &index, std::string &filename);
+	void init_category(std::string &filename);
 
 	// init file index
 	void directory_scan();

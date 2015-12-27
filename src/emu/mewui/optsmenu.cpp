@@ -64,15 +64,15 @@ void ui_menu_game_options::handle()
 			{
 				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(m_event->iptkey == IPT_UI_RIGHT) ? main_filters::actual++ : main_filters::actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? ++main_filters::actual : --main_filters::actual;
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
 					int total = main_filters::length;
 					std::vector<std::string> s_sel(total);
-					for (int index = 0; index < total; index++)
-						s_sel[index].assign(main_filters::text[index]);
+					for (int index = 0; index < total; ++index)
+						s_sel[index] = main_filters::text[index];
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &main_filters::actual)));
 				}
@@ -100,7 +100,7 @@ void ui_menu_game_options::handle()
 					std::vector<std::string> s_sel(total);
 					machine().inifile().current_category = 0;
 					for (size_t index = 0; index < total; ++index)
-						s_sel[index].assign(ifile.ini_index[index].name);
+						s_sel[index] = ifile.ini_index[index].name;
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &ifile.current_file, SELECTOR_INIFILE)));
 				}

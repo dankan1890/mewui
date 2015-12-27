@@ -47,7 +47,7 @@ void ui_menu_selector::handle()
 	{
 		if (m_event->iptkey == IPT_UI_SELECT)
 		{
-			for (size_t idx = 0; idx < m_str_items.size(); idx++)
+			for (size_t idx = 0; idx < m_str_items.size(); ++idx)
 				if ((void*)&m_str_items[idx] == m_event->itemref)
 					*m_selector = idx;
 
@@ -121,12 +121,12 @@ void ui_menu_selector::populate()
 	{
 		find_matches(m_search);
 
-		for (int curitem = 0; m_searchlist[curitem]; curitem++)
+		for (int curitem = 0; m_searchlist[curitem]; ++curitem)
 			item_append(m_searchlist[curitem]->c_str(), nullptr, 0, (void *)m_searchlist[curitem]);
 	}
 	else
 	{
-		for (size_t index = 0, added = 0; index < m_str_items.size(); index++)
+		for (size_t index = 0, added = 0; index < m_str_items.size(); ++index)
 			if (m_str_items[index].compare("_skip_") != 0)
 			{
 				if (m_first_pass && *m_selector == index)
@@ -216,7 +216,7 @@ void ui_menu_selector::find_matches(const char *str)
 	std::vector<int> penalty(VISIBLE_GAMES_IN_SEARCH, 9999);
 	int index = 0;
 
-	for (; index < m_str_items.size(); index++)
+	for (; index < m_str_items.size(); ++index)
 	{
 		if (!m_str_items[index].compare("_skip_"))
 			continue;
@@ -225,7 +225,7 @@ void ui_menu_selector::find_matches(const char *str)
 		int curpenalty = fuzzy_substring(str, m_str_items[index].c_str());
 
 		// insert into the sorted table of matches
-		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; matchnum--)
+		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; --matchnum)
 		{
 			// stop if we're worse than the current entry
 			if (curpenalty >= penalty[matchnum])

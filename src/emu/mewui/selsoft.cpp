@@ -328,30 +328,36 @@ void ui_menu_select_software::handle()
 	{
 		m_search[0] = '\0';
 
-		if (l_sw_hover == MEWUI_SW_REGION)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.region.ui,
-			                                     &m_filter.region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
-		else if (l_sw_hover == MEWUI_SW_YEARS)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.year.ui,
-			                                     &m_filter.year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
-		else if (l_sw_hover == MEWUI_SW_LIST)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.swlist.description,
-			                                     &m_filter.swlist.actual, SELECTOR_SOFTWARE, l_sw_hover)));
-		else if (l_sw_hover == MEWUI_SW_TYPE)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.type.ui,
-			                                     &m_filter.type.actual, SELECTOR_SOFTWARE, l_sw_hover)));
-		else if (l_sw_hover == MEWUI_SW_PUBLISHERS)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.publisher.ui,
-			                                     &m_filter.publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
-		else if (l_sw_hover == MEWUI_SW_CUSTOM)
+		switch (l_sw_hover)
 		{
-			sw_filters::actual = l_sw_hover;
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_swcustom_filter(machine(), container, m_driver, m_filter)));
-		}
-		else
-		{
-			sw_filters::actual = l_sw_hover;
-			reset(UI_MENU_RESET_SELECT_FIRST);
+			case MEWUI_SW_REGION:
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.region.ui,
+					&m_filter.region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+				break;
+			case MEWUI_SW_YEARS:
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.year.ui,
+					&m_filter.year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+				break;
+			case MEWUI_SW_LIST:
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.swlist.description,
+					&m_filter.swlist.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+				break;
+			case MEWUI_SW_TYPE:
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.type.ui,
+					&m_filter.type.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+				break;
+			case MEWUI_SW_PUBLISHERS:
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_filter.publisher.ui,
+					&m_filter.publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+				break;
+			case MEWUI_SW_CUSTOM:
+				sw_filters::actual = l_sw_hover;
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_swcustom_filter(machine(), container, m_driver, m_filter)));
+				break;
+			default:
+				sw_filters::actual = l_sw_hover;
+				reset(UI_MENU_RESET_SELECT_FIRST);
+				break;
 		}
 	}
 }
@@ -418,7 +424,7 @@ void ui_menu_select_software::populate()
 		}
 
 		// iterate over entries
-		for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
+		for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 		{
 			if (reselect_last::software.compare("[Start empty]") == 0 && !reselect_last::driver.empty())
 				old_software = 0;
@@ -436,7 +442,7 @@ void ui_menu_select_software::populate()
 	{
 		find_matches(m_search, VISIBLE_GAMES_IN_SEARCH);
 
-		for (int curitem = 0; m_searchlist[curitem]; curitem++)
+		for (int curitem = 0; m_searchlist[curitem] != nullptr; ++curitem)
 			item_append(m_searchlist[curitem]->longname.c_str(), m_searchlist[curitem]->devicetype.c_str(),
 			            m_searchlist[curitem]->parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
 			            (void *)m_searchlist[curitem]);
@@ -465,24 +471,7 @@ void ui_menu_select_software::populate()
 void ui_menu_select_software::build_software_list()
 {
 	// add start empty item
-	ui_software_info first_swlist;
-	first_swlist.shortname = m_driver->name;
-	first_swlist.longname = m_driver->description;
-	first_swlist.parentname.clear();
-	first_swlist.year.clear();
-	first_swlist.publisher.clear();
-	first_swlist.supported = 0;
-	first_swlist.part.clear();
-	first_swlist.driver = m_driver;
-	first_swlist.listname.clear();
-	first_swlist.interface.clear();
-	first_swlist.instance.clear();
-	first_swlist.startempty = 1;
-	first_swlist.parentlongname.clear();
-	first_swlist.usage.clear();
-	first_swlist.devicetype.clear();
-	first_swlist.available = true;
-	m_swinfo.push_back(first_swlist);
+	m_swinfo.emplace_back(m_driver->name, m_driver->description, "", "", "", 0, "", m_driver, "", "", "", 1, "", "", "", true);
 
 	machine_config config(*m_driver, machine().options());
 	software_list_device_iterator deviter(config.root_device());
@@ -550,7 +539,7 @@ void ui_menu_select_software::build_software_list()
 	m_displaylist.resize(m_swinfo.size() + 1);
 
 	// retrieve and set the long name of software for parents
-	for (size_t y = 1; y < m_swinfo.size(); y++)
+	for (size_t y = 1; y < m_swinfo.size(); ++y)
 	{
 		if (!m_swinfo[y].parentname.empty())
 		{
@@ -558,7 +547,7 @@ void ui_menu_select_software::build_software_list()
 			bool found = false;
 
 			// first scan backward
-			for (int x = y; x > 0; x--)
+			for (int x = y; x > 0; --x)
 				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
 					m_swinfo[y].parentlongname = m_swinfo[x].longname;
@@ -567,7 +556,7 @@ void ui_menu_select_software::build_software_list()
 				}
 
 			// not found? then scan forward
-			for (size_t x = y; !found && x < m_swinfo.size(); x++)
+			for (size_t x = y; !found && x < m_swinfo.size(); ++x)
 				if (lparent == m_swinfo[x].shortname && m_swinfo[y].listname == m_swinfo[x].listname)
 				{
 					m_swinfo[y].parentlongname = m_swinfo[x].longname;
@@ -655,7 +644,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	// get the size of the text
 	float maxwidth = origx2 - origx1;
 
-	for (int line = 0; line < 3; line++)
+	for (int line = 0; line < 3; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
@@ -678,7 +667,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (int line = 0; line < 3; line++)
+	for (int line = 0; line < 3; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
@@ -882,19 +871,18 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 			}
 			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
-				std::vector<std::string> partname, partdesc;
+				std::map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
 					{
-						partname.push_back(swpart->name());
 						std::string menu_part_name(swpart->name());
 						if (swpart->feature("part_id") != nullptr)
 							menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
-						partdesc.push_back(menu_part_name);
+						parts.emplace(swpart->name(), menu_part_name);
 					}
 				}
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, parts, ui_swinfo)));
 				return;
 			}
 			std::string error_string;
@@ -965,14 +953,14 @@ void ui_menu_select_software::load_sw_custom_filters()
 		file.gets(buffer, MAX_CHAR_INFO);
 		pb = strchr(buffer, '=') + 2;
 
-		for (int y = 0; y < sw_filters::length; y++)
+		for (int y = 0; y < sw_filters::length; ++y)
 			if (!strncmp(pb, sw_filters::text[y], strlen(sw_filters::text[y])))
 			{
 				sw_custfltr::main = y;
 				break;
 			}
 
-		for (int x = 1; x <= sw_custfltr::numother; x++)
+		for (int x = 1; x <= sw_custfltr::numother; ++x)
 		{
 			file.gets(buffer, MAX_CHAR_INFO);
 			char *cb = strchr(buffer, '=') + 2;
@@ -985,7 +973,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.publisher.ui.size(); z++)
+						for (size_t z = 0; z < m_filter.publisher.ui.size(); ++z)
 							if (!strncmp(ab, m_filter.publisher.ui[z].c_str(), m_filter.publisher.ui[z].length()))
 								sw_custfltr::mnfct[x] = z;
 					}
@@ -993,7 +981,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.year.ui.size(); z++)
+						for (size_t z = 0; z < m_filter.year.ui.size(); ++z)
 							if (!strncmp(db, m_filter.year.ui[z].c_str(), m_filter.year.ui[z].length()))
 								sw_custfltr::year[x] = z;
 					}
@@ -1001,7 +989,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *gb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.swlist.name.size(); z++)
+						for (size_t z = 0; z < m_filter.swlist.name.size(); ++z)
 							if (!strncmp(gb, m_filter.swlist.name[z].c_str(), m_filter.swlist.name[z].length()))
 								sw_custfltr::list[x] = z;
 					}
@@ -1009,7 +997,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *fb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.type.ui.size(); z++)
+						for (size_t z = 0; z < m_filter.type.ui.size(); ++z)
 							if (!strncmp(fb, m_filter.type.ui[z].c_str(), m_filter.type.ui[z].length()))
 								sw_custfltr::type[x] = z;
 					}
@@ -1017,7 +1005,7 @@ void ui_menu_select_software::load_sw_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *eb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.region.ui.size(); z++)
+						for (size_t z = 0; z < m_filter.region.ui.size(); ++z)
 							if (!strncmp(eb, m_filter.region.ui[z].c_str(), m_filter.region.ui[z].length()))
 								sw_custfltr::region[x] = z;
 					}
@@ -1208,7 +1196,7 @@ void ui_menu_select_software::find_matches(const char *str, int count)
 	std::vector<int> penalty(count, 9999);
 	int index = 0;
 
-	for (; m_displaylist[index]; index++)
+	for (; m_displaylist[index]; ++index)
 	{
 		// pick the best match between driver name and description
 		int curpenalty = driver_list::penalty_compare(str, m_displaylist[index]->longname.c_str());
@@ -1216,7 +1204,7 @@ void ui_menu_select_software::find_matches(const char *str, int count)
 		curpenalty = MIN(curpenalty, tmp);
 
 		// insert into the sorted table of matches
-		for (int matchnum = count - 1; matchnum >= 0; matchnum--)
+		for (int matchnum = count - 1; matchnum >= 0; --matchnum)
 		{
 			// stop if we're worse than the current entry
 			if (curpenalty >= penalty[matchnum])
@@ -1246,7 +1234,7 @@ void ui_menu_select_software::build_custom()
 
 	build_list(m_sortedlist, nullptr, sw_custfltr::main);
 
-	for (int count = 1; count <= sw_custfltr::numother; count++)
+	for (int count = 1; count <= sw_custfltr::numother; ++count)
 	{
 		int filter = sw_custfltr::other[count];
 		s_drivers = m_displaylist;
@@ -1306,7 +1294,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		}
 
 		float text_sign = mui.get_string_width_ex("_# ", text_size);
-		for (int x = 0; x < text_lenght; x++)
+		for (int x = 0; x < text_lenght; ++x)
 		{
 			float total_width;
 
@@ -1329,7 +1317,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 		y1 += UI_BOX_TB_BORDER;
 		y2 -= UI_BOX_TB_BORDER;
 
-		for (int filter = 0; filter < text_lenght; filter++)
+		for (int filter = 0; filter < text_lenght; ++filter)
 		{
 			std::string str(text[filter]);
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
@@ -1361,7 +1349,7 @@ float ui_menu_select_software::draw_left_panel(float x1, float y1, float x2, flo
 				}
 				else
 				{
-					for (int count = 1; count <= sw_custfltr::numother; count++)
+					for (int count = 1; count <= sw_custfltr::numother; ++count)
 					{
 						int cfilter = sw_custfltr::other[count];
 						if (cfilter == filter)
@@ -1516,7 +1504,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 	if (topline_datsview + r_visible_lines >= totallines)
 			topline_datsview = totallines - r_visible_lines;
 
-	for (int r = 0; r < r_visible_lines; r++)
+	for (int r = 0; r < r_visible_lines; ++r)
 	{
 		int itemline = r + topline_datsview;
 		std::string tempbuf;
@@ -1772,10 +1760,9 @@ void ui_menu_select_software::draw_right_panel(void *selectedref, float origx1, 
 //  ctor
 //-------------------------------------------------
 
-ui_mewui_software_parts::ui_mewui_software_parts(running_machine &machine, render_container *container, std::vector<std::string> partname, std::vector<std::string> partdesc, ui_software_info *ui_info) : ui_menu(machine, container)
+ui_mewui_software_parts::ui_mewui_software_parts(running_machine &machine, render_container *container, std::map<std::string, std::string> parts, ui_software_info *ui_info) : ui_menu(machine, container)
 {
-	m_nameparts = partname;
-	m_descpart = partdesc;
+	m_parts = parts;
 	m_uiinfo = ui_info;
 }
 
@@ -1793,8 +1780,8 @@ ui_mewui_software_parts::~ui_mewui_software_parts()
 
 void ui_mewui_software_parts::populate()
 {
-	for (size_t index = 0; index < m_nameparts.size(); index++)
-		item_append(m_nameparts[index].c_str(), m_descpart[index].c_str(), 0, (void *)&m_nameparts[index]);
+	for (auto & elem : m_parts)
+		item_append(elem.first.c_str(), elem.second.c_str(), 0, (void *)&elem);
 
 	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
@@ -1809,11 +1796,11 @@ void ui_mewui_software_parts::handle()
 	// process the menu
 	const ui_menu_event *event = process(0);
 	if (event != nullptr && event->iptkey == IPT_UI_SELECT && event->itemref != nullptr)
-		for (auto & elem : m_nameparts)
+		for (auto & elem : m_parts)
 			if ((void*)&elem == event->itemref)
 			{
 				std::string error_string;
-				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(elem).append(":").append(m_uiinfo->instance);
+				std::string string_list = std::string(m_uiinfo->listname).append(":").append(m_uiinfo->shortname).append(":").append(elem.first).append(":").append(m_uiinfo->instance);
 				machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 
 				reselect_last::driver = m_uiinfo->driver->name;
@@ -1938,19 +1925,18 @@ void ui_mewui_bios_selection::handle()
 					software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
 					if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 					{
-						std::vector<std::string> partname, partdesc;
+						std::map<std::string, std::string> parts;
 						for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 						{
 							if (swpart->matches_interface(ui_swinfo->interface.c_str()))
 							{
-								partname.push_back(swpart->name());
 								std::string menu_part_name(swpart->name());
 								if (swpart->feature("part_id") != nullptr)
 									menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
-								partdesc.push_back(menu_part_name);
+								parts.emplace(swpart->name(), menu_part_name);
 							}
 						}
-						ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
+						ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, parts, ui_swinfo)));
 						return;
 					}
 					std::string error_string;

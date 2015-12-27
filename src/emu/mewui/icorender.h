@@ -110,7 +110,7 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 	int maxSize = 0;
 	int offset = 0;
 	int maxBitCount = 0;
-	for (int i = 0; i < iconsCount; i++, dirEntry++)
+	for (int i = 0; i < iconsCount; i++, ++dirEntry)
 	{
 		int w = dirEntry->bWidth;
 		int h = dirEntry->bHeight;
@@ -138,16 +138,16 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 	// rgba + vertical swap
 	if (realBitsCount >= 32)
 	{
-		for (int x = 0; x < width; x++)
-			for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; ++x)
+			for (int y = 0; y < height; ++y)
 			{
 				int shift2 = 4 * (x + (height - y - 1) * width);
 				bitmap.pix32(y, x) = rgb_t(cursor[shift2 + 3], cursor[shift2 + 2], cursor[shift2 + 1], cursor[shift2]);
 			}
 	}
 	else if (realBitsCount == 24)
-		for (int x = 0; x < width; x++)
-			for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; ++x)
+			for (int y = 0; y < height; ++y)
 			{
 				int shift2 = 3 * (x + (height - y - 1) * width);
 				bitmap.pix32(y, x) = rgb_t(255, cursor[shift2 + 2], cursor[shift2 + 1], cursor[shift2]);
@@ -157,8 +157,8 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 		// 256 color table
 		UINT8 *colors = cursor;
 		cursor += 256 * 4;
-		for (int x = 0; x < width; x++)
-			for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; ++x)
+			for (int y = 0; y < height; ++y)
 			{
 				int shift2 = (x + (height - y - 1) * width);
 				int index = 4 * cursor[shift2];
@@ -170,8 +170,8 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 		// 16 color table
 		UINT8 *colors = cursor;
 		cursor += 16 * 4;
-		for (int x = 0; x < width; x++)
-			for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; ++x)
+			for (int y = 0; y < height; ++y)
 			{
 				int shift2 = (x + (height - y - 1) * width);
 				UINT8 index = cursor[shift2 / 2];
@@ -191,8 +191,8 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 		int boundary = width; // !!! 32 bit boundary (http://www.daubnet.com/en/file-format-ico)
 		while (boundary % 32 != 0) boundary++;
 
-		for (int x = 0; x < width; x++)
-			for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; ++x)
+			for (int y = 0; y < height; ++y)
 			{
 				int shift2 = (x + (height - y - 1) * boundary);
 				UINT8 index = cursor[shift2 / 8];
@@ -215,8 +215,8 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 		boundary = width;
 		while (boundary % 32 != 0) boundary++;
 
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++)
+		for (int y = 0; y < height; ++y)
+			for (int x = 0; x < width; ++x)
 			{
 				UINT8 bit = 7 - (x % 8);
 				int shift2 = (x + (height - y - 1) * boundary) / 8;

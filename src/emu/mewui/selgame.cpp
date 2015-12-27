@@ -598,7 +598,7 @@ void ui_mewui_select_game::populate()
 			}
 
 			// iterate over entries
-			for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
+			for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 			{
 				if (!reselect_last::driver.empty() && !(core_stricmp(m_displaylist[curitem]->name, reselect_last::driver.c_str())))
 					old_item_selected = curitem;
@@ -628,7 +628,6 @@ void ui_mewui_select_game::populate()
 		// iterate over entries
 		for (auto & mfavorite : machine().favorite().m_favorite_list)
 		{
-//			ui_software_info &mfavorite = machine().favorite().m_favorite_list[x];
 			if (mfavorite.startempty == 1)
 			{
 				bool cloneof = strcmp(mfavorite.driver->parent, "0");
@@ -697,7 +696,7 @@ void ui_mewui_select_game::build_available_list()
 		const char *src;
 
 		// build a name for it
-		for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; src++)
+		for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; ++src)
 			*dst++ = tolower((UINT8) * src);
 
 		*dst = 0;
@@ -790,7 +789,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		tempbuf[1].assign(filtered.c_str()).append(" Search: ").append(m_search).append("_");
 
 	// get the size of the text
-	for (int line = 0; line < 2; line++)
+	for (int line = 0; line < 2; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
@@ -813,7 +812,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (int line = 0; line < 2; line++)
+	for (int line = 0; line < 2; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
@@ -1137,19 +1136,18 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 			}
 			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
-				std::vector<std::string> partname, partdesc;
+				std::map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
 					{
-						partname.push_back(swpart->name());
 						std::string menu_part_name(swpart->name());
 						if (swpart->feature("part_id") != nullptr)
 							menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
-						partdesc.push_back(menu_part_name);
+						parts.emplace(swpart->name(), menu_part_name);
 					}
 				}
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, parts, ui_swinfo)));
 				return;
 			}
 
@@ -1367,14 +1365,14 @@ void ui_mewui_select_game::build_custom()
 		m_displaylist.push_back(elem);
 	}
 
-	for (int count = 1; count <= custfltr::numother; count++)
+	for (int count = 1; count <= custfltr::numother; ++count)
 	{
 		int filter = custfltr::other[count];
 		if (filter == FILTER_BIOS)
 			bioscheck = true;
 	}
 
-	for (int count = 1; count <= custfltr::numother; count++)
+	for (int count = 1; count <= custfltr::numother; ++count)
 	{
 		int filter = custfltr::other[count];
 		s_drivers = m_displaylist;
@@ -1498,7 +1496,7 @@ void ui_mewui_select_game::populate_search()
 		curpenalty = MIN(curpenalty, tmp);
 
 		// insert into the sorted table of matches
-		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; matchnum--)
+		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; --matchnum)
 		{
 			// stop if we're worse than the current entry
 			if (curpenalty >= penalty[matchnum])
@@ -1518,7 +1516,7 @@ void ui_mewui_select_game::populate_search()
 
 	(index < VISIBLE_GAMES_IN_SEARCH) ? m_searchlist[index] = nullptr : m_searchlist[VISIBLE_GAMES_IN_SEARCH] = nullptr;
 	UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
-	for (int curitem = 0; m_searchlist[curitem]; curitem++)
+	for (int curitem = 0; m_searchlist[curitem]; ++curitem)
 	{
 		bool cloneof = strcmp(m_searchlist[curitem]->parent, "0");
 		if (cloneof)
@@ -1613,7 +1611,7 @@ void ui_mewui_select_game::inkey_export()
 	emu_file infile(machine().options().mewui_path(), OPEN_FLAG_READ);
 	if (infile.open(filename.c_str(), ".xml") == FILERR_NONE)
 	{
-		for (int seq = 0; ; seq++)
+		for (int seq = 0; ; ++seq)
 		{
 			std::string seqtext;
 			strprintf(seqtext, "%s_%04d", filename.c_str(), seq);
@@ -1640,7 +1638,7 @@ void ui_mewui_select_game::inkey_export()
 
 		if (m_search[0] != 0)
 		{
-			for (int curitem = 0; m_searchlist[curitem]; curitem++)
+			for (int curitem = 0; m_searchlist[curitem]; ++curitem)
 			{
 				int f = driver_list::find(m_searchlist[curitem]->name);
 				drivlist.include(f);
@@ -1953,18 +1951,18 @@ void ui_mewui_select_game::load_custom_filters()
 		file.gets(buffer, MAX_CHAR_INFO);
 		pb = strchr(buffer, '=') + 2;
 
-		for (int y = 0; y < main_filters::length; y++)
+		for (int y = 0; y < main_filters::length; ++y)
 			if (!strncmp(pb, main_filters::text[y], strlen(main_filters::text[y])))
 			{
 				custfltr::main = y;
 				break;
 			}
 
-		for (int x = 1; x <= custfltr::numother; x++)
+		for (int x = 1; x <= custfltr::numother; ++x)
 		{
 			file.gets(buffer, MAX_CHAR_INFO);
 			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < main_filters::length; y++)
+			for (int y = 0; y < main_filters::length; ++y)
 				if (!strncmp(cb, main_filters::text[y], strlen(main_filters::text[y])))
 				{
 					custfltr::other[x] = y;
@@ -1972,7 +1970,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_mnfct::ui.size(); z++)
+						for (size_t z = 0; z < c_mnfct::ui.size(); ++z)
 							if (!strncmp(ab, c_mnfct::ui[z].c_str(), c_mnfct::ui[z].length()))
 								custfltr::mnfct[x] = z;
 					}
@@ -1980,7 +1978,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_year::ui.size(); z++)
+						for (size_t z = 0; z < c_year::ui.size(); ++z)
 							if (!strncmp(db, c_year::ui[z].c_str(), c_year::ui[z].length()))
 								custfltr::year[x] = z;
 					}
@@ -1988,7 +1986,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < screen_filters::length; z++)
+						for (size_t z = 0; z < screen_filters::length; ++z)
 							if (!strncmp(db, screen_filters::text[z], strlen(screen_filters::text[z])))
 								custfltr::screen[x] = z;
 					}
@@ -2030,7 +2028,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		}
 
 		float text_sign = mui.get_string_width_ex("_# ", text_size);
-		for (int x = 0; x < text_lenght; x++)
+		for (int x = 0; x < text_lenght; ++x)
 		{
 			float total_width;
 
@@ -2053,7 +2051,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		y1 += UI_BOX_TB_BORDER;
 		y2 -= UI_BOX_TB_BORDER;
 
-		for (int filter = 0; filter < text_lenght; filter++)
+		for (int filter = 0; filter < text_lenght; ++filter)
 		{
 			std::string str(text[filter]);
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
@@ -2085,7 +2083,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 				}
 				else
 				{
-					for (int count = 1; count <= custfltr::numother; count++)
+					for (int count = 1; count <= custfltr::numother; ++count)
 					{
 						int cfilter = custfltr::other[count];
 						if (cfilter == filter)
@@ -2207,7 +2205,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		float title_size = 0.0f;
 		float txt_lenght = 0.0f;
 
-		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; x++)
+		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; ++x)
 		{
 			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
 			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
@@ -2238,7 +2236,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 			if (!m_item.empty() && mewui_globals::curdats_view == MEWUI_COMMAND_LOAD)
 			{
-				for (size_t x = 0; x < m_item.size(); x++)
+				for (size_t x = 0; x < m_item.size(); ++x)
 				{
 					std::string t_buffer;
 					machine().datfile().load_command_info(t_buffer, x);
@@ -2270,7 +2268,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (topline_datsview + r_visible_lines >= totallines)
 			topline_datsview = totallines - r_visible_lines;
 
-		for (int r = 0; r < r_visible_lines; r++)
+		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
 			std::string tempbuf;
@@ -2421,7 +2419,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (topline_datsview + r_visible_lines >= totallines)
 				topline_datsview = totallines - r_visible_lines;
 
-		for (int r = 0; r < r_visible_lines; r++)
+		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
 			std::string tempbuf;

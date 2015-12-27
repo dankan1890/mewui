@@ -71,7 +71,7 @@ void ui_menu_custom_ui::handle()
 				{
 					int total = ARRAY_LENGTH(hide_status);
 					std::vector<std::string> s_sel(total);
-					for (int index = 0; index < total; index++)
+					for (int index = 0; index < total; ++index)
 						s_sel[index] = hide_status[index];
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::panels_status)));

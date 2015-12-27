@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <fstream>
 #include "drivenum.h"
+#include <map>
 
 #define MAX_CHAR_INFO            256
 #define MAX_CUST_FILTER          8
@@ -167,6 +168,15 @@ enum
 // GLOBAL STRUCTURES
 struct ui_software_info
 {
+	ui_software_info() {}
+	ui_software_info(std::string sname, std::string lname, std::string pname, std::string y, std::string pub,
+		UINT8 s, std::string pa, const game_driver *d, std::string li, std::string i, std::string is, UINT8 em,
+		std::string plong, std::string u, std::string de, bool av)
+	{
+		shortname = sname; longname = lname; parentname = pname; year = y; publisher = pub;
+		supported = s; part = pa; driver = d; listname = li; interface = i; instance = is; startempty = em;
+		parentlongname = plong; usage = u; devicetype = de; available = av;
+	}
 	std::string shortname;
 	std::string longname;
 	std::string parentname;
@@ -323,14 +333,14 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 		jpeg_read_scanlines(&cinfo, buffer, 1);
 
 		if (s == 1)
-			for (int i = 0; i < w; i++)
+			for (int i = 0; i < w; ++i)
 				if (format == BITMAP_FORMAT_ARGB32)
 					bitmap.pix32(j, i) = rgb_t(0xFF, buffer[0][i], buffer[0][i], buffer[0][i]);
 				else
 					bitmap.pix32(j, i) = rgb_t(buffer[0][i], buffer[0][i], buffer[0][i]);
 
 		else if (s == 3)
-			for (int i = 0; i < w; i++)
+			for (int i = 0; i < w; ++i)
 				if (format == BITMAP_FORMAT_ARGB32)
 					bitmap.pix32(j, i) = rgb_t(0xFF, buffer[0][i * s], buffer[0][i * s + 1], buffer[0][i * s + 2]);
 				else

@@ -100,7 +100,7 @@ void ui_menu_sound_options::handle()
 					int total = ARRAY_LENGTH(m_sound_rate);
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; index++)
-						strprintf(s_sel[index], "%d", m_sound_rate[index]);
+						s_sel[index] = std::to_string(m_sound_rate[index]);
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_cur_rates)));
 				}

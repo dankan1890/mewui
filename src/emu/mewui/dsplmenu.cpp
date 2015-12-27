@@ -117,8 +117,8 @@ void ui_menu_display_options::handle()
 			{
 				int total = ARRAY_LENGTH(m_video);
 				std::vector<std::string> s_sel(total);
-				for (int index = 0; index < total; index++)
-					s_sel[index].assign(m_video[index].label);
+				for (int index = 0; index < total; ++index)
+					s_sel[index] = m_video[index].label;
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
 			}

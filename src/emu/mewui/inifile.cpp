@@ -60,17 +60,7 @@ void inifile_manager::directory_scan()
 		{
 			// try to open file and indexing
 			if (ParseOpen(file_name.c_str()))
-			{
-				std::vector<IniCategoryIndex> tmp;
-				init_category(tmp, m_fullpath);
-				if (!tmp.empty())
-				{
-					IniFileIndex tfile;
-					tfile.name.assign(file_name);
-					tfile.category = tmp;
-					ini_index.push_back(tfile);
-				}
-			}
+				init_category(file_name);
 		}
 	}
 }
@@ -79,10 +69,11 @@ void inifile_manager::directory_scan()
 //  initialize category
 //-------------------------------------------------
 
-void inifile_manager::init_category(std::vector<IniCategoryIndex> &index, std::string &filename)
+void inifile_manager::init_category(std::string &filename)
 {
+	std::vector<IniCategoryIndex> index;
 	std::string readbuf;
-	std::ifstream myfile(filename.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 	while (clean_getline(myfile, readbuf))
 	{
 		if (!readbuf.empty() && readbuf[0] == '[')
@@ -92,15 +83,13 @@ void inifile_manager::init_category(std::vector<IniCategoryIndex> &index, std::s
 			if (name.compare("FOLDER_SETTINGS") == 0 || name.compare("ROOT_FOLDER") == 0)
 				continue;
 			else
-			{
-				IniCategoryIndex tmp;
-				tmp.name.assign(name);
-				tmp.offset = myfile.tellg();
-				index.push_back(tmp);
-			}
+				index.emplace_back(name, myfile.tellg());
 		}
 	}
 	myfile.close();
+
+	if (!index.empty())
+		ini_index.emplace_back(filename, index);
 }
 
 
@@ -159,7 +148,7 @@ bool inifile_manager::ParseOpen(const char *filename)
 
 	if (fp.open(filename) == FILERR_NONE)
 	{
-		m_fullpath.assign(fp.fullpath());
+		m_fullpath = fp.fullpath();
 		fp.close();
 		return true;
 	}

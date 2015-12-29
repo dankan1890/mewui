@@ -138,44 +138,38 @@ void datfile_manager::init_command()
 void datfile_manager::load_software_info(const char *softlist, std::string &buffer, const char *softname)
 {
 	// Load history text
-	if (ParseOpen("history.dat"))
+	if (!m_swindex.empty() && ParseOpen("history.dat"))
 	{
-		if (!m_swindex.empty())
+		std::string readbuf;
+		long s_offset = 0;
+
+		// Find software in software list index
+		if (m_swindex.find(softlist) == m_swindex.end())
+			return;
+
+		std::vector<Itemsindex>::iterator m_itemsiter;
+		m_itemsiter = std::find_if(m_swindex[softlist].begin(), m_swindex[softlist].end(), [softname](Itemsindex const& n) { return n.name == softname; });
+		if (m_itemsiter == m_swindex[softlist].end())
+			return;
+
+		s_offset = (*m_itemsiter).offset;
+
+		std::ifstream myfile(m_fullpath.c_str());
+		myfile.seekg(s_offset, myfile.beg);
+		size_t tend = strlen(TAG_END);
+		while (myfile.good())
 		{
-			std::string readbuf;
-			bool found = false;
-			long s_offset = 0;
+			// read from datafile
+			clean_getline(myfile, readbuf);
 
-			// Find software in software list index
-			for (int x = 0; !found && x < m_swindex.size(); x++)
-				if (m_swindex[x].listname.compare(softlist) == 0)
-					for (int y = 0; !found && y < m_swindex[x].items.size(); y++)
-						if (m_swindex[x].items[y].name.compare(softname) == 0)
-						{
-							found = true;
-							s_offset = m_swindex[x].items[y].offset;
-						}
+			// end entry when a end tag is encountered
+			if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
+				break;
 
-			if (!found)
-				return;
-
-			std::ifstream myfile(m_fullpath.c_str());
-			myfile.seekg(s_offset, myfile.beg);
-			size_t tend = strlen(TAG_END);
-			while (myfile.good())
-			{
-				// read from datafile
-				clean_getline(myfile, readbuf);
-
-				// end entry when a end tag is encountered
-				if (!core_strnicmp(TAG_END, readbuf.c_str(), tend))
-					break;
-
-				// add this string to the buffer
-				buffer.append(readbuf).append("\n");
-			}
-			myfile.close();
+			// add this string to the buffer
+			buffer.append(readbuf).append("\n");
 		}
+		myfile.close();
 	}
 }
 
@@ -330,7 +324,6 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 //-------------------------------------------------
 int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vector<Itemsindex> &index_drv, int &drvcount)
 {
-	int          count = 0;
 	std::string  readbuf, name;
 	int          t_mame = strlen(TAG_MAMEINFO_R);
 	int          t_mess = strlen(TAG_MESSINFO_R);
@@ -369,20 +362,11 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 					// validate driver
 					int game_index = driver_list::find(name.c_str());
 					if (game_index != -1)
-					{
-						Drvindex idx;
-						idx.driver = &driver_list::driver(game_index);
-						idx.offset = myfile.tellg();
-						index.push_back(idx);
-						count++;
-					}
+						index.emplace_back(&driver_list::driver(game_index), myfile.tellg());
 				}
 				else if (xid.compare(0, t_drv, TAG_DRIVER) == 0)
 				{
-					Itemsindex idx_drv;
-					idx_drv.name = name;
-					idx_drv.offset = myfile.tellg();
-					index_drv.push_back(idx_drv);
+					index_drv.emplace_back(name, myfile.tellg());
 					drvcount++;
 				}
 			}
@@ -390,7 +374,7 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 		myfile.close();
 	}
 
-	return count;
+	return index.size();
 }
 
 //-------------------------------------------------
@@ -399,7 +383,6 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 //-------------------------------------------------
 int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 {
-	int          count = 0;
 	std::string  readbuf, name;
 	int          t_hist = strlen(TAG_HISTORY_R);
 	int          t_story = strlen(TAG_STORY_R);
@@ -453,13 +436,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 						int game_index = driver_list::find(name.c_str());
 
 						if (game_index != -1)
-						{
-							Drvindex idx;
-							idx.driver = &driver_list::driver(game_index);
-							idx.offset = myfile.tellg();
-							index.push_back(idx);
-							count++;
-						}
+							index.emplace_back(&driver_list::driver(game_index), myfile.tellg());
 
 						// update current point
 						curpoint = found + 1;
@@ -474,13 +451,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 
 						int game_index = driver_list::find(name.c_str());
 						if (game_index != -1)
-						{
-							Drvindex idx;
-							idx.driver = &driver_list::driver(game_index);
-							idx.offset = myfile.tellg();
-							index.push_back(idx);
-							count++;
-						}
+							index.emplace_back(&driver_list::driver(game_index), myfile.tellg());
 
 						// update current point
 						curpoint = ends;
@@ -522,7 +493,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 						}
 
 						// search for a software list in the index, if not found then allocates
-						int list_index = find_or_allocate(name);
+						std::string lname(name);
 						int cpoint = 0;
 						int cends = s_roms.length();
 
@@ -540,10 +511,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 								strtrimspace(name);
 
 								// add a SoftwareItem
-								Itemsindex t_temp;
-								t_temp.name.assign(name);
-								t_temp.offset = myfile.tellg();
-								m_swindex[list_index].items.push_back(t_temp);
+								m_swindex[lname].emplace_back(name, myfile.tellg());
 
 								// update current point
 								cpoint = found + 1;
@@ -562,10 +530,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 									name.erase(found+1);
 
 								// add a SoftwareItem
-								Itemsindex t_temp;
-								t_temp.name.assign(name);
-								t_temp.offset = myfile.tellg();
-								m_swindex[list_index].items.push_back(t_temp);
+								m_swindex[lname].emplace_back(name, myfile.tellg());
 
 								// update current point
 								cpoint = cends;
@@ -578,7 +543,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 		}
 		myfile.close();
 	}
-	return count;
+	return index.size();
 }
 
 //-------------------------------------------------
@@ -638,10 +603,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<Drvindex
 		if (!core_strnicmp(TAG_COMMAND, readbuf.c_str(), tcommand))
 		{
 			clean_getline(myfile, readbuf);
-			Itemsindex m_idx;
-			m_idx.name = readbuf;
-			m_idx.offset = myfile.tellg();
-			index.push_back(m_idx);
+			index.emplace_back(readbuf, myfile.tellg());
 		}
 	}
 	myfile.close();
@@ -695,20 +657,4 @@ void datfile_manager::command_sub_menu(const game_driver *drv, std::vector<std::
 		for (auto & elem : m_menuidx)
 			menuitems.push_back(elem.name);
 	}
-}
-
-int datfile_manager::find_or_allocate(std::string &name)
-{
-	int x = 0;
-	for (; x < m_swindex.size(); x++)
-		if (m_swindex[x].listname.compare(name) == 0)
-			return x;
-
-	if (x == m_swindex.size())
-	{
-		SoftwareListIndex tmp;
-		tmp.listname.assign(name);
-		m_swindex.push_back(tmp);
-	}
-	return x;
 }

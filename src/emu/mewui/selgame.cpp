@@ -1042,7 +1042,7 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 			if ((driver->flags & MACHINE_TYPE_ARCADE) != 0 || !has_swlist)
 			{
 				std::vector<s_bios> biosname;
-				if (get_bios_count(driver, biosname) > 1 && !machine().options().skip_bios_menu())
+				if (has_multiple_bios(driver, biosname) && !machine().options().skip_bios_menu())
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)driver, false, false)));
 				else
 				{
@@ -1093,7 +1093,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
+			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, false)));
 			else
 			{
@@ -1127,14 +1127,14 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
+			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
 			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
-				std::map<std::string, std::string> parts;
+				std::unordered_map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))

@@ -90,7 +90,7 @@ bool compare_software(ui_software_info a, ui_software_info b)
 //  get bios count
 //-------------------------------------------------
 
-int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
+bool has_multiple_bios(const game_driver *driver, std::vector<s_bios> &biosname)
 {
 	if (driver->rom == nullptr)
 		return 0;
@@ -100,12 +100,10 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 		if (ROMENTRY_ISDEFAULT_BIOS(rom))
 			default_name = ROM_GETNAME(rom);
 
-	int bios_count = 0;
 	for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
 	{
 		if (ROMENTRY_ISSYSTEM_BIOS(rom))
 		{
-			bios_count++;
 			std::string name(ROM_GETHASHDATA(rom));
 			std::string bname(ROM_GETNAME(rom));
 			int bios_flags = ROM_GETBIOSFLAGS(rom);
@@ -113,21 +111,13 @@ int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname)
 			if (bname == default_name)
 			{
 				name.append(" (default)");
-				s_bios tmp;
-				tmp.name = name;
-				tmp.id = bios_flags - 1;
-				biosname.insert(biosname.begin(), tmp);
+				biosname.emplace(biosname.begin(), name, bios_flags - 1);
 			}
 			else
-			{
-				s_bios tmp;
-				tmp.name = name;
-				tmp.id = bios_flags - 1;
-				biosname.push_back(tmp);
-			}
+				biosname.emplace_back(name, bios_flags - 1);
 		}
 	}
-	return bios_count;
+	return (biosname.size() > 1);
 }
 
 //-------------------------------------------------
@@ -836,7 +826,7 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 	if (ui_swinfo->startempty == 1)
 	{
 		std::vector<s_bios> biosname;
-		if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
+		if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, true)));
 		else
 		{
@@ -864,14 +854,14 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !mopt.skip_bios_menu())
+			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
 			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
 			{
-				std::map<std::string, std::string> parts;
+				std::unordered_map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
@@ -1760,7 +1750,7 @@ void ui_menu_select_software::draw_right_panel(void *selectedref, float origx1, 
 //  ctor
 //-------------------------------------------------
 
-ui_mewui_software_parts::ui_mewui_software_parts(running_machine &machine, render_container *container, std::map<std::string, std::string> parts, ui_software_info *ui_info) : ui_menu(machine, container)
+ui_mewui_software_parts::ui_mewui_software_parts(running_machine &machine, render_container *container, std::unordered_map<std::string, std::string> parts, ui_software_info *ui_info) : ui_menu(machine, container)
 {
 	m_parts = parts;
 	m_uiinfo = ui_info;
@@ -1925,7 +1915,7 @@ void ui_mewui_bios_selection::handle()
 					software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
 					if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 					{
-						std::map<std::string, std::string> parts;
+						std::unordered_map<std::string, std::string> parts;
 						for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 						{
 							if (swpart->matches_interface(ui_swinfo->interface.c_str()))

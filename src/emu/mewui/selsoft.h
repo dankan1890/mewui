@@ -16,6 +16,7 @@
 
 struct s_bios
 {
+	s_bios(std::string _name, int _id) { name = _name; id = _id; }
 	std::string name;
 	int id;
 };
@@ -66,7 +67,7 @@ private:
 class ui_mewui_software_parts : public ui_menu
 {
 public:
-	ui_mewui_software_parts(running_machine &machine, render_container *container, std::map<std::string, std::string> parts, ui_software_info *ui_info);
+	ui_mewui_software_parts(running_machine &machine, render_container *container, std::unordered_map<std::string, std::string> parts, ui_software_info *ui_info);
 	virtual ~ui_mewui_software_parts();
 	virtual void populate() override;
 	virtual void handle() override;
@@ -74,7 +75,7 @@ public:
 
 private:
 	ui_software_info *m_uiinfo;
-	std::map<std::string, std::string> m_parts;
+	std::unordered_map<std::string, std::string> m_parts;
 };
 
 class ui_mewui_bios_selection : public ui_menu
@@ -105,7 +106,7 @@ private:
 };
 
 // Getter
-int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname);
+bool has_multiple_bios(const game_driver *driver, std::vector<s_bios> &biosname);
 
 
 #endif /* __MEWUI_SELSOFT_H__ */

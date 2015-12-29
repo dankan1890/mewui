@@ -25,6 +25,7 @@ CPUS["M6809"] = true
 CPUS["M680X0"] = true
 CPUS["TMS9900"] = true
 CPUS["COP400"] = true
+CPUS["CP1610"] = true
 
 --------------------------------------------------
 -- Specify all the sound cores necessary for the
@@ -45,6 +46,7 @@ SOUNDS["CEM3394"] = true
 SOUNDS["VOTRAX"] = true
 SOUNDS["WAVE"] = true
 SOUNDS["SN76477"] = true
+SOUNDS["SP0256"] = true
 
 --------------------------------------------------
 -- specify available video cores
@@ -79,6 +81,8 @@ BUSES["CENTRONICS"] = true
 BUSES["RS232"] = true
 BUSES["ABCBUS"] = true
 BUSES["SCSI"] = true
+BUSES["INTV"] = true
+BUSES["GENERIC"] = true
 
 --------------------------------------------------
 -- This is the list of files that are necessary
@@ -91,6 +95,7 @@ function createProjects_mewui_test(_target, _subtarget)
 	targetsubdir(_target .."_" .. _subtarget)
 	kind (LIBTYPE)
 	uuid (os.uuid("drv-mewui-test"))
+        addprojectflags()
 
 	includedirs {
 		MAME_DIR .. "src/osd",
@@ -106,54 +111,54 @@ function createProjects_mewui_test(_target, _subtarget)
 
 	files{
 		MAME_DIR .. "src/mame/machine/ticket.cpp",
-	MAME_DIR .. "src/mame/machine/ticket.h",
+		MAME_DIR .. "src/mame/machine/ticket.h",
 		MAME_DIR .. "src/mame/drivers/carpolo.cpp",
-	MAME_DIR .. "src/mame/includes/carpolo.h",
+		MAME_DIR .. "src/mame/includes/carpolo.h",
 		MAME_DIR .. "src/mame/machine/carpolo.cpp",
 		MAME_DIR .. "src/mame/video/carpolo.cpp",
 		MAME_DIR .. "src/mame/drivers/circus.cpp",
-	MAME_DIR .. "src/mame/includes/circus.h",
+		MAME_DIR .. "src/mame/includes/circus.h",
 		MAME_DIR .. "src/mame/audio/circus.cpp",
 		MAME_DIR .. "src/mame/video/circus.cpp",
 		MAME_DIR .. "src/mame/drivers/exidy.cpp",
-	MAME_DIR .. "src/mame/includes/exidy.h",
+		MAME_DIR .. "src/mame/includes/exidy.h",
 		MAME_DIR .. "src/mame/audio/exidy.cpp",
-	MAME_DIR .. "src/mame/audio/exidy.h",
+		MAME_DIR .. "src/mame/audio/exidy.h",
 		MAME_DIR .. "src/mame/video/exidy.cpp",
 		MAME_DIR .. "src/mame/audio/exidy440.cpp",
-	MAME_DIR .. "src/mame/audio/exidy440.h",
+		MAME_DIR .. "src/mame/audio/exidy440.h",
 		MAME_DIR .. "src/mame/drivers/starfire.cpp",
-	MAME_DIR .. "src/mame/includes/starfire.h",
+		MAME_DIR .. "src/mame/includes/starfire.h",
 		MAME_DIR .. "src/mame/video/starfire.cpp",
 		MAME_DIR .. "src/mame/drivers/vertigo.cpp",
-	MAME_DIR .. "src/mame/includes/vertigo.h",
+		MAME_DIR .. "src/mame/includes/vertigo.h",
 		MAME_DIR .. "src/mame/machine/vertigo.cpp",
 		MAME_DIR .. "src/mame/video/vertigo.cpp",
 		MAME_DIR .. "src/mame/drivers/victory.cpp",
-	MAME_DIR .. "src/mame/includes/victory.h",
+		MAME_DIR .. "src/mame/includes/victory.h",
 		MAME_DIR .. "src/mame/video/victory.cpp",
 		MAME_DIR .. "src/mame/audio/targ.cpp",
 		MAME_DIR .. "src/mame/drivers/astrocde.cpp",
-	MAME_DIR .. "src/mame/includes/astrocde.h",
+		MAME_DIR .. "src/mame/includes/astrocde.h",
 		MAME_DIR .. "src/mame/video/astrocde.cpp",
 		MAME_DIR .. "src/mame/drivers/gridlee.cpp",
-	MAME_DIR .. "src/mame/includes/gridlee.h",
+		MAME_DIR .. "src/mame/includes/gridlee.h",
 		MAME_DIR .. "src/mame/audio/gridlee.cpp",
 		MAME_DIR .. "src/mame/video/gridlee.cpp",
 		MAME_DIR .. "src/mame/drivers/williams.cpp",
-	MAME_DIR .. "src/mame/includes/williams.h",
+		MAME_DIR .. "src/mame/includes/williams.h",
 		MAME_DIR .. "src/mame/machine/williams.cpp",
 		MAME_DIR .. "src/mame/audio/williams.cpp",
-	MAME_DIR .. "src/mame/audio/williams.h",
+		MAME_DIR .. "src/mame/audio/williams.h",
 		MAME_DIR .. "src/mame/video/williams.cpp",
 		MAME_DIR .. "src/mame/audio/gorf.cpp",
 		MAME_DIR .. "src/mame/audio/wow.cpp",
 		MAME_DIR .. "src/mame/drivers/gaelco.cpp",
-	MAME_DIR .. "src/mame/includes/gaelco.h",
+		MAME_DIR .. "src/mame/includes/gaelco.h",
 		MAME_DIR .. "src/mame/video/gaelco.cpp",
 		MAME_DIR .. "src/mame/machine/gaelcrpt.cpp",
 		MAME_DIR .. "src/mame/drivers/wrally.cpp",
-	MAME_DIR .. "src/mame/includes/wrally.h",
+		MAME_DIR .. "src/mame/includes/wrally.h",
 		MAME_DIR .. "src/mame/machine/wrally.cpp",
 		MAME_DIR .. "src/mame/video/wrally.cpp",
 		MAME_DIR .. "src/mame/drivers/looping.cpp",
@@ -163,8 +168,16 @@ function createProjects_mewui_test(_target, _subtarget)
 		MAME_DIR .. "src/mame/drivers/nl_pongd.cpp",
 		MAME_DIR .. "src/mame/drivers/nl_breakout.cpp",
 		MAME_DIR .. "src/mame/drivers/abc80.cpp",
+		MAME_DIR .. "src/mame/includes/abc80.h",
 		MAME_DIR .. "src/mame/machine/abc80kb.cpp",
+		MAME_DIR .. "src/mame/machine/abc80kb.h",
 		MAME_DIR .. "src/mame/video/abc80.cpp",
+		MAME_DIR .. "src/mame/drivers/intv.cpp",
+		MAME_DIR .. "src/mame/includes/intv.h",
+		MAME_DIR .. "src/mame/machine/intv.cpp",
+		MAME_DIR .. "src/mame/video/intv.cpp",
+		MAME_DIR .. "src/mame/video/stic.cpp",
+		MAME_DIR .. "src/mame/video/stic.h",
 	}
 end
 

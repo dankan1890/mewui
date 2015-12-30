@@ -176,7 +176,7 @@ public:
 
 private:
 	static ui_menu *menu_free;
-	static bitmap_rgb32 *hilight_bitmap;
+	static std::unique_ptr<bitmap_rgb32> hilight_bitmap;
 	static render_texture *hilight_texture, *arrow_texture;
 
 	bool m_special_main_menu;
@@ -259,7 +259,7 @@ protected:
 
 private:
 	static bitmap_argb32 *no_avail_bitmap, *bgrnd_bitmap, *star_bitmap;
-	static bitmap_rgb32 *hilight_main_bitmap;
+	static std::unique_ptr<bitmap_rgb32> hilight_main_bitmap;
 	static render_texture *hilight_main_texture, *bgrnd_texture, *star_texture;
 	static render_texture *icons_texture[];
 	static bitmap_argb32 *icons_bitmap[];

@@ -16,7 +16,7 @@
 const char *ui_menu_controller_mapping::m_device_status[] = { "none", "keyboard", "mouse", "lightgun", "joystick" };
 
 ui_menu_controller_mapping::ctrl_option ui_menu_controller_mapping::m_options[] = {
-	{ 0, NULL, NULL },
+	{ 0, nullptr, nullptr },
 	{ 0, "Lightgun Device Assignment",   OPTION_LIGHTGUN_DEVICE },
 	{ 0, "Trackball Device Assignment",  OPTION_TRACKBALL_DEVICE },
 	{ 0, "Pedal Device Assignment",      OPTION_PEDAL_DEVICE },
@@ -58,7 +58,7 @@ void ui_menu_controller_mapping::handle()
 
 	// process the menu
 	const ui_menu_event *m_event = process(0);
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 		{
@@ -84,7 +84,7 @@ void ui_menu_controller_mapping::populate()
 		UINT32 arrow_flags = get_arrow_flags(0, ARRAY_LENGTH(m_device_status) - 1, m_options[d].status);
 		item_append(m_options[d].description, m_device_status[m_options[d].status], arrow_flags, (void *)(FPTR)d);
 	}
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	customtop =  machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
 }
 
@@ -98,7 +98,7 @@ void ui_menu_controller_mapping::custom_render(void *selectedref, float top, flo
 	ui_manager &mui = machine().ui();
 
 	mui.draw_text_full(container, "Device Mapping", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -118,7 +118,7 @@ void ui_menu_controller_mapping::custom_render(void *selectedref, float top, flo
 
 	// draw the text within it
 	mui.draw_text_full(container, "Device Mapping", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 }
 

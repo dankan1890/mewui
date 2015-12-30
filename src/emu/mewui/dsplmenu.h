@@ -21,9 +21,9 @@ class ui_menu_display_options : public ui_menu
 public:
 	ui_menu_display_options(running_machine &machine, render_container *container);
 	virtual ~ui_menu_display_options();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	struct dspl_option

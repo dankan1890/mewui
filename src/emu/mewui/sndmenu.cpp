@@ -77,7 +77,7 @@ void ui_menu_sound_options::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		switch ((FPTR)m_event->itemref)
 		{
@@ -100,7 +100,7 @@ void ui_menu_sound_options::handle()
 					int total = ARRAY_LENGTH(m_sound_rate);
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; index++)
-						strprintf(s_sel[index], "%d", m_sound_rate[index]);
+						s_sel[index] = std::to_string(m_sound_rate[index]);
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_cur_rates)));
 				}
@@ -136,7 +136,7 @@ void ui_menu_sound_options::populate()
 	item_append("Sound", m_sound ? "On" : "Off", m_sound ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)ENABLE_SOUND);
 	item_append("Sample Rate", s_text.c_str(), arrow_flags, (void *)(FPTR)SAMPLE_RATE);
 	item_append("Use External Samples", m_samples ? "On" : "Off", m_samples ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)ENABLE_SAMPLES);
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
 }
@@ -150,7 +150,7 @@ void ui_menu_sound_options::custom_render(void *selectedref, float top, float bo
 	float width;
 	ui_manager &mui = machine().ui();
 	mui.draw_text_full(container, "Sound Options", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
 
@@ -170,5 +170,5 @@ void ui_menu_sound_options::custom_render(void *selectedref, float top, float bo
 
 	// draw the text within it
 	mui.draw_text_full(container, "Sound Options", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }

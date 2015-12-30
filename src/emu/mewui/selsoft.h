@@ -16,6 +16,7 @@
 
 struct s_bios
 {
+	s_bios(std::string _name, int _id) { name = _name; id = _id; }
 	std::string name;
 	int id;
 };
@@ -26,17 +27,17 @@ class ui_menu_select_software : public ui_menu
 public:
 	ui_menu_select_software(running_machine &machine, render_container *container, const game_driver *driver);
 	virtual ~ui_menu_select_software();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
-	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 	// draw left panel
-	virtual float draw_left_panel(float x1, float y1, float x2, float y2);
+	virtual float draw_left_panel(float x1, float y1, float x2, float y2) override;
 
 	// draw right panel
-	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2);
+	virtual void draw_right_panel(void *selectedref, float origx1, float origy1, float origx2, float origy2) override;
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
@@ -46,13 +47,11 @@ private:
 	s_filter            m_filter;
 
 	ui_software_info                  *m_searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
-	std::vector<ui_software_info *>   m_displaylist;
+	std::vector<ui_software_info *>   m_displaylist, m_tmp, m_sortedlist;
 	std::vector<ui_software_info>     m_swinfo;
-	std::vector<ui_software_info *>   m_tmp;
-	std::vector<ui_software_info *>   m_sortedlist;
 
 	void build_software_list();
-	void build_list(std::vector<ui_software_info *> &vec, const char *filter_text = NULL, int filter = -1);
+	void build_list(std::vector<ui_software_info *> &vec, const char *filter_text = nullptr, int filter = -1);
 	void build_custom();
 	void find_matches(const char *str, int count);
 	void load_sw_custom_filters();
@@ -68,15 +67,15 @@ private:
 class ui_mewui_software_parts : public ui_menu
 {
 public:
-	ui_mewui_software_parts(running_machine &machine, render_container *container, std::vector<std::string> partname, std::vector<std::string> partdesc, ui_software_info *ui_info);
+	ui_mewui_software_parts(running_machine &machine, render_container *container, std::unordered_map<std::string, std::string> parts, ui_software_info *ui_info);
 	virtual ~ui_mewui_software_parts();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	ui_software_info          *m_uiinfo;
-	std::vector<std::string>  m_nameparts, m_descpart;
+	ui_software_info *m_uiinfo;
+	std::unordered_map<std::string, std::string> m_parts;
 };
 
 class ui_mewui_bios_selection : public ui_menu
@@ -84,14 +83,14 @@ class ui_mewui_bios_selection : public ui_menu
 public:
 	ui_mewui_bios_selection(running_machine &machine, render_container *container, std::vector<s_bios> biosname, void *driver, bool software, bool inlist);
 	virtual ~ui_mewui_bios_selection();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 
 	void                      *m_driver;
-	bool m_software,          m_inlist;
+	bool                      m_software, m_inlist;
 	std::vector<s_bios>       m_bios;
 };
 
@@ -107,7 +106,7 @@ private:
 };
 
 // Getter
-int get_bios_count(const game_driver *driver, std::vector<s_bios> &biosname);
+bool has_multiple_bios(const game_driver *driver, std::vector<s_bios> &biosname);
 
 
 #endif /* __MEWUI_SELSOFT_H__ */

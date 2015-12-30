@@ -30,11 +30,11 @@ class ui_menu_selector : public ui_menu
 public:
 	ui_menu_selector(running_machine &machine, render_container *container, std::vector<std::string> _sel, UINT16 *_actual, int _category = 0, int _hover = 0);
 	virtual ~ui_menu_selector();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
-	virtual bool menu_has_search_active() { return (m_search[0] != 0); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };

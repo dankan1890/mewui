@@ -80,6 +80,7 @@ function createProjects_mewui_tiny(_target, _subtarget)
 	targetsubdir(_target .."_" .. _subtarget)
 	kind (LIBTYPE)
 	uuid (os.uuid("drv-mewui-tiny"))
+        addprojectflags()
 
 	includedirs {
 		MAME_DIR .. "src/osd",

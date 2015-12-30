@@ -123,7 +123,7 @@ ui_mewui_select_game::ui_mewui_select_game(running_machine &machine, render_cont
 
 	if (first_start)
 	{
-		reselect_last::driver.assign(moptions.last_used_machine());
+		reselect_last::driver = moptions.last_used_machine();
 		std::string tmp(moptions.last_used_filter());
 		std::size_t found = tmp.find_first_of(",");
 		if (found == std::string::npos)
@@ -186,9 +186,9 @@ ui_mewui_select_game::~ui_mewui_select_game()
 {
 	std::string error_string, last_driver;
 	emu_options &mopt = machine().options();
-	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : NULL;
+	const game_driver *driver = (selected >= 0 && selected < item.size()) ? (const game_driver *)item[selected].ref : nullptr;
 	if ((FPTR)driver > 2)
-		last_driver.assign(driver->name);
+		last_driver = driver->name;
 
 	std::string filter(main_filters::text[main_filters::actual]);
 	if (main_filters::actual == FILTER_MANUFACTURER)
@@ -212,6 +212,7 @@ ui_mewui_select_game::~ui_mewui_select_game()
 void ui_mewui_select_game::handle()
 {
 	bool check_filter = false;
+	bool enabled_dats = machine().options().enabled_dats();
 
 	// if i have to load datfile, performe an hard reset
 	if (mewui_globals::reset)
@@ -235,7 +236,7 @@ void ui_mewui_select_game::handle()
 
 	// process the menu
 	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		// reset the error on any future m_event
 		if (ui_error)
@@ -318,7 +319,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_HISTORY
-		else if (m_event->iptkey == IPT_UI_HISTORY && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_HISTORY && enabled_dats)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
@@ -340,7 +341,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_MAMEINFO
-		else if (m_event->iptkey == IPT_UI_MAMEINFO && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_MAMEINFO && enabled_dats)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
@@ -367,7 +368,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_STORY
-		else if (m_event->iptkey == IPT_UI_STORY && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_STORY && enabled_dats)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
@@ -384,7 +385,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_SYSINFO
-		else if (m_event->iptkey == IPT_UI_SYSINFO && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_SYSINFO && enabled_dats)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
@@ -401,7 +402,7 @@ void ui_mewui_select_game::handle()
 		}
 
 		// handle UI_COMMAND
-		else if (m_event->iptkey == IPT_UI_COMMAND && machine().options().enabled_dats())
+		else if (m_event->iptkey == IPT_UI_COMMAND && enabled_dats)
 		{
 			if (main_filters::actual != FILTER_FAVORITE_GAME)
 			{
@@ -455,12 +456,12 @@ void ui_mewui_select_game::handle()
 			inkey_export();
 
 		// handle UI_AUDIT_FAST
-		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailablelist.empty())
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 1)));
+		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailsortedlist.empty())
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availsortedlist, m_unavailsortedlist, 1)));
 
 		// handle UI_AUDIT_ALL
 		else if (m_event->iptkey == IPT_UI_AUDIT_ALL)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availablelist, m_unavailablelist, m_availsortedlist, m_unavailsortedlist, 2)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_audit(machine(), container, m_availsortedlist, m_unavailsortedlist, 2)));
 
 		// typed characters append to the buffer
 		else if (m_event->iptkey == IPT_SPECIAL)
@@ -470,7 +471,7 @@ void ui_mewui_select_game::handle()
 			check_filter = true;
 	}
 
-	if (m_event != NULL && m_event->itemref == NULL)
+	if (m_event != nullptr && m_event->itemref == nullptr)
 	{
 		if (m_event->iptkey == IPT_SPECIAL && m_event->unichar == 0x09)
 			selected = m_prev_selected;
@@ -526,7 +527,7 @@ void ui_mewui_select_game::handle()
 		{
 			std::vector<std::string> text(screen_filters::length);
 			for (int x = 0; x < screen_filters::length; ++x)
-				text[x].assign(screen_filters::text[x]);
+				text[x] = screen_filters::text[x];
 
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text,
 				&screen_filters::actual, SELECTOR_GAME, l_hover)));
@@ -597,7 +598,7 @@ void ui_mewui_select_game::populate()
 			}
 
 			// iterate over entries
-			for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
+			for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 			{
 				if (!reselect_last::driver.empty() && !(core_stricmp(m_displaylist[curitem]->name, reselect_last::driver.c_str())))
 					old_item_selected = curitem;
@@ -610,7 +611,7 @@ void ui_mewui_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(m_displaylist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+				item_append(m_displaylist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
 				            (void *)m_displaylist[curitem]);
 			}
 		}
@@ -625,9 +626,8 @@ void ui_mewui_select_game::populate()
 		flags_mewui |= MENU_FLAG_MEWUI_FAVORITE;
 
 		// iterate over entries
-		for (size_t x = 0; x < machine().favorite().m_favorite_list.size(); x++)
+		for (auto & mfavorite : machine().favorite().m_favorite_list)
 		{
-			ui_software_info &mfavorite = machine().favorite().m_favorite_list[x];
 			if (mfavorite.startempty == 1)
 			{
 				bool cloneof = strcmp(mfavorite.driver->parent, "0");
@@ -638,7 +638,7 @@ void ui_mewui_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(mfavorite.longname.c_str(), NULL,
+				item_append(mfavorite.longname.c_str(), nullptr,
 				            (cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui,
 							(void *)&mfavorite);
 			}
@@ -651,9 +651,9 @@ void ui_mewui_select_game::populate()
 	}
 
 	// add special items
-	item_append(MENU_SEPARATOR_ITEM, NULL, MENU_FLAG_MEWUI, NULL);
-	item_append("Configure Options", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)1);
-	item_append("Configure Directories", NULL, MENU_FLAG_MEWUI, (void *)(FPTR)2);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, MENU_FLAG_MEWUI, nullptr);
+	item_append("Configure Options", nullptr, MENU_FLAG_MEWUI, (void *)(FPTR)1);
+	item_append("Configure Directories", nullptr, MENU_FLAG_MEWUI, (void *)(FPTR)2);
 
 	// configure the custom rendering
 	float y_pixel = 1.0f / container->manager().ui_target().height();
@@ -689,14 +689,14 @@ void ui_mewui_select_game::build_available_list()
 	const osd_directory_entry *dir;
 
 	// iterate while we get new objects
-	while ((dir = path.next()) != NULL)
+	while ((dir = path.next()) != nullptr)
 	{
 		char drivername[50];
 		char *dst = drivername;
 		const char *src;
 
 		// build a name for it
-		for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; src++)
+		for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; ++src)
 			*dst++ = tolower((UINT8) * src);
 
 		*dst = 0;
@@ -705,7 +705,7 @@ void ui_mewui_select_game::build_available_list()
 
 		if (drivnum != -1 && !m_included[drivnum])
 		{
-			m_availablelist.push_back(&driver_list::driver(drivnum));
+			m_availsortedlist.push_back(&driver_list::driver(drivnum));
 			m_included[drivnum] = true;
 		}
 	}
@@ -714,28 +714,26 @@ void ui_mewui_select_game::build_available_list()
 	for (int x = 0; x < m_total; ++x)
 		if (!m_included[x])
 		{
-			if (!strcmp("___empty", driver_list::driver(x).name))
+			if (&driver_list::driver(x) == &GAME_NAME(___empty))
 				continue;
 
 			const rom_entry *rom = driver_list::driver(x).rom;
 			if (ROMENTRY_ISREGION(rom) && ROMENTRY_ISEND(++rom))
 			{
-				m_availablelist.push_back(&driver_list::driver(x));
+				m_availsortedlist.push_back(&driver_list::driver(x));
 				m_included[x] = true;
 			}
 		}
 
 	// sort
-	m_availsortedlist = m_availablelist;
 	std::stable_sort(m_availsortedlist.begin(), m_availsortedlist.end(), sort_game_list);
 
 	// now build the unavailable list
 	for (int x = 0; x < m_total; ++x)
-		if (!m_included[x] && strcmp("___empty", driver_list::driver(x).name) != 0)
-			m_unavailablelist.push_back(&driver_list::driver(x));
+		if (!m_included[x] && &driver_list::driver(x) != &GAME_NAME(___empty))
+			m_unavailsortedlist.push_back(&driver_list::driver(x));
 
 	// sort
-	m_unavailsortedlist = m_unavailablelist;
 	std::stable_sort(m_unavailsortedlist.begin(), m_unavailsortedlist.end(), sort_game_list);
 }
 
@@ -746,8 +744,8 @@ void ui_mewui_select_game::build_available_list()
 void ui_mewui_select_game::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float tbarspace = (1.0f / container->manager().ui_target().height()) * 32;
-	const game_driver *driver = NULL;
-	ui_software_info *swinfo = NULL;
+	const game_driver *driver = nullptr;
+	ui_software_info *swinfo = nullptr;
 	float width, maxwidth = origx2 - origx1;
 	std::string tempbuf[5];
 	rgb_t color = UI_BACKGROUND_COLOR;
@@ -786,13 +784,13 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	if (no_active_search())
 		tempbuf[1].clear();
 	else
-		tempbuf[1].assign(filtered.c_str()).append(" Search: ").append(m_search).append("_");
+		tempbuf[1].assign(filtered).append(" Search: ").append(m_search).append("_");
 
 	// get the size of the text
-	for (int line = 0; line < 2; line++)
+	for (int line = 0; line < 2; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(width, maxwidth);
 	}
@@ -812,10 +810,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (int line = 0; line < 2; line++)
+	for (int line = 0; line < 2; ++line)
 	{
 		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
 
@@ -826,10 +824,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	// determine the text to render below
 	if (main_filters::actual != FILTER_FAVORITE_GAME)
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
 	else
 	{
-		swinfo = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		swinfo = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (swinfo && swinfo->startempty == 1)
 			driver = swinfo->driver;
 	}
@@ -850,21 +848,21 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		if (cloneof != -1)
 			strprintf(tempbuf[2], "Driver is clone of: %-.100s", driver_list::driver(cloneof).description);
 		else
-			tempbuf[2].assign("Driver is parent");
+			tempbuf[2] = "Driver is parent";
 
 		// next line is overall driver status
 		if (driver->flags & MACHINE_NOT_WORKING)
-			tempbuf[3].assign("Overall: NOT WORKING");
+			tempbuf[3] = "Overall: NOT WORKING";
 		else if (driver->flags & MACHINE_UNEMULATED_PROTECTION)
-			tempbuf[3].assign("Overall: Unemulated Protection");
+			tempbuf[3] = "Overall: Unemulated Protection";
 		else
-			tempbuf[3].assign("Overall: Working");
+			tempbuf[3] = "Overall: Working";
 
 		// next line is graphics, sound status
 		if (driver->flags & (MACHINE_IMPERFECT_GRAPHICS | MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS))
-			tempbuf[4].assign("Graphics: Imperfect, ");
+			tempbuf[4] = "Graphics: Imperfect, ";
 		else
-			tempbuf[4].assign("Graphics: OK, ");
+			tempbuf[4] = "Graphics: OK, ";
 
 		if (driver->flags & MACHINE_NO_SOUND)
 			tempbuf[4].append("Sound: Unimplemented");
@@ -897,22 +895,22 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		if (!swinfo->parentname.empty())
 			strprintf(tempbuf[2], "Software is clone of: %-.100s", !swinfo->parentlongname.empty() ? swinfo->parentlongname.c_str() : swinfo->parentname.c_str());
 		else
-			tempbuf[2].assign("Software is parent");
+			tempbuf[2] = "Software is parent";
 
 		// next line is supported status
 		if (swinfo->supported == SOFTWARE_SUPPORTED_NO)
 		{
-			tempbuf[3].assign("Supported: No");
+			tempbuf[3] = "Supported: No";
 			color = UI_RED_COLOR;
 		}
 		else if (swinfo->supported == SOFTWARE_SUPPORTED_PARTIAL)
 		{
-			tempbuf[3].assign("Supported: Partial");
+			tempbuf[3] = "Supported: Partial";
 			color = UI_YELLOW_COLOR;
 		}
 		else
 		{
-			tempbuf[3].assign("Supported: Yes");
+			tempbuf[3] = "Supported: Yes";
 			color = UI_GREEN_COLOR;
 		}
 
@@ -926,10 +924,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		size_t found = copyright.find("\n");
 
 		tempbuf[0].assign(emulator_info::get_applongname()).append(" ").append(build_version);
-		tempbuf[1].assign(copyright.substr(0, found));
-		tempbuf[2].assign(copyright.substr(found + 1));
+		tempbuf[1] = copyright.substr(0, found);
+		tempbuf[2] = copyright.substr(found + 1);
 		tempbuf[3].clear();
-		tempbuf[4].assign("MEWUI by dankan1890 http://dankan1890.github.io/mewui/");
+		tempbuf[4] = "MEWUI by dankan1890 http://dankan1890.github.io/mewui/";
 	}
 
 	// compute our bounds
@@ -944,10 +942,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// get the size of the text
 	maxwidth = origx2 - origx1;
 
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -971,10 +969,10 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		draw_star(x1, y1);
 
 	// draw all lines
-	for (int line = 0; line < 5; line++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
 }
@@ -993,7 +991,7 @@ void ui_mewui_select_game::force_game_select(running_machine &machine, render_co
 	ui_menu *quit = auto_alloc_clear(machine, ui_menu_quit_game(machine, container));
 	quit->set_special_main_menu(true);
 	ui_menu::stack_push(quit);
-	ui_menu::stack_push(auto_alloc_clear(machine, ui_mewui_select_game(machine, container, NULL)));
+	ui_menu::stack_push(auto_alloc_clear(machine, ui_mewui_select_game(machine, container, nullptr)));
 
 	// force the menus on
 	machine.ui().show_menu();
@@ -1032,8 +1030,8 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 			if ((driver->flags & MACHINE_TYPE_ARCADE) == 0)
 			{
 				software_list_device_iterator iter(enumerator.config().root_device());
-				for (software_list_device *swlistdev = iter.first(); swlistdev != NULL; swlistdev = iter.next())
-					if (swlistdev->first_software_info() != NULL)
+				for (software_list_device *swlistdev = iter.first(); swlistdev != nullptr; swlistdev = iter.next())
+					if (swlistdev->first_software_info() != nullptr)
 					{
 						ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_select_software(machine(), container, driver)));
 						has_swlist = true;
@@ -1044,11 +1042,11 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 			if ((driver->flags & MACHINE_TYPE_ARCADE) != 0 || !has_swlist)
 			{
 				std::vector<s_bios> biosname;
-				if (get_bios_count(driver, biosname) > 1 && !machine().options().skip_bios_menu())
+				if (has_multiple_bios(driver, biosname) && !machine().options().skip_bios_menu())
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)driver, false, false)));
 				else
 				{
-					reselect_last::driver.assign(driver->name);
+					reselect_last::driver = driver->name;
 					reselect_last::software.clear();
 					reselect_last::swlist.clear();
 					machine().manager().schedule_new_driver(*driver);
@@ -1073,6 +1071,7 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 {
 	ui_software_info *ui_swinfo = (ui_software_info *)m_event->itemref;
+	emu_options &mopt = machine().options();
 
 	// special case for configure options
 	if ((FPTR)ui_swinfo == 1)
@@ -1085,7 +1084,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 	else if (ui_swinfo->startempty == 1)
 	{
 		// audit the game first to see if we're going to work
-		driver_enumerator enumerator(machine().options(), *ui_swinfo->driver);
+		driver_enumerator enumerator(mopt, *ui_swinfo->driver);
 		enumerator.next();
 		media_auditor auditor(enumerator);
 		media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
@@ -1094,11 +1093,11 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
+			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo->driver, false, false)));
 			else
 			{
-				reselect_last::driver.assign(ui_swinfo->driver->name);
+				reselect_last::driver = ui_swinfo->driver->name;
 				reselect_last::software.clear();
 				reselect_last::swlist.clear();
 				reselect_last::set(true);
@@ -1118,7 +1117,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 	else
 	{
 		// first validate
-		driver_enumerator drv(machine().options(), *ui_swinfo->driver);
+		driver_enumerator drv(mopt, *ui_swinfo->driver);
 		media_auditor auditor(drv);
 		drv.next();
 		software_list_device *swlist = software_list_device::find_by_name(drv.config(), ui_swinfo->listname.c_str());
@@ -1128,37 +1127,36 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (get_bios_count(ui_swinfo->driver, biosname) > 1 && !machine().options().skip_bios_menu())
+			if (!mopt.skip_bios_menu() && has_multiple_bios(ui_swinfo->driver, biosname))
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
-			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !machine().options().skip_parts_menu())
+			else if (!mopt.skip_parts_menu() && swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 			{
-				std::vector<std::string> partname, partdesc;
-				for (const software_part *swpart = swinfo->first_part(); swpart != NULL; swpart = swpart->next())
+				std::unordered_map<std::string, std::string> parts;
+				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
 				{
 					if (swpart->matches_interface(ui_swinfo->interface.c_str()))
 					{
-						partname.push_back(swpart->name());
 						std::string menu_part_name(swpart->name());
-						if (swpart->feature("part_id") != NULL)
+						if (swpart->feature("part_id") != nullptr)
 							menu_part_name.assign("(").append(swpart->feature("part_id")).append(")");
-						partdesc.push_back(menu_part_name);
+						parts.emplace(swpart->name(), menu_part_name);
 					}
 				}
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, partname, partdesc, ui_swinfo)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_software_parts(machine(), container, parts, ui_swinfo)));
 				return;
 			}
 
 			std::string error_string;
 			std::string string_list = std::string(ui_swinfo->listname).append(":").append(ui_swinfo->shortname).append(":").append(ui_swinfo->part).append(":").append(ui_swinfo->instance);
-			machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+			mopt.set_value(OPTION_SOFTWARENAME, string_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 			std::string snap_list = std::string(ui_swinfo->listname).append(PATH_SEPARATOR).append(ui_swinfo->shortname);
-			machine().options().set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-			reselect_last::driver.assign(drv.driver().name);
-			reselect_last::software.assign(ui_swinfo->shortname);
-			reselect_last::swlist.assign(ui_swinfo->listname);
+			mopt.set_value(OPTION_SNAPNAME, snap_list.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+			reselect_last::driver = drv.driver().name;
+			reselect_last::software = ui_swinfo->shortname;
+			reselect_last::swlist = ui_swinfo->listname;
 			machine().manager().schedule_new_driver(drv.driver());
 			machine().schedule_hard_reset();
 			ui_menu::stack_reset(machine());
@@ -1241,15 +1239,15 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 			s_drivers = m_sortedlist;
 	}
 
-	for (size_t index = 0; index < s_drivers.size(); index++)
+	for (auto & s_driver : s_drivers)
 	{
-		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
+		if (!bioscheck && filter != FILTER_BIOS && (s_driver->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
 		switch (filter)
@@ -1257,81 +1255,81 @@ void ui_mewui_select_game::build_list(std::vector<const game_driver *> &s_driver
 			case FILTER_ALL:
 			case FILTER_AVAILABLE:
 			case FILTER_UNAVAILABLE:
-				m_displaylist.push_back(s_drivers[index]);
+				m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_WORKING:
-				if (!(s_drivers[index]->flags & MACHINE_NOT_WORKING))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_NOT_WORKING))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOT_MECHANICAL:
-				if (!(s_drivers[index]->flags & MACHINE_MECHANICAL))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_MECHANICAL))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_BIOS:
-				if (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_IS_BIOS_ROOT)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_PARENT:
 			case FILTER_CLONES:
-				cloneof = strcmp(s_drivers[index]->parent, "0");
+				cloneof = strcmp(s_driver->parent, "0");
 				if (cloneof)
 				{
-					cx = driver_list::find(s_drivers[index]->parent);
+					cx = driver_list::find(s_driver->parent);
 					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
 
 				if (filter == FILTER_CLONES && cloneof)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				else if (filter == FILTER_PARENT && !cloneof)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOT_WORKING:
-				if (s_drivers[index]->flags & MACHINE_NOT_WORKING)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_NOT_WORKING)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_MECHANICAL:
-				if (s_drivers[index]->flags & MACHINE_MECHANICAL)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_MECHANICAL)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_SAVE:
-				if (s_drivers[index]->flags & MACHINE_SUPPORTS_SAVE)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & MACHINE_SUPPORTS_SAVE)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOSAVE:
-				if (!(s_drivers[index]->flags & MACHINE_SUPPORTS_SAVE))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & MACHINE_SUPPORTS_SAVE))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_YEAR:
-				if (!core_stricmp(filter_text, s_drivers[index]->year))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!core_stricmp(filter_text, s_driver->year))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_VERTICAL:
-				if (s_drivers[index]->flags & ORIENTATION_SWAP_XY)
-					m_displaylist.push_back(s_drivers[index]);
+				if (s_driver->flags & ORIENTATION_SWAP_XY)
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_HORIZONTAL:
-				if (!(s_drivers[index]->flags & ORIENTATION_SWAP_XY))
-					m_displaylist.push_back(s_drivers[index]);
+				if (!(s_driver->flags & ORIENTATION_SWAP_XY))
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_MANUFACTURER:
 			{
-				std::string name = c_mnfct::getname(s_drivers[index]->manufacturer);
+				std::string name = c_mnfct::getname(s_driver->manufacturer);
 
 				if (!core_stricmp(filter_text, name.c_str()))
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 			}
 		}
@@ -1354,25 +1352,25 @@ void ui_mewui_select_game::build_custom()
 	else
 		s_drivers = m_sortedlist;
 
-	for (size_t index = 0; index < s_drivers.size(); ++index)
+	for (auto & elem : s_drivers)
 	{
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((elem->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(elem->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
-		m_displaylist.push_back(s_drivers[index]);
+		m_displaylist.push_back(elem);
 	}
 
-	for (int count = 1; count <= custfltr::numother; count++)
+	for (int count = 1; count <= custfltr::numother; ++count)
 	{
 		int filter = custfltr::other[count];
 		if (filter == FILTER_BIOS)
 			bioscheck = true;
 	}
 
-	for (int count = 1; count <= custfltr::numother; count++)
+	for (int count = 1; count <= custfltr::numother; ++count)
 	{
 		int filter = custfltr::other[count];
 		s_drivers = m_displaylist;
@@ -1397,7 +1395,7 @@ void ui_mewui_select_game::build_custom()
 				build_from_cache(s_drivers, 0, filter, bioscheck);
 				break;
 			default:
-				build_list(s_drivers, NULL, filter, bioscheck);
+				build_list(s_drivers, nullptr, filter, bioscheck);
 				break;
 		}
 	}
@@ -1412,11 +1410,9 @@ void ui_mewui_select_game::build_category()
 	std::vector<int> temp_filter;
 	machine().inifile().load_ini_category(temp_filter);
 
-	for (size_t index = 0; index < temp_filter.size(); ++index)
-	{
-		int actual = temp_filter[index];
+	for (auto actual : temp_filter)
 		m_tmp.push_back(&driver_list::driver(actual));
-	}
+
 	std::stable_sort(m_tmp.begin(), m_tmp.end(), sort_game_list);
 	m_displaylist = m_tmp;
 }
@@ -1433,49 +1429,49 @@ void ui_mewui_select_game::build_from_cache(std::vector<const game_driver *> &s_
 		filter = main_filters::actual;
 	}
 
-	for (size_t index = 0; index < s_drivers.size(); ++index)
+	for (auto & s_driver : s_drivers)
 	{
-		if (!bioscheck && filter != FILTER_BIOS && (s_drivers[index]->flags & MACHINE_IS_BIOS_ROOT) != 0)
+		if (!bioscheck && filter != FILTER_BIOS && (s_driver->flags & MACHINE_IS_BIOS_ROOT) != 0)
 			continue;
 
-		if ((s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
+		if ((s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_SYSTEMS)
 			continue;
 
-		if (!(s_drivers[index]->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
+		if (!(s_driver->flags & MACHINE_TYPE_ARCADE) && ume_filters::actual == MEWUI_ARCADES)
 			continue;
 
-		int idx = driver_list::find(s_drivers[index]->name);
+		int idx = driver_list::find(s_driver->name);
 
 		switch (filter)
 		{
 			case FILTER_SCREEN:
 				if (driver_cache[idx].b_screen == screens)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_SAMPLES:
 				if (driver_cache[idx].b_samples)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOSAMPLES:
 				if (!driver_cache[idx].b_samples)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_STEREO:
 				if (driver_cache[idx].b_stereo)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_CHD:
 				if (driver_cache[idx].b_chd)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 
 			case FILTER_NOCHD:
 				if (!driver_cache[idx].b_chd)
-					m_displaylist.push_back(s_drivers[index]);
+					m_displaylist.push_back(s_driver);
 				break;
 		}
 	}
@@ -1498,7 +1494,7 @@ void ui_mewui_select_game::populate_search()
 		curpenalty = MIN(curpenalty, tmp);
 
 		// insert into the sorted table of matches
-		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; matchnum--)
+		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; --matchnum)
 		{
 			// stop if we're worse than the current entry
 			if (curpenalty >= penalty[matchnum])
@@ -1516,9 +1512,9 @@ void ui_mewui_select_game::populate_search()
 		}
 	}
 
-	(index < VISIBLE_GAMES_IN_SEARCH) ? m_searchlist[index] = NULL : m_searchlist[VISIBLE_GAMES_IN_SEARCH] = NULL;
+	(index < VISIBLE_GAMES_IN_SEARCH) ? m_searchlist[index] = nullptr : m_searchlist[VISIBLE_GAMES_IN_SEARCH] = nullptr;
 	UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
-	for (int curitem = 0; m_searchlist[curitem]; curitem++)
+	for (int curitem = 0; m_searchlist[curitem]; ++curitem)
 	{
 		bool cloneof = strcmp(m_searchlist[curitem]->parent, "0");
 		if (cloneof)
@@ -1527,7 +1523,7 @@ void ui_mewui_select_game::populate_search()
 			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 				cloneof = false;
 		}
-		item_append(m_searchlist[curitem]->description, NULL, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
+		item_append(m_searchlist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
 		            (void *)m_searchlist[curitem]);
 	}
 }
@@ -1613,7 +1609,7 @@ void ui_mewui_select_game::inkey_export()
 	emu_file infile(machine().options().mewui_path(), OPEN_FLAG_READ);
 	if (infile.open(filename.c_str(), ".xml") == FILERR_NONE)
 	{
-		for (int seq = 0; ; seq++)
+		for (int seq = 0; ; ++seq)
 		{
 			std::string seqtext;
 			strprintf(seqtext, "%s_%04d", filename.c_str(), seq);
@@ -1640,7 +1636,7 @@ void ui_mewui_select_game::inkey_export()
 
 		if (m_search[0] != 0)
 		{
-			for (int curitem = 0; m_searchlist[curitem]; curitem++)
+			for (int curitem = 0; m_searchlist[curitem]; ++curitem)
 			{
 				int f = driver_list::find(m_searchlist[curitem]->name);
 				drivlist.include(f);
@@ -1649,16 +1645,16 @@ void ui_mewui_select_game::inkey_export()
 		else
 		{
 			// iterate over entries
-			for (size_t curitem = 0; curitem < m_displaylist.size(); curitem++)
+			for (auto & elem : m_displaylist)
 			{
-				int f = driver_list::find(m_displaylist[curitem]->name);
+				int f = driver_list::find(elem->name);
 				drivlist.include(f);
 			}
 		}
 
 		// create the XML and save to file
 		info_xml_creator creator(drivlist);
-		creator.output(pfile);
+		creator.output(pfile, false);
 		fclose(pfile);
 		machine().popmessage("%s.xml saved under mewui folder.", filename.c_str());
 	}
@@ -1687,7 +1683,7 @@ void ui_mewui_select_game::save_cache_info()
 		for (int x = 0; x < driver_list::total(); ++x)
 		{
 			const game_driver *driver = &driver_list::driver(x);
-			if (!strcmp("___empty", driver->name))
+			if (driver == &GAME_NAME(___empty))
 				continue;
 
 			m_fulllist.push_back(driver);
@@ -1709,7 +1705,7 @@ void ui_mewui_select_game::save_cache_info()
 		for (int x = 0; x < driver_list::total(); ++x)
 		{
 			const game_driver *driver = &driver_list::driver(x);
-			if (!strcmp("___empty", driver->name))
+			if (driver == &GAME_NAME(___empty))
 				continue;
 
 			if (driver->flags & MACHINE_TYPE_ARCADE)
@@ -1728,14 +1724,14 @@ void ui_mewui_select_game::save_cache_info()
 			machine_config config(*driver, machine().options());
 
 			samples_device_iterator iter(config.root_device());
-			infos.b_samples = (iter.first() != NULL) ? 1 : 0;
+			infos.b_samples = (iter.first() != nullptr) ? 1 : 0;
 
 			const screen_device *screen = config.first_screen();
-			infos.b_screen = (screen != NULL) ? screen->screen_type() : 0;
+			infos.b_screen = (screen != nullptr) ? screen->screen_type() : 0;
 
 			speaker_device_iterator siter(config.root_device());
 			sound_interface_iterator snditer(config.root_device());
-			infos.b_stereo = (snditer.first() != NULL && siter.count() > 1) ? 1 : 0;
+			infos.b_stereo = (snditer.first() != nullptr && siter.count() > 1) ? 1 : 0;
 			infos.b_chd = 0;
 			for (const rom_entry *rom = driver->rom; !ROMENTRY_ISEND(rom); ++rom)
 				if (ROMENTRY_ISREGION(rom) && ROMREGION_ISDISKDATA(rom))
@@ -1806,7 +1802,7 @@ void ui_mewui_select_game::load_cache_info()
 	for (int x = 0; x < driver_list::total(); ++x)
 	{
 		const game_driver *driver = &driver_list::driver(x);
-		if (!strcmp("___empty", driver->name))
+		if (driver == &GAME_NAME(___empty))
 			continue;
 
 		m_fulllist.push_back(driver);
@@ -1828,49 +1824,6 @@ void ui_mewui_select_game::load_cache_info()
 	myfile.close();
 	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());
-}
-
-//-------------------------------------------------
-//  save drivers infos to file
-//-------------------------------------------------
-
-void ui_mewui_select_game::save_available_machines()
-{
-	// attempt to open the output file
-	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-	if (file.open(emulator_info::get_configname(), "_avail.ini") == FILERR_NONE)
-	{
-		std::string filename(file.fullpath());
-		file.close();
-		std::ofstream myfile(filename.c_str());
-		UINT8 space = 0;
-
-		// generate header
-		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
-		myfile << buffer;
-		myfile << (int)m_availablelist.size() << space;
-		myfile << (int)m_unavailablelist.size() << space;
-		int find = 0;
-
-		// generate available list
-		for (size_t x = 0; x < m_availablelist.size(); ++x)
-		{
-			find = driver_list::find(m_availablelist[x]->name);
-			myfile << find << space;
-			find = driver_list::find(m_availsortedlist[x]->name);
-			myfile << find << space;
-		}
-
-		// generate unavailable list
-		for (size_t x = 0; x < m_unavailablelist.size(); ++x)
-		{
-			find = driver_list::find(m_unavailablelist[x]->name);
-			myfile << find << space;
-			find = driver_list::find(m_unavailsortedlist[x]->name);
-			myfile << find << space;
-		}
-		myfile.close();
-	}
 }
 
 //-------------------------------------------------
@@ -1915,16 +1868,12 @@ bool ui_mewui_select_game::load_available_machines()
 	for (int x = 0; x < avsize; ++x)
 	{
 		myfile >> find >> space;
-		m_availablelist.push_back(&driver_list::driver(find));
-		myfile >> find >> space;
 		m_availsortedlist.push_back(&driver_list::driver(find));
 	}
 
 	// load unavailable list
 	for (int x = 0; x < unavsize; ++x)
 	{
-		myfile >> find >> space;
-		m_unavailablelist.push_back(&driver_list::driver(find));
 		myfile >> find >> space;
 		m_unavailsortedlist.push_back(&driver_list::driver(find));
 	}
@@ -1953,18 +1902,18 @@ void ui_mewui_select_game::load_custom_filters()
 		file.gets(buffer, MAX_CHAR_INFO);
 		pb = strchr(buffer, '=') + 2;
 
-		for (int y = 0; y < main_filters::length; y++)
+		for (int y = 0; y < main_filters::length; ++y)
 			if (!strncmp(pb, main_filters::text[y], strlen(main_filters::text[y])))
 			{
 				custfltr::main = y;
 				break;
 			}
 
-		for (int x = 1; x <= custfltr::numother; x++)
+		for (int x = 1; x <= custfltr::numother; ++x)
 		{
 			file.gets(buffer, MAX_CHAR_INFO);
 			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < main_filters::length; y++)
+			for (int y = 0; y < main_filters::length; ++y)
 				if (!strncmp(cb, main_filters::text[y], strlen(main_filters::text[y])))
 				{
 					custfltr::other[x] = y;
@@ -1972,7 +1921,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_mnfct::ui.size(); z++)
+						for (size_t z = 0; z < c_mnfct::ui.size(); ++z)
 							if (!strncmp(ab, c_mnfct::ui[z].c_str(), c_mnfct::ui[z].length()))
 								custfltr::mnfct[x] = z;
 					}
@@ -1980,7 +1929,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < c_year::ui.size(); z++)
+						for (size_t z = 0; z < c_year::ui.size(); ++z)
 							if (!strncmp(db, c_year::ui[z].c_str(), c_year::ui[z].length()))
 								custfltr::year[x] = z;
 					}
@@ -1988,7 +1937,7 @@ void ui_mewui_select_game::load_custom_filters()
 					{
 						file.gets(buffer, MAX_CHAR_INFO);
 						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < screen_filters::length; z++)
+						for (size_t z = 0; z < screen_filters::length; ++z)
 							if (!strncmp(db, screen_filters::text[z], strlen(screen_filters::text[z])))
 								custfltr::screen[x] = z;
 					}
@@ -2030,7 +1979,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		}
 
 		float text_sign = mui.get_string_width_ex("_# ", text_size);
-		for (int x = 0; x < text_lenght; x++)
+		for (int x = 0; x < text_lenght; ++x)
 		{
 			float total_width;
 
@@ -2053,7 +2002,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 		y1 += UI_BOX_TB_BORDER;
 		y2 -= UI_BOX_TB_BORDER;
 
-		for (int filter = 0; filter < text_lenght; filter++)
+		for (int filter = 0; filter < text_lenght; ++filter)
 		{
 			std::string str(text[filter]);
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
@@ -2085,7 +2034,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 				}
 				else
 				{
-					for (int count = 1; count <= custfltr::numother; count++)
+					for (int count = 1; count <= custfltr::numother; ++count)
 					{
 						int cfilter = custfltr::other[count];
 						if (cfilter == filter)
@@ -2100,7 +2049,7 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 			}
 
 			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-			                              DRAW_NORMAL, fgcolor, bgcolor, NULL, NULL, text_size);
+			                              DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 			y1 += line_height_max;
 		}
 
@@ -2166,29 +2115,29 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 	std::vector<int> xstart;
 	std::vector<int> xend;
 	float text_size = machine().options().infos_size();
-	const game_driver *driver = NULL;
-	ui_software_info *soft = NULL;
+	const game_driver *driver = nullptr;
+	ui_software_info *soft = nullptr;
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-	static ui_software_info *oldsoft = NULL;
-	static const game_driver *olddriver = NULL;
+	static ui_software_info *oldsoft = nullptr;
+	static const game_driver *olddriver = nullptr;
 	static int oldview = -1;
 	static int old_sw_view = -1;
 
 	if (is_favorites)
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (soft && soft->startempty == 1)
 		{
 			driver = soft->driver;
-			oldsoft = NULL;
+			oldsoft = nullptr;
 		}
 		else
-			olddriver = NULL;
+			olddriver = nullptr;
 	}
 	else
 	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
-		oldsoft = NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
+		oldsoft = nullptr;
 	}
 
 	if (driver)
@@ -2207,16 +2156,16 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		float title_size = 0.0f;
 		float txt_lenght = 0.0f;
 
-		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; x++)
+		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; ++x)
 		{
 			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
 		mui.draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curdats_view, MEWUI_FIRST_LOAD, MEWUI_LAST_LOAD, title_size);
 
@@ -2238,7 +2187,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 			if (!m_item.empty() && mewui_globals::curdats_view == MEWUI_COMMAND_LOAD)
 			{
-				for (size_t x = 0; x < m_item.size(); x++)
+				for (size_t x = 0; x < m_item.size(); ++x)
 				{
 					std::string t_buffer;
 					machine().datfile().load_command_info(t_buffer, x);
@@ -2253,7 +2202,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (buffer.empty())
 		{
 			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
@@ -2270,11 +2219,11 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (topline_datsview + r_visible_lines >= totallines)
 			topline_datsview = totallines - r_visible_lines;
 
-		for (int r = 0; r < r_visible_lines; r++)
+		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
 			std::string tempbuf;
-			tempbuf.assign(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
+			tempbuf = buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)
@@ -2285,11 +2234,19 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			// special case for mamescore
 			else if (mewui_globals::curdats_view == MEWUI_STORY_LOAD)
 			{
-				int last_underscore = tempbuf.find_last_of('_');
-				if (last_underscore == -1)
+				size_t last_underscore = tempbuf.find_last_of("_");
+				if (last_underscore == std::string::npos)
+				{
+					// check size
+					float sc = origx2 - origx1 - (2.0f * UI_BOX_LR_BORDER);
+					float textlen = mui.get_string_width_ex(tempbuf.c_str(), text_size);
+					if (textlen > sc)
+						text_size = sc / textlen;
+
 					mui.draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL,
-					                              text_size);
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr,
+						text_size);
+				}
 				else
 				{
 					float effective_width = origx2 - origx1 - gutter_width;
@@ -2300,14 +2257,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					float item_width;
 
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              &item_width, NULL, text_size);
+						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+						&item_width, nullptr, text_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
-					                              origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
-					}
+						origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
+					    WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
+					    nullptr, nullptr, text_size);
+				}
 			}
 
 			// special case for command
@@ -2323,19 +2280,19 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					strtrimspace(last_part);
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
 					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
+					                              nullptr, nullptr, text_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
 					                              JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              NULL, NULL, text_size);
+					                              nullptr, nullptr, text_size);
 				}
 				else
 					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
+					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 			}
 			else
 				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL, text_size);
+				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 
 			oy1 += (line_height * text_size);
 		}
@@ -2353,7 +2310,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (soft->usage.empty())
 		{
 			mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			mewui_globals::cur_sw_dats_view = 0;
 		}
 		else
@@ -2361,48 +2318,44 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			float title_size = 0.0f;
 			float txt_lenght = 0.0f;
 			std::string t_text[2];
-			t_text[0].assign("History");
-			t_text[1].assign("Usage");
+			t_text[0] = "History";
+			t_text[1] = "Usage";
 
-			for (int x = 0; x < 2; x++)
+			for (auto & elem: t_text)
 			{
-				mui.draw_text_full(container, t_text[x].c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, NULL);
+				mui.draw_text_full(container, elem.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 				txt_lenght += 0.01f;
 				title_size = MAX(txt_lenght, title_size);
 			}
 
 			mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
 			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-			                              NULL, NULL);
+			                              nullptr, nullptr);
 
 			draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::cur_sw_dats_view, 0, 1, title_size);
 		}
 
 		if (oldsoft != soft || old_sw_view != mewui_globals::cur_sw_dats_view)
 		{
+			buffer.clear();
+			old_sw_view = mewui_globals::cur_sw_dats_view;
+			oldsoft = soft;
 			if (mewui_globals::cur_sw_dats_view == 0)
 			{
-				buffer.clear();
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
 				if (soft->startempty == 1)
 					machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 				else
-					machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
+					machine().datfile().load_software_info(soft->listname, buffer, soft->shortname, soft->parentname);
 			}
 			else
-			{
-				old_sw_view = mewui_globals::cur_sw_dats_view;
-				oldsoft = soft;
-				buffer.assign(soft->usage);
-			}
+				buffer = soft->usage;
 		}
 
 		if (buffer.empty())
 		{
 			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else
@@ -2417,11 +2370,11 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (topline_datsview + r_visible_lines >= totallines)
 				topline_datsview = totallines - r_visible_lines;
 
-		for (int r = 0; r < r_visible_lines; r++)
+		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
 			std::string tempbuf;
-			tempbuf.assign(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
+			tempbuf = buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)
@@ -2432,7 +2385,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			else
 				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
 				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-				                              NULL, NULL, text_size);
+				                              nullptr, nullptr, text_size);
 			oy1 += (line_height * text_size);
 		}
 
@@ -2490,26 +2443,26 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 	ui_manager &mui = machine().ui();
 	float line_height = mui.get_line_height();
 	bool is_favorites = ((item[0].flags & MENU_FLAG_MEWUI_FAVORITE) != 0);
-	static ui_software_info *oldsoft = NULL;
-	static const game_driver *olddriver = NULL;
-	const game_driver *driver = NULL;
-	ui_software_info *soft = NULL;
+	static ui_software_info *oldsoft = nullptr;
+	static const game_driver *olddriver = nullptr;
+	const game_driver *driver = nullptr;
+	ui_software_info *soft = nullptr;
 
 	if (is_favorites)
 	{
-		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : NULL;
+		soft = ((FPTR)selectedref > 2) ? (ui_software_info *)selectedref : nullptr;
 		if (soft && soft->startempty == 1)
 		{
 			driver = soft->driver;
-			oldsoft = NULL;
+			oldsoft = nullptr;
 		}
 		else
-			olddriver = NULL;
+			olddriver = nullptr;
 	}
 	else
 	{
-		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : NULL;
-		oldsoft = NULL;
+		driver = ((FPTR)selectedref > 2) ? (const game_driver *)selectedref : nullptr;
+		oldsoft = nullptr;
 	}
 
 	if (driver)
@@ -2538,12 +2491,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			if (!tmp_bitmap->valid())
 			{
 				fullname.assign(driver->name).append(".png");
-				render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+				render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
 					fullname.assign(driver->name).append(".jpg");
-					render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 				}
 			}
 
@@ -2562,12 +2515,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 				if (cloneof)
 				{
 					fullname.assign(driver->parent).append(".png");
-					render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 					if (!tmp_bitmap->valid())
 					{
 						fullname.assign(driver->parent).append(".jpg");
-						render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+						render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 					}
 				}
 			}
@@ -2612,12 +2565,12 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			{
 				// Load driver snapshot
 				fullname.assign(soft->driver->name).append(".png");
-				render_load_png(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+				render_load_png(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 
 				if (!tmp_bitmap->valid())
 				{
 					fullname.assign(soft->driver->name).append(".jpg");
-					render_load_jpeg(*tmp_bitmap, snapfile, NULL, fullname.c_str());
+					render_load_jpeg(*tmp_bitmap, snapfile, nullptr, fullname.c_str());
 				}
 			}
 			else if (mewui_globals::curimage_view == TITLES_VIEW)
@@ -2636,7 +2589,7 @@ void ui_mewui_select_game::arts_render(void *selectedref, float origx1, float or
 			else
 			{
 				// First attempt from name list
-				pathname.assign(soft->listname);
+				pathname = soft->listname;
 				fullname.assign(soft->shortname).append(".png");
 				render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 

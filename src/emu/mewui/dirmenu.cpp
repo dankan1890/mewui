@@ -52,7 +52,7 @@ static const folders_entry s_folders_entry[] =
 	{ "Logos",               OPTION_LOGOS_PATH },
 	{ "Scores",              OPTION_SCORES_PATH },
 	{ "Versus",              OPTION_VERSUS_PATH },
-	{ NULL }
+	{ nullptr }
 };
 
 /**************************************************
@@ -69,7 +69,7 @@ ui_menu_add_change_folder::ui_menu_add_change_folder(running_machine &machine, r
 	m_search[0] = '\0';
 
 	// configure the starting's path
-	char *dst = NULL;
+	char *dst = nullptr;
 	osd_get_full_path(&dst, ".");
 	m_current_path.assign(dst);
 	osd_free(dst);
@@ -88,7 +88,7 @@ void ui_menu_add_change_folder::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		if (m_event->iptkey == IPT_UI_SELECT)
 		{
@@ -171,7 +171,7 @@ void ui_menu_add_change_folder::handle()
 
 				// from current item to the end
 				for (entry = cur_selected; entry < item.size(); entry++)
-					if (item[entry].ref != NULL && m_search != NULL)
+					if (item[entry].ref != nullptr && m_search != nullptr)
 					{
 						int match = 0;
 						for (int i = 0; i < ARRAY_LENGTH(m_search); i++)
@@ -190,7 +190,7 @@ void ui_menu_add_change_folder::handle()
 				// and from the first item to current one
 				for (entry = 0; entry < cur_selected; entry++)
 				{
-					if (item[entry].ref != NULL && m_search != NULL)
+					if (item[entry].ref != nullptr && m_search != nullptr)
 					{
 						int match = 0;
 						for (int i = 0; i < ARRAY_LENGTH(m_search); i++)
@@ -230,17 +230,17 @@ void ui_menu_add_change_folder::populate()
 	int folders_count = 0;
 
 	// add the drives
-	for (int i = 0; (volume_name = osd_get_volume_name(i)) != NULL; i++)
+	for (int i = 0; (volume_name = osd_get_volume_name(i)) != nullptr; i++)
 		item_append(volume_name, "[DRIVE]", 0, (void *)(FPTR)++folders_count);
 
 	// add the directories
-	while ((dirent = path.next()) != NULL)
+	while ((dirent = path.next()) != nullptr)
 	{
 		if (dirent->type == ENTTYPE_DIR && strcmp(dirent->name, ".") != 0)
 			item_append(dirent->name, "[DIR]", 0, (void *)(FPTR)++folders_count);
 	}
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	// configure the custom rendering
 	customtop = 2.0f * machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
@@ -258,13 +258,13 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	std::string tempbuf[2];
 	const char *s_change = (m_change) ? "Change" : "Add";
 	tempbuf[0].assign(s_change).append(" ").append(s_folders_entry[m_ref].name).append(" Folder - Search: ").append(m_search).append("_");
-	tempbuf[1].assign(m_current_path.c_str());
+	tempbuf[1] = m_current_path;
 
 	// get the size of the text
-	for (int i = 0; i < 2; i++)
+	for (auto & elem: tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[i].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(width, maxwidth);
 	}
@@ -284,18 +284,18 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (int i = 0; i < 2; i++)
+	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, tempbuf[i].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 = y1 + mui.get_line_height();
 	}
 
 	// bottom text
-	tempbuf[0].assign("Press TAB to set");
+	tempbuf[0] = "Press TAB to set";
 
 	mui.draw_text_full(container, tempbuf[0].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -315,7 +315,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 
 	// draw the text within it
 	mui.draw_text_full(container, tempbuf[0].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 }
 
@@ -345,7 +345,7 @@ void ui_menu_directory::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
+	if (m_event != nullptr && m_event->itemref != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		int ref = (FPTR)m_event->itemref;
 		bool change = (ref == HISTORY_FOLDERS || ref == EXTRAINI_FOLDERS || ref == MEWUI_FOLDERS);
@@ -359,34 +359,34 @@ void ui_menu_directory::handle()
 
 void ui_menu_directory::populate()
 {
-	item_append("Roms", NULL, 0, (void *)(FPTR)ROM_FOLDERS);
-	item_append("MEWUI", NULL, 0, (void *)(FPTR)MEWUI_FOLDERS);
-	item_append("Samples", NULL, 0, (void *)(FPTR)SAMPLE_FOLDERS);
-	item_append("INIs", NULL, 0, (void *)(FPTR)INI_FOLDERS);
-	item_append("Artwork", NULL, 0, (void *)(FPTR)ARTWORK_FOLDERS);
-	item_append("DATs (History, Mameinfo, etc...)", NULL, 0, (void *)(FPTR)HISTORY_FOLDERS);
-	item_append("Extra INI (Category, etc...)", NULL, 0, (void *)(FPTR)EXTRAINI_FOLDERS);
-	item_append("Icons", NULL, 0, (void *)(FPTR)ICON_FOLDERS);
-	item_append("Cheats", NULL, 0, (void *)(FPTR)CHEAT_FOLDERS);
-	item_append("Snapshots", NULL, 0, (void *)(FPTR)SNAPSHOT_FOLDERS);
-	item_append("Cabinets", NULL, 0, (void *)(FPTR)CABINET_FOLDERS);
-	item_append("Flyers", NULL, 0, (void *)(FPTR)FLYER_FOLDERS);
-	item_append("Titles", NULL, 0, (void *)(FPTR)TITLE_FOLDERS);
-	item_append("Ends", NULL, 0, (void *)(FPTR)ENDS_FOLDERS);
-	item_append("PCBs", NULL, 0, (void *)(FPTR)PCB_FOLDERS);
-	item_append("Marquees", NULL, 0, (void *)(FPTR)MARQUEES_FOLDERS);
-	item_append("Control Panels", NULL, 0, (void *)(FPTR)CPANEL_FOLDERS);
-	item_append("Bosses", NULL, 0, (void *)(FPTR)BOSSES_FOLDERS);
-	item_append("Versus", NULL, 0, (void *)(FPTR)VERSUS_FOLDERS);
-	item_append("Game Over", NULL, 0, (void *)(FPTR)GAMEOVER_FOLDERS);
-	item_append("How To", NULL, 0, (void *)(FPTR)HOWTO_FOLDERS);
-	item_append("Select", NULL, 0, (void *)(FPTR)SELECT_FOLDERS);
-	item_append("Artwork Preview", NULL, 0, (void *)(FPTR)ARTPREV_FOLDERS);
-	item_append("Scores", NULL, 0, (void *)(FPTR)SCORES_FOLDERS);
-	item_append("Logos", NULL, 0, (void *)(FPTR)LOGO_FOLDERS);
-	item_append("Crosshairs", NULL, 0, (void *)(FPTR)CROSSHAIR_FOLDERS);
+	item_append("Roms", nullptr, 0, (void *)(FPTR)ROM_FOLDERS);
+	item_append("MEWUI", nullptr, 0, (void *)(FPTR)MEWUI_FOLDERS);
+	item_append("Samples", nullptr, 0, (void *)(FPTR)SAMPLE_FOLDERS);
+	item_append("INIs", nullptr, 0, (void *)(FPTR)INI_FOLDERS);
+	item_append("Artwork", nullptr, 0, (void *)(FPTR)ARTWORK_FOLDERS);
+	item_append("DATs (History, Mameinfo, etc...)", nullptr, 0, (void *)(FPTR)HISTORY_FOLDERS);
+	item_append("Extra INI (Category, etc...)", nullptr, 0, (void *)(FPTR)EXTRAINI_FOLDERS);
+	item_append("Icons", nullptr, 0, (void *)(FPTR)ICON_FOLDERS);
+	item_append("Cheats", nullptr, 0, (void *)(FPTR)CHEAT_FOLDERS);
+	item_append("Snapshots", nullptr, 0, (void *)(FPTR)SNAPSHOT_FOLDERS);
+	item_append("Cabinets", nullptr, 0, (void *)(FPTR)CABINET_FOLDERS);
+	item_append("Flyers", nullptr, 0, (void *)(FPTR)FLYER_FOLDERS);
+	item_append("Titles", nullptr, 0, (void *)(FPTR)TITLE_FOLDERS);
+	item_append("Ends", nullptr, 0, (void *)(FPTR)ENDS_FOLDERS);
+	item_append("PCBs", nullptr, 0, (void *)(FPTR)PCB_FOLDERS);
+	item_append("Marquees", nullptr, 0, (void *)(FPTR)MARQUEES_FOLDERS);
+	item_append("Control Panels", nullptr, 0, (void *)(FPTR)CPANEL_FOLDERS);
+	item_append("Bosses", nullptr, 0, (void *)(FPTR)BOSSES_FOLDERS);
+	item_append("Versus", nullptr, 0, (void *)(FPTR)VERSUS_FOLDERS);
+	item_append("Game Over", nullptr, 0, (void *)(FPTR)GAMEOVER_FOLDERS);
+	item_append("How To", nullptr, 0, (void *)(FPTR)HOWTO_FOLDERS);
+	item_append("Select", nullptr, 0, (void *)(FPTR)SELECT_FOLDERS);
+	item_append("Artwork Preview", nullptr, 0, (void *)(FPTR)ARTPREV_FOLDERS);
+	item_append("Scores", nullptr, 0, (void *)(FPTR)SCORES_FOLDERS);
+	item_append("Logos", nullptr, 0, (void *)(FPTR)LOGO_FOLDERS);
+	item_append("Crosshairs", nullptr, 0, (void *)(FPTR)CROSSHAIR_FOLDERS);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
 
@@ -401,7 +401,7 @@ void ui_menu_directory::custom_render(void *selectedref, float top, float bottom
 
 	// get the size of the text
 	mui.draw_text_full(container, "Folder Setup", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	float maxwidth = MAX(width, origx2 - origx1);
 
@@ -421,7 +421,7 @@ void ui_menu_directory::custom_render(void *selectedref, float top, float bottom
 
 	// draw the text within it
 	mui.draw_text_full(container, "Folder Setup", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }
 
 /**************************************************
@@ -450,7 +450,7 @@ void ui_menu_display_actual::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
+	if (m_event != nullptr && m_event->itemref != nullptr && m_event->iptkey == IPT_UI_SELECT)
 		switch ((FPTR)m_event->itemref)
 		{
 			case REMOVE_FOLDER:
@@ -477,18 +477,18 @@ void ui_menu_display_actual::populate()
 	std::string curpath;
 	m_folders.clear();
 
-	while (path.next(curpath, NULL))
+	while (path.next(curpath, nullptr))
 		m_folders.push_back(curpath);
 
 	if (m_change)
-		item_append("Change Folder", NULL, 0, (void *)CHANGE_FOLDER);
+		item_append("Change Folder", nullptr, 0, (void *)CHANGE_FOLDER);
 	else
-		item_append("Add Folder", NULL, 0, (void *)ADD_FOLDER);
+		item_append("Add Folder", nullptr, 0, (void *)ADD_FOLDER);
 
 	if (m_folders.size() > 1)
-		item_append("Remove Folder", NULL, 0, (void *)REMOVE_FOLDER);
+		item_append("Remove Folder", nullptr, 0, (void *)REMOVE_FOLDER);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	customtop = (m_folders.size() + 1) * machine().ui().get_line_height() + 6.0f * UI_BOX_TB_BORDER;
 }
@@ -503,17 +503,17 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	ui_manager &mui = machine().ui();
 	float lineh = mui.get_line_height();
 
-	for (size_t line = 0; line < m_folders.size(); line++)
+	for (auto & elem : m_folders)
 	{
-		mui.draw_text_full(container, m_folders[line].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 		maxwidth = MAX(maxwidth, width);
 	}
 
 	// get the size of the text
 	mui.draw_text_full(container, m_tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	maxwidth = MAX(width, maxwidth);
 
@@ -533,7 +533,7 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 
 	// draw the text within it
 	mui.draw_text_full(container, m_tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 	// compute our bounds
 	x1 = 0.5f - 0.5f * maxwidth;
@@ -550,10 +550,10 @@ void ui_menu_display_actual::custom_render(void *selectedref, float top, float b
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	for (size_t line = 0; line < m_folders.size(); line++)
+	for (auto & elem : m_folders)
 	{
-		mui.draw_text_full(container, m_folders[line].c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+		mui.draw_text_full(container, elem.c_str(), x1, y1, x2 - x1, JUSTIFY_LEFT, WRAP_TRUNCATE,
+		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += lineh;
 	}
 
@@ -585,7 +585,7 @@ void ui_menu_remove_folder::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL && m_event->iptkey == IPT_UI_SELECT)
+	if (m_event != nullptr && m_event->itemref != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		int index = (FPTR)m_event->itemref - 1;
 		std::string tmppath;
@@ -614,10 +614,10 @@ void ui_menu_remove_folder::populate()
 	std::string curpath;
 	int folders_count = 0;
 
-	while (path.next(curpath, NULL))
-		item_append(curpath.c_str(), NULL, 0, (void *)(FPTR)++folders_count);
+	while (path.next(curpath, nullptr))
+		item_append(curpath.c_str(), nullptr, 0, (void *)(FPTR)++folders_count);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	customtop = machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 }
@@ -634,7 +634,7 @@ void ui_menu_remove_folder::custom_render(void *selectedref, float top, float bo
 
 	// get the size of the text
 	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	float maxwidth = MAX(width, origx2 - origx1);
 
@@ -654,6 +654,6 @@ void ui_menu_remove_folder::custom_render(void *selectedref, float top, float bo
 
 	// draw the text within it
 	mui.draw_text_full(container, tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 }

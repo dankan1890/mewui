@@ -81,16 +81,12 @@ UINT16 sw_custfltr::list[MAX_CUST_FILTER];
 //  search a substring with even partial matching
 //-------------------------------------------------
 
-int fuzzy_substring(const char *needle, const char *haystack)
+int fuzzy_substring(std::string s_needle, std::string s_haystack)
 {
-	const int nlen = strlen(needle);
-	const int hlen = strlen(haystack);
-
-	if (hlen == 0) return nlen;
-	if (nlen == 0) return hlen;
-
-	std::string s_needle(needle);
-	std::string s_haystack(haystack);
+	if (s_needle.empty())
+		return s_haystack.size();
+	if (s_haystack.empty())
+		return s_needle.size();
 
 	strmakelower(s_needle);
 	strmakelower(s_haystack);
@@ -100,13 +96,13 @@ int fuzzy_substring(const char *needle, const char *haystack)
 	if (s_haystack.find(s_needle) != std::string::npos)
 		return 0;
 
-	int *row1 = global_alloc_array_clear(int, hlen + 2);
-	int *row2 = global_alloc_array_clear(int, hlen + 2);
+	auto *row1 = global_alloc_array_clear(int, s_haystack.size() + 2);
+	auto *row2 = global_alloc_array_clear(int, s_haystack.size() + 2);
 
-	for (int i = 0; i < nlen; ++i)
+	for (int i = 0; i < s_needle.size(); ++i)
 	{
 		row2[0] = i + 1;
-		for (int j = 0; j < hlen; ++j)
+		for (int j = 0; j < s_haystack.size(); ++j)
 		{
 			int cost = (s_needle[i] == s_haystack[j]) ? 0 : 1;
 			row2[j + 1] = MIN(row1[j + 1] + 1, MIN(row2[j] + 1, row1[j] + cost));
@@ -119,7 +115,7 @@ int fuzzy_substring(const char *needle, const char *haystack)
 
 	int *first, *smallest;
 	first = smallest = row1;
-	int *last = row1 + hlen;
+	int *last = row1 + s_haystack.size();
 
 	while (++first != last)
 		if (*first < *smallest)
@@ -155,7 +151,7 @@ int fuzzy_substring2(const char *needle, const char *haystack)
 	if (it != std::string::npos)
 		return it;
 
-	size_t *costs = global_alloc_array(size_t, n + 1);
+	auto *costs = global_alloc_array(size_t, n + 1);
 	for(size_t k = 0; k <= n; ++k)
 		costs[k] = k;
 	size_t i = 0;

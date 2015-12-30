@@ -51,104 +51,104 @@ void ui_menu_main::populate()
 	std::string menu_text;
 
 	/* add input menu items */
-	item_append("Input (general)", NULL, 0, (void *)INPUT_GROUPS);
+	item_append("Input (general)", nullptr, 0, (void *)INPUT_GROUPS);
 
 	strprintf(menu_text, "Input (this %s)", emulator_info::get_capstartgamenoun());
-	item_append(menu_text.c_str(), NULL, 0, (void *)INPUT_SPECIFIC);
+	item_append(menu_text.c_str(), nullptr, 0, (void *)INPUT_SPECIFIC);
 
 	/* add optional input-related menus */
 	if (machine().ioport().has_analog())
-		item_append("Analog Controls", NULL, 0, (void *)ANALOG);
+		item_append("Analog Controls", nullptr, 0, (void *)ANALOG);
 	if (machine().ioport().has_dips())
-		item_append("Dip Switches", NULL, 0, (void *)SETTINGS_DIP_SWITCHES);
+		item_append("Dip Switches", nullptr, 0, (void *)SETTINGS_DIP_SWITCHES);
 	if (machine().ioport().has_configs())
 	{
 		strprintf(menu_text, "%s Configuration", emulator_info::get_capstartgamenoun());
-		item_append(menu_text.c_str(), NULL, 0, (void *)SETTINGS_DRIVER_CONFIG);
+		item_append(menu_text.c_str(), nullptr, 0, (void *)SETTINGS_DRIVER_CONFIG);
 	}
 
 	/* add bookkeeping menu */
-	item_append("Bookkeeping Info", NULL, 0, (void *)BOOKKEEPING);
+	item_append("Bookkeeping Info", nullptr, 0, (void *)BOOKKEEPING);
 
 	/* add game info menu */
 	strprintf(menu_text, "%s Information", emulator_info::get_capstartgamenoun());
-	item_append(menu_text.c_str(), NULL, 0, (void *)GAME_INFO);
+	item_append(menu_text.c_str(), nullptr, 0, (void *)GAME_INFO);
 
 	image_interface_iterator imgiter(machine().root_device());
-	if (imgiter.first() != NULL)
+	if (imgiter.first() != nullptr)
 	{
 		/* add image info menu */
-		item_append("Image Information", NULL, 0, (void *)IMAGE_MENU_IMAGE_INFO);
+		item_append("Image Information", nullptr, 0, (void *)IMAGE_MENU_IMAGE_INFO);
 
 		/* add file manager menu */
-		item_append("File Manager", NULL, 0, (void *)IMAGE_MENU_FILE_MANAGER);
+		item_append("File Manager", nullptr, 0, (void *)IMAGE_MENU_FILE_MANAGER);
 
 		/* add tape control menu */
 		cassette_device_iterator cassiter(machine().root_device());
-		if (cassiter.first() != NULL)
-			item_append("Tape Control", NULL, 0, (void *)TAPE_CONTROL);
+		if (cassiter.first() != nullptr)
+			item_append("Tape Control", nullptr, 0, (void *)TAPE_CONTROL);
 	}
 
 		pty_interface_iterator ptyiter(machine().root_device());
-		if (ptyiter.first() != NULL) {
-			item_append("Pseudo terminals", NULL, 0, (void *)PTY_INFO);
+		if (ptyiter.first() != nullptr) {
+			item_append("Pseudo terminals", nullptr, 0, (void *)PTY_INFO);
 		}
 	if (machine().ioport().has_bioses())
-		item_append("Bios Selection", NULL, 0, (void *)BIOS_SELECTION);
+		item_append("Bios Selection", nullptr, 0, (void *)BIOS_SELECTION);
 
 	slot_interface_iterator slotiter(machine().root_device());
-	if (slotiter.first() != NULL)
+	if (slotiter.first() != nullptr)
 	{
 		/* add slot info menu */
-		item_append("Slot Devices", NULL, 0, (void *)SLOT_DEVICES);
+		item_append("Slot Devices", nullptr, 0, (void *)SLOT_DEVICES);
 	}
 
 	barcode_reader_device_iterator bcriter(machine().root_device());
-	if (bcriter.first() != NULL)
+	if (bcriter.first() != nullptr)
 	{
 		/* add slot info menu */
-		item_append("Barcode Reader", NULL, 0, (void *)BARCODE_READ);
+		item_append("Barcode Reader", nullptr, 0, (void *)BARCODE_READ);
 	}
 
 	network_interface_iterator netiter(machine().root_device());
-	if (netiter.first() != NULL)
+	if (netiter.first() != nullptr)
 	{
 		/* add image info menu */
-		item_append("Network Devices", NULL, 0, (void*)NETWORK_DEVICES);
+		item_append("Network Devices", nullptr, 0, (void*)NETWORK_DEVICES);
 	}
 
 	/* add keyboard mode menu */
 	if (machine().ioport().has_keyboard() && machine().ioport().natkeyboard().can_post())
-		item_append("Keyboard Mode", NULL, 0, (void *)KEYBOARD_MODE);
+		item_append("Keyboard Mode", nullptr, 0, (void *)KEYBOARD_MODE);
 
 	/* add sliders menu */
-	item_append("Slider Controls", NULL, 0, (void *)SLIDERS);
+	item_append("Slider Controls", nullptr, 0, (void *)SLIDERS);
 
 	/* add video options menu */
-	item_append("Video Options", NULL, 0, (machine().render().target_by_index(1) != NULL) ? (void *)VIDEO_TARGETS : (void *)VIDEO_OPTIONS);
+	item_append("Video Options", nullptr, 0, (machine().render().target_by_index(1) != nullptr) ? (void *)VIDEO_TARGETS : (void *)VIDEO_OPTIONS);
 
 	/* add crosshair options menu */
 	if (crosshair_get_usage(machine()))
-		item_append("Crosshair Options", NULL, 0, (void *)CROSSHAIR);
+		item_append("Crosshair Options", nullptr, 0, (void *)CROSSHAIR);
 
 	/* add cheat menu */
-	if (machine().options().cheat() && machine().cheat().first() != NULL)
-		item_append("Cheat", NULL, 0, (void *)CHEAT);
+	if (machine().options().cheat() && machine().cheat().first() != nullptr)
+		item_append("Cheat", nullptr, 0, (void *)CHEAT);
 
 	/* add history menu */
 	if (machine().options().enabled_dats())
-		item_append("History Info", NULL, 0, (void *)HISTORY);
+		item_append("History Info", nullptr, 0, (void *)HISTORY);
 
 	// add software history menu
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0 && machine().options().enabled_dats())
 	{
 		image_interface_iterator iter(machine().root_device());
-		for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+		for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 		{
 			const char *name = image->filename();
-			if (name != NULL)
+			if (name != nullptr)
 			{
-				item_append("Software History Info", NULL, 0, (void *)SW_HISTORY);
+				item_append("Software History Info", nullptr, 0, (void *)SW_HISTORY);
 				break;
 			}
 		}
@@ -158,39 +158,39 @@ void ui_menu_main::populate()
 	if (machine().options().enabled_dats())
 	{
 		if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0)
-			item_append("MameInfo", NULL, 0, (void *)MAMEINFO);
+			item_append("MameInfo", nullptr, 0, (void *)MAMEINFO);
 		else if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0)
-			item_append("MessInfo", NULL, 0, (void *)MAMEINFO);
+			item_append("MessInfo", nullptr, 0, (void *)MAMEINFO);
 	}
 
 	/* add sysinfo menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) == 0 && machine().options().enabled_dats())
-		item_append("SysInfo", NULL, 0, (void *)SYSINFO);
+		item_append("SysInfo", nullptr, 0, (void *)SYSINFO);
 
 	/* add command list menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0 && machine().options().enabled_dats())
-		item_append("Commands Info", NULL, 0, (void *)COMMAND);
+		item_append("Commands Info", nullptr, 0, (void *)COMMAND);
 
 	/* add story menu */
 	if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0 && machine().options().enabled_dats())
-		item_append("Mamescores", NULL, 0, (void *)STORYINFO);
+		item_append("Mamescores", nullptr, 0, (void *)STORYINFO);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	/* add favorite menu */
     if (!machine().favorite().isgame_favorite())
-		item_append("Add To Favorites", NULL, 0, (void *)ADD_FAVORITE);
+		item_append("Add To Favorites", nullptr, 0, (void *)ADD_FAVORITE);
 	else
-		item_append("Remove From Favorites", NULL, 0, (void *)REMOVE_FAVORITE);
+		item_append("Remove From Favorites", nullptr, 0, (void *)REMOVE_FAVORITE);
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 
 	menu_text.assign("Quit from ").append(emulator_info::get_capstartgamenoun());
-	item_append(menu_text.c_str(), NULL, 0, (void *)QUIT_GAME);
+	item_append(menu_text.c_str(), nullptr, 0, (void *)QUIT_GAME);
 
 	/* add reset and exit menus */
 //	strprintf(menu_text, "Select New %s", emulator_info::get_capstartgamenoun());
-//	item_append(menu_text.c_str(), NULL, 0, (void *)SELECT_GAME);
+//	item_append(menu_text.c_str(), nullptr, 0, (void *)SELECT_GAME);
 }
 
 ui_menu_main::~ui_menu_main()
@@ -205,7 +205,7 @@ void ui_menu_main::handle()
 {
 	/* process the menu */
 	const ui_menu_event *menu_event = process(0);
-	if (menu_event != NULL && menu_event->iptkey == IPT_UI_SELECT) {
+	if (menu_event != nullptr && menu_event->iptkey == IPT_UI_SELECT) {
 		switch((long long)(menu_event->itemref)) {
 		case INPUT_GROUPS:
 			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_input_groups(machine(), container)));
@@ -240,11 +240,11 @@ void ui_menu_main::handle()
 			break;
 
 		case IMAGE_MENU_FILE_MANAGER:
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_file_manager(machine(), container, NULL)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_file_manager(machine(), container, nullptr)));
 			break;
 
 		case TAPE_CONTROL:
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_tape_control(machine(), container, NULL)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_tape_control(machine(), container, nullptr)));
 			break;
 
 				case PTY_INFO:
@@ -284,7 +284,7 @@ void ui_menu_main::handle()
 			break;
 
 		case SELECT_GAME:
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_select_game(machine(), container, 0)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_select_game(machine(), container, nullptr)));
 			break;
 
 		case BIOS_SELECTION:
@@ -292,7 +292,7 @@ void ui_menu_main::handle()
 			break;
 
 		case BARCODE_READ:
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_barcode_reader(machine(), container, NULL)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_barcode_reader(machine(), container, nullptr)));
 			break;
 
 		case HISTORY:

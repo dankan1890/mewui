@@ -45,7 +45,7 @@ void inifile_manager::directory_scan()
 	const osd_directory_entry *dir;
 
 	// loop into folder's file
-	while ((dir = path.next()) != NULL)
+	while ((dir = path.next()) != nullptr)
 	{
 		int length = strlen(dir->name);
 		std::string file_name(dir->name);
@@ -60,17 +60,7 @@ void inifile_manager::directory_scan()
 		{
 			// try to open file and indexing
 			if (ParseOpen(file_name.c_str()))
-			{
-				std::vector<IniCategoryIndex> tmp;
-				init_category(tmp, m_fullpath);
-				if (!tmp.empty())
-				{
-					IniFileIndex tfile;
-					tfile.name.assign(file_name);
-					tfile.category = tmp;
-					ini_index.push_back(tfile);
-				}
-			}
+				init_category(file_name);
 		}
 	}
 }
@@ -79,10 +69,11 @@ void inifile_manager::directory_scan()
 //  initialize category
 //-------------------------------------------------
 
-void inifile_manager::init_category(std::vector<IniCategoryIndex> &index, std::string &filename)
+void inifile_manager::init_category(std::string &filename)
 {
+	std::vector<IniCategoryIndex> index;
 	std::string readbuf;
-	std::ifstream myfile(filename.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
 	while (clean_getline(myfile, readbuf))
 	{
 		if (!readbuf.empty() && readbuf[0] == '[')
@@ -92,15 +83,13 @@ void inifile_manager::init_category(std::vector<IniCategoryIndex> &index, std::s
 			if (name.compare("FOLDER_SETTINGS") == 0 || name.compare("ROOT_FOLDER") == 0)
 				continue;
 			else
-			{
-				IniCategoryIndex tmp;
-				tmp.name.assign(name);
-				tmp.offset = myfile.tellg();
-				index.push_back(tmp);
-			}
+				index.emplace_back(name, myfile.tellg());
 		}
 	}
 	myfile.close();
+
+	if (!index.empty())
+		ini_index.emplace_back(filename, index);
 }
 
 
@@ -159,7 +148,7 @@ bool inifile_manager::ParseOpen(const char *filename)
 
 	if (fp.open(filename) == FILERR_NONE)
 	{
-		m_fullpath.assign(fp.fullpath());
+		m_fullpath = fp.fullpath();
 		fp.close();
 		return true;
 	}
@@ -233,7 +222,7 @@ void favorite_manager::add_favorite_game()
 
 	bool software_avail = false;
 	image_interface_iterator iter(machine().root_device());
-	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 	{
 		if (image->exists() && image->software_entry())
 		{
@@ -256,7 +245,7 @@ void favorite_manager::add_favorite_game()
 			if (swinfo->parentname())
 			{
 				software_list_device *swlist = software_list_device::find_by_name(machine().config(), image->software_list_name());
-				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != NULL; c_swinfo = c_swinfo->next())
+				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != nullptr; c_swinfo = c_swinfo->next())
 				{
 					std::string c_parent(c_swinfo->parentname());
 					if (!c_parent.empty() && !c_parent.compare(swinfo->shortname()))
@@ -268,7 +257,7 @@ void favorite_manager::add_favorite_game()
 			}
 
 			tmpmatches.usage.clear();
-			for (feature_list_item *flist = swinfo->other_info(); flist != NULL; flist = flist->next())
+			for (feature_list_item *flist = swinfo->other_info(); flist != nullptr; flist = flist->next())
 				if (!strcmp(flist->name(), "usage"))
 					tmpmatches.usage.assign(flist->value());
 
@@ -322,7 +311,7 @@ bool favorite_manager::isgame_favorite()
 	image_interface_iterator iter(machine().root_device());
 	bool image_loaded = false;
 
-	for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 	{
 		if (image->exists() && image->software_entry())
 		{
@@ -461,24 +450,24 @@ void favorite_manager::save_favorite_games()
 		// generate the favorite INI
 		std::string text("[ROOT_FOLDER]\n[Favorite]\n\n");
 
-		for (size_t current = 0; current < m_favorite_list.size(); current++)
+		for (auto & elem : m_favorite_list)
 		{
-			text += m_favorite_list[current].shortname + "\n";
-			text += m_favorite_list[current].longname + "\n";
-			text += m_favorite_list[current].parentname + "\n";
-			text += m_favorite_list[current].year + "\n";
-			text += m_favorite_list[current].publisher + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].supported);
-			text += m_favorite_list[current].part + "\n";
-			strcatprintf(text, "%s\n", m_favorite_list[current].driver->name);
-			text += m_favorite_list[current].listname + "\n";
-			text += m_favorite_list[current].interface + "\n";
-			text += m_favorite_list[current].instance + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].startempty);
-			text += m_favorite_list[current].parentlongname + "\n";
-			text += m_favorite_list[current].usage + "\n";
-			text += m_favorite_list[current].devicetype + "\n";
-			strcatprintf(text, "%d\n", m_favorite_list[current].available);
+			text += elem.shortname + "\n";
+			text += elem.longname + "\n";
+			text += elem.parentname + "\n";
+			text += elem.year + "\n";
+			text += elem.publisher + "\n";
+			strcatprintf(text, "%d\n", elem.supported);
+			text += elem.part + "\n";
+			strcatprintf(text, "%s\n", elem.driver->name);
+			text += elem.listname + "\n";
+			text += elem.interface + "\n";
+			text += elem.instance + "\n";
+			strcatprintf(text, "%d\n", elem.startempty);
+			text += elem.parentlongname + "\n";
+			text += elem.usage + "\n";
+			text += elem.devicetype + "\n";
+			strcatprintf(text, "%d\n", elem.available);
 		}
 		file.puts(text.c_str());
 		file.close();

@@ -35,7 +35,7 @@ ui_menu_display_options::video_modes ui_menu_display_options::m_video[] = {
 };
 
 ui_menu_display_options::dspl_option ui_menu_display_options::m_options[] = {
-	{ 0, NULL, NULL },
+	{ 0, nullptr, nullptr },
 	{ 0, "Video Mode",               OSDOPTION_VIDEO },
 #ifdef MEWUI_WINDOWS
 	{ 0, "Hardware Stretch",         WINOPTION_HWSTRETCH },
@@ -103,7 +103,7 @@ void ui_menu_display_options::handle()
 	// process the menu
 	const ui_menu_event *m_event = process(0);
 
-	if (m_event != NULL && m_event->itemref != NULL)
+	if (m_event != nullptr && m_event->itemref != nullptr)
 	{
 		int value = (FPTR)m_event->itemref;
 		if (!strcmp(m_options[value].option, OSDOPTION_VIDEO) || !strcmp(m_options[value].option, OSDOPTION_PRESCALE))
@@ -117,8 +117,8 @@ void ui_menu_display_options::handle()
 			{
 				int total = ARRAY_LENGTH(m_video);
 				std::vector<std::string> s_sel(total);
-				for (int index = 0; index < total; index++)
-					s_sel[index].assign(m_video[index].label);
+				for (int index = 0; index < total; ++index)
+					s_sel[index] = m_video[index].label;
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
 			}
@@ -157,7 +157,7 @@ void ui_menu_display_options::populate()
 			item_append(m_options[opt].description, v_text.c_str(), arrow_flags, (void *)(FPTR)opt);
 		}
 
-	item_append(MENU_SEPARATOR_ITEM, NULL, 0, NULL);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
 }
 
@@ -170,7 +170,7 @@ void ui_menu_display_options::custom_render(void *selectedref, float top, float 
 	float width;
 	ui_manager &mui = machine().ui();
 	mui.draw_text_full(container, "Display Options", 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, NULL);
+	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += 2 * UI_BOX_LR_BORDER;
 	float maxwidth = MAX(origx2 - origx1, width);
 
@@ -190,5 +190,5 @@ void ui_menu_display_options::custom_render(void *selectedref, float top, float 
 
 	// draw the text within it
 	mui.draw_text_full(container, "Display Options", x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }

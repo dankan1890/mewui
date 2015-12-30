@@ -162,7 +162,7 @@ static INT32 slider_crossoffset(running_machine &machine, void *arg, std::string
 //  character a possible line break?
 //-------------------------------------------------
 
-INLINE int is_breakable_char(unicode_char ch)
+static inline int is_breakable_char(unicode_char ch)
 {
 	// regular spaces and hyphens are breakable
 	if (ch == ' ' || ch == '-')
@@ -250,8 +250,8 @@ ui_manager::ui_manager(running_machine &machine)
 	ui_gfx_init(machine);
 
 	// reset instance variables
-	m_font = NULL;
-	m_handler_callback = NULL;
+	m_font = nullptr;
+	m_handler_callback = nullptr;
 	m_handler_param = 0;
 	m_single_step = false;
 	m_showfps = false;
@@ -259,14 +259,14 @@ ui_manager::ui_manager(running_machine &machine)
 	m_show_profiler = false;
 	m_popup_text_end = 0;
 	m_use_natural_keyboard = false;
-	m_mouse_arrow_texture = NULL;
+	m_mouse_arrow_texture = nullptr;
 
 	get_font_rows(&machine);
 	decode_ui_color(0, &machine);
 
 	// more initialization
 	set_handler(handler_messagebox, 0);
-	m_non_char_keys_down = auto_alloc_array(machine, UINT8, (ARRAY_LENGTH(non_char_keys) + 7) / 8);
+	m_non_char_keys_down = std::make_unique<UINT8[]>((ARRAY_LENGTH(non_char_keys) + 7) / 8);
 	m_mouse_show = machine.system().flags & MACHINE_CLICKABLE_ARTWORK ? true : false;
 
 	// request a callback upon exiting
@@ -290,13 +290,13 @@ void ui_manager::exit()
 {
 	// free the mouse texture
 	machine().render().texture_free(m_mouse_arrow_texture);
-	m_mouse_arrow_texture = NULL;
+	m_mouse_arrow_texture = nullptr;
 
 	// free the font
-	if (m_font != NULL)
+	if (m_font != nullptr)
 	{
 		machine().render().font_free(m_font);
-		m_font = NULL;
+		m_font = nullptr;
 	}
 }
 
@@ -460,7 +460,7 @@ void ui_manager::update_and_render(render_container *container)
 		machine().cheat().render_text(*container);
 
 	// call the current UI handler
-	assert(m_handler_callback != NULL);
+	assert(m_handler_callback != nullptr);
 	m_handler_param = (*m_handler_callback)(machine(), container, m_handler_param);
 
 	// display any popup messages
@@ -475,7 +475,7 @@ void ui_manager::update_and_render(render_container *container)
 		bool mouse_button;
 		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
 
-		if (mouse_target != NULL)
+		if (mouse_target != nullptr)
 		{
 			float mouse_y=-1,mouse_x=-1;
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y)) {
@@ -499,7 +499,7 @@ void ui_manager::update_and_render(render_container *container)
 render_font *ui_manager::get_font()
 {
 	// allocate the font and messagebox string
-	if (m_font == NULL)
+	if (m_font == nullptr)
 		m_font = machine().render().font_alloc(machine().options().ui_font());
 	return m_font;
 }
@@ -606,7 +606,7 @@ void ui_manager::draw_outlined_box(render_container *container, float x0, float 
 
 void ui_manager::draw_text(render_container *container, const char *buf, float x, float y)
 {
-	draw_text_full(container, buf, x, y, 1.0f - x, JUSTIFY_LEFT, WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+	draw_text_full(container, buf, x, y, 1.0f - x, JUSTIFY_LEFT, WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }
 
 
@@ -636,7 +636,7 @@ void ui_manager::draw_text_full(render_container *container, const char *origs, 
 	// loop over lines
 	while (*s != 0)
 	{
-		const char *lastbreak = NULL;
+		const char *lastbreak = nullptr;
 		int line_justify = justify;
 		unicode_char schar;
 		int scharcount;
@@ -703,7 +703,7 @@ void ui_manager::draw_text_full(render_container *container, const char *origs, 
 			if (wrap == WRAP_WORD)
 			{
 				// if we hit a break, back up to there with the appropriate width
-				if (lastbreak != NULL)
+				if (lastbreak != nullptr)
 				{
 					s = lastbreak;
 					curwidth = lastbreak_width;
@@ -868,7 +868,7 @@ void ui_manager::draw_text_box(render_container *container, const char *text, in
 						target_x + target_width + UI_BOX_LR_BORDER,
 						target_y + target_height + UI_BOX_TB_BORDER, backcolor);
 	draw_text_full(container, text, target_x, target_y, target_width + 0.00001f,
-				justify, WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, NULL, NULL);
+				justify, WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }
 
 
@@ -1182,10 +1182,10 @@ std::string &ui_manager::game_info_astring(std::string &str)
 
 	// loop over all CPUs
 	execute_interface_iterator execiter(machine().root_device());
-	tagmap_t<UINT8> exectags;
-	for (device_execute_interface *exec = execiter.first(); exec != NULL; exec = execiter.next())
+	std::unordered_set<std::string> exectags;
+	for (device_execute_interface *exec = execiter.first(); exec != nullptr; exec = execiter.next())
 	{
-		if (exectags.add(exec->device().tag(), 1, FALSE) == TMERR_DUPLICATE)
+		if (!exectags.insert(exec->device().tag()).second)
 			continue;
 		// get cpu specific clock that takes internal multiplier/dividers into account
 		int clock = exec->device().clock();
@@ -1194,10 +1194,10 @@ std::string &ui_manager::game_info_astring(std::string &str)
 		int count = 1;
 		const char *name = exec->device().name();
 		execute_interface_iterator execinneriter(machine().root_device());
-		for (device_execute_interface *scan = execinneriter.first(); scan != NULL; scan = execinneriter.next())
+		for (device_execute_interface *scan = execinneriter.first(); scan != nullptr; scan = execinneriter.next())
 		{
 			if (exec->device().type() == scan->device().type() && strcmp(name, scan->device().name()) == 0 && exec->device().clock() == scan->device().clock())
-				if (exectags.add(scan->device().tag(), 1, FALSE) != TMERR_DUPLICATE)
+				if (exectags.insert(scan->device().tag()).second)
 					count++;
 		}
 
@@ -1215,11 +1215,11 @@ std::string &ui_manager::game_info_astring(std::string &str)
 
 	// loop over all sound chips
 	sound_interface_iterator snditer(machine().root_device());
-	tagmap_t<UINT8> soundtags;
+	std::unordered_set<std::string> soundtags;
 	bool found_sound = false;
-	for (device_sound_interface *sound = snditer.first(); sound != NULL; sound = snditer.next())
+	for (device_sound_interface *sound = snditer.first(); sound != nullptr; sound = snditer.next())
 	{
-		if (soundtags.add(sound->device().tag(), 1, FALSE) == TMERR_DUPLICATE)
+		if (!soundtags.insert(sound->device().tag()).second)
 			continue;
 
 		// append the Sound: string
@@ -1230,10 +1230,10 @@ std::string &ui_manager::game_info_astring(std::string &str)
 		// count how many identical sound chips we have
 		int count = 1;
 		sound_interface_iterator sndinneriter(machine().root_device());
-		for (device_sound_interface *scan = sndinneriter.first(); scan != NULL; scan = sndinneriter.next())
+		for (device_sound_interface *scan = sndinneriter.first(); scan != nullptr; scan = sndinneriter.next())
 		{
 			if (sound->device().type() == scan->device().type() && sound->device().clock() == scan->device().clock())
-				if (soundtags.add(scan->device().tag(), 1, FALSE) != TMERR_DUPLICATE)
+				if (soundtags.insert(scan->device().tag()).second)
 					count++;
 		}
 		// if more than one, prepend a #x in front of the CPU name
@@ -1259,7 +1259,7 @@ std::string &ui_manager::game_info_astring(std::string &str)
 		str.append("None\n");
 	else
 	{
-		for (screen_device *screen = scriter.first(); screen != NULL; screen = scriter.next())
+		for (screen_device *screen = scriter.first(); screen != nullptr; screen = scriter.next())
 		{
 			if (scrcount > 1)
 			{
@@ -1454,11 +1454,11 @@ bool ui_manager::can_paste()
 	char *text = osd_get_clipboard_text();
 
 	// free the string if allocated
-	if (text != NULL)
+	if (text != nullptr)
 		osd_free(text);
 
 	// did we have text?
-	return text != NULL;
+	return text != nullptr;
 }
 
 
@@ -1472,7 +1472,7 @@ void ui_manager::paste()
 	char *text = osd_get_clipboard_text();
 
 	// was a result returned?
-	if (text != NULL)
+	if (text != nullptr)
 	{
 		// post the text
 		machine().ioport().natkeyboard().post_utf8(text);
@@ -1494,7 +1494,7 @@ void ui_manager::image_handler_ingame()
 	if (machine().phase() == MACHINE_PHASE_RUNNING)
 	{
 		image_interface_iterator iter(machine().root_device());
-		for (device_image_interface *image = iter.first(); image != NULL; image = iter.next())
+		for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 			image->call_display();
 	}
 }
@@ -1514,14 +1514,14 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	{
 		std::string tempstring;
 		machine.ui().draw_text_full(container, machine.video().speed_text(tempstring).c_str(), 0.0f, 0.0f, 1.0f,
-					JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
+					JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, nullptr, nullptr);
 	}
 
 	// draw the profiler if visible
 	if (machine.ui().show_profiler())
 	{
 		const char *text = g_profiler.text(machine);
-		machine.ui().draw_text_full(container, text, 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
+		machine.ui().draw_text_full(container, text, 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, nullptr, nullptr);
 	}
 
 	// if we're single-stepping, pause now
@@ -1614,7 +1614,7 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	if (ui_input_pressed(machine, IPT_UI_TAPE_START))
 	{
 		cassette_device_iterator cassiter(machine.root_device());
-		for (cassette_image_device *cass = cassiter.first(); cass != NULL; cass = cassiter.next())
+		for (cassette_image_device *cass = cassiter.first(); cass != nullptr; cass = cassiter.next())
 		{
 			cass->change_state(CASSETTE_PLAY, CASSETTE_MASK_UISTATE);
 			return 0;
@@ -1623,7 +1623,7 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	if (ui_input_pressed(machine, IPT_UI_TAPE_STOP))
 	{
 		cassette_device_iterator cassiter(machine.root_device());
-		for (cassette_image_device *cass = cassiter.first(); cass != NULL; cass = cassiter.next())
+		for (cassette_image_device *cass = cassiter.first(); cass != nullptr; cass = cassiter.next())
 		{
 			cass->change_state(CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
 			return 0;
@@ -1869,13 +1869,13 @@ static slider_state *slider_init(running_machine &machine)
 {
 	ioport_field *field;
 	ioport_port *port;
-	slider_state *listhead = NULL;
+	slider_state *listhead = nullptr;
 	slider_state **tailptr = &listhead;
 	std::string str;
 	int item;
 
 	// add overall volume
-	*tailptr = slider_alloc(machine, "Master Volume", -32, 0, 0, 1, slider_volume, NULL);
+	*tailptr = slider_alloc(machine, "Master Volume", -32, 0, 0, 1, slider_volume, nullptr);
 	tailptr = &(*tailptr)->next;
 
 	// add per-channel volume
@@ -1892,8 +1892,8 @@ static slider_state *slider_init(running_machine &machine)
 	}
 
 	// add analog adjusters
-	for (port = machine.ioport().first_port(); port != NULL; port = port->next())
-		for (field = port->first_field(); field != NULL; field = field->next())
+	for (port = machine.ioport().first_port(); port != nullptr; port = port->next())
+		for (field = port->first_field(); field != nullptr; field = field->next())
 			if (field->type() == IPT_ADJUSTER)
 			{
 				void *param = (void *)field;
@@ -1905,7 +1905,7 @@ static slider_state *slider_init(running_machine &machine)
 	if (machine.options().cheat())
 	{
 		execute_interface_iterator iter(machine.root_device());
-		for (device_execute_interface *exec = iter.first(); exec != NULL; exec = iter.next())
+		for (device_execute_interface *exec = iter.first(); exec != nullptr; exec = iter.next())
 		{
 			void *param = (void *)&exec->device();
 			strprintf(str, "Overclock CPU %s", exec->device().tag());
@@ -1916,7 +1916,7 @@ static slider_state *slider_init(running_machine &machine)
 
 	// add screen parameters
 	screen_device_iterator scriter(machine.root_device());
-	for (screen_device *screen = scriter.first(); screen != NULL; screen = scriter.next())
+	for (screen_device *screen = scriter.first(); screen != nullptr; screen = scriter.next())
 	{
 		int defxscale = floor(screen->xscale() * 1000.0f + 0.5f);
 		int defyscale = floor(screen->yscale() * 1000.0f + 0.5f);
@@ -1959,7 +1959,7 @@ static slider_state *slider_init(running_machine &machine)
 	}
 
 	laserdisc_device_iterator lditer(machine.root_device());
-	for (laserdisc_device *laserdisc = lditer.first(); laserdisc != NULL; laserdisc = lditer.next())
+	for (laserdisc_device *laserdisc = lditer.first(); laserdisc != nullptr; laserdisc = lditer.next())
 		if (laserdisc->overlay_configured())
 		{
 			laserdisc_overlay_config config;
@@ -1985,25 +1985,25 @@ static slider_state *slider_init(running_machine &machine)
 			tailptr = &(*tailptr)->next;
 		}
 
-	for (screen_device *screen = scriter.first(); screen != NULL; screen = scriter.next())
+	for (screen_device *screen = scriter.first(); screen != nullptr; screen = scriter.next())
 		if (screen->screen_type() == SCREEN_TYPE_VECTOR)
 		{
 			// add vector control
-			*tailptr = slider_alloc(machine, "Vector Flicker", 0, 0, 1000, 10, slider_flicker, NULL);
+			*tailptr = slider_alloc(machine, "Vector Flicker", 0, 0, 1000, 10, slider_flicker, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Width Minimum", 1, 100, 1000, 1, slider_beam_width_min, NULL);
+			*tailptr = slider_alloc(machine, "Beam Width Minimum", 1, 100, 1000, 1, slider_beam_width_min, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Width Maximum", 1, 100, 1000, 1, slider_beam_width_max, NULL);
+			*tailptr = slider_alloc(machine, "Beam Width Maximum", 1, 100, 1000, 1, slider_beam_width_max, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Intensity Weight", -1000, 0, 1000, 10, slider_beam_intensity_weight, NULL);
+			*tailptr = slider_alloc(machine, "Beam Intensity Weight", -1000, 0, 1000, 10, slider_beam_intensity_weight, nullptr);
 			tailptr = &(*tailptr)->next;
 			break;
 		}
 
 #ifdef MAME_DEBUG
 	// add crosshair adjusters
-	for (port = machine.ioport().first_port(); port != NULL; port = port->next())
-		for (field = port->first_field(); field != NULL; field = field->next())
+	for (port = machine.ioport().first_port(); port != nullptr; port = port->next())
+		for (field = port->first_field(); field != nullptr; field = field->next())
 			if (field->crosshair_axis() != CROSSHAIR_AXIS_NONE && field->player() == 0)
 			{
 				void *param = (void *)field;
@@ -2028,7 +2028,7 @@ static INT32 slider_volume(running_machine &machine, void *arg, std::string *str
 {
 	if (newval != SLIDER_NOCHANGE)
 		machine.sound().set_attenuation(newval);
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%3ddB", machine.sound().attenuation());
 	return machine.sound().attenuation();
 }
@@ -2050,7 +2050,7 @@ static INT32 slider_mixervol(running_machine &machine, void *arg, std::string *s
 		if (newval > curval && (newval - curval) <= 4) newval += 4; // round up on increment
 		info.stream->set_user_gain(info.inputnum, (float)newval * 0.001f);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%4.2f", (double) info.stream->user_gain(info.inputnum));
 	return floorf(info.stream->user_gain(info.inputnum) * 1000.0f + 0.5f);
 }
@@ -2072,7 +2072,7 @@ static INT32 slider_adjuster(running_machine &machine, void *arg, std::string *s
 		settings.value = newval;
 		field->set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%d%%", settings.value);
 	return settings.value;
 }
@@ -2088,7 +2088,7 @@ static INT32 slider_overclock(running_machine &machine, void *arg, std::string *
 	device_t *cpu = (device_t *)arg;
 	if (newval != SLIDER_NOCHANGE)
 		cpu->set_clock_scale((float)newval * 0.001f);
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%3.0f%%", floor(cpu->clock_scale() * 100.0 + 0.5));
 	return floor(cpu->clock_scale() * 1000.0 + 0.5);
 }
@@ -2111,7 +2111,7 @@ static INT32 slider_refresh(running_machine &machine, void *arg, std::string *st
 		const rectangle &visarea = screen->visible_area();
 		screen->configure(width, height, visarea, HZ_TO_ATTOSECONDS(defrefresh + (double)newval * 0.001));
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3ffps", ATTOSECONDS_TO_HZ(machine.first_screen()->frame_period().attoseconds()));
 	refresh = ATTOSECONDS_TO_HZ(machine.first_screen()->frame_period().attoseconds());
 	return floor((refresh - defrefresh) * 1000.0 + 0.5);
@@ -2134,7 +2134,7 @@ static INT32 slider_brightness(running_machine &machine, void *arg, std::string 
 		settings.m_brightness = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_brightness);
 	return floor(settings.m_brightness * 1000.0f + 0.5f);
 }
@@ -2156,7 +2156,7 @@ static INT32 slider_contrast(running_machine &machine, void *arg, std::string *s
 		settings.m_contrast = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_contrast);
 	return floor(settings.m_contrast * 1000.0f + 0.5f);
 }
@@ -2177,7 +2177,7 @@ static INT32 slider_gamma(running_machine &machine, void *arg, std::string *str,
 		settings.m_gamma = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_gamma);
 	return floor(settings.m_gamma * 1000.0f + 0.5f);
 }
@@ -2199,7 +2199,7 @@ static INT32 slider_xscale(running_machine &machine, void *arg, std::string *str
 		settings.m_xscale = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_xscale);
 	return floor(settings.m_xscale * 1000.0f + 0.5f);
 }
@@ -2221,7 +2221,7 @@ static INT32 slider_yscale(running_machine &machine, void *arg, std::string *str
 		settings.m_yscale = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_yscale);
 	return floor(settings.m_yscale * 1000.0f + 0.5f);
 }
@@ -2243,7 +2243,7 @@ static INT32 slider_xoffset(running_machine &machine, void *arg, std::string *st
 		settings.m_xoffset = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_xoffset);
 	return floor(settings.m_xoffset * 1000.0f + 0.5f);
 }
@@ -2265,7 +2265,7 @@ static INT32 slider_yoffset(running_machine &machine, void *arg, std::string *st
 		settings.m_yoffset = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f",  (double) settings.m_yoffset);
 	return floor(settings.m_yoffset * 1000.0f + 0.5f);
 }
@@ -2287,7 +2287,7 @@ static INT32 slider_overxscale(running_machine &machine, void *arg, std::string 
 		settings.m_overscalex = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_overscalex);
 	return floor(settings.m_overscalex * 1000.0f + 0.5f);
 }
@@ -2309,7 +2309,7 @@ static INT32 slider_overyscale(running_machine &machine, void *arg, std::string 
 		settings.m_overscaley = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_overscaley);
 	return floor(settings.m_overscaley * 1000.0f + 0.5f);
 }
@@ -2331,7 +2331,7 @@ static INT32 slider_overxoffset(running_machine &machine, void *arg, std::string
 		settings.m_overposx = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_overposx);
 	return floor(settings.m_overposx * 1000.0f + 0.5f);
 }
@@ -2353,7 +2353,7 @@ static INT32 slider_overyoffset(running_machine &machine, void *arg, std::string
 		settings.m_overposy = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%.3f", (double) settings.m_overposy);
 	return floor(settings.m_overposy * 1000.0f + 0.5f);
 }
@@ -2366,11 +2366,11 @@ static INT32 slider_overyoffset(running_machine &machine, void *arg, std::string
 
 static INT32 slider_flicker(running_machine &machine, void *arg, std::string *str, INT32 newval)
 {
-	vector_device *vector = NULL;
+	vector_device *vector = nullptr;
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_flicker((float)newval * 0.001f);
-	if (str != NULL)
-		strprintf(*str, "%1.2f", (double)vector->get_flicker());
+	if (str != nullptr)
+		strprintf(*str,"%1.2f", (double) vector->get_flicker());
 	return floor(vector->get_flicker() * 1000.0f + 0.5f);
 }
 
@@ -2382,10 +2382,10 @@ static INT32 slider_flicker(running_machine &machine, void *arg, std::string *st
 
 static INT32 slider_beam_width_min(running_machine &machine, void *arg, std::string *str, INT32 newval)
 {
-	vector_device *vector = NULL;
+	vector_device *vector = nullptr;
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_width_min(MIN((float)newval * 0.01f, vector->get_beam_width_max()));
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%1.2f", (double) vector->get_beam_width_min());
 	return floor(vector->get_beam_width_min() * 100.0f + 0.5f);
 }
@@ -2398,10 +2398,10 @@ static INT32 slider_beam_width_min(running_machine &machine, void *arg, std::str
 
 static INT32 slider_beam_width_max(running_machine &machine, void *arg, std::string *str, INT32 newval)
 {
-	vector_device *vector = NULL;
+	vector_device *vector = nullptr;
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_width_max(MAX((float)newval * 0.01f, vector->get_beam_width_min()));
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%1.2f", (double) vector->get_beam_width_max());
 	return floor(vector->get_beam_width_max() * 100.0f + 0.5f);
 }
@@ -2414,10 +2414,10 @@ static INT32 slider_beam_width_max(running_machine &machine, void *arg, std::str
 
 static INT32 slider_beam_intensity_weight(running_machine &machine, void *arg, std::string *str, INT32 newval)
 {
-	vector_device *vector = NULL;
+	vector_device *vector = nullptr;
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_intensity_weight((float)newval * 0.001f);
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%1.2f", (double) vector->get_beam_intensity_weight());
 	return floor(vector->get_beam_intensity_weight() * 1000.0f + 0.5f);
 }
@@ -2454,7 +2454,7 @@ static INT32 slider_crossscale(running_machine &machine, void *arg, std::string 
 
 	if (newval != SLIDER_NOCHANGE)
 		field->set_crosshair_scale(float(newval) * 0.001);
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%s %s %1.3f", "Crosshair Scale", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y", float(newval) * 0.001f);
 	return floor(field->crosshair_scale() * 1000.0f + 0.5f);
 }
@@ -2473,7 +2473,7 @@ static INT32 slider_crossoffset(running_machine &machine, void *arg, std::string
 
 	if (newval != SLIDER_NOCHANGE)
 		field->set_crosshair_offset(float(newval) * 0.001f);
-	if (str != NULL)
+	if (str != nullptr)
 		strprintf(*str,"%s %s %1.3f", "Crosshair Offset", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y", float(newval) * 0.001f);
 	return field->crosshair_offset();
 }
@@ -2521,7 +2521,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 	// loop over lines
 	while (*s != 0)
 	{
-		const char *lastbreak = NULL;
+		const char *lastbreak = nullptr;
 		unicode_char schar;
 		int scharcount;
 		float lastbreak_width = 0;
@@ -2576,7 +2576,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 		if (curwidth > wrapwidth)
 		{
 			// if we hit a break, back up to there with the appropriate width
-			if (lastbreak != NULL)
+			if (lastbreak != nullptr)
 			{
 				s = lastbreak;
 				curwidth = lastbreak_width;
@@ -2674,9 +2674,9 @@ rgb_t decode_ui_color(int id, running_machine *machine)
 			const char *s_option = machine->options().value(s_color_list[x]);
 			int len = strlen(s_option);
 			if (len != 8)
-				color[x] = rgb_t((UINT32)strtoul(o_default, NULL, 16));
+				color[x] = rgb_t((UINT32)strtoul(o_default, nullptr, 16));
 			else
-				color[x] = rgb_t((UINT32)strtoul(s_option, NULL, 16));
+				color[x] = rgb_t((UINT32)strtoul(s_option, nullptr, 16));
 		}
 	}
 	return color[id];

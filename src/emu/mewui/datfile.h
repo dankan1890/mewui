@@ -28,7 +28,7 @@ public:
 	// actions
 	void load_data_info(const game_driver *drv, std::string &buffer, int type);
 	void load_command_info(std::string &buffer, const int sel);
-	void load_software_info(const char *softlist, std::string &buffer, const char *softname);
+	void load_software_info(std::string softlist, std::string &buffer, std::string softname, std::string parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
 
 	std::string rev_history() const { return m_history_rev; }
@@ -40,26 +40,22 @@ public:
 private:
 	struct Drvindex
 	{
-		long offset;
+		Drvindex(const game_driver *_driver, long _off) { driver = _driver; offset = _off; }
 		const game_driver *driver;
+		long offset;
 	};
 
 	struct Itemsindex
 	{
-		UINT64 offset;
+		Itemsindex(std::string _name, long _off) { name = _name; offset = _off; }
 		std::string name;
-	};
-
-	struct SoftwareListIndex
-	{
-		std::string listname;
-		std::vector<Itemsindex> items;
+		long offset;
 	};
 
 	// global index
 	std::vector<Drvindex> m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
 	std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
-	std::vector<SoftwareListIndex> m_swindex;
+	std::unordered_map<std::string, std::vector<Itemsindex>> m_swindex;
 
 	// internal helpers
 	void init_history();
@@ -77,8 +73,6 @@ private:
 
 	void load_data_text(const game_driver *drv, std::string &buffer, std::vector<Drvindex> &idx, const char *tag);
 	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, const char *tag);
-
-	int find_or_allocate(std::string &name);
 
 	// internal state
 	running_machine     &m_machine;             // reference to our machine

@@ -75,9 +75,9 @@ class ui_menu_swcustom_filter : public ui_menu
 public:
 	ui_menu_swcustom_filter(running_machine &machine, render_container *container, const game_driver *_driver, s_filter &_filter);
 	virtual ~ui_menu_swcustom_filter();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum
@@ -108,9 +108,9 @@ class ui_menu_custom_filter : public ui_menu
 public:
 	ui_menu_custom_filter(running_machine &machine, render_container *container, bool _single_menu = false);
 	virtual ~ui_menu_custom_filter();
-	virtual void populate();
-	virtual void handle();
-	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2);
+	virtual void populate() override;
+	virtual void handle() override;
+	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
 	enum

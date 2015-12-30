@@ -854,12 +854,12 @@ void ui_menu_select_software::inkey_select(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
+			if (!mopt.skip_bios_menu() && has_multiple_bios(ui_swinfo->driver, biosname))
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
-			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
+			else if (!mopt.skip_parts_menu() && swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 			{
 				std::unordered_map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
@@ -1470,7 +1470,7 @@ void ui_menu_select_software::infos_render(void *selectedref, float origx1, floa
 			if (soft->startempty == 1)
 				machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 			else
-				machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
+				machine().datfile().load_software_info(soft->listname, buffer, soft->shortname, soft->parentname);
 		}
 		else
 			buffer = soft->usage;
@@ -1674,7 +1674,7 @@ void ui_menu_select_software::arts_render(void *selectedref, float origx1, float
 				if (!tmp_bitmap->valid())
 				{
 					// Second attempt from driver name + part name
-					pathname.assign(soft->driver->name).append(soft->part.c_str());
+					pathname.assign(soft->driver->name).append(soft->part);
 					fullname.assign(soft->shortname).append(".png");
 					render_load_png(*tmp_bitmap, snapfile, pathname.c_str(), fullname.c_str());
 
@@ -1913,7 +1913,7 @@ void ui_mewui_bios_selection::handle()
 					drivlist.next();
 					software_list_device *swlist = software_list_device::find_by_name(drivlist.config(), ui_swinfo->listname.c_str());
 					software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
-					if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
+					if (!moptions.skip_parts_menu() && swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 					{
 						std::unordered_map<std::string, std::string> parts;
 						for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())

@@ -135,7 +135,7 @@ void datfile_manager::init_command()
 //  load software info
 //-------------------------------------------------
 
-void datfile_manager::load_software_info(const char *softlist, std::string &buffer, const char *softname)
+void datfile_manager::load_software_info(std::string softlist, std::string &buffer, std::string softname, std::string parentname)
 {
 	// Load history text
 	if (!m_swindex.empty() && ParseOpen("history.dat"))
@@ -149,6 +149,9 @@ void datfile_manager::load_software_info(const char *softlist, std::string &buff
 
 		std::vector<Itemsindex>::iterator m_itemsiter;
 		m_itemsiter = std::find_if(m_swindex[softlist].begin(), m_swindex[softlist].end(), [softname](Itemsindex const& n) { return n.name == softname; });
+		if (m_itemsiter == m_swindex[softlist].end())
+			m_itemsiter = std::find_if(m_swindex[softlist].begin(), m_swindex[softlist].end(), [parentname](Itemsindex const& n) { return n.name == parentname; });
+
 		if (m_itemsiter == m_swindex[softlist].end())
 			return;
 

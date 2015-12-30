@@ -273,7 +273,7 @@ struct sw_custfltr
 // GLOBAL FUNCTIONS
 
 // advanced search function
-int fuzzy_substring(const char *needle, const char *haystack);
+int fuzzy_substring(std::string needle, std::string haystack);
 int fuzzy_substring2(const char *needle, const char *haystack);
 
 // jpeg loader

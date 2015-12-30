@@ -784,7 +784,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	if (no_active_search())
 		tempbuf[1].clear();
 	else
-		tempbuf[1].assign(filtered.c_str()).append(" Search: ").append(m_search).append("_");
+		tempbuf[1].assign(filtered).append(" Search: ").append(m_search).append("_");
 
 	// get the size of the text
 	for (int line = 0; line < 2; ++line)
@@ -1127,12 +1127,12 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
-			if (has_multiple_bios(ui_swinfo->driver, biosname) && !mopt.skip_bios_menu())
+			if (!mopt.skip_bios_menu() && has_multiple_bios(ui_swinfo->driver, biosname))
 			{
 				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)ui_swinfo, true, false)));
 				return;
 			}
-			else if (swinfo->has_multiple_parts(ui_swinfo->interface.c_str()) && !mopt.skip_parts_menu())
+			else if (!mopt.skip_parts_menu() && swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
 			{
 				std::unordered_map<std::string, std::string> parts;
 				for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
@@ -2346,7 +2346,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 				if (soft->startempty == 1)
 					machine().datfile().load_data_info(soft->driver, buffer, MEWUI_HISTORY_LOAD);
 				else
-					machine().datfile().load_software_info(soft->listname.c_str(), buffer, soft->shortname.c_str());
+					machine().datfile().load_software_info(soft->listname, buffer, soft->shortname, soft->parentname);
 			}
 			else
 				buffer = soft->usage;

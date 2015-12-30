@@ -258,7 +258,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	std::string tempbuf[2];
 	const char *s_change = (m_change) ? "Change" : "Add";
 	tempbuf[0].assign(s_change).append(" ").append(s_folders_entry[m_ref].name).append(" Folder - Search: ").append(m_search).append("_");
-	tempbuf[1].assign(m_current_path.c_str());
+	tempbuf[1] = m_current_path;
 
 	// get the size of the text
 	for (auto & elem: tempbuf)
@@ -292,7 +292,7 @@ void ui_menu_add_change_folder::custom_render(void *selectedref, float top, floa
 	}
 
 	// bottom text
-	tempbuf[0].assign("Press TAB to set");
+	tempbuf[0] = "Press TAB to set";
 
 	mui.draw_text_full(container, tempbuf[0].c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);

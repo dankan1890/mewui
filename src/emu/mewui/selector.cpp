@@ -180,7 +180,7 @@ void ui_menu_selector::custom_render(void *selectedref, float top, float bottom,
 	// get the text for 'UI Select'
 	std::string ui_select_text;
 	machine().input().seq_name(ui_select_text, machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
-	tempbuf.assign("Double click or press ").append(ui_select_text.c_str()).append(" to select");
+	tempbuf.assign("Double click or press ").append(ui_select_text).append(" to select");
 
 	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
@@ -222,7 +222,7 @@ void ui_menu_selector::find_matches(const char *str)
 			continue;
 
 		// pick the best match between driver name and description
-		int curpenalty = fuzzy_substring(str, m_str_items[index].c_str());
+		int curpenalty = fuzzy_substring(str, m_str_items[index]);
 
 		// insert into the sorted table of matches
 		for (int matchnum = VISIBLE_GAMES_IN_SEARCH - 1; matchnum >= 0; --matchnum)

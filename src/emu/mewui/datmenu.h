@@ -87,7 +87,7 @@ public:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	const char *m_list, *m_short, *m_long;
+	std::string m_list, m_short, m_long, m_parent;
 	const game_driver *m_driver;
 };
 

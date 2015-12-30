@@ -16,6 +16,7 @@
 #include "mewui/datfile.h"
 #include "mewui/datmenu.h"
 #include "mewui/utils.h"
+#include "softlist.h"
 
 /**************************************************
     MENU COMMAND
@@ -245,9 +246,10 @@ void ui_menu_command_content::custom_render(void *selectedref, float top, float 
 
 ui_menu_history_sw::ui_menu_history_sw(running_machine &machine, render_container *container, ui_software_info *swinfo, const game_driver *driver) : ui_menu(machine, container)
 {
-	m_list = swinfo->listname.c_str();
-	m_short = swinfo->shortname.c_str();
-	m_long = swinfo->longname.c_str();
+	m_list = swinfo->listname;
+	m_short = swinfo->shortname;
+	m_long = swinfo->longname;
+	m_parent = swinfo->parentname;
 	m_driver = (driver == nullptr) ? &machine.system() : driver;
 }
 
@@ -259,8 +261,9 @@ ui_menu_history_sw::ui_menu_history_sw(running_machine &machine, render_containe
 		if (image->filename())
 		{
 			m_list = image->software_list_name();
-			m_short = image->filename();
-			m_long = image->longname();
+			m_short = image->software_entry()->shortname();
+			m_long = image->software_entry()->longname();
+			m_parent = image->software_entry()->parentname();
 		}
 	}
 	m_driver = (driver == nullptr) ? &machine.system() : driver;
@@ -288,7 +291,7 @@ void ui_menu_history_sw::populate()
 {
 	machine().pause();
 	std::string buffer;
-	machine().datfile().load_software_info(m_list, buffer, m_short);
+	machine().datfile().load_software_info(m_list, buffer, m_short, m_parent);
 	if (!buffer.empty())
 	{
 		float line_height = machine().ui().get_line_height();
@@ -303,7 +306,7 @@ void ui_menu_history_sw::populate()
 
 		for (int r = 0; r < total_lines; r++)
 		{
-			std::string tempbuf = std::string(buffer.substr(xstart[r], xend[r] - xstart[r]));
+			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
 			item_append(tempbuf.c_str(), nullptr, MENU_FLAG_MEWUI_HISTORY, nullptr);
 		}
 	}

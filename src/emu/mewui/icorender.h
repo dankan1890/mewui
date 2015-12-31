@@ -78,7 +78,7 @@ void render_load_ico(bitmap_argb32 &bitmap, emu_file &file, const char *dirname,
 	std::string fname;
 
 	if (!dirname)
-		fname.assign(filename);
+		fname = filename;
 	else
 		fname.assign(dirname).append(PATH_SEPARATOR).append(filename);
 

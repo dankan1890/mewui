@@ -626,7 +626,7 @@ void ui_mewui_select_game::populate()
 		flags_mewui |= MENU_FLAG_MEWUI_FAVORITE;
 
 		// iterate over entries
-		for (auto & mfavorite : machine().favorite().m_favorite_list)
+		for (auto & mfavorite : machine().favorite().m_list)
 		{
 			if (mfavorite.startempty == 1)
 			{
@@ -923,7 +923,7 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 		std::string copyright(emulator_info::get_copyright());
 		size_t found = copyright.find("\n");
 
-		tempbuf[0].assign(emulator_info::get_applongname()).append(" ").append(build_version);
+		tempbuf[0].assign(emulator_info::get_appname()).append(" ").append(build_version);
 		tempbuf[1] = copyright.substr(0, found);
 		tempbuf[2] = copyright.substr(found + 1);
 		tempbuf[3].clear();

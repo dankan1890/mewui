@@ -289,7 +289,7 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	std::string fname;
 
 	if (!dirname)
-		fname.assign(filename);
+		fname = filename;
 	else
 		fname.assign(dirname).append(PATH_SEPARATOR).append(filename);
 

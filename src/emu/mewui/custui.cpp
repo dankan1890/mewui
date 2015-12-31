@@ -318,7 +318,7 @@ void ui_menu_font_ui::populate()
 	std::string name(m_class.ui[m_class.actual]);
 	item_append("UI Font", name.c_str(), arrow_flags, (void *)(FPTR)MUI_FNT);
 
-	if (name.compare("default") != 0)
+	if (name != "default")
 	{
 		item_append("Bold", m_bold ? "On" : "Off", m_bold ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_BOLD);
 		item_append("Italic", m_italic ? "On" : "Off", m_italic ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_ITALIC);

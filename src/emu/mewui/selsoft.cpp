@@ -416,11 +416,11 @@ void ui_menu_select_software::populate()
 		// iterate over entries
 		for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 		{
-			if (reselect_last::software.compare("[Start empty]") == 0 && !reselect_last::driver.empty())
+			if (reselect_last::software == "[Start empty]" && !reselect_last::driver.empty())
 				old_software = 0;
 
-			else if (!reselect_last::software.empty() && m_displaylist[curitem]->shortname.compare(reselect_last::software) == 0
-			         && m_displaylist[curitem]->listname.compare(reselect_last::swlist) == 0)
+			else if (!reselect_last::software.empty() && m_displaylist[curitem]->shortname == reselect_last::software
+			         && m_displaylist[curitem]->listname == reselect_last::swlist)
 				old_software = m_has_empty_start ? curitem + 1 : curitem;
 
 			item_append(m_displaylist[curitem]->longname.c_str(), m_displaylist[curitem]->devicetype.c_str(),
@@ -760,7 +760,7 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 		std::string copyright(emulator_info::get_copyright());
 		size_t found = copyright.find("\n");
 
-		tempbuf[0].assign(emulator_info::get_applongname()).append(" ").append(build_version);
+		tempbuf[0].assign(emulator_info::get_appname()).append(" ").append(build_version);
 		tempbuf[1] = copyright.substr(0, found);
 		tempbuf[2] = copyright.substr(found + 1);
 		tempbuf[3].clear();
@@ -1140,7 +1140,7 @@ void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_driv
 			{
 				std::string name = m_filter.region.getname(s_driver->longname);
 
-				if(!name.empty() && name.compare(filter_text) == 0)
+				if(!name.empty() && name == filter_text)
 					m_displaylist.push_back(s_driver);
 				break;
 			}
@@ -1149,7 +1149,7 @@ void ui_menu_select_software::build_list(std::vector<ui_software_info *> &s_driv
 			{
 				std::string name = m_filter.publisher.getname(s_driver->publisher);
 
-				if(!name.empty() && name.compare(filter_text) == 0)
+				if(!name.empty() && name == filter_text)
 					m_displaylist.push_back(s_driver);
 				break;
 			}

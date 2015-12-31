@@ -71,7 +71,7 @@ ui_menu_add_change_folder::ui_menu_add_change_folder(running_machine &machine, r
 	// configure the starting's path
 	char *dst = nullptr;
 	osd_get_full_path(&dst, ".");
-	m_current_path.assign(dst);
+	m_current_path = dst;
 	osd_free(dst);
 }
 
@@ -118,7 +118,7 @@ void ui_menu_add_change_folder::handle()
 						m_current_path.append(PATH_SEPARATOR).append(pitem.text);
 				}
 				else
-					m_current_path.assign(pitem.text);
+					m_current_path = pitem.text;
 			}
 
 			// reset the char buffer also in this case

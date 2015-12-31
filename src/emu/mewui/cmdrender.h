@@ -85,7 +85,7 @@ process_next:
 	}
 
 	d[j] = '\0';
-	str.assign(d);
+	str = d;
 	global_free_array(d);
 }
 

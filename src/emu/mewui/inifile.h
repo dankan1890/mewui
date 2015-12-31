@@ -77,7 +77,7 @@ public:
 	favorite_manager(running_machine &machine);
 
 	// favorite indices
-	std::vector<ui_software_info> m_favorite_list;
+	std::vector<ui_software_info> m_list;
 
 	// getters
 	running_machine &machine() const { return m_machine; }
@@ -101,7 +101,7 @@ public:
 
 private:
 	// current
-	int m_current_favorite;
+	int m_current;
 
 	// parse file mewui_favorite
 	void parse_favorite();

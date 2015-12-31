@@ -127,7 +127,7 @@ void ui_menu_selector::populate()
 	else
 	{
 		for (size_t index = 0, added = 0; index < m_str_items.size(); ++index)
-			if (m_str_items[index].compare("_skip_") != 0)
+			if (m_str_items[index] != "_skip_")
 			{
 				if (m_first_pass && *m_selector == index)
 					selected = added;
@@ -218,7 +218,7 @@ void ui_menu_selector::find_matches(const char *str)
 
 	for (; index < m_str_items.size(); ++index)
 	{
-		if (!m_str_items[index].compare("_skip_"))
+		if (m_str_items[index] == "_skip_")
 			continue;
 
 		// pick the best match between driver name and description

@@ -126,7 +126,7 @@ void ui_menu_game_options::handle()
 					int total = ifile.ini_index[cfile].category.size();
 					std::vector<std::string> s_sel(total);
 					for (int index = 0; index < total; ++index)
-						s_sel[index].assign(ifile.ini_index[cfile].category[index].name);
+						s_sel[index] = ifile.ini_index[cfile].category[index].name;
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &ifile.current_category, SELECTOR_CATEGORY)));
 				}
@@ -165,7 +165,7 @@ void ui_menu_game_options::handle()
 				{
 					std::vector<std::string> text(screen_filters::length);
 					for (int x = 0; x < screen_filters::length; ++x)
-						text[x].assign(screen_filters::text[x]);
+						text[x] = screen_filters::text[x];
 
 					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, text, &screen_filters::actual)));
 				}
@@ -249,7 +249,7 @@ void ui_menu_game_options::populate()
 		item_append(fbuff.c_str(), inif.ini_index[afile].name.c_str(), arrow_flags, (void *)(FPTR)FILE_CATEGORY_FILTER);
 
 		arrow_flags = get_arrow_flags(0, inif.ini_index[afile].category.size() - 1, acategory);
-		fbuff.assign(" ^!Category");
+		fbuff = " ^!Category";
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), inif.ini_index[afile].category[acategory].name.c_str(), arrow_flags, (void *)(FPTR)CATEGORY_FILTER);
 	}
@@ -257,7 +257,7 @@ void ui_menu_game_options::populate()
 	else if (main_filters::actual == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
 	{
 		arrow_flags = get_arrow_flags(0, c_mnfct::ui.size() - 1, c_mnfct::actual);
-		fbuff.assign("^!Manufacturer");
+		fbuff = "^!Manufacturer";
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), c_mnfct::ui[c_mnfct::actual].c_str(), arrow_flags, (void *)(FPTR)MANUFACT_CAT_FILTER);
 	}
@@ -273,14 +273,14 @@ void ui_menu_game_options::populate()
 	else if (main_filters::actual == FILTER_SCREEN)
 	{
 		arrow_flags = get_arrow_flags(0, screen_filters::length - 1, screen_filters::actual);
-		fbuff.assign("^!Screen type");
+		fbuff = "^!Screen type";
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), screen_filters::text[screen_filters::actual], arrow_flags, (void *)(FPTR)SCREEN_CAT_FILTER);
 	}
 	// add custom subitem
 	else if (main_filters::actual == FILTER_CUSTOM)
 	{
-		fbuff.assign("^!Setup custom filter");
+		fbuff = "^!Setup custom filter";
 		convert_command_glyph(fbuff);
 		item_append(fbuff.c_str(), nullptr, 0, (void *)(FPTR)CUSTOM_FILTER);
 	}

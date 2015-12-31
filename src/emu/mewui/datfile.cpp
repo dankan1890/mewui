@@ -190,29 +190,29 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 	switch (type)
 	{
 		case MEWUI_HISTORY_LOAD:
-			filename.assign("history.dat");
+			filename = "history.dat";
 			tag = TAG_BIO;
 			index_idx = m_histidx;
 			break;
 		case MEWUI_MAMEINFO_LOAD:
-			filename.assign("mameinfo.dat");
+			filename = "mameinfo.dat";
 			tag = TAG_MAME;
 			index_idx = m_mameidx;
 			driver_idx = m_drvidx;
 			break;
 		case MEWUI_SYSINFO_LOAD:
-			filename.assign("sysinfo.dat");
+			filename = "sysinfo.dat";
 			tag = TAG_BIO;
 			index_idx = m_sysidx;
 			break;
 		case MEWUI_MESSINFO_LOAD:
-			filename.assign("messinfo.dat");
+			filename = "messinfo.dat";
 			tag = TAG_MAME;
 			index_idx = m_messidx;
 			driver_idx = m_messdrvidx;
 			break;
 		case MEWUI_STORY_LOAD:
-			filename.assign("story.dat");
+			filename = "story.dat";
 			tag = TAG_STORY;
 			index_idx = m_storyidx;
 			break;
@@ -415,7 +415,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 			else if (m_story_rev.empty() && readbuf.compare(0, t_story, TAG_STORY_R) == 0)
 			{
 				size_t found = readbuf.find_first_of(carriage, t_story + 1);
-				m_story_rev.assign(readbuf.substr(t_story + 1, found - t_story));
+				m_story_rev = readbuf.substr(t_story + 1, found - t_story);
 			}
 			// TAG_INFO identifies the driver
 			else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
@@ -432,7 +432,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 					{
 						// copy data and validate driver
 						int len = found - curpoint;
-						name.assign(readbuf.substr(curpoint, len));
+						name = readbuf.substr(curpoint, len);
 						strtrimspace(name);
 
 						// validate driver
@@ -447,7 +447,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 					// if comma not found, copy data while until reach the end of string
 					else if (curpoint < ends)
 					{
-						name.assign(readbuf.substr(curpoint));
+						name = readbuf.substr(curpoint);
 						size_t found = name.find_last_not_of(carriage);
 						if (found != std::string::npos)
 							name.erase(found+1);
@@ -484,13 +484,13 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 						if (found != std::string::npos)
 						{
 							int len = found - curpoint;
-							name.assign(s_list.substr(curpoint, len));
+							name = s_list.substr(curpoint, len);
 							strtrimspace(name);
 							curpoint = found + 1;
 						}
 						else
 						{
-							name.assign(s_list);
+							name = s_list;
 							strtrimspace(name);
 							curpoint = ends;
 						}
@@ -510,7 +510,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 							{
 								// copy data
 								int len = found - cpoint;
-								name.assign(s_roms.substr(cpoint, len));
+								name = s_roms.substr(cpoint, len);
 								strtrimspace(name);
 
 								// add a SoftwareItem
@@ -527,7 +527,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 									break;
 
 								// copy data
-								name.assign(s_roms.substr(cpoint));
+								name = s_roms.substr(cpoint);
 								size_t found = name.find_last_not_of(carriage);
 								if (found != std::string::npos)
 									name.erase(found+1);
@@ -560,7 +560,7 @@ bool datfile_manager::ParseOpen(const char *filename)
 
 	if (fp.open(filename) == FILERR_NONE)
 	{
-		m_fullpath.assign(fp.fullpath());
+		m_fullpath = fp.fullpath();
 		fp.close();
 		return true;
 	}

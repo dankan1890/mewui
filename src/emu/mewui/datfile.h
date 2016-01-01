@@ -28,7 +28,7 @@ public:
 	// actions
 	void load_data_info(const game_driver *drv, std::string &buffer, int type);
 	void load_command_info(std::string &buffer, const int sel);
-	void load_software_info(std::string softlist, std::string &buffer, std::string softname, std::string parentname);
+	void load_software_info(std::string &softlist, std::string &buffer, std::string &softname, std::string &parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
 
 	std::string rev_history() const { return m_history_rev; }

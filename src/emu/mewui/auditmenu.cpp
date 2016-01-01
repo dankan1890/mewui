@@ -128,7 +128,7 @@ void ui_menu_audit::handle()
 				iter = m_unavailablesorted.erase(iter);
 			}
 			else
-				iter++;
+				++iter;
 		}
 	}
 	else

@@ -135,7 +135,7 @@ void datfile_manager::init_command()
 //  load software info
 //-------------------------------------------------
 
-void datfile_manager::load_software_info(std::string softlist, std::string &buffer, std::string softname, std::string parentname)
+void datfile_manager::load_software_info(std::string &softlist, std::string &buffer, std::string &softname, std::string &parentname)
 {
 	// Load history text
 	if (!m_swindex.empty() && ParseOpen("history.dat"))

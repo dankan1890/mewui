@@ -96,6 +96,7 @@ function createProjects_mewui_test(_target, _subtarget)
 	kind (LIBTYPE)
 	uuid (os.uuid("drv-mewui-test"))
         addprojectflags()
+	precompiledheaders()
 
 	includedirs {
 		MAME_DIR .. "src/osd",

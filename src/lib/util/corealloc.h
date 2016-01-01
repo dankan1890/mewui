@@ -87,7 +87,7 @@ extern const zeromem_t zeromem;
 #ifndef NO_MEM_TRACKING
 // re-route classic malloc-style allocations
 #undef malloc
-#if !defined(__OSX__)
+#if !defined(SDLMAME_MACOSX)
 #undef realloc
 #define realloc(x,y)    __error_realloc_is_dangerous__
 #endif

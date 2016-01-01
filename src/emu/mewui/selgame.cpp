@@ -9,16 +9,18 @@
 *********************************************************************/
 
 #include "emu.h"
+#include "emuopts.h"
 #include "ui/ui.h"
 #include "ui/menu.h"
+#include "uiinput.h"
+#include "mewui/selgame.h"
+#include "ui/inputmap.h"
+#include "ui/miscmenu.h"
+#include "audit.h"
+#include <ctype.h>
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
-#include "mewui/selgame.h"
-#include "drivenum.h"
 #include "rendfont.h"
-#include "uiinput.h"
-#include "audit.h"
-#include "ui/miscmenu.h"
 #include "mewui/datmenu.h"
 #include "mewui/dirmenu.h"
 #include "mewui/optsmenu.h"

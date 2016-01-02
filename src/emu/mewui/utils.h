@@ -182,17 +182,17 @@ struct ui_software_info
 	std::string parentname;
 	std::string year;
 	std::string publisher;
-	UINT8 supported;
+	UINT8 supported = 0;
 	std::string part;
 	const game_driver *driver;
 	std::string listname;
 	std::string interface;
 	std::string instance;
-	UINT8 startempty;
+	UINT8 startempty = 0;
 	std::string parentlongname;
 	std::string usage;
 	std::string devicetype;
-	bool available;
+	bool available = false;
 
 	bool operator==(const ui_software_info& r)
 	{

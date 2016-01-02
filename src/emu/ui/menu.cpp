@@ -168,20 +168,21 @@ void ui_menu::exit(running_machine &machine)
 	ui_menu::clear_free_list(machine);
 
 	// free textures
-	machine.render().texture_free(hilight_texture);
-	machine.render().texture_free(arrow_texture);
-	machine.render().texture_free(snapx_texture);
-	machine.render().texture_free(hilight_main_texture);
-	machine.render().texture_free(bgrnd_texture);
-	machine.render().texture_free(star_texture);
+	render_manager &mre = machine.render();
+	mre.texture_free(hilight_texture);
+	mre.texture_free(arrow_texture);
+	mre.texture_free(snapx_texture);
+	mre.texture_free(hilight_main_texture);
+	mre.texture_free(bgrnd_texture);
+	mre.texture_free(star_texture);
 
 	for (auto & elem : icons_texture)
-		machine.render().texture_free(elem);
+		mre.texture_free(elem);
 
 	for (int i = 0; i < MEWUI_TOOLBAR_BUTTONS; i++)
 	{
-		machine.render().texture_free(sw_toolbar_texture[i]);
-		machine.render().texture_free(toolbar_texture[i]);
+		mre.texture_free(sw_toolbar_texture[i]);
+		mre.texture_free(toolbar_texture[i]);
 	}
 }
 
@@ -2036,14 +2037,15 @@ void ui_menu::handle_main_events(UINT32 flags)
 void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 {
 	float text_size = 0.65f;
-	float line_height = machine().ui().get_line_height() * text_size;
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height() * text_size;
 	float maxwidth = 0.0f;
 
 	for (int x = 0; x < ume_filters::length; x++)
 	{
 		float width;
 		// compute width of left hand side
-		machine().ui().draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 			DRAW_NONE, UI_TEXT_COLOR, ARGB_BLACK, &width, nullptr, text_size);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -2051,7 +2053,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 
 	x2 = x1 + maxwidth;
 
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -2080,7 +2082,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 		if (bgcolor != UI_TEXT_BG_COLOR)
 			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
-		machine().ui().draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 			DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 
 		y1 += line_height;
@@ -2093,12 +2095,13 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 
 float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 {
-	float line_height = machine().ui().get_line_height();
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
 	float midl = (x2 - x1) * 0.5f;
 
 	// add outlined box for options
 	//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// add separator line
 	container->add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -2134,7 +2137,7 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 			container->add_rect(x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
 			bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
-		machine().ui().draw_text_full(container, buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
+		mui.draw_text_full(container, buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
 			JUSTIFY_CENTER, WRAP_NEVER, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 		x1 = x1 + midl;
 	}

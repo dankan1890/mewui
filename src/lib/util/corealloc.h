@@ -83,7 +83,7 @@ extern const zeromem_t zeromem;
 //**************************************************************************
 //  ADDDITIONAL MACROS
 //**************************************************************************
-
+#define NO_MEM_TRACKING
 #ifndef NO_MEM_TRACKING
 // re-route classic malloc-style allocations
 #undef malloc

@@ -227,11 +227,10 @@ void free_file_line(void *memory, const char *file, int line, bool array)
 void *realloc_internal(void *memory, size_t size, const char *file, int line, bool array)
 {
 	fprintf(stderr, "realloc_internal called for %p in %s(%d)!\n", memory, file, line);
-	if (size == 0) {
+	if(size == 0) {
 		return nullptr;
 	}
-	
-	if (memory == nullptr) {
+	if(memory == nullptr) {
 		return malloc_file_line(size, file, line, array, false, false);
 	}
 	// find the memory entry
@@ -244,9 +243,9 @@ void *realloc_internal(void *memory, size_t size, const char *file, int line, bo
 		osd_break_into_debugger("Error: attempt to realloc untracked memory");
 		return memory;
 	}
-	
+
 	// this is used internally and should always be an array
-	if (!array || !entry->m_array)
+	if(!array || !entry->m_array)
 	{
 		fprintf(stderr, "Error: attempt to realloc non-array memory %p in %s(%d). realloc_internal should never be called directly!\n", memory, file, line);
 		osd_break_into_debugger("Error: attempt to realloc non-array memory");
@@ -254,7 +253,7 @@ void *realloc_internal(void *memory, size_t size, const char *file, int line, bo
 
 	size_t o_size = entry->m_size;
 	void *new_buf = malloc_file_line(size, file, line, array, false, false);
-	if (new_buf == nullptr) {
+	if(new_buf == nullptr) {
 		fprintf(stderr, "Error: realloc: unable to allocate new buffer %p in %s(%d)!\n", memory, file, line);
 		return nullptr;
 	}
@@ -262,6 +261,7 @@ void *realloc_internal(void *memory, size_t size, const char *file, int line, bo
 	free_file_line(memory, file, line, array);
 	return new_buf;
 }
+
 
 //-------------------------------------------------
 //  track_memory - enables or disables the memory

@@ -73,7 +73,7 @@ void inifile_manager::init_category(std::string &filename)
 {
 	std::vector<IniCategoryIndex> index;
 	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 	while (clean_getline(myfile, readbuf))
 	{
 		if (!readbuf.empty() && readbuf[0] == '[')
@@ -86,7 +86,7 @@ void inifile_manager::init_category(std::string &filename)
 				index.emplace_back(name, myfile.tellg());
 		}
 	}
-	myfile.close();
+//	myfile.close();
 
 	if (!index.empty())
 		ini_index.emplace_back(filename, index);
@@ -111,7 +111,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 
 	if (ParseOpen(file_name.c_str()))
 	{
-		std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+		std::ifstream myfile(m_fullpath, std::ifstream::binary);
 		int num_game = driver_list::total();
 		std::string readbuf;
 		myfile.seekg(offset, myfile.beg);

@@ -181,7 +181,7 @@ void ui_menu_audit::save_available_machines()
 	{
 		std::string filename(file.fullpath());
 		file.close();
-		std::ofstream myfile(filename.c_str());
+		std::ofstream myfile(filename);
 		UINT8 space = 0;
 
 		// generate header

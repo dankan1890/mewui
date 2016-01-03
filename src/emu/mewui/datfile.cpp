@@ -157,7 +157,7 @@ void datfile_manager::load_software_info(std::string &softlist, std::string &buf
 
 		s_offset = (*m_itemsiter).offset;
 
-		std::ifstream myfile(m_fullpath.c_str());
+		std::ifstream myfile(m_fullpath);
 		myfile.seekg(s_offset, myfile.beg);
 		size_t tend = strlen(TAG_END);
 		while (myfile.good())
@@ -257,7 +257,7 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 	}
 
 	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 
 	myfile.seekg(idx[x].offset, myfile.beg);
 	size_t tend = strlen(TAG_END);
@@ -297,7 +297,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 		return;
 
 	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 	size_t tend = strlen(TAG_END);
 	size_t ttag = strlen(tag);
 	myfile.seekg(idx[index].offset, myfile.beg);
@@ -334,7 +334,7 @@ int datfile_manager::index_mame_mess_info(std::vector<Drvindex> &index, std::vec
 	int          t_tag = strlen(TAG_MAME);
 	int          t_info = strlen(TAG_INFO);
 
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 	if (myfile.is_open())
 	{
 		// loop through datafile
@@ -394,7 +394,7 @@ int datfile_manager::index_datafile(std::vector<Drvindex> &index, int &swcount)
 	int          t_bio = strlen(TAG_BIO);
 	std::string  carriage("\r\n");
 
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 	if (myfile.is_open())
 	{
 		// loop through datafile
@@ -593,7 +593,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, std::vector<Drvindex
 	}
 
 	// seek to correct point in datafile
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+	std::ifstream myfile(m_fullpath, std::ifstream::binary);
 	myfile.seekg(idx[x].offset, myfile.beg);
 	size_t tinfo = strlen(TAG_INFO);
 	size_t tcommand = strlen(TAG_COMMAND);
@@ -625,7 +625,7 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 		size_t tend = strlen(TAG_END);
 
 		// open and seek to correct point in datafile
-		std::ifstream myfile(m_fullpath.c_str());
+		std::ifstream myfile(m_fullpath);
 		myfile.seekg(m_menuidx[sel].offset, myfile.beg);
 		while (myfile.good())
 		{

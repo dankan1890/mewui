@@ -609,7 +609,6 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 	if (ParseOpen("command.dat"))
 	{
 		size_t tcs = TAG_COMMAND_SEPARATOR.size();
-		size_t tend = TAG_END.size();
 
 		// open and seek to correct point in datafile
 		fseek(fp, m_menuidx[sel].offset, SEEK_SET);

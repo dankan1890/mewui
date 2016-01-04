@@ -1748,7 +1748,7 @@ void ui_mewui_select_game::load_cache_info()
 	char rbuf[2048];
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
-	strtrimspace(readbuf.assign(rbuf));
+	strtrimcarriage(readbuf.assign(rbuf));
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? save and exit
@@ -1771,7 +1771,7 @@ void ui_mewui_select_game::load_cache_info()
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
 		file.gets(rbuf, 2048);
-		strtrimspace(readbuf.assign(rbuf));
+		strtrimcarriage(readbuf.assign(rbuf));
 		pos = readbuf.find_first_of(',');
 		driver_cache[x].b_screen = std::stoi(readbuf.substr(0, pos));
 		end = readbuf.find_first_of(',', ++pos);
@@ -1787,7 +1787,7 @@ void ui_mewui_select_game::load_cache_info()
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
 	file.gets(rbuf, 2048);
-	strtrimspace(readbuf.assign(rbuf));
+	strtrimcarriage(readbuf.assign(rbuf));
 	pos = readbuf.find_first_of(',');
 	m_isabios = std::stoi(readbuf.substr(0, pos));
 	end = readbuf.find_first_of(',', ++pos);
@@ -1817,7 +1817,7 @@ bool ui_mewui_select_game::load_available_machines()
 	char rbuf[2048];
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
-	strtrimspace(readbuf.assign(rbuf));
+	strtrimcarriage(readbuf.assign(rbuf));
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? exit

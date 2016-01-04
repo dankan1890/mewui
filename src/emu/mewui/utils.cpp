@@ -9,9 +9,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "mewui\utils.h"
-#include "mewui\inifile.h"
-#include "sound\samples.h"
+#include "mewui/utils.h"
+#include "mewui/inifile.h"
+#include "sound/samples.h"
 #include "audit.h"
 
 // Years index
@@ -76,6 +76,17 @@ UINT16 sw_custfltr::year[MAX_CUST_FILTER];
 UINT16 sw_custfltr::region[MAX_CUST_FILTER];
 UINT16 sw_custfltr::type[MAX_CUST_FILTER];
 UINT16 sw_custfltr::list[MAX_CUST_FILTER];
+
+std::string strtrimcarriage(std::string &str)
+{
+	std::string carriage("\n\r");
+	std::size_t found = str.find_last_not_of(carriage);
+	if (found != std::string::npos)
+		str.erase(found + 1);
+	else
+		str.clear();            // str is all whitespace
+	return str;
+}
 
 //-------------------------------------------------
 //  search a substring with even partial matching

@@ -74,13 +74,14 @@ void inifile_manager::init_category(std::string &filename)
 {
 	std::vector<IniCategoryIndex> index;
 	char rbuf[2048];
+	std::string readbuf, name;
 	while (fgets(rbuf, 2048, fp) != nullptr)
 	{
-		std::string readbuf(rbuf);
+		readbuf = rbuf;
 		if (readbuf[0] == '[')
 		{
 			size_t found = readbuf.find("]");
-			std::string name = readbuf.substr(1, found - 1);
+			name = readbuf.substr(1, found - 1);
 			if (name == "FOLDER_SETTINGS" || name == "ROOT_FOLDER")
 				continue;
 			else
@@ -116,7 +117,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		std::string readbuf;
 		while (fgets(rbuf, 2048, fp) != nullptr)
 		{
-			strtrimspace(readbuf.assign(rbuf));
+			strtrimcarriage(readbuf.assign(rbuf));
 
 			if (readbuf.empty() || readbuf[0] == '[')
 				break;
@@ -370,38 +371,38 @@ void favorite_manager::parse_favorite()
 		while (file.gets(readbuf, 1024))
 		{
 			ui_software_info tmpmatches;
-			tmpmatches.shortname = strtrimspace(text.assign(readbuf));
+			tmpmatches.shortname = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.longname = strtrimspace(text.assign(readbuf));
+			tmpmatches.longname = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.parentname = strtrimspace(text.assign(readbuf));
+			tmpmatches.parentname = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.year = strtrimspace(text.assign(readbuf));
+			tmpmatches.year = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.publisher = strtrimspace(text.assign(readbuf));
+			tmpmatches.publisher = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
 			tmpmatches.supported = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.part = strtrimspace(text.assign(readbuf));
+			tmpmatches.part = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			text = strtrimspace(text.assign(readbuf));
+			text = strtrimcarriage(text.assign(readbuf));
 			int dx = driver_list::find(text.c_str());
 			if (dx == -1) continue;
 			tmpmatches.driver = &driver_list::driver(dx);
 			file.gets(readbuf, 1024);
-			tmpmatches.listname = strtrimspace(text.assign(readbuf));
+			tmpmatches.listname = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.interface = strtrimspace(text.assign(readbuf));
+			tmpmatches.interface = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.instance = strtrimspace(text.assign(readbuf));
+			tmpmatches.instance = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
 			tmpmatches.startempty = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.parentlongname = strtrimspace(text.assign(readbuf));
+			tmpmatches.parentlongname = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.usage = strtrimspace(text.assign(readbuf));
+			tmpmatches.usage = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
-			tmpmatches.devicetype = strtrimspace(text.assign(readbuf));
+			tmpmatches.devicetype = strtrimcarriage(text.assign(readbuf));
 			file.gets(readbuf, 1024);
 			tmpmatches.available = atoi(readbuf);
 			m_list.push_back(tmpmatches);

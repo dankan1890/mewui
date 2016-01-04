@@ -361,4 +361,6 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	global_free_array(jpg_buffer);
 }
 
+std::string strtrimcarriage(std::string &str);
+
 #endif /* __MEWUI_UTILS_H__ */

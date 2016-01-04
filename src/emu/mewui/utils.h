@@ -15,7 +15,7 @@
 
 #include "osdepend.h"
 #include "render.h"
-#include "libjpeg\jpeglib.h"
+#include "libjpeg/jpeglib.h"
 #include <algorithm>
 #include "drivenum.h"
 #include <map>

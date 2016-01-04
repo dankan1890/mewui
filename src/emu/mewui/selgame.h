@@ -14,7 +14,7 @@
 #define __MEWUI_MAIN_H__
 
 #include "drivenum.h"
-#include "ui\menu.h"
+#include "ui/menu.h"
 
 class ui_mewui_select_game : public ui_menu
 {

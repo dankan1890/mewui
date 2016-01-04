@@ -82,7 +82,6 @@
 # OPENMP = 1
 # FASTDEBUG = 1
 
-# FILTER_DEPS = 1
 # SEPARATE_BIN = 1
 # PYTHON_EXECUTABLE = python3
 # SHADOW_CHECK = 1
@@ -635,10 +634,6 @@ endif
 
 ifdef FASTDEBUG
 PARAMS += --FASTDEBUG='$(FASTDEBUG)'
-endif
-
-ifdef FILTER_DEPS
-PARAMS += --FILTER_DEPS='$(FILTER_DEPS)'
 endif
 
 ifdef SEPARATE_BIN
@@ -1220,7 +1215,7 @@ generate: \
 		$(GEN_FOLDERS) \
 		$(patsubst $(SRC)/%.lay,$(GENDIR)/%.lh,$(LAYOUTS))
 
-$(GENDIR)/%.lh: $(SRC)/%.lay scripts/build/file2str.py
+$(GENDIR)/%.lh: $(SRC)/%.lay scripts/build/file2str.py | $(GEN_FOLDERS)
 	@echo Converting $<...
 	$(SILENT)$(PYTHON) scripts/build/file2str.py $< $@ layout_$(basename $(notdir $<))
 

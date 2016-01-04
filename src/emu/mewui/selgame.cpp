@@ -1784,7 +1784,7 @@ void ui_mewui_select_game::load_cache_info()
 		end = readbuf.find_first_of(',', ++pos);
 		driver_cache[x].b_chd = std::stoi(readbuf.substr(pos, end));
 		pos = end;
-		int find = std::stoi(readbuf.substr(pos));
+		int find = std::stoi(readbuf.substr(++pos));
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
 	file.gets(rbuf, 2048);
@@ -1797,7 +1797,7 @@ void ui_mewui_select_game::load_cache_info()
 	end = readbuf.find_first_of(',', ++pos);
 	m_isarcades = std::stoi(readbuf.substr(pos, end));
 	pos = end;
-	m_issystems = std::stoi(readbuf.substr(pos));
+	m_issystems = std::stoi(readbuf.substr(++pos));
 	file.close();
 	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());

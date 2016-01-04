@@ -174,10 +174,10 @@ void datfile_manager::load_software_info(std::string &softlist, std::string &buf
 		char rbuf[64*1024];
 		fseek(fp, s_offset, SEEK_SET);
 		size_t tend = TAG_END.size();
+		std::string readbuf;
 		while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 		{
-			std::string readbuf(rbuf);
-			strtrimspace(readbuf);
+			strtrimspace(readbuf.assign(rbuf));
 
 			// end entry when a end tag is encountered
 			if (!core_strnicmp(TAG_END.c_str(), readbuf.c_str(), tend))
@@ -274,11 +274,10 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 	size_t tend = TAG_END.size();
 	size_t ttag = tag.size();
 	char rbuf[64 * 1024];
+	std::string readbuf;
 	while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 	{
-		// read from datafile
-		std::string readbuf(rbuf);
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 
 		// end entry when a end tag is encountered
 		if (!core_strnicmp(TAG_END.c_str(), readbuf.c_str(), tend))
@@ -315,11 +314,10 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 	size_t tend = TAG_END.size();
 	size_t ttag = tag.size();
 	char rbuf[64 * 1024];
+	std::string readbuf;
 	while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 	{
-		// read from datafile
-		std::string readbuf(rbuf);
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 
 		// end entry when a end tag is encountered
 		if (!core_strnicmp(TAG_END.c_str(), readbuf.c_str(), tend))
@@ -349,10 +347,10 @@ int datfile_manager::index_mame_mess_info(DrvIndex &index, std::vector<Itemsinde
 	size_t t_info = TAG_INFO.size();
 
 	char rbuf[2048];
+	std::string readbuf, xid;
 	while (fgets(rbuf, 2048, fp) != nullptr)
 	{
-		std::string readbuf(rbuf);
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 
 		if (m_mame_rev.empty() && readbuf.compare(0, t_mame, TAG_MAMEINFO_R) == 0)
 		{
@@ -369,8 +367,7 @@ int datfile_manager::index_mame_mess_info(DrvIndex &index, std::vector<Itemsinde
 		else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 		{
 			fgets(rbuf, 2048, fp);
-			std::string xid(rbuf);
-			strtrimspace(xid);
+			strtrimspace(xid.assign(rbuf));
 			name = readbuf.substr(t_info + 1);
 			if (xid.compare(0, t_tag, TAG_MAME) == 0)
 			{
@@ -406,8 +403,7 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 	char rbuf[2048];
 	while (fgets(rbuf, 2048, fp) != nullptr)
 	{
-		std::string readbuf(rbuf);
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 
 		if (m_history_rev.empty() && readbuf.compare(0, t_hist, TAG_HISTORY_R) == 0)
 		{
@@ -440,8 +436,7 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 				{
 					// copy data and validate driver
 					int len = found - curpoint;
-					name = readbuf.substr(curpoint, len);
-					strtrimspace(name);
+					strtrimspace(name.assign(readbuf.substr(curpoint, len)));
 
 					// validate driver
 					int game_index = driver_list::find(name.c_str());
@@ -454,9 +449,7 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 				// if comma not found, copy data while until reach the end of string
 				else if (curpoint < ends)
 				{
-					name = readbuf.substr(curpoint);
-					strtrimspace(name);
-
+					strtrimspace(name.assign(readbuf.substr(curpoint)));
 					int game_index = driver_list::find(name.c_str());
 					if (game_index != -1)
 							index.emplace(&driver_list::driver(game_index), ftell(fp));
@@ -488,15 +481,12 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 					// found it
 					if (found != std::string::npos)
 					{
-						int len = found - curpoint;
-						name = s_list.substr(curpoint, len);
-						strtrimspace(name);
+						strtrimspace(name.assign(s_list.substr(curpoint, found - curpoint)));
 						curpoint = found + 1;
 					}
 					else
 					{
-						name = s_list;
-						strtrimspace(name);
+						strtrimspace(name.assign(s_list));
 						curpoint = ends;
 					}
 
@@ -514,9 +504,7 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 						if (found != std::string::npos)
 						{
 							// copy data
-							int len = found - cpoint;
-							name = s_roms.substr(cpoint, len);
-							strtrimspace(name);
+							strtrimspace(name.assign(s_roms.substr(cpoint, found - cpoint)));
 
 							// add a SoftwareItem
 							m_swindex[lname].emplace_back(name, ftell(fp));
@@ -532,8 +520,7 @@ int datfile_manager::index_datafile(DrvIndex &index, int &swcount)
 								break;
 
 							// copy data
-							name = s_roms.substr(cpoint);
-							strtrimspace(name);
+							strtrimspace(name.assign(s_roms.substr(cpoint)));
 
 							// add a SoftwareItem
 							m_swindex[lname].emplace_back(name, ftell(fp));
@@ -599,10 +586,10 @@ void datfile_manager::index_menuidx(const game_driver *drv, DrvIndex &idx, std::
 	size_t tinfo = TAG_INFO.size();
 	size_t tcommand = TAG_COMMAND.size();
 	char rbuf[64 * 1024];
+	std::string readbuf;
 	while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 	{
-		std::string readbuf(rbuf);
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 
 		if (!core_strnicmp(TAG_INFO.c_str(), readbuf.c_str(), tinfo))
 			break;
@@ -611,8 +598,7 @@ void datfile_manager::index_menuidx(const game_driver *drv, DrvIndex &idx, std::
 		if (!core_strnicmp(TAG_COMMAND.c_str(), readbuf.c_str(), tcommand))
 		{
 			fgets(rbuf, 64 * 1024, fp);
-			std::string readbuf(rbuf);
-			strtrimspace(readbuf);
+			strtrimspace(readbuf.assign(rbuf));
 			index.emplace_back(readbuf, ftell(fp));
 		}
 	}
@@ -632,10 +618,10 @@ void datfile_manager::load_command_info(std::string &buffer, const int sel)
 		// open and seek to correct point in datafile
 		fseek(fp, m_menuidx[sel].offset, SEEK_SET);
 		char rbuf[64 * 1024];
+		std::string readbuf;
 		while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 		{
-			std::string readbuf(rbuf);
-			strtrimspace(readbuf);
+			strtrimspace(readbuf.assign(rbuf));
 
 			// skip separator lines
 			if (!core_strnicmp(TAG_COMMAND_SEPARATOR.c_str(), readbuf.c_str(), tcs))

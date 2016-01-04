@@ -113,10 +113,10 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		fseek(fp, offset, SEEK_SET);
 		int num_game = driver_list::total();
 		char rbuf[2048];
+		std::string readbuf;
 		while (fgets(rbuf, 2048, fp) != nullptr)
 		{
-			std::string readbuf(rbuf);
-			strtrimspace(readbuf);
+			strtrimspace(readbuf.assign(rbuf));
 
 			if (readbuf.empty() || readbuf[0] == '[')
 				break;

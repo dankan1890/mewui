@@ -33,9 +33,7 @@
 #include "softlist.h"
 
 static bool first_start = true;
-
-extern const char *dats_info[];
-const char *dats_info[] = { "General Info", "History", "Mameinfo", "Sysinfo", "Messinfo", "Command", "Mamescore" };
+static const char *dats_info[] = { "General Info", "History", "Mameinfo", "Sysinfo", "Messinfo", "Command", "Mamescore" };
 
 //-------------------------------------------------
 //  sort
@@ -1751,9 +1749,7 @@ void ui_mewui_select_game::load_cache_info()
 	char rbuf[2048];
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
-	size_t pos = 0, end = 0;
-	readbuf = rbuf;
-	strtrimspace(readbuf);
+	strtrimspace(readbuf.assign(rbuf));
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? save and exit
@@ -1764,6 +1760,7 @@ void ui_mewui_select_game::load_cache_info()
 		return;
 	}
 
+	size_t pos = 0, end = 0;
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
 	for (int x = 0; x < driver_list::total(); ++x)
@@ -1775,36 +1772,32 @@ void ui_mewui_select_game::load_cache_info()
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
 		file.gets(rbuf, 2048);
-		readbuf = rbuf;
-		strtrimspace(readbuf);
+		strtrimspace(readbuf.assign(rbuf));
 		pos = readbuf.find_first_of(',');
-		driver_cache[x].b_screen = std::stod(readbuf.substr(0, pos));
+		driver_cache[x].b_screen = std::stoi(readbuf.substr(0, pos));
 		end = readbuf.find_first_of(',', ++pos);
-		driver_cache[x].b_samples = std::stod(readbuf.substr(pos, end));
+		driver_cache[x].b_samples = std::stoi(readbuf.substr(pos, end));
 		pos = end;
 		end = readbuf.find_first_of(',', ++pos);
-		driver_cache[x].b_stereo = std::stod(readbuf.substr(pos, end));
+		driver_cache[x].b_stereo = std::stoi(readbuf.substr(pos, end));
 		pos = end;
 		end = readbuf.find_first_of(',', ++pos);
-		driver_cache[x].b_chd = std::stod(readbuf.substr(pos, end));
+		driver_cache[x].b_chd = std::stoi(readbuf.substr(pos, end));
 		pos = end;
-		end = readbuf.find_first_of(',', ++pos);
-		int find = std::stod(readbuf.substr(pos, end));
+		int find = std::stoi(readbuf.substr(pos));
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
 	file.gets(rbuf, 2048);
-	readbuf = rbuf;
-	strtrimspace(readbuf);
+	strtrimspace(readbuf.assign(rbuf));
 	pos = readbuf.find_first_of(',');
-	m_isabios = std::stod(readbuf.substr(0, pos));
+	m_isabios = std::stoi(readbuf.substr(0, pos));
 	end = readbuf.find_first_of(',', ++pos);
-	m_issbios = std::stod(readbuf.substr(pos, end));
+	m_issbios = std::stoi(readbuf.substr(pos, end));
 	pos = end;
 	end = readbuf.find_first_of(',', ++pos);
-	m_isarcades = std::stod(readbuf.substr(pos, end));
+	m_isarcades = std::stoi(readbuf.substr(pos, end));
 	pos = end;
-	end = readbuf.find_first_of(',', ++pos);
-	m_issystems = std::stod(readbuf.substr(pos, end));
+	m_issystems = std::stoi(readbuf.substr(pos));
 	file.close();
 	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());
@@ -1817,48 +1810,49 @@ void ui_mewui_select_game::load_cache_info()
 bool ui_mewui_select_game::load_available_machines()
 {
 	// try to load available drivers from file
-	emu_file efile(machine().options().mewui_path(), OPEN_FLAG_READ);
-	if (efile.open(emulator_info::get_configname(), "_avail.ini") != FILERR_NONE)
+	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
+	if (file.open(emulator_info::get_configname(), "_avail.ini") != FILERR_NONE)
 		return false;
 
-	std::string filename(efile.fullpath());
-	efile.close();
-
-	std::ifstream myfile(filename);
 	std::string readbuf;
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
+	char rbuf[2048];
+	file.gets(rbuf, 2048);
+	file.gets(rbuf, 2048);
+	strtrimspace(readbuf.assign(rbuf));
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? exit
 	if (a_rev != readbuf)
 	{
-		myfile.close();
+		file.close();
 		return false;
 	}
 
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
-
-	UINT8 space = 0;
+	file.gets(rbuf, 2048);
+	file.gets(rbuf, 2048);
 	int avsize = 0, unavsize = 0;
-	myfile >> avsize >> space >> unavsize >> space;
+	file.gets(rbuf, 2048);
+	avsize = atoi(rbuf);
+	file.gets(rbuf, 2048);
+	unavsize = atoi(rbuf);
 	int find = 0;
 
 	// load available list
 	for (int x = 0; x < avsize; ++x)
 	{
-		myfile >> find >> space;
+		file.gets(rbuf, 2048);
+		int find = atoi(rbuf);
 		m_availsortedlist.push_back(&driver_list::driver(find));
 	}
 
 	// load unavailable list
 	for (int x = 0; x < unavsize; ++x)
 	{
-		myfile >> find >> space;
+		file.gets(rbuf, 2048);
+		int find = atoi(rbuf);
 		m_unavailsortedlist.push_back(&driver_list::driver(find));
 	}
-	myfile.close();
+	file.close();
 	return true;
 }
 

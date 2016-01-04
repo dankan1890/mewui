@@ -17,7 +17,6 @@
 #include "render.h"
 #include "libjpeg\jpeglib.h"
 #include <algorithm>
-#include <fstream>
 #include "drivenum.h"
 #include <map>
 

@@ -29,9 +29,6 @@ std::string reselect_last::driver;
 std::string reselect_last::software;
 std::string reselect_last::swlist;
 bool reselect_last::m_reselect = false;
-
-extern const char *dats_info[];
-
 static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
                                       "ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
                                       "isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",

@@ -18,8 +18,6 @@
 //-------------------------------------------------
 //  GLOBAL VARIABLES
 //-------------------------------------------------
-
-static const char *favorite_filename = "favorites.ini";
 UINT16 inifile_manager::current_category = 0;
 UINT16 inifile_manager::current_file = 0;
 
@@ -48,10 +46,10 @@ void inifile_manager::directory_scan()
 	while ((dir = path.next()) != nullptr)
 	{
 		int length = strlen(dir->name);
-		std::string file_name(dir->name);
+		std::string filename(dir->name);
 
 		// skip mewui_favorite file
-		if (!core_stricmp("mewui_favorite.ini", file_name.c_str()))
+		if (!core_stricmp("mewui_favorite.ini", filename.c_str()))
 			continue;
 
 		// check .ini file ending
@@ -59,8 +57,11 @@ void inifile_manager::directory_scan()
 			tolower((UINT8)dir->name[length - 2]) == 'n' && tolower((UINT8)dir->name[length - 1]) == 'i')
 		{
 			// try to open file and indexing
-			if (ParseOpen(file_name.c_str()))
-				init_category(file_name);
+			if (ParseOpen(filename.c_str()))
+			{
+				init_category(filename);
+				ParseClose();
+			}
 		}
 	}
 }
@@ -72,29 +73,27 @@ void inifile_manager::directory_scan()
 void inifile_manager::init_category(std::string &filename)
 {
 	std::vector<IniCategoryIndex> index;
-	std::string readbuf;
-	std::ifstream myfile(m_fullpath, std::ifstream::binary);
-	while (clean_getline(myfile, readbuf))
+	char rbuf[2048];
+	while (fgets(rbuf, 2048, fp) != nullptr)
 	{
-		if (!readbuf.empty() && readbuf[0] == '[')
+		std::string readbuf(rbuf);
+		if (readbuf[0] == '[')
 		{
 			size_t found = readbuf.find("]");
 			std::string name = readbuf.substr(1, found - 1);
 			if (name == "FOLDER_SETTINGS" || name == "ROOT_FOLDER")
 				continue;
 			else
-				index.emplace_back(name, myfile.tellg());
+				index.emplace_back(name, ftell(fp));
 		}
 	}
-//	myfile.close();
 
 	if (!index.empty())
 		ini_index.emplace_back(filename, index);
 }
 
-
 //-------------------------------------------------
-//  closes the existing opened file (if any)
+//  load and indexing ini files
 //-------------------------------------------------
 
 void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
@@ -103,21 +102,25 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		return;
 
 	bool search_clones = false;
-	std::string file_name(ini_index[current_file].name);
+	std::string filename(ini_index[current_file].name);
 	long offset = ini_index[current_file].category[current_category].offset;
 
-	if (!core_stricmp(file_name.c_str(), "category.ini") || !core_stricmp(file_name.c_str(), "alltime.ini"))
+	if (!core_stricmp(filename.c_str(), "category.ini") || !core_stricmp(filename.c_str(), "alltime.ini"))
 		search_clones = true;
 
-	if (ParseOpen(file_name.c_str()))
+	if (ParseOpen(filename.c_str()))
 	{
-		std::ifstream myfile(m_fullpath, std::ifstream::binary);
+		fseek(fp, offset, SEEK_SET);
 		int num_game = driver_list::total();
-		std::string readbuf;
-		myfile.seekg(offset, myfile.beg);
-		while (clean_getline(myfile, readbuf))
+		char rbuf[2048];
+		while (fgets(rbuf, 2048, fp) != nullptr)
 		{
-			if (readbuf.empty() || readbuf[0] == '[') break;
+			std::string readbuf(rbuf);
+			strtrimspace(readbuf);
+
+			if (readbuf.empty() || readbuf[0] == '[')
+				break;
+
 			int dfind = driver_list::find(readbuf.c_str());
 			if (dfind != -1 && search_clones)
 			{
@@ -133,27 +136,30 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 			else if (dfind != -1)
 				temp_filter.push_back(dfind);
 		}
-		myfile.close();
+		ParseClose();
 	}
 }
 
-//-------------------------------------------------
-//  open up file for reading
-//-------------------------------------------------
+//---------------------------------------------------------
+//	ParseOpen - Open up file for reading
+//---------------------------------------------------------
 
 bool inifile_manager::ParseOpen(const char *filename)
 {
-	// Open file up in binary mode
-	emu_file fp(machine().options().extraini_path(), OPEN_FLAG_READ);
+	// MAME core file parsing functions fail in recognizing UNICODE chars in UTF-8 without BOM,
+	// so it's better and faster use standard C fileio functions.
 
-	if (fp.open(filename) == FILERR_NONE)
-	{
-		m_fullpath = fp.fullpath();
-		fp.close();
-		return true;
-	}
+	emu_file file(machine().options().extraini_path(), OPEN_FLAG_READ);
+	if (file.open(filename) != FILERR_NONE)
+		return false;
 
-	return false;
+	m_fullpath = file.fullpath();
+	file.close();
+	fp = fopen(m_fullpath.c_str(), "r");
+
+	fgetc(fp);
+	fseek(fp, 0, SEEK_SET);
+	return true;
 }
 
 /**************************************************************************
@@ -352,13 +358,12 @@ bool favorite_manager::isgame_favorite(ui_software_info &swinfo)
 void favorite_manager::parse_favorite()
 {
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
-
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
 		char readbuf[1024];
 		std::string text;
-
 		file.gets(readbuf, 1024);
+
 		while (readbuf[0] == '[')
 			file.gets(readbuf, 1024);
 
@@ -413,7 +418,6 @@ void favorite_manager::save_favorite_games()
 {
 	// attempt to open the output file
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
 		if (m_list.empty())
@@ -425,7 +429,6 @@ void favorite_manager::save_favorite_games()
 
 		// generate the favorite INI
 		std::string text("[ROOT_FOLDER]\n[Favorite]\n\n");
-
 		for (auto & elem : m_list)
 		{
 			text += elem.shortname + "\n";

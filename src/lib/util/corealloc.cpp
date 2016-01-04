@@ -190,9 +190,9 @@ void free_file_line(void *memory, const char *file, int line, bool array)
 	if (entry == nullptr)
 	{
 		fprintf(stderr, "Error: attempt to free untracked memory %p in %s(%d)!\n", memory, file, line);
-#ifndef _MSC_VER // todo: check fstream in Visual Studio
+//#ifndef _MSC_VER // todo: check fstream in Visual Studio
 		osd_break_into_debugger("Error: attempt to free untracked memory");
-#endif // !_MSC_VER
+//#endif // !_MSC_VER
 		return;
 	}
 

@@ -38,13 +38,6 @@ public:
 	std::string rev_storyinfo() const { return m_story_rev; }
 
 private:
-	struct Drvindex
-	{
-		Drvindex(const game_driver *_driver, long _off) { driver = _driver; offset = _off; }
-		const game_driver *driver;
-		long offset;
-	};
-
 	struct Itemsindex
 	{
 		Itemsindex(std::string _name, long _off) { name = _name; offset = _off; }
@@ -52,10 +45,13 @@ private:
 		long offset;
 	};
 
+	typedef std::unordered_map<const game_driver *, long> DrvIndex;
+	typedef std::unordered_map<std::string, std::vector<Itemsindex>> SwIndex;
+
 	// global index
-	std::vector<Drvindex> m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
+	DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
 	std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
-	std::unordered_map<std::string, std::vector<Itemsindex>> m_swindex;
+	SwIndex m_swindex;
 
 	// internal helpers
 	void init_history();
@@ -65,19 +61,22 @@ private:
 	void init_sysinfo();
 	void init_storyinfo();
 
+	// file open/close/seek
 	bool ParseOpen(const char *filename);
+	void ParseClose() { if (fp != nullptr) fclose(fp); }
 
-	int index_mame_mess_info(std::vector<Drvindex> &index, std::vector<Itemsindex> &index_drv, int &drvcount);
-	int index_datafile(std::vector<Drvindex> &index, int &swcount);
-	void index_menuidx(const game_driver *drv, std::vector<Drvindex> &idx, std::vector<Itemsindex> &index);
+	int index_mame_mess_info(DrvIndex &index, std::vector<Itemsindex> &index_drv, int &drvcount);
+	int index_datafile(DrvIndex &index, int &swcount);
+	void index_menuidx(const game_driver *drv, DrvIndex &idx, std::vector<Itemsindex> &index);
 
-	void load_data_text(const game_driver *drv, std::string &buffer, std::vector<Drvindex> &idx, const char *tag);
-	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, const char *tag);
+	void load_data_text(const game_driver *drv, std::string &buffer, DrvIndex &idx, std::string &tag);
+	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, std::string &tag);
 
 	// internal state
 	running_machine     &m_machine;             // reference to our machine
 	std::string         m_fullpath;
 	std::string         m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
+	FILE				*fp = nullptr;
 };
 
 

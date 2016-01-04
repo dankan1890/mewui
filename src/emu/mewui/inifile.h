@@ -15,22 +15,6 @@
 
 #include "mewui/utils.h"
 
-// category structure
-struct IniCategoryIndex
-{
-	IniCategoryIndex(std::string _name, long _offset) { name = _name; offset = _offset; }
-	std::string name;
-	long offset;
-};
-
-// ini file structure
-struct IniFileIndex
-{
-	IniFileIndex(std::string _name, std::vector<IniCategoryIndex> _category) { name = _name; category = _category; }
-	std::string name;
-	std::vector<IniCategoryIndex> category;
-};
-
 //-------------------------------------------------
 //  INIFILE MANAGER
 //-------------------------------------------------
@@ -38,6 +22,22 @@ struct IniFileIndex
 class inifile_manager
 {
 public:
+	// category structure
+	struct IniCategoryIndex
+	{
+		IniCategoryIndex(std::string _name, long _offset) { name = _name; offset = _offset; }
+		std::string name;
+		long offset;
+	};
+
+	// ini file structure
+	struct IniFileIndex
+	{
+		IniFileIndex(std::string _name, std::vector<IniCategoryIndex> _category) { name = _name; category = _category; }
+		std::string name;
+		std::vector<IniCategoryIndex> category;
+	};
+
 	// construction/destruction
 	inifile_manager(running_machine &machine);
 
@@ -58,12 +58,14 @@ private:
 	// init file index
 	void directory_scan();
 
-	// file open/close
+	// file open/close/seek
 	bool ParseOpen(const char *filename);
+	void ParseClose() { if (fp != nullptr) fclose(fp); }
 
 	// internal state
 	running_machine &m_machine;  // reference to our machine
 	std::string     m_fullpath;
+	FILE			*fp = nullptr;
 };
 
 //-------------------------------------------------
@@ -100,6 +102,8 @@ public:
 	void remove_favorite_game(ui_software_info &swinfo);
 
 private:
+	const char *favorite_filename = "favorites.ini";
+	
 	// current
 	int m_current;
 

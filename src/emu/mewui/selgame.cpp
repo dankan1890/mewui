@@ -14,10 +14,8 @@
 #include "ui/menu.h"
 #include "uiinput.h"
 #include "mewui/selgame.h"
-#include "ui/inputmap.h"
 #include "ui/miscmenu.h"
 #include "audit.h"
-#include <ctype.h>
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
 #include "rendfont.h"
@@ -27,7 +25,6 @@
 #include "mewui/selector.h"
 #include "mewui/selsoft.h"
 #include "sound/samples.h"
-#include "unzip.h"
 #include "mewui/custmenu.h"
 #include "info.h"
 #include "mewui/utils.h"
@@ -1655,13 +1652,10 @@ void ui_mewui_select_game::save_cache_info()
 	if (file.open("info_", emulator_info::get_configname(), ".ini") == FILERR_NONE)
 	{
 		std::string filename(file.fullpath());
-		file.close();
-		std::ofstream myfile(filename);
 		m_sortedlist.clear();
 
 		// generate header
 		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
-		myfile << buffer;
 
 		// generate full list
 		for (int x = 0; x < driver_list::total(); ++x)
@@ -1723,23 +1717,17 @@ void ui_mewui_select_game::save_cache_info()
 					break;
 				}
 			driver_cache[x].b_screen = infos.b_screen;
-			myfile << infos.b_screen;
 			driver_cache[x].b_samples = infos.b_samples;
-			myfile << infos.b_samples;
 			driver_cache[x].b_stereo = infos.b_stereo;
-			myfile << infos.b_stereo;
 			driver_cache[x].b_chd = infos.b_chd;
-			myfile << infos.b_chd;
 			int find = driver_list::find(m_sortedlist[index++]->name);
-			myfile << find;
+			strcatprintf(buffer, "%d,%d,%d,%d,%d\n", infos.b_screen, infos.b_samples, infos.b_stereo, infos.b_chd, find);
 		}
 
 		UINT8 space = 0;
-		myfile << space << m_isabios;
-		myfile << space << m_issbios;
-		myfile << space << m_isarcades;
-		myfile << space << m_issystems;
-		myfile.close();
+		strcatprintf(buffer, "%d,%d,%d,%d\n", m_isabios, m_issbios, m_isarcades, m_issystems);
+		file.puts(buffer.c_str());
+		file.close();
 	}
 }
 
@@ -1752,33 +1740,32 @@ void ui_mewui_select_game::load_cache_info()
 	driver_cache.resize(driver_list::total() + 1);
 
 	// try to load driver cache
-	emu_file efile(machine().options().mewui_path(), OPEN_FLAG_READ);
-	if (efile.open("info_", emulator_info::get_configname(), ".ini") != FILERR_NONE)
+	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
+	if (file.open("info_", emulator_info::get_configname(), ".ini") != FILERR_NONE)
 	{
 		save_cache_info();
 		return;
 	}
 
-	std::string filename(efile.fullpath());
-	efile.close();
-
-	std::ifstream myfile(filename);
 	std::string readbuf;
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
+	char rbuf[2048];
+	file.gets(rbuf, 2048);
+	file.gets(rbuf, 2048);
+	size_t pos = 0, end = 0;
+	readbuf = rbuf;
+	strtrimspace(readbuf);
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? save and exit
 	if (a_rev != readbuf)
 	{
-		myfile.close();
+		file.close();
 		save_cache_info();
 		return;
 	}
 
-	std::getline(myfile, readbuf);
-	std::getline(myfile, readbuf);
-
+	file.gets(rbuf, 2048);
+	file.gets(rbuf, 2048);
 	for (int x = 0; x < driver_list::total(); ++x)
 	{
 		const game_driver *driver = &driver_list::driver(x);
@@ -1787,20 +1774,38 @@ void ui_mewui_select_game::load_cache_info()
 
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
-		myfile >> driver_cache[x].b_screen;
-		myfile >> driver_cache[x].b_samples;
-		myfile >> driver_cache[x].b_stereo;
-		myfile >> driver_cache[x].b_chd;
-		int find;
-		myfile >> find;
+		file.gets(rbuf, 2048);
+		readbuf = rbuf;
+		strtrimspace(readbuf);
+		pos = readbuf.find_first_of(',');
+		driver_cache[x].b_screen = std::stod(readbuf.substr(0, pos));
+		end = readbuf.find_first_of(',', ++pos);
+		driver_cache[x].b_samples = std::stod(readbuf.substr(pos, end));
+		pos = end;
+		end = readbuf.find_first_of(',', ++pos);
+		driver_cache[x].b_stereo = std::stod(readbuf.substr(pos, end));
+		pos = end;
+		end = readbuf.find_first_of(',', ++pos);
+		driver_cache[x].b_chd = std::stod(readbuf.substr(pos, end));
+		pos = end;
+		end = readbuf.find_first_of(',', ++pos);
+		int find = std::stod(readbuf.substr(pos, end));
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
-	UINT8 space = 0;
-	myfile >> space >> m_isabios;
-	myfile >> space >> m_issbios;
-	myfile >> space >> m_isarcades;
-	myfile >> space >> m_issystems;
-	myfile.close();
+	file.gets(rbuf, 2048);
+	readbuf = rbuf;
+	strtrimspace(readbuf);
+	pos = readbuf.find_first_of(',');
+	m_isabios = std::stod(readbuf.substr(0, pos));
+	end = readbuf.find_first_of(',', ++pos);
+	m_issbios = std::stod(readbuf.substr(pos, end));
+	pos = end;
+	end = readbuf.find_first_of(',', ++pos);
+	m_isarcades = std::stod(readbuf.substr(pos, end));
+	pos = end;
+	end = readbuf.find_first_of(',', ++pos);
+	m_issystems = std::stod(readbuf.substr(pos, end));
+	file.close();
 	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());
 }

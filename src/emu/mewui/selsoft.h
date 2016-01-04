@@ -12,7 +12,7 @@
 #ifndef __MEWUI_SELSOFT_H__
 #define __MEWUI_SELSOFT_H__
 
-#include "mewui/custmenu.h"
+#include "mewui\custmenu.h"
 
 struct s_bios
 {

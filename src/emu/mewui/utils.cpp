@@ -9,9 +9,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "mewui/utils.h"
-#include "mewui/inifile.h"
-#include "sound/samples.h"
+#include "mewui\utils.h"
+#include "mewui\inifile.h"
+#include "sound\samples.h"
 #include "audit.h"
 
 // Years index

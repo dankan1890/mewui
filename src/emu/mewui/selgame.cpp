@@ -1722,7 +1722,6 @@ void ui_mewui_select_game::save_cache_info()
 			strcatprintf(buffer, "%d,%d,%d,%d,%d\n", infos.b_screen, infos.b_samples, infos.b_stereo, infos.b_chd, find);
 		}
 
-		UINT8 space = 0;
 		strcatprintf(buffer, "%d,%d,%d,%d\n", m_isabios, m_issbios, m_isarcades, m_issystems);
 		file.puts(buffer.c_str());
 		file.close();
@@ -1835,7 +1834,6 @@ bool ui_mewui_select_game::load_available_machines()
 	avsize = atoi(rbuf);
 	file.gets(rbuf, 2048);
 	unavsize = atoi(rbuf);
-	int find = 0;
 
 	// load available list
 	for (int x = 0; x < avsize; ++x)

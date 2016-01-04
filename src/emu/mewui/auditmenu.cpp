@@ -181,8 +181,8 @@ void ui_menu_audit::save_available_machines()
 	{
 		// generate header
 		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
-		strcatprintf(buffer, "%d\n", m_availablesorted.size());
-		strcatprintf(buffer, "%d\n", m_unavailablesorted.size());
+		strcatprintf(buffer, "%d\n", (int)m_availablesorted.size());
+		strcatprintf(buffer, "%d\n", (int)m_unavailablesorted.size());
 
 		// generate available list
 		for (size_t x = 0; x < m_availablesorted.size(); ++x)

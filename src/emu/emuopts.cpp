@@ -185,7 +185,8 @@ const options_entry emu_options::s_option_entries[] =
 	{ OPTION_AUTOBOOT_COMMAND ";ab",                     nullptr,        OPTION_STRING,     "command to execute after machine boot" },
 	{ OPTION_AUTOBOOT_DELAY,                             "2",         OPTION_INTEGER,    "timer delay in sec to trigger command execution on autoboot" },
 	{ OPTION_AUTOBOOT_SCRIPT ";script",                  nullptr,        OPTION_STRING,     "lua script to execute after machine boot" },
-
+	{ OPTION_CONSOLE,                                    "0",         OPTION_BOOLEAN,    "enable emulator LUA console" },
+	
 	// MEWUI seach path options
 	{ nullptr,                           nullptr,  OPTION_HEADER,  "MEWUI SEARCH PATH OPTIONS" },
 	{ OPTION_HISTORY_PATH,             "history",  OPTION_STRING,  "path to history files" },

@@ -117,7 +117,8 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		std::string readbuf;
 		while (fgets(rbuf, 2048, fp) != nullptr)
 		{
-			strtrimcarriage(readbuf.assign(rbuf));
+			chartrimcarriage(rbuf);
+			readbuf = rbuf;
 
 			if (readbuf.empty() || readbuf[0] == '[')
 				break;

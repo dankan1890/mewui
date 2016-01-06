@@ -88,6 +88,13 @@ std::string strtrimcarriage(std::string &str)
 	return str;
 }
 
+void chartrimcarriage(char str[])
+{
+	size_t len = strlen(str);
+	if (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
+		str[len - 1] = '\0';
+}
+
 //-------------------------------------------------
 //  search a substring with even partial matching
 //-------------------------------------------------

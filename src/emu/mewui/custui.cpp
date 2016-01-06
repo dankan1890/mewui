@@ -972,10 +972,8 @@ void ui_menu_rgb_ui::inkey_special(const ui_menu_event *m_event)
 	// if it's a backspace and we can handle it, do so
 	if (((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0))
 		*(char *)utf8_previous_char(&m_search[buflen]) = 0;
-
 	else if (buflen >= 3)
 		return;
-
 	// if it's any other key and we're not maxed out, update
 	else if ((m_event->unichar >= '0' && m_event->unichar <= '9'))
 		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);

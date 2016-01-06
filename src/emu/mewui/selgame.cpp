@@ -1020,22 +1020,19 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 						ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_select_software(machine(), container, driver)));
 						return;
 					}
-
 			}
+
+			std::vector<s_bios> biosname;
+			if (!machine().options().skip_bios_menu() && has_multiple_bios(driver, biosname))
+				ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)driver, false, false)));
 			else
 			{
-				std::vector<s_bios> biosname;
-				if (!machine().options().skip_bios_menu() && has_multiple_bios(driver, biosname))
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_mewui_bios_selection(machine(), container, biosname, (void *)driver, false, false)));
-				else
-				{
-					reselect_last::driver = driver->name;
-					reselect_last::software.clear();
-					reselect_last::swlist.clear();
-					machine().manager().schedule_new_driver(*driver);
-					machine().schedule_hard_reset();
-					ui_menu::stack_reset(machine());
-				}
+				reselect_last::driver = driver->name;
+				reselect_last::software.clear();
+				reselect_last::swlist.clear();
+				machine().manager().schedule_new_driver(*driver);
+				machine().schedule_hard_reset();
+				ui_menu::stack_reset(machine());
 			}
 		}
 		// otherwise, display an error
@@ -1649,7 +1646,6 @@ void ui_mewui_select_game::save_cache_info()
 
 	if (file.open("info_", emulator_info::get_configname(), ".ini") == FILERR_NONE)
 	{
-		std::string filename(file.fullpath());
 		m_sortedlist.clear();
 
 		// generate header
@@ -1748,7 +1744,8 @@ void ui_mewui_select_game::load_cache_info()
 	char rbuf[2048];
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
-	strtrimcarriage(readbuf.assign(rbuf));
+	chartrimcarriage(rbuf);
+	readbuf = rbuf;
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? save and exit
@@ -1771,7 +1768,8 @@ void ui_mewui_select_game::load_cache_info()
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
 		file.gets(rbuf, 2048);
-		strtrimcarriage(readbuf.assign(rbuf));
+		chartrimcarriage(rbuf);
+		readbuf = rbuf;
 		pos = readbuf.find_first_of(',');
 		driver_cache[x].b_screen = std::stoi(readbuf.substr(0, pos));
 		end = readbuf.find_first_of(',', ++pos);
@@ -1787,7 +1785,8 @@ void ui_mewui_select_game::load_cache_info()
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
 	file.gets(rbuf, 2048);
-	strtrimcarriage(readbuf.assign(rbuf));
+	chartrimcarriage(rbuf);
+	readbuf = rbuf;
 	pos = readbuf.find_first_of(',');
 	m_isabios = std::stoi(readbuf.substr(0, pos));
 	end = readbuf.find_first_of(',', ++pos);
@@ -1817,7 +1816,8 @@ bool ui_mewui_select_game::load_available_machines()
 	char rbuf[2048];
 	file.gets(rbuf, 2048);
 	file.gets(rbuf, 2048);
-	strtrimcarriage(readbuf.assign(rbuf));
+	chartrimcarriage(rbuf);
+	readbuf = rbuf;
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
 
 	// version not matching ? exit

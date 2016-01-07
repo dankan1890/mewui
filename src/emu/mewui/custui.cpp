@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/custui.c
+    mewui/custui.cpp
 
     Internal MEWUI user interface.
 

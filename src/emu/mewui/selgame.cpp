@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/selgame.c
+    mewui/selgame.cpp
 
     Main MEWUI menu.
 

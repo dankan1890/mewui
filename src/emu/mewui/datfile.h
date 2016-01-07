@@ -45,8 +45,8 @@ private:
 		long offset;
 	};
 
-	typedef std::unordered_map<const game_driver *, long> DrvIndex;
-	typedef std::unordered_map<std::string, std::vector<Itemsindex>> SwIndex;
+	using DrvIndex = std::unordered_map<const game_driver *, long>;
+	using SwIndex = std::unordered_map<std::string, std::vector<Itemsindex>>;
 
 	// global index
 	DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;

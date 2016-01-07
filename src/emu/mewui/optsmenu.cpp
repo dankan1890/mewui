@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/optsmenu.c
+    mewui/optsmenu.cpp
 
     MEWUI main options menu manager.
 

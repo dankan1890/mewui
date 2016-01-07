@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/dirmenu.c
+    mewui/dirmenu.cpp
 
     Internal MEWUI user interface.
 

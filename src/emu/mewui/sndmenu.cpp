@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/sndmenu.c
+    mewui/sndmenu.cpp
 
     Internal MEWUI user interface.
 

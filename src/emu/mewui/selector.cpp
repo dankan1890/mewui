@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/m_selector.c
+    mewui/m_selector.cpp
 
     Internal MEWUI user interface.
 

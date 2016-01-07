@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/dsplmenu.c
+    mewui/dsplmenu.cpp
 
     MEWUI video options menu.
 

@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/auditmenu.c
+    mewui/auditmenu.cpp
 
     Internal MEWUI user interface.
 

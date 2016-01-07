@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/datmenu.c
+    mewui/datmenu.cpp
 
     Internal MEWUI user interface.
 

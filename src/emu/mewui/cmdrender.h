@@ -23,7 +23,6 @@ void convert_command_glyph(std::string &str)
 	{
 		fix_command_t *fixcmd = nullptr;
 		unicode_char uchar;
-
 		int ucharcount = uchar_from_utf8(&uchar, s + i, len - i);
 		if (ucharcount == -1)
 			break;
@@ -33,13 +32,12 @@ void convert_command_glyph(std::string &str)
 			uchar = '\n';
 		else if (s[i] == COMMAND_CONVERT_TEXT)
 		{
-			fix_strings_t *fixtext = convert_text;
-
 			if (s[i] == s[i + 1])
-				i++;
+				++i;
 			else
 			{
-				for (; fixtext->glyph_code; fixtext++)
+				fix_strings_t *fixtext = convert_text;
+				for (; fixtext->glyph_code; ++fixtext)
 				{
 					if (!fixtext->glyph_str_len)
 						fixtext->glyph_str_len = strlen(fixtext->glyph_str);
@@ -64,26 +62,22 @@ void convert_command_glyph(std::string &str)
 				i++;
 			else
 			{
-				for (; fixcmd->glyph_code; fixcmd++)
+				for (; fixcmd->glyph_code; ++fixcmd)
 					if (s[i + 1] == fixcmd->glyph_char)
 					{
 						uchar = fixcmd->glyph_code + COMMAND_UNICODE;
-						i++;
+						++i;
 						break;
 					}
 			}
 		}
-
 process_next:
 		i += ucharcount;
-
 		ucharcount = utf8_from_uchar(d + j, buflen - j - 1, uchar);
 		if (ucharcount == -1)
 			break;
-
 		j += ucharcount;
 	}
-
 	d[j] = '\0';
 	str = d;
 	global_free_array(d);

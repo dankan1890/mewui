@@ -68,7 +68,7 @@ void ui_menu_command::handle()
 	if (m_event != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		std::string m_title(item[selected].text);
-		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command_content(machine(), container, (FPTR)m_event->itemref, m_title, m_driver)));
+		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command_content>(machine(), container, (FPTR)m_event->itemref, m_title, m_driver)));
 	}
 }
 

@@ -61,11 +61,11 @@ void ui_menu_custom_ui::handle()
 			switch ((FPTR)m_event->itemref)
 			{
 				case FONT_MENU:
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_font_ui(machine(), container)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_font_ui>(machine(), container)));
 					break;
 
 				case COLORS_MENU:
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_colors_ui(machine(), container)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_colors_ui>(machine(), container)));
 					break;
 				case HIDE_MENU:
 				{
@@ -74,7 +74,7 @@ void ui_menu_custom_ui::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = hide_status[index];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::panels_status)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, &mewui_globals::panels_status)));
 				}
 			}
 		}
@@ -282,7 +282,7 @@ void ui_menu_font_ui::handle()
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_class.ui, &m_class.actual)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_class.ui, &m_class.actual)));
 					changed = true;
 				}
 				break;
@@ -461,7 +461,7 @@ void ui_menu_colors_ui::handle()
 	if (m_event != nullptr && m_event->itemref != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		if ((FPTR)m_event->itemref != MUI_RESTORE)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_rgb_ui(machine(), container, &m_color_table[(FPTR)m_event->itemref].color, item[selected].text)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_rgb_ui>(machine(), container, &m_color_table[(FPTR)m_event->itemref].color, item[selected].text)));
 		else
 		{
 			changed = true;
@@ -789,7 +789,7 @@ void ui_menu_rgb_ui::handle()
 
 			case PALETTE_CHOOSE:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_palette_sel(machine(), container, *m_color)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_palette_sel>(machine(), container, *m_color)));
 				break;
 		}
 	}

@@ -120,7 +120,7 @@ void ui_menu_display_options::handle()
 				for (int index = 0; index < total; ++index)
 					s_sel[index] = m_video[index].label;
 
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, &m_options[value].status)));
 			}
 		}
 		else if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT || m_event->iptkey == IPT_UI_SELECT)

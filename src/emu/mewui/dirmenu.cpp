@@ -349,7 +349,7 @@ void ui_menu_directory::handle()
 	{
 		int ref = (FPTR)m_event->itemref;
 		bool change = (ref == HISTORY_FOLDERS || ref == EXTRAINI_FOLDERS || ref == MEWUI_FOLDERS);
-		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_display_actual(machine(), container, ref, change)));
+		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_display_actual>(machine(), container, ref, change)));
 	}
 }
 
@@ -454,12 +454,12 @@ void ui_menu_display_actual::handle()
 		switch ((FPTR)m_event->itemref)
 		{
 			case REMOVE_FOLDER:
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_remove_folder(machine(), container, m_ref)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_remove_folder>(machine(), container, m_ref)));
 				break;
 
 			case ADD_FOLDER:
 			case CHANGE_FOLDER:
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_add_change_folder(machine(), container, m_ref, m_change)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_add_change_folder>(machine(), container, m_ref, m_change)));
 				break;
 		}
 }

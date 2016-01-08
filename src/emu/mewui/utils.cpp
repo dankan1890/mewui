@@ -114,8 +114,8 @@ int fuzzy_substring(std::string s_needle, std::string s_haystack)
 	if (s_haystack.find(s_needle) != std::string::npos)
 		return 0;
 
-	auto *row1 = global_alloc_array_clear(int, s_haystack.size() + 2);
-	auto *row2 = global_alloc_array_clear(int, s_haystack.size() + 2);
+	auto *row1 = global_alloc_array_clear<int>(s_haystack.size() + 2);
+	auto *row2 = global_alloc_array_clear<int>(s_haystack.size() + 2);
 
 	for (int i = 0; i < s_needle.size(); ++i)
 	{

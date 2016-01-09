@@ -22,19 +22,19 @@ before_install:
     sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
     fi
 script:
-  - make -j4
+  - make -j4 && ./mewuitest64 -validate
 after_success:
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then
     echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdllib.zip mewuitest64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
-    curl --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Lib/ &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/commit.txt' -Q 'RNTO upload/Mac-Lib/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac-Lib/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
+    curl -# --ftp-create-dirs -T "{mewui64-mac-sdllib.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Lib/ &&
+    curl -# --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/commit.txt' -Q 'RNTO upload/Mac-Lib/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
+    curl -# --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Lib/mewui64-mac-sdllib.zip' -Q 'RNTO upload/Mac-Lib/mewui64-mac-sdllib.zip' -u $FTP_USER:$FTP_PASSWORD;
     else echo $TRAVIS_COMMIT &&
     echo $TRAVIS_COMMIT > commit.txt &&
     zip -9 -r mewui64-mac-sdlframework.zip mewuitest64 docs/ hash/ hlsl/ nl_examples/ samples/ &&
-    curl --ftp-create-dirs -T "{mewui64-mac-sdlframework.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Framework/ &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/commit.txt' -Q 'RNTO upload/Mac-Framework/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
-    curl --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/mewui64-mac-sdlframework.zip' -Q 'RNTO upload/Mac-Framework/mewui64-mac-sdlframework.zip' -u $FTP_USER:$FTP_PASSWORD;
+    curl -# --ftp-create-dirs -T "{mewui64-mac-sdlframework.zip,commit.txt}" -u $FTP_USER:$FTP_PASSWORD ftp://ftp.mewui.altervista.org/tmp/Mac-Framework/ &&
+    curl -# --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/commit.txt' -Q 'RNTO upload/Mac-Framework/commit.txt' -u $FTP_USER:$FTP_PASSWORD &&
+    curl -# --ftp-create-dirs ftp://ftp.mewui.altervista.org/ -Q 'RNFR tmp/Mac-Framework/mewui64-mac-sdlframework.zip' -Q 'RNTO upload/Mac-Framework/mewui64-mac-sdlframework.zip' -u $FTP_USER:$FTP_PASSWORD;
     fi

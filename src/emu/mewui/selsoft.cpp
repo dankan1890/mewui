@@ -1186,8 +1186,8 @@ void ui_menu_select_software::find_matches(const char *str, int count)
 	for (; m_displaylist[index]; ++index)
 	{
 		// pick the best match between driver name and description
-		int curpenalty = driver_list::penalty_compare(str, m_displaylist[index]->longname.c_str());
-		int tmp = driver_list::penalty_compare(str, m_displaylist[index]->shortname.c_str());
+		int curpenalty = fuzzy_substring(str, m_displaylist[index]->longname);
+		int tmp = fuzzy_substring(str, m_displaylist[index]->shortname);
 		curpenalty = MIN(curpenalty, tmp);
 
 		// insert into the sorted table of matches

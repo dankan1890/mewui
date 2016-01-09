@@ -12,7 +12,6 @@
 #include "ui/ui.h"
 #include "ui/menu.h"
 #include "mewui/custmenu.h"
-#include "mewui/utils.h"
 #include "mewui/selector.h"
 #include "mewui/inifile.h"
 #include "rendfont.h"

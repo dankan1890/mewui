@@ -363,7 +363,6 @@ void favorite_manager::parse_favorite()
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
 		char readbuf[1024];
-		std::string text;
 		file.gets(readbuf, 1024);
 
 		while (readbuf[0] == '[')
@@ -372,38 +371,38 @@ void favorite_manager::parse_favorite()
 		while (file.gets(readbuf, 1024))
 		{
 			ui_software_info tmpmatches;
-			tmpmatches.shortname = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.shortname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.longname = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.longname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.parentname = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.parentname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.year = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.year = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.publisher = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.publisher = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.supported = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.part = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.part = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			text = strtrimcarriage(text.assign(readbuf));
-			int dx = driver_list::find(text.c_str());
+			chartrimcarriage(readbuf);
+			int dx = driver_list::find(readbuf);
 			if (dx == -1) continue;
 			tmpmatches.driver = &driver_list::driver(dx);
 			file.gets(readbuf, 1024);
-			tmpmatches.listname = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.listname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.interface = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.interface = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.instance = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.instance = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.startempty = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.parentlongname = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.parentlongname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.usage = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.usage = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.devicetype = strtrimcarriage(text.assign(readbuf));
+			tmpmatches.devicetype = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.available = atoi(readbuf);
 			m_list.push_back(tmpmatches);

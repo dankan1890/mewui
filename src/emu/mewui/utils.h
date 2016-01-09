@@ -273,7 +273,9 @@ struct sw_custfltr
 
 // advanced search function
 int fuzzy_substring(std::string needle, std::string haystack);
-int fuzzy_substring2(const char *needle, const char *haystack);
+
+// trim carriage return
+char* chartrimcarriage(char str[]);
 
 // jpeg loader
 template <typename _T>
@@ -360,8 +362,5 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	free(buffer);
 	global_free_array(jpg_buffer);
 }
-
-std::string strtrimcarriage(std::string &str);
-void chartrimcarriage(char str[]);
 
 #endif /* __MEWUI_UTILS_H__ */

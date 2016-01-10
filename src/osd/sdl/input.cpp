@@ -1879,7 +1879,7 @@ void sdlinput_poll(running_machine &machine)
 				sdl_window_info *window = GET_FOCUS_WINDOW(&event.button);
 				if (window != NULL && window->xy_to_render_target(event.button.x,event.button.y, &cx, &cy) )
 				{
-					machine().ui_input().push_mouse_wheel_event(window->target(), cx, cy, -120, 3);
+					machine.ui_input().push_mouse_wheel_event(window->target(), cx, cy, -120, 3);
 				}
 			}
 #endif
@@ -1895,7 +1895,7 @@ void sdlinput_poll(running_machine &machine)
 			{
 				sdl_window_info *window = GET_FOCUS_WINDOW(&event.wheel);
 				if (window != NULL)
-					machine().ui_input().push_mouse_wheel_event(window->target(), 0, 0, event.wheel.y, 3);
+					machine.ui_input().push_mouse_wheel_event(window->target(), 0, 0, event.wheel.y, 3);
 			}
 			break;
 #endif

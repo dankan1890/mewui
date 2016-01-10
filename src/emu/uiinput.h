@@ -110,7 +110,7 @@ private:
 	int                         m_events_start;
 	int                         m_events_end;
 
-	bool						m_initialized;
+//	bool						m_initialized;
 };
 
 #endif  /* __UIINPUT_H__ */

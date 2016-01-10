@@ -492,10 +492,8 @@ void ui_mewui_select_game::handle()
 
 	// if we're in an error state, overlay an error message
 	if (ui_error)
-		machine().ui().draw_text_box(container,
-		                             "The selected game is missing one or more required ROM or CHD images. "
-		                             "Please select a different game.\n\nPress any key (except ESC) to continue.",
-		                             JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
+		machine().ui().draw_text_box(container, "The selected game is missing one or more required ROM or CHD images. " 
+			"Please select a different game.\n\nPress any key (except ESC) to continue.", JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
 
 	// handle filters selection from key shortcuts
 	if (check_filter)
@@ -512,11 +510,9 @@ void ui_mewui_select_game::handle()
 			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_custom_filter>(machine(), container, true)));
 		}
 		else if (l_hover == FILTER_MANUFACTURER)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui,
-			                                     &c_mnfct::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, &c_mnfct::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_YEAR)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui,
-			                                     &c_year::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, &c_year::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_SCREEN)
 		{
 			std::vector<std::string> text(screen_filters::length);
@@ -605,8 +601,8 @@ void ui_mewui_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(m_displaylist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-				            (void *)m_displaylist[curitem]);
+				item_append(m_displaylist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui), 
+					(void *)m_displaylist[curitem]);
 			}
 		}
 	}
@@ -633,8 +629,7 @@ void ui_mewui_select_game::populate()
 			}
 			else
 				item_append(mfavorite.longname.c_str(), mfavorite.devicetype.c_str(), 
-					mfavorite.parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-					(void *)&mfavorite);
+					mfavorite.parentname.empty() ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui), (void *)&mfavorite);
 		}
 	}
 
@@ -799,8 +794,8 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 	// draw the text within it
 	for (int line = 0; line < 2; ++line)
 	{
-		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+		mui.draw_text_full(container, tempbuf[line].c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER, 
+			DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 		y1 += mui.get_line_height();
 	}
 
@@ -929,8 +924,8 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	for (auto & elem : tempbuf)
 	{
-		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-		                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
+		mui.draw_text_full(container, elem.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER, 
+			DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
 	}
@@ -1103,7 +1098,6 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		software_list_device *swlist = software_list_device::find_by_name(drv.config(), ui_swinfo->listname.c_str());
 		software_info *swinfo = swlist->find(ui_swinfo->shortname.c_str());
 		media_auditor::summary summary = auditor.audit_software(swlist->list_name(), swinfo, AUDIT_VALIDATE_FAST);
-
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
 			std::vector<s_bios> biosname;
@@ -1501,8 +1495,8 @@ void ui_mewui_select_game::populate_search()
 			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 				cloneof = false;
 		}
-		item_append(m_searchlist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui),
-		            (void *)m_searchlist[curitem]);
+		item_append(m_searchlist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui), 
+			(void *)m_searchlist[curitem]);
 	}
 }
 
@@ -1586,7 +1580,6 @@ void ui_mewui_select_game::inkey_export()
 	std::string filename("exported");
 	emu_file infile(machine().options().mewui_path(), OPEN_FLAG_READ);
 	if (infile.open(filename.c_str(), ".xml") == FILERR_NONE)
-	{
 		for (int seq = 0; ; ++seq)
 		{
 			std::string seqtext;
@@ -1597,7 +1590,6 @@ void ui_mewui_select_game::inkey_export()
 				break;
 			}
 		}
-	}
 
 	// attempt to open the output file
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
@@ -2021,8 +2013,8 @@ float ui_mewui_select_game::draw_left_panel(float x1, float y1, float x2, float 
 				convert_command_glyph(str);
 			}
 
-			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER,
-			                              DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
+			mui.draw_text_full(container, str.c_str(), x1t, y1, x2 - x1, JUSTIFY_LEFT, WRAP_NEVER, 
+				DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 			y1 += line_height_max;
 		}
 
@@ -2131,14 +2123,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		for (int x = MEWUI_FIRST_LOAD; x < MEWUI_LAST_LOAD; ++x)
 		{
-			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
+			mui.draw_text_full(container, dats_info[x], origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, 
+				WRAP_TRUNCATE, DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 			txt_lenght += 0.01f;
 			title_size = MAX(txt_lenght, title_size);
 		}
 
-		mui.draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER,
-		                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+		mui.draw_text_full(container, snaptext.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, 
+			WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 		draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::curdats_view, MEWUI_FIRST_LOAD, MEWUI_LAST_LOAD, title_size);
 
@@ -2174,13 +2166,13 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		if (buffer.empty())
 		{
-			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER, 
+				WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
-			                         xstart, xend, text_size);
+			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines, 
+				xstart, xend, text_size);
 		else
 			mui.wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 
@@ -2251,21 +2243,19 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					std::string first_part(tempbuf.substr(0, first_dspace));
 					std::string last_part(tempbuf.substr(first_dspace + 1));
 					strtrimspace(last_part);
-					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-					                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              nullptr, nullptr, text_size);
+					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width, JUSTIFY_LEFT, 
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 
-					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width,
-					                              JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					                              nullptr, nullptr, text_size);
+					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width, 
+						JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 				}
 				else
-					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-					                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
+					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT, 
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 			}
 			else
-				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT,
-				                              WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
+				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT, 
+					WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 
 			oy1 += (line_height * text_size);
 		}
@@ -2282,8 +2272,8 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		// apply title to right panel
 		if (soft->usage.empty())
 		{
-			mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-			                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+			mui.draw_text_full(container, "History", origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE, 
+				DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			mewui_globals::cur_sw_dats_view = 0;
 		}
 		else
@@ -2296,15 +2286,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 			for (auto & elem: t_text)
 			{
-				mui.draw_text_full(container, elem.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-				                              DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
+				mui.draw_text_full(container, elem.c_str(), origx1, origy1, origx2 - origx1, JUSTIFY_CENTER, WRAP_TRUNCATE, 
+					DRAW_NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &txt_lenght, nullptr);
 				txt_lenght += 0.01f;
 				title_size = MAX(txt_lenght, title_size);
 			}
 
-			mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1,
-			                              JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-			                              nullptr, nullptr);
+			mui.draw_text_full(container, t_text[mewui_globals::cur_sw_dats_view].c_str(), origx1, origy1, origx2 - origx1, 
+				JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 			draw_common_arrow(origx1, origy1, origx2, origy2, mewui_globals::cur_sw_dats_view, 0, 1, title_size);
 		}
@@ -2327,13 +2316,12 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 
 		if (buffer.empty())
 		{
-			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER,
-			                              WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+			mui.draw_text_full(container, "No Infos Available", origx1, (origy2 + origy1) * 0.5f, origx2 - origx1, JUSTIFY_CENTER, 
+				WRAP_WORD, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
 		else
-			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines,
-			                         xstart, xend, text_size);
+			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 
 		int r_visible_lines = floor((origy2 - oy1) / (line_height * text_size));
 		if (totallines < r_visible_lines)
@@ -2356,9 +2344,8 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			else if (r == r_visible_lines - 1 && itemline != totallines - 1)
 				info_arrow(1, origx1, origx2, oy1, line_height, text_size, ud_arrow_width);
 			else
-				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1,
-				                              JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-				                              nullptr, nullptr, text_size);
+				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT, 
+					WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
 			oy1 += (line_height * text_size);
 		}
 

@@ -542,33 +542,34 @@ bool ui_menu_dats::get_data(const game_driver *driver, int flags)
 	std::string buffer;
 	machine().datfile().load_data_info(driver, buffer, flags);
 
-	if (!buffer.empty())
+	if (buffer.empty())
+		return false;
+
+	float line_height = machine().ui().get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	float gutter_width = lr_arrow_width * 1.3f;
+	std::vector<int> xstart;
+	std::vector<int> xend;
+	int tlines;
+
+	machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), tlines, xstart, xend);
+	for (int r = 0; r < tlines; r++)
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		float gutter_width = lr_arrow_width * 1.3f;
-		std::vector<int> xstart;
-		std::vector<int> xend;
-		int tlines;
-
-		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), tlines, xstart, xend);
-		for (int r = 0; r < tlines; r++)
+		std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
+		// special case for mamescore
+		if (flags == MEWUI_STORY_LOAD)
 		{
-			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
-
-			// special case for mamescore
-			if (flags == MEWUI_STORY_LOAD && tempbuf.find_last_of('_') != -1)
+			size_t last_underscore = tempbuf.find_last_of('_');
+			if (last_underscore != std::string::npos)
 			{
-				int last_underscore = tempbuf.find_last_of('_');
 				std::string last_part(tempbuf.substr(last_underscore + 1));
 				int primary = tempbuf.find("___");
 				std::string first_part(tempbuf.substr(0, primary));
 				item_append(first_part.c_str(), last_part.c_str(), MENU_FLAG_MEWUI_HISTORY, nullptr);
 			}
-			else
-				item_append(tempbuf.c_str(), nullptr, MENU_FLAG_MEWUI_HISTORY, nullptr);
 		}
-		return true;
+		else
+			item_append(tempbuf.c_str(), nullptr, MENU_FLAG_MEWUI_HISTORY, nullptr);
 	}
-	return false;
+		return true;
 }

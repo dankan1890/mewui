@@ -173,6 +173,8 @@ files {
 	MAME_DIR .. "src/emu/mewui/inifile.h",
 	MAME_DIR .. "src/emu/mewui/miscmenu.cpp",
 	MAME_DIR .. "src/emu/mewui/miscmenu.h",
+	MAME_DIR .. "src/emu/mewui/moptions.cpp",
+	MAME_DIR .. "src/emu/mewui/moptions.h",
 	MAME_DIR .. "src/emu/mewui/optsmenu.cpp",
 	MAME_DIR .. "src/emu/mewui/optsmenu.h",
 	MAME_DIR .. "src/emu/mewui/selector.cpp",

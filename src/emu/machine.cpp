@@ -121,9 +121,7 @@ running_machine::running_machine(const machine_config &_config, machine_manager 
 		primary_screen(nullptr),
 		debug_flags(0),
 		romload_data(nullptr),
-		ui_input_data(nullptr),
 		debugcpu_data(nullptr),
-		generic_machine_data(nullptr),
 		m_config(_config),
 		m_system(_config.gamedrv()),
 		m_manager(manager),
@@ -219,11 +217,11 @@ TIMER_CALLBACK_MEMBER(running_machine::autoboot_callback)
 void running_machine::start()
 {
 	// initialize basic can't-fail systems here
-	config_init(*this);
+	m_configuration = std::make_unique<configuration_manager>(*this);
 	m_input = std::make_unique<input_manager>(*this);
-	output_init(*this);
+	m_output = std::make_unique<output_manager>(*this);
 	m_render = std::make_unique<render_manager>(*this);
-	generic_machine_init(*this);
+	m_bookkeeping = std::make_unique<bookkeeping_manager>(*this);
 
 	// allocate a soft_reset timer
 	m_soft_reset_timer = m_scheduler.timer_alloc(timer_expired_delegate(FUNC(running_machine::soft_reset), this));
@@ -249,7 +247,7 @@ void running_machine::start()
 		m_base_time = newbase;
 
 	// intialize UI input
-	ui_input_init(*this);
+	m_ui_input = std::make_unique<ui_input_manager>(*this);
 
 	// initialize the streams engine before the sound devices start
 	m_sound = std::make_unique<sound_manager>(*this);
@@ -274,7 +272,7 @@ void running_machine::start()
 	image_init(*this);
 	m_tilemap = std::make_unique<tilemap_manager>(*this);
 	crosshair_init(*this);
-	network_init(*this);
+	m_network = std::make_unique<network_manager>(*this);
 
 	// initialize the debugger
 	if ((debug_flags & DEBUG_FLAG_ENABLED) != 0)
@@ -346,7 +344,7 @@ int running_machine::run(bool firstrun)
 		start();
 
 		// load the configuration settings and NVRAM
-		config_load_settings(*this);
+		m_configuration->load_settings();
 
 		// disallow save state registrations starting here.
 		// Don't do it earlier, config load can create network
@@ -401,7 +399,7 @@ int running_machine::run(bool firstrun)
 		// save the NVRAM and configuration
 		sound().ui_mute(true);
 		nvram_save();
-		config_save_settings(*this);
+		m_configuration->save_settings();
 	}
 	catch (emu_fatalerror &fatal)
 	{

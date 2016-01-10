@@ -1965,7 +1965,7 @@ void ioport_field::frame_update(ioport_value &result, bool mouse_down)
 	}
 
 	// skip locked-out coin inputs
-	if (curstate && m_type >= IPT_COIN1 && m_type <= IPT_COIN12 && coin_lockout_get_state(machine(), m_type - IPT_COIN1))
+	if (curstate && m_type >= IPT_COIN1 && m_type <= IPT_COIN12 && machine().bookkeeping().coin_lockout_get_state(m_type - IPT_COIN1))
 	{
 		bool verbose = machine().options().verbose();
 #ifdef MAME_DEBUG
@@ -2535,7 +2535,7 @@ time_t ioport_manager::initialize()
 
 	m_natkeyboard.initialize();
 	// register callbacks for when we load configurations
-	config_register(machine(), "input", config_saveload_delegate(FUNC(ioport_manager::load_config), this), config_saveload_delegate(FUNC(ioport_manager::save_config), this));
+	machine().configuration().config_register("input", config_saveload_delegate(FUNC(ioport_manager::load_config), this), config_saveload_delegate(FUNC(ioport_manager::save_config), this));
 
 	// calculate "has..." values
 	{
@@ -2900,7 +2900,7 @@ g_profiler.start(PROFILER_INPUT);
 	// perform mouse hit testing
 	INT32 mouse_target_x, mouse_target_y;
 	bool mouse_button;
-	render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+	render_target *mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 
 	// if the button is pressed, map the point and determine what was hit
 	ioport_field *mouse_field = nullptr;
@@ -2958,10 +2958,10 @@ INT32 ioport_manager::frame_interpolate(INT32 oldval, INT32 newval)
 //  data from the XML nodes
 //-------------------------------------------------
 
-void ioport_manager::load_config(int config_type, xml_data_node *parentnode)
+void ioport_manager::load_config(config_type cfg_type, xml_data_node *parentnode)
 {
 	// in the completion phase, we finish the initialization with the final ports
-	if (config_type == CONFIG_TYPE_FINAL)
+	if (cfg_type == config_type::CONFIG_TYPE_FINAL)
 	{
 		m_safe_to_read = true;
 		frame_update();
@@ -2972,7 +2972,7 @@ void ioport_manager::load_config(int config_type, xml_data_node *parentnode)
 		return;
 
 	// iterate over all the remap nodes for controller configs only
-	if (config_type == CONFIG_TYPE_CONTROLLER)
+	if (cfg_type == config_type::CONFIG_TYPE_CONTROLLER)
 		load_remap_table(parentnode);
 
 	// iterate over all the port nodes
@@ -3002,7 +3002,7 @@ void ioport_manager::load_config(int config_type, xml_data_node *parentnode)
 		}
 
 		// if we're loading default ports, apply to the defaults
-		if (config_type != CONFIG_TYPE_GAME)
+		if (cfg_type != config_type::CONFIG_TYPE_GAME)
 			load_default_config(portnode, type, player, newseq);
 		else
 			load_game_config(portnode, type, player, newseq);
@@ -3010,7 +3010,7 @@ void ioport_manager::load_config(int config_type, xml_data_node *parentnode)
 
 	// after applying the controller config, push that back into the backup, since that is
 	// what we will diff against
-	if (config_type == CONFIG_TYPE_CONTROLLER)
+	if (cfg_type == config_type::CONFIG_TYPE_CONTROLLER)
 		for (input_type_entry *entry = m_typelist.first(); entry != nullptr; entry = entry->next())
 			for (input_seq_type seqtype = SEQ_TYPE_STANDARD; seqtype < SEQ_TYPE_TOTAL; ++seqtype)
 				entry->defseq(seqtype) = entry->seq(seqtype);
@@ -3149,14 +3149,14 @@ bool ioport_manager::load_game_config(xml_data_node *portnode, int type, int pla
 //  port configuration
 //-------------------------------------------------
 
-void ioport_manager::save_config(int config_type, xml_data_node *parentnode)
+void ioport_manager::save_config(config_type cfg_type, xml_data_node *parentnode)
 {
 	// if no parentnode, ignore
 	if (parentnode == nullptr)
 		return;
 
 	// default ports save differently
-	if (config_type == CONFIG_TYPE_DEFAULT)
+	if (cfg_type == config_type::CONFIG_TYPE_DEFAULT)
 		save_default_inputs(parentnode);
 	else
 		save_game_inputs(parentnode);

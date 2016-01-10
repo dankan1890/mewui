@@ -111,7 +111,7 @@ inline bool ui_menu_item::is_selectable() const
 
 inline bool ui_menu::exclusive_input_pressed(int key, int repeat)
 {
-	if (menu_event.iptkey == IPT_INVALID && ui_input_pressed_repeat(machine(), key, repeat))
+	if (menu_event.iptkey == IPT_INVALID && machine().ui_input().pressed_repeat(key, repeat))
 	{
 		menu_event.iptkey = key;
 		return true;
@@ -549,7 +549,7 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	if (!customonly && !noinput)
 	{
 		INT32 mouse_target_x, mouse_target_y;
-		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+		render_target *mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 		if (mouse_target != nullptr)
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 				mouse_hit = true;
@@ -823,7 +823,7 @@ void ui_menu::handle_events(UINT32 flags)
 	bool historyflag = ((item[0].flags & MENU_FLAG_MEWUI_HISTORY) != 0);
 
 	// loop while we have interesting events
-	while (!stop && ui_input_pop_event(machine(), &local_menu_event))
+	while (!stop && machine().ui_input().pop_event(&local_menu_event))
 	{
 		switch (local_menu_event.event_type)
 		{
@@ -1026,7 +1026,7 @@ void ui_menu::handle_keys(UINT32 flags)
 	}
 
 	// handle a toggle cheats request
-	if (ui_input_pressed_repeat(machine(), IPT_UI_TOGGLE_CHEAT, 0))
+	if (machine().ui_input().pressed_repeat(IPT_UI_TOGGLE_CHEAT, 0))
 		machine().cheat().set_enable(!machine().cheat().enabled());
 
 	// see if any other UI keys are pressed
@@ -1104,7 +1104,7 @@ void ui_menu::stack_push(ui_menu *menu)
 	menu->parent = menu_stack;
 	menu_stack = menu;
 	menu->reset(UI_MENU_RESET_SELECT_FIRST);
-	ui_input_reset(menu->machine());
+	menu->machine().ui_input().reset();
 }
 
 
@@ -1120,7 +1120,7 @@ void ui_menu::stack_pop(running_machine &machine)
 		menu_stack = menu->parent;
 		menu->parent = menu_free;
 		menu_free = menu;
-		ui_input_reset(machine);
+		machine.ui_input().reset();
 	}
 }
 
@@ -1172,7 +1172,7 @@ UINT32 ui_menu::ui_handler(running_machine &machine, render_container *container
 	clear_free_list(machine);
 
 	// if the menus are to be hidden, return a cancel here
-	if (machine.ui().is_menu_active() && ((ui_input_pressed(machine, IPT_UI_CONFIGURE) && !stack_has_special_main_menu()) || menu_stack == nullptr))
+	if (machine.ui().is_menu_active() && ((machine.ui_input().pressed(IPT_UI_CONFIGURE) && !stack_has_special_main_menu()) || menu_stack == nullptr))
 		return UI_HANDLER_CANCEL;
 
 	return 0;
@@ -1385,7 +1385,7 @@ void ui_menu::draw_select_game(bool noinput)
 	mouse_button = FALSE;
 	if (!noinput)
 	{
-		mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+		mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 		if (mouse_target != nullptr)
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 				mouse_hit = TRUE;
@@ -1828,7 +1828,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	}
 
 	// handle a toggle cheats request
-	if (!ui_error && ui_input_pressed_repeat(machine(), IPT_UI_TOGGLE_CHEAT, 0))
+	if (!ui_error && machine().ui_input().pressed_repeat(IPT_UI_TOGGLE_CHEAT, 0))
 		machine().cheat().set_enable(!machine().cheat().enabled());
 
 	// see if any other UI keys are pressed
@@ -1854,7 +1854,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 	ui_event local_menu_event;
 
 	// loop while we have interesting events
-	while (!stop && ui_input_pop_event(machine(), &local_menu_event))
+	while (!stop && machine().ui_input().pop_event(&local_menu_event))
 	{
 		switch (local_menu_event.event_type)
 		{
@@ -2581,7 +2581,7 @@ void ui_menu::draw_palette_menu()
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+	mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 	if (mouse_target != nullptr)
 		if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 			mouse_hit = true;

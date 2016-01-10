@@ -159,7 +159,7 @@ void ui_menu_select_software::handle()
 	bool check_filter = false;
 
 	// ignore pause keys by swallowing them before we process the menu
-	ui_input_pressed(machine(), IPT_UI_PAUSE);
+	machine().ui_input().pressed(IPT_UI_PAUSE);
 
 	// process the menu
 	const ui_menu_event *m_event = process(UI_MENU_PROCESS_LR_REPEAT);

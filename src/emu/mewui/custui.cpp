@@ -540,8 +540,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// bottom text
 	// get the text for 'UI Select'
-	std::string ui_select_text;
-	machine().input().seq_name(ui_select_text, machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
+	std::string ui_select_text = machine().input().seq_name(machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
 	topbuf.assign("Double click or press ").append(ui_select_text.c_str()).append(" to change the m_color value");
 
 	mui.draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,

@@ -85,6 +85,11 @@ char* chartrimcarriage(char str[])
 	return str;
 }
 
+const char* strensure(const char* s)
+{
+	return s == nullptr ? "" : s;
+}
+
 //-------------------------------------------------
 //  search a substring with even partial matching
 //-------------------------------------------------

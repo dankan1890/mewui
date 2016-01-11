@@ -32,7 +32,7 @@ static std::string TAG_STORY_R("# version");
 static std::string TAG_COMMAND_SEPARATOR("-----------------------------------------------");
 
 //-------------------------------------------------
-//  Index
+//  Statics
 //-------------------------------------------------
 datfile_manager::DrvIndex datfile_manager::m_histidx;
 datfile_manager::DrvIndex datfile_manager::m_mameidx;
@@ -44,7 +44,11 @@ std::vector<datfile_manager::Itemsindex> datfile_manager::m_drvidx;
 std::vector<datfile_manager::Itemsindex> datfile_manager::m_messdrvidx;
 std::vector<datfile_manager::Itemsindex> datfile_manager::m_menuidx;
 datfile_manager::SwIndex datfile_manager::m_swindex;
-
+std::string datfile_manager::m_history_rev;
+std::string datfile_manager::m_mame_rev;
+std::string datfile_manager::m_mess_rev;
+std::string datfile_manager::m_sysinfo_rev;
+std::string datfile_manager::m_story_rev;
 bool datfile_manager::first_run = true;
 
 //-------------------------------------------------
@@ -315,8 +319,7 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 
 void datfile_manager::load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, std::string &tag)
 {
-	std::string s;
-	core_filename_extract_base(s, drv->source_file);
+	std::string s(core_filename_extract_base(drv->source_file));
 	size_t index = 0;
 	for (index = 0; index < idx.size() && idx[index].name != s; ++index) ;
 

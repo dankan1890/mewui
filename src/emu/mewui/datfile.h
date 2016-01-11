@@ -76,7 +76,7 @@ private:
 	// internal state
 	running_machine     &m_machine;             // reference to our machine
 	std::string         m_fullpath;
-	std::string         m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
+	static std::string  m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
 	FILE				*fp = nullptr;
 	static bool			first_run;
 };

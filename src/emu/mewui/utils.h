@@ -277,6 +277,8 @@ int fuzzy_substring(std::string needle, std::string haystack);
 // trim carriage return
 char* chartrimcarriage(char str[]);
 
+const char* strensure(const char* s);
+
 // jpeg loader
 template <typename _T>
 void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const char *filename)

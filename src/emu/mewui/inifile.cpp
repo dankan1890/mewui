@@ -220,17 +220,17 @@ void favorite_manager::add_favorite_game()
 			const software_info *swinfo = image->software_entry();
 			const software_part *part = image->part_entry();
 			ui_software_info tmpmatches;
-			if (swinfo->shortname()) tmpmatches.shortname = swinfo->shortname();
-			if (image->longname()) tmpmatches.longname = image->longname();
-			if (swinfo->parentname()) tmpmatches.parentname = swinfo->parentname();
-			if (image->year()) tmpmatches.year = image->year();
-			if (image->manufacturer()) tmpmatches.publisher = image->manufacturer();
+			tmpmatches.shortname = strensure(swinfo->shortname());
+			tmpmatches.longname = strensure(image->longname());
+			tmpmatches.parentname = strensure(swinfo->parentname());
+			tmpmatches.year = strensure(image->year());
+			tmpmatches.publisher = strensure(image->manufacturer());
 			tmpmatches.supported = image->supported();
-			if (part->name()) tmpmatches.part = part->name();
+			tmpmatches.part = strensure(part->name());
 			tmpmatches.driver = &machine().system();
-			if (image->software_list_name()) tmpmatches.listname = image->software_list_name();
-			if (part->interface()) tmpmatches.interface = part->interface();
-			if (image->instance_name()) tmpmatches.instance = image->instance_name();
+			tmpmatches.listname = strensure(image->software_list_name());
+			tmpmatches.interface = strensure(part->interface());
+			tmpmatches.instance = strensure(image->instance_name());
 			tmpmatches.startempty = 0;
 			tmpmatches.parentlongname.clear();
 			if (swinfo->parentname())
@@ -252,7 +252,7 @@ void favorite_manager::add_favorite_game()
 				if (!strcmp(flist->name(), "usage"))
 					tmpmatches.usage = flist->value();
 
-			if (image->image_type_name()) tmpmatches.devicetype = image->image_type_name();
+			tmpmatches.devicetype = strensure(image->image_type_name());
 			tmpmatches.available = true;
 			software_avail = true;
 			m_list.push_back(tmpmatches);

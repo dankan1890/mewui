@@ -150,17 +150,13 @@ void ui_menu_command_content::populate()
 		std::vector<int> xstart;
 		std::vector<int> xend;
 		int total_lines;
-
 		convert_command_glyph(buffer);
 		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width),
 		                         total_lines, xstart, xend);
-
 		for (int r = 0; r < total_lines; r++)
 		{
 			std::string tempbuf = std::string(buffer.substr(xstart[r], xend[r] - xstart[r]));
-
 			int first_dspace = tempbuf.find("  ");
-
 			if (first_dspace > 0 )
 			{
 				std::string first_part(tempbuf.substr(0, first_dspace));
@@ -260,10 +256,10 @@ ui_menu_history_sw::ui_menu_history_sw(running_machine &machine, render_containe
 	{
 		if (image->filename())
 		{
-			m_list = image->software_list_name();
-			m_short = image->software_entry()->shortname();
-			m_long = image->software_entry()->longname();
-			m_parent = image->software_entry()->parentname();
+			m_list = strensure(image->software_list_name());
+			m_short = strensure(image->software_entry()->shortname());
+			m_long = strensure(image->software_entry()->longname());
+			m_parent = strensure(image->software_entry()->parentname());
 		}
 	}
 	m_driver = (driver == nullptr) ? &machine.system() : driver;

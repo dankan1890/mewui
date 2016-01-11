@@ -247,8 +247,8 @@ void ui_menu_main::handle()
 			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_tape_control>(machine(), container, nullptr)));
 			break;
 
-				case PTY_INFO:
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_pty_info>(machine(), container)));
+		case PTY_INFO:
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_pty_info>(machine(), container)));
 			break;
 
 		case SLOT_DEVICES:

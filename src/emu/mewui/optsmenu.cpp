@@ -343,8 +343,8 @@ void save_game_options(running_machine &machine)
 	if (file.open(emulator_info::get_configname(), ".ini") == FILERR_NONE)
 	{
 		// generate the updated INI
-		std::string initext;
-		file.puts(machine.options().output_ini(initext));
+		std::string initext = machine.options().output_ini();
+		file.puts(initext.c_str());
 		file.close();
 	}
 	else

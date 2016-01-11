@@ -567,7 +567,7 @@ void ui_menu_select_software::build_software_list()
 			{
 				std::string name;
 				if (dir->type == ENTTYPE_FILE)
-					core_filename_extract_base(name, dir->name, true);
+					name = core_filename_extract_base(dir->name, true);
 				else if (dir->type == ENTTYPE_DIR && strcmp(dir->name, ".") != 0)
 					name = dir->name;
 				else

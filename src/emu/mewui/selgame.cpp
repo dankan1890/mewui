@@ -2187,7 +2187,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
-			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
+			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)
@@ -2331,7 +2331,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
-			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
+			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]));
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)

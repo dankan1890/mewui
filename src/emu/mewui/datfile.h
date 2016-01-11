@@ -27,7 +27,7 @@ public:
 
 	// actions
 	void load_data_info(const game_driver *drv, std::string &buffer, int type);
-	void load_command_info(std::string &buffer, const int sel);
+	void load_command_info(std::string &buffer, std::string sel);
 	void load_software_info(std::string &softlist, std::string &buffer, std::string &softname, std::string &parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
 	void reset_run() { first_run = true; }
@@ -46,13 +46,14 @@ public:
 	};
 
 private:
-	using DrvIndex = std::unordered_map<const game_driver *, long>;
-	using SwIndex = std::unordered_map<std::string, std::vector<Itemsindex>>;
+	using dataindex = std::unordered_map<const game_driver *, long>;
+	using swindex = std::unordered_map<std::string, std::vector<Itemsindex>>;
+	using drvindex = std::unordered_map<std::string, long>;
 
 	// global index
-	static DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
-	static std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
-	static SwIndex m_swindex;
+	static dataindex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
+	static drvindex m_drvidx, m_messdrvidx, m_menuidx;
+	static swindex m_swindex;
 
 	// internal helpers
 	void init_history();
@@ -63,15 +64,15 @@ private:
 	void init_storyinfo();
 
 	// file open/close/seek
-	bool ParseOpen(const char *filename);
-	void ParseClose() { if (fp != nullptr) fclose(fp); }
+	bool parseopen(const char *filename);
+	void parseclose() { if (fp != nullptr) fclose(fp); }
 
-	int index_mame_mess_info(DrvIndex &index, std::vector<Itemsindex> &index_drv, int &drvcount);
-	int index_datafile(DrvIndex &index, int &swcount);
-	void index_menuidx(const game_driver *drv, DrvIndex &idx, std::vector<Itemsindex> &index);
+	int index_mame_mess_info(dataindex &index, drvindex &index_drv, int &drvcount);
+	int index_datafile(dataindex &index, int &swcount);
+	void index_menuidx(const game_driver *drv, dataindex &idx, drvindex &index);
 
-	void load_data_text(const game_driver *drv, std::string &buffer, DrvIndex &idx, std::string &tag);
-	void load_driver_text(const game_driver *drv, std::string &buffer, std::vector<Itemsindex> &idx, std::string &tag);
+	void load_data_text(const game_driver *drv, std::string &buffer, dataindex &idx, std::string &tag);
+	void load_driver_text(const game_driver *drv, std::string &buffer, drvindex &idx, std::string &tag);
 
 	// internal state
 	running_machine     &m_machine;             // reference to our machine

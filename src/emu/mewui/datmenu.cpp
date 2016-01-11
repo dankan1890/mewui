@@ -68,7 +68,7 @@ void ui_menu_command::handle()
 	if (m_event != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		std::string m_title(item[selected].text);
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command_content>(machine(), container, (FPTR)m_event->itemref, m_title, m_driver)));
+		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command_content>(machine(), container, m_title, m_driver)));
 	}
 }
 
@@ -112,10 +112,9 @@ void ui_menu_command::custom_render(void *selectedref, float top, float bottom, 
 //  ctor / dtor
 //-------------------------------------------------
 
-ui_menu_command_content::ui_menu_command_content(running_machine &machine, render_container *container, FPTR p_param, std::string p_title, const game_driver *driver) : ui_menu(machine, container)
+ui_menu_command_content::ui_menu_command_content(running_machine &machine, render_container *container, std::string p_title, const game_driver *driver) : ui_menu(machine, container)
 {
 	m_driver = (driver == nullptr) ? &machine.system() : driver;
-	m_param = p_param;
 	m_title = p_title;
 }
 
@@ -141,7 +140,7 @@ void ui_menu_command_content::populate()
 {
 	machine().pause();
 	std::string buffer;
-	machine().datfile().load_command_info(buffer, m_param);
+	machine().datfile().load_command_info(buffer, m_title);
 	if (!buffer.empty())
 	{
 		float line_height = machine().ui().get_line_height();

@@ -57,10 +57,10 @@ void inifile_manager::directory_scan()
 			tolower((UINT8)dir->name[length - 2]) == 'n' && tolower((UINT8)dir->name[length - 1]) == 'i')
 		{
 			// try to open file and indexing
-			if (ParseOpen(filename.c_str()))
+			if (parseopen(filename.c_str()))
 			{
 				init_category(filename);
-				ParseClose();
+				parseclose();
 			}
 		}
 	}
@@ -109,7 +109,7 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 	if (!core_stricmp(filename.c_str(), "category.ini") || !core_stricmp(filename.c_str(), "alltime.ini"))
 		search_clones = true;
 
-	if (ParseOpen(filename.c_str()))
+	if (parseopen(filename.c_str()))
 	{
 		fseek(fp, offset, SEEK_SET);
 		int num_game = driver_list::total();
@@ -138,15 +138,15 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 			else if (dfind != -1)
 				temp_filter.push_back(dfind);
 		}
-		ParseClose();
+		parseclose();
 	}
 }
 
 //---------------------------------------------------------
-//	ParseOpen - Open up file for reading
+//	parseopen - Open up file for reading
 //---------------------------------------------------------
 
-bool inifile_manager::ParseOpen(const char *filename)
+bool inifile_manager::parseopen(const char *filename)
 {
 	// MAME core file parsing functions fail in recognizing UNICODE chars in UTF-8 without BOM,
 	// so it's better and faster use standard C fileio functions.

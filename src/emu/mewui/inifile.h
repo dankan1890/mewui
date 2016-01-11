@@ -59,8 +59,8 @@ private:
 	void directory_scan();
 
 	// file open/close/seek
-	bool ParseOpen(const char *filename);
-	void ParseClose() { if (fp != nullptr) fclose(fp); }
+	bool parseopen(const char *filename);
+	void parseclose() { if (fp != nullptr) fclose(fp); }
 
 	// internal state
 	running_machine &m_machine;  // reference to our machine

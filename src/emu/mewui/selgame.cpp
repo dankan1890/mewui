@@ -2155,8 +2155,8 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 				for (size_t x = 0; x < m_item.size(); ++x)
 				{
 					std::string t_buffer;
-					machine().datfile().load_command_info(t_buffer, x);
 					buffer.append(m_item[x]).append("\n");
+					machine().datfile().load_command_info(t_buffer, m_item[x]);
 					if (!t_buffer.empty())
 						buffer.append(t_buffer).append("\n");
 				}
@@ -2171,8 +2171,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			return;
 		}
 		else if (mewui_globals::curdats_view != MEWUI_STORY_LOAD && mewui_globals::curdats_view != MEWUI_COMMAND_LOAD)
-			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines, 
-				xstart, xend, text_size);
+			mui.wrap_text(container, buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 		else
 			mui.wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), totallines, xstart, xend, text_size);
 
@@ -2184,11 +2183,11 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		if (topline_datsview + r_visible_lines >= totallines)
 			topline_datsview = totallines - r_visible_lines;
 
+		float sc = origx2 - origx1 - (2.0f * UI_BOX_LR_BORDER);
 		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
-			std::string tempbuf;
-			tempbuf = buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
+			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)
@@ -2199,42 +2198,40 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 			// special case for mamescore
 			else if (mewui_globals::curdats_view == MEWUI_STORY_LOAD)
 			{
+				// check size
+				float textlen = mui.get_string_width_ex(tempbuf.c_str(), text_size);
+				float tmp_size = (textlen > sc) ? text_size * (sc / textlen) : text_size;
+
 				size_t last_underscore = tempbuf.find_last_of("_");
 				if (last_underscore == std::string::npos)
 				{
-					// check size
-					float sc = origx2 - origx1 - (2.0f * UI_BOX_LR_BORDER);
-					float textlen = mui.get_string_width_ex(tempbuf.c_str(), text_size);
-					if (textlen > sc)
-						text_size = sc / textlen;
-
 					mui.draw_text_full(container, tempbuf.c_str(), origx1, oy1, origx2 - origx1, JUSTIFY_CENTER,
-						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr,
-						text_size);
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, tmp_size);
 				}
 				else
 				{
 					float effective_width = origx2 - origx1 - gutter_width;
 					float effective_left = origx1 + gutter_width;
 					std::string last_part(tempbuf.substr(last_underscore + 1));
-					int primary = tempbuf.find("___");
-					std::string first_part(tempbuf.substr(0, primary));
+					std::string first_part(tempbuf.substr(0, tempbuf.find("___")));
 					float item_width;
 
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width,
-						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-						&item_width, nullptr, text_size);
+						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, &item_width, nullptr, tmp_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left + item_width, oy1,
-						origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT,
-					    WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR,
-					    nullptr, nullptr, text_size);
+						origx2 - origx1 - 2.0f * gutter_width - item_width, JUSTIFY_RIGHT, WRAP_TRUNCATE, 
+						DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, tmp_size);
 				}
 			}
 
 			// special case for command
 			else if (mewui_globals::curdats_view == MEWUI_COMMAND_LOAD || mewui_globals::curdats_view == MEWUI_GENERAL_LOAD)
 			{
+				// check size
+				float textlen = mui.get_string_width_ex(tempbuf.c_str(), text_size);
+				float tmp_size = (textlen > sc) ? text_size * (sc / textlen) : text_size;
+
 				int first_dspace = (mewui_globals::curdats_view == MEWUI_COMMAND_LOAD) ? tempbuf.find("  ") : tempbuf.find(":");
 				if (first_dspace > 0)
 				{
@@ -2244,14 +2241,14 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 					std::string last_part(tempbuf.substr(first_dspace + 1));
 					strtrimspace(last_part);
 					mui.draw_text_full(container, first_part.c_str(), effective_left, oy1, effective_width, JUSTIFY_LEFT, 
-						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, tmp_size);
 
 					mui.draw_text_full(container, last_part.c_str(), effective_left, oy1, origx2 - origx1 - 2.0f * gutter_width, 
-						JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
+						JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, tmp_size);
 				}
 				else
 					mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT, 
-						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, text_size);
+						WRAP_TRUNCATE, DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, tmp_size);
 			}
 			else
 				mui.draw_text_full(container, tempbuf.c_str(), origx1 + gutter_width, oy1, origx2 - origx1, JUSTIFY_LEFT, 
@@ -2334,8 +2331,7 @@ void ui_mewui_select_game::infos_render(void *selectedref, float origx1, float o
 		for (int r = 0; r < r_visible_lines; ++r)
 		{
 			int itemline = r + topline_datsview;
-			std::string tempbuf;
-			tempbuf = buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
+			std::string tempbuf(buffer.substr(xstart[itemline], xend[itemline] - xstart[itemline]);
 
 			// up arrow
 			if (r == 0 && topline_datsview != 0)

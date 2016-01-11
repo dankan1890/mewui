@@ -331,15 +331,14 @@ void ui_input_manager::push_char_event(render_target* target, unicode_char ch)
 }
 
 /*-------------------------------------------------
-ui_input_push_mouse_scroll_event -
-pushes a mouse scroll event to the specified
-render_target
+	push_mouse_wheel_event - pushes a mouse 
+	wheel event to the specified render_target
 -------------------------------------------------*/
 
 void ui_input_manager::push_mouse_wheel_event(render_target *target, INT32 x, INT32 y, short delta, int ucNumLines)
 {
 	ui_event event = { UI_EVENT_NONE };
-	event.event_type = UI_EVENT_MOUSE_SCROLL;
+	event.event_type = UI_EVENT_MOUSE_WHEEL;
 	event.target = target;
 	event.mouse_x = x;
 	event.mouse_y = y;

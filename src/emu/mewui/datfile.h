@@ -30,6 +30,7 @@ public:
 	void load_command_info(std::string &buffer, const int sel);
 	void load_software_info(std::string &softlist, std::string &buffer, std::string &softname, std::string &parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
+	void reset_run() { first_run = true; }
 
 	std::string rev_history() const { return m_history_rev; }
 	std::string rev_mameinfo() const { return m_mame_rev; }
@@ -49,7 +50,7 @@ private:
 	using SwIndex = std::unordered_map<std::string, std::vector<Itemsindex>>;
 
 	// global index
-	DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
+	static DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
 	std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
 	SwIndex m_swindex;
 
@@ -77,6 +78,7 @@ private:
 	std::string         m_fullpath;
 	std::string         m_history_rev, m_mame_rev, m_mess_rev, m_sysinfo_rev, m_story_rev;
 	FILE				*fp = nullptr;
+	static bool			first_run;
 };
 
 

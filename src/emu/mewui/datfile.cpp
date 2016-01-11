@@ -32,12 +32,25 @@ static std::string TAG_STORY_R("# version");
 static std::string TAG_COMMAND_SEPARATOR("-----------------------------------------------");
 
 //-------------------------------------------------
+//  Index
+//-------------------------------------------------
+datfile_manager::DrvIndex datfile_manager::m_histidx;
+datfile_manager::DrvIndex datfile_manager::m_mameidx;
+datfile_manager::DrvIndex datfile_manager::m_messidx;
+datfile_manager::DrvIndex datfile_manager::m_cmdidx;
+datfile_manager::DrvIndex datfile_manager::m_sysidx;
+datfile_manager::DrvIndex datfile_manager::m_storyidx;
+
+bool datfile_manager::first_run = true;
+
+//-------------------------------------------------
 // ctor
 //-------------------------------------------------
 datfile_manager::datfile_manager(running_machine &machine) : m_machine(machine)
 {
-	if (machine.options().enabled_dats())
+	if (machine.options().enabled_dats() && first_run)
 	{
+		first_run = false;
 		if (ParseOpen("mameinfo.dat"))
 		{
 			init_mameinfo();

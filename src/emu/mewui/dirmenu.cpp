@@ -98,14 +98,10 @@ void ui_menu_add_change_folder::handle()
 			// go up to the parent path
 			if (!strcmp(pitem.text, ".."))
 			{
-				int first_sep = m_current_path.find_first_of(PATH_SEPARATOR[0]);
-
-				int last_sep = m_current_path.find_last_of(PATH_SEPARATOR[0]);
-
-				if (first_sep == last_sep)
-					last_sep++;
-
-				m_current_path.substr(0, last_sep);
+				size_t first_sep = m_current_path.find_first_of(PATH_SEPARATOR[0]);
+				size_t last_sep = m_current_path.find_last_of(PATH_SEPARATOR[0]);
+				if (first_sep != last_sep)
+					m_current_path.erase(++last_sep);
 			}
 			else
 			{
@@ -124,7 +120,6 @@ void ui_menu_add_change_folder::handle()
 			// reset the char buffer also in this case
 			if (m_search[0] != 0)
 				m_search[0] = '\0';
-
 			reset(UI_MENU_RESET_SELECT_FIRST);
 		}
 		else if (m_event->iptkey == IPT_SPECIAL)
@@ -152,6 +147,7 @@ void ui_menu_add_change_folder::handle()
 				if (m_change)
 				{
 					machine().options().set_value(s_folders_entry[m_ref].option, m_current_path.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+					machine().datfile().reset_run();
 				}
 				else
 				{

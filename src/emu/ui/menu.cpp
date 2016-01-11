@@ -868,7 +868,7 @@ void ui_menu::handle_events(UINT32 flags)
 				break;
 
 			// caught scroll event
-			case UI_EVENT_MOUSE_SCROLL:
+			case UI_EVENT_MOUSE_WHEEL:
 				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
 				{
 					if (local_menu_event.zdelta > 0)
@@ -1995,7 +1995,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 			break;
 
 			// caught scroll event
-		case UI_EVENT_MOUSE_SCROLL:
+		case UI_EVENT_MOUSE_WHEEL:
 			if (local_menu_event.zdelta > 0)
 			{
 				if (selected >= visible_items || selected == 0 || ui_error)

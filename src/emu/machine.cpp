@@ -120,7 +120,6 @@ running_machine::running_machine(const machine_config &_config, machine_manager 
 	: firstcpu(nullptr),
 		primary_screen(nullptr),
 		debug_flags(0),
-		romload_data(nullptr),
 		debugcpu_data(nullptr),
 		m_config(_config),
 		m_system(_config.gamedrv()),
@@ -254,7 +253,7 @@ void running_machine::start()
 
 	// first load ROMs, then populate memory, and finally initialize CPUs
 	// these operations must proceed in this order
-	rom_init(*this);
+	m_rom_load = make_unique_clear<rom_load_manager>(*this);
 	m_memory.initialize();
 
 	// initialize the watchdog
@@ -269,7 +268,7 @@ void running_machine::start()
 	save().save_item(NAME(m_rand_seed));
 
 	// initialize image devices
-	image_init(*this);
+	m_image = std::make_unique<image_manager>(*this);
 	m_tilemap = std::make_unique<tilemap_manager>(*this);
 	m_crosshair = make_unique_clear<crosshair_manager>(*this);
 	m_network = std::make_unique<network_manager>(*this);

@@ -23,7 +23,6 @@ struct folders_entry
 	const char *option;
 };
 
-
 static const folders_entry s_folders_entry[] =
 {
 	{ "ROMs",                OPTION_MEDIAPATH },

@@ -40,6 +40,10 @@ datfile_manager::DrvIndex datfile_manager::m_messidx;
 datfile_manager::DrvIndex datfile_manager::m_cmdidx;
 datfile_manager::DrvIndex datfile_manager::m_sysidx;
 datfile_manager::DrvIndex datfile_manager::m_storyidx;
+std::vector<datfile_manager::Itemsindex> datfile_manager::m_drvidx;
+std::vector<datfile_manager::Itemsindex> datfile_manager::m_messdrvidx;
+std::vector<datfile_manager::Itemsindex> datfile_manager::m_menuidx;
+datfile_manager::SwIndex datfile_manager::m_swindex;
 
 bool datfile_manager::first_run = true;
 

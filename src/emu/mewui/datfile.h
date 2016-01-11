@@ -38,7 +38,6 @@ public:
 	std::string rev_sysinfo() const { return m_sysinfo_rev; }
 	std::string rev_storyinfo() const { return m_story_rev; }
 
-private:
 	struct Itemsindex
 	{
 		Itemsindex(std::string _name, long _off) { name = _name; offset = _off; }
@@ -46,13 +45,14 @@ private:
 		long offset;
 	};
 
+private:
 	using DrvIndex = std::unordered_map<const game_driver *, long>;
 	using SwIndex = std::unordered_map<std::string, std::vector<Itemsindex>>;
 
 	// global index
 	static DrvIndex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;
-	std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
-	SwIndex m_swindex;
+	static std::vector<Itemsindex> m_drvidx, m_messdrvidx, m_menuidx;
+	static SwIndex m_swindex;
 
 	// internal helpers
 	void init_history();

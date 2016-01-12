@@ -38,17 +38,10 @@ public:
 	std::string rev_sysinfo() const { return m_sysinfo_rev; }
 	std::string rev_storyinfo() const { return m_story_rev; }
 
-	struct Itemsindex
-	{
-		Itemsindex(std::string _name, long _off) { name = _name; offset = _off; }
-		std::string name;
-		long offset;
-	};
-
 private:
-	using dataindex = std::unordered_map<const game_driver *, long>;
-	using swindex = std::unordered_map<std::string, std::vector<Itemsindex>>;
 	using drvindex = std::unordered_map<std::string, long>;
+	using dataindex = std::unordered_map<const game_driver *, long>;
+	using swindex = std::unordered_map<std::string, drvindex>;
 
 	// global index
 	static dataindex m_histidx, m_mameidx, m_messidx, m_cmdidx, m_sysidx, m_storyidx;

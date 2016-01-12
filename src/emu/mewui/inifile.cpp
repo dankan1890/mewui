@@ -72,7 +72,7 @@ void inifile_manager::directory_scan()
 
 void inifile_manager::init_category(std::string &filename)
 {
-	std::vector<IniCategoryIndex> index;
+	categoryindex index;
 	char rbuf[2048];
 	std::string readbuf, name;
 	while (fgets(rbuf, 2048, fp) != nullptr)

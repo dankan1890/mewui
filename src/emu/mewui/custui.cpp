@@ -74,7 +74,7 @@ void ui_menu_custom_ui::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = hide_status[index];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, &mewui_globals::panels_status)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, mewui_globals::panels_status)));
 				}
 			}
 		}
@@ -147,13 +147,13 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 
 	m_bold = (strreplace(name, "[B]", "") + strreplace(name, "[b]", "") > 0);
 	m_italic = (strreplace(name, "[I]", "") + strreplace(name, "[i]", "") > 0);
-	m_class.actual = 0;
+	m_fonts.actual = 0;
 
-	for (size_t index = 0; index < m_class.ui.size(); index++)
+	for (size_t index = 0; index < m_fonts.ui.size(); index++)
 	{
-		if (m_class.ui[index] == name)
+		if (m_fonts.ui[index] == name)
 		{
-			m_class.actual = index;
+			m_fonts.actual = index;
 			break;
 		}
 	}
@@ -206,14 +206,14 @@ void ui_menu_font_ui::list()
 	lf.lfFaceName[0] = '\0';
 
 	HDC hDC = GetDC( nullptr );
-	EnumFontFamiliesEx( hDC, &lf, (FONTENUMPROC)EnumFontFamiliesExProc, (LPARAM)&m_class, 0 );
+	EnumFontFamiliesEx( hDC, &lf, (FONTENUMPROC)EnumFontFamiliesExProc, (LPARAM)&m_fonts, 0 );
 	ReleaseDC( nullptr, hDC );
 
 	// sort
-	std::stable_sort(m_class.ui.begin(), m_class.ui.end());
+	std::stable_sort(m_fonts.ui.begin(), m_fonts.ui.end());
 
 	// add default string to the top of array
-	m_class.ui.insert(m_class.ui.begin(), std::string("default"));
+	m_fonts.ui.insert(m_fonts.ui.begin(), std::string("default"));
 }
 #endif
 
@@ -227,8 +227,8 @@ ui_menu_font_ui::~ui_menu_font_ui()
 	emu_options &moptions = machine().options();
 
 #ifdef MEWUI_WINDOWS
-	std::string name(m_class.ui[m_class.actual]);
-	if (m_class.ui[m_class.actual] != "default")
+	std::string name(m_fonts.ui[m_fonts.actual]);
+	if (m_fonts.ui[m_fonts.actual] != "default")
 	{
 		if (m_italic)
 			name.insert(0, "[I]");
@@ -277,12 +277,12 @@ void ui_menu_font_ui::handle()
 			case MUI_FNT:
 				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(m_event->iptkey == IPT_UI_RIGHT) ? m_class.actual++ : m_class.actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? m_fonts.actual++ : m_fonts.actual--;
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_class.ui, &m_class.actual)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_fonts.ui, m_fonts.actual)));
 					changed = true;
 				}
 				break;
@@ -314,8 +314,8 @@ void ui_menu_font_ui::populate()
 
 #ifdef MEWUI_WINDOWS
 	// add fonts option
-	arrow_flags = get_arrow_flags(0, m_class.ui.size() - 1, m_class.actual);
-	std::string name(m_class.ui[m_class.actual]);
+	arrow_flags = get_arrow_flags(0, m_fonts.ui.size() - 1, m_fonts.actual);
+	std::string name(m_fonts.ui[m_fonts.actual]);
 	item_append("UI Font", name.c_str(), arrow_flags, (void *)(FPTR)MUI_FNT);
 
 	if (name != "default")

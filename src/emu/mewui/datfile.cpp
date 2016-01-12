@@ -176,15 +176,15 @@ void datfile_manager::load_software_info(std::string &softlist, std::string &buf
 		if (m_swindex.find(softlist) == m_swindex.end())
 			return;
 
-		std::vector<Itemsindex>::iterator m_itemsiter;
-		m_itemsiter = std::find_if(m_swindex[softlist].begin(), m_swindex[softlist].end(), [softname](Itemsindex const& n) { return n.name == softname; });
-		if (m_itemsiter == m_swindex[softlist].end())
-			m_itemsiter = std::find_if(m_swindex[softlist].begin(), m_swindex[softlist].end(), [parentname](Itemsindex const& n) { return n.name == parentname; });
+		drvindex::iterator itemsiter;
+		itemsiter = m_swindex[softlist].find(softname);
+		if (itemsiter == m_swindex[softlist].end() && !parentname.empty())
+			itemsiter = m_swindex[softlist].find(parentname);
 
-		if (m_itemsiter == m_swindex[softlist].end())
+		if (itemsiter == m_swindex[softlist].end())
 			return;
 
-		long s_offset = (*m_itemsiter).offset;
+		long s_offset = (*itemsiter).second;
 		char rbuf[64*1024];
 		fseek(fp, s_offset, SEEK_SET);
 		std::string readbuf;
@@ -254,7 +254,7 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 			load_driver_text(drv, buffer, driver_idx, TAG_DRIVER);
 
 		// cleanup mameinfo double line spacing
-		if (tag == TAG_MAME)
+		if (tag == TAG_MAME || type == MEWUI_SYSINFO_LOAD)
 			strreplace(buffer, "\n\n", "\n");
 
 		parseclose();
@@ -266,8 +266,8 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 //-------------------------------------------------
 void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer, dataindex &idx, std::string &tag)
 {
-	dataindex::iterator m_itemsiter = idx.find(drv);
-	if (m_itemsiter == idx.end())
+	dataindex::iterator itemsiter = idx.find(drv);
+	if (itemsiter == idx.end())
 	{
 		int cloneof = driver_list::non_bios_clone(*drv);
 		if (cloneof == -1)
@@ -275,13 +275,13 @@ void datfile_manager::load_data_text(const game_driver *drv, std::string &buffer
 		else
 		{
 			const game_driver *c_drv = &driver_list::driver(cloneof);
-			m_itemsiter = idx.find(c_drv);
-			if (m_itemsiter == idx.end())
+			itemsiter = idx.find(c_drv);
+			if (itemsiter == idx.end())
 				return;
 		}
 	}
 
-	long s_offset = (*m_itemsiter).second;
+	long s_offset = (*itemsiter).second;
 	fseek(fp, s_offset, SEEK_SET);
 	char rbuf[64 * 1024];
 	std::string readbuf;
@@ -510,7 +510,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 							name = s_roms.substr(cpoint, found - cpoint);
 
 							// add a SoftwareItem
-							m_swindex[lname].emplace_back(name, ftell(fp));
+							m_swindex[lname].emplace(name, ftell(fp));
 
 							// update current point
 							cpoint = found + 1;
@@ -526,7 +526,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 							name = s_roms.substr(cpoint);
 
 							// add a SoftwareItem
-							m_swindex[lname].emplace_back(name, ftell(fp));
+							m_swindex[lname].emplace(name, ftell(fp));
 
 							// update current point
 							cpoint = cends;
@@ -566,8 +566,8 @@ bool datfile_manager::parseopen(const char *filename)
 //-------------------------------------------------
 void datfile_manager::index_menuidx(const game_driver *drv, dataindex &idx, drvindex &index)
 {
-	std::unordered_map<const game_driver *, long>::iterator m_itemsiter = idx.find(drv);
-	if (m_itemsiter == idx.end())
+	dataindex::iterator itemsiter = idx.find(drv);
+	if (itemsiter == idx.end())
 	{
 		int cloneof = driver_list::non_bios_clone(*drv);
 		if (cloneof == -1)
@@ -575,14 +575,14 @@ void datfile_manager::index_menuidx(const game_driver *drv, dataindex &idx, drvi
 		else
 		{
 			const game_driver *c_drv = &driver_list::driver(cloneof);
-			m_itemsiter = idx.find(c_drv);
-			if (m_itemsiter == idx.end())
+			itemsiter = idx.find(c_drv);
+			if (itemsiter == idx.end())
 				return;
 		}
 	}
 
 	// seek to correct point in datafile
-	long s_offset = (*m_itemsiter).second;
+	long s_offset = (*itemsiter).second;
 	fseek(fp, s_offset, SEEK_SET);
 	size_t tinfo = TAG_INFO.size();
 	char rbuf[64 * 1024];

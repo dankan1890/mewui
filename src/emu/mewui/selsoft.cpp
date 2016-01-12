@@ -319,23 +319,23 @@ void ui_menu_select_software::handle()
 		{
 			case MEWUI_SW_REGION:
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.region.ui,
-					&m_filter.region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+					m_filter.region.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 				break;
 			case MEWUI_SW_YEARS:
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.year.ui,
-					&m_filter.year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+					m_filter.year.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 				break;
 			case MEWUI_SW_LIST:
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.swlist.description,
-					&m_filter.swlist.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+					m_filter.swlist.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 				break;
 			case MEWUI_SW_TYPE:
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.type.ui,
-					&m_filter.type.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+					m_filter.type.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 				break;
 			case MEWUI_SW_PUBLISHERS:
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.publisher.ui,
-					&m_filter.publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
+					m_filter.publisher.actual, SELECTOR_SOFTWARE, l_sw_hover)));
 				break;
 			case MEWUI_SW_CUSTOM:
 				sw_filters::actual = l_sw_hover;

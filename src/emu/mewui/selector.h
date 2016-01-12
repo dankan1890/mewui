@@ -28,7 +28,7 @@ enum
 class ui_menu_selector : public ui_menu
 {
 public:
-	ui_menu_selector(running_machine &machine, render_container *container, std::vector<std::string> _sel, UINT16 *_actual, int _category = 0, int _hover = 0);
+	ui_menu_selector(running_machine &machine, render_container *container, std::vector<std::string> _sel, UINT16 &_actual, int _category = 0, int _hover = 0);
 	virtual ~ui_menu_selector();
 	virtual void populate() override;
 	virtual void handle() override;
@@ -39,7 +39,7 @@ public:
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
 	char                       m_search[40];
-	UINT16                     *m_selector;
+	UINT16                     &m_selector;
 	int                        m_category, m_hover;
 	bool                       m_first_pass;
 	std::vector<std::string>   m_str_items;

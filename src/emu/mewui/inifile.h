@@ -30,10 +30,12 @@ public:
 		long offset;
 	};
 
+	using categoryindex = std::vector<IniCategoryIndex>;
+
 	// ini file structure
 	struct IniFileIndex
 	{
-		IniFileIndex(std::string _name, std::vector<IniCategoryIndex> _category) { name = _name; category = _category; }
+		IniFileIndex(std::string _name, categoryindex _category) { name = _name; category = _category; }
 		std::string name;
 		std::vector<IniCategoryIndex> category;
 	};

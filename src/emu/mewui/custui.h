@@ -69,8 +69,9 @@ private:
 	{
 		std::vector<std::string> ui;
 		UINT16 actual;
-	} m_class;
+	};
 
+	c_uifonts m_fonts;
 	bool      m_bold, m_italic;
 	void      list();
 	static int CALLBACK EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam);

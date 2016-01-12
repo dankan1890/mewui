@@ -510,17 +510,16 @@ void ui_mewui_select_game::handle()
 			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_custom_filter>(machine(), container, true)));
 		}
 		else if (l_hover == FILTER_MANUFACTURER)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, &c_mnfct::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, c_mnfct::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_YEAR)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, &c_year::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, c_year::actual, SELECTOR_GAME, l_hover)));
 		else if (l_hover == FILTER_SCREEN)
 		{
 			std::vector<std::string> text(screen_filters::length);
 			for (int x = 0; x < screen_filters::length; ++x)
 				text[x] = screen_filters::text[x];
 
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, text,
-				&screen_filters::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, text, screen_filters::actual, SELECTOR_GAME, l_hover)));
 		}
 		else
 		{

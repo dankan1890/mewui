@@ -179,6 +179,11 @@ end
 	
 	maintargetosdoptions(_target,_subtarget)
 
+	local layouttarget = _target
+	if (_target=="mewui") then
+		layouttarget = "mame"
+	end
+
 	includedirs {
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/emu",
@@ -187,7 +192,7 @@ end
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. _target .. "/layout",
+		GEN_DIR  .. layouttarget .. "/layout",
 		GEN_DIR  .. "resource",
 	}
 

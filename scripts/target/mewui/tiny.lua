@@ -91,7 +91,7 @@ function createProjects_mewui_tiny(_target, _subtarget)
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. _target .. "/layout",
+		GEN_DIR  .. "mame/layout",
 	}
 
 	files{

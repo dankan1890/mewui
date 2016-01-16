@@ -874,7 +874,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"zvt",
 		"messshared",
 	}
-	if (_subtarget=="mess" or _subtarget=="test") then
+	if (_subtarget=="mess") then
 	links {
 		"mameshared",
 	}
@@ -898,7 +898,8 @@ function createMESSProjects(_target, _subtarget, _name)
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "src/lib/netlist",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. _target .. "/layout",
+		GEN_DIR  .. "mess/layout",
+		GEN_DIR  .. "mame/layout",
 	}
 end
 
@@ -926,7 +927,7 @@ function createProjects_mame_mess(_target, _subtarget)
 -- vectrex.c (MESS + MAME)
 -- cps1.c (MESS + MAME)
 --------------------------------------------------
-if (_subtarget=="mess" or _subtarget=="test") then
+if (_subtarget=="mess") then
 createMESSProjects(_target, _subtarget, "mameshared")
 files {
 	MAME_DIR .. "src/mame/machine/archimds.cpp",
@@ -2994,10 +2995,10 @@ files {
 	MAME_DIR .. "src/mame/drivers/fb01.cpp",
 }
 dependency {
-	{ MAME_DIR .. "src/mame/drivers/ymmu100.cpp",    GEN_DIR .. _target .. "/drivers/ymmu100.inc" },
+	{ MAME_DIR .. "src/mame/drivers/ymmu100.cpp",    GEN_DIR .. "mame/drivers/ymmu100.inc" },
 }
 custombuildtask {
-	{ MAME_DIR .. "src/mame/drivers/ymmu100.ppm", GEN_DIR .. _target .. "/drivers/ymmu100.inc",  {  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting src/drivers/ymmu100.ppm...", PYTHON .. " $(1) $(<) $(@) ymmu100_bkg UINT8" }},
+	{ MAME_DIR .. "src/mame/drivers/ymmu100.ppm", GEN_DIR .. "mame/drivers/ymmu100.inc",  {  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting src/drivers/ymmu100.ppm...", PYTHON .. " $(1) $(<) $(@) ymmu100_bkg UINT8" }},
 }
 
 createMESSProjects(_target, _subtarget, "zenith")

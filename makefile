@@ -1195,9 +1195,14 @@ clean:
 	-@rm -rf $(BUILDDIR)
 	$(SILENT) $(MAKE) $(MAKEPARAMS) -C 3rdparty/genie/build/gmake.$(GENIEOS) -f genie.make clean
 
+ifeq ($(TARGET),mewui)
+GEN_FOLDERS := $(GENDIR)/mame/layout/ $(GENDIR)/$(TARGET)/$(SUBTARGET)/
+LAYOUTS=$(wildcard $(SRC)/mame/layout/*.lay)
+else
 GEN_FOLDERS := $(GENDIR)/$(TARGET)/layout/ $(GENDIR)/$(TARGET)/$(SUBTARGET)/
 
 LAYOUTS=$(wildcard $(SRC)/$(TARGET)/layout/*.lay)
+endif
 
 ifneq (,$(wildcard src/osd/$(OSD)/$(OSD).mak))
 include src/osd/$(OSD)/$(OSD).mak

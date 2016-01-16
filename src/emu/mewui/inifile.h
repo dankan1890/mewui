@@ -37,7 +37,7 @@ public:
 	{
 		IniFileIndex(std::string _name, categoryindex _category) { name = _name; category = _category; }
 		std::string name;
-		std::vector<IniCategoryIndex> category;
+		categoryindex category;
 	};
 
 	// construction/destruction

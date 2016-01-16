@@ -185,7 +185,7 @@ void datfile_manager::load_software_info(std::string &softlist, std::string &buf
 			return;
 
 		long s_offset = (*itemsiter).second;
-		char rbuf[64*1024];
+		char rbuf[64 * 1024];
 		fseek(fp, s_offset, SEEK_SET);
 		std::string readbuf;
 		while (fgets(rbuf, 64 * 1024, fp) != nullptr)
@@ -350,9 +350,9 @@ int datfile_manager::index_mame_mess_info(dataindex &index, drvindex &index_drv,
 	size_t t_mess = TAG_MESSINFO_R.size();
 	size_t t_info = TAG_INFO.size();
 
-	char rbuf[2048];
+	char rbuf[64 * 1024];
 	std::string readbuf, xid;
-	while (fgets(rbuf, 2048, fp) != nullptr)
+	while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 	{
 		chartrimcarriage(rbuf);
 		readbuf = rbuf;
@@ -371,7 +371,7 @@ int datfile_manager::index_mame_mess_info(dataindex &index, drvindex &index_drv,
 		// TAG_INFO
 		else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 		{
-			fgets(rbuf, 2048, fp);
+			fgets(rbuf, 64 * 1024, fp);
 			chartrimcarriage(rbuf);
 			xid = rbuf;
 			name = readbuf.substr(t_info + 1);
@@ -404,8 +404,8 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 	size_t t_sysinfo = TAG_SYSINFO_R.size();
 	size_t t_info = TAG_INFO.size();
 	size_t t_bio = TAG_BIO.size();
-	char rbuf[2048];
-	while (fgets(rbuf, 2048, fp) != nullptr)
+	char rbuf[64 * 1024];
+	while (fgets(rbuf, 64 * 1024, fp) != nullptr)
 	{
 		chartrimcarriage(rbuf);
 		readbuf = rbuf;
@@ -426,8 +426,8 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 		// TAG_INFO identifies the driver
 		else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 		{
-			int curpoint = t_info + 1;
-			int ends = readbuf.length();
+			int curpoint = ++t_info;
+			int ends = readbuf.size();
 			while (curpoint < ends)
 			{
 				// search for comma
@@ -437,8 +437,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 				if (found != std::string::npos)
 				{
 					// copy data and validate driver
-					int len = found - curpoint;
-					name = readbuf.substr(curpoint, len);
+					name = readbuf.substr(curpoint, found - curpoint);
 
 					// validate driver
 					int game_index = driver_list::find(name.c_str());
@@ -446,7 +445,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 						index.emplace(&driver_list::driver(game_index), ftell(fp));
 
 					// update current point
-					curpoint = found + 1;
+					curpoint = ++found;
 				}
 				// if comma not found, copy data while until reach the end of string
 				else if (curpoint < ends)
@@ -454,7 +453,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 					name = readbuf.substr(curpoint);
 					int game_index = driver_list::find(name.c_str());
 					if (game_index != -1)
-							index.emplace(&driver_list::driver(game_index), ftell(fp));
+						index.emplace(&driver_list::driver(game_index), ftell(fp));
 
 					// update current point
 					curpoint = ends;
@@ -464,7 +463,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 		// search for software info
 		else if (!readbuf.empty() && readbuf[0] == DATAFILE_TAG[0])
 		{
-			fgets(rbuf, 2048, fp);
+			fgets(rbuf, 64 * 1024, fp);
 			chartrimcarriage(rbuf);
 			std::string readbuf_2(rbuf);
 
@@ -474,7 +473,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 				size_t eq_sign = readbuf.find("=");
 				std::string s_list(readbuf.substr(1, eq_sign - 1));
 				std::string s_roms(readbuf.substr(eq_sign + 1));
-				int ends = s_list.length();
+				int ends = s_list.size();
 				int curpoint = 0;
 
 				while (curpoint < ends)
@@ -485,7 +484,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 					if (found != std::string::npos)
 					{
 						name = s_list.substr(curpoint, found - curpoint);
-						curpoint = found + 1;
+						curpoint = ++found;
 					}
 					else
 					{
@@ -496,7 +495,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 					// search for a software list in the index, if not found then allocates
 					std::string lname(name);
 					int cpoint = 0;
-					int cends = s_roms.length();
+					int cends = s_roms.size();
 
 					while (cpoint < cends)
 					{
@@ -513,7 +512,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 							m_swindex[lname].emplace(name, ftell(fp));
 
 							// update current point
-							cpoint = found + 1;
+							cpoint = ++found;
 							swcount++;
 						}
 						else

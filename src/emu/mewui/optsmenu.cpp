@@ -227,7 +227,7 @@ void ui_menu_game_options::handle()
 void ui_menu_game_options::populate()
 {
 	// set filter arrow
-	std::string fbuff("^!File");
+	std::string fbuff;
 
 	// add filter item
 	UINT32 arrow_flags = get_arrow_flags(0, ume_filters::length - 1, ume_filters::actual);
@@ -242,16 +242,16 @@ void ui_menu_game_options::populate()
 	{
 		inifile_manager &inif = machine().inifile();
 		int afile = inif.current_file;
-		int acategory = inif.current_category;
 
 		arrow_flags = get_arrow_flags(0, inif.ini_index.size() - 1, afile);
+		fbuff = " ^!File";
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), inif.ini_index[afile].name.c_str(), arrow_flags, (void *)(FPTR)FILE_CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.actual_file().c_str(), arrow_flags, (void *)(FPTR)FILE_CATEGORY_FILTER);
 
-		arrow_flags = get_arrow_flags(0, inif.ini_index[afile].category.size() - 1, acategory);
+		arrow_flags = get_arrow_flags(0, inif.ini_index[afile].category.size() - 1, inif.current_category);
 		fbuff = " ^!Category";
 		convert_command_glyph(fbuff);
-		item_append(fbuff.c_str(), inif.ini_index[afile].category[acategory].name.c_str(), arrow_flags, (void *)(FPTR)CATEGORY_FILTER);
+		item_append(fbuff.c_str(), inif.actual_category().c_str(), arrow_flags, (void *)(FPTR)CATEGORY_FILTER);
 	}
 	// add manufacturer subitem
 	else if (main_filters::actual == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)

@@ -744,11 +744,8 @@ void ui_mewui_select_game::custom_render(void *selectedref, float top, float bot
 
 	if (main_filters::actual == FILTER_CATEGORY && !machine().inifile().ini_index.empty())
 	{
-		inifile_manager &inif = machine().inifile();
-		int c_file = inif.current_file;
-		int c_cat = inif.current_category;
-		std::string s_file = inif.ini_index[c_file].name;
-		std::string s_category = inif.ini_index[c_file].category[c_cat].name;
+		std::string s_file(machine().inifile().actual_file());
+		std::string s_category(machine().inifile().actual_category());
 		filtered.assign(main_filters::text[main_filters::actual]).append(" (").append(s_file).append(" - ").append(s_category).append(") -");
 	}
 
@@ -1147,7 +1144,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 //  returns if the search can be activated
 //-------------------------------------------------
 
-bool ui_mewui_select_game::no_active_search()
+inline bool ui_mewui_select_game::no_active_search()
 {
 	return (main_filters::actual == FILTER_FAVORITE_GAME);
 }
@@ -1732,9 +1729,9 @@ void ui_mewui_select_game::load_cache_info()
 	}
 
 	std::string readbuf;
-	char rbuf[2048];
-	file.gets(rbuf, 2048);
-	file.gets(rbuf, 2048);
+	char rbuf[MAX_CHAR_INFO];
+	file.gets(rbuf, MAX_CHAR_INFO);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	chartrimcarriage(rbuf);
 	readbuf = rbuf;
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
@@ -1748,8 +1745,8 @@ void ui_mewui_select_game::load_cache_info()
 	}
 
 	size_t pos = 0, end = 0;
-	file.gets(rbuf, 2048);
-	file.gets(rbuf, 2048);
+	file.gets(rbuf, MAX_CHAR_INFO);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	for (int x = 0; x < driver_list::total(); ++x)
 	{
 		const game_driver *driver = &driver_list::driver(x);
@@ -1758,7 +1755,7 @@ void ui_mewui_select_game::load_cache_info()
 
 		c_mnfct::set(driver->manufacturer);
 		c_year::set(driver->year);
-		file.gets(rbuf, 2048);
+		file.gets(rbuf, MAX_CHAR_INFO);
 		chartrimcarriage(rbuf);
 		readbuf = rbuf;
 		pos = readbuf.find_first_of(',');
@@ -1775,7 +1772,7 @@ void ui_mewui_select_game::load_cache_info()
 		int find = std::stoi(readbuf.substr(++pos));
 		m_sortedlist.push_back(&driver_list::driver(find));
 	}
-	file.gets(rbuf, 2048);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	chartrimcarriage(rbuf);
 	readbuf = rbuf;
 	pos = readbuf.find_first_of(',');
@@ -1804,9 +1801,9 @@ bool ui_mewui_select_game::load_available_machines()
 		return false;
 
 	std::string readbuf;
-	char rbuf[2048];
-	file.gets(rbuf, 2048);
-	file.gets(rbuf, 2048);
+	char rbuf[MAX_CHAR_INFO];
+	file.gets(rbuf, MAX_CHAR_INFO);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	chartrimcarriage(rbuf);
 	readbuf = rbuf;
 	std::string a_rev = std::string(MEWUI_VERSION_TAG).append(mewui_version);
@@ -1818,18 +1815,18 @@ bool ui_mewui_select_game::load_available_machines()
 		return false;
 	}
 
-	file.gets(rbuf, 2048);
-	file.gets(rbuf, 2048);
+	file.gets(rbuf, MAX_CHAR_INFO);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	int avsize = 0, unavsize = 0;
-	file.gets(rbuf, 2048);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	avsize = atoi(rbuf);
-	file.gets(rbuf, 2048);
+	file.gets(rbuf, MAX_CHAR_INFO);
 	unavsize = atoi(rbuf);
 
 	// load available list
 	for (int x = 0; x < avsize; ++x)
 	{
-		file.gets(rbuf, 2048);
+		file.gets(rbuf, MAX_CHAR_INFO);
 		int find = atoi(rbuf);
 		m_availsortedlist.push_back(&driver_list::driver(find));
 	}
@@ -1837,7 +1834,7 @@ bool ui_mewui_select_game::load_available_machines()
 	// load unavailable list
 	for (int x = 0; x < unavsize; ++x)
 	{
-		file.gets(rbuf, 2048);
+		file.gets(rbuf, MAX_CHAR_INFO);
 		int find = atoi(rbuf);
 		m_unavailsortedlist.push_back(&driver_list::driver(find));
 	}

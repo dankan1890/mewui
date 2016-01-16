@@ -73,9 +73,9 @@ void inifile_manager::directory_scan()
 void inifile_manager::init_category(std::string &filename)
 {
 	categoryindex index;
-	char rbuf[2048];
+	char rbuf[MAX_CHAR_INFO];
 	std::string readbuf, name;
-	while (fgets(rbuf, 2048, fp) != nullptr)
+	while (fgets(rbuf, MAX_CHAR_INFO, fp) != nullptr)
 	{
 		readbuf = rbuf;
 		if (readbuf[0] == '[')
@@ -113,9 +113,9 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 	{
 		fseek(fp, offset, SEEK_SET);
 		int num_game = driver_list::total();
-		char rbuf[2048];
+		char rbuf[MAX_CHAR_INFO];
 		std::string readbuf;
-		while (fgets(rbuf, 2048, fp) != nullptr)
+		while (fgets(rbuf, MAX_CHAR_INFO, fp) != nullptr)
 		{
 			chartrimcarriage(rbuf);
 			readbuf = rbuf;

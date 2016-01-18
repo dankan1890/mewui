@@ -79,10 +79,10 @@ render_texture *ui_menu::star_texture;
 render_texture *ui_menu::toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
 render_texture *ui_menu::sw_toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
 render_texture *ui_menu::icons_texture[MAX_ICONS_RENDER];
-bitmap_argb32 *ui_menu::snapx_bitmap;
-bitmap_argb32 *ui_menu::no_avail_bitmap;
-bitmap_argb32 *ui_menu::star_bitmap;
-bitmap_argb32 *ui_menu::bgrnd_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::snapx_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::no_avail_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::star_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::bgrnd_bitmap;
 bitmap_argb32 *ui_menu::icons_bitmap[MAX_ICONS_RENDER];
 std::unique_ptr<bitmap_rgb32> ui_menu::hilight_main_bitmap;
 bitmap_argb32 *ui_menu::toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
@@ -1279,16 +1279,16 @@ void ui_menu::init_mewui(running_machine &machine)
 	hilight_main_texture->set_bitmap(*hilight_main_bitmap, hilight_main_bitmap->cliprect(), TEXFORMAT_ARGB32);
 
 	// create a texture for snapshot
-	snapx_bitmap = auto_alloc(machine, bitmap_argb32);
+	snapx_bitmap = std::make_unique<bitmap_argb32>(0, 0);
 	snapx_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	// allocates and sets the default "no available" image
-	no_avail_bitmap = auto_alloc(machine, bitmap_argb32(256, 256));
+	no_avail_bitmap = std::make_unique<bitmap_argb32>(256, 256);
 	UINT32 *dst = &no_avail_bitmap->pix32(0);
 	memcpy(dst, no_avail_bmp, 256 * 256 * sizeof(UINT32));
 
 	// allocates and sets the favorites star image
-	star_bitmap = auto_alloc(machine, bitmap_argb32(32, 32));
+	star_bitmap = std::make_unique<bitmap_argb32>(32, 32);
 	dst = &star_bitmap->pix32(0);
 	memcpy(dst, favorite_star_bmp, 32 * 32 * sizeof(UINT32));
 	star_texture = mrender.texture_alloc();
@@ -1302,7 +1302,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	}
 
 	// create a texture for main menu background
-	bgrnd_bitmap = auto_alloc(machine, bitmap_argb32);
+	bgrnd_bitmap = std::make_unique<bitmap_argb32>(0, 0);
 	bgrnd_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	emu_options &mopt = machine.options();

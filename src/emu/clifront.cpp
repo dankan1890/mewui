@@ -104,7 +104,7 @@ int cli_frontend::execute(int argc, char **argv)
 		std::string option_errors;
 		m_options.parse_command_line(argc, argv, option_errors);
 
-		m_options.parse_standard_inis(option_errors);
+//		m_options.parse_standard_inis(option_errors);
 
 		if (*(m_options.software_name()) != 0)
 		{
@@ -170,6 +170,8 @@ int cli_frontend::execute(int argc, char **argv)
 				throw emu_fatalerror(MAMERR_FATALERROR, nullptr);
 			}
 		}
+
+		m_options.parse_standard_inis(option_errors);
 
 		// parse the command line, adding any system-specific options
 		if (!m_options.parse_command_line(argc, argv, option_errors))

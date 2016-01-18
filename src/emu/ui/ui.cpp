@@ -2662,7 +2662,7 @@ rgb_t decode_ui_color(int id, running_machine *machine)
 {
 	static rgb_t color[ARRAY_LENGTH(s_color_list)];
 
-	if (machine) {
+	if (machine != nullptr) {
 		emu_options option;
 		for (int x = 0; x < ARRAY_LENGTH(s_color_list); x++) {
 			const char *o_default = option.value(s_color_list[x]);
@@ -2685,5 +2685,5 @@ int get_font_rows(running_machine *machine)
 {
 	static int value;
 
-	return (machine ? value = machine->options().font_rows() : value);
+	return ((machine != nullptr) ? value = machine->options().font_rows() : value);
 }

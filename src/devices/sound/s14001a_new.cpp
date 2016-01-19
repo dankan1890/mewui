@@ -1,13 +1,112 @@
 // license:BSD-3-Clause
-// copyright-holders:Ed Bernard
+// copyright-holders:Ed Bernard, Jonathan Gevaryahu, hap
+// thanks-to:Kevin Horton
+/*
+    SSi TSI S14001A speech IC emulator
+    aka CRC: Custom ROM Controller, designed in 1975, first usage in 1976 on TSI Speech+ calculator
+    Originally written for MAME by Jonathan Gevaryahu(Lord Nightmare) 2006-2013,
+    replaced with near-complete rewrite by Ed Bernard in 2016
 
-// http://www.vintagecalculators.com/html/speech-.html
+    TODO:
+    - nothing at the moment?
+
+    Further reading:
+    - http://www.vintagecalculators.com/html/speech-.html
+    - http://www.vintagecalculators.com/html/development_of_the_tsi_speech-.html
+    - http://www.vintagecalculators.com/html/speech-_state_machine.html
+    - https://archive.org/stream/pdfy-QPCSwTWiFz1u9WU_/david_djvu.txt
+*/
+
+/* Chip Pinout:
+The original datasheet (which is lost as far as I know) clearly called the
+s14001a chip the 'CRC chip', or 'Custom Rom Controller', as it appears with
+this name on the Stern and Canon schematics, as well as on some TSI speech
+print advertisements.
+Labels are not based on the labels used by the Atari wolf pack and Stern
+schematics, as these are inconsistent. Atari calls the word select/speech address
+input pins SAx while Stern calls them Cx. Also Atari and Canon both have the bit
+ordering for the word select/speech address bus backwards, which may indicate it
+was so on the original datasheet. Stern has it correct, and I've used their Cx
+labeling.
+
+                      ______    ______
+                    _|o     \__/      |_
+            +5V -- |_|1             40|_| -> /BUSY*
+                    _|                |_
+          ?TEST ?? |_|2             39|_| <- ROM D7
+                    _|                |_
+ XTAL CLOCK/CKC -> |_|3             38|_| -> ROM A11
+                    _|                |_
+  ROM CLOCK/CKR <- |_|4             37|_| <- ROM D6
+                    _|                |_
+  DIGITAL OUT 0 <- |_|5             36|_| -> ROM A10
+                    _|                |_
+  DIGITAL OUT 1 <- |_|6             35|_| -> ROM A9
+                    _|                |_
+  DIGITAL OUT 2 <- |_|7             34|_| <- ROM D5
+                    _|                |_
+  DIGITAL OUT 3 <- |_|8             33|_| -> ROM A8
+                    _|                |_
+        ROM /EN <- |_|9             32|_| <- ROM D4
+                    _|       S        |_
+          START -> |_|10 7   1   T  31|_| -> ROM A7
+                    _|   7   4   S    |_
+      AUDIO OUT <- |_|11 3   0   I  30|_| <- ROM D3
+                    _|   7   0        |_
+         ROM A0 <- |_|12     1      29|_| -> ROM A6
+                    _|       A        |_
+SPCH ADR BUS C0 -> |_|13            28|_| <- SPCH ADR BUS C5
+                    _|                |_
+         ROM A1 <- |_|14            27|_| <- ROM D2
+                    _|                |_
+SPCH ADR BUS C1 -> |_|15            26|_| <- SPCH ADR BUS C4
+                    _|                |_
+         ROM A2 <- |_|16            25|_| <- ROM D1
+                    _|                |_
+SPCH ADR BUS C2 -> |_|17            24|_| <- SPCH ADR BUS C3
+                    _|                |_
+         ROM A3 <- |_|18            23|_| <- ROM D0
+                    _|                |_
+         ROM A4 <- |_|19            22|_| -> ROM A5
+                    _|                |_
+            GND -- |_|20            21|_| -- -10V
+                     |________________|
+
+*Note from Kevin Horton when testing the hookup of the S14001A: the /BUSY line
+is not a standard voltage line: when it is in its HIGH state (i.e. not busy) it
+puts out a voltage of -10 volts, so it needs to be dropped back to a sane
+voltage level before it can be passed to any sort of modern IC. The address
+lines for the speech rom (A0-A11) do not have this problem, they output at a
+TTL/CMOS compatible voltage. The AUDIO OUT pin also outputs a voltage below GND,
+and the TEST pins may do so too.
+
+START is pulled high when a word is to be said and the word number is on the
+word select/speech address input lines. The Canon 'Canola' uses a separate 'rom
+strobe' signal independent of the chip to either enable or clock the speech rom.
+It's likely that they did this to be able to force the speech chip to stop talking,
+which is normally impossible. The later 'version 3' TSI speech board as featured in
+an advertisement in the John Cater book probably also has this feature, in addition
+to external speech rom banking.
+
+The Digital out pins supply a copy of the 4-bit waveform which also goes to the
+internal DAC. They are only valid every other clock cycle. It is possible that
+on 'invalid' cycles they act as a 4 bit input to drive the dac.
+
+Because it requires -10V to operate, the chip manufacturing process must be PMOS.
+
+* Operation:
+Put the 6-bit address of the word to be said onto the C0-C5 word select/speech
+address bus lines. Next, clock the START line low-high-low. As long as the START
+line is held high, the first address byte of the first word will be read repeatedly
+every clock, with the rom enable line enabled constantly (i.e. it doesn't toggle on
+and off as it normally does during speech). Once START has gone low-high-low, the
+/BUSY line will go low until 3 clocks after the chip is done speaking.
+*/
 
 #include "emu.h"
 #include "s14001a_new.h"
 
-
-
+// device definition
 const device_type S14001A_NEW = &device_creator<s14001a_new_device>;
 
 s14001a_new_device::s14001a_new_device(const machine_config &mconfig, std::string tag, device_t *owner, UINT32 clock)
@@ -24,6 +123,8 @@ s14001a_new_device::s14001a_new_device(const machine_config &mconfig, std::strin
 //  device_start - device-specific startup
 //-------------------------------------------------
 
+ALLOW_SAVE_TYPE(s14001a_new_device::states); // allow save_item on a non-fundamental type
+
 void s14001a_new_device::device_start()
 {
 	m_stream = machine().sound().stream_alloc(*this, 0, 1, clock() ? clock() : machine().sample_rate());
@@ -32,7 +133,51 @@ void s14001a_new_device::device_start()
 	m_ext_read_handler.resolve();
 	m_bsy_handler.resolve();
 	
+	// note: zerofill is done already by MAME core
+	ClearStatistics();
 	m_uOutputP1 = m_uOutputP2 = 7;
+	
+	// register for savestates
+	save_item(NAME(m_bPhase1));
+	save_item(NAME(m_uStateP1));
+	save_item(NAME(m_uStateP2));
+	save_item(NAME(m_uDAR13To05P1));
+	save_item(NAME(m_uDAR13To05P2));
+	save_item(NAME(m_uDAR04To00P1));
+	save_item(NAME(m_uDAR04To00P2));
+	save_item(NAME(m_uCWARP1));
+	save_item(NAME(m_uCWARP2));
+
+	save_item(NAME(m_bStopP1));
+	save_item(NAME(m_bStopP2));
+	save_item(NAME(m_bVoicedP1));
+	save_item(NAME(m_bVoicedP2));
+	save_item(NAME(m_bSilenceP1));
+	save_item(NAME(m_bSilenceP2));
+	save_item(NAME(m_uLengthP1));
+	save_item(NAME(m_uLengthP2));
+	save_item(NAME(m_uXRepeatP1));
+	save_item(NAME(m_uXRepeatP2));
+	save_item(NAME(m_uDeltaOldP1));
+	save_item(NAME(m_uDeltaOldP2));
+	save_item(NAME(m_uOutputP1));
+
+	save_item(NAME(m_bDAR04To00CarryP2));
+	save_item(NAME(m_bPPQCarryP2));
+	save_item(NAME(m_bRepeatCarryP2));
+	save_item(NAME(m_bLengthCarryP2));
+	save_item(NAME(m_RomAddrP1));
+
+	save_item(NAME(m_uOutputP2));
+	save_item(NAME(m_uRomAddrP2));
+	save_item(NAME(m_bBusyP1));
+	save_item(NAME(m_bStart));
+	save_item(NAME(m_uWord));
+
+	save_item(NAME(m_uNPitchPeriods));
+	save_item(NAME(m_uNVoiced));
+	save_item(NAME(m_uNControlWords));
+	save_item(NAME(m_uPrintLevel));
 }
 
 
@@ -45,19 +190,22 @@ void s14001a_new_device::sound_stream_update(sound_stream &stream, stream_sample
 	for (int i = 0; i < samples; i++)
 	{
 		Clock();
-		INT16 sample = INT16(m_uOutputP2) - 7;
-		outputs[0][i] = sample * 0x4000;
+		INT16 sample = m_uOutputP2 - 7; // range -7..8
+		outputs[0][i] = sample * 0xf00;
 	}
 }
 
 
+/**************************************************************************
+    External interface
+**************************************************************************/
 
 void s14001a_new_device::force_update()
 {
 	m_stream->update();
 }
 
-READ_LINE_MEMBER(s14001a_new_device::romclock_r)
+READ_LINE_MEMBER(s14001a_new_device::romen_r)
 {
 	m_stream->update();
 	return (m_bPhase1) ? 1 : 0;
@@ -82,14 +230,16 @@ WRITE_LINE_MEMBER(s14001a_new_device::start_w)
 	if (m_bStart) m_uStateP1 = WORDWAIT;
 }
 
-void s14001a_new_device::set_clock(int clock)
+void s14001a_new_device::set_clock(UINT32 clock)
 {
 	m_stream->update();
 	m_stream->set_sample_rate(clock);
 }
 
 
-
+/**************************************************************************
+    Device emulation
+**************************************************************************/
 
 UINT8 s14001a_new_device::readmem(UINT16 offset, bool phase)
 {

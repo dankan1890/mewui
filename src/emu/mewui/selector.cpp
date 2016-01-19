@@ -13,7 +13,6 @@
 #include "ui/menu.h"
 #include "mewui/selector.h"
 #include "mewui/inifile.h"
-#include "mewui/utils.h"
 
 //-------------------------------------------------
 //  ctor / dtor

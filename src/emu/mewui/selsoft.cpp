@@ -14,7 +14,6 @@
 #include "ui/menu.h"
 #include "uiinput.h"
 #include "audit.h"
-#include "mewui/utils.h"
 #include "mewui/selsoft.h"
 #include "mewui/datmenu.h"
 #include "mewui/datfile.h"

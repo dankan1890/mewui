@@ -12,7 +12,6 @@
 #include "ui/ui.h"
 #include "ui/menu.h"
 #include "mewui/dirmenu.h"
-#include "mewui/inifile.h"
 #include "mewui/datfile.h"
 #include "mewui/utils.h"
 #include "mewui/optsmenu.h"

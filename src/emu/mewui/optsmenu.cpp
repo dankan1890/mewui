@@ -13,7 +13,6 @@
 #include "ui/menu.h"
 #include "mewui/datfile.h"
 #include "mewui/inifile.h"
-#include "mewui/utils.h"
 #include "mewui/selector.h"
 #include "mewui/custui.h"
 #include "mewui/sndmenu.h"

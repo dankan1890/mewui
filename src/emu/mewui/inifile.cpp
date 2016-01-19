@@ -9,10 +9,7 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "emuopts.h"
-#include "drivenum.h"
 #include "mewui/inifile.h"
-#include "mewui/utils.h"
 #include "softlist.h"
 
 //-------------------------------------------------

@@ -27,10 +27,11 @@
 #include "sound/samples.h"
 #include "mewui/custmenu.h"
 #include "info.h"
-#include "mewui/utils.h"
 #include "mewui/auditmenu.h"
 #include "rendutil.h"
 #include "softlist.h"
+
+extern const char MEWUI_VERSION_TAG[];
 
 static bool first_start = true;
 static const char *dats_info[] = { "General Info", "History", "Mameinfo", "Sysinfo", "Messinfo", "Command", "Mamescore" };

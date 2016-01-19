@@ -10,9 +10,11 @@
 
 #include "emu.h"
 #include "mewui/utils.h"
-#include "mewui/inifile.h"
 #include "sound/samples.h"
 #include "audit.h"
+
+extern const char MEWUI_VERSION_TAG[];
+const char MEWUI_VERSION_TAG[] = "# MEWUI INFO ";
 
 // Years index
 UINT16 c_year::actual = 0;

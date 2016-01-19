@@ -22,7 +22,8 @@
 
 #define MAX_CHAR_INFO            256
 #define MAX_CUST_FILTER          8
-#define MEWUI_VERSION_TAG        "# MEWUI INFO "
+
+//#define MEWUI_VERSION_TAG        "# MEWUI INFO "
 
 // GLOBAL ENUMERATORS
 enum

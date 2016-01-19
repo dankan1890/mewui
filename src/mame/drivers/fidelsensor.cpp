@@ -20,7 +20,7 @@ WIP: plan to move to main fidelity chess driver^Z^Z^Z^Z - move magnet board sens
 #include "emu.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
-#include "sound/s14001a.h"
+#include "sound/s14001a_new.h"
 
 // same layout of Sensory Chess Challenger
 //extern const char layout_vsc[];
@@ -35,7 +35,7 @@ public:
 	{ }
 
 	required_device<cpu_device> m_maincpu;
-	required_device<s14001a_device> m_speech;
+	required_device<s14001a_new_device> m_speech;
 
 	virtual void machine_start() override;
 
@@ -92,7 +92,7 @@ WRITE8_MEMBER( csc_state::pia0_pa_w )
 		break;
 	}
 
-//  m_speech->reg_w(data & 0x3f);
+//  m_speech->data_w(space, 0, data & 0x3f);
 
 	// for avoid the digit flashing
 	m_selector |= 0x80;
@@ -100,15 +100,14 @@ WRITE8_MEMBER( csc_state::pia0_pa_w )
 
 WRITE8_MEMBER( csc_state::pia0_pb_w )
 {
-//  m_speech->set_volume(15); // hack, s14001a core should assume a volume of 15 unless otherwise stated...
-//  m_speech->rst_w(BIT(data, 1));
+//  m_speech->start_w(BIT(data, 1));
 }
 
 READ8_MEMBER( csc_state::pia0_pb_r )
 {
 	UINT8 data = 0x04;
 
-	if(m_speech->bsy_r())
+	if(m_speech->busy_r())
 		data |= 0x08;
 
 	if (m_selector<9)
@@ -325,7 +324,7 @@ static MACHINE_CONFIG_START( csc, csc_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("speech", S14001A, 25000) // around 25khz
+	MCFG_SOUND_ADD("speech", S14001A_NEW, 25000) // around 25khz
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_CONFIG_END
 
@@ -343,7 +342,17 @@ ROM_START(csc)
 	ROM_LOAD("101-32107.bin", 0x0000, 0x1000, CRC(f35784f9) SHA1(348e54a7fa1e8091f89ac656b4da22f28ca2e44d))
 ROM_END
 
+ROM_START( fexcelv )
+	ROM_REGION( 0x10000, "maincpu", 0 )
+	ROM_LOAD("101-1080a01.ic5", 0x0000, 0x8000, CRC(846f8e40) SHA1(4e1d5b08d5ff3422192b54fa82cb3f505a69a971) )
+
+	ROM_REGION( 0x8000, "speech", 0 )
+	ROM_LOAD("101-1081a01.ic2", 0x0000, 0x8000, CRC(c8ae1607) SHA1(6491ce6be60ed77f3dd931c0ca17616f13af943e) )
+ROM_END
+
 /* Driver */
 
 /*    YEAR  NAME          PARENT  COMPAT  MACHINE    INPUT       INIT      COMPANY  FULLNAME                     FLAGS */
 COMP( 1981, csc,     0,      0,      csc,  csc, driver_device,   0, "Fidelity Electronics", "Champion Chess Challenger (model CSC)",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK)
+
+COMP( 1987, fexcelv,     0,      0,      csc,  csc, driver_device,   0, "Fidelity Electronics", "Voice Excellence (model 6092)", MACHINE_NOT_WORKING )

@@ -32,7 +32,7 @@
 
 #define MCFG_TIMER_ADD_NONE(_tag) \
 	MCFG_DEVICE_ADD(_tag, TIMER, 0) \
-	timer_device::static_configure_generic_empty(*device);
+	timer_device::static_configure_generic(*device, timer_device_expired_delegate());
 #define MCFG_TIMER_DRIVER_ADD(_tag, _class, _callback) \
 	MCFG_DEVICE_ADD(_tag, TIMER, 0) \
 	timer_device::static_configure_generic(*device, timer_device_expired_delegate(&_class::_callback, #_class "::" #_callback, NULL, (_class *)0));
@@ -81,13 +81,12 @@ class timer_device : public device_t
 {
 public:
 	// construction/destruction
-	timer_device(const machine_config &mconfig, std::string tag, device_t *owner, UINT32 clock);
+	timer_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
 	// inline configuration helpers
 	static void static_configure_generic(device_t &device, timer_device_expired_delegate callback);
-	static void static_configure_generic_empty(device_t &device);
 	static void static_configure_periodic(device_t &device, timer_device_expired_delegate callback, const attotime &period);
-	static void static_configure_scanline(device_t &device, timer_device_expired_delegate callback, std::string screen, int first_vpos, int increment);
+	static void static_configure_scanline(device_t &device, timer_device_expired_delegate callback, const char *screen, int first_vpos, int increment);
 	static void static_set_callback(device_t &device, timer_device_expired_delegate callback);
 	static void static_set_start_delay(device_t &device, const attotime &delay);
 	static void static_set_param(device_t &device, int param);
@@ -139,7 +138,7 @@ private:
 	INT32                   m_param;            // the integer parameter passed to the timer callback
 
 	// scanline timers only
-	std::string             m_screen_tag;       // the tag of the screen this timer tracks
+	const char *            m_screen_tag;       // the tag of the screen this timer tracks
 	screen_device *         m_screen;           // pointer to the screen device
 	UINT32                  m_first_vpos;       // the first vertical scanline position the timer fires on
 	UINT32                  m_increment;        // the number of scanlines between firings

@@ -188,7 +188,7 @@ const char *running_machine::describe_context()
 	{
 		cpu_device *cpu = dynamic_cast<cpu_device *>(&executing->device());
 		if (cpu != nullptr)
-			strprintf(m_context, "'%s' (%s)", cpu->tag().c_str(), core_i64_format(cpu->pc(), cpu->space(AS_PROGRAM).logaddrchars(), cpu->is_octal()));
+			strprintf(m_context, "'%s' (%s)", cpu->tag(), core_i64_format(cpu->pc(), cpu->space(AS_PROGRAM).logaddrchars(), cpu->is_octal()));
 	}
 	else
 		m_context.assign("(no context)");
@@ -423,7 +423,7 @@ int running_machine::run(bool firstrun)
 	}
 	catch (add_exception &aex)
 	{
-		osd_printf_error("Tag '%s' already exists in tagged_list\n", aex.tag().c_str());
+		osd_printf_error("Tag '%s' already exists in tagged_list\n", aex.tag());
 		error = MAMERR_FATALERROR;
 	}
 	catch (std::exception &ex)
@@ -1103,7 +1103,7 @@ void running_machine::start_all_devices()
 						device->set_machine(*this);
 
 					// now start the device
-					osd_printf_verbose("Starting %s '%s'\n", device->name().c_str(), device->tag().c_str());
+					osd_printf_verbose("Starting %s '%s'\n", device->name(), device->tag());
 					device->start();
 				}
 

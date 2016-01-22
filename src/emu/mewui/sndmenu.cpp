@@ -14,7 +14,7 @@
 #include "mewui/sndmenu.h"
 #include "mewui/selector.h"
 #include "cliopts.h"
-//#include "../osd/modules/lib/osdobj_common.h" // TODO: remove
+#include "../osd/modules/lib/osdobj_common.h" // TODO: remove
 
 const int ui_menu_sound_options::m_sound_rate[] = { 11025, 22050, 44100, 48000 };
 

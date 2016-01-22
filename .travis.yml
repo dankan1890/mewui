@@ -10,15 +10,15 @@ branches:
     - master
 env:
   global:
-  - OPTIMIZE=0 TARGET=mewui USE_BGFX=0 SUBTARGET=test
+  - OPTIMIZE=0 TARGET=mewui SUBTARGET=test
   matrix:
   - MACOSX_USE_LIBSDL=0
   - MACOSX_USE_LIBSDL=1
 before_install:
   - brew update
   - if [ $MACOSX_USE_LIBSDL == 1 ]; then brew install sdl2 sdl2_ttf;
-    else curl -o SDL2-2.0.3.dmg 'https://www.libsdl.org/release/SDL2-2.0.3.dmg' &&
-    hdiutil attach SDL2-2.0.3.dmg &&
+    else curl -o SDL2-2.0.4.dmg 'https://www.libsdl.org/release/SDL2-2.0.4.dmg' &&
+    hdiutil attach SDL2-2.0.4.dmg &&
     sudo cp -R /Volumes/SDL2/SDL2.framework /Library/Frameworks/; 
     fi
 script:

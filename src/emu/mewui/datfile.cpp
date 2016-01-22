@@ -607,12 +607,12 @@ void datfile_manager::index_menuidx(const game_driver *drv, dataindex &idx, drvi
 //-------------------------------------------------
 //  load command text into the buffer
 //-------------------------------------------------
-void datfile_manager::load_command_info(std::string &buffer, std::string sel)
+void datfile_manager::load_command_info(std::string &buffer, std::string &sel)
 {
 	if (parseopen("command.dat"))
 	{
 		// open and seek to correct point in datafile
-		long offset = m_menuidx[sel];
+		long offset = m_menuidx.at(sel);
 		fseek(fp, offset, SEEK_SET);
 		char rbuf[64 * 1024];
 		std::string readbuf;

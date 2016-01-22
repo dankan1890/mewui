@@ -95,9 +95,9 @@ void ui_menu_custom_filter::handle()
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = main_filters::length;
+				size_t total = main_filters::length;
 				std::vector<std::string> s_sel(total);
-				for (int index = 0; index < total; ++index)
+				for (size_t index = 0; index < total; ++index)
 					if (index <= FILTER_UNAVAILABLE || index == FILTER_CATEGORY || index == FILTER_FAVORITE_GAME || index == FILTER_CUSTOM)
 						s_sel[index] = "_skip_";
 					else
@@ -121,9 +121,9 @@ void ui_menu_custom_filter::handle()
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = screen_filters::length;
+				size_t total = screen_filters::length;
 				std::vector<std::string> s_sel(total);
-				for (int index = 0; index < total; ++index)
+				for (size_t index = 0; index < total; ++index)
 					s_sel[index] = screen_filters::text[index];
 
 				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, custfltr::screen[pos])));
@@ -368,9 +368,9 @@ void ui_menu_swcustom_filter::handle()
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
 			{
-				int total = sw_filters::length;
+				size_t total = sw_filters::length;
 				std::vector<std::string> s_sel(total);
-				for (int index = 0; index < total; ++index)
+				for (size_t index = 0; index < total; ++index)
 					if (index <= MEWUI_SW_UNAVAILABLE|| index == MEWUI_SW_CUSTOM)
 						s_sel[index] = "_skip_";
 					else

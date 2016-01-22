@@ -27,7 +27,7 @@ public:
 
 	// actions
 	void load_data_info(const game_driver *drv, std::string &buffer, int type);
-	void load_command_info(std::string &buffer, std::string sel);
+	void load_command_info(std::string &buffer, std::string &sel);
 	void load_software_info(std::string &softlist, std::string &buffer, std::string &softname, std::string &parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);
 	void reset_run() { first_run = true; }

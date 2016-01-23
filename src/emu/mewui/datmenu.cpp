@@ -154,7 +154,7 @@ void ui_menu_command_content::populate()
 		                         total_lines, xstart, xend);
 		for (int r = 0; r < total_lines; r++)
 		{
-			std::string tempbuf = std::string(buffer.substr(xstart[r], xend[r] - xstart[r]));
+			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
 			int first_dspace = tempbuf.find("  ");
 			if (first_dspace > 0 )
 			{

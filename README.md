@@ -1,6 +1,6 @@
 # **MEWUI** #
 
-[![Build Status](https://travis-ci.org/dankan1890/mewui.svg)](https://travis-ci.org/dankan1890/mewui) [![Build status](https://ci.appveyor.com/api/projects/status/rswl8b39pw8gl5b1?svg=true)](https://ci.appveyor.com/project/dankan1890/mewui) [![Build Status](https://semaphoreci.com/api/v1/projects/5d1c58be-ca10-40da-a100-bc2c1b0b5331/640847/shields_badge.svg)](https://semaphoreci.com/dankan1890/mewui)
+OS X:[![Build Status](https://travis-ci.org/dankan1890/mewui.svg)](https://travis-ci.org/dankan1890/mewui) Windows:[![Build status](https://ci.appveyor.com/api/projects/status/rswl8b39pw8gl5b1?svg=true)](https://ci.appveyor.com/project/dankan1890/mewui) Ubuntu:[![Build Status](https://semaphoreci.com/api/v1/projects/5d1c58be-ca10-40da-a100-bc2c1b0b5331/640847/shields_badge.svg)](https://semaphoreci.com/dankan1890/mewui)
 
 What is MEWUI?
 =============

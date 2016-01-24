@@ -212,6 +212,16 @@ void ui_menu_game_options::handle()
 					(m_event->iptkey == IPT_UI_RIGHT) ? ume_filters::actual++ : ume_filters::actual--;
 					changed = true;
 				}
+				else if (m_event->iptkey == IPT_UI_SELECT)
+				{
+					int total = ume_filters::length;
+					std::vector<std::string> s_sel(total);
+					for (int index = 0; index < total; ++index)
+						s_sel[index] = ume_filters::text[index];
+
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, ume_filters::actual)));
+				}
+
 				break;
 		}
 

@@ -65,15 +65,11 @@ private:
 	};
 
 #ifdef MEWUI_WINDOWS
-	struct c_uifonts
-	{
-		std::vector<std::string> ui;
-		UINT16 actual;
-	};
+	UINT16						m_actual;
+	std::vector<std::string>	m_fonts;
+	bool						m_bold, m_italic;
 
-	c_uifonts m_fonts;
-	bool      m_bold, m_italic;
-	void      list();
+	void list();
 	static int CALLBACK EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam);
 
 #endif

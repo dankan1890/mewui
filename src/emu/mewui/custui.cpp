@@ -437,13 +437,11 @@ ui_menu_colors_ui::ui_menu_colors_ui(running_machine &machine, render_container 
 
 ui_menu_colors_ui::~ui_menu_colors_ui()
 {
-	std::string error_string;
-	char dec_color[65];
-
+	std::string error_string, dec_color;
 	for (int index = 1; index < MUI_RESTORE; index++)
 	{
-		sprintf(dec_color, "%x", (UINT32)m_color_table[index].color);
-		machine().options().set_value(m_color_table[index].option, dec_color, OPTION_PRIORITY_CMDLINE, error_string);
+		strprintf(dec_color, "%x", (UINT32)m_color_table[index].color);
+		machine().options().set_value(m_color_table[index].option, dec_color.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	}
 }
 
@@ -997,8 +995,8 @@ ui_menu_palette_sel::palcolor ui_menu_palette_sel::m_palette[] = {
 //  ctor
 //-------------------------------------------------
 
-ui_menu_palette_sel::ui_menu_palette_sel(running_machine &machine, render_container *container, rgb_t &_color) : ui_menu(machine, container),
-	m_original(_color)
+ui_menu_palette_sel::ui_menu_palette_sel(running_machine &machine, render_container *container, rgb_t &_color) 
+	: ui_menu(machine, container), m_original(_color)
 {
 }
 

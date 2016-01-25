@@ -76,7 +76,9 @@ mspacmanbg      // bootleg
 mspacmanbgd     // bootleg
 mspacmanbcc     // bootleg
 mspacmanblt     // bootleg
-clubpacm        // Miky
+clubpacm        // Miky SRL
+clubpacma       // Miky SRL
+clubpacmb       // Miky SRL
 woodpeck        // (c) 1981 Amenip (Palcom Queen River)
 woodpeca        // (c) 1981 Amenip Nova Games Ltd.
 mspacmab        // bootleg
@@ -4192,6 +4194,7 @@ wfortunea       // (c) 1989 GameTek
 grmatch         // (c) 1989 Yankee Game Technology
 stratab         // (c) 1990 Strata/Incredible Technologies
 stratab1        // (c) 1990 Strata/Incredible Technologies
+stratabs		// (c) 1990 Strata/Incredible Technologies
 sstrike         // (c) 1990 Strata/Incredible Technologies
 gtg             // (c) 1990 Strata/Incredible Technologies
 gtgt            // (c) 1990 Strata/Incredible Technologies
@@ -6197,6 +6200,7 @@ ffantasybl      // bootleg
 secretag        // (c) 1989 Data East Corporation (World)
 secretagj       // (c) 1989 Data East Corporation (Japan)
 slyspy          // (c) 1989 Data East USA (US)
+slyspy3         // (c) 1989 Data East USA (US)
 slyspy2         // (c) 1989 Data East USA (US)
 secretab        // bootleg
 midres          // (c) 1989 Data East Corporation (World)
@@ -9173,7 +9177,8 @@ touchgon        // (c) 1995 - Ref 950906
 touchgoe        // (c) 1995 - Ref 950510-1
 wrally2         // (c) 1995 - Ref 950510
 maniacsp        // (c) 1996 - Ref 922804/2 - (prototype)
-maniacsq        // (c) 1996 - Ref ??? - (unprotected)
+maniacsq        // (c) 1996 - Ref 940411 - (unprotected)
+maniacsqa		// (c) 1996 - Ref 940411
 snowboar        // (c) 1996 - Ref 960419/1
 snowboara       // (c) 1996 - Ref 960419/1
 bang            // (c) 1998 - Ref ???
@@ -9698,6 +9703,7 @@ trckydoca       // (c) 1987
 
 // Metro games
 karatour        // (c) 1992 Mitchell
+karatourj       // (c) 1992 Mitchell
 ladykill        // (c) 1993 Yanyaka + Mitchell license - (Arcade TV Game List - P.101, Right, 2 from Bottom)
 moegonta        // (c) 1993 Yanyaka (Japan) (Arcade TV Game List - P.101, Right, 2 from Bottom)
 pangpoms        // (c) 1992
@@ -11205,6 +11211,7 @@ sgsafari        // (c) 1996 New Impeuropex Corp.
 musicsrt        // (c) 1995 ABM Games
 galaxi          // (c) 2000 BRL S.R.L. Bologna
 magjoker        // (c) 2000 BRL S.R.L. Bologna
+lastfour        // (c) 2001 BRL S.R.L. Bologna
 dwarfd          // (c) 198? Electro-Sports
 dwarfda         // (c) 198? Electro-Sports
 quarterh        // (c) 1983 Electro-Sports

@@ -189,7 +189,7 @@ endif
 #-------------------------------------------------
 
 ifndef TARGET
-TARGET := mame
+TARGET := mewui
 endif
 
 ifndef SUBTARGET

@@ -1,2 +1,2 @@
 # MEWUI Site
-MEWUI -  MAME Extended User Interface
+MEWUI -  MAME Frontend page

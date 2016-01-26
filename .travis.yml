@@ -10,7 +10,7 @@ branches:
     - master
 env:
   global:
-  - OPTIMIZE=0 TARGET=mewui SUBTARGET=test
+  - OPTIMIZE=0 SUBTARGET=test
   matrix:
   - MACOSX_USE_LIBSDL=0
   - MACOSX_USE_LIBSDL=1

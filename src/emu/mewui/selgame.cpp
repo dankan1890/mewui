@@ -590,7 +590,7 @@ void ui_mewui_select_game::populate()
 			// iterate over entries
 			for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 			{
-				if (!reselect_last::driver.empty() && !(core_stricmp(m_displaylist[curitem]->name, reselect_last::driver.c_str())))
+				if (old_item_selected == -1 && !reselect_last::driver.empty() && m_displaylist[curitem]->name == reselect_last::driver)
 					old_item_selected = curitem;
 
 				bool cloneof = strcmp(m_displaylist[curitem]->parent, "0");
@@ -600,13 +600,13 @@ void ui_mewui_select_game::populate()
 					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
+				if (cloneof)
+					flags_mewui |= MENU_FLAG_INVERT;
 
-				item_append(m_displaylist[curitem]->description, nullptr, (!cloneof) ? flags_mewui : (MENU_FLAG_INVERT | flags_mewui), 
-					(void *)m_displaylist[curitem]);
+				item_append(m_displaylist[curitem]->description, nullptr, flags_mewui, (void *)m_displaylist[curitem]);
 			}
 		}
 	}
-
 	// populate favorites list
 	else
 	{
@@ -625,7 +625,10 @@ void ui_mewui_select_game::populate()
 					if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 						cloneof = false;
 				}
-				item_append(mfavorite.longname.c_str(), nullptr, (cloneof) ? (MENU_FLAG_INVERT | flags_mewui) : flags_mewui, (void *)&mfavorite);
+				if (cloneof)
+					flags_mewui |= MENU_FLAG_INVERT;
+
+				item_append(mfavorite.longname.c_str(), nullptr, flags_mewui, (void *)&mfavorite);
 			}
 			else
 				item_append(mfavorite.longname.c_str(), mfavorite.devicetype.c_str(), 

@@ -540,7 +540,6 @@ void ui_mewui_select_game::populate()
 	mewui_globals::redraw_icon = true;
 	mewui_globals::switch_image = true;
 	int old_item_selected = -1;
-	UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
 
 	if (main_filters::actual != FILTER_FAVORITE_GAME)
 	{
@@ -590,6 +589,8 @@ void ui_mewui_select_game::populate()
 			// iterate over entries
 			for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
 			{
+				UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
+
 				if (old_item_selected == -1 && !reselect_last::driver.empty() && m_displaylist[curitem]->name == reselect_last::driver)
 					old_item_selected = curitem;
 
@@ -611,11 +612,11 @@ void ui_mewui_select_game::populate()
 	else
 	{
 		m_search[0] = '\0';
-		flags_mewui |= MENU_FLAG_MEWUI_FAVORITE;
 
 		// iterate over entries
 		for (auto & mfavorite : machine().favorite().m_list)
 		{
+			UINT32 flags_mewui = MENU_FLAG_MEWUI | MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW | MENU_FLAG_MEWUI_FAVORITE;
 			if (mfavorite.startempty == 1)
 			{
 				bool cloneof = strcmp(mfavorite.driver->parent, "0");

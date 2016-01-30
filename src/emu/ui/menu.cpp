@@ -218,7 +218,7 @@ ui_menu::~ui_menu()
 	{
 		ui_menu_pool *ppool = pool;
 		pool = pool->next;
-		auto_free(machine(), ppool);
+		global_free(ppool);
 	}
 }
 
@@ -393,7 +393,7 @@ void *ui_menu::m_pool_alloc(size_t size)
 		}
 
 	// allocate a new pool
-	ppool = (ui_menu_pool *)auto_alloc_array_clear(machine(), UINT8, sizeof(*ppool) + UI_MENU_POOL_SIZE);
+	ppool = (ui_menu_pool *)global_alloc_array_clear<UINT8>(sizeof(*ppool) + UI_MENU_POOL_SIZE);
 
 	// wire it up
 	ppool->next = pool;
@@ -1073,7 +1073,7 @@ void ui_menu::clear_free_list(running_machine &machine)
 	{
 		ui_menu *menu = menu_free;
 		menu_free = menu->parent;
-		auto_free(machine, menu);
+		global_free(menu);
 	}
 }
 
@@ -1162,7 +1162,7 @@ UINT32 ui_menu::ui_handler(running_machine &machine, render_container *container
 {
 	// if we have no menus stacked up, start with the main menu
 	if (menu_stack == nullptr)
-		stack_push(auto_alloc_clear(machine, <ui_menu_main>(machine, container)));
+		stack_push(global_alloc_clear<ui_menu_main>(machine, container));
 
 	// update the menu state
 	if (menu_stack != nullptr)

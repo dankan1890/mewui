@@ -52,6 +52,7 @@ const options_entry mewui_options::s_option_entries[] =
 	{ OPTION_START_FILTER,                  "0",		OPTION_INTEGER,		"startup filter (0 = ALL, 1 = ARCADES, 2 = SYSTEMS)" },
 	{ OPTION_LAST_USED_FILTER,              "",			OPTION_STRING,		"latest used filter" },
 	{ OPTION_LAST_USED_MACHINE,             "",			OPTION_STRING,		"latest used machine" },
+	{ OPTION_INFO_AUTO_AUDIT,               "0",		OPTION_BOOLEAN,		"enable auto audit in the general info panel" },
 
 	// UI options
 	{ nullptr,                              nullptr,		OPTION_HEADER,		"MEWUI UI OPTIONS" },

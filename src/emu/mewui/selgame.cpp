@@ -1556,24 +1556,29 @@ void ui_mewui_select_game::general_info(const game_driver *driver, std::string &
 	strcatprintf(buffer, "Requires CHD: %s\n", (driver_cache[idx].b_chd ? "Yes" : "No"));
 
 	// audit the game first to see if we're going to work
-	driver_enumerator enumerator(machine().options(), *driver);
-	enumerator.next();
-	media_auditor auditor(enumerator);
-	media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
-	media_auditor::summary summary_samples = auditor.audit_samples();
+	if (machine().options().info_audit())
+	{
+		driver_enumerator enumerator(machine().options(), *driver);
+		enumerator.next();
+		media_auditor auditor(enumerator);
+		media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
+		media_auditor::summary summary_samples = auditor.audit_samples();
 
-	// if everything looks good, schedule the new driver
-	if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
-		buffer.append("Roms Audit Pass: OK\n");
-	else
-		buffer.append("Roms Audit Pass: BAD\n");
+		// if everything looks good, schedule the new driver
+		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
+			buffer.append("Roms Audit Pass: OK\n");
+		else
+			buffer.append("Roms Audit Pass: BAD\n");
 
-	if (summary_samples == media_auditor::NONE_NEEDED)
-		buffer.append("Samples Audit Pass: None Needed\n");
-	else if (summary_samples == media_auditor::CORRECT || summary_samples == media_auditor::BEST_AVAILABLE)
-		buffer.append("Samples Audit Pass: OK\n");
+		if (summary_samples == media_auditor::NONE_NEEDED)
+			buffer.append("Samples Audit Pass: None Needed\n");
+		else if (summary_samples == media_auditor::CORRECT || summary_samples == media_auditor::BEST_AVAILABLE)
+			buffer.append("Samples Audit Pass: OK\n");
+		else
+			buffer.append("Samples Audit Pass: BAD\n");
+	}
 	else
-		buffer.append("Samples Audit Pass: BAD\n");
+		buffer.append("Roms Audit Pass: Disabled\nSamples Audit Pass: Disabled\n");
 }
 
 void ui_mewui_select_game::inkey_export()

@@ -225,7 +225,7 @@ void ui_mewui_select_game::handle()
 	if (reselect_last::get())
 	{
 		const game_driver *driver = (const game_driver *)item[selected].ref;
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_select_software>(machine(), container, driver)));
+		ui_menu::stack_push(global_alloc_clear<ui_menu_select_software>(machine(), container, driver));
 		return;
 	}
 
@@ -323,7 +323,7 @@ void ui_mewui_select_game::handle()
 			{
 				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD, driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD, driver));
 			}
 			else
 			{
@@ -331,9 +331,9 @@ void ui_mewui_select_game::handle()
 				if ((FPTR)swinfo > 2)
 				{
 					if (swinfo->startempty == 1)
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD, swinfo->driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD, swinfo->driver));
 					else
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_history_sw>(machine(), container, swinfo)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_history_sw>(machine(), container, swinfo));
 				}
 			}
 		}
@@ -347,9 +347,9 @@ void ui_mewui_select_game::handle()
 				if ((FPTR)driver > 2)
 				{
 					if ((driver->flags & MACHINE_TYPE_ARCADE) != 0)
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD, driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD, driver));
 					else
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD, driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD, driver));
 				}
 			}
 			else
@@ -358,9 +358,9 @@ void ui_mewui_select_game::handle()
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
 				{
 					if ((swinfo->driver->flags & MACHINE_TYPE_ARCADE) != 0)
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD, swinfo->driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD, swinfo->driver));
 					else
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD, swinfo->driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD, swinfo->driver));
 				}
 			}
 		}
@@ -372,13 +372,13 @@ void ui_mewui_select_game::handle()
 			{
 				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD, driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD, driver));
 			}
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD, swinfo->driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD, swinfo->driver));
 			}
 		}
 
@@ -389,13 +389,13 @@ void ui_mewui_select_game::handle()
 			{
 				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD, driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD, driver));
 			}
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD, swinfo->driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD, swinfo->driver));
 			}
 		}
 
@@ -406,13 +406,13 @@ void ui_mewui_select_game::handle()
 			{
 				const game_driver *driver = (const game_driver *)m_event->itemref;
 				if ((FPTR)driver > 2)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command>(machine(), container, driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_command>(machine(), container, driver));
 			}
 			else
 			{
 				ui_software_info *swinfo  = (ui_software_info *)m_event->itemref;
 				if ((FPTR)swinfo > 2 && swinfo->startempty == 1)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command>(machine(), container, swinfo->driver)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_command>(machine(), container, swinfo->driver));
 			}
 		}
 
@@ -455,11 +455,11 @@ void ui_mewui_select_game::handle()
 
 		// handle UI_AUDIT_FAST
 		else if (m_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailsortedlist.empty())
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_audit>(machine(), container, m_availsortedlist, m_unavailsortedlist, 1)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_audit>(machine(), container, m_availsortedlist, m_unavailsortedlist, 1));
 
 		// handle UI_AUDIT_ALL
 		else if (m_event->iptkey == IPT_UI_AUDIT_ALL)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_audit>(machine(), container, m_availsortedlist, m_unavailsortedlist, 2)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_audit>(machine(), container, m_availsortedlist, m_unavailsortedlist, 2));
 
 		// typed characters append to the buffer
 		else if (m_event->iptkey == IPT_SPECIAL)
@@ -503,24 +503,24 @@ void ui_mewui_select_game::handle()
 		if (l_hover == FILTER_CATEGORY)
 		{
 			main_filters::actual = l_hover;
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_game_options>(machine(), container)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_game_options>(machine(), container));
 		}
 		else if (l_hover == FILTER_CUSTOM)
 		{
 			main_filters::actual = l_hover;
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_custom_filter>(machine(), container, true)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_custom_filter>(machine(), container, true));
 		}
 		else if (l_hover == FILTER_MANUFACTURER)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, c_mnfct::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_mnfct::ui, c_mnfct::actual, SELECTOR_GAME, l_hover));
 		else if (l_hover == FILTER_YEAR)
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, c_year::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_year::ui, c_year::actual, SELECTOR_GAME, l_hover));
 		else if (l_hover == FILTER_SCREEN)
 		{
 			std::vector<std::string> text(screen_filters::length);
 			for (int x = 0; x < screen_filters::length; ++x)
 				text[x] = screen_filters::text[x];
 
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, text, screen_filters::actual, SELECTOR_GAME, l_hover)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, text, screen_filters::actual, SELECTOR_GAME, l_hover));
 		}
 		else
 		{
@@ -969,10 +969,10 @@ void ui_mewui_select_game::force_game_select(running_machine &machine, render_co
 	ui_menu::stack_reset(machine);
 
 	// add the quit entry followed by the game select entry
-	ui_menu *quit = auto_alloc_clear(machine, <ui_menu_quit_game>(machine, container));
+	ui_menu *quit = global_alloc_clear<ui_menu_quit_game>(machine, container);
 	quit->set_special_main_menu(true);
 	ui_menu::stack_push(quit);
-	ui_menu::stack_push(auto_alloc_clear(machine, <ui_mewui_select_game>(machine, container, nullptr)));
+	ui_menu::stack_push(global_alloc_clear<ui_mewui_select_game>(machine, container, nullptr));
 
 	// force the menus on
 	machine.ui().show_menu();
@@ -991,10 +991,10 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 
 	// special case for configure options
 	if ((FPTR)driver == 1)
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_game_options>(machine(), container)));
+		ui_menu::stack_push(global_alloc_clear<ui_menu_game_options>(machine(), container));
 	// special case for configure directory
 	else if ((FPTR)driver == 2)
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_directory>(machine(), container)));
+		ui_menu::stack_push(global_alloc_clear<ui_menu_directory>(machine(), container));
 	// anything else is a driver
 	else
 	{
@@ -1013,14 +1013,14 @@ void ui_mewui_select_game::inkey_select(const ui_menu_event *m_event)
 				for (software_list_device *swlistdev = iter.first(); swlistdev != nullptr; swlistdev = iter.next())
 					if (swlistdev->first_software_info() != nullptr)
 					{
-						ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_select_software>(machine(), container, driver)));
+						ui_menu::stack_push(global_alloc_clear<ui_menu_select_software>(machine(), container, driver));
 						return;
 					}
 			}
 
 			std::vector<s_bios> biosname;
 			if (!machine().options().skip_bios_menu() && has_multiple_bios(driver, biosname))
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_mewui_bios_selection>(machine(), container, biosname, (void *)driver, false, false)));
+				ui_menu::stack_push(global_alloc_clear<ui_mewui_bios_selection>(machine(), container, biosname, (void *)driver, false, false));
 			else
 			{
 				reselect_last::driver = driver->name;
@@ -1051,11 +1051,11 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 
 	// special case for configure options
 	if ((FPTR)ui_swinfo == 1)
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_game_options>(machine(), container)));
+		ui_menu::stack_push(global_alloc_clear<ui_menu_game_options>(machine(), container));
 
 	// special case for configure directory
 	else if ((FPTR)ui_swinfo == 2)
-		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_directory>(machine(), container)));
+		ui_menu::stack_push(global_alloc_clear<ui_menu_directory>(machine(), container));
 
 	else if (ui_swinfo->startempty == 1)
 	{
@@ -1070,7 +1070,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 		{
 			std::vector<s_bios> biosname;
 			if (!mopt.skip_bios_menu() && has_multiple_bios(ui_swinfo->driver, biosname))
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_mewui_bios_selection>(machine(), container, biosname, (void *)ui_swinfo->driver, false, false)));
+				ui_menu::stack_push(global_alloc_clear<ui_mewui_bios_selection>(machine(), container, biosname, (void *)ui_swinfo->driver, false, false));
 			else
 			{
 				reselect_last::driver = ui_swinfo->driver->name;
@@ -1104,7 +1104,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 			std::vector<s_bios> biosname;
 			if (!mopt.skip_bios_menu() && has_multiple_bios(ui_swinfo->driver, biosname))
 			{
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_mewui_bios_selection>(machine(), container, biosname, (void *)ui_swinfo, true, false)));
+				ui_menu::stack_push(global_alloc_clear<ui_mewui_bios_selection>(machine(), container, biosname, (void *)ui_swinfo, true, false));
 				return;
 			}
 			else if (!mopt.skip_parts_menu() && swinfo->has_multiple_parts(ui_swinfo->interface.c_str()))
@@ -1120,7 +1120,7 @@ void ui_mewui_select_game::inkey_select_favorite(const ui_menu_event *m_event)
 						parts.emplace(swpart->name(), menu_part_name);
 					}
 				}
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_mewui_software_parts>(machine(), container, parts, ui_swinfo)));
+				ui_menu::stack_push(global_alloc_clear<ui_mewui_software_parts>(machine(), container, parts, ui_swinfo));
 				return;
 			}
 

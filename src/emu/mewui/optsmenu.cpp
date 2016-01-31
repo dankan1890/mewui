@@ -73,7 +73,7 @@ void ui_menu_game_options::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = main_filters::text[index];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, main_filters::actual)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, main_filters::actual));
 				}
 				break;
 			}
@@ -101,7 +101,7 @@ void ui_menu_game_options::handle()
 					for (size_t index = 0; index < total; ++index)
 						s_sel[index] = ifile.ini_index[index].name;
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, ifile.current_file, SELECTOR_INIFILE)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, ifile.current_file, SELECTOR_INIFILE));
 				}
 				break;
 			}
@@ -127,7 +127,7 @@ void ui_menu_game_options::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = ifile.ini_index[cfile].category[index].name;
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, ifile.current_category, SELECTOR_CATEGORY)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, ifile.current_category, SELECTOR_CATEGORY));
 				}
 				break;
 			}
@@ -139,7 +139,7 @@ void ui_menu_game_options::handle()
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, c_mnfct::actual)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_mnfct::ui, c_mnfct::actual));
 
 				break;
 
@@ -150,7 +150,7 @@ void ui_menu_game_options::handle()
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, c_year::actual)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_year::ui, c_year::actual));
 
 				break;
 
@@ -166,44 +166,44 @@ void ui_menu_game_options::handle()
 					for (int x = 0; x < screen_filters::length; ++x)
 						text[x] = screen_filters::text[x];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, text, screen_filters::actual)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, text, screen_filters::actual));
 				}
 
 				break;
 
 			case MISC_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_misc_options>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_misc_options>(machine(), container));
 				break;
 
 			case SOUND_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_sound_options>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_sound_options>(machine(), container));
 				break;
 
 			case DISPLAY_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_display_options>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_display_options>(machine(), container));
 				break;
 
 			case CUSTOM_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_custom_ui>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_custom_ui>(machine(), container));
 				break;
 
 			case CONTROLLER_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_controller_mapping>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_controller_mapping>(machine(), container));
 				break;
 
 			case CGI_MENU:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_input_groups>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_input_groups>(machine(), container));
 				break;
 
 			case CUSTOM_FILTER:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_custom_filter>(machine(), container)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_custom_filter>(machine(), container));
 				break;
 
 			case UME_SYSTEM:
@@ -219,7 +219,7 @@ void ui_menu_game_options::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = ume_filters::text[index];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, ume_filters::actual)));
+					ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, ume_filters::actual));
 				}
 
 				break;

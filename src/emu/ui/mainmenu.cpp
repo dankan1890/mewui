@@ -248,7 +248,7 @@ void ui_menu_main::handle()
 			break;
 
 		case PTY_INFO:
-						ui_menu::stack_push(global_alloc_clear<ui_menu_pty_info>(machine(), container));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_pty_info>(machine(), container));
 			break;
 
 		case SLOT_DEVICES:
@@ -283,9 +283,9 @@ void ui_menu_main::handle()
 			ui_menu::stack_push(global_alloc_clear<ui_menu_cheat>(machine(), container));
 			break;
 
-		case SELECT_GAME:
-			ui_menu::stack_push(global_alloc_clear<ui_menu_select_game>(machine(), container, nullptr));
-			break;
+//		case SELECT_GAME:
+//			ui_menu::stack_push(global_alloc_clear<ui_menu_select_game>(machine(), container, nullptr));
+//			break;
 
 		case BIOS_SELECTION:
 			ui_menu::stack_push(global_alloc_clear<ui_menu_bios_selection>(machine(), container));
@@ -296,26 +296,26 @@ void ui_menu_main::handle()
 			break;
 
 		case HISTORY:
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_HISTORY_LOAD));
 			break;
 
 		case MAMEINFO:
 			if ((machine().system().flags & MACHINE_TYPE_ARCADE) != 0)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD)));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MAMEINFO_LOAD));
 			else
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD)));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_MESSINFO_LOAD));
 			break;
 
 		case SYSINFO:
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_SYSINFO_LOAD));
 			break;
 
 		case COMMAND:
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command>(machine(), container)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_command>(machine(), container));
 			break;
 
 		case STORYINFO:
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_dats>(machine(), container, MEWUI_STORY_LOAD));
 			break;
 
 		case ADD_FAVORITE:
@@ -329,7 +329,7 @@ void ui_menu_main::handle()
 			break;
 
 		case SW_HISTORY:
-			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_history_sw>(machine(), container)));
+			ui_menu::stack_push(global_alloc_clear<ui_menu_history_sw>(machine(), container));
 			break;
 
 		case QUIT_GAME:

@@ -103,7 +103,7 @@ void ui_menu_custom_filter::handle()
 					else
 						s_sel[index] = main_filters::text[index];
 
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, custfltr::other[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, custfltr::other[pos]));
 			}
 		}
 		else if ((FPTR)m_event->itemref >= SCREEN_FILTER && (FPTR)m_event->itemref < SCREEN_FILTER + MAX_CUST_FILTER)
@@ -126,7 +126,7 @@ void ui_menu_custom_filter::handle()
 				for (size_t index = 0; index < total; ++index)
 					s_sel[index] = screen_filters::text[index];
 
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, custfltr::screen[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, custfltr::screen[pos]));
 			}
 		}
 		else if ((FPTR)m_event->itemref >= YEAR_FILTER && (FPTR)m_event->itemref < YEAR_FILTER + MAX_CUST_FILTER)
@@ -143,7 +143,7 @@ void ui_menu_custom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_year::ui, custfltr::year[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_year::ui, custfltr::year[pos]));
 		}
 		else if ((FPTR)m_event->itemref >= MNFCT_FILTER && (FPTR)m_event->itemref < MNFCT_FILTER + MAX_CUST_FILTER)
 		{
@@ -159,7 +159,7 @@ void ui_menu_custom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, c_mnfct::ui, custfltr::mnfct[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, c_mnfct::ui, custfltr::mnfct[pos]));
 		}
 	}
 
@@ -376,7 +376,7 @@ void ui_menu_swcustom_filter::handle()
 					else
 						s_sel[index] = sw_filters::text[index];
 
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, sw_custfltr::other[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, s_sel, sw_custfltr::other[pos]));
 			}
 		}
 		else if ((FPTR)m_event->itemref >= YEAR_FILTER && (FPTR)m_event->itemref < YEAR_FILTER + MAX_CUST_FILTER)
@@ -393,7 +393,7 @@ void ui_menu_swcustom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.year.ui, sw_custfltr::year[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, m_filter.year.ui, sw_custfltr::year[pos]));
 		}
 		else if ((FPTR)m_event->itemref >= TYPE_FILTER && (FPTR)m_event->itemref < TYPE_FILTER + MAX_CUST_FILTER)
 		{
@@ -409,7 +409,7 @@ void ui_menu_swcustom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.type.ui, sw_custfltr::type[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, m_filter.type.ui, sw_custfltr::type[pos]));
 		}
 		else if ((FPTR)m_event->itemref >= MNFCT_FILTER && (FPTR)m_event->itemref < MNFCT_FILTER + MAX_CUST_FILTER)
 		{
@@ -425,7 +425,7 @@ void ui_menu_swcustom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.publisher.ui, sw_custfltr::mnfct[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, m_filter.publisher.ui, sw_custfltr::mnfct[pos]));
 		}
 		else if ((FPTR)m_event->itemref >= REGION_FILTER && (FPTR)m_event->itemref < REGION_FILTER + MAX_CUST_FILTER)
 		{
@@ -441,7 +441,7 @@ void ui_menu_swcustom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.region.ui, sw_custfltr::region[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, m_filter.region.ui, sw_custfltr::region[pos]));
 		}
 		else if ((FPTR)m_event->itemref >= LIST_FILTER && (FPTR)m_event->itemref < LIST_FILTER + MAX_CUST_FILTER)
 		{
@@ -457,7 +457,7 @@ void ui_menu_swcustom_filter::handle()
 				changed = true;
 			}
 			else if (m_event->iptkey == IPT_UI_SELECT)
-				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_filter.swlist.description, sw_custfltr::list[pos])));
+				ui_menu::stack_push(global_alloc_clear<ui_menu_selector>(machine(), container, m_filter.swlist.description, sw_custfltr::list[pos]));
 		}
 	}
 

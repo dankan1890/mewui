@@ -10,8 +10,7 @@
 
 #include "emu.h"
 #include "mewui/utils.h"
-#include "sound/samples.h"
-#include "audit.h"
+#include <algorithm>
 
 extern const char MEWUI_VERSION_TAG[];
 const char MEWUI_VERSION_TAG[] = "# MEWUI INFO ";
@@ -81,9 +80,12 @@ UINT16 sw_custfltr::list[MAX_CUST_FILTER];
 
 char* chartrimcarriage(char str[])
 {
-	size_t len = strlen(str);
-	if (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
-		str[len - 1] = '\0';
+	char *pstr = strrchr(str, '\n');
+	if (pstr)
+		str[pstr - str] = '\0';
+	pstr = strrchr(str, '\r');
+	if (pstr)
+		str[pstr - str] = '\0';
 	return str;
 }
 

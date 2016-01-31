@@ -135,22 +135,17 @@ void ui_menu_audit::handle()
 	}
 	else
 	{
-		for (int m_x = 0; m_x < driver_list::total(); ++m_x)
+		driver_enumerator enumerator(machine().options());
+		media_auditor auditor(enumerator);
+		while (enumerator.next())
 		{
-			const game_driver *driver = &driver_list::driver(m_x);
-			if (driver == &GAME_NAME(___empty))
-				continue;
-
-			driver_enumerator enumerator(machine().options(), driver->name);
-			enumerator.next();
-			media_auditor auditor(enumerator);
 			media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
 
 			// if everything looks good, include the driver
 			if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
-				m_availablesorted.push_back(driver);
+				m_availablesorted.push_back(&enumerator.driver());
 			else
-				m_unavailablesorted.push_back(driver);
+				m_unavailablesorted.push_back(&enumerator.driver());
 		}
 	}
 

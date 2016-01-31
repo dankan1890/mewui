@@ -30,6 +30,7 @@
 #include "mewui/auditmenu.h"
 #include "rendutil.h"
 #include "softlist.h"
+#include <algorithm>
 
 extern const char MEWUI_VERSION_TAG[];
 

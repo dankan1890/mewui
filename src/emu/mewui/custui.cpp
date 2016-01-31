@@ -14,6 +14,7 @@
 #include "mewui/selector.h"
 #include "mewui/custui.h"
 #include "mewui/utils.h"
+#include <algorithm>
 
 const char *ui_menu_custom_ui::hide_status[] = { "Show All", "Hide Filters", "Hide Info/Image", "Hide Both" };
 

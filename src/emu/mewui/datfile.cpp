@@ -343,6 +343,7 @@ void datfile_manager::load_driver_text(const game_driver *drv, std::string &buff
 int datfile_manager::index_mame_mess_info(dataindex &index, drvindex &index_drv, int &drvcount)
 {
 	std::string name;
+	size_t foundtag;
 	size_t t_mame = TAG_MAMEINFO_R.size();
 	size_t t_mess = TAG_MESSINFO_R.size();
 	size_t t_info = TAG_INFO.size();
@@ -357,15 +358,11 @@ int datfile_manager::index_mame_mess_info(dataindex &index, drvindex &index_drv,
 			size_t found = readbuf.find(" ", t_mame + 1);
 			m_mame_rev = readbuf.substr(t_mame + 1, found - t_mame);
 		}
-		else if (m_mess_rev.empty())
-		{
-			size_t foundtag = readbuf.find(TAG_MESSINFO_R);
-			if (foundtag != std::string::npos)
+		else if (m_mess_rev.empty() && (foundtag = readbuf.find(TAG_MESSINFO_R) != std::string::npos))
 			{
 				size_t found = readbuf.find(" ", foundtag + t_mess + 1);
 				m_mess_rev = readbuf.substr(foundtag + t_mess + 1, found - t_mess - foundtag);
 			}
-		}
 		else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 		{
 			// TAG_INFO
@@ -422,7 +419,7 @@ int datfile_manager::index_datafile(dataindex &index, int &swcount)
 		// TAG_INFO identifies the driver
 		else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 		{
-			int curpoint = ++t_info;
+			int curpoint = t_info + 1;
 			int ends = readbuf.size();
 			while (curpoint < ends)
 			{

@@ -34,8 +34,8 @@ inline int cs_stricmp(const char *s1, const char *s2)
 
 bool sorted_game_list(const game_driver *x, const game_driver *y)
 {
-	bool clonex = (strcmp(x->parent, "0") == 0);
-	bool cloney = (strcmp(y->parent, "0") == 0);
+	bool clonex = strcmp(x->parent, "0");
+	bool cloney = strcmp(y->parent, "0");
 
 	if (!clonex && !cloney)
 		return (cs_stricmp(x->description, y->description) < 0);

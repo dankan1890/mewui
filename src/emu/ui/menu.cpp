@@ -2210,13 +2210,16 @@ void ui_menu::draw_toolbar(float x1, float y1, float x2, float y2, bool software
 			m_valid++;
 
 	float x_pixel = 1.0f / container->manager().ui_target().width();
-	x1 = (x1 + x2) * 0.5f - x_pixel * (m_valid * 18);
+
+	int h_len = mui.get_line_height() * container->manager().ui_target().height();
+	h_len = (h_len % 2 == 0) ? h_len : h_len - 1;
+	x1 = (x1 + x2) * 0.5f - x_pixel * (m_valid * ((h_len / 2) + 2));
 
 	for (int z = 0; z < MEWUI_TOOLBAR_BUTTONS; ++z)
 	{
 		if (t_bitmap[z]->valid())
 		{
-			x2 = x1 + x_pixel * 32;
+			x2 = x1 + x_pixel * h_len;
 			rgb_t color(0xEFEFEFEF);
 			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 			{
@@ -2227,7 +2230,7 @@ void ui_menu::draw_toolbar(float x1, float y1, float x2, float y2, bool software
 			}
 
 			container->add_quad(x1, y1, x2, y2, color, t_texture[z], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-			x1 += x_pixel * 36;
+			x1 += x_pixel * (h_len + 2);
 		}
 	}
 }

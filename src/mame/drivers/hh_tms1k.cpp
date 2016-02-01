@@ -13,6 +13,7 @@
 --------------------------------------------------------------------
  @CP0904A  TMS0970   1977, Milton Bradley Comp IV
  @MP0905B  TMS0970   1977, Parker Brothers Codename Sector
+ *MP0057   TMS1000   1978, APH Student Speech+ (same ROM contents as TSI Speech+?)
  *MP0168   TMS1000?  1979, Conic Basketball
  @MP0914   TMS1000   1979, Entex Baseball 1
  @MP0923   TMS1000   1979, Entex Baseball 2
@@ -39,7 +40,7 @@
  @MP3301A  TMS1000   1979, Milton Bradley Big Trak
  *MP3320A  TMS1000   1979, Coleco Head to Head Basketball
  *M32001   TMS1000   1981, Coleco Quiz Wiz Challenger (note: MP3398, MP3399, M3200x?)
-  MP3403   TMS1100   1978, Marx Electronic Bowling -> elecbowl.c
+  MP3403   TMS1100   1978, Marx Electronic Bowling -> elecbowl.cpp
  @MP3404   TMS1100   1978, Parker Brothers Merlin
  @MP3405   TMS1100   1979, Coleco Amaze-A-Tron
  *MP3415   TMS1100   1978, Coleco Electronic Quarterback
@@ -68,7 +69,7 @@
  @MP7313   TMS1400   1980, Parker Brothers Bank Shot
  @MP7314   TMS1400   1980, Parker Brothers Split Second
  *MP7324   TMS1400?  1985, Coleco Talking Teacher
-  MP7332   TMS1400   1981, Milton Bradley Dark Tower -> mbdtower.c
+  MP7332   TMS1400   1981, Milton Bradley Dark Tower -> mbdtower.cpp
  @MP7334   TMS1400   1981, Coleco Total Control 4
  @MP7351   TMS1400CR 1982, Parker Brothers Master Merlin
  @MP7551   TMS1670   1980, Entex Color Football 4 (6009)
@@ -77,8 +78,9 @@
 
   inconsistent:
 
- *M95041   ?         1983, Tsukuda Game Pachinko (? note: 40-pin, VFD-capable)
+ *TMC1007  TMS1000   1976, TSI Speech+ (S14002-A)
  @CD7282SL TMS1100   1981, Tandy/RadioShack Tandy-12 (serial is similar to TI Speak & Spell series?)
+ *M95041   ?         1983, Tsukuda Game Pachinko (? note: 40-pin, VFD-capable)
 
   (* denotes not yet emulated by MAME, @ denotes it's in this driver)
 
@@ -211,7 +213,7 @@ void hh_tms1k_state::display_update()
 		if (m_display_cache[y] != active_state[y])
 		{
 			if (m_display_segmask[y] != 0)
-				output_set_digit_value(y, active_state[y] & m_display_segmask[y]);
+				output().set_digit_value(y, active_state[y] & m_display_segmask[y]);
 
 			const int mul = (m_display_maxx <= 10) ? 10 : 100;
 			for (int x = 0; x <= m_display_maxx; x++)
@@ -231,8 +233,8 @@ void hh_tms1k_state::display_update()
 					sprintf(buf1, "lamp%d", y * mul + x);
 					sprintf(buf2, "%d.%d", y, x);
 				}
-				output_set_value(buf1, state);
-				output_set_value(buf2, state);
+				output().set_value(buf1, state);
+				output().set_value(buf2, state);
 			}
 		}
 
@@ -242,7 +244,7 @@ void hh_tms1k_state::display_update()
 	if (m_power_led != m_power_on)
 	{
 		m_power_led = m_power_on;
-		output_set_value("power_led", m_power_led ? 1 : 0);
+		output().set_value("power_led", m_power_led ? 1 : 0);
 	}
 }
 
@@ -2368,7 +2370,7 @@ INPUT_PORTS_END
 static MACHINE_CONFIG_START( elecdet, elecdet_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS0980, 425000) // approximation - unknown freq
+	MCFG_CPU_ADD("maincpu", TMS0980, 425000) // approximation
 	MCFG_TMS1XXX_READ_K_CB(READ8(elecdet_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(elecdet_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(elecdet_state, write_o))
@@ -2914,7 +2916,7 @@ INPUT_PORTS_END
 static MACHINE_CONFIG_START( comp4, comp4_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS0970, 250000) // approximation - unknown freq
+	MCFG_CPU_ADD("maincpu", TMS0970, 250000) // approximation
 	MCFG_TMS1XXX_READ_K_CB(READ8(comp4_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(comp4_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(comp4_state, write_o))
@@ -3247,11 +3249,11 @@ WRITE16_MEMBER(bigtrak_state::write_o)
 	// O4: right motor reverse
 	// O5: ext out
 	// O6: N/C
-	output_set_value("left_motor_forward", data >> 1 & 1);
-	output_set_value("left_motor_reverse", data >> 2 & 1);
-	output_set_value("right_motor_forward", data >> 3 & 1);
-	output_set_value("right_motor_reverse", data >> 4 & 1);
-	output_set_value("ext_out", data >> 5 & 1);
+	output().set_value("left_motor_forward", data >> 1 & 1);
+	output().set_value("left_motor_reverse", data >> 2 & 1);
+	output().set_value("right_motor_forward", data >> 3 & 1);
+	output().set_value("right_motor_reverse", data >> 4 & 1);
+	output().set_value("ext_out", data >> 5 & 1);
 
 	// O0,O7(,R10)(tied together): speaker out
 	m_speaker->level_w((data & 1) | (data >> 6 & 2) | (m_r >> 8 & 4));
@@ -3466,7 +3468,7 @@ INPUT_PORTS_END
 static MACHINE_CONFIG_START( cnsector, cnsector_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS0970, 250000) // approximation - unknown freq
+	MCFG_CPU_ADD("maincpu", TMS0970, 250000) // approximation
 	MCFG_TMS1XXX_READ_K_CB(READ8(cnsector_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(cnsector_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(cnsector_state, write_o))
@@ -3762,7 +3764,7 @@ INPUT_PORTS_END
 static MACHINE_CONFIG_START( stopthief, stopthief_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS0980, 425000) // approximation - unknown freq
+	MCFG_CPU_ADD("maincpu", TMS0980, 425000) // approximation
 	MCFG_TMS1XXX_READ_K_CB(READ8(stopthief_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(stopthief_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(stopthief_state, write_o))
@@ -4460,7 +4462,7 @@ INPUT_CHANGED_MEMBER(phpball_state::flipper_button)
 {
 	// rectangular LEDs under LEDs D,F and E,G are directly connected
 	// to the left and right flipper buttons - output them to lamp90 and 91
-	output_set_lamp_value(90 + (int)(FPTR)param, newval);
+	output().set_lamp_value(90 + (int)(FPTR)param, newval);
 }
 
 
@@ -4654,7 +4656,7 @@ ROM_START( elecdet )
 	ROM_REGION( 1982, "maincpu:mpla", 0 )
 	ROM_LOAD( "tms0980_common1_micro.pla", 0, 1982, CRC(3709014f) SHA1(d28ee59ded7f3b9dc3f0594a32a98391b6e9c961) )
 	ROM_REGION( 352, "maincpu:opla", 0 )
-	ROM_LOAD( "tms0980_elecdet_output.pla", 0, 352, CRC(652d19c3) SHA1(75550c2b293453b6b9efed88c8cc77195a53161f) )
+	ROM_LOAD( "tms0980_elecdet_output.pla", 0, 352, CRC(5d12c24a) SHA1(e486802151a704c6273d4a8682c9c374d27d1e6d) )
 	ROM_REGION( 157, "maincpu:spla", 0 )
 	ROM_LOAD( "tms0980_common1_segment.pla", 0, 157, CRC(399aa481) SHA1(72c56c58fde3fbb657d69647a9543b5f8fc74279) )
 ROM_END
@@ -4712,9 +4714,9 @@ ROM_START( comp4 )
 	ROM_REGION( 860, "maincpu:mpla", 0 )
 	ROM_LOAD( "tms0970_comp4_micro.pla", 0, 860, CRC(ee9d7d9e) SHA1(25484e18f6a07f7cdb21a07220e2f2a82fadfe7b) )
 	ROM_REGION( 352, "maincpu:opla", 0 )
-	ROM_LOAD( "tms0970_comp4_output.pla", 0, 352, CRC(a0f887d1) SHA1(3c666663d484d5bed81e1014f8715aab8a3d489f) )
+	ROM_LOAD( "tms0980_comp4_output.pla", 0, 352, CRC(144ce2d5) SHA1(459b92ad62421932df61b7e3965f1821f9636a2c) )
 	ROM_REGION( 157, "maincpu:spla", 0 )
-	ROM_LOAD( "tms0970_comp4_segment.pla", 0, 157, CRC(e5bddd90) SHA1(4b1c6512c70e5bcd23c2dbf0c88cd8aa2c632a10) )
+	ROM_LOAD( "tms0980_comp4_segment.pla", 0, 157, CRC(73426b07) SHA1(311be3f95a97936b6d1a4dcfa7746da26318ce54) )
 ROM_END
 
 
@@ -4760,9 +4762,9 @@ ROM_START( cnsector )
 	ROM_REGION( 860, "maincpu:mpla", 0 )
 	ROM_LOAD( "tms0970_cnsector_micro.pla", 0, 860, CRC(059f5bb4) SHA1(2653766f9fd74d41d44013bb6f54c0973a6080c9) )
 	ROM_REGION( 352, "maincpu:opla", 0 )
-	ROM_LOAD( "tms0970_cnsector_output.pla", 0, 352, CRC(7c0bdcd6) SHA1(dade774097e8095dca5deac7b2367d0c701aca51) )
+	ROM_LOAD( "tms0980_cnsector_output.pla", 0, 352, CRC(c8bfb9d2) SHA1(30c3c73cec194debdcb1dd01b4adfefaeddf9516) )
 	ROM_REGION( 157, "maincpu:spla", 0 )
-	ROM_LOAD( "tms0970_common2_segment.pla", 0, 157, CRC(56c37a4f) SHA1(18ecc20d2666e89673739056483aed5a261ae927) )
+	ROM_LOAD( "tms0980_common2_segment.pla", 0, 157, CRC(c03cccd8) SHA1(08bc4b597686a7aa8b2c9f43b85b62747ffd455b) )
 ROM_END
 
 
@@ -4797,7 +4799,7 @@ ROM_START( stopthie )
 	ROM_REGION( 1982, "maincpu:mpla", 0 )
 	ROM_LOAD( "tms0980_common1_micro.pla", 0, 1982, CRC(3709014f) SHA1(d28ee59ded7f3b9dc3f0594a32a98391b6e9c961) )
 	ROM_REGION( 352, "maincpu:opla", 0 )
-	ROM_LOAD( "tms0980_stopthie_output.pla", 0, 352, CRC(50337a48) SHA1(4a9ea62ed797a9ac5190eec3bb6ebebb7814628c) )
+	ROM_LOAD( "tms0980_stopthie_output.pla", 0, 352, CRC(680ca1c1) SHA1(dea6365f2e6b50a52f1a8f1d8417176b905d2bc9) )
 	ROM_REGION( 157, "maincpu:spla", 0 )
 	ROM_LOAD( "tms0980_common1_segment.pla", 0, 157, CRC(399aa481) SHA1(72c56c58fde3fbb657d69647a9543b5f8fc74279) )
 ROM_END
@@ -4811,7 +4813,7 @@ ROM_START( stopthiep )
 	ROM_REGION( 1982, "maincpu:mpla", 0 )
 	ROM_LOAD( "tms0980_common1_micro.pla", 0, 1982, CRC(3709014f) SHA1(d28ee59ded7f3b9dc3f0594a32a98391b6e9c961) )
 	ROM_REGION( 352, "maincpu:opla", 0 )
-	ROM_LOAD( "tms0980_stopthie_output.pla", 0, 352, CRC(50337a48) SHA1(4a9ea62ed797a9ac5190eec3bb6ebebb7814628c) )
+	ROM_LOAD( "tms0980_stopthie_output.pla", 0, 352, CRC(680ca1c1) SHA1(dea6365f2e6b50a52f1a8f1d8417176b905d2bc9) )
 	ROM_REGION( 157, "maincpu:spla", 0 )
 	ROM_LOAD( "tms0980_common1_segment.pla", 0, 157, CRC(399aa481) SHA1(72c56c58fde3fbb657d69647a9543b5f8fc74279) )
 ROM_END

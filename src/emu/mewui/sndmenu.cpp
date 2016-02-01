@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/sndmenu.c
+    mewui/sndmenu.cpp
 
     Internal MEWUI user interface.
 
@@ -13,12 +13,8 @@
 #include "ui/menu.h"
 #include "mewui/sndmenu.h"
 #include "mewui/selector.h"
-
-#ifdef MEWUI_WINDOWS
-#include "../osd/windows/winmain.h"
-#else
-#include "../osd/modules/lib/osdobj_common.h"
-#endif
+#include "cliopts.h"
+#include "../osd/modules/lib/osdobj_common.h" // TODO: remove
 
 const int ui_menu_sound_options::m_sound_rate[] = { 11025, 22050, 44100, 48000 };
 
@@ -28,11 +24,7 @@ const int ui_menu_sound_options::m_sound_rate[] = { 11025, 22050, 44100, 48000 }
 
 ui_menu_sound_options::ui_menu_sound_options(running_machine &machine, render_container *container) : ui_menu(machine, container)
 {
-#ifdef MEWUI_WINDOWS
-	windows_options &options = downcast<windows_options &>(machine.options());
-#else
 	osd_options &options = downcast<osd_options &>(machine.options());
-#endif
 
 	m_sample_rate = machine.options().sample_rate();
 	m_sound = (strcmp(options.sound(), OSDOPTVAL_NONE) && strcmp(options.sound(), "0"));
@@ -102,7 +94,7 @@ void ui_menu_sound_options::handle()
 					for (int index = 0; index < total; index++)
 						s_sel[index] = std::to_string(m_sound_rate[index]);
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_cur_rates)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, m_cur_rates)));
 				}
 				break;
 

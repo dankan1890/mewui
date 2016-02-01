@@ -79,10 +79,10 @@ render_texture *ui_menu::star_texture;
 render_texture *ui_menu::toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
 render_texture *ui_menu::sw_toolbar_texture[MEWUI_TOOLBAR_BUTTONS];
 render_texture *ui_menu::icons_texture[MAX_ICONS_RENDER];
-bitmap_argb32 *ui_menu::snapx_bitmap;
-bitmap_argb32 *ui_menu::no_avail_bitmap;
-bitmap_argb32 *ui_menu::star_bitmap;
-bitmap_argb32 *ui_menu::bgrnd_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::snapx_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::no_avail_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::star_bitmap;
+std::unique_ptr<bitmap_argb32> ui_menu::bgrnd_bitmap;
 bitmap_argb32 *ui_menu::icons_bitmap[MAX_ICONS_RENDER];
 std::unique_ptr<bitmap_rgb32> ui_menu::hilight_main_bitmap;
 bitmap_argb32 *ui_menu::toolbar_bitmap[MEWUI_TOOLBAR_BUTTONS];
@@ -111,7 +111,7 @@ inline bool ui_menu_item::is_selectable() const
 
 inline bool ui_menu::exclusive_input_pressed(int key, int repeat)
 {
-	if (menu_event.iptkey == IPT_INVALID && ui_input_pressed_repeat(machine(), key, repeat))
+	if (menu_event.iptkey == IPT_INVALID && machine().ui_input().pressed_repeat(key, repeat))
 	{
 		menu_event.iptkey = key;
 		return true;
@@ -168,20 +168,21 @@ void ui_menu::exit(running_machine &machine)
 	ui_menu::clear_free_list(machine);
 
 	// free textures
-	machine.render().texture_free(hilight_texture);
-	machine.render().texture_free(arrow_texture);
-	machine.render().texture_free(snapx_texture);
-	machine.render().texture_free(hilight_main_texture);
-	machine.render().texture_free(bgrnd_texture);
-	machine.render().texture_free(star_texture);
+	render_manager &mre = machine.render();
+	mre.texture_free(hilight_texture);
+	mre.texture_free(arrow_texture);
+	mre.texture_free(snapx_texture);
+	mre.texture_free(hilight_main_texture);
+	mre.texture_free(bgrnd_texture);
+	mre.texture_free(star_texture);
 
 	for (auto & elem : icons_texture)
-		machine.render().texture_free(elem);
+		mre.texture_free(elem);
 
 	for (int i = 0; i < MEWUI_TOOLBAR_BUTTONS; i++)
 	{
-		machine.render().texture_free(sw_toolbar_texture[i]);
-		machine.render().texture_free(toolbar_texture[i]);
+		mre.texture_free(sw_toolbar_texture[i]);
+		mre.texture_free(toolbar_texture[i]);
 	}
 }
 
@@ -548,7 +549,7 @@ void ui_menu::draw(bool customonly, bool noimage, bool noinput)
 	if (!customonly && !noinput)
 	{
 		INT32 mouse_target_x, mouse_target_y;
-		render_target *mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+		render_target *mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 		if (mouse_target != nullptr)
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 				mouse_hit = true;
@@ -822,7 +823,7 @@ void ui_menu::handle_events(UINT32 flags)
 	bool historyflag = ((item[0].flags & MENU_FLAG_MEWUI_HISTORY) != 0);
 
 	// loop while we have interesting events
-	while (!stop && ui_input_pop_event(machine(), &local_menu_event))
+	while (!stop && machine().ui_input().pop_event(&local_menu_event))
 	{
 		switch (local_menu_event.event_type)
 		{
@@ -867,7 +868,7 @@ void ui_menu::handle_events(UINT32 flags)
 				break;
 
 			// caught scroll event
-			case UI_EVENT_MOUSE_SCROLL:
+			case UI_EVENT_MOUSE_WHEEL:
 				if ((flags & UI_MENU_PROCESS_ONLYCHAR) == 0)
 				{
 					if (local_menu_event.zdelta > 0)
@@ -1025,7 +1026,7 @@ void ui_menu::handle_keys(UINT32 flags)
 	}
 
 	// handle a toggle cheats request
-	if (ui_input_pressed_repeat(machine(), IPT_UI_TOGGLE_CHEAT, 0))
+	if (machine().ui_input().pressed_repeat(IPT_UI_TOGGLE_CHEAT, 0))
 		machine().cheat().set_enable(!machine().cheat().enabled());
 
 	// see if any other UI keys are pressed
@@ -1103,7 +1104,7 @@ void ui_menu::stack_push(ui_menu *menu)
 	menu->parent = menu_stack;
 	menu_stack = menu;
 	menu->reset(UI_MENU_RESET_SELECT_FIRST);
-	ui_input_reset(menu->machine());
+	menu->machine().ui_input().reset();
 }
 
 
@@ -1119,7 +1120,7 @@ void ui_menu::stack_pop(running_machine &machine)
 		menu_stack = menu->parent;
 		menu->parent = menu_free;
 		menu_free = menu;
-		ui_input_reset(machine);
+		machine.ui_input().reset();
 	}
 }
 
@@ -1161,7 +1162,7 @@ UINT32 ui_menu::ui_handler(running_machine &machine, render_container *container
 {
 	// if we have no menus stacked up, start with the main menu
 	if (menu_stack == nullptr)
-		stack_push(auto_alloc_clear(machine, ui_menu_main(machine, container)));
+		stack_push(auto_alloc_clear(machine, <ui_menu_main>(machine, container)));
 
 	// update the menu state
 	if (menu_stack != nullptr)
@@ -1171,7 +1172,7 @@ UINT32 ui_menu::ui_handler(running_machine &machine, render_container *container
 	clear_free_list(machine);
 
 	// if the menus are to be hidden, return a cancel here
-	if (machine.ui().is_menu_active() && ((ui_input_pressed(machine, IPT_UI_CONFIGURE) && !stack_has_special_main_menu()) || menu_stack == nullptr))
+	if (machine.ui().is_menu_active() && ((machine.ui_input().pressed(IPT_UI_CONFIGURE) && !stack_has_special_main_menu()) || menu_stack == nullptr))
 		return UI_HANDLER_CANCEL;
 
 	return 0;
@@ -1278,16 +1279,16 @@ void ui_menu::init_mewui(running_machine &machine)
 	hilight_main_texture->set_bitmap(*hilight_main_bitmap, hilight_main_bitmap->cliprect(), TEXFORMAT_ARGB32);
 
 	// create a texture for snapshot
-	snapx_bitmap = auto_alloc(machine, bitmap_argb32);
+	snapx_bitmap = std::make_unique<bitmap_argb32>(0, 0);
 	snapx_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	// allocates and sets the default "no available" image
-	no_avail_bitmap = auto_alloc(machine, bitmap_argb32(256, 256));
+	no_avail_bitmap = std::make_unique<bitmap_argb32>(256, 256);
 	UINT32 *dst = &no_avail_bitmap->pix32(0);
 	memcpy(dst, no_avail_bmp, 256 * 256 * sizeof(UINT32));
 
 	// allocates and sets the favorites star image
-	star_bitmap = auto_alloc(machine, bitmap_argb32(32, 32));
+	star_bitmap = std::make_unique<bitmap_argb32>(32, 32);
 	dst = &star_bitmap->pix32(0);
 	memcpy(dst, favorite_star_bmp, 32 * 32 * sizeof(UINT32));
 	star_texture = mrender.texture_alloc();
@@ -1301,7 +1302,7 @@ void ui_menu::init_mewui(running_machine &machine)
 	}
 
 	// create a texture for main menu background
-	bgrnd_bitmap = auto_alloc(machine, bitmap_argb32);
+	bgrnd_bitmap = std::make_unique<bitmap_argb32>(0, 0);
 	bgrnd_texture = mrender.texture_alloc(render_texture::hq_scale);
 
 	emu_options &mopt = machine.options();
@@ -1384,7 +1385,7 @@ void ui_menu::draw_select_game(bool noinput)
 	mouse_button = FALSE;
 	if (!noinput)
 	{
-		mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+		mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 		if (mouse_target != nullptr)
 			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 				mouse_hit = TRUE;
@@ -1827,7 +1828,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	}
 
 	// handle a toggle cheats request
-	if (!ui_error && ui_input_pressed_repeat(machine(), IPT_UI_TOGGLE_CHEAT, 0))
+	if (!ui_error && machine().ui_input().pressed_repeat(IPT_UI_TOGGLE_CHEAT, 0))
 		machine().cheat().set_enable(!machine().cheat().enabled());
 
 	// see if any other UI keys are pressed
@@ -1853,7 +1854,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 	ui_event local_menu_event;
 
 	// loop while we have interesting events
-	while (!stop && ui_input_pop_event(machine(), &local_menu_event))
+	while (!stop && machine().ui_input().pop_event(&local_menu_event))
 	{
 		switch (local_menu_event.event_type)
 		{
@@ -1994,7 +1995,7 @@ void ui_menu::handle_main_events(UINT32 flags)
 			break;
 
 			// caught scroll event
-		case UI_EVENT_MOUSE_SCROLL:
+		case UI_EVENT_MOUSE_WHEEL:
 			if (local_menu_event.zdelta > 0)
 			{
 				if (selected >= visible_items || selected == 0 || ui_error)
@@ -2036,14 +2037,15 @@ void ui_menu::handle_main_events(UINT32 flags)
 void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 {
 	float text_size = 0.65f;
-	float line_height = machine().ui().get_line_height() * text_size;
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height() * text_size;
 	float maxwidth = 0.0f;
 
 	for (int x = 0; x < ume_filters::length; x++)
 	{
 		float width;
 		// compute width of left hand side
-		machine().ui().draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, ume_filters::text[x], 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
 			DRAW_NONE, UI_TEXT_COLOR, ARGB_BLACK, &width, nullptr, text_size);
 		width += 2 * UI_BOX_LR_BORDER;
 		maxwidth = MAX(maxwidth, width);
@@ -2051,7 +2053,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 
 	x2 = x1 + maxwidth;
 
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
@@ -2080,7 +2082,7 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 		if (bgcolor != UI_TEXT_BG_COLOR)
 			container->add_rect(x1, y1, x2, y1 + line_height, bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
-		machine().ui().draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
+		mui.draw_text_full(container, ume_filters::text[filter], x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
 			DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
 
 		y1 += line_height;
@@ -2093,12 +2095,13 @@ void ui_menu::draw_ume_box(float x1, float y1, float x2, float y2)
 
 float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 {
-	float line_height = machine().ui().get_line_height();
+	ui_manager &mui = machine().ui();
+	float line_height = mui.get_line_height();
 	float midl = (x2 - x1) * 0.5f;
 
 	// add outlined box for options
 	//machine().ui().draw_outlined_box(container, x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-	machine().ui().draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// add separator line
 	container->add_line(x1 + midl, y1, x1 + midl, y1 + line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
@@ -2134,7 +2137,7 @@ float ui_menu::draw_right_box_title(float x1, float y1, float x2, float y2)
 			container->add_rect(x1 + UI_LINE_WIDTH, y1 + UI_LINE_WIDTH, x1 + midl - UI_LINE_WIDTH, y1 + line_height,
 			bgcolor, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(TRUE));
 
-		machine().ui().draw_text_full(container, buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
+		mui.draw_text_full(container, buffer[cells].c_str(), x1 + UI_LINE_WIDTH, y1, midl - UI_LINE_WIDTH,
 			JUSTIFY_CENTER, WRAP_NEVER, DRAW_NORMAL, fgcolor, bgcolor, nullptr, nullptr);
 		x1 = x1 + midl;
 	}
@@ -2578,7 +2581,7 @@ void ui_menu::draw_palette_menu()
 	// locate mouse
 	mouse_hit = false;
 	mouse_button = false;
-	mouse_target = ui_input_find_mouse(machine(), &mouse_target_x, &mouse_target_y, &mouse_button);
+	mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
 	if (mouse_target != nullptr)
 		if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
 			mouse_hit = true;

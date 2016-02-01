@@ -60,7 +60,7 @@ private:
 class ui_menu_command_content : public ui_menu
 {
 public:
-	ui_menu_command_content(running_machine &machine, render_container *container, FPTR p_param, std::string title, const game_driver *driver = nullptr);
+	ui_menu_command_content(running_machine &machine, render_container *container, std::string title, const game_driver *driver = nullptr);
 	virtual ~ui_menu_command_content();
 	virtual void populate() override;
 	virtual void handle() override;
@@ -68,8 +68,7 @@ public:
 
 private:
 	const game_driver   *m_driver;
-	FPTR                m_param;
-	std::string         m_title;
+	std::string          m_title;
 };
 
 //-------------------------------------------------

@@ -195,7 +195,7 @@ void cc40_state::update_lcd_indicator(UINT8 y, UINT8 x, int state)
 	// ---- raw lcd screen here ----
 	// under    |    ERROR   v      v      v      v      v      v    _LOW
 	// output#  |    60     61     62     63     50     51     52     53
-	output_set_lamp_value(y * 10 + x, state);
+	output().set_lamp_value(y * 10 + x, state);
 }
 
 static HD44780_PIXEL_UPDATE(cc40_pixel_update)
@@ -402,7 +402,7 @@ INPUT_CHANGED_MEMBER(cc40_state::sysram_size_changed)
 
 static INPUT_PORTS_START( cc40 )
 	PORT_START("RAMSIZE")
-	PORT_CONFNAME( 0x07, 0x01, "RAM Chip 1") PORT_CHANGED_MEMBER(DEVICE_SELF, cc40_state, sysram_size_changed, (void *)nullptr)
+	PORT_CONFNAME( 0x07, 0x01, "RAM Chip 1") PORT_CHANGED_MEMBER(DEVICE_SELF, cc40_state, sysram_size_changed, (void *)0)
 	PORT_CONFSETTING(    0x00, "None" )
 	PORT_CONFSETTING(    0x01, "2KB" )
 	PORT_CONFSETTING(    0x04, "8KB" )

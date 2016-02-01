@@ -44,7 +44,7 @@ end
 	flags {
 		"Unicode",
 	}
-if (_OPTIONS["SOURCES"] == nil) then 
+
 	configuration { "x64", "Release" }
 		targetsuffix "64"
 		if _OPTIONS["PROFILE"] then
@@ -80,7 +80,7 @@ if (_OPTIONS["SOURCES"] == nil) then
 		if _OPTIONS["PROFILE"] then
 			targetsuffix "dp"
 		end
-end
+
 	configuration { "mingw*" or "vs*" }
 		targetextension ".exe"
 
@@ -129,7 +129,6 @@ end
 		"7z",
 		"lua",
 		"lsqlite3",
-		"jsoncpp",
 	}
 
 	if _OPTIONS["with-bundled-zlib"] then
@@ -180,6 +179,11 @@ end
 	
 	maintargetosdoptions(_target,_subtarget)
 
+	local layouttarget = _target
+	if (_target=="mewui") then
+		layouttarget = "mame"
+	end
+
 	includedirs {
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/emu",
@@ -188,7 +192,7 @@ end
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "3rdparty",
-		GEN_DIR  .. _target .. "/layout",
+		GEN_DIR  .. layouttarget .. "/layout",
 		GEN_DIR  .. "resource",
 	}
 
@@ -247,8 +251,8 @@ end
 	
 if (_OPTIONS["SOURCES"] == nil) then 	
 	dependency {
-		{ "../../../../generated/mame/mame/drivlist.cpp",  MAME_DIR .. "src/mame/mess.lst", true },
-		{ "../../../../generated/mame/mame/drivlist.cpp" , MAME_DIR .. "src/mame/arcade.lst", true},
+		{ "../../../../generated/" .. _target .. "/" .. _subtarget .. "/drivlist.cpp",  MAME_DIR .. "src/mame/mess.lst", true },
+		{ "../../../../generated/" .. _target .. "/" .. _subtarget .. "/drivlist.cpp" , MAME_DIR .. "src/mame/arcade.lst", true},
 	}
 	custombuildtask {
 		{ MAME_DIR .. "src/".._target .."/" .. _subtarget ..".lst" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py" }, {"@echo Building driver list...",    PYTHON .. " $(1) $(<) > $(@)" }},

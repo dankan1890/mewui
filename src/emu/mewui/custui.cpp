@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/custui.c
+    mewui/custui.cpp
 
     Internal MEWUI user interface.
 
@@ -11,9 +11,9 @@
 #include "emu.h"
 #include "ui/ui.h"
 #include "ui/menu.h"
-#include "mewui/utils.h"
 #include "mewui/selector.h"
 #include "mewui/custui.h"
+#include "mewui/utils.h"
 
 const char *ui_menu_custom_ui::hide_status[] = { "Show All", "Hide Filters", "Hide Info/Image", "Hide Both" };
 
@@ -61,11 +61,11 @@ void ui_menu_custom_ui::handle()
 			switch ((FPTR)m_event->itemref)
 			{
 				case FONT_MENU:
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_font_ui(machine(), container)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_font_ui>(machine(), container)));
 					break;
 
 				case COLORS_MENU:
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_colors_ui(machine(), container)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_colors_ui>(machine(), container)));
 					break;
 				case HIDE_MENU:
 				{
@@ -74,7 +74,7 @@ void ui_menu_custom_ui::handle()
 					for (int index = 0; index < total; ++index)
 						s_sel[index] = hide_status[index];
 
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &mewui_globals::panels_status)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, mewui_globals::panels_status)));
 				}
 			}
 		}
@@ -147,13 +147,13 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 
 	m_bold = (strreplace(name, "[B]", "") + strreplace(name, "[b]", "") > 0);
 	m_italic = (strreplace(name, "[I]", "") + strreplace(name, "[i]", "") > 0);
-	m_class.actual = 0;
+	m_actual = 0;
 
-	for (size_t index = 0; index < m_class.ui.size(); index++)
+	for (size_t index = 0; index < m_fonts.size(); index++)
 	{
-		if (m_class.ui[index] == name)
+		if (m_fonts[index] == name)
 		{
-			m_class.actual = index;
+			m_actual = index;
 			break;
 		}
 	}
@@ -186,10 +186,10 @@ ui_menu_font_ui::ui_menu_font_ui(running_machine &machine, render_container *con
 
 int CALLBACK ui_menu_font_ui::EnumFontFamiliesExProc(const LOGFONT *lpelfe, const TEXTMETRIC *lpntme, DWORD FontType, LPARAM lParam)
 {
-	c_uifonts *lpc = (c_uifonts*)lParam;
+	std::vector<std::string> *lpc = (std::vector<std::string>*)lParam;
 	std::string utf((char *)lpelfe->lfFaceName);
 	if (utf[0] != '@')
-		lpc->ui.push_back(utf);
+		lpc->push_back(utf);
 
 	return 1;
 }
@@ -206,14 +206,14 @@ void ui_menu_font_ui::list()
 	lf.lfFaceName[0] = '\0';
 
 	HDC hDC = GetDC( nullptr );
-	EnumFontFamiliesEx( hDC, &lf, (FONTENUMPROC)EnumFontFamiliesExProc, (LPARAM)&m_class, 0 );
+	EnumFontFamiliesEx( hDC, &lf, (FONTENUMPROC)EnumFontFamiliesExProc, (LPARAM)&m_fonts, 0 );
 	ReleaseDC( nullptr, hDC );
 
 	// sort
-	std::stable_sort(m_class.ui.begin(), m_class.ui.end());
+	std::stable_sort(m_fonts.begin(), m_fonts.end());
 
 	// add default string to the top of array
-	m_class.ui.insert(m_class.ui.begin(), std::string("default"));
+	m_fonts.insert(m_fonts.begin(), std::string("default"));
 }
 #endif
 
@@ -227,8 +227,8 @@ ui_menu_font_ui::~ui_menu_font_ui()
 	emu_options &moptions = machine().options();
 
 #ifdef MEWUI_WINDOWS
-	std::string name(m_class.ui[m_class.actual]);
-	if (m_class.ui[m_class.actual] != "default")
+	std::string name(m_fonts[m_actual]);
+	if (m_fonts[m_actual] != "default")
 	{
 		if (m_italic)
 			name.insert(0, "[I]");
@@ -277,12 +277,12 @@ void ui_menu_font_ui::handle()
 			case MUI_FNT:
 				if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT)
 				{
-					(m_event->iptkey == IPT_UI_RIGHT) ? m_class.actual++ : m_class.actual--;
+					(m_event->iptkey == IPT_UI_RIGHT) ? m_actual++ : m_actual--;
 					changed = true;
 				}
 				else if (m_event->iptkey == IPT_UI_SELECT)
 				{
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, m_class.ui, &m_class.actual)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, m_fonts, m_actual)));
 					changed = true;
 				}
 				break;
@@ -314,11 +314,11 @@ void ui_menu_font_ui::populate()
 
 #ifdef MEWUI_WINDOWS
 	// add fonts option
-	arrow_flags = get_arrow_flags(0, m_class.ui.size() - 1, m_class.actual);
-	std::string name(m_class.ui[m_class.actual]);
+	arrow_flags = get_arrow_flags(0, m_fonts.size() - 1, m_actual);
+	std::string name(m_fonts[m_actual]);
 	item_append("UI Font", name.c_str(), arrow_flags, (void *)(FPTR)MUI_FNT);
 
-	if (name.compare("default") != 0)
+	if (name != "default")
 	{
 		item_append("Bold", m_bold ? "On" : "Off", m_bold ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_BOLD);
 		item_append("Italic", m_italic ? "On" : "Off", m_italic ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)MUI_ITALIC);
@@ -437,13 +437,11 @@ ui_menu_colors_ui::ui_menu_colors_ui(running_machine &machine, render_container 
 
 ui_menu_colors_ui::~ui_menu_colors_ui()
 {
-	std::string error_string;
-	char dec_color[65];
-
+	std::string error_string, dec_color;
 	for (int index = 1; index < MUI_RESTORE; index++)
 	{
-		sprintf(dec_color, "%x", (UINT32)m_color_table[index].color);
-		machine().options().set_value(m_color_table[index].option, dec_color, OPTION_PRIORITY_CMDLINE, error_string);
+		strprintf(dec_color, "%x", (UINT32)m_color_table[index].color);
+		machine().options().set_value(m_color_table[index].option, dec_color.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	}
 }
 
@@ -461,7 +459,7 @@ void ui_menu_colors_ui::handle()
 	if (m_event != nullptr && m_event->itemref != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		if ((FPTR)m_event->itemref != MUI_RESTORE)
-			ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_rgb_ui(machine(), container, &m_color_table[(FPTR)m_event->itemref].color, item[selected].text)));
+			ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_rgb_ui>(machine(), container, &m_color_table[(FPTR)m_event->itemref].color, item[selected].text)));
 		else
 		{
 			changed = true;
@@ -540,8 +538,7 @@ void ui_menu_colors_ui::custom_render(void *selectedref, float top, float bottom
 
 	// bottom text
 	// get the text for 'UI Select'
-	std::string ui_select_text;
-	machine().input().seq_name(ui_select_text, machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
+	std::string ui_select_text = machine().input().seq_name(machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
 	topbuf.assign("Double click or press ").append(ui_select_text.c_str()).append(" to change the m_color value");
 
 	mui.draw_text_full(container, topbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
@@ -789,7 +786,7 @@ void ui_menu_rgb_ui::handle()
 
 			case PALETTE_CHOOSE:
 				if (m_event->iptkey == IPT_UI_SELECT)
-					ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_palette_sel(machine(), container, *m_color)));
+					ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_palette_sel>(machine(), container, *m_color)));
 				break;
 		}
 	}
@@ -972,10 +969,8 @@ void ui_menu_rgb_ui::inkey_special(const ui_menu_event *m_event)
 	// if it's a backspace and we can handle it, do so
 	if (((m_event->unichar == 8 || m_event->unichar == 0x7f) && buflen > 0))
 		*(char *)utf8_previous_char(&m_search[buflen]) = 0;
-
 	else if (buflen >= 3)
 		return;
-
 	// if it's any other key and we're not maxed out, update
 	else if ((m_event->unichar >= '0' && m_event->unichar <= '9'))
 		buflen += utf8_from_uchar(&m_search[buflen], ARRAY_LENGTH(m_search) - buflen, m_event->unichar);
@@ -1000,8 +995,8 @@ ui_menu_palette_sel::palcolor ui_menu_palette_sel::m_palette[] = {
 //  ctor
 //-------------------------------------------------
 
-ui_menu_palette_sel::ui_menu_palette_sel(running_machine &machine, render_container *container, rgb_t &_color) : ui_menu(machine, container),
-	m_original(_color)
+ui_menu_palette_sel::ui_menu_palette_sel(running_machine &machine, render_container *container, rgb_t &_color) 
+	: ui_menu(machine, container), m_original(_color)
 {
 }
 

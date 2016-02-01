@@ -278,6 +278,7 @@ static DView *          focus_view;
 static ui_menu *        menu;
 static DView_edit *     cur_editor;
 static int              win_count;
+static void*            menu_sel;  // selected item in the menu
 
 static void set_focus_view(DView *dv)
 {
@@ -452,10 +453,10 @@ static void dview_draw_hsb(DView *dv)
 
 static void dview_draw_vsb(DView *dv)
 {
-	int vt;
-	int ts;
+	INT64 vt;
+	INT64 ts;
 	//int sz = SLIDER_SIZE;
-	int sz;
+	INT64 sz;
 	rectangle r;
 	adjustment *sb = &dv->vsb;
 
@@ -788,6 +789,7 @@ static void dview_size_allocate(DView *dv)
 	debug_view_xy size, pos, col, vsize;
 	render_container::user_settings rcus;
 	rectangle r;
+	std::string title;
 
 	dv->container->get_user_settings(rcus);
 	rcus.m_xoffset = (float) dv->ofs_x / (float) dv->rt_width;
@@ -805,7 +807,7 @@ static void dview_size_allocate(DView *dv)
 	dview_get_rect(dv, RECT_DVIEW_CLIENT, r);
 
 	dv->hsb.visible = (size.x * debug_font_width > r.width() ? 1 : 0);
-	dv->vsb.visible = (size.y * debug_font_height > r.height() ? 1 : 0);
+	dv->vsb.visible = ((INT64)size.y * (INT64)debug_font_height > r.height() ? 1 : 0);
 	dview_get_rect(dv, RECT_DVIEW_CLIENT, r);
 
 //  dv->hsb.visible = (size.x * debug_font_width > r.width() ? 1 : 0);
@@ -1016,7 +1018,7 @@ static void on_memory_window_activate(DView *dv, const ui_menu_event *event)
 	ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
 	ndv->bounds.setx(0,500);
 	win_count++;
-
+	dview_set_state(ndv,VIEW_STATE_VISIBLE,true);
 	set_focus_view(ndv);
 }
 
@@ -1035,6 +1037,7 @@ static void on_disassembly_window_activate(DView *dv, const ui_menu_event *event
 	dview_set_title(ndv, source->name());
 	ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
 	win_count++;
+	dview_set_state(ndv,VIEW_STATE_VISIBLE,true);
 	set_focus_view(ndv);
 }
 
@@ -1064,6 +1067,7 @@ static void on_log_window_activate(DView *dv, const ui_menu_event *event)
 	ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
 	ndv->bounds.setx(0,600);
 	win_count++;
+	dview_set_state(ndv,VIEW_STATE_VISIBLE,true);
 	set_focus_view(ndv);
 }
 
@@ -1078,6 +1082,7 @@ static void on_bp_window_activate(DView *dv, const ui_menu_event *event)
 	ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
 	ndv->bounds.setx(0,600);
 	win_count++;
+	dview_set_state(ndv,VIEW_STATE_VISIBLE,true);
 	set_focus_view(ndv);
 }
 
@@ -1092,6 +1097,7 @@ static void on_wp_window_activate(DView *dv, const ui_menu_event *event)
 	ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
 	ndv->bounds.setx(0,600);
 	win_count++;
+	dview_set_state(ndv,VIEW_STATE_VISIBLE,true);
 	set_focus_view(ndv);
 }
 
@@ -1317,8 +1323,11 @@ static void CreateMainMenu(running_machine &machine)
 	std::string title;
 
 	if (menu)
+	{
+		menu_sel = menu->get_selection();
 		global_free( menu);
-	menu = global_alloc_clear(ui_menu_debug(machine, &machine.render().ui_container()));
+	}
+	menu = global_alloc_clear<ui_menu_debug>(machine, &machine.render().ui_container());
 
 	switch (focus_view->type)
 	{
@@ -1397,27 +1406,28 @@ static void CreateMainMenu(running_machine &machine)
 
 	/* add input menu items */
 
-	menu->item_append("New Memory Window", nullptr, 0, (void *)on_memory_window_activate);
-	menu->item_append("New Disassembly Window", nullptr, 0, (void *)on_disassembly_window_activate);
-	menu->item_append("New Error Log Window", nullptr, 0, (void *)on_log_window_activate);
-	menu->item_append("New Breakpoints Window", nullptr, 0, (void *)on_bp_window_activate);
-	menu->item_append("New Watchpoints Window", nullptr, 0, (void *)on_wp_window_activate);
+	menu->item_append("New Memory Window", "[Ctrl+M]", 0, (void *)on_memory_window_activate);
+	menu->item_append("New Disassembly Window", "[Ctrl+D]", 0, (void *)on_disassembly_window_activate);
+	menu->item_append("New Error Log Window", "[Ctrl+L]", 0, (void *)on_log_window_activate);
+	menu->item_append("New Breakpoints Window", "[Ctrl+B]", 0, (void *)on_bp_window_activate);
+	menu->item_append("New Watchpoints Window", "[Ctrl+W]", 0, (void *)on_wp_window_activate);
 	menu->item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
-	menu->item_append("Run", nullptr, 0, (void *)on_run_activate);
-	menu->item_append("Run and Hide Debugger", nullptr, 0, (void *)on_run_h_activate);
-	menu->item_append("Run to Next CPU", nullptr, 0, (void *)on_run_cpu_activate);
-	menu->item_append("Run until Next Interrupt on This CPU", nullptr, 0, (void *)on_run_irq_activate);
-	menu->item_append("Run until Next VBLANK", nullptr, 0, (void *)on_run_vbl_activate);
+	menu->item_append("Run", "[F5]", 0, (void *)on_run_activate);
+	menu->item_append("Run and Hide Debugger", "[F12]", 0, (void *)on_run_h_activate);
+	menu->item_append("Run to Next CPU", "[F6]", 0, (void *)on_run_cpu_activate);
+	menu->item_append("Run until Next Interrupt on This CPU", "[F7]", 0, (void *)on_run_irq_activate);
+	menu->item_append("Run until Next VBLANK", "[F8]", 0, (void *)on_run_vbl_activate);
 	menu->item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
-	menu->item_append("Step Into", nullptr, 0, (void *)on_step_into_activate);
-	menu->item_append("Step Over", nullptr, 0, (void *)on_step_over_activate);
+	menu->item_append("Step Into", "[F11]", 0, (void *)on_step_into_activate);
+	menu->item_append("Step Over", "[F10]", 0, (void *)on_step_over_activate);
 	menu->item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
-	menu->item_append("Soft Reset", nullptr, 0, (void *)on_soft_reset_activate);
-	menu->item_append("Hard Reset", nullptr, 0, (void *)on_hard_reset_activate);
+	menu->item_append("Soft Reset", "[F3]", 0, (void *)on_soft_reset_activate);
+	menu->item_append("Hard Reset", "[Shift+F3]", 0, (void *)on_hard_reset_activate);
 	menu->item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
 	if (!dview_is_state(focus_view, VIEW_STATE_FOLLOW_CPU))
-		menu->item_append("Close Window", nullptr, 0, (void *)on_close_activate);
+		menu->item_append("Close Window", "[Shift+F4]", 0, (void *)on_close_activate);
 	menu->item_append("Exit", nullptr, 0, (void *)on_exit_activate);
+	menu->set_selection(menu_sel);
 }
 
 static int map_point(DView *dv, INT32 target_x, INT32 target_y, INT32 *mapped_x, INT32 *mapped_y)
@@ -1453,7 +1463,7 @@ static void handle_mouse(running_machine &machine)
 	if (menu != nullptr)
 		return;
 
-	mouse_target = ui_input_find_mouse(machine, &x, &y, &button);
+	mouse_target = machine.ui_input().find_mouse(&x, &y, &button);
 
 	if (mouse_target == nullptr)
 		return;
@@ -1469,6 +1479,186 @@ static void handle_mouse(running_machine &machine)
 	}
 }
 
+static void handle_keys(running_machine &machine)
+{
+	if (menu != nullptr)
+		return;
+
+	// global keys
+	if(machine.input().code_pressed_once(KEYCODE_F3))
+	{
+		if(machine.input().code_pressed(KEYCODE_LSHIFT))
+			machine.schedule_hard_reset();
+		else
+		{
+			machine.schedule_soft_reset();
+			debug_cpu_get_visible_cpu(machine)->debug()->go();
+		}
+	}
+
+	if(machine.input().code_pressed_once(KEYCODE_F5))
+		debug_cpu_get_visible_cpu(machine)->debug()->go();
+	if(machine.input().code_pressed_once(KEYCODE_F6))
+		debug_cpu_get_visible_cpu(machine)->debug()->go_next_device();
+	if(machine.input().code_pressed_once(KEYCODE_F7))
+		debug_cpu_get_visible_cpu(machine)->debug()->go_interrupt();
+	if(machine.input().code_pressed_once(KEYCODE_F8))
+		debug_cpu_get_visible_cpu(machine)->debug()->go_vblank();
+	if(machine.input().code_pressed_once(KEYCODE_F10))
+		debug_cpu_get_visible_cpu(machine)->debug()->single_step_over();
+	if(machine.input().code_pressed_once(KEYCODE_F11))
+		debug_cpu_get_visible_cpu(machine)->debug()->single_step();
+	if(machine.input().code_pressed_once(KEYCODE_F12))
+	{
+		debug_hide_all();
+		debug_cpu_get_visible_cpu(machine)->debug()->go();
+	}
+
+	// TODO: make common functions to be shared here and with the menu callbacks
+	if(machine.input().code_pressed_once(KEYCODE_D))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+		{
+			DView *ndv;
+			render_target *target;
+			const debug_view_source *source;
+
+			target = &machine.render().ui_target();
+
+			ndv = dview_alloc(target, machine, DVT_DISASSEMBLY, 0);
+			ndv->editor.active = TRUE;
+			ndv->editor.container = &machine.render().ui_container();
+			source = ndv->view->source();
+			dview_set_title(ndv, source->name());
+			ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
+			win_count++;
+			set_focus_view(ndv);
+		}
+	}
+	if(machine.input().code_pressed_once(KEYCODE_M))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+		{
+			DView *ndv;
+			render_target *target;
+			const debug_view_source *source;
+
+			target = &machine.render().ui_target();
+
+			ndv = dview_alloc(target, machine, DVT_MEMORY, 0);
+			ndv->editor.active = TRUE;
+			ndv->editor.container = &machine.render().ui_container();
+			source = ndv->view->source();
+			dview_set_title(ndv, source->name());
+			ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
+			ndv->bounds.setx(0,500);
+			win_count++;
+
+			set_focus_view(ndv);
+		}
+	}
+	if(machine.input().code_pressed_once(KEYCODE_L))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+		{
+			DView *ndv;
+			render_target *target;
+
+			target = &machine.render().ui_target();
+			ndv = dview_alloc(target, machine, DVT_LOG, 0);
+			dview_set_title(ndv, "Log");
+			ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
+			ndv->bounds.setx(0,600);
+			win_count++;
+			set_focus_view(ndv);
+		}
+	}
+	if(machine.input().code_pressed_once(KEYCODE_B))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+		{
+			DView *ndv;
+			render_target *target;
+
+			target = &machine.render().ui_target();
+			ndv = dview_alloc(target, machine, DVT_BREAK_POINTS, 0);
+			dview_set_title(ndv, "Breakpoints");
+			ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
+			ndv->bounds.setx(0,600);
+			win_count++;
+			set_focus_view(ndv);
+		}
+	}
+	if(machine.input().code_pressed_once(KEYCODE_W))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+		{
+			DView *ndv;
+			render_target *target;
+
+			target = &machine.render().ui_target();
+			ndv = dview_alloc(target, machine, DVT_WATCH_POINTS, 0);
+			dview_set_title(ndv, "Watchpoints");
+			ndv->ofs_x = ndv->ofs_y = win_count * TITLE_HEIGHT;
+			ndv->bounds.setx(0,600);
+			win_count++;
+			set_focus_view(ndv);
+		}
+	}
+	if (!dview_is_state(focus_view, VIEW_STATE_FOLLOW_CPU))
+	{
+		if(machine.input().code_pressed_once(KEYCODE_F4))
+		{
+			if(machine.input().code_pressed(KEYCODE_LSHIFT))  // use shift+F4, as ctrl+F4 is used to toggle keepaspect.
+			{
+				DView* dv = focus_view;
+				set_focus_view(focus_view->next);
+				win_count--;
+				dview_free(dv);
+			}
+		}
+	}
+
+
+	// pass keypresses to debug view with focus
+	if(machine.input().code_pressed_once(KEYCODE_UP))
+		focus_view->view->process_char(DCH_UP);
+	if(machine.input().code_pressed_once(KEYCODE_DOWN))
+		focus_view->view->process_char(DCH_DOWN);
+	if(machine.input().code_pressed_once(KEYCODE_LEFT))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+			focus_view->view->process_char(DCH_CTRLLEFT);
+		else
+			focus_view->view->process_char(DCH_LEFT);
+	}
+	if(machine.input().code_pressed_once(KEYCODE_RIGHT))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+			focus_view->view->process_char(DCH_CTRLRIGHT);
+		else
+			focus_view->view->process_char(DCH_RIGHT);
+	}
+	if(machine.input().code_pressed_once(KEYCODE_PGUP))
+		focus_view->view->process_char(DCH_PUP);
+	if(machine.input().code_pressed_once(KEYCODE_PGDN))
+		focus_view->view->process_char(DCH_PDOWN);
+	if(machine.input().code_pressed_once(KEYCODE_HOME))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+			focus_view->view->process_char(DCH_CTRLHOME);
+		else
+			focus_view->view->process_char(DCH_HOME);
+	}
+	if(machine.input().code_pressed_once(KEYCODE_END))
+	{
+		if(machine.input().code_pressed(KEYCODE_LCONTROL))
+			focus_view->view->process_char(DCH_CTRLEND);
+		else
+			focus_view->view->process_char(DCH_END);
+	}
+}
+
 
 /*-------------------------------------------------
     handle_editor - handle the editor
@@ -1476,12 +1666,12 @@ static void handle_mouse(running_machine &machine)
 
 static void handle_editor(running_machine &machine)
 {
-	if (focus_view->editor.active)
+	if (focus_view->editor.active && dview_is_state(focus_view, VIEW_STATE_VISIBLE))
 	{
 		ui_event event;
 
 		/* loop while we have interesting events */
-		while (ui_input_pop_event(machine, &event))
+		while (machine.ui_input().pop_event(&event))
 		{
 			switch (event.event_type)
 			{
@@ -1512,13 +1702,13 @@ static void handle_editor(running_machine &machine)
 		if (cur_editor != nullptr)
 		{
 			render_editor(cur_editor);
-			if (ui_input_pressed(machine, IPT_UI_SELECT))
+			if (machine.ui_input().pressed(IPT_UI_SELECT))
 			{
 				process_string(focus_view, focus_view->editor.str.c_str());
 				focus_view->editor.str = "";
 				cur_editor = nullptr;
 			}
-			if (ui_input_pressed(machine, IPT_UI_CANCEL))
+			if (machine.ui_input().pressed(IPT_UI_CANCEL))
 				cur_editor = nullptr;
 		}
 	}
@@ -1535,7 +1725,7 @@ static void handle_menus(running_machine &machine)
 	const ui_menu_event *event;
 
 	machine.render().ui_container().empty();
-	ui_input_frame_update(machine);
+	machine.ui_input().frame_update();
 	if (menu != nullptr)
 	{
 		/* process the menu */
@@ -1548,8 +1738,9 @@ static void handle_menus(running_machine &machine)
 			//ui_menu_stack_push(ui_menu_alloc(machine, menu->container, (ui_menu_handler_func)event->itemref,nullptr));
 			CreateMainMenu(machine);
 		}
-		else if (ui_input_pressed(machine, IPT_UI_CONFIGURE))
+		else if (machine.ui_input().pressed(IPT_UI_CONFIGURE))
 		{
+			menu_sel = menu->get_selection();
 			global_free(menu);
 			menu = nullptr;
 		}
@@ -1557,7 +1748,7 @@ static void handle_menus(running_machine &machine)
 	else
 	{
 		/* turn on menus if requested */
-		if (ui_input_pressed(machine, IPT_UI_CONFIGURE))
+		if (machine.ui_input().pressed(IPT_UI_CONFIGURE))
 			CreateMainMenu(machine);
 		/* turn on editor if requested */
 		//if (ui_input_pressed(machine, IPT_UI_UP) && focus_view->editor.active)
@@ -1638,8 +1829,8 @@ void debug_internal::wait_for_debugger(device_t &device, bool firststop)
 		win_count++;
 
 		DView *statewin = dview_alloc(target, device.machine(), DVT_STATE, VIEW_STATE_FOLLOW_CPU);
-		statewin->ofs_x = 350;
-		statewin->bounds.set(0,150,0,600);
+		statewin->ofs_x = 300;
+		statewin->bounds.set(0,200,0,600);
 		win_count++;
 
 		DView *console = dview_alloc(target, device.machine(), DVT_CONSOLE, VIEW_STATE_FOLLOW_CPU);
@@ -1654,12 +1845,17 @@ void debug_internal::wait_for_debugger(device_t &device, bool firststop)
 	}
 
 	followers_set_cpu(&device);
-	debug_show_all();
+	if(firststop)
+	{
+		debug_show_all();
+		device.machine().ui_input().reset();
+	}
 	//ui_update_and_render(device.machine(), device.machine().render().ui_container()());
 	update_views();
 	device.machine().osd().update(false);
 	handle_menus(device.machine());
 	handle_mouse(device.machine());
+	handle_keys(device.machine());
 	//osd_sleep(osd_ticks_per_second()/60);
 
 }

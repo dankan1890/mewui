@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/dsplmenu.c
+    mewui/dsplmenu.cpp
 
     MEWUI video options menu.
 
@@ -15,7 +15,7 @@
 #include "mewui/selector.h"
 #include "mewui/utils.h"
 
-#ifdef MEWUI_WINDOWS
+#if defined(MEWUI_WINDOWS) && !defined(MEWUI_SDL)
 #include "../osd/windows/winmain.h"
 #else
 #include "../osd/modules/lib/osdobj_common.h"
@@ -24,7 +24,7 @@
 ui_menu_display_options::video_modes ui_menu_display_options::m_video[] = {
 	{ "auto",    "Auto" },
 	{ "opengl",  "OpenGL" },
-#ifdef MEWUI_WINDOWS
+#if defined(MEWUI_WINDOWS) && !defined(MEWUI_SDL)
 	{ "d3d",     "Direct3D" },
 	{ "gdi",     "GDI" },
 	{ "ddraw",   "DirectDraw" }
@@ -37,7 +37,7 @@ ui_menu_display_options::video_modes ui_menu_display_options::m_video[] = {
 ui_menu_display_options::dspl_option ui_menu_display_options::m_options[] = {
 	{ 0, nullptr, nullptr },
 	{ 0, "Video Mode",               OSDOPTION_VIDEO },
-#ifdef MEWUI_WINDOWS
+#if defined(MEWUI_WINDOWS) && !defined(MEWUI_SDL)
 	{ 0, "Hardware Stretch",         WINOPTION_HWSTRETCH },
 	{ 0, "Triple Buffering",         WINOPTION_TRIPLEBUFFER },
 	{ 0, "HLSL",                     WINOPTION_HLSL_ENABLE },
@@ -60,7 +60,7 @@ ui_menu_display_options::dspl_option ui_menu_display_options::m_options[] = {
 
 ui_menu_display_options::ui_menu_display_options(running_machine &machine, render_container *container) : ui_menu(machine, container)
 {
-#ifdef MEWUI_WINDOWS
+#if defined(MEWUI_WINDOWS) && !defined(MEWUI_SDL)
 	windows_options &options = downcast<windows_options &>(machine.options());
 #else
 	osd_options &options = downcast<osd_options &>(machine.options());
@@ -120,7 +120,7 @@ void ui_menu_display_options::handle()
 				for (int index = 0; index < total; ++index)
 					s_sel[index] = m_video[index].label;
 
-				ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_selector(machine(), container, s_sel, &m_options[value].status)));
+				ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_selector>(machine(), container, s_sel, m_options[value].status)));
 			}
 		}
 		else if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT || m_event->iptkey == IPT_UI_SELECT)

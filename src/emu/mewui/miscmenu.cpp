@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /***************************************************************************
 
-    mewui/miscmenu.c
+    mewui/miscmenu.cpp
 
     MEWUI miscellaneous options menu.
 

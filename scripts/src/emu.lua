@@ -15,11 +15,7 @@ uuid ("e6fa15e4-a354-4526-acef-13c8e80fcacf")
 kind (LIBTYPE)
 
 addprojectflags()
-
--- MEWUI
---if (_OPTIONS["target"]=="mewui") then
-	dofile("mewui.lua")
---end
+precompiledheaders()
 
 includedirs {
 	MAME_DIR .. "src/osd",
@@ -42,6 +38,18 @@ if _OPTIONS["with-bundled-lua"] then
 	}
 end
 
+if (_OPTIONS["targetos"] == "windows") then
+	defines {
+		"MEWUI_WINDOWS",
+	}
+end
+
+if (_OPTIONS["osd"] == "sdl") then
+	defines {
+		"MEWUI_SDL",
+	}
+end
+
 files {
 	MAME_DIR .. "src/emu/emu.h",
 	MAME_DIR .. "src/emu/gamedrv.h",
@@ -53,6 +61,8 @@ files {
 	MAME_DIR .. "src/emu/attotime.h",
 	MAME_DIR .. "src/emu/audit.cpp",
 	MAME_DIR .. "src/emu/audit.h",
+	MAME_DIR .. "src/emu/bookkeeping.cpp",
+	MAME_DIR .. "src/emu/bookkeeping.h",
 	MAME_DIR .. "src/emu/cheat.cpp",
 	MAME_DIR .. "src/emu/cheat.h",
 	MAME_DIR .. "src/emu/clifront.cpp",
@@ -147,6 +157,46 @@ files {
 	MAME_DIR .. "src/emu/memarray.h",
 	MAME_DIR .. "src/emu/memory.cpp",
 	MAME_DIR .. "src/emu/memory.h",
+	MAME_DIR .. "src/emu/mewui/auditmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/auditmenu.h",
+	MAME_DIR .. "src/emu/mewui/cmddata.h",
+	MAME_DIR .. "src/emu/mewui/cmdrender.h",
+	MAME_DIR .. "src/emu/mewui/ctrlmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/ctrlmenu.h",
+	MAME_DIR .. "src/emu/mewui/custmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/custmenu.h",
+	MAME_DIR .. "src/emu/mewui/custui.cpp",
+	MAME_DIR .. "src/emu/mewui/custui.h",
+	MAME_DIR .. "src/emu/mewui/datfile.cpp",
+	MAME_DIR .. "src/emu/mewui/datfile.h",
+	MAME_DIR .. "src/emu/mewui/datmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/datmenu.h",
+	MAME_DIR .. "src/emu/mewui/defimg.h",
+	MAME_DIR .. "src/emu/mewui/dirmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/dirmenu.h",
+	MAME_DIR .. "src/emu/mewui/dsplmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/dsplmenu.h",
+	MAME_DIR .. "src/emu/mewui/icorender.h",
+	MAME_DIR .. "src/emu/mewui/inifile.cpp",
+	MAME_DIR .. "src/emu/mewui/inifile.h",
+	MAME_DIR .. "src/emu/mewui/miscmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/miscmenu.h",
+	MAME_DIR .. "src/emu/mewui/moptions.cpp",
+	MAME_DIR .. "src/emu/mewui/moptions.h",
+	MAME_DIR .. "src/emu/mewui/optsmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/optsmenu.h",
+	MAME_DIR .. "src/emu/mewui/selector.cpp",
+	MAME_DIR .. "src/emu/mewui/selector.h",
+	MAME_DIR .. "src/emu/mewui/selgame.cpp",
+	MAME_DIR .. "src/emu/mewui/selgame.h",
+	MAME_DIR .. "src/emu/mewui/selsoft.cpp",
+	MAME_DIR .. "src/emu/mewui/selsoft.h",
+	MAME_DIR .. "src/emu/mewui/sndmenu.cpp",
+	MAME_DIR .. "src/emu/mewui/sndmenu.h",
+	MAME_DIR .. "src/emu/mewui/starimg.h",
+	MAME_DIR .. "src/emu/mewui/toolbar.h",
+	MAME_DIR .. "src/emu/mewui/utils.cpp",
+	MAME_DIR .. "src/emu/mewui/utils.h",
 	MAME_DIR .. "src/emu/network.cpp",
 	MAME_DIR .. "src/emu/network.h",
 	MAME_DIR .. "src/emu/parameters.cpp",
@@ -276,8 +326,6 @@ files {
 	MAME_DIR .. "src/devices/machine/buffer.h",
 	MAME_DIR .. "src/devices/machine/clock.cpp",
 	MAME_DIR .. "src/devices/machine/clock.h",
-	MAME_DIR .. "src/emu/machine/generic.cpp",
-	MAME_DIR .. "src/emu/machine/generic.h",
 	MAME_DIR .. "src/devices/machine/keyboard.cpp",
 	MAME_DIR .. "src/devices/machine/keyboard.h",
 	MAME_DIR .. "src/devices/machine/laserdsc.cpp",
@@ -337,6 +385,7 @@ dependency {
 	-- additional dependencies
 	--------------------------------------------------
 	{ MAME_DIR .. "src/emu/rendfont.cpp", GEN_DIR .. "emu/uismall.fh" },
+	{ MAME_DIR .. "src/emu/rendfont.cpp", GEN_DIR .. "emu/mewui/uicmd14.fh" },
 	-------------------------------------------------
 	-- core layouts
 	--------------------------------------------------
@@ -357,6 +406,7 @@ dependency {
 
 custombuildtask {
 	{ MAME_DIR .. "src/emu/uismall.png"         , GEN_DIR .. "emu/uismall.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uismall.png...", PYTHON .. " $(1) $(<) temp.bdc", PYTHON .. " $(2) temp.bdc $(@) font_uismall UINT8" }},
+	{ MAME_DIR .. "src/emu/mewui/uicmd14.png"   , GEN_DIR .. "emu/mewui/uicmd14.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uicmd14.png...", "python $(1) $(<) temp_cmd.bdc", "python $(2) temp_cmd.bdc $(@) font_uicmd14 UINT8" }},
 
 	layoutbuildtask("emu/layout", "dualhovu"),
 	layoutbuildtask("emu/layout", "dualhsxs"),
@@ -370,3 +420,30 @@ custombuildtask {
 	layoutbuildtask("emu/layout", "noscreens"),
 	layoutbuildtask("emu/layout", "snap"),
 }
+
+project ("precompile")
+targetsubdir(_OPTIONS["target"] .."_" .. _OPTIONS["subtarget"])
+uuid ("a6fb15d4-b123-4445-acef-13c8e80fcacf")
+kind (LIBTYPE)
+
+addprojectflags()
+precompiledheaders()
+
+includedirs {
+	MAME_DIR .. "src/osd",
+	MAME_DIR .. "src/emu",
+	MAME_DIR .. "src/devices", -- till deps are fixed
+	MAME_DIR .. "src/lib",
+	MAME_DIR .. "src/lib/util",
+	MAME_DIR .. "3rdparty",
+	GEN_DIR  .. "emu",
+	GEN_DIR  .. "emu/layout",
+}
+files {
+	MAME_DIR .. "src/emu/drivers/empty.cpp",
+}
+dependency {
+	{ "$(OBJDIR)/src/emu/drivers/empty.o", "$(GCH)", true  },
+}
+
+

@@ -13,6 +13,7 @@
 #ifndef __MEWUI_MAIN_H__
 #define __MEWUI_MAIN_H__
 
+#include "drivenum.h"
 #include "ui/menu.h"
 
 class ui_mewui_select_game : public ui_menu
@@ -48,7 +49,6 @@ private:
 	int  m_prev_selected;
 	int  m_isabios, m_issbios, m_isarcades, m_issystems;
 
-	std::vector<const game_driver *> m_fulllist;
 	std::vector<const game_driver *> m_sortedlist;
 	std::vector<const game_driver *> m_availsortedlist;
 	std::vector<const game_driver *> m_unavailsortedlist;

@@ -13,7 +13,7 @@
 #ifndef __EMUOPTS_H__
 #define __EMUOPTS_H__
 
-#include "options.h"
+//#include "options.h"
 #include "mewui/moptions.h"
 
 
@@ -28,8 +28,9 @@ enum
 	OPTION_PRIORITY_CMDLINE = OPTION_PRIORITY_HIGH,
 
 	// INI-based options are NORMAL priority, in increasing order:
-	OPTION_PRIORITY_INI = OPTION_PRIORITY_NORMAL,
-	OPTION_PRIORITY_MAME_INI,
+//	OPTION_PRIORITY_INI = OPTION_PRIORITY_NORMAL,
+//	OPTION_PRIORITY_MAME_INI,
+	OPTION_PRIORITY_MAME_INI = OPTION_PRIORITY_NORMAL,
 	OPTION_PRIORITY_DEBUG_INI,
 	OPTION_PRIORITY_ORIENTATION_INI,
 	OPTION_PRIORITY_SYSTYPE_INI,
@@ -37,7 +38,8 @@ enum
 	OPTION_PRIORITY_SOURCE_INI,
 	OPTION_PRIORITY_GPARENT_INI,
 	OPTION_PRIORITY_PARENT_INI,
-	OPTION_PRIORITY_DRIVER_INI
+	OPTION_PRIORITY_DRIVER_INI,
+	OPTION_PRIORITY_INI
 };
 
 // core options
@@ -190,6 +192,9 @@ enum
 #define OPTION_AUTOBOOT_COMMAND     "autoboot_command"
 #define OPTION_AUTOBOOT_DELAY       "autoboot_delay"
 #define OPTION_AUTOBOOT_SCRIPT      "autoboot_script"
+
+#define OPTION_CONSOLE              "console"
+
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -363,12 +368,15 @@ public:
 	int autoboot_delay() const { return int_value(OPTION_AUTOBOOT_DELAY); }
 	const char *autoboot_script() const { return value(OPTION_AUTOBOOT_SCRIPT); }
 
+	bool console() const { return bool_value(OPTION_CONSOLE); }
+
 	// FIXME: Couriersud: This should be in image_device_exit
 	void remove_device_options();
 
-	const char *main_value(std::string &buffer, const char *option) const;
-	const char *sub_value(std::string &buffer, const char *name, const char *subname) const;
+	std::string main_value(const char *option) const;
+	std::string sub_value(const char *name, const char *subname) const;
 	bool add_slot_options(bool isfirst);
+
 
 private:
 	// device-specific option handling

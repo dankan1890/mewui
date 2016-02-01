@@ -17,13 +17,11 @@
 #include "render.h"
 #include "libjpeg/jpeglib.h"
 #include <algorithm>
-#include <fstream>
 #include "drivenum.h"
 #include <map>
 
 #define MAX_CHAR_INFO            256
 #define MAX_CUST_FILTER          8
-#define MEWUI_VERSION_TAG        "# MEWUI INFO "
 
 // GLOBAL ENUMERATORS
 enum
@@ -182,17 +180,17 @@ struct ui_software_info
 	std::string parentname;
 	std::string year;
 	std::string publisher;
-	UINT8 supported;
+	UINT8 supported = 0;
 	std::string part;
 	const game_driver *driver;
 	std::string listname;
 	std::string interface;
 	std::string instance;
-	UINT8 startempty;
+	UINT8 startempty = 0;
 	std::string parentlongname;
 	std::string usage;
 	std::string devicetype;
-	bool available;
+	bool available = false;
 
 	bool operator==(const ui_software_info& r)
 	{
@@ -274,7 +272,11 @@ struct sw_custfltr
 
 // advanced search function
 int fuzzy_substring(std::string needle, std::string haystack);
-int fuzzy_substring2(const char *needle, const char *haystack);
+
+// trim carriage return
+char* chartrimcarriage(char str[]);
+
+const char* strensure(const char* s);
 
 // jpeg loader
 template <typename _T>
@@ -288,8 +290,8 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	// define file's full name
 	std::string fname;
 
-	if (!dirname)
-		fname.assign(filename);
+	if (dirname == nullptr)
+		fname = filename;
 	else
 		fname.assign(dirname).append(PATH_SEPARATOR).append(filename);
 
@@ -361,8 +363,5 @@ void render_load_jpeg(_T &bitmap, emu_file &file, const char *dirname, const cha
 	free(buffer);
 	global_free_array(jpg_buffer);
 }
-
-// std::getline consistent line endings replacement
-std::ifstream &clean_getline(std::ifstream &is, std::string &line);
 
 #endif /* __MEWUI_UTILS_H__ */

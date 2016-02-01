@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/m_selector.c
+    mewui/m_selector.cpp
 
     Internal MEWUI user interface.
 
@@ -13,16 +13,15 @@
 #include "ui/menu.h"
 #include "mewui/selector.h"
 #include "mewui/inifile.h"
-#include "mewui/utils.h"
 
 //-------------------------------------------------
 //  ctor / dtor
 //-------------------------------------------------
 
-ui_menu_selector::ui_menu_selector(running_machine &machine, render_container *container, std::vector<std::string> s_sel, UINT16 *s_actual, int category, int _hover) : ui_menu(machine, container)
+ui_menu_selector::ui_menu_selector(running_machine &machine, render_container *container, std::vector<std::string> s_sel, UINT16 &s_actual, int category, int _hover) 
+	: ui_menu(machine, container), m_selector(s_actual)
 {
 	m_category = category;
-	m_selector = s_actual;
 	m_first_pass = true;
 	m_hover = _hover;
 	m_str_items = s_sel;
@@ -49,18 +48,18 @@ void ui_menu_selector::handle()
 		{
 			for (size_t idx = 0; idx < m_str_items.size(); ++idx)
 				if ((void*)&m_str_items[idx] == m_event->itemref)
-					*m_selector = idx;
+					m_selector = idx;
 
 			switch (m_category)
 			{
 				case SELECTOR_INIFILE:
-					machine().inifile().current_file = *m_selector;
+					machine().inifile().current_file = m_selector;
 					machine().inifile().current_category = 0;
 					ui_menu::menu_stack->parent->reset(UI_MENU_RESET_REMEMBER_REF);
 					break;
 
 				case SELECTOR_CATEGORY:
-					machine().inifile().current_category = *m_selector;
+					machine().inifile().current_category = m_selector;
 					ui_menu::menu_stack->parent->reset(UI_MENU_RESET_REMEMBER_REF);
 					break;
 
@@ -127,9 +126,9 @@ void ui_menu_selector::populate()
 	else
 	{
 		for (size_t index = 0, added = 0; index < m_str_items.size(); ++index)
-			if (m_str_items[index].compare("_skip_") != 0)
+			if (m_str_items[index] != "_skip_")
 			{
-				if (m_first_pass && *m_selector == index)
+				if (m_first_pass && m_selector == index)
 					selected = added;
 
 				added++;
@@ -153,8 +152,8 @@ void ui_menu_selector::custom_render(void *selectedref, float top, float bottom,
 	std::string tempbuf = std::string("Selection List - Search: ").append(m_search).append("_");
 
 	// get the size of the text
-	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
+	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE, 
+		DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += (2.0f * UI_BOX_LR_BORDER) + 0.01f;
 	float maxwidth = MAX(width, origx2 - origx1);
 
@@ -173,17 +172,16 @@ void ui_menu_selector::custom_render(void *selectedref, float top, float bottom,
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	mui.draw_text_full(container, tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+	mui.draw_text_full(container, tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE, 
+		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 
 	// bottom text
 	// get the text for 'UI Select'
-	std::string ui_select_text;
-	machine().input().seq_name(ui_select_text, machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
+	std::string ui_select_text = machine().input().seq_name(machine().ioport().type_seq(IPT_UI_SELECT, 0, SEQ_TYPE_STANDARD));
 	tempbuf.assign("Double click or press ").append(ui_select_text).append(" to select");
 
-	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER,
-	                              DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
+	mui.draw_text_full(container, tempbuf.c_str(), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_NEVER, 
+		DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
 	width += 2 * UI_BOX_LR_BORDER;
 	maxwidth = MAX(maxwidth, width);
 
@@ -202,8 +200,8 @@ void ui_menu_selector::custom_render(void *selectedref, float top, float bottom,
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	mui.draw_text_full(container, tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER,
-	                              DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+	mui.draw_text_full(container, tempbuf.c_str(), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_NEVER, 
+		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }
 
 //-------------------------------------------------
@@ -218,7 +216,7 @@ void ui_menu_selector::find_matches(const char *str)
 
 	for (; index < m_str_items.size(); ++index)
 	{
-		if (!m_str_items[index].compare("_skip_"))
+		if (m_str_items[index] == "_skip_")
 			continue;
 
 		// pick the best match between driver name and description

@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /***************************************************************************
 
-    mewui/utils.c
+    mewui/utils.cpp
 
     Internal MEWUI user interface.
 
@@ -10,9 +10,11 @@
 
 #include "emu.h"
 #include "mewui/utils.h"
-#include "mewui/inifile.h"
 #include "sound/samples.h"
 #include "audit.h"
+
+extern const char MEWUI_VERSION_TAG[];
+const char MEWUI_VERSION_TAG[] = "# MEWUI INFO ";
 
 // Years index
 UINT16 c_year::actual = 0;
@@ -77,6 +79,19 @@ UINT16 sw_custfltr::region[MAX_CUST_FILTER];
 UINT16 sw_custfltr::type[MAX_CUST_FILTER];
 UINT16 sw_custfltr::list[MAX_CUST_FILTER];
 
+char* chartrimcarriage(char str[])
+{
+	size_t len = strlen(str);
+	if (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
+		str[len - 1] = '\0';
+	return str;
+}
+
+const char* strensure(const char* s)
+{
+	return s == nullptr ? "" : s;
+}
+
 //-------------------------------------------------
 //  search a substring with even partial matching
 //-------------------------------------------------
@@ -96,8 +111,8 @@ int fuzzy_substring(std::string s_needle, std::string s_haystack)
 	if (s_haystack.find(s_needle) != std::string::npos)
 		return 0;
 
-	auto *row1 = global_alloc_array_clear(int, s_haystack.size() + 2);
-	auto *row2 = global_alloc_array_clear(int, s_haystack.size() + 2);
+	auto *row1 = global_alloc_array_clear<int>(s_haystack.size() + 2);
+	auto *row2 = global_alloc_array_clear<int>(s_haystack.size() + 2);
 
 	for (int i = 0; i < s_needle.size(); ++i)
 	{
@@ -126,57 +141,6 @@ int fuzzy_substring(std::string s_needle, std::string s_haystack)
 	global_free_array(row2);
 
 	return rv;
-}
-//-------------------------------------------------
-//  search a substring with even partial matching
-//-------------------------------------------------
-
-int fuzzy_substring2(const char *needle, const char *haystack)
-{
-	std::string s1(needle);
-	std::string s2(haystack);
-	strmakelower(s1);
-	strmakelower(s2);
-	const size_t m(s1.size());
-	const size_t n(s2.size());
-
-	if (m == 0)
-		return n;
-	if (n == 0)
-		return m;
-
-	if (s1 == s2)
-		return 0;
-	size_t it = s2.find(s1);
-	if (it != std::string::npos)
-		return it;
-
-	auto *costs = global_alloc_array(size_t, n + 1);
-	for(size_t k = 0; k <= n; ++k)
-		costs[k] = k;
-	size_t i = 0;
-	for (std::string::const_iterator it1 = s1.begin(); it1 != s1.end(); ++it1, ++i)
-	{
-		costs[0] = i+1;
-		size_t corner = i;
-		size_t j = 0;
-		for (std::string::const_iterator it2 = s2.begin(); it2 != s2.end(); ++it2, ++j)
-		{
-			size_t upper = costs[j+1];
-			if (*it1 == *it2)
-				costs[j+1] = corner;
-			else
-			{
-				size_t t(upper < corner ? upper : corner);
-				costs[j+1] = (costs[j] < t ? costs[j] : t) + 1;
-			}
-			corner = upper;
-		}
-	}
-
-	size_t result = costs[n];
-	global_free_array(costs);
-	return result;
 }
 
 //-------------------------------------------------
@@ -214,17 +178,4 @@ void c_year::set(const char *str)
 		return;
 
 	ui.push_back(name);
-}
-
-std::ifstream &clean_getline(std::ifstream &is, std::string &line)
-{
-	if (std::getline(is, line)) 
-	{
-		size_t epos = line.find_last_not_of("\r\n");
-		if (epos != std::string::npos)
-			line.erase(epos+1);
-		else
-			line.clear();
-	}
-	return is;
 }

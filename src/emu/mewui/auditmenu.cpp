@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/auditmenu.c
+    mewui/auditmenu.cpp
 
     Internal MEWUI user interface.
 
@@ -13,7 +13,9 @@
 #include "ui/menu.h"
 #include "audit.h"
 #include "mewui/auditmenu.h"
-#include "mewui/utils.h"
+#include <algorithm>
+
+extern const char MEWUI_VERSION_TAG[];
 
 //-------------------------------------------------
 //  sort
@@ -128,7 +130,7 @@ void ui_menu_audit::handle()
 				iter = m_unavailablesorted.erase(iter);
 			}
 			else
-				iter++;
+				++iter;
 		}
 	}
 	else
@@ -179,31 +181,25 @@ void ui_menu_audit::save_available_machines()
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
 	if (file.open(emulator_info::get_configname(), "_avail.ini") == FILERR_NONE)
 	{
-		std::string filename(file.fullpath());
-		file.close();
-		std::ofstream myfile(filename.c_str());
-		UINT8 space = 0;
-
 		// generate header
 		std::string buffer = std::string("#\n").append(MEWUI_VERSION_TAG).append(mewui_version).append("\n#\n\n");
-		myfile << buffer;
-		myfile << (int)m_availablesorted.size() << space;
-		myfile << (int)m_unavailablesorted.size() << space;
-		int find = 0;
+		strcatprintf(buffer, "%d\n", (int)m_availablesorted.size());
+		strcatprintf(buffer, "%d\n", (int)m_unavailablesorted.size());
 
 		// generate available list
 		for (size_t x = 0; x < m_availablesorted.size(); ++x)
 		{
-			find = driver_list::find(m_availablesorted[x]->name);
-			myfile << find << space;
+			int find = driver_list::find(m_availablesorted[x]->name);
+			strcatprintf(buffer, "%d\n", find);
 		}
 
 		// generate unavailable list
 		for (size_t x = 0; x < m_unavailablesorted.size(); ++x)
 		{
-			find = driver_list::find(m_unavailablesorted[x]->name);
-			myfile << find << space;
+			int find = driver_list::find(m_unavailablesorted[x]->name);
+			strcatprintf(buffer, "%d\n", find);
 		}
-		myfile.close();
+		file.puts(buffer.c_str());
+		file.close();
 	}
 }

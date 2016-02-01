@@ -2,7 +2,7 @@
 // copyright-holders:Dankan1890
 /*********************************************************************
 
-    mewui/datmenu.c
+    mewui/datmenu.cpp
 
     Internal MEWUI user interface.
 
@@ -68,7 +68,7 @@ void ui_menu_command::handle()
 	if (m_event != nullptr && m_event->iptkey == IPT_UI_SELECT)
 	{
 		std::string m_title(item[selected].text);
-		ui_menu::stack_push(auto_alloc_clear(machine(), ui_menu_command_content(machine(), container, (FPTR)m_event->itemref, m_title, m_driver)));
+		ui_menu::stack_push(auto_alloc_clear(machine(), <ui_menu_command_content>(machine(), container, m_title, m_driver)));
 	}
 }
 
@@ -112,10 +112,9 @@ void ui_menu_command::custom_render(void *selectedref, float top, float bottom, 
 //  ctor / dtor
 //-------------------------------------------------
 
-ui_menu_command_content::ui_menu_command_content(running_machine &machine, render_container *container, FPTR p_param, std::string p_title, const game_driver *driver) : ui_menu(machine, container)
+ui_menu_command_content::ui_menu_command_content(running_machine &machine, render_container *container, std::string p_title, const game_driver *driver) : ui_menu(machine, container)
 {
 	m_driver = (driver == nullptr) ? &machine.system() : driver;
-	m_param = p_param;
 	m_title = p_title;
 }
 
@@ -141,7 +140,7 @@ void ui_menu_command_content::populate()
 {
 	machine().pause();
 	std::string buffer;
-	machine().datfile().load_command_info(buffer, m_param);
+	machine().datfile().load_command_info(buffer, m_title);
 	if (!buffer.empty())
 	{
 		float line_height = machine().ui().get_line_height();
@@ -150,17 +149,13 @@ void ui_menu_command_content::populate()
 		std::vector<int> xstart;
 		std::vector<int> xend;
 		int total_lines;
-
 		convert_command_glyph(buffer);
 		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width),
 		                         total_lines, xstart, xend);
-
 		for (int r = 0; r < total_lines; r++)
 		{
-			std::string tempbuf = std::string(buffer.substr(xstart[r], xend[r] - xstart[r]));
-
+			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
 			int first_dspace = tempbuf.find("  ");
-
 			if (first_dspace > 0 )
 			{
 				std::string first_part(tempbuf.substr(0, first_dspace));
@@ -260,10 +255,10 @@ ui_menu_history_sw::ui_menu_history_sw(running_machine &machine, render_containe
 	{
 		if (image->filename())
 		{
-			m_list = image->software_list_name();
-			m_short = image->software_entry()->shortname();
-			m_long = image->software_entry()->longname();
-			m_parent = image->software_entry()->parentname();
+			m_list = strensure(image->software_list_name());
+			m_short = strensure(image->software_entry()->shortname());
+			m_long = strensure(image->software_entry()->longname());
+			m_parent = strensure(image->software_entry()->parentname());
 		}
 	}
 	m_driver = (driver == nullptr) ? &machine.system() : driver;
@@ -542,33 +537,34 @@ bool ui_menu_dats::get_data(const game_driver *driver, int flags)
 	std::string buffer;
 	machine().datfile().load_data_info(driver, buffer, flags);
 
-	if (!buffer.empty())
+	if (buffer.empty())
+		return false;
+
+	float line_height = machine().ui().get_line_height();
+	float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
+	float gutter_width = lr_arrow_width * 1.3f;
+	std::vector<int> xstart;
+	std::vector<int> xend;
+	int tlines;
+
+	machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), tlines, xstart, xend);
+	for (int r = 0; r < tlines; r++)
 	{
-		float line_height = machine().ui().get_line_height();
-		float lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
-		float gutter_width = lr_arrow_width * 1.3f;
-		std::vector<int> xstart;
-		std::vector<int> xend;
-		int tlines;
-
-		machine().ui().wrap_text(container, buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * UI_BOX_LR_BORDER) - 0.02f - (2.0f * gutter_width), tlines, xstart, xend);
-		for (int r = 0; r < tlines; r++)
+		std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
+		// special case for mamescore
+		if (flags == MEWUI_STORY_LOAD)
 		{
-			std::string tempbuf(buffer.substr(xstart[r], xend[r] - xstart[r]));
-
-			// special case for mamescore
-			if (flags == MEWUI_STORY_LOAD && tempbuf.find_last_of('_') != -1)
+			size_t last_underscore = tempbuf.find_last_of('_');
+			if (last_underscore != std::string::npos)
 			{
-				int last_underscore = tempbuf.find_last_of('_');
 				std::string last_part(tempbuf.substr(last_underscore + 1));
 				int primary = tempbuf.find("___");
 				std::string first_part(tempbuf.substr(0, primary));
 				item_append(first_part.c_str(), last_part.c_str(), MENU_FLAG_MEWUI_HISTORY, nullptr);
 			}
-			else
-				item_append(tempbuf.c_str(), nullptr, MENU_FLAG_MEWUI_HISTORY, nullptr);
 		}
-		return true;
+		else
+			item_append(tempbuf.c_str(), nullptr, MENU_FLAG_MEWUI_HISTORY, nullptr);
 	}
-	return false;
+		return true;
 }

@@ -112,7 +112,7 @@ protected:
 				virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override { return (spacenum == AS_PROGRAM) ? &m_program_config : ( (spacenum == AS_IO) ? &m_io_config : NULL ); }
 
 				// device_state_interface overrides
-				void state_string_export(const device_state_entry &entry, std::string &str) override;
+				void state_string_export(const device_state_entry &entry, std::string &str) const override;
 
 				// device_disasm_interface overrides
 				virtual UINT32 disasm_min_opcode_bytes() const override { return 2; }
@@ -125,7 +125,8 @@ protected:
 				AEC_CASE_A,     // Instr. fetches, non-base page fetches of link pointers, BPC direct non-base page accesses
 				AEC_CASE_B,     // Base page fetches of link pointers, BPC direct base page accesses
 				AEC_CASE_C,     // IOC, EMC & BPC indirect final destination accesses
-				AEC_CASE_D      // DMA accesses
+				AEC_CASE_D,     // DMA accesses
+				AEC_CASE_I      // Interrupt vector fetches
 		} aec_cases_t;
 
 		// do memory address extension

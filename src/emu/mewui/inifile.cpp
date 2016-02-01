@@ -2,24 +2,19 @@
 // copyright-holders:Dankan1890
 /***************************************************************************
 
-    mewui/inifile.c
+    mewui/inifile.cpp
 
     MEWUI INIs file manager.
 
 ***************************************************************************/
 
 #include "emu.h"
-#include "emuopts.h"
-#include "drivenum.h"
 #include "mewui/inifile.h"
-#include "mewui/utils.h"
 #include "softlist.h"
 
 //-------------------------------------------------
 //  GLOBAL VARIABLES
 //-------------------------------------------------
-
-static const char *favorite_filename = "favorites.ini";
 UINT16 inifile_manager::current_category = 0;
 UINT16 inifile_manager::current_file = 0;
 
@@ -48,10 +43,10 @@ void inifile_manager::directory_scan()
 	while ((dir = path.next()) != nullptr)
 	{
 		int length = strlen(dir->name);
-		std::string file_name(dir->name);
+		std::string filename(dir->name);
 
 		// skip mewui_favorite file
-		if (!core_stricmp("mewui_favorite.ini", file_name.c_str()))
+		if (!core_stricmp("mewui_favorite.ini", filename.c_str()))
 			continue;
 
 		// check .ini file ending
@@ -59,8 +54,11 @@ void inifile_manager::directory_scan()
 			tolower((UINT8)dir->name[length - 2]) == 'n' && tolower((UINT8)dir->name[length - 1]) == 'i')
 		{
 			// try to open file and indexing
-			if (ParseOpen(file_name.c_str()))
-				init_category(file_name);
+			if (parseopen(filename.c_str()))
+			{
+				init_category(filename);
+				parseclose();
+			}
 		}
 	}
 }
@@ -71,30 +69,29 @@ void inifile_manager::directory_scan()
 
 void inifile_manager::init_category(std::string &filename)
 {
-	std::vector<IniCategoryIndex> index;
-	std::string readbuf;
-	std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
-	while (clean_getline(myfile, readbuf))
+	categoryindex index;
+	char rbuf[MAX_CHAR_INFO];
+	std::string readbuf, name;
+	while (fgets(rbuf, MAX_CHAR_INFO, fp) != nullptr)
 	{
-		if (!readbuf.empty() && readbuf[0] == '[')
+		readbuf = rbuf;
+		if (readbuf[0] == '[')
 		{
 			size_t found = readbuf.find("]");
-			std::string name = readbuf.substr(1, found - 1);
-			if (name.compare("FOLDER_SETTINGS") == 0 || name.compare("ROOT_FOLDER") == 0)
+			name = readbuf.substr(1, found - 1);
+			if (name == "FOLDER_SETTINGS" || name == "ROOT_FOLDER")
 				continue;
 			else
-				index.emplace_back(name, myfile.tellg());
+				index.emplace_back(name, ftell(fp));
 		}
 	}
-	myfile.close();
 
 	if (!index.empty())
 		ini_index.emplace_back(filename, index);
 }
 
-
 //-------------------------------------------------
-//  closes the existing opened file (if any)
+//  load and indexing ini files
 //-------------------------------------------------
 
 void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
@@ -103,21 +100,25 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 		return;
 
 	bool search_clones = false;
-	std::string file_name(ini_index[current_file].name);
+	std::string filename(ini_index[current_file].name);
 	long offset = ini_index[current_file].category[current_category].offset;
 
-	if (!core_stricmp(file_name.c_str(), "category.ini") || !core_stricmp(file_name.c_str(), "alltime.ini"))
+	if (!core_stricmp(filename.c_str(), "category.ini") || !core_stricmp(filename.c_str(), "alltime.ini"))
 		search_clones = true;
 
-	if (ParseOpen(file_name.c_str()))
+	if (parseopen(filename.c_str()))
 	{
-		std::ifstream myfile(m_fullpath.c_str(), std::ifstream::binary);
+		fseek(fp, offset, SEEK_SET);
 		int num_game = driver_list::total();
+		char rbuf[MAX_CHAR_INFO];
 		std::string readbuf;
-		myfile.seekg(offset, myfile.beg);
-		while (clean_getline(myfile, readbuf))
+		while (fgets(rbuf, MAX_CHAR_INFO, fp) != nullptr)
 		{
-			if (readbuf.empty() || readbuf[0] == '[') break;
+			readbuf = chartrimcarriage(rbuf);
+
+			if (readbuf.empty() || readbuf[0] == '[')
+				break;
+
 			int dfind = driver_list::find(readbuf.c_str());
 			if (dfind != -1 && search_clones)
 			{
@@ -126,34 +127,37 @@ void inifile_manager::load_ini_category(std::vector<int> &temp_filter)
 				if (clone_of == -1)
 				{
 					for (int x = 0; x < num_game; x++)
-						if (readbuf.compare(driver_list::driver(x).parent) == 0 && readbuf.compare(driver_list::driver(x).name) != 0)
+						if (readbuf == driver_list::driver(x).parent && readbuf != driver_list::driver(x).name)
 							temp_filter.push_back(x);
 				}
 			}
 			else if (dfind != -1)
 				temp_filter.push_back(dfind);
 		}
-		myfile.close();
+		parseclose();
 	}
 }
 
-//-------------------------------------------------
-//  open up file for reading
-//-------------------------------------------------
+//---------------------------------------------------------
+//	parseopen - Open up file for reading
+//---------------------------------------------------------
 
-bool inifile_manager::ParseOpen(const char *filename)
+bool inifile_manager::parseopen(const char *filename)
 {
-	// Open file up in binary mode
-	emu_file fp(machine().options().extraini_path(), OPEN_FLAG_READ);
+	// MAME core file parsing functions fail in recognizing UNICODE chars in UTF-8 without BOM,
+	// so it's better and faster use standard C fileio functions.
 
-	if (fp.open(filename) == FILERR_NONE)
-	{
-		m_fullpath = fp.fullpath();
-		fp.close();
-		return true;
-	}
+	emu_file file(machine().options().extraini_path(), OPEN_FLAG_READ);
+	if (file.open(filename) != FILERR_NONE)
+		return false;
 
-	return false;
+	m_fullpath = file.fullpath();
+	file.close();
+	fp = fopen(m_fullpath.c_str(), "r");
+
+	fgetc(fp);
+	fseek(fp, 0, SEEK_SET);
+	return true;
 }
 
 /**************************************************************************
@@ -167,7 +171,7 @@ bool inifile_manager::ParseOpen(const char *filename)
 favorite_manager::favorite_manager(running_machine &machine)
 	: m_machine(machine)
 {
-	m_current_favorite = -1;
+	m_current = -1;
 	parse_favorite();
 }
 
@@ -177,24 +181,7 @@ favorite_manager::favorite_manager(running_machine &machine)
 
 void favorite_manager::add_favorite_game(const game_driver *driver)
 {
-	ui_software_info tmpmatches;
-	tmpmatches.shortname.assign(driver->name);
-	tmpmatches.longname.assign(driver->description);
-	tmpmatches.parentname.clear();
-	tmpmatches.year.clear();
-	tmpmatches.publisher.clear();
-	tmpmatches.supported = 0;
-	tmpmatches.part.clear();
-	tmpmatches.driver = driver;
-	tmpmatches.listname.clear();
-	tmpmatches.interface.clear();
-	tmpmatches.instance.clear();
-	tmpmatches.startempty = 1;
-	tmpmatches.parentlongname.clear();
-	tmpmatches.usage.clear();
-	tmpmatches.devicetype.clear();
-	tmpmatches.available = true;
-	m_favorite_list.push_back(tmpmatches);
+	m_list.emplace_back(driver->name, driver->description, "", "", "", 0, "", driver, "", "", "", 1, "", "", "", true);
 	save_favorite_games();
 }
 
@@ -204,7 +191,7 @@ void favorite_manager::add_favorite_game(const game_driver *driver)
 
 void favorite_manager::add_favorite_game(ui_software_info &swinfo)
 {
-	m_favorite_list.push_back(swinfo);
+	m_list.push_back(swinfo);
 	save_favorite_games();
 }
 
@@ -229,17 +216,17 @@ void favorite_manager::add_favorite_game()
 			const software_info *swinfo = image->software_entry();
 			const software_part *part = image->part_entry();
 			ui_software_info tmpmatches;
-			if (swinfo->shortname()) tmpmatches.shortname.assign(swinfo->shortname());
-			if (image->longname()) tmpmatches.longname.assign(image->longname());
-			if (swinfo->parentname()) tmpmatches.parentname.assign(swinfo->parentname());
-			if (image->year()) tmpmatches.year.assign(image->year());
-			if (image->manufacturer()) tmpmatches.publisher.assign(image->manufacturer());
+			tmpmatches.shortname = strensure(swinfo->shortname());
+			tmpmatches.longname = strensure(image->longname());
+			tmpmatches.parentname = strensure(swinfo->parentname());
+			tmpmatches.year = strensure(image->year());
+			tmpmatches.publisher = strensure(image->manufacturer());
 			tmpmatches.supported = image->supported();
-			if (part->name()) tmpmatches.part.assign(part->name());
+			tmpmatches.part = strensure(part->name());
 			tmpmatches.driver = &machine().system();
-			if (image->software_list_name()) tmpmatches.listname.assign(image->software_list_name());
-			if (part->interface()) tmpmatches.interface.assign(part->interface());
-			if (image->instance_name()) tmpmatches.instance.assign(image->instance_name());
+			tmpmatches.listname = strensure(image->software_list_name());
+			tmpmatches.interface = strensure(part->interface());
+			tmpmatches.instance = strensure(image->instance_name());
 			tmpmatches.startempty = 0;
 			tmpmatches.parentlongname.clear();
 			if (swinfo->parentname())
@@ -248,9 +235,9 @@ void favorite_manager::add_favorite_game()
 				for (software_info *c_swinfo = swlist->first_software_info(); c_swinfo != nullptr; c_swinfo = c_swinfo->next())
 				{
 					std::string c_parent(c_swinfo->parentname());
-					if (!c_parent.empty() && !c_parent.compare(swinfo->shortname()))
+					if (!c_parent.empty() && c_parent == swinfo->shortname())
 						{
-							tmpmatches.parentlongname.assign(c_swinfo->longname());
+							tmpmatches.parentlongname = c_swinfo->longname();
 							break;
 						}
 				}
@@ -259,12 +246,12 @@ void favorite_manager::add_favorite_game()
 			tmpmatches.usage.clear();
 			for (feature_list_item *flist = swinfo->other_info(); flist != nullptr; flist = flist->next())
 				if (!strcmp(flist->name(), "usage"))
-					tmpmatches.usage.assign(flist->value());
+					tmpmatches.usage = flist->value();
 
-			if (image->image_type_name()) tmpmatches.devicetype.assign(image->image_type_name());
+			tmpmatches.devicetype = strensure(image->image_type_name());
 			tmpmatches.available = true;
 			software_avail = true;
-			m_favorite_list.push_back(tmpmatches);
+			m_list.push_back(tmpmatches);
 			save_favorite_games();
 		}
 	}
@@ -279,13 +266,7 @@ void favorite_manager::add_favorite_game()
 
 void favorite_manager::remove_favorite_game(ui_software_info &swinfo)
 {
-	for (size_t x = 0; x < m_favorite_list.size(); x++)
-		if (m_favorite_list[x] == swinfo)
-		{
-			m_favorite_list.erase(m_favorite_list.begin() + x);
-			break;
-		}
-
+	m_list.erase(std::remove(m_list.begin(), m_list.end(), swinfo), m_list.end());
 	save_favorite_games();
 }
 
@@ -295,7 +276,7 @@ void favorite_manager::remove_favorite_game(ui_software_info &swinfo)
 
 void favorite_manager::remove_favorite_game()
 {
-	m_favorite_list.erase(m_favorite_list.begin() + m_current_favorite);
+	m_list.erase(m_list.begin() + m_current);
 	save_favorite_games();
 }
 
@@ -313,16 +294,15 @@ bool favorite_manager::isgame_favorite()
 
 	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
 	{
-		if (image->exists() && image->software_entry())
+		const software_info *swinfo = image->software_entry();
+		if (image->exists() && swinfo != nullptr)
 		{
 			image_loaded = true;
-			const software_info *swinfo = image->software_entry();
-
-			for (size_t current = 0; current < m_favorite_list.size(); current++)
-				if (!m_favorite_list[current].shortname.compare(swinfo->shortname()) &&
-				    !m_favorite_list[current].listname.compare(image->software_list_name()))
+			for (size_t current = 0; current < m_list.size(); current++)
+				if (m_list[current].shortname == swinfo->shortname() &&
+				    m_list[current].listname == image->software_list_name())
 				{
-					m_current_favorite = current;
+					m_current = current;
 					return true;
 				}
 		}
@@ -331,7 +311,7 @@ bool favorite_manager::isgame_favorite()
 	if (!image_loaded)
 		return isgame_favorite(&machine().system());
 
-	m_current_favorite = -1;
+	m_current = -1;
 	return false;
 }
 
@@ -341,14 +321,14 @@ bool favorite_manager::isgame_favorite()
 
 bool favorite_manager::isgame_favorite(const game_driver *driver)
 {
-	for (size_t x = 0; x < m_favorite_list.size(); x++)
-		if (m_favorite_list[x].driver == driver && m_favorite_list[x].shortname.compare(driver->name) == 0)
+	for (size_t x = 0; x < m_list.size(); x++)
+		if (m_list[x].driver == driver && m_list[x].shortname == driver->name)
 		{
-			m_current_favorite = x;
+			m_current = x;
 			return true;
 		}
 
-	m_current_favorite = -1;
+	m_current = -1;
 	return false;
 }
 
@@ -358,14 +338,14 @@ bool favorite_manager::isgame_favorite(const game_driver *driver)
 
 bool favorite_manager::isgame_favorite(ui_software_info &swinfo)
 {
-	for (size_t x = 0; x < m_favorite_list.size(); x++)
-		if (m_favorite_list[x] == swinfo)
+	for (size_t x = 0; x < m_list.size(); x++)
+		if (m_list[x] == swinfo)
 		{
-			m_current_favorite = x;
+			m_current = x;
 			return true;
 		}
 
-	m_current_favorite = -1;
+	m_current = -1;
 	return false;
 }
 
@@ -376,54 +356,52 @@ bool favorite_manager::isgame_favorite(ui_software_info &swinfo)
 void favorite_manager::parse_favorite()
 {
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_READ);
-
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
 		char readbuf[1024];
-		std::string text;
-
 		file.gets(readbuf, 1024);
+
 		while (readbuf[0] == '[')
 			file.gets(readbuf, 1024);
 
 		while (file.gets(readbuf, 1024))
 		{
 			ui_software_info tmpmatches;
-			tmpmatches.shortname = strtrimspace(text.assign(readbuf));
+			tmpmatches.shortname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.longname = strtrimspace(text.assign(readbuf));
+			tmpmatches.longname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.parentname = strtrimspace(text.assign(readbuf));
+			tmpmatches.parentname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.year = strtrimspace(text.assign(readbuf));
+			tmpmatches.year = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.publisher = strtrimspace(text.assign(readbuf));
+			tmpmatches.publisher = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.supported = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.part = strtrimspace(text.assign(readbuf));
+			tmpmatches.part = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			text = strtrimspace(text.assign(readbuf));
-			int dx = driver_list::find(text.c_str());
+			chartrimcarriage(readbuf);
+			int dx = driver_list::find(readbuf);
 			if (dx == -1) continue;
 			tmpmatches.driver = &driver_list::driver(dx);
 			file.gets(readbuf, 1024);
-			tmpmatches.listname = strtrimspace(text.assign(readbuf));
+			tmpmatches.listname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.interface = strtrimspace(text.assign(readbuf));
+			tmpmatches.interface = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.instance = strtrimspace(text.assign(readbuf));
+			tmpmatches.instance = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.startempty = atoi(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.parentlongname = strtrimspace(text.assign(readbuf));
+			tmpmatches.parentlongname = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.usage = strtrimspace(text.assign(readbuf));
+			tmpmatches.usage = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
-			tmpmatches.devicetype = strtrimspace(text.assign(readbuf));
+			tmpmatches.devicetype = chartrimcarriage(readbuf);
 			file.gets(readbuf, 1024);
 			tmpmatches.available = atoi(readbuf);
-			m_favorite_list.push_back(tmpmatches);
+			m_list.push_back(tmpmatches);
 		}
 		file.close();
 	}
@@ -437,10 +415,9 @@ void favorite_manager::save_favorite_games()
 {
 	// attempt to open the output file
 	emu_file file(machine().options().mewui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-
 	if (file.open(favorite_filename) == FILERR_NONE)
 	{
-		if (m_favorite_list.empty())
+		if (m_list.empty())
 		{
 			file.remove_on_close();
 			file.close();
@@ -449,8 +426,7 @@ void favorite_manager::save_favorite_games()
 
 		// generate the favorite INI
 		std::string text("[ROOT_FOLDER]\n[Favorite]\n\n");
-
-		for (auto & elem : m_favorite_list)
+		for (auto & elem : m_list)
 		{
 			text += elem.shortname + "\n";
 			text += elem.longname + "\n";

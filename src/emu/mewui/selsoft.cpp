@@ -438,8 +438,6 @@ void ui_menu_select_software::populate()
 	item_append(MENU_SEPARATOR_ITEM, nullptr, flags_mewui, nullptr);
 
 	// configure the custom rendering
-	//float y_pixel = 1.0f / container->manager().ui_target().height();
-	//customtop = 3.0f * machine().ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER + 32 * y_pixel;
 	customtop = 4.0f * machine().ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER;
 	custombottom = 5.0f * machine().ui().get_line_height() + 4.0f * UI_BOX_TB_BORDER;
 
@@ -609,7 +607,6 @@ void ui_menu_select_software::custom_render(void *selectedref, float top, float 
 	std::string tempbuf[5], filtered;
 	rgb_t color = UI_BACKGROUND_COLOR;
 	bool isstar = false;
-	//float tbarspace = (1.0f / container->manager().ui_target().height()) * 32;
 	float tbarspace = mui.get_line_height();
 
 	// determine the text for the header

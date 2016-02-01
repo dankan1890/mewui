@@ -644,8 +644,6 @@ void ui_mewui_select_game::populate()
 	item_append("Configure Directories", nullptr, MENU_FLAG_MEWUI, (void *)(FPTR)2);
 
 	// configure the custom rendering
-	//float y_pixel = 1.0f / container->manager().ui_target().height();
-	//customtop = 2.0f * machine().ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER + 32 * y_pixel;
 	customtop = 3.0f * machine().ui().get_line_height() + 5.0f * UI_BOX_TB_BORDER;
 	custombottom = 5.0f * machine().ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
 
@@ -731,7 +729,6 @@ void ui_mewui_select_game::build_available_list()
 
 void ui_mewui_select_game::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
-//	float tbarspace = (1.0f / container->manager().ui_target().height()) * 32;
 	const game_driver *driver = nullptr;
 	ui_software_info *swinfo = nullptr;
 	float width, maxwidth = origx2 - origx1;

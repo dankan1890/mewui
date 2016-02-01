@@ -53,8 +53,8 @@ public:
 	std::vector<IniFileIndex> ini_index;
 	static UINT16 current_file, current_category;
 
-	std::string actual_category() { return ini_index[current_file].name; }
-	std::string actual_file() { return ini_index[current_file].category[current_category].name; }
+	std::string actual_file() { return ini_index[current_file].name; }
+	std::string actual_category() { return ini_index[current_file].category[current_category].name; }
 
 private:
 	// init category index

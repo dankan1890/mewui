@@ -358,7 +358,7 @@ int datfile_manager::index_mame_mess_info(dataindex &index, drvindex &index_drv,
 			size_t found = readbuf.find(" ", t_mame + 1);
 			m_mame_rev = readbuf.substr(t_mame + 1, found - t_mame);
 		}
-		else if (m_mess_rev.empty() && (foundtag = readbuf.find(TAG_MESSINFO_R) != std::string::npos))
+		else if (m_mess_rev.empty() && (foundtag = readbuf.find(TAG_MESSINFO_R)) != std::string::npos)
 		{
 			size_t found = readbuf.find(" ", foundtag + t_mess + 1);
 			m_mess_rev = readbuf.substr(foundtag + t_mess + 1, found - t_mess - foundtag);

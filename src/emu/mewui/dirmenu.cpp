@@ -165,7 +165,7 @@ void ui_menu_add_change_folder::handle()
 
 				// from current item to the end
 				for (entry = cur_selected; entry < item.size(); entry++)
-					if (item[entry].ref != nullptr && m_search != nullptr)
+					if (item[entry].ref != nullptr && m_search[0] != 0)
 					{
 						int match = 0;
 						for (int i = 0; i < ARRAY_LENGTH(m_search); i++)
@@ -184,7 +184,7 @@ void ui_menu_add_change_folder::handle()
 				// and from the first item to current one
 				for (entry = 0; entry < cur_selected; entry++)
 				{
-					if (item[entry].ref != nullptr && m_search != nullptr)
+					if (item[entry].ref != nullptr && m_search[0] != 0)
 					{
 						int match = 0;
 						for (int i = 0; i < ARRAY_LENGTH(m_search); i++)

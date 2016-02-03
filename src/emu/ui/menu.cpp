@@ -1682,8 +1682,8 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (!ignoreright && exclusive_input_pressed(IPT_UI_RIGHT, (flags & UI_MENU_PROCESS_LR_REPEAT) ? 6 : 0))
 	{
 		// Swap the right panel
-		if (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1))
-			menu_event.iptkey = IPT_UI_RIGHT_PANEL;
+//		if (minput.code_pressed(KEYCODE_LCONTROL) || minput.code_pressed(JOYCODE_BUTTON1))
+//			menu_event.iptkey = IPT_UI_RIGHT_PANEL;
 		return;
 	}
 
@@ -1835,8 +1835,7 @@ void ui_menu::handle_main_keys(UINT32 flags)
 	if (menu_event.iptkey == IPT_INVALID)
 		for (int code = IPT_UI_FIRST + 1; code < IPT_UI_LAST; code++)
 		{
-			if (ui_error || code == IPT_UI_CONFIGURE || (code == IPT_UI_LEFT && ignoreleft)
-				|| (code == IPT_UI_RIGHT && ignoreright) || (code == IPT_UI_PAUSE && ignorepause))
+			if (ui_error || code == IPT_UI_CONFIGURE || (code == IPT_UI_LEFT && ignoreleft)	|| (code == IPT_UI_RIGHT && ignoreright) || (code == IPT_UI_PAUSE && ignorepause))
 				continue;
 
 			if (exclusive_input_pressed(code, 0))

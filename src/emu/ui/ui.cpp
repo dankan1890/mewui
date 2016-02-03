@@ -37,6 +37,8 @@ enum
 	LOADSAVE_SAVE
 };
 
+#define MAX_SAVED_STATE_JOYSTICK   4
+
 
 /***************************************************************************
     LOCAL VARIABLES
@@ -261,6 +263,7 @@ ui_manager::ui_manager(running_machine &machine)
 	m_popup_text_end = 0;
 	m_use_natural_keyboard = false;
 	m_mouse_arrow_texture = nullptr;
+	m_load_save_hold = false;
 
 	get_font_rows(&machine);
 	decode_ui_color(0, &machine);
@@ -1649,6 +1652,7 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	if (machine.ui_input().pressed(IPT_UI_SAVE_STATE))
 	{
 		machine.pause();
+		machine.ui().m_load_save_hold = true;
 		return machine.ui().set_handler(handler_load_save, LOADSAVE_SAVE);
 	}
 
@@ -1656,6 +1660,7 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	if (machine.ui_input().pressed(IPT_UI_LOAD_STATE))
 	{
 		machine.pause();
+		machine.ui().m_load_save_hold = true;
 		return machine.ui().set_handler(handler_load_save, LOADSAVE_LOAD);
 	}
 
@@ -1743,6 +1748,23 @@ UINT32 ui_manager::handler_load_save(running_machine &machine, render_container 
 	else
 		machine.ui().draw_message_window(container, "Select position to load from");
 
+	// if load/save state sequence is still being pressed, do not read the filename yet
+	if (machine.ui().m_load_save_hold) {
+		bool seq_in_progress = false;
+		const input_seq &load_save_seq = state == LOADSAVE_SAVE ?
+			machine.ioport().type_seq(IPT_UI_SAVE_STATE) :
+			machine.ioport().type_seq(IPT_UI_LOAD_STATE);
+
+		for (int i = 0; i < load_save_seq.length(); i++)
+			if (machine.input().code_pressed_once(load_save_seq[i]))
+				seq_in_progress = true;
+
+		if (seq_in_progress)
+			return state;
+		else
+			machine.ui().m_load_save_hold = false;
+	}
+
 	// check for cancel key
 	if (machine.ui_input().pressed(IPT_UI_CANCEL))
 	{
@@ -1770,20 +1792,40 @@ UINT32 ui_manager::handler_load_save(running_machine &machine, render_container 
 			if (machine.input().code_pressed_once(input_code(DEVICE_CLASS_KEYBOARD, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, id)))
 				file = id - ITEM_ID_0_PAD + '0';
 	if (file == 0)
-		return state;
+	{
+		bool found = false;
+
+		for (int joy_index = 0; joy_index <= MAX_SAVED_STATE_JOYSTICK; joy_index++)
+			for (input_item_id id = ITEM_ID_BUTTON1; id <= ITEM_ID_BUTTON32; ++id)
+				if (machine.input().code_pressed_once(input_code(DEVICE_CLASS_JOYSTICK, joy_index, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, id)))
+				{
+					snprintf(filename, sizeof(filename), "joy%i-%i", joy_index, id - ITEM_ID_BUTTON1 + 1);
+					found = true;
+					break;
+				}
+
+		if (!found)
+			return state;
+	}
+	else
+	{
+		sprintf(filename, "%c", file);
+	}
 
 	// display a popup indicating that the save will proceed
-	sprintf(filename, "%c", file);
 	if (state == LOADSAVE_SAVE)
 	{
-		machine.popmessage("Save to position %c", file);
+		machine.popmessage("Save to position %s", filename);
 		machine.schedule_save(filename);
 	}
 	else
 	{
-		machine.popmessage("Load from position %c", file);
+		machine.popmessage("Load from position %s", filename);
 		machine.schedule_load(filename);
 	}
+
+	// avoid handling the name of the save state slot as a seperate input
+	machine.ui_input().mark_all_as_pressed();
 
 	// remove the pause and reset the state
 	machine.resume();

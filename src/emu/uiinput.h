@@ -90,6 +90,8 @@ public:
 	void push_char_event(render_target* target, unicode_char ch);
 	void push_mouse_wheel_event(render_target *target, INT32 x, INT32 y, short delta, int ucNumLines);
 
+	void mark_all_as_pressed();
+
 private:
 
 	// internal state

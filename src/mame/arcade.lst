@@ -5143,12 +5143,15 @@ shienryu        // 1997.02 Shienryu (Warashi)
 vmahjong        // 1997.02 Virtual Mahjong (Micronet)
 pclub2kc        // 1997.02 Print Club Kome Kome Club
 pclub2fc        // 1997.04 Print Club 2 Felix The Cat
+pclub2pe		//
 pclub2pf		//
+pclub26w		//
 pclub27s		//
 pclubyo2		//
 groovef         // 1997.05 Groove on Fight (Atlus)
 nclubv3         // 1997.07 Name Club Ver. 3
-nclubv2
+nclubv2			//
+nameclub		//
 pclb2elk        // 1997.07 Print Club Custom
 pclub2          // 1997.09 Print Club 2
 thunt           // 1997.09 Puzzle & Action Treasure Hunt (Sega (Deniam License))
@@ -5667,7 +5670,7 @@ shootpl         // 2003.?? Shootout Pool The Medal / Shootout Pool Prize (Rev A)
 cfield          // 2004.06 Chaos Field
 tetkiwam        // 2004.06 Tetris Kiwamemichi (Arcade TV Game List - P.88, Right, 11 from bottom)
 trizeal         // 2004.09 Trizeal
-				// 2004.?? Dragon Treasure 2
+dragntr2        // 2004.?? Dragon Treasure 2 (Rev A)
 kick4csh        // 2004.?? Kick '4' Cash
 shootplm        // 2004.?? Shootout Pool The Medal Ver. B / Shootout Pool Prize Ver. B
 				// 2004.?? The Quiz Show
@@ -9275,6 +9278,7 @@ oedfight        // (c) 1994 Kaneko
 bonkadv         // (c) 1994 Kaneko
 gtmr            // (c) 1994 Kaneko
 gtmra           // (c) 1994 Kaneko
+gtmrb			// (c) 1994 Kaneko
 gtmro			// (c) 1994 Kaneko
 gtmre           // (c) 1994 Kaneko
 gtmrusa         // (c) 1994 Kaneko (US)

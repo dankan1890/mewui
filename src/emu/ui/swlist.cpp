@@ -2,7 +2,7 @@
 // copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
 /*********************************************************************
 
-    ui/swlist.c
+    ui/swlist.cpp
 
     Internal MAME user interface for software list.
 
@@ -62,32 +62,32 @@ void ui_menu_software_parts::populate()
 		software_part_menu_entry *entry1 = (software_part_menu_entry *) m_pool_alloc(sizeof(*entry1));
 		entry1->type = T_EMPTY;
 		entry1->part = nullptr;
-		item_append("[empty slot]", nullptr, 0, entry1);
+		item_append(_("[empty slot]"), nullptr, 0, entry1);
 
 		software_part_menu_entry *entry2 = (software_part_menu_entry *) m_pool_alloc(sizeof(*entry2));
 		entry2->type = T_FMGR;
 		entry2->part = nullptr;
-		item_append("[file manager]", nullptr, 0, entry2);
+		item_append(_("[file manager]"), nullptr, 0, entry2);
 
 
 		software_part_menu_entry *entry3 = (software_part_menu_entry *) m_pool_alloc(sizeof(*entry3));
 		entry3->type = T_SWLIST;
 		entry3->part = nullptr;
-		item_append("[software list]", nullptr, 0, entry3);
+		item_append(_("[software list]"), nullptr, 0, entry3);
 	}
 
-	for (const software_part *swpart = m_info->first_part(); swpart != nullptr; swpart = swpart->next())
+	for (const software_part &swpart : m_info->parts())
 	{
-		if (swpart->matches_interface(m_interface))
+		if (swpart.matches_interface(m_interface))
 		{
 			software_part_menu_entry *entry = (software_part_menu_entry *) m_pool_alloc(sizeof(*entry));
 			// check if the available parts have specific part_id to be displayed (e.g. "Map Disc", "Bonus Disc", etc.)
 			// if not, we simply display "part_name"; if yes we display "part_name (part_id)"
-			std::string menu_part_name(swpart->name());
-			if (swpart->feature("part_id") != nullptr)
-				menu_part_name.append(" (").append(swpart->feature("part_id")).append(")");
+			std::string menu_part_name(swpart.name());
+			if (swpart.feature("part_id") != nullptr)
+				menu_part_name.append(" (").append(swpart.feature("part_id")).append(")");
 			entry->type = T_ENTRY;
-			entry->part = swpart;
+			entry->part = &swpart;
 			item_append(m_info->shortname(), menu_part_name.c_str(), 0, entry);
 		}
 	}
@@ -182,24 +182,24 @@ int ui_menu_software_list::compare_entries(const entry_info *e1, const entry_inf
 //  append_software_entry - populate a specific list
 //-------------------------------------------------
 
-ui_menu_software_list::entry_info *ui_menu_software_list::append_software_entry(const software_info *swinfo)
+ui_menu_software_list::entry_info *ui_menu_software_list::append_software_entry(const software_info &swinfo)
 {
 	entry_info *entry = nullptr;
 	entry_info **entryptr;
 	bool entry_updated = FALSE;
 
 	// check if at least one of the parts has the correct interface and add a menu entry only in this case
-	for (const software_part *swpart = swinfo->first_part(); swpart != nullptr; swpart = swpart->next())
+	for (const software_part &swpart : swinfo.parts())
 	{
-		if (swpart->matches_interface(m_interface) && swpart->is_compatible(*m_swlist))
+		if (swpart.matches_interface(m_interface) && swpart.is_compatible(*m_swlist))
 		{
 			entry_updated = TRUE;
 			// allocate a new entry
 			entry = (entry_info *) m_pool_alloc(sizeof(*entry));
 			memset(entry, 0, sizeof(*entry));
 
-			entry->short_name = pool_strdup(swinfo->shortname());
-			entry->long_name = pool_strdup(swinfo->longname());
+			entry->short_name = pool_strdup(swinfo.shortname());
+			entry->long_name = pool_strdup(swinfo.longname());
 			break;
 		}
 	}
@@ -228,11 +228,11 @@ ui_menu_software_list::entry_info *ui_menu_software_list::append_software_entry(
 void ui_menu_software_list::populate()
 {
 	// build up the list of entries for the menu
-	for (const software_info *swinfo = m_swlist->first_software_info(); swinfo != nullptr; swinfo = swinfo->next())
+	for (const software_info &swinfo : m_swlist->get_info())
 		append_software_entry(swinfo);
 
 	// add an entry to change ordering
-	item_append("Switch Item Ordering", nullptr, 0, (void *)1);
+	item_append(_("Switch Item Ordering"), nullptr, 0, (void *)1);
 
 	// append all of the menu entries
 	for (entry_info *entry = m_entrylist; entry != nullptr; entry = entry->next)
@@ -265,7 +265,7 @@ void ui_menu_software_list::handle()
 
 			// reload the menu with the new order
 			reset(UI_MENU_RESET_REMEMBER_REF);
-			machine().popmessage("Switched Order: entries now ordered by %s", m_ordered_by_shortname ? "shortname" : "description");
+			machine().popmessage(_("Switched Order: entries now ordered by %s"), m_ordered_by_shortname ? _("shortname") : _("description"));
 		}
 		// handle selections
 		else if (event->iptkey == IPT_UI_SELECT)
@@ -355,7 +355,10 @@ void ui_menu_software_list::handle()
 				}
 
 				if (selected_entry != nullptr && selected_entry != cur_selected)
-					set_selection((void *) selected_entry);
+				{
+					set_selection((void *)selected_entry);
+					top_line = selected - (visible_lines / 2);
+				}
 			}
 		}
 		else if (event->iptkey == IPT_UI_CANCEL)
@@ -408,11 +411,11 @@ void ui_menu_software::populate()
 	software_list_device_iterator iter(machine().config().root_device());
 	for (software_list_device *swlistdev = iter.first(); swlistdev != nullptr; swlistdev = iter.next())
 		if (swlistdev->list_type() == SOFTWARE_LIST_ORIGINAL_SYSTEM)
-			if (swlistdev->first_software_info() != nullptr && m_interface != nullptr)
+			if (!swlistdev->get_info().empty() && m_interface != nullptr)
 			{
 				bool found = false;
-				for (const software_info *swinfo = swlistdev->first_software_info(); swinfo != nullptr; swinfo = swinfo->next())
-					if (swinfo->first_part()->matches_interface(m_interface))
+				for (const software_info &swinfo : swlistdev->get_info())
+					if (swinfo.first_part()->matches_interface(m_interface))
 						found = true;
 				if (found)
 					item_append(swlistdev->description(), nullptr, 0, (void *)swlistdev);
@@ -421,16 +424,16 @@ void ui_menu_software::populate()
 	// add compatible software lists for this system
 	for (software_list_device *swlistdev = iter.first(); swlistdev != nullptr; swlistdev = iter.next())
 		if (swlistdev->list_type() == SOFTWARE_LIST_COMPATIBLE_SYSTEM)
-			if (swlistdev->first_software_info() != nullptr && m_interface != nullptr)
+			if (!swlistdev->get_info().empty() && m_interface != nullptr)
 			{
 				bool found = false;
-				for (const software_info *swinfo = swlistdev->first_software_info(); swinfo != nullptr; swinfo = swinfo->next())
-					if (swinfo->first_part()->matches_interface(m_interface))
+				for (const software_info &swinfo : swlistdev->get_info())
+					if (swinfo.first_part()->matches_interface(m_interface))
 						found = true;
 				if (found)
 				{
 					if (!have_compatible)
-						item_append("[compatible lists]", nullptr, MENU_FLAG_DISABLE, nullptr);
+						item_append(_("[compatible lists]"), nullptr, MENU_FLAG_DISABLE, nullptr);
 					item_append(swlistdev->description(), nullptr, 0, (void *)swlistdev);
 				}
 				have_compatible = true;

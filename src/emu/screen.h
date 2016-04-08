@@ -30,7 +30,8 @@ enum screen_type_enum
 	SCREEN_TYPE_INVALID = 0,
 	SCREEN_TYPE_RASTER,
 	SCREEN_TYPE_VECTOR,
-	SCREEN_TYPE_LCD
+	SCREEN_TYPE_LCD,
+	SCREEN_TYPE_SVG
 };
 
 // texture formats
@@ -155,6 +156,8 @@ typedef device_delegate<void (screen_device &, bool)> screen_vblank_delegate;
 
 // ======================> screen_device
 
+class screen_device_svg_renderer;
+
 class screen_device : public device_t
 {
 	friend class render_manager;
@@ -193,6 +196,8 @@ public:
 	static void static_set_screen_vblank(device_t &device, screen_vblank_delegate callback);
 	static void static_set_palette(device_t &device, const char *tag);
 	static void static_set_video_attributes(device_t &device, UINT32 flags);
+	static void static_set_color(device_t &device, rgb_t color);
+	static void static_set_svg_region(device_t &device, const char *region);
 
 	// information getters
 	render_container &container() const { assert(m_container != nullptr); return *m_container; }
@@ -278,10 +283,11 @@ private:
 	screen_vblank_delegate m_screen_vblank;         // screen vblank callback
 	optional_device<palette_device> m_palette;      // our palette
 	UINT32              m_video_attributes;         // flags describing the video system
+	const char *        m_svg_region;               // the region in which the svg data is in
 
 	// internal state
 	render_container *  m_container;                // pointer to our container
-
+	std::unique_ptr<screen_device_svg_renderer> m_svg; // the svg renderer
 	// dimensions
 	int                 m_width;                    // current width (HTOTAL)
 	int                 m_height;                   // current height (VTOTAL)
@@ -365,11 +371,22 @@ typedef device_type_iterator<&device_creator<screen_device>, screen_device> scre
 #define MCFG_SCREEN_ADD(_tag, _type) \
 	MCFG_DEVICE_ADD(_tag, SCREEN, 0) \
 	MCFG_SCREEN_TYPE(_type)
+
+#define MCFG_SCREEN_ADD_MONOCHROME(_tag, _type, _color) \
+	MCFG_DEVICE_ADD(_tag, SCREEN, 0) \
+	MCFG_SCREEN_TYPE(_type) \
+	MCFG_SCREEN_COLOR(_color)
+
 #define MCFG_SCREEN_MODIFY(_tag) \
 	MCFG_DEVICE_MODIFY(_tag)
 
 #define MCFG_SCREEN_TYPE(_type) \
 	screen_device::static_set_type(*device, SCREEN_TYPE_##_type);
+
+#define MCFG_SCREEN_SVG_ADD(_tag, _region) \
+	MCFG_DEVICE_ADD(_tag, SCREEN, 0) \
+	MCFG_SCREEN_TYPE(SVG) \
+	screen_device::static_set_svg_region(*device, _region);
 
 /*!
  @brief Configures screen parameters for the given screen.
@@ -442,6 +459,8 @@ typedef device_type_iterator<&device_creator<screen_device>, screen_device> scre
 	screen_device::static_set_palette(*device, FINDER_DUMMY_TAG);
 #define MCFG_SCREEN_VIDEO_ATTRIBUTES(_flags) \
 	screen_device::static_set_video_attributes(*device, _flags);
+#define MCFG_SCREEN_COLOR(_color) \
+	screen_device::static_set_color(*device, _color);
 
 
 //**************************************************************************

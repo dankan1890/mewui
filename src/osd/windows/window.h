@@ -9,6 +9,12 @@
 #ifndef __WIN_WINDOW__
 #define __WIN_WINDOW__
 
+// standard windows headers
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <windowsx.h>
+#include <mmsystem.h>
+
 #include <mutex>
 #include "video.h"
 #include "render.h"
@@ -51,14 +57,22 @@ public:
 
 	virtual bool win_has_menu() override
 	{
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		return GetMenu(m_hwnd) ? true : false;
+#else
+		return false;
+#endif
 	}
 
 	virtual osd_dim get_size() override
 	{
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		RECT client;
 		GetClientRect(m_hwnd, &client);
 		return osd_dim(client.right - client.left, client.bottom - client.top);
+#else
+		throw ref new Platform::NotImplementedException();
+#endif
 	}
 
 	virtual osd_monitor_info *monitor() const override { return m_monitor; }

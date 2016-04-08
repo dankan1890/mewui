@@ -48,6 +48,17 @@
 
 
 //**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+// use this to refer to the owning device when providing a device tag
+static const char DEVICE_SELF[] = "";
+
+// use this to refer to the owning device's owner when providing a device tag
+static const char DEVICE_SELF_OWNER[] = "^";
+
+
+//**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
 
@@ -93,15 +104,84 @@ class device_t : public delegate_late_bind
 {
 	DISABLE_COPYING(device_t);
 
-	friend class device_interface;
-	friend class device_memory_interface;
-	friend class device_state_interface;
-	friend class device_execute_interface;
 	friend class simple_list<device_t>;
-	friend class device_list;
-	friend class machine_config;
 	friend class running_machine;
 	friend class finder_base;
+
+	class subdevice_list
+	{
+		friend class device_t;
+		friend class machine_config;
+
+public:
+		// construction/destruction
+		subdevice_list() { }
+
+		// getters
+		device_t *first() const { return m_list.first(); }
+
+		// range iterators
+		using auto_iterator = simple_list<device_t>::auto_iterator;
+		auto_iterator begin() const { return m_list.begin(); }
+		auto_iterator end() const { return m_list.end(); }
+
+private:
+		// private helpers
+		device_t *find(const std::string &name) const
+		{
+			device_t *curdevice;
+			for (curdevice = m_list.first(); curdevice != nullptr; curdevice = curdevice->next())
+				if (name.compare(curdevice->m_basetag) == 0)
+					return curdevice;
+			return nullptr;
+		}
+
+		// private state
+		simple_list<device_t>   m_list;         // list of sub-devices we own
+		mutable std::unordered_map<std::string,device_t *> m_tagmap;      // map of devices looked up and found by subtag
+	};
+
+	class interface_list
+	{
+		friend class device_t;
+		friend class device_interface;
+		friend class device_memory_interface;
+		friend class device_state_interface;
+		friend class device_execute_interface;
+
+public:
+		class auto_iterator
+		{
+public:
+			// construction/destruction
+			auto_iterator(device_interface *intf) : m_current(intf) { }
+
+			// required operator overrides
+			bool operator!=(const auto_iterator &iter) const { return m_current != iter.m_current; }
+			device_interface &operator*() const { return *m_current; }
+			const auto_iterator &operator++();
+
+private:
+			// private state
+			device_interface *m_current;
+		};
+
+		// construction/destruction
+		interface_list() : m_head(nullptr), m_execute(nullptr), m_memory(nullptr), m_state(nullptr) { }
+
+		// getters
+		device_interface *first() const { return m_head; }
+
+		// range iterators
+		auto_iterator begin() const { return auto_iterator(m_head); }
+		auto_iterator end() const { return auto_iterator(nullptr); }
+
+private:
+		device_interface *      m_head;         // head of interface list
+		device_execute_interface *m_execute;    // pre-cached pointer to execute interface
+		device_memory_interface *m_memory;      // pre-cached pointer to memory interface
+		device_state_interface *m_state;        // pre-cached pointer to state interface
+	};
 
 protected:
 	// construction/destruction
@@ -130,26 +210,29 @@ public:
 	UINT8 default_bios() const { return m_default_bios; }
 	UINT8 system_bios() const { return m_system_bios; }
 	std::string default_bios_tag() const { return m_default_bios_tag; }
-	std::string parameter(const char *tag) const;
 
 	// interface helpers
-	device_interface *first_interface() const { return m_interface_list; }
+	interface_list &interfaces() { return m_interfaces; }
+	const interface_list &interfaces() const { return m_interfaces; }
 	template<class _DeviceClass> bool interface(_DeviceClass *&intf) { intf = dynamic_cast<_DeviceClass *>(this); return (intf != nullptr); }
 	template<class _DeviceClass> bool interface(_DeviceClass *&intf) const { intf = dynamic_cast<const _DeviceClass *>(this); return (intf != nullptr); }
 
 	// specialized helpers for common core interfaces
-	bool interface(device_execute_interface *&intf) { intf = m_execute; return (intf != nullptr); }
-	bool interface(device_execute_interface *&intf) const { intf = m_execute; return (intf != nullptr); }
-	bool interface(device_memory_interface *&intf) { intf = m_memory; return (intf != nullptr); }
-	bool interface(device_memory_interface *&intf) const { intf = m_memory; return (intf != nullptr); }
-	bool interface(device_state_interface *&intf) { intf = m_state; return (intf != nullptr); }
-	bool interface(device_state_interface *&intf) const { intf = m_state; return (intf != nullptr); }
-	device_execute_interface &execute() const { assert(m_execute != nullptr); return *m_execute; }
-	device_memory_interface &memory() const { assert(m_memory != nullptr); return *m_memory; }
-	device_state_interface &state() const { assert(m_state != nullptr); return *m_state; }
+	bool interface(device_execute_interface *&intf) { intf = m_interfaces.m_execute; return (intf != nullptr); }
+	bool interface(device_execute_interface *&intf) const { intf = m_interfaces.m_execute; return (intf != nullptr); }
+	bool interface(device_memory_interface *&intf) { intf = m_interfaces.m_memory; return (intf != nullptr); }
+	bool interface(device_memory_interface *&intf) const { intf = m_interfaces.m_memory; return (intf != nullptr); }
+	bool interface(device_state_interface *&intf) { intf = m_interfaces.m_state; return (intf != nullptr); }
+	bool interface(device_state_interface *&intf) const { intf = m_interfaces.m_state; return (intf != nullptr); }
+	device_execute_interface &execute() const { assert(m_interfaces.m_execute != nullptr); return *m_interfaces.m_execute; }
+	device_memory_interface &memory() const { assert(m_interfaces.m_memory != nullptr); return *m_interfaces.m_memory; }
+	device_state_interface &state() const { assert(m_interfaces.m_state != nullptr); return *m_interfaces.m_state; }
 
 	// owned object helpers
-	device_t *first_subdevice() const { return m_subdevice_list.first(); }
+	subdevice_list &subdevices() { return m_subdevices; }
+	const subdevice_list &subdevices() const { return m_subdevices; }
+
+	// device-relative tag lookups
 	std::string subtag(const char *tag) const;
 	std::string siblingtag(const char *tag) const { return (m_owner != nullptr) ? m_owner->subtag(tag) : std::string(tag); }
 	memory_region *memregion(const char *tag) const;
@@ -160,7 +243,7 @@ public:
 	device_t *siblingdevice(const char *tag) const;
 	template<class _DeviceClass> inline _DeviceClass *subdevice(const char *tag) const { return downcast<_DeviceClass *>(subdevice(tag)); }
 	template<class _DeviceClass> inline _DeviceClass *siblingdevice(const char *tag) const { return downcast<_DeviceClass *>(siblingdevice(tag)); }
-	memory_region *region() const { return m_region; }
+	std::string parameter(const char *tag) const;
 
 	// configuration helpers
 	static void static_set_clock(device_t &device, UINT32 clock);
@@ -206,9 +289,8 @@ public:
 	bool findit(bool isvalidation = false) const;
 
 	// misc
-	void popmessage(const char *format, ...) const;
-	void logerror(const char *format, ...) const;
-	void vlogerror(const char *format, va_list args) const;
+	template <typename Format, typename... Params> void popmessage(Format &&fmt, Params &&... args) const;
+	template <typename Format, typename... Params> void logerror(Format &&fmt, Params &&... args) const;
 
 protected:
 	// miscellaneous helpers
@@ -248,17 +330,11 @@ protected:
 	std::string             m_searchpath;           // search path, used for media loading
 	std::string             m_source;               // device source file name
 
-	// device relationships
+	// device relationships & interfaces
 	device_t *              m_owner;                // device that owns us
 	device_t *              m_next;                 // next device by the same owner (of any type/class)
-	simple_list<device_t>   m_subdevice_list;       // list of sub-devices we own
-	mutable std::unordered_map<std::string,device_t *> m_device_map;      // map of device names looked up and found
-
-	// device interfaces
-	device_interface *      m_interface_list;       // head of interface list
-	device_execute_interface *m_execute;            // pre-cached pointer to execute interface
-	device_memory_interface *m_memory;              // pre-cached pointer to memory interface
-	device_state_interface *m_state;                // pre-cached pointer to state interface
+	subdevice_list          m_subdevices;           // container for list of subdevices
+	interface_list          m_interfaces;           // container for list of interfaces
 
 	// device clocks
 	UINT32                  m_configured_clock;     // originally configured device clock
@@ -268,7 +344,6 @@ protected:
 	attoseconds_t           m_attoseconds_per_clock;// period in attoseconds
 
 	std::unique_ptr<device_debug> m_debug;
-	memory_region *         m_region;               // our device-local region
 	const machine_config &  m_machine_config;       // reference to the machine's configuration
 	const void *            m_static_config;        // static device configuration
 	const input_device_default *m_input_defaults;   // devices input ports default overrides
@@ -278,10 +353,7 @@ protected:
 	std::string             m_default_bios_tag;     // tag of the default system BIOS
 
 private:
-	// private helpers
-	device_t *add_subdevice(device_type type, const char *tag, UINT32 clock);
-	device_t *replace_subdevice(device_t &old, device_type type, const char *tag, UINT32 clock);
-	void remove_subdevice(device_t &device);
+	// internal helpers
 	device_t *subdevice_slow(const char *tag) const;
 
 	// private state; accessor use required
@@ -318,7 +390,6 @@ public:
 
 	// iteration helpers
 	device_interface *interface_next() const { return m_interface_next; }
-	template<class _InterfaceClass> bool next(_InterfaceClass *&intf) const { return m_device.next(intf); }
 
 	// optional operation overrides
 	//
@@ -380,7 +451,7 @@ public:
 		// search down first
 		if (m_curdepth < m_maxdepth)
 		{
-			m_current = start->first_subdevice();
+			m_current = start->subdevices().first();
 			if (m_current != nullptr)
 			{
 				m_curdepth++;
@@ -389,7 +460,7 @@ public:
 		}
 
 		// search next for neighbors up the ownership chain
-		while (m_curdepth > 0)
+		while (m_curdepth > 0 && start != nullptr)
 		{
 			// found a neighbor? great!
 			m_current = start->next();
@@ -594,8 +665,8 @@ inline device_t *device_t::subdevice(const char *tag) const
 		return const_cast<device_t *>(this);
 
 	// do a quick lookup and return that if possible
-	auto quick = m_device_map.find(tag);
-	return (quick != m_device_map.end()) ? quick->second : subdevice_slow(tag);
+	auto quick = m_subdevices.m_tagmap.find(tag);
+	return (quick != m_subdevices.m_tagmap.end()) ? quick->second : subdevice_slow(tag);
 }
 
 
@@ -620,5 +691,14 @@ inline device_t *device_t::siblingdevice(const char *tag) const
 	// otherwise, it's NULL unless the tag is absolute
 	return (tag[0] == ':') ? subdevice(tag) : nullptr;
 }
+
+
+// this operator requires device_interface to be a complete type
+inline const device_t::interface_list::auto_iterator &device_t::interface_list::auto_iterator::operator++()
+{
+	m_current = m_current->interface_next();
+	return *this;
+}
+
 
 #endif  /* __DEVICE_H__ */

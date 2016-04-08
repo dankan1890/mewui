@@ -36,7 +36,7 @@ function bgfxProject(_name, _kind, _defines)
 		includedirs {
 			path.join(BGFX_DIR, "3rdparty"),
 			path.join(BGFX_DIR, "3rdparty/dxsdk/include"),
-			path.join(BGFX_DIR, "../bx/include"),
+			path.join(BX_DIR,   "include"),
 		}
 
 		defines {
@@ -51,11 +51,23 @@ function bgfxProject(_name, _kind, _defines)
 
 		if _OPTIONS["with-ovr"] then
 			defines {
+--				"BGFX_CONFIG_MULTITHREADED=0",
 				"BGFX_CONFIG_USE_OVR=1",
 			}
 			includedirs {
 				"$(OVR_DIR)/LibOVR/Include",
 			}
+
+			configuration { "x32" }
+				libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/Win32/Release", _ACTION) }
+
+			configuration { "x64" }
+				libdirs { path.join("$(OVR_DIR)/LibOVR/Lib/Windows/x64/Release", _ACTION) }
+
+			configuration { "x32 or x64" }
+				links { "libovr" }
+
+			configuration {}
 		end
 
 		configuration { "Debug" }
@@ -88,10 +100,16 @@ function bgfxProject(_name, _kind, _defines)
 				"-weak_framework Metal",
 			}
 
-		configuration { "not nacl" }
+		configuration { "not nacl", "not linux-steamlink" }
 			includedirs {
 				--nacl has GLES2 headers modified...
+				--steamlink has EGL headers modified...
 				path.join(BGFX_DIR, "3rdparty/khronos"),
+			}
+
+		configuration { "linux-steamlink" }
+			defines {
+				"EGL_API_FB",
 			}
 
 		configuration {}

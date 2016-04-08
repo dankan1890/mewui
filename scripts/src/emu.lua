@@ -16,37 +16,37 @@ kind (LIBTYPE)
 
 addprojectflags()
 precompiledheaders()
-
+options {
+	"ArchiveSplit",
+}
 includedirs {
 	MAME_DIR .. "src/osd",
 	MAME_DIR .. "src/emu",
 	MAME_DIR .. "src/devices", -- till deps are fixed
 	MAME_DIR .. "src/lib",
 	MAME_DIR .. "src/lib/util",
+	MAME_DIR .. "3rdparty/rapidjson/include",
 	MAME_DIR .. "3rdparty",
 	GEN_DIR  .. "emu",
 	GEN_DIR  .. "emu/layout",
 }
-if _OPTIONS["with-bundled-expat"] then
-	includedirs {
-		MAME_DIR .. "3rdparty/expat/lib",
-	}
-end
-if _OPTIONS["with-bundled-lua"] then
-	includedirs {
-		MAME_DIR .. "3rdparty/lua/src",
-	}
-end
 
-if (_OPTIONS["targetos"] == "windows") then
+includedirs {
+	ext_includedir("expat"),
+	ext_includedir("lua"),
+	ext_includedir("zlib"),
+	ext_includedir("flac"),
+}
+
+if (_OPTIONS["targetos"] == "windows" and _OPTIONS["osd"] ~= "osdmini") then
 	defines {
-		"MEWUI_WINDOWS",
+		"UI_WINDOWS",
 	}
 end
 
 if (_OPTIONS["osd"] == "sdl") then
 	defines {
-		"MEWUI_SDL",
+		"UI_SDL",
 	}
 end
 
@@ -85,6 +85,7 @@ files {
 	MAME_DIR .. "src/emu/devfind.h",
 	MAME_DIR .. "src/emu/device.cpp",
 	MAME_DIR .. "src/emu/device.h",
+	MAME_DIR .. "src/emu/device.ipp",
 	MAME_DIR .. "src/emu/didisasm.cpp",
 	MAME_DIR .. "src/emu/didisasm.h",
 	MAME_DIR .. "src/emu/diexec.cpp",
@@ -117,6 +118,8 @@ files {
 	MAME_DIR .. "src/emu/distate.h",
 	MAME_DIR .. "src/emu/divideo.cpp",
 	MAME_DIR .. "src/emu/divideo.h",
+	MAME_DIR .. "src/emu/divtlb.cpp",
+	MAME_DIR .. "src/emu/divtlb.h",
 	MAME_DIR .. "src/emu/drawgfx.cpp",
 	MAME_DIR .. "src/emu/drawgfx.h",
 	MAME_DIR .. "src/emu/drawgfxm.h",
@@ -128,6 +131,8 @@ files {
 	MAME_DIR .. "src/emu/emualloc.h",
 	MAME_DIR .. "src/emu/emucore.cpp",
 	MAME_DIR .. "src/emu/emucore.h",
+	MAME_DIR .. "src/emu/emumem.cpp",
+	MAME_DIR .. "src/emu/emumem.h",	
 	MAME_DIR .. "src/emu/emuopts.cpp",
 	MAME_DIR .. "src/emu/emuopts.h",
 	MAME_DIR .. "src/emu/emupal.cpp",
@@ -147,60 +152,23 @@ files {
 	MAME_DIR .. "src/emu/inpttype.h",
 	MAME_DIR .. "src/emu/luaengine.cpp",
 	MAME_DIR .. "src/emu/luaengine.h",
+	MAME_DIR .. "src/emu/language.cpp",
+	MAME_DIR .. "src/emu/language.h",
 	MAME_DIR .. "src/emu/mame.cpp",
 	MAME_DIR .. "src/emu/mame.h",
 	MAME_DIR .. "src/emu/machine.cpp",
 	MAME_DIR .. "src/emu/machine.h",
+	MAME_DIR .. "src/emu/machine.ipp",
 	MAME_DIR .. "src/emu/mconfig.cpp",
 	MAME_DIR .. "src/emu/mconfig.h",
 	MAME_DIR .. "src/emu/memarray.cpp",
 	MAME_DIR .. "src/emu/memarray.h",
-	MAME_DIR .. "src/emu/memory.cpp",
-	MAME_DIR .. "src/emu/memory.h",
-	MAME_DIR .. "src/emu/mewui/auditmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/auditmenu.h",
-	MAME_DIR .. "src/emu/mewui/cmddata.h",
-	MAME_DIR .. "src/emu/mewui/cmdrender.h",
-	MAME_DIR .. "src/emu/mewui/ctrlmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/ctrlmenu.h",
-	MAME_DIR .. "src/emu/mewui/custmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/custmenu.h",
-	MAME_DIR .. "src/emu/mewui/custui.cpp",
-	MAME_DIR .. "src/emu/mewui/custui.h",
-	MAME_DIR .. "src/emu/mewui/datfile.cpp",
-	MAME_DIR .. "src/emu/mewui/datfile.h",
-	MAME_DIR .. "src/emu/mewui/datmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/datmenu.h",
-	MAME_DIR .. "src/emu/mewui/defimg.h",
-	MAME_DIR .. "src/emu/mewui/dirmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/dirmenu.h",
-	MAME_DIR .. "src/emu/mewui/dsplmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/dsplmenu.h",
-	MAME_DIR .. "src/emu/mewui/icorender.h",
-	MAME_DIR .. "src/emu/mewui/inifile.cpp",
-	MAME_DIR .. "src/emu/mewui/inifile.h",
-	MAME_DIR .. "src/emu/mewui/miscmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/miscmenu.h",
-	MAME_DIR .. "src/emu/mewui/moptions.cpp",
-	MAME_DIR .. "src/emu/mewui/moptions.h",
-	MAME_DIR .. "src/emu/mewui/optsmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/optsmenu.h",
-	MAME_DIR .. "src/emu/mewui/selector.cpp",
-	MAME_DIR .. "src/emu/mewui/selector.h",
-	MAME_DIR .. "src/emu/mewui/selgame.cpp",
-	MAME_DIR .. "src/emu/mewui/selgame.h",
-	MAME_DIR .. "src/emu/mewui/selsoft.cpp",
-	MAME_DIR .. "src/emu/mewui/selsoft.h",
-	MAME_DIR .. "src/emu/mewui/sndmenu.cpp",
-	MAME_DIR .. "src/emu/mewui/sndmenu.h",
-	MAME_DIR .. "src/emu/mewui/starimg.h",
-	MAME_DIR .. "src/emu/mewui/toolbar.h",
-	MAME_DIR .. "src/emu/mewui/utils.cpp",
-	MAME_DIR .. "src/emu/mewui/utils.h",
 	MAME_DIR .. "src/emu/network.cpp",
 	MAME_DIR .. "src/emu/network.h",
 	MAME_DIR .. "src/emu/parameters.cpp",
 	MAME_DIR .. "src/emu/parameters.h",
+	MAME_DIR .. "src/emu/pluginopts.cpp",
+	MAME_DIR .. "src/emu/pluginopts.h",
 	MAME_DIR .. "src/emu/output.cpp",
 	MAME_DIR .. "src/emu/output.h",
 	MAME_DIR .. "src/emu/render.cpp",
@@ -238,6 +206,8 @@ files {
 	MAME_DIR .. "src/emu/ui/devctrl.h",
 	MAME_DIR .. "src/emu/ui/menu.cpp",
 	MAME_DIR .. "src/emu/ui/menu.h",
+	MAME_DIR .. "src/emu/ui/submenu.cpp",
+	MAME_DIR .. "src/emu/ui/submenu.h",
 	MAME_DIR .. "src/emu/ui/mainmenu.cpp",
 	MAME_DIR .. "src/emu/ui/mainmenu.h",
 	MAME_DIR .. "src/emu/ui/miscmenu.cpp",
@@ -246,6 +216,8 @@ files {
 	MAME_DIR .. "src/emu/ui/barcode.h",
 	MAME_DIR .. "src/emu/ui/cheatopt.cpp",
 	MAME_DIR .. "src/emu/ui/cheatopt.h",
+	MAME_DIR .. "src/emu/ui/pluginopt.cpp",
+	MAME_DIR .. "src/emu/ui/pluginopt.h",
 	MAME_DIR .. "src/emu/ui/devopt.cpp",
 	MAME_DIR .. "src/emu/ui/devopt.h",
 	MAME_DIR .. "src/emu/ui/filemngr.cpp",
@@ -260,8 +232,6 @@ files {
 	MAME_DIR .. "src/emu/ui/info_pty.h",
 	MAME_DIR .. "src/emu/ui/inputmap.cpp",
 	MAME_DIR .. "src/emu/ui/inputmap.h",
-	MAME_DIR .. "src/emu/ui/selgame.cpp",
-	MAME_DIR .. "src/emu/ui/selgame.h",
 	MAME_DIR .. "src/emu/ui/sliders.cpp",
 	MAME_DIR .. "src/emu/ui/sliders.h",
 	MAME_DIR .. "src/emu/ui/slotopt.cpp",
@@ -274,6 +244,48 @@ files {
 	MAME_DIR .. "src/emu/ui/videoopt.h",
 	MAME_DIR .. "src/emu/ui/viewgfx.cpp",
 	MAME_DIR .. "src/emu/ui/viewgfx.h",
+	MAME_DIR .. "src/emu/ui/auditmenu.cpp",
+	MAME_DIR .. "src/emu/ui/auditmenu.h",
+	MAME_DIR .. "src/emu/ui/cmddata.h",
+	MAME_DIR .. "src/emu/ui/cmdrender.h",
+	MAME_DIR .. "src/emu/ui/ctrlmenu.cpp",
+	MAME_DIR .. "src/emu/ui/ctrlmenu.h",
+	MAME_DIR .. "src/emu/ui/custmenu.cpp",
+	MAME_DIR .. "src/emu/ui/custmenu.h",
+	MAME_DIR .. "src/emu/ui/custui.cpp",
+	MAME_DIR .. "src/emu/ui/custui.h",
+	MAME_DIR .. "src/emu/ui/datfile.cpp",
+	MAME_DIR .. "src/emu/ui/datfile.h",
+	MAME_DIR .. "src/emu/ui/datmenu.cpp",
+	MAME_DIR .. "src/emu/ui/datmenu.h",
+	MAME_DIR .. "src/emu/ui/defimg.h",
+	MAME_DIR .. "src/emu/ui/dirmenu.cpp",
+	MAME_DIR .. "src/emu/ui/dirmenu.h",
+	MAME_DIR .. "src/emu/ui/dsplmenu.cpp",
+	MAME_DIR .. "src/emu/ui/dsplmenu.h",
+	MAME_DIR .. "src/emu/ui/icorender.h",
+	MAME_DIR .. "src/emu/ui/inifile.cpp",
+	MAME_DIR .. "src/emu/ui/inifile.h",
+	MAME_DIR .. "src/emu/ui/miscmenu.cpp",
+	MAME_DIR .. "src/emu/ui/miscmenu.h",
+	MAME_DIR .. "src/emu/ui/moptions.cpp",
+	MAME_DIR .. "src/emu/ui/moptions.h",
+	MAME_DIR .. "src/emu/ui/optsmenu.cpp",
+	MAME_DIR .. "src/emu/ui/optsmenu.h",
+	MAME_DIR .. "src/emu/ui/selector.cpp",
+	MAME_DIR .. "src/emu/ui/selector.h",
+	MAME_DIR .. "src/emu/ui/selgame.cpp",
+	MAME_DIR .. "src/emu/ui/selgame.h",
+	MAME_DIR .. "src/emu/ui/simpleselgame.cpp",
+	MAME_DIR .. "src/emu/ui/simpleselgame.h",
+	MAME_DIR .. "src/emu/ui/selsoft.cpp",
+	MAME_DIR .. "src/emu/ui/selsoft.h",
+	MAME_DIR .. "src/emu/ui/sndmenu.cpp",
+	MAME_DIR .. "src/emu/ui/sndmenu.h",
+	MAME_DIR .. "src/emu/ui/starimg.h",
+	MAME_DIR .. "src/emu/ui/toolbar.h",
+	MAME_DIR .. "src/emu/ui/utils.cpp",
+	MAME_DIR .. "src/emu/ui/utils.h",
 	MAME_DIR .. "src/emu/validity.cpp",
 	MAME_DIR .. "src/emu/validity.h",
 	MAME_DIR .. "src/emu/video.cpp",
@@ -385,7 +397,7 @@ dependency {
 	-- additional dependencies
 	--------------------------------------------------
 	{ MAME_DIR .. "src/emu/rendfont.cpp", GEN_DIR .. "emu/uismall.fh" },
-	{ MAME_DIR .. "src/emu/rendfont.cpp", GEN_DIR .. "emu/mewui/uicmd14.fh" },
+	{ MAME_DIR .. "src/emu/rendfont.cpp", GEN_DIR .. "emu/ui/uicmd14.fh" },
 	-------------------------------------------------
 	-- core layouts
 	--------------------------------------------------
@@ -398,6 +410,7 @@ dependency {
 	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/vertical.lh" },
 	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/lcd.lh" },
 	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/lcd_rot.lh" },
+	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/svg.lh" },
 	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/noscreens.lh" },
 
 	{ MAME_DIR .. "src/emu/video.cpp",   GEN_DIR .. "emu/layout/snap.lh" },
@@ -405,8 +418,11 @@ dependency {
 }
 
 custombuildtask {
-	{ MAME_DIR .. "src/emu/uismall.png"         , GEN_DIR .. "emu/uismall.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uismall.png...", PYTHON .. " $(1) $(<) temp.bdc", PYTHON .. " $(2) temp.bdc $(@) font_uismall UINT8" }},
-	{ MAME_DIR .. "src/emu/mewui/uicmd14.png"   , GEN_DIR .. "emu/mewui/uicmd14.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uicmd14.png...", "python $(1) $(<) temp_cmd.bdc", "python $(2) temp_cmd.bdc $(@) font_uicmd14 UINT8" }},
+	{ MAME_DIR .. "scripts/font/NotoSans-Bold.bdc", GEN_DIR .. "emu/uismall.fh",     {  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting NotoSans-Bold.bdc...", PYTHON .. " $(1) $(<) $(@) font_uismall UINT8" }},
+}
+
+custombuildtask {
+	{ MAME_DIR .. "src/emu/ui/uicmd14.png"        , GEN_DIR .. "emu/ui/uicmd14.fh",  {  MAME_DIR.. "scripts/build/png2bdc.py",  MAME_DIR .. "scripts/build/file2str.py" }, {"@echo Converting uicmd14.png...", PYTHON .. " $(1) $(<) temp_cmd.bdc", PYTHON .. " $(2) temp_cmd.bdc $(@) font_uicmd14 UINT8" }},
 
 	layoutbuildtask("emu/layout", "dualhovu"),
 	layoutbuildtask("emu/layout", "dualhsxs"),
@@ -417,6 +433,7 @@ custombuildtask {
 	layoutbuildtask("emu/layout", "vertical"),
 	layoutbuildtask("emu/layout", "lcd"),
 	layoutbuildtask("emu/layout", "lcd_rot"),
+	layoutbuildtask("emu/layout", "svg"),
 	layoutbuildtask("emu/layout", "noscreens"),
 	layoutbuildtask("emu/layout", "snap"),
 }

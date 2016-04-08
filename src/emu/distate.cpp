@@ -134,7 +134,7 @@ void device_state_entry::format_from_mask()
 	int width = 0;
 	for (UINT64 tempmask = m_datamask; tempmask != 0; tempmask >>= 4)
 		width++;
-	strprintf(m_format,"%%0%dX", width);
+	m_format = string_format("%%0%dX", width);
 }
 
 
@@ -397,7 +397,7 @@ device_state_interface::device_state_interface(const machine_config &mconfig, de
 	memset(m_fast_state, 0, sizeof(m_fast_state));
 
 	// configure the fast accessor
-	device.m_state = this;
+	device.interfaces().m_state = this;
 }
 
 

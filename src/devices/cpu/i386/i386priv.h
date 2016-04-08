@@ -486,7 +486,7 @@ int i386_device::translate_address(int pl, int type, UINT32 *address, UINT32 *er
 	if(!(m_cr[0] & 0x80000000)) // Some (very few) old OS's won't work with this
 		return TRUE;
 
-	const vtlb_entry *table = vtlb_table(m_vtlb);
+	const vtlb_entry *table = vtlb_table();
 	UINT32 index = *address >> 12;
 	vtlb_entry entry = table[index];
 	if(type == TRANSLATE_FETCH)
@@ -506,7 +506,7 @@ int i386_device::translate_address(int pl, int type, UINT32 *address, UINT32 *er
 				*error |= 1;
 			return FALSE;
 		}
-		vtlb_dynload(m_vtlb, index, *address, entry);
+		vtlb_dynload(index, *address, entry);
 		return TRUE;
 	}
 	if(!(entry & (1 << type)))
@@ -1000,6 +1000,23 @@ void i386_device::PUSH32(UINT32 value)
 		REG16(SP) = new_esp;
 	}
 }
+
+void i386_device::PUSH32SEG(UINT32 value)
+{
+	UINT32 ea, new_esp;
+	if( STACK_32BIT ) {
+		new_esp = REG32(ESP) - 4;
+		ea = i386_translate(SS, new_esp, 1);
+		((m_cpu_version & 0xf00) == 0x300) ? WRITE16(ea, value) : WRITE32(ea, value ); // 486 also?
+		REG32(ESP) = new_esp;
+	} else {
+		new_esp = (REG16(SP) - 4) & 0xffff;
+		ea = i386_translate(SS, new_esp, 1);
+		((m_cpu_version & 0xf00) == 0x300) ? WRITE16(ea, value) : WRITE32(ea, value );
+		REG16(SP) = new_esp;
+	}
+}
+
 void i386_device::PUSH8(UINT8 value)
 {
 	if( m_operand_size ) {

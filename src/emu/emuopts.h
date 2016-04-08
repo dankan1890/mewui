@@ -13,9 +13,7 @@
 #ifndef __EMUOPTS_H__
 #define __EMUOPTS_H__
 
-//#include "options.h"
-#include "mewui/moptions.h"
-
+#include "options.h"
 
 //**************************************************************************
 //  CONSTANTS
@@ -25,12 +23,11 @@
 enum
 {
 	// command-line options are HIGH priority
-	OPTION_PRIORITY_CMDLINE = OPTION_PRIORITY_HIGH,
+	OPTION_PRIORITY_SUBCMD = OPTION_PRIORITY_HIGH,
+	OPTION_PRIORITY_CMDLINE,
 
 	// INI-based options are NORMAL priority, in increasing order:
-//	OPTION_PRIORITY_INI = OPTION_PRIORITY_NORMAL,
-//	OPTION_PRIORITY_MAME_INI,
-	OPTION_PRIORITY_MAME_INI = OPTION_PRIORITY_NORMAL,
+	OPTION_PRIORITY_MAME_INI = OPTION_PRIORITY_NORMAL + 1,
 	OPTION_PRIORITY_DEBUG_INI,
 	OPTION_PRIORITY_ORIENTATION_INI,
 	OPTION_PRIORITY_SYSTYPE_INI,
@@ -39,7 +36,7 @@ enum
 	OPTION_PRIORITY_GPARENT_INI,
 	OPTION_PRIORITY_PARENT_INI,
 	OPTION_PRIORITY_DRIVER_INI,
-	OPTION_PRIORITY_INI
+	OPTION_PRIORITY_INI,
 };
 
 // core options
@@ -60,6 +57,8 @@ enum
 #define OPTION_FONTPATH             "fontpath"
 #define OPTION_CHEATPATH            "cheatpath"
 #define OPTION_CROSSHAIRPATH        "crosshairpath"
+#define OPTION_PLUGINSPATH          "pluginspath"
+#define OPTION_LANGUAGEPATH         "languagepath"
 
 // core directory options
 #define OPTION_CFG_DIRECTORY        "cfg_directory"
@@ -75,6 +74,8 @@ enum
 #define OPTION_AUTOSAVE             "autosave"
 #define OPTION_PLAYBACK             "playback"
 #define OPTION_RECORD               "record"
+#define OPTION_RECORD_TIMECODE      "record_timecode"
+#define OPTION_EXIT_AFTER_PLAYBACK  "exit_after_playback"
 #define OPTION_MNGWRITE             "mngwrite"
 #define OPTION_AVIWRITE             "aviwrite"
 #ifdef MAME_DEBUG
@@ -96,6 +97,14 @@ enum
 #define OPTION_SLEEP                "sleep"
 #define OPTION_SPEED                "speed"
 #define OPTION_REFRESHSPEED         "refreshspeed"
+
+// core render options
+#define OPTION_KEEPASPECT           "keepaspect"
+#define OPTION_UNEVENSTRETCH        "unevenstretch"
+#define OPTION_UNEVENSTRETCHX       "unevenstretchx"
+#define OPTION_INTOVERSCAN          "intoverscan"
+#define OPTION_INTSCALEX            "intscalex"
+#define OPTION_INTSCALEY            "intscaley"
 
 // core rotation options
 #define OPTION_ROTATE               "rotate"
@@ -178,6 +187,7 @@ enum
 #define OPTION_CHEAT                "cheat"
 #define OPTION_SKIP_GAMEINFO        "skip_gameinfo"
 #define OPTION_UI_FONT              "uifont"
+#define OPTION_UI                   "ui"
 #define OPTION_RAMSIZE              "ramsize"
 
 // core comm options
@@ -194,7 +204,11 @@ enum
 #define OPTION_AUTOBOOT_SCRIPT      "autoboot_script"
 
 #define OPTION_CONSOLE              "console"
+#define OPTION_PLUGINS              "plugins"
+#define OPTION_PLUGIN               "plugin"
+#define OPTION_NO_PLUGIN            "noplugin"
 
+#define OPTION_LANGUAGE             "language"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -205,7 +219,7 @@ struct game_driver;
 class software_part;
 
 
-class emu_options : public mewui_options
+class emu_options : public core_options
 {
 	static const UINT32 OPTION_FLAG_DEVICE = 0x80000000;
 
@@ -238,6 +252,8 @@ public:
 	const char *font_path() const { return value(OPTION_FONTPATH); }
 	const char *cheat_path() const { return value(OPTION_CHEATPATH); }
 	const char *crosshair_path() const { return value(OPTION_CROSSHAIRPATH); }
+	const char *plugins_path() const { return value(OPTION_PLUGINSPATH); }
+	const char *language_path() const { return value(OPTION_LANGUAGEPATH); }
 
 	// core directory options
 	const char *cfg_directory() const { return value(OPTION_CFG_DIRECTORY); }
@@ -253,6 +269,8 @@ public:
 	bool autosave() const { return bool_value(OPTION_AUTOSAVE); }
 	const char *playback() const { return value(OPTION_PLAYBACK); }
 	const char *record() const { return value(OPTION_RECORD); }
+	bool record_timecode() const { return bool_value(OPTION_RECORD_TIMECODE); }
+	bool exit_after_playback() const { return bool_value(OPTION_EXIT_AFTER_PLAYBACK); }
 	const char *mng_write() const { return value(OPTION_MNGWRITE); }
 	const char *avi_write() const { return value(OPTION_AVIWRITE); }
 #ifdef MAME_DEBUG
@@ -274,6 +292,14 @@ public:
 	bool sleep() const { return m_sleep; }
 	float speed() const { return float_value(OPTION_SPEED); }
 	bool refresh_speed() const { return m_refresh_speed; }
+
+	// core render options
+	bool keep_aspect() const { return bool_value(OPTION_KEEPASPECT); }
+	bool uneven_stretch() const { return bool_value(OPTION_UNEVENSTRETCH); }
+	bool uneven_stretch_x() const { return bool_value(OPTION_UNEVENSTRETCHX); }
+	bool int_overscan() const { return bool_value(OPTION_INTOVERSCAN); }
+	int int_scale_x() const { return int_value(OPTION_INTSCALEX); }
+	int int_scale_y() const { return int_value(OPTION_INTSCALEY); }
 
 	// core rotation options
 	bool rotate() const { return bool_value(OPTION_ROTATE); }
@@ -354,6 +380,7 @@ public:
 	bool cheat() const { return bool_value(OPTION_CHEAT); }
 	bool skip_gameinfo() const { return bool_value(OPTION_SKIP_GAMEINFO); }
 	const char *ui_font() const { return value(OPTION_UI_FONT); }
+	const char *ui() const { return value(OPTION_UI); }
 	const char *ram_size() const { return value(OPTION_RAMSIZE); }
 
 	// core comm options
@@ -361,6 +388,7 @@ public:
 	const char *comm_localport() const { return value(OPTION_COMM_LOCAL_PORT); }
 	const char *comm_remotehost() const { return value(OPTION_COMM_REMOTE_HOST); }
 	const char *comm_remoteport() const { return value(OPTION_COMM_REMOTE_PORT); }
+
 
 	bool confirm_quit() const { return bool_value(OPTION_CONFIRM_QUIT); }
 	bool ui_mouse() const { return bool_value(OPTION_UI_MOUSE); }
@@ -370,6 +398,13 @@ public:
 	const char *autoboot_script() const { return value(OPTION_AUTOBOOT_SCRIPT); }
 
 	bool console() const { return bool_value(OPTION_CONSOLE); }
+
+	bool plugins() const { return bool_value(OPTION_PLUGINS); }
+
+	const char *plugin() const { return value(OPTION_PLUGIN); }
+	const char *no_plugin() const { return value(OPTION_NO_PLUGIN); }
+
+	const char *language() const { return value(OPTION_LANGUAGE); }
 
 	// FIXME: Couriersud: This should be in image_device_exit
 	void remove_device_options();

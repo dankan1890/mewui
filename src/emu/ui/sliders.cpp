@@ -2,7 +2,7 @@
 // copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
 /*********************************************************************
 
-    miscmenu.c
+    ui/sliders.cpp
 
     Internal MAME menus for the user interface.
 
@@ -17,9 +17,9 @@
 #include "ui/sliders.h"
 
 
-ui_menu_sliders::ui_menu_sliders(running_machine &machine, render_container *container, bool _menuless_mode) : ui_menu(machine, container)
+ui_menu_sliders::ui_menu_sliders(running_machine &machine, render_container *container, bool menuless_mode) : ui_menu(machine, container)
 {
-	menuless_mode = hidden = _menuless_mode;
+	m_menuless_mode = m_hidden = menuless_mode;
 }
 
 ui_menu_sliders::~ui_menu_sliders()
@@ -35,7 +35,7 @@ void ui_menu_sliders::handle()
 	const ui_menu_event *menu_event;
 
 	/* process the menu */
-	menu_event = process(UI_MENU_PROCESS_LR_REPEAT | (hidden ? UI_MENU_PROCESS_CUSTOM_ONLY : 0));
+	menu_event = process(UI_MENU_PROCESS_LR_REPEAT | (m_hidden ? UI_MENU_PROCESS_CUSTOM_ONLY : 0));
 	if (menu_event != nullptr)
 	{
 		/* handle keys if there is a valid item selected */
@@ -44,24 +44,29 @@ void ui_menu_sliders::handle()
 			const slider_state *slider = (const slider_state *)menu_event->itemref;
 			INT32 curvalue = (*slider->update)(machine(), slider->arg, nullptr, SLIDER_NOCHANGE);
 			INT32 increment = 0;
+			bool alt_pressed = machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT);
+			bool ctrl_pressed = machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL);
+			bool shift_pressed = machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT);
 
 			switch (menu_event->iptkey)
 			{
 				/* toggle visibility */
 				case IPT_UI_ON_SCREEN_DISPLAY:
-					if (menuless_mode)
+					if (m_menuless_mode)
 						ui_menu::stack_pop(machine());
 					else
-						hidden = !hidden;
+						m_hidden = !m_hidden;
 					break;
 
 				/* decrease value */
 				case IPT_UI_LEFT:
-					if (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT))
+					if (alt_pressed && shift_pressed)
 						increment = -1;
-					else if (machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT))
+					if (alt_pressed)
+						increment = -(curvalue - slider->minval);
+					else if (shift_pressed)
 						increment = (slider->incval > 10) ? -(slider->incval / 10) : -1;
-					else if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL))
+					else if (ctrl_pressed)
 						increment = -slider->incval * 10;
 					else
 						increment = -slider->incval;
@@ -69,11 +74,13 @@ void ui_menu_sliders::handle()
 
 				/* increase value */
 				case IPT_UI_RIGHT:
-					if (machine().input().code_pressed(KEYCODE_LALT) || machine().input().code_pressed(KEYCODE_RALT))
+					if (alt_pressed && shift_pressed)
 						increment = 1;
-					else if (machine().input().code_pressed(KEYCODE_LSHIFT) || machine().input().code_pressed(KEYCODE_RSHIFT))
+					if (alt_pressed)
+						increment = slider->maxval - curvalue;
+					else if (shift_pressed)
 						increment = (slider->incval > 10) ? (slider->incval / 10) : 1;
-					else if (machine().input().code_pressed(KEYCODE_LCONTROL) || machine().input().code_pressed(KEYCODE_RCONTROL))
+					else if (ctrl_pressed)
 						increment = slider->incval * 10;
 					else
 						increment = slider->incval;
@@ -103,7 +110,7 @@ void ui_menu_sliders::handle()
 		}
 
 		/* if we are selecting an invalid item and we are hidden, skip to the next one */
-		else if (hidden)
+		else if (m_hidden)
 		{
 			/* if we got here via up or page up, select the previous item */
 			if (menu_event->iptkey == IPT_UI_UP || menu_event->iptkey == IPT_UI_PAGE_UP)
@@ -252,5 +259,5 @@ UINT32 ui_menu_sliders::ui_handler(running_machine &machine, render_container *c
 		ui_menu::stack_pop(machine);
 
 	ui_menu_sliders *uim = dynamic_cast<ui_menu_sliders *>(menu_stack);
-	return uim && uim->menuless_mode ? 0 : UI_HANDLER_CANCEL;
+	return uim && uim->m_menuless_mode ? 0 : UI_HANDLER_CANCEL;
 }

@@ -2,7 +2,7 @@
 // copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
 /*********************************************************************
 
-    ui.c
+    ui.cpp
 
     Functions used to handle MAME's user interface.
 
@@ -13,6 +13,7 @@
 #include "video/vector.h"
 #include "machine/laserdsc.h"
 #include "render.h"
+#include "luaengine.h"
 #include "cheat.h"
 #include "rendfont.h"
 #include "uiinput.h"
@@ -112,13 +113,13 @@ static const char *s_color_list[] = {
 ***************************************************************************/
 
 // messagebox buffer
-static std::string messagebox_text;
-static std::string messagebox_poptext;
-static rgb_t messagebox_backcolor;
+std::string ui_manager::messagebox_text;
+std::string ui_manager::messagebox_poptext;
+rgb_t ui_manager::messagebox_backcolor;
 
 // slider info
-static slider_state *slider_list;
-static slider_state *slider_current;
+slider_state *ui_manager::slider_list;
+slider_state *ui_manager::slider_current;
 
 
 /***************************************************************************
@@ -148,7 +149,7 @@ static INT32 slider_flicker(running_machine &machine, void *arg, std::string *st
 static INT32 slider_beam_width_min(running_machine &machine, void *arg, std::string *str, INT32 newval);
 static INT32 slider_beam_width_max(running_machine &machine, void *arg, std::string *str, INT32 newval);
 static INT32 slider_beam_intensity_weight(running_machine &machine, void *arg, std::string *str, INT32 newval);
-static char *slider_get_screen_desc(screen_device &screen);
+static std::string slider_get_screen_desc(screen_device &screen);
 #ifdef MAME_DEBUG
 static INT32 slider_crossscale(running_machine &machine, void *arg, std::string *str, INT32 newval);
 static INT32 slider_crossoffset(running_machine &machine, void *arg, std::string *str, INT32 newval);
@@ -158,6 +159,24 @@ static INT32 slider_crossoffset(running_machine &machine, void *arg, std::string
 /***************************************************************************
     INLINE FUNCTIONS
 ***************************************************************************/
+
+//-------------------------------------------------
+//  load ui options
+//-------------------------------------------------
+
+static void load_ui_options(running_machine &machine)
+{
+	// parse the file
+	std::string error;
+	// attempt to open the output file
+	emu_file file(machine.options().ini_path(), OPEN_FLAG_READ);
+	if (file.open("ui.ini") == osd_file::error::NONE)
+	{
+		bool result = machine.ui().options().parse_ini_file((util::core_file&)file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_DRIVER_INI, error);
+		if (!result)
+			osd_printf_error("**Error loading ui.ini**");
+	}
+}
 
 //-------------------------------------------------
 //  is_breakable_char - is a given unicode
@@ -248,9 +267,14 @@ static const UINT32 mouse_bitmap[32*32] =
 ui_manager::ui_manager(running_machine &machine)
 	: m_machine(machine)
 {
+}
+
+void ui_manager::init()
+{
+	load_ui_options(machine());
 	// initialize the other UI bits
-	ui_menu::init(machine);
-	ui_gfx_init(machine);
+	ui_menu::init(machine());
+	ui_gfx_init(machine());
 
 	// reset instance variables
 	m_font = nullptr;
@@ -263,25 +287,27 @@ ui_manager::ui_manager(running_machine &machine)
 	m_popup_text_end = 0;
 	m_use_natural_keyboard = false;
 	m_mouse_arrow_texture = nullptr;
+	m_show_timecode_counter = false;
+	m_show_timecode_total = false;
 	m_load_save_hold = false;
 
-	get_font_rows(&machine);
-	decode_ui_color(0, &machine);
+	get_font_rows(&machine());
+	decode_ui_color(0, &machine());
 
 	// more initialization
 	set_handler(handler_messagebox, 0);
 	m_non_char_keys_down = std::make_unique<UINT8[]>((ARRAY_LENGTH(non_char_keys) + 7) / 8);
-	m_mouse_show = machine.system().flags & MACHINE_CLICKABLE_ARTWORK ? true : false;
+	m_mouse_show = machine().system().flags & MACHINE_CLICKABLE_ARTWORK ? true : false;
 
 	// request a callback upon exiting
-	machine.add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(ui_manager::exit), this));
+	machine().add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(ui_manager::exit), this));
 
 	// retrieve options
-	m_use_natural_keyboard = machine.options().natural_keyboard();
-	bitmap_argb32 *ui_mouse_bitmap = auto_alloc(machine, bitmap_argb32(32, 32));
+	m_use_natural_keyboard = machine().options().natural_keyboard();
+	bitmap_argb32 *ui_mouse_bitmap = auto_alloc(machine(), bitmap_argb32(32, 32));
 	UINT32 *dst = &ui_mouse_bitmap->pix32(0);
 	memcpy(dst,mouse_bitmap,32*32*sizeof(UINT32));
-	m_mouse_arrow_texture = machine.render().texture_alloc();
+	m_mouse_arrow_texture = machine().render().texture_alloc();
 	m_mouse_arrow_texture->set_bitmap(*ui_mouse_bitmap, ui_mouse_bitmap->cliprect(), TEXFORMAT_ARGB32);
 }
 
@@ -334,9 +360,9 @@ UINT32 ui_manager::set_handler(ui_callback callback, UINT32 param)
 //  various startup screens
 //-------------------------------------------------
 
-void ui_manager::display_startup_screens(bool first_time, bool show_disclaimer)
+void ui_manager::display_startup_screens(bool first_time)
 {
-	const int maxstate = 4;
+	const int maxstate = 3;
 	int str = machine().options().seconds_to_run();
 	bool show_gameinfo = !machine().options().skip_gameinfo();
 	bool show_warnings = true, show_mandatory_fileman = true;
@@ -345,11 +371,11 @@ void ui_manager::display_startup_screens(bool first_time, bool show_disclaimer)
 	// disable everything if we are using -str for 300 or fewer seconds, or if we're the empty driver,
 	// or if we are debugging
 	if (!first_time || (str > 0 && str < 60*5) || &machine().system() == &GAME_NAME(___empty) || (machine().debug_flags & DEBUG_FLAG_ENABLED) != 0)
-		show_gameinfo = show_warnings = show_disclaimer = show_mandatory_fileman = FALSE;
+		show_gameinfo = show_warnings = show_mandatory_fileman = FALSE;
 
 	#if defined(EMSCRIPTEN)
 	// also disable for the JavaScript port since the startup screens do not run asynchronously
-	show_gameinfo = show_warnings = show_disclaimer = FALSE;
+	show_gameinfo = show_warnings = FALSE;
 	#endif
 
 	// loop over states
@@ -363,14 +389,9 @@ void ui_manager::display_startup_screens(bool first_time, bool show_disclaimer)
 		switch (state)
 		{
 			case 0:
-				if (show_disclaimer && disclaimer_string(messagebox_text).length() > 0)
-					set_handler(handler_messagebox_ok, 0);
-				break;
-
-			case 1:
 				if (show_warnings && warnings_string(messagebox_text).length() > 0)
 				{
-					set_handler(handler_messagebox_ok, 0);
+					set_handler(handler_messagebox_anykey, 0);
 					if (machine().system().flags & (MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_COLORS | MACHINE_REQUIRES_ARTWORK | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND | MACHINE_IMPERFECT_KEYBOARD | MACHINE_NO_SOUND))
 						messagebox_backcolor = UI_YELLOW_COLOR;
 					if (machine().system().flags & (MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION | MACHINE_MECHANICAL))
@@ -378,16 +399,16 @@ void ui_manager::display_startup_screens(bool first_time, bool show_disclaimer)
 				}
 				break;
 
-			case 2:
+			case 1:
 				if (show_gameinfo && game_info_astring(messagebox_text).length() > 0)
 					set_handler(handler_messagebox_anykey, 0);
 				break;
 
-			case 3:
+			case 2:
 				if (show_mandatory_fileman && machine().image().mandatory_scan(messagebox_text).length() > 0)
 				{
 					std::string warning;
-					warning.assign("This driver requires images to be loaded in the following device(s): ").append(messagebox_text.substr(0, messagebox_text.length() - 2));
+					warning.assign(_("This driver requires images to be loaded in the following device(s): ")).append(messagebox_text.substr(0, messagebox_text.length() - 2));
 					ui_menu_file_manager::force_file_manager(machine(), &machine().render().ui_container(), warning.c_str());
 				}
 				break;
@@ -461,7 +482,10 @@ void ui_manager::update_and_render(render_container *container)
 
 	// render any cheat stuff at the bottom
 	if (machine().phase() >= MACHINE_PHASE_RESET)
+	{
+		machine().manager().lua()->on_frame_done();
 		machine().cheat().render_text(*container);
+	}
 
 	// call the current UI handler
 	assert(m_handler_callback != nullptr);
@@ -473,6 +497,7 @@ void ui_manager::update_and_render(render_container *container)
 	else
 		m_popup_text_end = 0;
 
+	// display the internal mouse cursor
 	if (m_mouse_show || (is_menu_active() && machine().options().ui_mouse()))
 	{
 		INT32 mouse_target_x, mouse_target_y;
@@ -482,10 +507,10 @@ void ui_manager::update_and_render(render_container *container)
 		if (mouse_target != nullptr)
 		{
 			float mouse_y=-1,mouse_x=-1;
-			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y)) {
-				float l_heigth = machine().ui().get_line_height();
-				container->add_quad(mouse_x, mouse_y, mouse_x + l_heigth*container->manager().ui_aspect(container), mouse_y + l_heigth, UI_TEXT_COLOR, m_mouse_arrow_texture, PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-
+			if (mouse_target->map_point_container(mouse_target_x, mouse_target_y, *container, mouse_x, mouse_y))
+			{
+				const float cursor_size = 0.6 * machine().ui().get_line_height();
+				container->add_quad(mouse_x, mouse_y, mouse_x + cursor_size*container->manager().ui_aspect(container), mouse_y + cursor_size, UI_TEXT_COLOR, m_mouse_arrow_texture, PRIMFLAG_ANTIALIAS(1) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 			}
 		}
 	}
@@ -888,26 +913,6 @@ void ui_manager::draw_message_window(render_container *container, const char *te
 
 
 //-------------------------------------------------
-//  popup_time - popup a message for a specific
-//  amount of time
-//-------------------------------------------------
-
-void CLIB_DECL ui_manager::popup_time(int seconds, const char *text, ...)
-{
-	va_list arg;
-
-	// extract the text
-	va_start(arg,text);
-	strvprintf(messagebox_poptext, text, arg);
-	messagebox_backcolor = UI_BACKGROUND_COLOR;
-	va_end(arg);
-
-	// set a timer
-	m_popup_text_end = osd_ticks() + osd_ticks_per_second() * seconds;
-}
-
-
-//-------------------------------------------------
 //  show_fps_temp - show the FPS counter for
 //  a specific period of time
 //-------------------------------------------------
@@ -1011,24 +1016,20 @@ bool ui_manager::is_menu_active(void)
 }
 
 
+bool ui_manager::show_timecode_counter()
+{
+	return m_show_timecode_counter;
+}
+bool ui_manager::show_timecode_total()
+{
+	return m_show_timecode_total;
+}
+
+
 
 /***************************************************************************
     TEXT GENERATORS
 ***************************************************************************/
-
-//-------------------------------------------------
-//  disclaimer_string - print the disclaimer
-//  text to the given buffer
-//-------------------------------------------------
-
-std::string &ui_manager::disclaimer_string(std::string &str)
-{
-	str.assign("Usage of emulators in conjunction with ROMs you don't own is forbidden by copyright law.\n\n");
-	strcatprintf(str, "IF YOU ARE NOT LEGALLY ENTITLED TO PLAY \"%s\" ON THIS EMULATOR, PRESS ESC.\n\n", machine().system().description);
-	str.append("Otherwise, type OK or move the joystick left then right to continue");
-	return str;
-}
-
 
 //-------------------------------------------------
 //  warnings_string - print the warning flags
@@ -1060,11 +1061,7 @@ std::string &ui_manager::warnings_string(std::string &str)
 	// add a warning if any ROMs were loaded with warnings
 	if (machine().rom_load().warnings() > 0)
 	{
-		str.append("One or more ROMs/CHDs for this ");
-		str.append(emulator_info::get_gamenoun());
-		str.append(" are incorrect. The ");
-		str.append(emulator_info::get_gamenoun());
-		str.append(" may not run correctly.\n");
+		str.append(_("One or more ROMs/CHDs for this machine are incorrect. The machine may not run correctly.\n"));
 		if (machine().system().flags & WARNING_FLAGS)
 			str.append("\n");
 	}
@@ -1077,54 +1074,42 @@ std::string &ui_manager::warnings_string(std::string &str)
 	// if we have at least one warning flag, print the general header
 	if ((machine().system().flags & WARNING_FLAGS) || machine().rom_load().knownbad() > 0)
 	{
-		str.append("There are known problems with this ");
-		str.append(emulator_info::get_gamenoun());
-		str.append("\n\n");
+		str.append(_("There are known problems with this machine\n\n"));
 
 		// add a warning if any ROMs are flagged BAD_DUMP/NO_DUMP
 		if (machine().rom_load().knownbad() > 0) {
-			str.append("One or more ROMs/CHDs for this ");
-			str.append(emulator_info::get_gamenoun());
-			str.append(" have not been correctly dumped.\n");
+			str.append(_("One or more ROMs/CHDs for this machine have not been correctly dumped.\n"));
 		}
 		// add one line per warning flag
 		if (machine().system().flags & MACHINE_IMPERFECT_KEYBOARD)
-			str.append("The keyboard emulation may not be 100% accurate.\n");
+			str.append(_("The keyboard emulation may not be 100% accurate.\n"));
 		if (machine().system().flags & MACHINE_IMPERFECT_COLORS)
-			str.append("The colors aren't 100% accurate.\n");
+			str.append(_("The colors aren't 100% accurate.\n"));
 		if (machine().system().flags & MACHINE_WRONG_COLORS)
-			str.append("The colors are completely wrong.\n");
+			str.append(_("The colors are completely wrong.\n"));
 		if (machine().system().flags & MACHINE_IMPERFECT_GRAPHICS)
-			str.append("The video emulation isn't 100% accurate.\n");
+			str.append(_("The video emulation isn't 100% accurate.\n"));
 		if (machine().system().flags & MACHINE_IMPERFECT_SOUND)
-			str.append("The sound emulation isn't 100% accurate.\n");
+			str.append(_("The sound emulation isn't 100% accurate.\n"));
 		if (machine().system().flags & MACHINE_NO_SOUND) {
-			str.append("The ");
-			str.append(emulator_info::get_gamenoun());
-			str.append(" lacks sound.\n");
+			str.append(_("The machine lacks sound.\n"));
 		}
 		if (machine().system().flags & MACHINE_NO_COCKTAIL)
-			str.append("Screen flipping in cocktail mode is not supported.\n");
+			str.append(_("Screen flipping in cocktail mode is not supported.\n"));
 
 		// check if external artwork is present before displaying this warning?
 		if (machine().system().flags & MACHINE_REQUIRES_ARTWORK) {
-			str.append("The ");
-			str.append(emulator_info::get_gamenoun());
-			str.append(" requires external artwork files\n");
+			str.append(_("The machine requires external artwork files\n"));
 		}
 
 		if (machine().system().flags & MACHINE_IS_INCOMPLETE )
 		{
-			str.append("This ");
-			str.append(emulator_info::get_gamenoun());
-			str.append(" was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n");
+			str.append(_("This machine was never completed. It may exhibit strange behavior or missing elements that are not bugs in the emulation.\n"));
 		}
 
 		if (machine().system().flags & MACHINE_NO_SOUND_HW )
 		{
-			str.append("This ");
-			str.append(emulator_info::get_gamenoun());
-			str.append(" has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n");
+			str.append(_("This machine has no sound hardware, MAME will produce no sounds, this is expected behaviour.\n"));
 		}
 
 		// if there's a NOT WORKING, UNEMULATED PROTECTION or GAME MECHANICAL warning, make it stronger
@@ -1132,25 +1117,15 @@ std::string &ui_manager::warnings_string(std::string &str)
 		{
 			// add the strings for these warnings
 			if (machine().system().flags & MACHINE_UNEMULATED_PROTECTION) {
-				str.append("The ");
-				str.append(emulator_info::get_gamenoun());
-				str.append(" has protection which isn't fully emulated.\n");
+				str.append(_("The machine has protection which isn't fully emulated.\n"));
 			}
 			if (machine().system().flags & MACHINE_NOT_WORKING) {
-				str.append("\nTHIS ");
-				str.append(emulator_info::get_capgamenoun());
-				str.append(" DOESN'T WORK. The emulation for this ");
-				str.append(emulator_info::get_gamenoun());
-				str.append(" is not yet complete. "
-						"There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n");
+				str.append(_("\nTHIS MACHINE DOESN'T WORK. The emulation for this machine is not yet complete. "
+						"There is nothing you can do to fix this problem except wait for the developers to improve the emulation.\n"));
 			}
 			if (machine().system().flags & MACHINE_MECHANICAL) {
-				str.append("\nCertain elements of this ");
-				str.append(emulator_info::get_gamenoun());
-				str.append(" cannot be emulated as it requires actual physical interaction or consists of mechanical devices. "
-						"It is not possible to fully play this ");
-				str.append(emulator_info::get_gamenoun());
-				str.append(".\n");
+				str.append(_("\nCertain elements of this machine cannot be emulated as it requires actual physical interaction or consists of mechanical devices. "
+						"It is not possible to fully play this machine.\n"));
 			}
 
 			// find the parent of this driver
@@ -1168,9 +1143,7 @@ std::string &ui_manager::warnings_string(std::string &str)
 					{
 						// this one works, add a header and display the name of the clone
 						if (!foundworking) {
-							str.append("\n\nThere are working clones of this ");
-							str.append(emulator_info::get_gamenoun());
-							str.append(": ");
+							str.append(_("\n\nThere are working clones of this machine: "));
 						}
 						else
 							str.append(", ");
@@ -1184,7 +1157,7 @@ std::string &ui_manager::warnings_string(std::string &str)
 	}
 
 	// add the 'press OK' string
-	str.append("\n\nType OK or move the joystick left then right to continue");
+	str.append(_("\n\nPress any key to continue"));
 	return str;
 }
 
@@ -1196,8 +1169,14 @@ std::string &ui_manager::warnings_string(std::string &str)
 
 std::string &ui_manager::game_info_astring(std::string &str)
 {
+	std::ostringstream buf;
+
 	// print description, manufacturer, and CPU:
-	strprintf(str, "%s\n%s %s\nDriver: %s\n\nCPU:\n", machine().system().description, machine().system().year, machine().system().manufacturer, core_filename_extract_base(machine().system().source_file).c_str());
+	util::stream_format(buf, _("%1$s\n%2$s %3$s\nDriver: %4$s\n\nCPU:\n"),
+			machine().system().description,
+			machine().system().year,
+			machine().system().manufacturer,
+			core_filename_extract_base(machine().system().source_file));
 
 	// loop over all CPUs
 	execute_interface_iterator execiter(machine().root_device());
@@ -1221,15 +1200,15 @@ std::string &ui_manager::game_info_astring(std::string &str)
 		}
 
 		// if more than one, prepend a #x in front of the CPU name
-		if (count > 1)
-			strcatprintf(str, "%d" UTF8_MULTIPLY, count);
-		str.append(name);
-
 		// display clock in kHz or MHz
-		if (clock >= 1000000)
-			strcatprintf(str, " %d.%06d" UTF8_NBSP "MHz\n", clock / 1000000, clock % 1000000);
-		else
-			strcatprintf(str, " %d.%03d" UTF8_NBSP "kHz\n", clock / 1000, clock % 1000);
+		util::stream_format(buf,
+				(count > 1) ? "%1$d" UTF8_MULTIPLY "%2$s %3$d.%4$0*5$d%6$s\n" : "%2$s %3$d.%4$0*5$d%6$s\n",
+				count,
+				name,
+				(clock >= 1000000) ? (clock / 1000000) : (clock / 1000),
+				(clock >= 1000000) ? (clock % 1000000) : (clock % 1000),
+				(clock >= 1000000) ? 6 : 3,
+				(clock >= 1000000) ? _("MHz") : _("kHz"));
 	}
 
 	// loop over all sound chips
@@ -1243,7 +1222,7 @@ std::string &ui_manager::game_info_astring(std::string &str)
 
 		// append the Sound: string
 		if (!found_sound)
-			str.append("\nSound:\n");
+			buf << _("\nSound:\n");
 		found_sound = true;
 
 		// count how many identical sound chips we have
@@ -1255,52 +1234,51 @@ std::string &ui_manager::game_info_astring(std::string &str)
 				if (soundtags.insert(scan->device().tag()).second)
 					count++;
 		}
-		// if more than one, prepend a #x in front of the CPU name
-		if (count > 1)
-			strcatprintf(str, "%d" UTF8_MULTIPLY, count);
-		str.append(sound->device().name());
 
+		// if more than one, prepend a #x in front of the CPU name
 		// display clock in kHz or MHz
 		int clock = sound->device().clock();
-		if (clock >= 1000000)
-			strcatprintf(str, " %d.%06d" UTF8_NBSP "MHz\n", clock / 1000000, clock % 1000000);
-		else if (clock != 0)
-			strcatprintf(str, " %d.%03d" UTF8_NBSP "kHz\n", clock / 1000, clock % 1000);
-		else
-			str.append("\n");
+		util::stream_format(buf,
+				(count > 1)
+					? ((clock != 0) ? "%1$d" UTF8_MULTIPLY "%2$s %3$d.%4$0*5$d%6$s\n" : "%1$d" UTF8_MULTIPLY "%2$s\n")
+					: ((clock != 0) ? "%2$s %3$d.%4$0*5$d%6$s\n" : "%2$s\n"),
+				count,
+				sound->device().name(),
+				(clock >= 1000000) ? (clock / 1000000) : (clock / 1000),
+				(clock >= 1000000) ? (clock % 1000000) : (clock % 1000),
+				(clock >= 1000000) ? 6 : 3,
+				(clock >= 1000000) ? _("MHz") : _("kHz"));
 	}
 
 	// display screen information
-	str.append("\nVideo:\n");
+	buf << _("\nVideo:\n");
 	screen_device_iterator scriter(machine().root_device());
 	int scrcount = scriter.count();
 	if (scrcount == 0)
-		str.append("None\n");
+		buf << _("None\n");
 	else
 	{
 		for (screen_device *screen = scriter.first(); screen != nullptr; screen = scriter.next())
 		{
-			if (scrcount > 1)
-			{
-				str.append(slider_get_screen_desc(*screen));
-				str.append(": ");
-			}
-
+			std::string detail;
 			if (screen->screen_type() == SCREEN_TYPE_VECTOR)
-				str.append("Vector\n");
+				detail = _("Vector");
 			else
 			{
 				const rectangle &visarea = screen->visible_area();
-
-				strcatprintf(str, "%d " UTF8_MULTIPLY " %d (%s) %f" UTF8_NBSP "Hz\n",
+				detail = string_format("%d " UTF8_MULTIPLY " %d (%s) %f" UTF8_NBSP "Hz",
 						visarea.width(), visarea.height(),
 						(machine().system().flags & ORIENTATION_SWAP_XY) ? "V" : "H",
 						ATTOSECONDS_TO_HZ(screen->frame_period().attoseconds()));
 			}
+
+			util::stream_format(buf,
+					(scrcount > 1) ? _("%1$s: %2$s\n") : _("%2$s\n"),
+					slider_get_screen_desc(*screen), detail);
 		}
 	}
 
-	return str;
+	return str = buf.str();
 }
 
 
@@ -1318,35 +1296,6 @@ UINT32 ui_manager::handler_messagebox(running_machine &machine, render_container
 {
 	machine.ui().draw_text_box(container, messagebox_text.c_str(), JUSTIFY_LEFT, 0.5f, 0.5f, messagebox_backcolor);
 	return 0;
-}
-
-
-//-------------------------------------------------
-//  handler_messagebox_ok - displays the current
-//  messagebox_text string and waits for an OK
-//-------------------------------------------------
-
-UINT32 ui_manager::handler_messagebox_ok(running_machine &machine, render_container *container, UINT32 state)
-{
-	// draw a standard message window
-	machine.ui().draw_text_box(container, messagebox_text.c_str(), JUSTIFY_LEFT, 0.5f, 0.5f, messagebox_backcolor);
-
-	// an 'O' or left joystick kicks us to the next state
-	if (state == 0 && (machine.input().code_pressed_once(KEYCODE_O) || machine.ui_input().pressed(IPT_UI_LEFT)))
-		state++;
-
-	// a 'K' or right joystick exits the state
-	else if (state == 1 && (machine.input().code_pressed_once(KEYCODE_K) || machine.ui_input().pressed(IPT_UI_RIGHT)))
-		state = UI_HANDLER_CANCEL;
-
-	// if the user cancels, exit out completely
-	else if (machine.ui_input().pressed(IPT_UI_CANCEL))
-	{
-		machine.schedule_exit();
-		state = UI_HANDLER_CANCEL;
-	}
-
-	return state;
 }
 
 
@@ -1535,6 +1484,20 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 					JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, nullptr, nullptr);
 	}
 
+	// Show the duration of current part (intro or gameplay or extra)
+	if (machine.ui().show_timecode_counter()) {
+		std::string tempstring;
+		machine.ui().draw_text_full(container, machine.video().timecode_text(tempstring).c_str(), 0.0f, 0.0f, 1.0f,
+			JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, rgb_t(0xf0,0xf0,0x10,0x10), ARGB_BLACK, NULL, NULL);
+	}
+	// Show the total time elapsed for the video preview (all parts intro, gameplay, extras)
+	if (machine.ui().show_timecode_total()) {
+		std::string tempstring;
+		machine.ui().draw_text_full(container, machine.video().timecode_total_text(tempstring).c_str(), 0.0f, 0.0f, 1.0f,
+			JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, rgb_t(0xf0,0x10,0xf0,0x10), ARGB_BLACK, NULL, NULL);
+	}
+
+
 	// draw the profiler if visible
 	if (machine.ui().show_profiler())
 	{
@@ -1565,22 +1528,22 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 			if (machine.ui_active())
 			{
 				machine.ui().popup_time(2, "%s\n%s\n%s\n%s\n%s\n%s\n",
-					"Keyboard Emulation Status",
+					_("Keyboard Emulation Status"),
 					"-------------------------",
-					"Mode: PARTIAL Emulation",
-					"UI:   Enabled",
+					_("Mode: PARTIAL Emulation"),
+					_("UI:   Enabled"),
 					"-------------------------",
-					"**Use ScrLock to toggle**");
+					_("**Use ScrLock to toggle**"));
 			}
 			else
 			{
 				machine.ui().popup_time(2, "%s\n%s\n%s\n%s\n%s\n%s\n",
-					"Keyboard Emulation Status",
+					_("Keyboard Emulation Status"),
 					"-------------------------",
-					"Mode: FULL Emulation",
-					"UI:   Disabled",
+					_("Mode: FULL Emulation"),
+					_("UI:   Disabled"),
 					"-------------------------",
-					"**Use ScrLock to toggle**");
+					_("**Use ScrLock to toggle**"));
 			}
 		}
 	}
@@ -1597,6 +1560,10 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	}
 
 	machine.ui().image_handler_ingame();
+
+	// handle a save input timecode request
+	if (machine.ui_input().pressed(IPT_UI_TIMECODE))
+		machine.video().save_input_timecode();
 
 	if (ui_disabled) return ui_disabled;
 
@@ -1670,17 +1637,9 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 
 	// toggle pause
 	if (machine.ui_input().pressed(IPT_UI_PAUSE))
-	{
-		// with a shift key, it is single step
-//		if (is_paused && (machine.input().code_pressed(KEYCODE_LSHIFT) || machine.input().code_pressed(KEYCODE_RSHIFT)))
-//		{
-//			machine.ui().set_single_step(true);
-//			machine.resume();
-//		}
-//		else
-			machine.toggle_pause();
-	}
+		machine.toggle_pause();
 
+	// pause single step
 	if (machine.ui_input().pressed(IPT_UI_PAUSE_SINGLE))
 	{
 		machine.ui().set_single_step(true);
@@ -1715,6 +1674,21 @@ UINT32 ui_manager::handler_ingame(running_machine &machine, render_container *co
 	if (machine.ui_input().pressed(IPT_UI_THROTTLE))
 		machine.video().toggle_throttle();
 
+	// toggle autofire
+	if (machine.ui_input().pressed(IPT_UI_TOGGLE_AUTOFIRE))
+	{
+		if (!machine.options().cheat())
+		{
+			machine.popmessage(_("Autofire can't be enabled"));
+		}
+		else
+		{
+			bool autofire_toggle = machine.ioport().get_autofire_toggle();
+			machine.ioport().set_autofire_toggle(!autofire_toggle);
+			machine.popmessage("Autofire %s", autofire_toggle ? _("Enabled") : _("Disabled"));
+		}
+	}
+
 	// check for fast forward
 	if (machine.ioport().type_pressed(IPT_UI_FAST_FORWARD))
 	{
@@ -1744,9 +1718,9 @@ UINT32 ui_manager::handler_load_save(running_machine &machine, render_container 
 
 	// okay, we're waiting for a key to select a slot; display a message
 	if (state == LOADSAVE_SAVE)
-		machine.ui().draw_message_window(container, "Select position to save to");
+		machine.ui().draw_message_window(container, _("Select position to save to"));
 	else
-		machine.ui().draw_message_window(container, "Select position to load from");
+		machine.ui().draw_message_window(container, _("Select position to load from"));
 
 	// if load/save state sequence is still being pressed, do not read the filename yet
 	if (machine.ui().m_load_save_hold) {
@@ -1770,9 +1744,9 @@ UINT32 ui_manager::handler_load_save(running_machine &machine, render_container 
 	{
 		// display a popup indicating things were cancelled
 		if (state == LOADSAVE_SAVE)
-			machine.popmessage("Save cancelled");
+			machine.popmessage(_("Save cancelled"));
 		else
-			machine.popmessage("Load cancelled");
+			machine.popmessage(_("Load cancelled"));
 
 		// reset the state
 		machine.resume();
@@ -1815,12 +1789,12 @@ UINT32 ui_manager::handler_load_save(running_machine &machine, render_container 
 	// display a popup indicating that the save will proceed
 	if (state == LOADSAVE_SAVE)
 	{
-		machine.popmessage("Save to position %s", filename);
+		machine.popmessage(_("Save to position %s"), filename);
 		machine.schedule_save(filename);
 	}
 	else
 	{
-		machine.popmessage("Load from position %s", filename);
+		machine.popmessage(_("Load from position %s"), filename);
 		machine.schedule_load(filename);
 	}
 
@@ -1860,11 +1834,11 @@ UINT32 ui_manager::handler_confirm_quit(running_machine &machine, render_contain
 	std::string ui_cancel_text = machine.input().seq_name(machine.ioport().type_seq(IPT_UI_CANCEL, 0, SEQ_TYPE_STANDARD));
 
 	// assemble the quit message
-	std::string quit_message = strformat("Are you sure you want to quit?\n\n"
-		"Press ''%s'' to quit,\n"
-		"Press ''%s'' to return to emulation.",
-		ui_select_text.c_str(),
-		ui_cancel_text.c_str());
+	std::string quit_message = string_format(_("Are you sure you want to quit?\n\n"
+			"Press ''%1$s'' to quit,\n"
+			"Press ''%2$s'' to return to emulation."),
+			ui_select_text,
+			ui_cancel_text);
 
 	machine.ui().draw_text_box(container, quit_message.c_str(), JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
 	machine.pause();
@@ -1913,6 +1887,7 @@ static slider_state *slider_alloc(running_machine &machine, const char *title, I
 	state->incval = incval;
 	state->update = update;
 	state->arg = arg;
+	state->id = -1;
 	strcpy(state->description, title);
 
 	return state;
@@ -1926,15 +1901,13 @@ static slider_state *slider_alloc(running_machine &machine, const char *title, I
 
 static slider_state *slider_init(running_machine &machine)
 {
-	ioport_field *field;
-	ioport_port *port;
 	slider_state *listhead = nullptr;
 	slider_state **tailptr = &listhead;
 	std::string str;
 	int item;
 
 	// add overall volume
-	*tailptr = slider_alloc(machine, "Master Volume", -32, 0, 0, 1, slider_volume, nullptr);
+	*tailptr = slider_alloc(machine, _("Master Volume"), -32, 0, 0, 1, slider_volume, nullptr);
 	tailptr = &(*tailptr)->next;
 
 	// add per-channel volume
@@ -1944,19 +1917,18 @@ static slider_state *slider_init(running_machine &machine)
 		INT32 maxval = 2000;
 		INT32 defval = 1000;
 
-		str.assign(info.stream->input_name(info.inputnum));
-		str.append(" Volume");
+		str = string_format(_("%1$s Volume"), info.stream->input_name(info.inputnum));
 		*tailptr = slider_alloc(machine, str.c_str(), 0, defval, maxval, 20, slider_mixervol, (void *)(FPTR)item);
 		tailptr = &(*tailptr)->next;
 	}
 
 	// add analog adjusters
-	for (port = machine.ioport().first_port(); port != nullptr; port = port->next())
-		for (field = port->first_field(); field != nullptr; field = field->next())
-			if (field->type() == IPT_ADJUSTER)
+	for (ioport_port &port : machine.ioport().ports())
+		for (ioport_field &field : port.fields())
+			if (field.type() == IPT_ADJUSTER)
 			{
-				void *param = (void *)field;
-				*tailptr = slider_alloc(machine, field->name(), field->minval(), field->defvalue(), field->maxval(), 1, slider_adjuster, param);
+				void *param = (void *)&field;
+				*tailptr = slider_alloc(machine, field.name(), field.minval(), field.defvalue(), field.maxval(), 1, slider_adjuster, param);
 				tailptr = &(*tailptr)->next;
 			}
 
@@ -1967,7 +1939,7 @@ static slider_state *slider_init(running_machine &machine)
 		for (device_execute_interface *exec = iter.first(); exec != nullptr; exec = iter.next())
 		{
 			void *param = (void *)&exec->device();
-			strprintf(str, "Overclock CPU %s", exec->device().tag());
+			str = string_format(_("Overclock CPU %1$s"), exec->device().tag());
 			*tailptr = slider_alloc(machine, str.c_str(), 10, 1000, 2000, 1, slider_overclock, param);
 			tailptr = &(*tailptr)->next;
 		}
@@ -1982,37 +1954,38 @@ static slider_state *slider_init(running_machine &machine)
 		int defxoffset = floor(screen->xoffset() * 1000.0f + 0.5f);
 		int defyoffset = floor(screen->yoffset() * 1000.0f + 0.5f);
 		void *param = (void *)screen;
+		std::string screen_desc = slider_get_screen_desc(*screen);
 
 		// add refresh rate tweaker
 		if (machine.options().cheat())
 		{
-			strprintf(str, "%s Refresh Rate", slider_get_screen_desc(*screen));
+			str = string_format(_("%1$s Refresh Rate"), screen_desc);
 			*tailptr = slider_alloc(machine, str.c_str(), -10000, 0, 10000, 1000, slider_refresh, param);
 			tailptr = &(*tailptr)->next;
 		}
 
 		// add standard brightness/contrast/gamma controls per-screen
-		strprintf(str, "%s Brightness", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Brightness"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), 100, 1000, 2000, 10, slider_brightness, param);
 		tailptr = &(*tailptr)->next;
-		strprintf(str, "%s Contrast", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Contrast"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), 100, 1000, 2000, 50, slider_contrast, param);
 		tailptr = &(*tailptr)->next;
-		strprintf(str,"%s Gamma", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Gamma"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), 100, 1000, 3000, 50, slider_gamma, param);
 		tailptr = &(*tailptr)->next;
 
 		// add scale and offset controls per-screen
-		strprintf(str,"%s Horiz Stretch", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Horiz Stretch"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), 500, defxscale, 1500, 2, slider_xscale, param);
 		tailptr = &(*tailptr)->next;
-		strprintf(str,"%s Horiz Position", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Horiz Position"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), -500, defxoffset, 500, 2, slider_xoffset, param);
 		tailptr = &(*tailptr)->next;
-		strprintf(str,"%s Vert Stretch", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Vert Stretch"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), 500, defyscale, 1500, 2, slider_yscale, param);
 		tailptr = &(*tailptr)->next;
-		strprintf(str,"%s Vert Position", slider_get_screen_desc(*screen));
+		str = string_format(_("%1$s Vert Position"), screen_desc);
 		*tailptr = slider_alloc(machine, str.c_str(), -500, defyoffset, 500, 2, slider_yoffset, param);
 		tailptr = &(*tailptr)->next;
 	}
@@ -2030,16 +2003,16 @@ static slider_state *slider_init(running_machine &machine)
 			void *param = (void *)laserdisc;
 
 			// add scale and offset controls per-overlay
-			strprintf(str,"Laserdisc '%s' Horiz Stretch", laserdisc->tag());
+			str = string_format(_("Laserdisc '%1$s' Horiz Stretch"), laserdisc->tag());
 			*tailptr = slider_alloc(machine, str.c_str(), 500, (defxscale == 0) ? 1000 : defxscale, 1500, 2, slider_overxscale, param);
 			tailptr = &(*tailptr)->next;
-			strprintf(str,"Laserdisc '%s' Horiz Position", laserdisc->tag());
+			str = string_format(_("Laserdisc '%1$s' Horiz Position"), laserdisc->tag());
 			*tailptr = slider_alloc(machine, str.c_str(), -500, defxoffset, 500, 2, slider_overxoffset, param);
 			tailptr = &(*tailptr)->next;
-			strprintf(str,"Laserdisc '%s' Vert Stretch", laserdisc->tag());
+			str = string_format(_("Laserdisc '%1$s' Vert Stretch"), laserdisc->tag());
 			*tailptr = slider_alloc(machine, str.c_str(), 500, (defyscale == 0) ? 1000 : defyscale, 1500, 2, slider_overyscale, param);
 			tailptr = &(*tailptr)->next;
-			strprintf(str,"Laserdisc '%s' Vert Position", laserdisc->tag());
+			str = string_format(_("Laserdisc '%1$s' Vert Position"), laserdisc->tag());
 			*tailptr = slider_alloc(machine, str.c_str(), -500, defyoffset, 500, 2, slider_overyoffset, param);
 			tailptr = &(*tailptr)->next;
 		}
@@ -2048,28 +2021,28 @@ static slider_state *slider_init(running_machine &machine)
 		if (screen->screen_type() == SCREEN_TYPE_VECTOR)
 		{
 			// add vector control
-			*tailptr = slider_alloc(machine, "Vector Flicker", 0, 0, 1000, 10, slider_flicker, nullptr);
+			*tailptr = slider_alloc(machine, _("Vector Flicker"), 0, 0, 1000, 10, slider_flicker, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Width Minimum", 1, 100, 1000, 1, slider_beam_width_min, nullptr);
+			*tailptr = slider_alloc(machine, _("Beam Width Minimum"), 1, 100, 1000, 1, slider_beam_width_min, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Width Maximum", 1, 100, 1000, 1, slider_beam_width_max, nullptr);
+			*tailptr = slider_alloc(machine, _("Beam Width Maximum"), 1, 100, 1000, 1, slider_beam_width_max, nullptr);
 			tailptr = &(*tailptr)->next;
-			*tailptr = slider_alloc(machine, "Beam Intensity Weight", -1000, 0, 1000, 10, slider_beam_intensity_weight, nullptr);
+			*tailptr = slider_alloc(machine, _("Beam Intensity Weight"), -1000, 0, 1000, 10, slider_beam_intensity_weight, nullptr);
 			tailptr = &(*tailptr)->next;
 			break;
 		}
 
 #ifdef MAME_DEBUG
 	// add crosshair adjusters
-	for (port = machine.ioport().first_port(); port != nullptr; port = port->next())
-		for (field = port->first_field(); field != nullptr; field = field->next())
-			if (field->crosshair_axis() != CROSSHAIR_AXIS_NONE && field->player() == 0)
+	for (ioport_port &port : machine.ioport().ports())
+		for (ioport_field &field : port.fields())
+			if (field.crosshair_axis() != CROSSHAIR_AXIS_NONE && field.player() == 0)
 			{
-				void *param = (void *)field;
-				strprintf(str,"Crosshair Scale %s", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y");
+				void *param = (void *)&field;
+				str = string_format(_("Crosshair Scale %1$s"), (field.crosshair_axis() == CROSSHAIR_AXIS_X) ? _("X") : _("Y"));
 				*tailptr = slider_alloc(machine, str.c_str(), -3000, 1000, 3000, 100, slider_crossscale, param);
 				tailptr = &(*tailptr)->next;
-				strprintf(str,"Crosshair Offset %s", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y");
+				str = string_format(_("Crosshair Offset %1$s"), (field.crosshair_axis() == CROSSHAIR_AXIS_X) ? _("X") : _("Y"));
 				*tailptr = slider_alloc(machine, str.c_str(), -3000, 0, 3000, 100, slider_crossoffset, param);
 				tailptr = &(*tailptr)->next;
 			}
@@ -2087,8 +2060,8 @@ static INT32 slider_volume(running_machine &machine, void *arg, std::string *str
 {
 	if (newval != SLIDER_NOCHANGE)
 		machine.sound().set_attenuation(newval);
-	if (str != nullptr)
-		strprintf(*str,"%3ddB", machine.sound().attenuation());
+	if (str)
+		*str = string_format(_("%1$3ddB"), machine.sound().attenuation());
 	return machine.sound().attenuation();
 }
 
@@ -2109,8 +2082,8 @@ static INT32 slider_mixervol(running_machine &machine, void *arg, std::string *s
 		if (newval > curval && (newval - curval) <= 4) newval += 4; // round up on increment
 		info.stream->set_user_gain(info.inputnum, (float)newval * 0.001f);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%4.2f", (double) info.stream->user_gain(info.inputnum));
+	if (str)
+		*str = string_format("%4.2f", info.stream->user_gain(info.inputnum));
 	return floorf(info.stream->user_gain(info.inputnum) * 1000.0f + 0.5f);
 }
 
@@ -2131,8 +2104,8 @@ static INT32 slider_adjuster(running_machine &machine, void *arg, std::string *s
 		settings.value = newval;
 		field->set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%d%%", settings.value);
+	if (str)
+		*str = string_format(_("%1$d%%"), settings.value);
 	return settings.value;
 }
 
@@ -2147,8 +2120,8 @@ static INT32 slider_overclock(running_machine &machine, void *arg, std::string *
 	device_t *cpu = (device_t *)arg;
 	if (newval != SLIDER_NOCHANGE)
 		cpu->set_clock_scale((float)newval * 0.001f);
-	if (str != nullptr)
-		strprintf(*str,"%3.0f%%", floor(cpu->clock_scale() * 100.0 + 0.5));
+	if (str)
+		*str = string_format(_("%1$3.0f%%"), floor(cpu->clock_scale() * 100.0 + 0.5));
 	return floor(cpu->clock_scale() * 1000.0 + 0.5);
 }
 
@@ -2170,8 +2143,8 @@ static INT32 slider_refresh(running_machine &machine, void *arg, std::string *st
 		const rectangle &visarea = screen->visible_area();
 		screen->configure(width, height, visarea, HZ_TO_ATTOSECONDS(defrefresh + (double)newval * 0.001));
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3ffps", ATTOSECONDS_TO_HZ(machine.first_screen()->frame_period().attoseconds()));
+	if (str)
+		*str = string_format(_("%1$.3ffps"), ATTOSECONDS_TO_HZ(machine.first_screen()->frame_period().attoseconds()));
 	refresh = ATTOSECONDS_TO_HZ(machine.first_screen()->frame_period().attoseconds());
 	return floor((refresh - defrefresh) * 1000.0 + 0.5);
 }
@@ -2193,8 +2166,8 @@ static INT32 slider_brightness(running_machine &machine, void *arg, std::string 
 		settings.m_brightness = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_brightness);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_brightness);
 	return floor(settings.m_brightness * 1000.0f + 0.5f);
 }
 
@@ -2215,8 +2188,8 @@ static INT32 slider_contrast(running_machine &machine, void *arg, std::string *s
 		settings.m_contrast = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_contrast);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_contrast);
 	return floor(settings.m_contrast * 1000.0f + 0.5f);
 }
 
@@ -2236,8 +2209,8 @@ static INT32 slider_gamma(running_machine &machine, void *arg, std::string *str,
 		settings.m_gamma = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_gamma);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_gamma);
 	return floor(settings.m_gamma * 1000.0f + 0.5f);
 }
 
@@ -2258,8 +2231,8 @@ static INT32 slider_xscale(running_machine &machine, void *arg, std::string *str
 		settings.m_xscale = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_xscale);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_xscale);
 	return floor(settings.m_xscale * 1000.0f + 0.5f);
 }
 
@@ -2280,8 +2253,8 @@ static INT32 slider_yscale(running_machine &machine, void *arg, std::string *str
 		settings.m_yscale = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_yscale);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_yscale);
 	return floor(settings.m_yscale * 1000.0f + 0.5f);
 }
 
@@ -2302,8 +2275,8 @@ static INT32 slider_xoffset(running_machine &machine, void *arg, std::string *st
 		settings.m_xoffset = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_xoffset);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_xoffset);
 	return floor(settings.m_xoffset * 1000.0f + 0.5f);
 }
 
@@ -2324,8 +2297,8 @@ static INT32 slider_yoffset(running_machine &machine, void *arg, std::string *st
 		settings.m_yoffset = (float)newval * 0.001f;
 		screen->container().set_user_settings(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f",  (double) settings.m_yoffset);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_yoffset);
 	return floor(settings.m_yoffset * 1000.0f + 0.5f);
 }
 
@@ -2346,8 +2319,8 @@ static INT32 slider_overxscale(running_machine &machine, void *arg, std::string 
 		settings.m_overscalex = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_overscalex);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_overscalex);
 	return floor(settings.m_overscalex * 1000.0f + 0.5f);
 }
 
@@ -2368,8 +2341,8 @@ static INT32 slider_overyscale(running_machine &machine, void *arg, std::string 
 		settings.m_overscaley = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_overscaley);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_overscaley);
 	return floor(settings.m_overscaley * 1000.0f + 0.5f);
 }
 
@@ -2390,8 +2363,8 @@ static INT32 slider_overxoffset(running_machine &machine, void *arg, std::string
 		settings.m_overposx = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_overposx);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_overposx);
 	return floor(settings.m_overposx * 1000.0f + 0.5f);
 }
 
@@ -2412,8 +2385,8 @@ static INT32 slider_overyoffset(running_machine &machine, void *arg, std::string
 		settings.m_overposy = (float)newval * 0.001f;
 		laserdisc->set_overlay_config(settings);
 	}
-	if (str != nullptr)
-		strprintf(*str,"%.3f", (double) settings.m_overposy);
+	if (str)
+		*str = string_format(_("%1$.3f"), settings.m_overposy);
 	return floor(settings.m_overposy * 1000.0f + 0.5f);
 }
 
@@ -2428,8 +2401,8 @@ static INT32 slider_flicker(running_machine &machine, void *arg, std::string *st
 	vector_device *vector = nullptr;
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_flicker((float)newval * 0.001f);
-	if (str != nullptr)
-		strprintf(*str,"%1.2f", (double) vector->get_flicker());
+	if (str)
+		*str = string_format(_("%1$1.2f"), vector->get_flicker());
 	return floor(vector->get_flicker() * 1000.0f + 0.5f);
 }
 
@@ -2445,7 +2418,7 @@ static INT32 slider_beam_width_min(running_machine &machine, void *arg, std::str
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_width_min(MIN((float)newval * 0.01f, vector->get_beam_width_max()));
 	if (str != nullptr)
-		strprintf(*str,"%1.2f", (double) vector->get_beam_width_min());
+		*str = string_format(_("%1$1.2f"), vector->get_beam_width_min());
 	return floor(vector->get_beam_width_min() * 100.0f + 0.5f);
 }
 
@@ -2461,7 +2434,7 @@ static INT32 slider_beam_width_max(running_machine &machine, void *arg, std::str
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_width_max(MAX((float)newval * 0.01f, vector->get_beam_width_min()));
 	if (str != nullptr)
-		strprintf(*str,"%1.2f", (double) vector->get_beam_width_max());
+		*str = string_format(_("%1$1.2f"), vector->get_beam_width_max());
 	return floor(vector->get_beam_width_max() * 100.0f + 0.5f);
 }
 
@@ -2477,7 +2450,7 @@ static INT32 slider_beam_intensity_weight(running_machine &machine, void *arg, s
 	if (newval != SLIDER_NOCHANGE)
 		vector->set_beam_intensity_weight((float)newval * 0.001f);
 	if (str != nullptr)
-		strprintf(*str,"%1.2f", (double) vector->get_beam_intensity_weight());
+		*str = string_format(_("%1$1.2f"), vector->get_beam_intensity_weight());
 	return floor(vector->get_beam_intensity_weight() * 1000.0f + 0.5f);
 }
 
@@ -2487,18 +2460,15 @@ static INT32 slider_beam_intensity_weight(running_machine &machine, void *arg, s
 //  description for a given screen
 //-------------------------------------------------
 
-static char *slider_get_screen_desc(screen_device &screen)
+static std::string slider_get_screen_desc(screen_device &screen)
 {
 	screen_device_iterator iter(screen.machine().root_device());
 	int scrcount = iter.count();
-	static char descbuf[256];
 
 	if (scrcount > 1)
-		sprintf(descbuf, "Screen '%s'", screen.tag());
+		return string_format(_("Screen '%1$s'"), screen.tag());
 	else
-		strcpy(descbuf, "Screen");
-
-	return descbuf;
+		return _("Screen");
 }
 
 //-------------------------------------------------
@@ -2513,8 +2483,8 @@ static INT32 slider_crossscale(running_machine &machine, void *arg, std::string 
 
 	if (newval != SLIDER_NOCHANGE)
 		field->set_crosshair_scale(float(newval) * 0.001);
-	if (str != nullptr)
-		strprintf(*str,"%s %s %1.3f", "Crosshair Scale", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y", float(newval) * 0.001f);
+	if (str)
+		*str = string_format((field->crosshair_axis() == CROSSHAIR_AXIS_X) ? _("Crosshair Scale X %1$1.3f") :  _("Crosshair Scale Y %1$1.3f"), float(newval) * 0.001f);
 	return floor(field->crosshair_scale() * 1000.0f + 0.5f);
 }
 #endif
@@ -2532,8 +2502,8 @@ static INT32 slider_crossoffset(running_machine &machine, void *arg, std::string
 
 	if (newval != SLIDER_NOCHANGE)
 		field->set_crosshair_offset(float(newval) * 0.001f);
-	if (str != nullptr)
-		strprintf(*str,"%s %s %1.3f", "Crosshair Offset", (field->crosshair_axis() == CROSSHAIR_AXIS_X) ? "X" : "Y", float(newval) * 0.001f);
+	if (str)
+		*str = string_format((field->crosshair_axis() == CROSSHAIR_AXIS_X) ? _("Crosshair Offset X %1$1.3f") :  _("Crosshair Offset Y %1$1.3f"), float(newval) * 0.001f);
 	return field->crosshair_offset();
 }
 #endif
@@ -2563,10 +2533,11 @@ void ui_manager::set_use_natural_keyboard(bool use_natural_keyboard)
 	assert(error.empty());
 }
 
-/**********************************************
- * MEWUI
- *********************************************/
-void ui_manager::wrap_text(render_container *container, const char *origs, float x, float y, float origwrapwidth, int &count, std::vector<int> &xstart, std::vector<int> &xend, float text_size)
+//-------------------------------------------------
+//  wrap_text
+//-------------------------------------------------
+
+int ui_manager::wrap_text(render_container *container, const char *origs, float x, float y, float origwrapwidth, std::vector<int> &xstart, std::vector<int> &xend, float text_size)
 {
 	float lineheight = get_line_height() * text_size;
 	const char *ends = origs + strlen(origs);
@@ -2575,7 +2546,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 	const char *linestart;
 	float maxwidth = 0;
 	float aspect = machine().render().ui_aspect(container);
-	count = 0;
+	int count = 0;
 
 	// loop over lines
 	while (*s != 0)
@@ -2658,8 +2629,8 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 		if (curwidth > maxwidth)
 			maxwidth = curwidth;
 
-        xstart.push_back(linestart - origs);
-        xend.push_back(s - origs);
+		xstart.push_back(linestart - origs);
+		xend.push_back(s - origs);
 
 		// loop from the line start and add the characters
 		while (linestart < s)
@@ -2691,6 +2662,7 @@ void ui_manager::wrap_text(render_container *container, const char *origs, float
 					break;
 			}
 	}
+	return count;
 }
 
 //-------------------------------------------------
@@ -2727,10 +2699,10 @@ rgb_t decode_ui_color(int id, running_machine *machine)
 	static rgb_t color[ARRAY_LENGTH(s_color_list)];
 
 	if (machine != nullptr) {
-		emu_options option;
-		for (int x = 0; x < ARRAY_LENGTH(s_color_list); x++) {
+		ui_options option;
+		for (int x = 0; x < ARRAY_LENGTH(s_color_list); ++x) {
 			const char *o_default = option.value(s_color_list[x]);
-			const char *s_option = machine->options().value(s_color_list[x]);
+			const char *s_option = machine->ui().options().value(s_color_list[x]);
 			int len = strlen(s_option);
 			if (len != 8)
 				color[x] = rgb_t((UINT32)strtoul(o_default, nullptr, 16));
@@ -2749,5 +2721,5 @@ int get_font_rows(running_machine *machine)
 {
 	static int value;
 
-	return ((machine != nullptr) ? value = machine->options().font_rows() : value);
+	return ((machine != nullptr) ? value = machine->ui().options().font_rows() : value);
 }

@@ -209,11 +209,11 @@ const device_type PPC405GP = &device_creator<ppc405gp_device>;
 
 ppc_device::ppc_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, UINT32 clock, const char *shortname, int address_bits, int data_bits, powerpc_flavor flavor, UINT32 cap, UINT32 tb_divisor, address_map_constructor internal_map)
 	: cpu_device(mconfig, type, name, tag, owner, clock, shortname, __FILE__)
+	, device_vtlb_interface(mconfig, *this, AS_PROGRAM)
 	, m_program_config("program", ENDIANNESS_BIG, data_bits, address_bits, 0, internal_map)
 	, c_bus_frequency(0)
 	, m_core(nullptr)
 	, m_bus_freq_multiplier(1)
-	, m_vtlb(nullptr)
 	, m_flavor(flavor)
 	, m_cap(cap)
 	, m_tb_divisor(tb_divisor)
@@ -224,6 +224,11 @@ ppc_device::ppc_device(const machine_config &mconfig, device_type type, const ch
 {
 	m_program_config.m_logaddr_width = 32;
 	m_program_config.m_page_shift = POWERPC_MIN_PAGE_SHIFT;
+
+	// configure the virtual TLB
+	set_vtlb_dynamic_entries(POWERPC_TLB_ENTRIES);
+	if (m_cap & PPCCAP_603_MMU)
+		set_vtlb_fixed_entries(PPC603_FIXED_TLB_ENTRIES);
 }
 
 //ppc403_device::ppc403_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
@@ -708,9 +713,6 @@ void ppc_device::device_start()
 	if (!(m_cap & PPCCAP_4XX) && space_config()->m_endianness != ENDIANNESS_NATIVE)
 		m_codexor = 4;
 
-	/* allocate the virtual TLB */
-	m_vtlb = vtlb_alloc(this, AS_PROGRAM, (m_cap & PPCCAP_603_MMU) ? PPC603_FIXED_TLB_ENTRIES : 0, POWERPC_TLB_ENTRIES);
-
 	/* allocate a timer for the compare interrupt */
 	if ((m_cap & PPCCAP_OEA) && (m_tb_divisor))
 		m_decrementer_int_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(ppc_device::decrementer_int_callback), this));
@@ -1012,131 +1014,131 @@ void ppc_device::state_string_export(const device_state_entry &entry, std::strin
 	switch (entry.index())
 	{
 		case PPC_F0:
-			strprintf(str, "%12f", m_core->f[0]);
+			str = string_format("%12f", m_core->f[0]);
 			break;
 
 		case PPC_F1:
-			strprintf(str, "%12f", m_core->f[1]);
+			str = string_format("%12f", m_core->f[1]);
 			break;
 
 		case PPC_F2:
-			strprintf(str, "%12f", m_core->f[2]);
+			str = string_format("%12f", m_core->f[2]);
 			break;
 
 		case PPC_F3:
-			strprintf(str, "%12f", m_core->f[3]);
+			str = string_format("%12f", m_core->f[3]);
 			break;
 
 		case PPC_F4:
-			strprintf(str, "%12f", m_core->f[4]);
+			str = string_format("%12f", m_core->f[4]);
 			break;
 
 		case PPC_F5:
-			strprintf(str, "%12f", m_core->f[5]);
+			str = string_format("%12f", m_core->f[5]);
 			break;
 
 		case PPC_F6:
-			strprintf(str, "%12f", m_core->f[6]);
+			str = string_format("%12f", m_core->f[6]);
 			break;
 
 		case PPC_F7:
-			strprintf(str, "%12f", m_core->f[7]);
+			str = string_format("%12f", m_core->f[7]);
 			break;
 
 		case PPC_F8:
-			strprintf(str, "%12f", m_core->f[8]);
+			str = string_format("%12f", m_core->f[8]);
 			break;
 
 		case PPC_F9:
-			strprintf(str, "%12f", m_core->f[9]);
+			str = string_format("%12f", m_core->f[9]);
 			break;
 
 		case PPC_F10:
-			strprintf(str, "%12f", m_core->f[10]);
+			str = string_format("%12f", m_core->f[10]);
 			break;
 
 		case PPC_F11:
-			strprintf(str, "%12f", m_core->f[11]);
+			str = string_format("%12f", m_core->f[11]);
 			break;
 
 		case PPC_F12:
-			strprintf(str, "%12f", m_core->f[12]);
+			str = string_format("%12f", m_core->f[12]);
 			break;
 
 		case PPC_F13:
-			strprintf(str, "%12f", m_core->f[13]);
+			str = string_format("%12f", m_core->f[13]);
 			break;
 
 		case PPC_F14:
-			strprintf(str, "%12f", m_core->f[14]);
+			str = string_format("%12f", m_core->f[14]);
 			break;
 
 		case PPC_F15:
-			strprintf(str, "%12f", m_core->f[15]);
+			str = string_format("%12f", m_core->f[15]);
 			break;
 
 		case PPC_F16:
-			strprintf(str, "%12f", m_core->f[16]);
+			str = string_format("%12f", m_core->f[16]);
 			break;
 
 		case PPC_F17:
-			strprintf(str, "%12f", m_core->f[17]);
+			str = string_format("%12f", m_core->f[17]);
 			break;
 
 		case PPC_F18:
-			strprintf(str, "%12f", m_core->f[18]);
+			str = string_format("%12f", m_core->f[18]);
 			break;
 
 		case PPC_F19:
-			strprintf(str, "%12f", m_core->f[19]);
+			str = string_format("%12f", m_core->f[19]);
 			break;
 
 		case PPC_F20:
-			strprintf(str, "%12f", m_core->f[20]);
+			str = string_format("%12f", m_core->f[20]);
 			break;
 
 		case PPC_F21:
-			strprintf(str, "%12f", m_core->f[21]);
+			str = string_format("%12f", m_core->f[21]);
 			break;
 
 		case PPC_F22:
-			strprintf(str, "%12f", m_core->f[22]);
+			str = string_format("%12f", m_core->f[22]);
 			break;
 
 		case PPC_F23:
-			strprintf(str, "%12f", m_core->f[23]);
+			str = string_format("%12f", m_core->f[23]);
 			break;
 
 		case PPC_F24:
-			strprintf(str, "%12f", m_core->f[24]);
+			str = string_format("%12f", m_core->f[24]);
 			break;
 
 		case PPC_F25:
-			strprintf(str, "%12f", m_core->f[25]);
+			str = string_format("%12f", m_core->f[25]);
 			break;
 
 		case PPC_F26:
-			strprintf(str, "%12f", m_core->f[26]);
+			str = string_format("%12f", m_core->f[26]);
 			break;
 
 		case PPC_F27:
-			strprintf(str, "%12f", m_core->f[27]);
+			str = string_format("%12f", m_core->f[27]);
 			break;
 
 		case PPC_F28:
-			strprintf(str, "%12f", m_core->f[28]);
+			str = string_format("%12f", m_core->f[28]);
 			break;
 
 		case PPC_F29:
-			strprintf(str, "%12f", m_core->f[29]);
+			str = string_format("%12f", m_core->f[29]);
 			break;
 
 		case PPC_F30:
-			strprintf(str, "%12f", m_core->f[30]);
+			str = string_format("%12f", m_core->f[30]);
 			break;
 
 		case PPC_F31:
-			strprintf(str, "%12f", m_core->f[31]);
+			str = string_format("%12f", m_core->f[31]);
 			break;
 	}
 }
@@ -1148,9 +1150,6 @@ void ppc_device::state_string_export(const device_state_entry &entry, std::strin
 
 void ppc_device::device_stop()
 {
-	if (m_vtlb != nullptr)
-		vtlb_free(m_vtlb);
-	m_vtlb = nullptr;
 }
 
 
@@ -1199,12 +1198,11 @@ void ppc_device::device_reset()
 	m_core->irq_pending = 0;
 
 	/* flush the TLB */
-	vtlb_flush_dynamic(m_vtlb);
 	if (m_cap & PPCCAP_603_MMU)
 	{
 		for (int tlbindex = 0; tlbindex < PPC603_FIXED_TLB_ENTRIES; tlbindex++)
 		{
-			vtlb_load(m_vtlb, tlbindex, 0, 0, 0);
+			vtlb_load(tlbindex, 0, 0, 0);
 		}
 	}
 
@@ -1385,7 +1383,7 @@ UINT32 ppc_device::ppccom_translate_address_internal(int intention, offs_t &addr
 	/* if we're simulating the 603 MMU, fill in the data and stop here */
 	if (m_cap & PPCCAP_603_MMU)
 	{
-		UINT32 entry = vtlb_table(m_vtlb)[address >> 12];
+		UINT32 entry = vtlb_table()[address >> 12];
 		m_core->mmu603_cmp = 0x80000000 | ((segreg & 0xffffff) << 7) | (0 << 6) | ((address >> 22) & 0x3f);
 		m_core->mmu603_hash[0] = hashbase | ((hash << 6) & hashmask);
 		m_core->mmu603_hash[1] = hashbase | ((~hash << 6) & hashmask);
@@ -1465,7 +1463,7 @@ bool ppc_device::memory_translate(address_spacenum spacenum, int intention, offs
 
 void ppc_device::ppccom_tlb_fill()
 {
-	vtlb_fill(m_vtlb, m_core->param0, m_core->param1);
+	vtlb_fill(m_core->param0, m_core->param1);
 }
 
 
@@ -1476,7 +1474,7 @@ void ppc_device::ppccom_tlb_fill()
 
 void ppc_device::ppccom_tlb_flush()
 {
-	vtlb_flush_dynamic(m_vtlb);
+	vtlb_flush_dynamic();
 }
 
 
@@ -1492,7 +1490,7 @@ void ppc_device::ppccom_tlb_flush()
 
 void ppc_device::ppccom_execute_tlbie()
 {
-	vtlb_flush_address(m_vtlb, m_core->param0);
+	vtlb_flush_address(m_core->param0);
 }
 
 
@@ -1503,7 +1501,7 @@ void ppc_device::ppccom_execute_tlbie()
 
 void ppc_device::ppccom_execute_tlbia()
 {
-	vtlb_flush_dynamic(m_vtlb);
+	vtlb_flush_dynamic();
 }
 
 
@@ -1530,7 +1528,7 @@ void ppc_device::ppccom_execute_tlbl()
 		flags |= VTLB_FETCH_ALLOWED;
 
 	/* load the entry */
-	vtlb_load(m_vtlb, entrynum, 1, address, (m_core->spr[SPR603_RPA] & 0xfffff000) | flags);
+	vtlb_load(entrynum, 1, address, (m_core->spr[SPR603_RPA] & 0xfffff000) | flags);
 }
 
 

@@ -339,7 +339,6 @@ Notes:
 #include "machine/vt83c461.h"
 #include "sound/dac.h"
 #include "includes/jaguar.h"
-#include "emuopts.h"
 #include "imagedev/snapquik.h"
 #include "sound/dac.h"
 #include "machine/eepromser.h"
@@ -481,13 +480,13 @@ void jaguar_state::machine_reset()
 emu_file jaguar_state::*jaguar_nvram_fopen( UINT32 openflags)
 {
     device_image_interface *image = dynamic_cast<device_image_interface *>(machine().device("cart"));
-    file_error filerr;
+    osd_file::error filerr;
     emu_file *file;
     if (image->exists())
     {
         std::string fname(machine().system().name, PATH_SEPARATOR, image->basename_noext(), ".nv");
         filerr = mame_fopen( SEARCHPATH_NVRAM, fname, openflags, &file);
-        return (filerr == FILERR_NONE) ? file : NULL;
+        return (filerr == osd_file::error::NONE) ? file : NULL;
     }
     else
         return NULL;

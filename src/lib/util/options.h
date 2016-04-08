@@ -89,13 +89,15 @@ public:
 		bool is_internal() const { return m_flags & OPTION_FLAG_INTERNAL; }
 		bool has_range() const { return (!m_minimum.empty() && !m_maximum.empty()); }
 		int priority() const { return m_priority; }
+		bool is_changed() const { return m_changed; }
 
 		// setters
 		void set_value(const char *newvalue, int priority);
 		void set_default_value(const char *defvalue);
 		void set_description(const char *description);
 		void set_flag(UINT32 mask, UINT32 flag);
-		void revert(int priority);
+		void mark_changed() { m_changed = true; }
+		void revert(int priority_hi, int priority_lo);
 
 	private:
 		// internal state
@@ -110,6 +112,7 @@ public:
 		std::string             m_defdata;          // default data for this item
 		std::string             m_minimum;          // minimum value
 		std::string             m_maximum;          // maximum value
+		bool                    m_changed;          // changed flag
 	};
 
 	// construction/destruction
@@ -128,6 +131,12 @@ public:
 	// getters
 	entry *first() const { return m_entrylist.first(); }
 	const char *command() const { return m_command.c_str(); }
+	entry *get_entry(const char *name) const;
+
+	// range iterators
+	using auto_iterator = simple_list<entry>::auto_iterator;
+	auto_iterator begin() const { return m_entrylist.begin(); }
+	auto_iterator end() const { return m_entrylist.end(); }
 
 	// configuration
 	void add_entry(const char *name, const char *description, UINT32 flags = 0, const char *defvalue = nullptr, bool override_existing = false);
@@ -139,10 +148,10 @@ public:
 
 	// parsing/input
 	bool parse_command_line(int argc, char **argv, int priority, std::string &error_string);
-	bool parse_ini_file(core_file &inifile, int priority, int ignore_priority, std::string &error_string);
+	bool parse_ini_file(util::core_file &inifile, int priority, int ignore_priority, std::string &error_string);
 
 	// reverting
-	void revert(int priority = OPTION_PRIORITY_MAXIMUM);
+	void revert(int priority_hi = OPTION_PRIORITY_MAXIMUM, int priority_lo = OPTION_PRIORITY_DEFAULT);
 
 	// output
 	std::string output_ini(const core_options *diff = nullptr) const;
@@ -157,6 +166,7 @@ public:
 	float float_value(const char *name) const { return atof(value(name)); }
 	UINT32 seqid(const char *name) const;
 	bool exists(const char *name) const;
+	bool is_changed(const char *name) const;
 
 	// setting
 	void set_command(const char *command);
@@ -164,6 +174,7 @@ public:
 	bool set_value(const char *name, int value, int priority, std::string &error_string);
 	bool set_value(const char *name, float value, int priority, std::string &error_string);
 	void set_flag(const char *name, UINT32 mask, UINT32 flags);
+	void mark_changed(const char *name);
 
 	// misc
 	static const char *unadorned(int x = 0) { return s_option_unadorned[MIN(x, MAX_UNADORNED_OPTIONS)]; }

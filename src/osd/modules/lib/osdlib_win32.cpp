@@ -21,6 +21,7 @@
 #include "osdlib.h"
 #include "osdcomm.h"
 #include "osdcore.h"
+#include "strconv.h"
 
 #ifdef OSD_WINDOWS
 #include "winutf8.h"
@@ -98,21 +99,6 @@ int osd_setenv(const char *name, const char *value, int overwrite)
 void osd_process_kill(void)
 {
 	TerminateProcess(GetCurrentProcess(), -1);
-}
-
-//============================================================
-//  osd_num_processors
-//============================================================
-
-int osd_get_num_processors(void)
-{
-	SYSTEM_INFO info;
-
-	// otherwise, fetch the info from the system
-	GetSystemInfo(&info);
-
-	// max out at 4 for now since scaling above that seems to do poorly
-	return MIN(info.dwNumberOfProcessors, 4);
 }
 
 //============================================================
@@ -257,93 +243,74 @@ void osd_break_into_debugger(const char *message)
 }
 
 //============================================================
-//  GLOBAL VARIABLES
+//  get_clipboard_text_by_format
 //============================================================
 
-static osd_ticks_t ticks_per_second = 0;
-static osd_ticks_t suspend_ticks = 0;
-static BOOL using_qpc = TRUE;
-
-
-
-//============================================================
-//  osd_ticks
-//============================================================
-
-osd_ticks_t osd_ticks(void)
+static char *get_clipboard_text_by_format(UINT format, char *(*convert)(LPCVOID data))
 {
-	LARGE_INTEGER performance_count;
+	char *result = NULL;
+	HANDLE data_handle;
+	LPVOID data;
 
-	// if we're suspended, just return that
-	if (suspend_ticks != 0)
-		return suspend_ticks;
-
-	// if we have a per second count, just go for it
-	if (ticks_per_second != 0)
+	// check to see if this format is available
+	if (IsClipboardFormatAvailable(format))
 	{
-		// QueryPerformanceCounter if we can
-		if (using_qpc)
+		// open the clipboard
+		if (OpenClipboard(NULL))
 		{
-			QueryPerformanceCounter(&performance_count);
-			return (osd_ticks_t)performance_count.QuadPart - suspend_ticks;
+			// try to access clipboard data
+			data_handle = GetClipboardData(format);
+			if (data_handle != NULL)
+			{
+				// lock the data
+				data = GlobalLock(data_handle);
+				if (data != NULL)
+				{
+					// invoke the convert
+					result = (*convert)(data);
+
+					// unlock the data
+					GlobalUnlock(data_handle);
+				}
+			}
+
+			// close out the clipboard
+			CloseClipboard();
 		}
-
-		// otherwise, fall back to timeGetTime
-		else
-			return (osd_ticks_t)timeGetTime() - suspend_ticks;
 	}
-
-	// if not, we have to determine it
-	using_qpc = QueryPerformanceFrequency(&performance_count) && (performance_count.QuadPart != 0);
-	if (using_qpc)
-		ticks_per_second = (osd_ticks_t)performance_count.QuadPart;
-	else
-		ticks_per_second = 1000;
-
-	// call ourselves to get the first value
-	return osd_ticks();
-}
-
-
-//============================================================
-//  osd_ticks_per_second
-//============================================================
-
-osd_ticks_t osd_ticks_per_second(void)
-{
-	if (ticks_per_second == 0)
-		osd_ticks();
-	return ticks_per_second;
+	return result;
 }
 
 //============================================================
-//  osd_sleep
+//  convert_wide
 //============================================================
 
-void osd_sleep(osd_ticks_t duration)
+static char *convert_wide(LPCVOID data)
 {
-	DWORD msec;
+	return utf8_from_wstring((LPCWSTR) data);
+}
 
-	// make sure we've computed ticks_per_second
-	if (ticks_per_second == 0)
-		(void)osd_ticks();
+//============================================================
+//  convert_ansi
+//============================================================
 
-	// convert to milliseconds, rounding down
-	msec = (DWORD)(duration * 1000 / ticks_per_second);
+static char *convert_ansi(LPCVOID data)
+{
+	return utf8_from_astring((LPCSTR) data);
+}
 
-	// only sleep if at least 2 full milliseconds
-	if (msec >= 2)
-	{
-		HANDLE current_thread = GetCurrentThread();
-		int old_priority = GetThreadPriority(current_thread);
+//============================================================
+//  osd_get_clipboard_text
+//============================================================
 
-		// take a couple of msecs off the top for good measure
-		msec -= 2;
+char *osd_get_clipboard_text(void)
+{
+	// try to access unicode text
+	char *result = get_clipboard_text_by_format(CF_UNICODETEXT, convert_wide);
 
-		// bump our thread priority super high so that we get
-		// priority when we need it
-		SetThreadPriority(current_thread, THREAD_PRIORITY_TIME_CRITICAL);
-		Sleep(msec);
-		SetThreadPriority(current_thread, old_priority);
-	}
+	// try to access ANSI text
+	if (result == nullptr)
+		result = get_clipboard_text_by_format(CF_TEXT, convert_ansi);
+
+	return result;
 }

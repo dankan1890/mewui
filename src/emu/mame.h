@@ -17,6 +17,7 @@
 #define __MAME_H__
 
 #include <time.h>
+#include "pluginopts.h"
 
 class osd_interface;
 
@@ -55,18 +56,8 @@ public:
 	static const char * get_appname();
 	static const char * get_appname_lower();
 	static const char * get_configname();
-	static const char * get_capgamenoun();
-	static const char * get_capstartgamenoun();
-	static const char * get_gamenoun();
-	static const char * get_gamesnoun();
 	static const char * get_copyright();
 	static const char * get_copyright_info();
-	static const char * get_disclaimer();
-	static const char * get_usage();
-	static const char * get_xml_root();
-	static const char * get_xml_top();
-	static const char * get_state_magic_num();
-	static void printf_usage(const char *par1, const char *par2);
 };
 
 class lua_engine;
@@ -86,6 +77,7 @@ public:
 
 	osd_interface &osd() const;
 	emu_options &options() const { return m_options; }
+	plugin_options &plugins() const { return *m_plugins; }
 	lua_engine *lua() { return m_lua; }
 
 	running_machine *machine() { return m_machine; }
@@ -96,11 +88,12 @@ public:
 
 	/* execute as configured by the OPTION_SYSTEMNAME option on the specified options */
 	int execute();
+	void start_luaengine();
 	void schedule_new_driver(const game_driver &driver);
 private:
 	osd_interface &         m_osd;                  // reference to OSD system
 	emu_options &           m_options;              // reference to options
-
+	std::unique_ptr<plugin_options> m_plugins;              // pointer to plugin options
 	lua_engine *            m_lua;
 
 	const game_driver *     m_new_driver_pending;   // pointer to the next pending driver
@@ -115,7 +108,5 @@ private:
 
 extern const char build_version[];
 extern const char bare_build_version[];
-extern const char mewui_version[]; // MEWUI
-
 
 #endif  /* __MAME_H__ */

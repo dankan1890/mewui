@@ -19,6 +19,7 @@
 #include "uiinput.h"
 #include "xmlfile.h"
 #include "coreutil.h"
+#include "luaengine.h"
 #include <ctype.h>
 
 
@@ -331,8 +332,8 @@ bool debug_comment_save(running_machine &machine)
 		if (found_comments)
 		{
 			emu_file file(machine.options().comment_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
-			file_error filerr = file.open(machine.basename(), ".cmt");
-			if (filerr == FILERR_NONE)
+			osd_file::error filerr = file.open(machine.basename(), ".cmt");
+			if (filerr == osd_file::error::NONE)
 			{
 				xml_file_write(root, file);
 				comments_saved = true;
@@ -360,10 +361,10 @@ bool debug_comment_load(running_machine &machine)
 {
 	// open the file
 	emu_file file(machine.options().comment_directory(), OPEN_FLAG_READ);
-	file_error filerr = file.open(machine.basename(), ".cmt");
+	osd_file::error filerr = file.open(machine.basename(), ".cmt");
 
 	// if an error, just return false
-	if (filerr != FILERR_NONE)
+	if (filerr != osd_file::error::NONE)
 		return false;
 
 	// wrap in a try/catch to handle errors
@@ -1665,9 +1666,10 @@ device_debug::device_debug(device_t &device)
 
 		// add all registers into it
 		std::string tempstr;
-		for (const device_state_entry *entry = m_state->state_first(); entry != nullptr; entry = entry->next()) {
-			strmakelower(tempstr.assign(entry->symbol()));
-			m_symtable.add(tempstr.c_str(), (void *)(FPTR)entry->index(), get_state, set_state);
+		for (const device_state_entry &entry : m_state->state_entries())
+		{
+			strmakelower(tempstr.assign(entry.symbol()));
+			m_symtable.add(tempstr.c_str(), (void *)(FPTR)entry.index(), get_state, set_state);
 		}
 	}
 
@@ -1927,6 +1929,8 @@ void device_debug::instruction_hook(offs_t curpc)
 		{
 			// flush any pending updates before waiting again
 			machine.debug_view().flush_osd_updates();
+
+			machine.manager().lua()->periodic_check();
 
 			// clear the memory modified flag and wait
 			global->memory_modified = false;
@@ -2228,10 +2232,9 @@ void device_debug::go_next_device()
 //  debugger on the next instruction
 //-------------------------------------------------
 
-void device_debug::halt_on_next_instruction(const char *fmt, ...)
+void device_debug::halt_on_next_instruction_impl(util::format_argument_pack<std::ostream> &&args)
 {
 	debugcpu_private *global = m_device.machine().debugcpu_data;
-	va_list arg;
 
 	assert(m_exec != nullptr);
 
@@ -2240,9 +2243,7 @@ void device_debug::halt_on_next_instruction(const char *fmt, ...)
 		return;
 
 	// output the message to the console
-	va_start(arg, fmt);
-	debug_console_vprintf(m_device.machine(), fmt, arg);
-	va_end(arg);
+	debug_console_vprintf(m_device.machine(), std::move(args));
 
 	// if we are live, stop now, otherwise note that we want to break there
 	if (&m_device == global->livecpu)
@@ -2677,7 +2678,6 @@ const char *device_debug::comment_text(offs_t addr) const
 bool device_debug::comment_export(xml_data_node &curnode)
 {
 	// iterate through the comments
-	std::string crc_buf;
 	for (const auto & elem : m_comment_set)
 	{
 		xml_data_node *datanode = xml_add_child(&curnode, "comment", xml_normalize_string(elem.m_text.c_str()));
@@ -2685,8 +2685,7 @@ bool device_debug::comment_export(xml_data_node &curnode)
 			return false;
 		xml_set_attribute_int(datanode, "address", elem.m_address);
 		xml_set_attribute_int(datanode, "color", elem.m_color);
-		strprintf(crc_buf,"%08X", elem.m_crc);
-		xml_set_attribute(datanode, "crc", crc_buf.c_str());
+		xml_set_attribute(datanode, "crc", string_format("%08X", elem.m_crc).c_str());
 	}
 	return true;
 }
@@ -3048,14 +3047,14 @@ void device_debug::watchpoint_check(address_space &space, int type, offs_t addre
 
 				if (type & WATCHPOINT_WRITE)
 				{
-					strprintf(buffer, "Stopped at watchpoint %X writing %s to %08X (PC=%X)", wp->m_index, sizes[size], space.byte_to_address(address), pc);
+					buffer = string_format("Stopped at watchpoint %X writing %s to %08X (PC=%X)", wp->m_index, sizes[size], space.byte_to_address(address), pc);
 					if (value_to_write >> 32)
-						strcatprintf(buffer, " (data=%X%08X)", (UINT32)(value_to_write >> 32), (UINT32)value_to_write);
+						buffer.append(string_format(" (data=%X%08X)", (UINT32)(value_to_write >> 32), (UINT32)value_to_write));
 					else
-						strcatprintf(buffer, " (data=%X)", (UINT32)value_to_write);
+						buffer.append(string_format(" (data=%X)", (UINT32)value_to_write));
 				}
 				else
-					strprintf(buffer,"Stopped at watchpoint %X reading %s from %08X (PC=%X)", wp->m_index, sizes[size], space.byte_to_address(address), pc);
+					buffer = string_format("Stopped at watchpoint %X reading %s from %08X (PC=%X)", wp->m_index, sizes[size], space.byte_to_address(address), pc);
 				debug_console_printf(space.machine(), "%s\n", buffer.c_str());
 				space.device().debug()->compute_debug_flags();
 			}
@@ -3483,7 +3482,7 @@ void device_debug::tracer::update(offs_t pc)
 	// print the address
 	std::string buffer;
 	int logaddrchars = m_debug.logaddrchars();
-	strprintf(buffer,"%0*X: ", logaddrchars, pc);
+	buffer = string_format("%0*X: ", logaddrchars, pc);
 
 	// print the disassembly
 	std::string dasm;

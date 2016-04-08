@@ -413,13 +413,11 @@ static MACHINE_CONFIG_START( chainrec, simpl156_state )
 	MCFG_DECO16IC_PF12_8X8_BANK(0)
 	MCFG_DECO16IC_PF12_16X16_BANK(1)
 	MCFG_DECO16IC_GFXDECODE("gfxdecode")
-	MCFG_DECO16IC_PALETTE("palette")
 
 	MCFG_DEVICE_ADD("spritegen", DECO_SPRITE, 0)
 	MCFG_DECO_SPRITE_GFX_REGION(2)
 	MCFG_DECO_SPRITE_PRIORITY_CB(simpl156_state, pri_callback)
 	MCFG_DECO_SPRITE_GFXDECODE("gfxdecode")
-	MCFG_DECO_SPRITE_PALETTE("palette")
 
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
@@ -485,7 +483,7 @@ This is a higher quality bootleg made with genuine DECO chips/parts.
 |      93C45  05.u29            |
 +-------------------------------+
 
-All roms are socketted eproms, no labels, just a number in pencel.
+All roms are socketed eproms, no labels, just a number in pencel.
 
 05.u29  27c4096
 01.u8l  27c4096

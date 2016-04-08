@@ -123,30 +123,15 @@ protected:
 
 	// configuration
 	address_map_constructor m_address_map[ADDRESS_SPACES]; // address maps for each address space
+
+private:
+	// internal state
 	address_space *     m_addrspace[ADDRESS_SPACES]; // reported address spaces
 };
 
 // iterator
 typedef device_interface_iterator<device_memory_interface> memory_interface_iterator;
 
-
-
-//**************************************************************************
-//  INLINE HELPERS
-//**************************************************************************
-
-//-------------------------------------------------
-//  device_get_space_config - return a pointer
-//  to sthe given address space's configuration
-//-------------------------------------------------
-
-inline const address_space_config *device_get_space_config(const device_t &device, address_spacenum spacenum = AS_0)
-{
-	const device_memory_interface *intf;
-	if (!device.interface(intf))
-		throw emu_fatalerror("Device '%s' does not have memory interface", device.tag());
-	return intf->space_config(spacenum);
-}
 
 
 #endif  /* __DIMEMORY_H__ */

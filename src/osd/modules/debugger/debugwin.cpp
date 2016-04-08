@@ -25,7 +25,8 @@
 #include "debugger.h"
 
 #include "window.h"
-#include "../../windows/input.h"
+#include "../input/input_common.h"
+#include "../input/input_windows.h"
 
 
 class debugger_windows : public osd_module, public debug_module, protected debugger_windows_interface
@@ -121,7 +122,7 @@ void debugger_windows::wait_for_debugger(device_t &device, bool firststop)
 	show_all();
 
 	// run input polling to ensure that our status is in sync
-	wininput_poll(*m_machine);
+	downcast<windows_osd_interface&>(machine().osd()).poll_input(*m_machine);
 
 	// get and process messages
 	MSG message;
@@ -162,8 +163,8 @@ void debugger_windows::debugger_update()
 			debug_cpu_get_visible_cpu(*m_machine)->debug()->halt_on_next_instruction("User-initiated break\n");
 
 			// if we were focused on some window's edit box, reset it to default
-			for (debugwin_info *info = m_window_list.first(); info != NULL; info = info->next())
-				info->restore_field(focuswnd);
+			for (debugwin_info &info : m_window_list)
+				info.restore_field(focuswnd);
 		}
 	}
 }
@@ -202,7 +203,7 @@ bool debugger_windows::seq_pressed() const
 		else
 		{
 			// handle everything else as a series of ANDs
-			int const vkey = wininput_vkey_for_mame_code(code);
+			int const vkey = keyboard_trans_table::instance().vkey_for_mame_code(code);
 			bool const pressed = (vkey != 0) && ((GetAsyncKeyState(vkey) & 0x8000) != 0);
 
 			if (first)          // if this is the first in the sequence, result is set equal
@@ -228,16 +229,16 @@ void debugger_windows::remove_window(debugwin_info &info)
 
 void debugger_windows::show_all()
 {
-	for (debugwin_info *info = m_window_list.first(); info != NULL; info = info->next())
-		info->show();
+	for (debugwin_info &info : m_window_list)
+		info.show();
 }
 
 
 void debugger_windows::hide_all()
 {
 	SetForegroundWindow(win_window_list->m_hwnd);
-	for (debugwin_info *info = m_window_list.first(); info != NULL; info = info->next())
-		info->hide();
+	for (debugwin_info &info : m_window_list)
+		info.hide();
 }
 
 

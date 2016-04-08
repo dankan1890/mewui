@@ -243,6 +243,7 @@ public:
 	bool is_value_parameter() const { return (m_parameter != nullptr && !m_parameter->has_itemlist()); }
 	bool is_itemlist_parameter() const { return (m_parameter != nullptr && m_parameter->has_itemlist()); }
 	bool is_oneshot_parameter() const { return (m_parameter != nullptr && !has_run_script() && !has_off_script() && has_change_script()); }
+	bool is_duplicate() const;
 
 	// actions
 	bool activate();
@@ -294,7 +295,7 @@ public:
 	// getters
 	running_machine &machine() const { return m_machine; }
 	bool enabled() const { return !m_disabled; }
-	cheat_entry *first() const { return m_cheatlist.first(); }
+	const simple_list<cheat_entry> &entries() const { return m_cheatlist; }
 
 	// setters
 	void set_enable(bool enable = true);
@@ -329,7 +330,7 @@ private:
 	symbol_table        m_symtable;                         // global symbol table
 
 	// constants
-	static const int CHEAT_VERSION = 1;
+	static constexpr int CHEAT_VERSION = 1;
 };
 
 

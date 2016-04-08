@@ -1,0 +1,71 @@
+// license:BSD-3-Clause
+// copyright-holders:Aaron Giles
+/******************************************************************************
+
+    tiny.lst
+
+    List of all enabled drivers in the system. This file is parsed by
+    makelist.exe, sorted, and output as C code describing the drivers.
+
+******************************************************************************/
+
+robby           // (c) 1981 Bally Midway
+gridlee         // [1983 Videa] prototype - no copyright notice
+alienar         // (c) 1985 Duncan Brown
+
+carpolo         // (c) 1977 Exidy
+sidetrac        // (c) 1979 Exidy
+targ            // (c) 1980 Exidy
+spectar         // (c) 1980 Exidy
+teetert         // (c) 1982 Exidy
+hardhat         // (c) 1982
+fax             // (c) 1983
+fax2            // (c) 1983
+circus          // (c) 1977 Exidy
+robotbwl        // (c) 197? Exidy
+crash           // (c) 1979 Exidy
+ripcord         // (c) 1979 Exidy
+starfire        // (c) 1979 Exidy
+starfirea       // (c) 1979 Exidy
+fireone         // (c) 1979 Exidy
+starfir2        // (c) 1979 Exidy
+victory         // (c) 1982
+victorba        // (c) 1982
+topgunnr        // (c) 1986
+
+looping         // (c) 1982 Video Games GMBH
+supertnk        // (c) 1981 VIDEO GAMES GmbH, W.-GERMANY
+
+wrally          // (c) 1993 - Ref 930705
+
+// Atari 100% TTL
+pong            // (c) 1972 Atari
+pongd           // (c) 1975 Atari
+pongf           // (c) 1972 Atari
+breakout        // (c) 1976 Atari
+
+// Luxor Datorer AB
+abc80
+
+// Mattel
+intv      // Mattel Intellivision - 1979 AKA INTV
+intv2     // Mattel Intellivision II- 1982?
+intvsrs   // Intellivision (Sears License) - 19??
+intvoice      // Mattel Intellivision + IntelliVoice expansion - 1982
+
+1942                            // 12/1984 (c) 1984
+1942a                           // 12/1984 (c) 1984
+1942abl                         // bootleg
+1942b                           // 12/1984 (c) 1984
+1942h                           // hack (Two Bit Score?)
+1942p                           // prototype
+1942w                           // 12/1984 (c) 1984 + Williams Electronics license (c) 1985
+
+1943                            // 6/1987 (c) 1987 (Euro)
+1943b                           // bootleg
+1943bj                          // bootleg
+1943j                           // 6/1987 (c) 1987 (Japan) Rev B
+1943ja                          // 6/1987 (c) 1987 (Japan)
+1943kai                         // 6/1988 (c) 1987 (Japan)
+1943u                           // 6/1987 (c) 1987 (US) Rev C
+1943ua                          // 6/1987 (c) 1987 (US)

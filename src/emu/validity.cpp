@@ -1,8 +1,8 @@
 // license:BSD-3-Clause
-// copyright-holders:Aaron Giles,Paul Priest
+// copyright-holders:Aaron Giles, Paul Priest
 /***************************************************************************
 
-    validity.c
+    validity.cpp
 
     Validity checks on internal data structures.
 
@@ -12,19 +12,6 @@
 #include "validity.h"
 #include "emuopts.h"
 #include <ctype.h>
-
-
-//**************************************************************************
-//  COMPILE-TIME VALIDATION
-//**************************************************************************
-
-// if the following lines error during compile, your PTR64 switch is set incorrectly in the makefile
-#ifdef PTR64
-UINT8 your_ptr64_flag_is_wrong[(int)(sizeof(void *) - 7)];
-#else
-UINT8 your_ptr64_flag_is_wrong[(int)(5 - sizeof(void *))];
-#endif
-
 
 
 //**************************************************************************
@@ -350,9 +337,9 @@ void validity_checker::validate_core()
 
 	// check pointer size
 #ifdef PTR64
-	if (sizeof(void *) != 8) osd_printf_error("PTR64 flag enabled, but was compiled for 32-bit target\n");
+	static_assert(sizeof(void *) == 8, "PTR64 flag enabled, but was compiled for 32-bit target\n");
 #else
-	if (sizeof(void *) != 4) osd_printf_error("PTR64 flag not enabled, but was compiled for 64-bit target\n");
+	static_assert(sizeof(void *) == 4, "PTR64 flag not enabled, but was compiled for 64-bit target\n");
 #endif
 
 	// TODO: check if this is actually working
@@ -377,9 +364,6 @@ void validity_checker::validate_inlines()
 #undef rand
 	volatile UINT64 testu64a = rand() ^ (rand() << 15) ^ ((UINT64)rand() << 30) ^ ((UINT64)rand() << 45);
 	volatile INT64 testi64a = rand() ^ (rand() << 15) ^ ((INT64)rand() << 30) ^ ((INT64)rand() << 45);
-#ifdef PTR64
-	volatile INT64 testi64b = rand() ^ (rand() << 15) ^ ((INT64)rand() << 30) ^ ((INT64)rand() << 45);
-#endif
 	volatile UINT32 testu32a = rand() ^ (rand() << 15);
 	volatile UINT32 testu32b = rand() ^ (rand() << 15);
 	volatile INT32 testi32a = rand() ^ (rand() << 15);
@@ -395,10 +379,6 @@ void validity_checker::validate_inlines()
 	if (testu64a == 0) testu64a++;
 	if (testi64a == 0) testi64a++;
 	else if (testi64a < 0) testi64a = -testi64a;
-#ifdef PTR64
-	if (testi64b == 0) testi64b++;
-	else if (testi64b < 0) testi64b = -testi64b;
-#endif
 	if (testu32a == 0) testu32a++;
 	if (testu32b == 0) testu32b++;
 	if (testi32a == 0) testi32a++;
@@ -497,23 +477,6 @@ void validity_checker::validate_inlines()
 	testi32a = (testi32a | 0xffff0000) & ~0x400000;
 	if (count_leading_ones(testi32a) != 9)
 		osd_printf_error("Error testing count_leading_ones\n");
-
-	testi32b = testi32a;
-	if (compare_exchange32(&testi32a, testi32b, 1000) != testi32b || testi32a != 1000)
-		osd_printf_error("Error testing compare_exchange32\n");
-#ifdef PTR64
-	testi64b = testi64a;
-	if (compare_exchange64(&testi64a, testi64b, 1000) != testi64b || testi64a != 1000)
-		osd_printf_error("Error testing compare_exchange64\n");
-#endif
-	if (atomic_exchange32(&testi32a, testi32b) != 1000)
-		osd_printf_error("Error testing atomic_exchange32\n");
-	if (atomic_add32(&testi32a, 45) != testi32b + 45)
-		osd_printf_error("Error testing atomic_add32\n");
-	if (atomic_increment32(&testi32a) != testi32b + 46)
-		osd_printf_error("Error testing atomic_increment32\n");
-	if (atomic_decrement32(&testi32a) != testi32b + 45)
-		osd_printf_error("Error testing atomic_decrement32\n");
 }
 
 
@@ -788,30 +751,30 @@ void validity_checker::validate_dip_settings(ioport_field &field)
 	bool coin_error = false;
 
 	// iterate through the settings
-	for (ioport_setting *setting = field.first_setting(); setting != nullptr; setting = setting->next())
+	for (ioport_setting &setting : field.settings())
 	{
 		// note any coinage strings
-		int strindex = get_defstr_index(setting->name());
+		int strindex = get_defstr_index(setting.name());
 		if (strindex >= __input_string_coinage_start && strindex <= __input_string_coinage_end)
 			coin_list[strindex - __input_string_coinage_start] = 1;
 
 		// make sure demo sounds default to on
-		if (field.name() == demo_sounds && strindex == INPUT_STRING_On && field.defvalue() != setting->value())
+		if (field.name() == demo_sounds && strindex == INPUT_STRING_On && field.defvalue() != setting.value())
 			osd_printf_error("Demo Sounds must default to On\n");
 
 		// check for bad demo sounds options
 		if (field.name() == demo_sounds && (strindex == INPUT_STRING_Yes || strindex == INPUT_STRING_No))
-			osd_printf_error("Demo Sounds option must be Off/On, not %s\n", setting->name());
+			osd_printf_error("Demo Sounds option must be Off/On, not %s\n", setting.name());
 
 		// check for bad flip screen options
 		if (field.name() == flipscreen && (strindex == INPUT_STRING_Yes || strindex == INPUT_STRING_No))
-			osd_printf_error("Flip Screen option must be Off/On, not %s\n", setting->name());
+			osd_printf_error("Flip Screen option must be Off/On, not %s\n", setting.name());
 
 		// if we have a neighbor, compare ourselves to him
-		if (setting->next() != nullptr)
+		if (setting.next() != nullptr)
 		{
 			// check for inverted off/on dispswitch order
-			int next_strindex = get_defstr_index(setting->next()->name(), true);
+			int next_strindex = get_defstr_index(setting.next()->name(), true);
 			if (strindex == INPUT_STRING_On && next_strindex == INPUT_STRING_Off)
 				osd_printf_error("%s option must have Off/On options in the order: Off, On\n", field.name());
 
@@ -825,9 +788,9 @@ void validity_checker::validate_dip_settings(ioport_field &field)
 
 			// check for proper coin ordering
 			else if (strindex >= __input_string_coinage_start && strindex <= __input_string_coinage_end && next_strindex >= __input_string_coinage_start && next_strindex <= __input_string_coinage_end &&
-						strindex >= next_strindex && setting->condition() == setting->next()->condition())
+						strindex >= next_strindex && setting.condition() == setting.next()->condition())
 			{
-				osd_printf_error("%s option has unsorted coinage %s > %s\n", field.name(), setting->name(), setting->next()->name());
+				osd_printf_error("%s option has unsorted coinage %s > %s\n", field.name(), setting.name(), setting.next()->name());
 				coin_error = true;
 			}
 		}
@@ -887,39 +850,39 @@ void validity_checker::validate_inputs()
 			osd_printf_error("I/O port error during construction:\n%s\n", errorbuf.c_str());
 
 		// do a first pass over ports to add their names and find duplicates
-		for (ioport_port *port = portlist.first(); port != nullptr; port = port->next())
-			if (!port_map.insert(port->tag()).second)
-				osd_printf_error("Multiple I/O ports with the same tag '%s' defined\n", port->tag());
+		for (ioport_port &port : portlist)
+			if (!port_map.insert(port.tag()).second)
+				osd_printf_error("Multiple I/O ports with the same tag '%s' defined\n", port.tag());
 
 		// iterate over ports
-		for (ioport_port *port = portlist.first(); port != nullptr; port = port->next())
+		for (ioport_port &port : portlist)
 		{
-			m_current_ioport = port->tag();
+			m_current_ioport = port.tag();
 
 			// iterate through the fields on this port
-			for (ioport_field *field = port->first_field(); field != nullptr; field = field->next())
+			for (ioport_field &field : port.fields())
 			{
 				// verify analog inputs
-				if (field->is_analog())
-					validate_analog_input_field(*field);
+				if (field.is_analog())
+					validate_analog_input_field(field);
 
 				// look for invalid (0) types which should be mapped to IPT_OTHER
-				if (field->type() == IPT_INVALID)
+				if (field.type() == IPT_INVALID)
 					osd_printf_error("Field has an invalid type (0); use IPT_OTHER instead\n");
 
 				// verify dip switches
-				if (field->type() == IPT_DIPSWITCH)
+				if (field.type() == IPT_DIPSWITCH)
 				{
 					// dip switch fields must have a name
-					if (field->name() == nullptr)
+					if (field.name() == nullptr)
 						osd_printf_error("DIP switch has a NULL name\n");
 
 					// verify the settings list
-					validate_dip_settings(*field);
+					validate_dip_settings(field);
 				}
 
 				// verify names
-				const char *name = field->specific_name();
+				const char *name = field.specific_name();
 				if (name != nullptr)
 				{
 					// check for empty string
@@ -939,13 +902,13 @@ void validity_checker::validate_inputs()
 				}
 
 				// verify conditions on the field
-				if (!field->condition().none())
-					validate_condition(field->condition(), *device, port_map);
+				if (!field.condition().none())
+					validate_condition(field.condition(), *device, port_map);
 
 				// verify conditions on the settings
-				for (ioport_setting *setting = field->first_setting(); setting != nullptr; setting = setting->next())
-					if (!setting->condition().none())
-						validate_condition(setting->condition(), *device, port_map);
+				for (ioport_setting &setting : field.settings())
+					if (!setting.condition().none())
+						validate_condition(setting.condition(), *device, port_map);
 			}
 
 			// done with this port
@@ -1003,11 +966,11 @@ void validity_checker::validate_devices()
 	slot_interface_iterator slotiter(m_current_config->root_device());
 	for (const device_slot_interface *slot = slotiter.first(); slot != nullptr; slot = slotiter.next())
 	{
-		for (const device_slot_option *option = slot->first_option(); option != nullptr; option = option->next())
+		for (const device_slot_option &option : slot->option_list())
 		{
 			std::string temptag("_");
-			temptag.append(option->name());
-			device_t *dev = const_cast<machine_config &>(*m_current_config).device_add(&m_current_config->root_device(), temptag.c_str(), option->devtype(), 0);
+			temptag.append(option.name());
+			device_t *dev = const_cast<machine_config &>(*m_current_config).device_add(&m_current_config->root_device(), temptag.c_str(), option.devtype(), 0);
 
 			// notify this device and all its subdevices that they are now configured
 			device_iterator subiter(*dev);

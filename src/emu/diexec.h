@@ -71,12 +71,13 @@ enum
 //  MACROS
 //**************************************************************************
 
+#define TIMER_CALLBACK(name)            void name(running_machine &machine, void *ptr, int param)
+#define TIMER_CALLBACK_MEMBER(name)     void name(void *ptr, INT32 param)
+
 // IRQ callback to be called by device implementations when an IRQ is actually taken
-#define IRQ_CALLBACK(func)              int func(device_t *device, int irqline)
 #define IRQ_CALLBACK_MEMBER(func)       int func(device_t &device, int irqline)
 
 // interrupt generator callback called as a VBLANK or periodic interrupt
-#define INTERRUPT_GEN(func)             void func(device_t *device)
 #define INTERRUPT_GEN_MEMBER(func)      void func(device_t &device)
 
 
@@ -146,7 +147,6 @@ public:
 	UINT64 attotime_to_cycles(const attotime &duration) const { return clocks_to_cycles(device().attotime_to_clocks(duration)); }
 	UINT32 input_lines() const { return execute_input_lines(); }
 	UINT32 default_irq_vector() const { return execute_default_irq_vector(); }
-	bool is_octal() const { return m_is_octal; }
 
 	// static inline configuration helpers
 	static void static_set_disable(device_t &device);
@@ -247,8 +247,7 @@ protected:
 		int             m_qindex;           // index within the queue
 
 	private:
-		static void static_empty_event_queue(running_machine &machine, void *ptr, int param);
-		void empty_event_queue();
+		TIMER_CALLBACK_MEMBER(empty_event_queue);
 	};
 
 	// scheduler
@@ -260,7 +259,6 @@ protected:
 	const char *            m_vblank_interrupt_screen;  // the screen that causes the VBLANK interrupt
 	device_interrupt_delegate m_timed_interrupt;        // for interrupts not tied to VBLANK
 	attotime                m_timed_interrupt_period;   // period for periodic interrupts
-	bool                    m_is_octal;                 // to determine if messages/debugger will show octal or hex
 
 	// execution lists
 	device_execute_interface *m_nextexec;               // pointer to the next device to execute, in order
@@ -294,12 +292,11 @@ protected:
 
 private:
 	// callbacks
-	static void static_timed_trigger_callback(running_machine &machine, void *ptr, int param);
+	TIMER_CALLBACK_MEMBER(timed_trigger_callback);
 
 	void on_vblank(screen_device &screen, bool vblank_state);
 
-	static void static_trigger_periodic_interrupt(running_machine &machine, void *ptr, int param);
-	void trigger_periodic_interrupt();
+	TIMER_CALLBACK_MEMBER(trigger_periodic_interrupt);
 	void suspend_resume_changed();
 
 	attoseconds_t minimum_quantum() const;

@@ -1,14 +1,16 @@
 // license:BSD-3-Clause
-// copyright-holders:Luca Elia
+// copyright-holders:Luca Elia,Roberto Fresca
 /***************************************************************************
 
-Galaxi (C)2000 B.R.L.
+  Galaxi (C)2000 B.R.L.
 
-driver by Luca Elia
+  Driver by Luca Elia.
+  Additional work by Roberto Fresca.
 
-Hardware info (29/07/2008 f205v):
 
-Chips:
+  Hardware info (29/07/2008 f205v):
+
+  Chips:
     1x missing main CPU (u1)(from the socket I would say it's a 68000)
     1x A40MX04-PL84 (u29)
     1x AD-65 (equivalent to M6295) (u9)(sound)
@@ -16,30 +18,23 @@ Chips:
     1x TDA2003 (u8)(sound)
     1x oscillator 10.000MHz (QZ1)
     1x oscillator 16.000000 (QZ2)
-ROMs:
+  ROMs:
     1x AT27C020 (1)
     2x M27C4001 (2,3)
     2x AT49F010 (4,5)
     2x DS1230Y (non volatile SRAM)
-Notes:
+  Notes:
     1x 28x2 edge connector
     1x trimmer (volume)
 
-- This hardware is almost identical to that in magic10.c
+  - This hardware is almost identical to that in magic10.c
 
-
-[31/08/2008] (Roberto Fresca)
-
-- Added Magic Joker.
-- Fixed the 3rd background offset to Galaxi.
-- Remapped inputs to match the standard poker games.
-
-[12/09/2008] (Roberto Fresca)
-
-- Added lamps support to magjoker & galaxi.
-
+  CPU is a MC68000P10, from the other games boards...
 
 ***************************************************************************/
+
+#define CPU_CLOCK       (XTAL_10MHz)
+#define SND_CLOCK       (XTAL_16MHz)/16
 
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
@@ -229,7 +224,7 @@ UINT32 galaxi_state::screen_update_galaxi(screen_device &screen, bitmap_ind16 &b
 }
 
 /***************************************************************************
-                            Memory Maps
+                               Handlers
 ***************************************************************************/
 
 void galaxi_state::show_out(  )
@@ -295,6 +290,10 @@ CUSTOM_INPUT_MEMBER(galaxi_state::hopper_r)
 }
 
 
+/***************************************************************************
+                            Memory Maps
+***************************************************************************/
+
 static ADDRESS_MAP_START( galaxi_map, AS_PROGRAM, 16, galaxi_state )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 
@@ -343,6 +342,7 @@ static ADDRESS_MAP_START( lastfour_map, AS_PROGRAM, 16, galaxi_state )
 	AM_RANGE(0x600000, 0x607fff) AM_RAM AM_SHARE("nvram")   // 2x DS1230Y (non volatile SRAM)
 ADDRESS_MAP_END
 
+
 /***************************************************************************
                                 Input Ports
 ***************************************************************************/
@@ -389,7 +389,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-                               Graphics Layout
+                      Graphics Layout & Graphics Decode
 ***************************************************************************/
 
 static const gfx_layout layout_8x8x4 =
@@ -421,7 +421,7 @@ GFXDECODE_END
 
 
 /***************************************************************************
-                              Machine Drivers
+                           Machine Start & Reset
 ***************************************************************************/
 
 void galaxi_state::machine_start()
@@ -438,10 +438,14 @@ void galaxi_state::machine_reset()
 	m_out = 0;
 }
 
+/***************************************************************************
+                              Machine Drivers
+***************************************************************************/
+
 static MACHINE_CONFIG_START( galaxi, galaxi_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", M68000, XTAL_10MHz) // ?
+	MCFG_CPU_ADD("maincpu", M68000, CPU_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(galaxi_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", galaxi_state,  irq4_line_hold)
 
@@ -460,18 +464,15 @@ static MACHINE_CONFIG_START( galaxi, galaxi_state )
 	MCFG_PALETTE_ADD("palette", 0x400)
 	MCFG_PALETTE_FORMAT(xRRRRRGGGGGBBBBB)
 
-
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_OKIM6295_ADD("oki", XTAL_16MHz/16, OKIM6295_PIN7_LOW)  // ?
+	MCFG_OKIM6295_ADD("oki", SND_CLOCK, OKIM6295_PIN7_LOW)  // ?
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 
 
 static MACHINE_CONFIG_DERIVED( magjoker, galaxi )
-
-	/* basic machine hardware */
 
 	/* sound hardware */
 	MCFG_SOUND_MODIFY("oki")
@@ -481,10 +482,14 @@ static MACHINE_CONFIG_DERIVED( magjoker, galaxi )
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 4.0)
 MACHINE_CONFIG_END
 
+
 static MACHINE_CONFIG_DERIVED( lastfour, galaxi )
+
+	/* basic machine hardware */
 	MCFG_CPU_MODIFY("maincpu")
 	MCFG_CPU_PROGRAM_MAP(lastfour_map)
 MACHINE_CONFIG_END
+
 
 /***************************************************************************
                                 ROMs Loading
@@ -516,6 +521,40 @@ ROM_START( magjoker )
 	ROM_LOAD( "21.u38", 0x00000, 0x40000, CRC(199baf33) SHA1(006708d955481fe1ae44555d27896d18e1ff8440) )
 ROM_END
 
+/*
+  Last Four
+  2001, BRL.
+
+  CPUs:
+  1x MC68000P10 (u1) 16/32-bit Microprocessor (main).
+  1x AD-65      (u9) 4-Channel Mixing ADCPM Voice Synthesis LSI (sound).
+  1x MC1458     (u10) Dual Operational Amplifier (sound).
+  1x TDA2003    (u8) Audio Amplifier (sound).
+  1x 10.000000MHz. oscillator (QZ1).
+  1x 16.000MHz. oscillator (QZ2).
+
+  ROMs:
+  1x AF49F010 (14) dumped.
+  1x Am27C010 (15) dumped.
+  1x MC27C100 (21) dumped.
+  2x M27C4001 (12, 13) dumped.
+
+  RAMs:
+  2x KT76C28K-10 (u16, u17).
+  2x HT6264-70 (u26, u27).
+  2x DS1230Y-100 (u4, u5) not dumped.
+
+  PLDs:
+  1x A40MX04-PL84 (u29)	read protected.
+
+  Others:
+  1x 28x2 JAMMA edge connector.
+  1x trimmer (volume).
+
+  Notes:
+  PCB is etched: GALAXI - 26 05 2000 BRL S.R.L. BOLOGNA.
+
+*/
 ROM_START( lastfour )
 	ROM_REGION( 0x40000, "maincpu", 0 )
 	ROM_LOAD16_BYTE( "15.u48", 0x00000, 0x20000, CRC(9168e19c) SHA1(4a2f0d100e457bd33691ba084a0f0549e8bf0790) )
@@ -529,11 +568,12 @@ ROM_START( lastfour )
 	ROM_LOAD( "21.u38", 0x00000, 0x20000, CRC(e48523dd) SHA1(47bc2e5c2164b93d685fa134397845e0ed7aaa5f) )
 ROM_END
 
+
 /***************************************************************************
                                Game Drivers
 ***************************************************************************/
 
-/*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT  ROT    COMPANY   FULLNAME                       FLAGS                   LAYOUT  */
-GAMEL( 2000, galaxi,   0,      galaxi,   galaxi, driver_device,   0,    ROT0,  "B.R.L.", "Galaxi (v2.0)",               MACHINE_SUPPORTS_SAVE,     layout_galaxi )
-GAMEL( 2000, magjoker, 0,      magjoker, magjoker, driver_device, 0,    ROT0,  "B.R.L.", "Magic Joker (v1.25.10.2000)", MACHINE_SUPPORTS_SAVE,     layout_galaxi )
-GAMEL( 2001, lastfour, 0,      lastfour, magjoker, driver_device, 0,    ROT0,  "B.R.L.", "Last Four (09:12 16/01/2001)",MACHINE_SUPPORTS_SAVE,     layout_galaxi )
+/*     YEAR  NAME      PARENT  MACHINE   INPUT     STATE          INIT  ROT    COMPANY   FULLNAME                       FLAGS                   LAYOUT  */
+GAMEL( 2000, galaxi,   0,      galaxi,   galaxi,   driver_device, 0,    ROT0, "B.R.L.", "Galaxi (v2.0)",                MACHINE_SUPPORTS_SAVE,  layout_galaxi )
+GAMEL( 2000, magjoker, 0,      magjoker, magjoker, driver_device, 0,    ROT0, "B.R.L.", "Magic Joker (v1.25.10.2000)",  MACHINE_SUPPORTS_SAVE,  layout_galaxi )
+GAMEL( 2001, lastfour, 0,      lastfour, magjoker, driver_device, 0,    ROT0, "B.R.L.", "Last Four (09:12 16/01/2001)", MACHINE_SUPPORTS_SAVE,  layout_galaxi )

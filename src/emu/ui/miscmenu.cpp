@@ -1,8 +1,8 @@
 // license:BSD-3-Clause
-// copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
+// copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods, Maurizio Petrarota
 /*********************************************************************
 
-    miscmenu.c
+    ui/miscmenu.cpp
 
     Internal MAME menus for the user interface.
 
@@ -15,7 +15,8 @@
 #include "ui/ui.h"
 #include "ui/menu.h"
 #include "ui/miscmenu.h"
-
+#include "ui/utils.h"
+#include "../info.h"
 
 /***************************************************************************
     MENU HANDLERS
@@ -32,7 +33,7 @@ ui_menu_keyboard_mode::ui_menu_keyboard_mode(running_machine &machine, render_co
 void ui_menu_keyboard_mode::populate()
 {
 	bool natural = machine().ui().use_natural_keyboard();
-	item_append("Keyboard Mode:", natural ? "Natural" : "Emulated", natural ? MENU_FLAG_LEFT_ARROW : MENU_FLAG_RIGHT_ARROW, nullptr);
+	item_append(_("Keyboard Mode:"), natural ? _("Natural") : _("Emulated"), natural ? MENU_FLAG_LEFT_ARROW : MENU_FLAG_RIGHT_ARROW, nullptr);
 }
 
 ui_menu_keyboard_mode::~ui_menu_keyboard_mode()
@@ -86,7 +87,7 @@ void ui_menu_bios_selection::populate()
 	}
 
 	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
-	item_append("Reset",  nullptr, 0, (void *)1);
+	item_append(_("Reset"),  nullptr, 0, (void *)1);
 }
 
 ui_menu_bios_selection::~ui_menu_bios_selection()
@@ -124,8 +125,7 @@ void ui_menu_bios_selection::handle()
 				assert(error.empty());
 			} else {
 				std::string error;
-				std::string value = machine().options().main_value(dev->owner()->tag()+1);
-				strcatprintf(value,",bios=%d",val-1);
+				std::string value = string_format("%s,bios=%d", machine().options().main_value(dev->owner()->tag()+1), val-1);
 				machine().options().set_value(dev->owner()->tag()+1, value.c_str(), OPTION_PRIORITY_CMDLINE, error);
 				assert(error.empty());
 			}
@@ -231,18 +231,18 @@ ui_menu_bookkeeping::~ui_menu_bookkeeping()
 void ui_menu_bookkeeping::populate()
 {
 	int tickets = machine().bookkeeping().get_dispensed_tickets();
-	std::string tempstring;
+	std::ostringstream tempstring;
 	int ctrnum;
 
 	/* show total time first */
-	if (prevtime.seconds() >= 60 * 60)
-		strcatprintf(tempstring, "Uptime: %d:%02d:%02d\n\n", prevtime.seconds() / (60 * 60), (prevtime.seconds() / 60) % 60, prevtime.seconds() % 60);
+	if (prevtime.seconds() >= (60 * 60))
+		util::stream_format(tempstring, _("Uptime: %1$d:%2$02d:%3$02d\n\n"), prevtime.seconds() / (60 * 60), (prevtime.seconds() / 60) % 60, prevtime.seconds() % 60);
 	else
-		strcatprintf(tempstring,"Uptime: %d:%02d\n\n", (prevtime.seconds() / 60) % 60, prevtime.seconds() % 60);
+		util::stream_format(tempstring, _("Uptime: %1$d:%2$02d\n\n"), (prevtime.seconds() / 60) % 60, prevtime.seconds() % 60);
 
 	/* show tickets at the top */
 	if (tickets > 0)
-		strcatprintf(tempstring,"Tickets dispensed: %d\n\n", tickets);
+		util::stream_format(tempstring, _("Tickets dispensed: %1$d\n\n"), tickets);
 
 	/* loop over coin counters */
 	for (ctrnum = 0; ctrnum < COIN_COUNTERS; ctrnum++)
@@ -250,22 +250,17 @@ void ui_menu_bookkeeping::populate()
 		int count = machine().bookkeeping().coin_counter_get_count(ctrnum);
 
 		/* display the coin counter number */
-		strcatprintf(tempstring,"Coin %c: ", ctrnum + 'A');
-
 		/* display how many coins */
-		if (count == 0)
-			tempstring.append("NA");
-		else
-			strcatprintf(tempstring, "%d", count);
-
 		/* display whether or not we are locked out */
-		if (machine().bookkeeping().coin_lockout_get_state(ctrnum))
-			tempstring.append(" (locked)");
-		tempstring.append("\n");
+		util::stream_format(tempstring,
+				(count == 0) ? _("Coin %1$c: NA%3$s\n") : _("Coin %1$c: %2$d%3$s\n"),
+				ctrnum + 'A',
+				count,
+				machine().bookkeeping().coin_lockout_get_state(ctrnum) ? _(" (locked)") : "");
 	}
 
 	/* append the single item */
-	item_append(tempstring.c_str(), nullptr, MENU_FLAG_MULTILINE, nullptr);
+	item_append(tempstring.str().c_str(), nullptr, MENU_FLAG_MULTILINE, nullptr);
 }
 
 /*-------------------------------------------------
@@ -520,7 +515,7 @@ void ui_menu_crosshair::populate()
 
 		/* add CROSSHAIR_ITEM_AUTO_TIME menu */
 		sprintf(temp_text, "%d", settings.auto_time);
-		item_append("Visible Delay", temp_text, flags, data);
+		item_append(_("Visible Delay"), temp_text, flags, data);
 	}
 //  else
 //      /* leave a blank filler line when not in auto time so size does not rescale */
@@ -555,4 +550,319 @@ void ui_menu_quit_game::handle()
 
 	/* reset the menu stack */
 	ui_menu::stack_reset(machine());
+}
+
+//-------------------------------------------------
+//  ctor / dtor
+//-------------------------------------------------
+
+ui_menu_export::ui_menu_export(running_machine &machine, render_container *container, std::vector<const game_driver *> drvlist)
+	: ui_menu(machine, container), m_list(drvlist)
+{
+}
+
+ui_menu_export::~ui_menu_export()
+{
+}
+
+//-------------------------------------------------
+//  handlethe options menu
+//-------------------------------------------------
+
+void ui_menu_export::handle()
+{
+	// process the menu
+	ui_menu::menu_stack->parent->process(UI_MENU_PROCESS_NOINPUT);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_NOIMAGE);
+	if (m_event != nullptr && m_event->itemref != nullptr)
+	{
+		switch ((FPTR)m_event->itemref)
+		{
+			case 1:
+			{
+				if (m_event->iptkey == IPT_UI_SELECT)
+				{
+					std::string filename("exported");
+					emu_file infile(machine().ui().options().ui_path(), OPEN_FLAG_READ);
+					if (infile.open(filename.c_str(), ".xml") == osd_file::error::NONE)
+						for (int seq = 0; ; ++seq)
+						{
+							std::string seqtext = string_format("%s_%04d", filename, seq);
+							if (infile.open(seqtext.c_str(), ".xml") != osd_file::error::NONE)
+							{
+								filename = seqtext;
+								break;
+							}
+						}
+
+					// attempt to open the output file
+					emu_file file(machine().ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+					if (file.open(filename.c_str(), ".xml") == osd_file::error::NONE)
+					{
+						FILE *pfile;
+						std::string fullpath(file.fullpath());
+						file.close();
+						pfile = fopen(fullpath.c_str(), "w");
+
+						// create the XML and save to file
+						driver_enumerator drvlist(machine().options());
+						drvlist.exclude_all();
+						for (auto & elem : m_list)
+							drvlist.include(driver_list::find(*elem));
+
+						info_xml_creator creator(drvlist);
+						creator.output(pfile, false);
+						fclose(pfile);
+						machine().popmessage(_("%s.xml saved under ui folder."), filename.c_str());
+					}
+				}
+				break;
+			}
+			case 2:
+			{
+				if (m_event->iptkey == IPT_UI_SELECT)
+				{
+					std::string filename("exported");
+					emu_file infile(machine().ui().options().ui_path(), OPEN_FLAG_READ);
+					if (infile.open(filename.c_str(), ".txt") == osd_file::error::NONE)
+						for (int seq = 0; ; ++seq)
+						{
+							std::string seqtext = string_format("%s_%04d", filename, seq);
+							if (infile.open(seqtext.c_str(), ".txt") != osd_file::error::NONE)
+							{
+								filename = seqtext;
+								break;
+							}
+						}
+
+					// attempt to open the output file
+					emu_file file(machine().ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+					if (file.open(filename.c_str(), ".txt") == osd_file::error::NONE)
+					{
+						// print the header
+						std::ostringstream buffer;
+						buffer << _("Name:             Description:\n");
+						driver_enumerator drvlist(machine().options());
+						drvlist.exclude_all();
+						for (auto & elem : m_list)
+							drvlist.include(driver_list::find(*elem));
+
+						// iterate through drivers and output the info
+						while (drvlist.next())
+							if ((drvlist.driver().flags & MACHINE_NO_STANDALONE) == 0)
+								util::stream_format(buffer, "%-18s\"%s\"\n", drvlist.driver().name, drvlist.driver().description);
+						file.puts(buffer.str().c_str());
+						file.close();
+						machine().popmessage(_("%s.txt saved under ui folder."), filename.c_str());
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+}
+
+//-------------------------------------------------
+//  populate
+//-------------------------------------------------
+
+void ui_menu_export::populate()
+{
+	// add options items
+	item_append(_("Export XML format (like -listxml)"), nullptr, 0, (void *)(FPTR)1);
+	item_append(_("Export TXT format (like -listfull)"), nullptr, 0, (void *)(FPTR)2);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
+}
+
+//-------------------------------------------------
+//  ctor / dtor
+//-------------------------------------------------
+
+ui_menu_machine_configure::ui_menu_machine_configure(running_machine &machine, render_container *container, const game_driver *prev)
+	: ui_menu(machine, container), m_drv(prev)
+{
+}
+
+ui_menu_machine_configure::~ui_menu_machine_configure()
+{
+}
+
+//-------------------------------------------------
+//  handlethe options menu
+//-------------------------------------------------
+
+void ui_menu_machine_configure::handle()
+{
+	// process the menu
+	ui_menu::menu_stack->parent->process(UI_MENU_PROCESS_NOINPUT);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_NOIMAGE);
+	if (m_event != nullptr && m_event->itemref != nullptr)
+	{
+		switch ((FPTR)m_event->itemref)
+		{
+			case 1:
+			{
+				if (m_event->iptkey == IPT_UI_SELECT)
+				{
+					std::string filename(m_drv->name);
+					emu_file file(machine().options().ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+					osd_file::error filerr = file.open(filename.c_str(), ".ini");
+					if (filerr == osd_file::error::NONE)
+					{
+						std::string inistring = machine().options().output_ini();
+						file.puts(inistring.c_str());
+					}
+				}
+			break;
+			}
+		default:
+			break;
+		}
+	}
+}
+
+//-------------------------------------------------
+//  populate
+//-------------------------------------------------
+
+void ui_menu_machine_configure::populate()
+{
+	// add options items
+	item_append(_("Dummy"), nullptr, 0, (void *)(FPTR)10);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
+	item_append(_("Save machine configuration"), nullptr, 0, (void *)(FPTR)1);
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
+	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
+}
+
+//-------------------------------------------------
+//  perform our special rendering
+//-------------------------------------------------
+
+void ui_menu_machine_configure::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
+{
+	float width;
+	ui_manager &mui = machine().ui();
+
+	mui.draw_text_full(container, m_drv->description, 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
+	width += 2 * UI_BOX_LR_BORDER;
+	float maxwidth = MAX(origx2 - origx1, width);
+
+	// compute our bounds
+	float x1 = 0.5f - 0.5f * maxwidth;
+	float x2 = x1 + maxwidth;
+	float y1 = origy1 - top;
+	float y2 = origy1 - UI_BOX_TB_BORDER;
+
+	// draw a box
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+
+	// take off the borders
+	x1 += UI_BOX_LR_BORDER;
+	x2 -= UI_BOX_LR_BORDER;
+	y1 += UI_BOX_TB_BORDER;
+
+	// draw the text within it
+	mui.draw_text_full(container, m_drv->description, x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+}
+
+//-------------------------------------------------
+//  ctor / dtor
+//-------------------------------------------------
+
+ui_menu_plugins_configure::ui_menu_plugins_configure(running_machine &machine, render_container *container)
+	: ui_menu(machine, container)
+{
+}
+
+ui_menu_plugins_configure::~ui_menu_plugins_configure()
+{
+	emu_file file_plugin(OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+	if (file_plugin.open("plugin.ini") != osd_file::error::NONE)
+		throw emu_fatalerror("Unable to create file plugin.ini\n");
+	// generate the updated INI
+	file_plugin.puts(machine().manager().plugins().output_ini().c_str());
+}
+
+//-------------------------------------------------
+//  handlethe options menu
+//-------------------------------------------------
+
+void ui_menu_plugins_configure::handle()
+{
+	// process the menu
+	bool changed = false;
+	plugin_options& plugins = machine().manager().plugins();
+	ui_menu::menu_stack->parent->process(UI_MENU_PROCESS_NOINPUT);
+	const ui_menu_event *m_event = process(UI_MENU_PROCESS_NOIMAGE);
+	if (m_event != nullptr && m_event->itemref != nullptr)
+	{
+		if (m_event->iptkey == IPT_UI_LEFT || m_event->iptkey == IPT_UI_RIGHT || m_event->iptkey == IPT_UI_SELECT)
+		{
+			int oldval = plugins.int_value((const char*)m_event->itemref);
+			std::string error_string;
+			plugins.set_value((const char*)m_event->itemref, oldval == 1 ? 0 : 1, OPTION_PRIORITY_CMDLINE, error_string);
+			changed = true;
+		}
+	}
+	if (changed)
+		reset(UI_MENU_RESET_REMEMBER_REF);
+}
+
+//-------------------------------------------------
+//  populate
+//-------------------------------------------------
+
+void ui_menu_plugins_configure::populate()
+{
+	plugin_options& plugins = machine().manager().plugins();
+
+	for (auto &curentry : plugins)
+	{
+		if (!curentry.is_header())
+		{
+			auto enabled = std::string(curentry.value()) == "1";
+			item_append(curentry.description(), enabled ? _("On") : _("Off"),
+				enabled ? MENU_FLAG_RIGHT_ARROW : MENU_FLAG_LEFT_ARROW, (void *)(FPTR)curentry.name());
+		}
+	}
+	item_append(MENU_SEPARATOR_ITEM, nullptr, 0, nullptr);
+	customtop = machine().ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
+}
+
+//-------------------------------------------------
+//  perform our special rendering
+//-------------------------------------------------
+
+void ui_menu_plugins_configure::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
+{
+	float width;
+	ui_manager &mui = machine().ui();
+
+	mui.draw_text_full(container, _("Plugins"), 0.0f, 0.0f, 1.0f, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		DRAW_NONE, ARGB_WHITE, ARGB_BLACK, &width, nullptr);
+	width += 2 * UI_BOX_LR_BORDER;
+	float maxwidth = MAX(origx2 - origx1, width);
+
+	// compute our bounds
+	float x1 = 0.5f - 0.5f * maxwidth;
+	float x2 = x1 + maxwidth;
+	float y1 = origy1 - top;
+	float y2 = origy1 - UI_BOX_TB_BORDER;
+
+	// draw a box
+	mui.draw_outlined_box(container, x1, y1, x2, y2, UI_GREEN_COLOR);
+
+	// take off the borders
+	x1 += UI_BOX_LR_BORDER;
+	x2 -= UI_BOX_LR_BORDER;
+	y1 += UI_BOX_TB_BORDER;
+
+	// draw the text within it
+	mui.draw_text_full(container, _("Plugins"), x1, y1, x2 - x1, JUSTIFY_CENTER, WRAP_TRUNCATE,
+		DRAW_NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 }

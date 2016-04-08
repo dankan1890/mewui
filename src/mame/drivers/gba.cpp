@@ -35,8 +35,6 @@ static inline void ATTR_PRINTF(3,4) verboselog(device_t &device, int n_level, co
 	}
 }
 
-#define GBA_ATTOTIME_NORMALIZE(a)   a.normalize()
-
 static const UINT32 timer_clks[4] = { 16777216, 16777216/64, 16777216/256, 16777216/1024 };
 
 
@@ -343,7 +341,6 @@ TIMER_CALLBACK_MEMBER(gba_state::timer_expire)
 		final = clocksel / rate;
 		m_timer_hz[tmr] = final;
 		time = attotime::from_hz(final);
-		GBA_ATTOTIME_NORMALIZE(time);
 		m_tmr_timer[tmr]->adjust(time, tmr, time);
 	}
 
@@ -1639,7 +1636,6 @@ WRITE32_MEMBER(gba_state::gba_io_w)
 					if( !(data & 0x40000) ) // if we're not in Count-Up mode
 					{
 						attotime time = attotime::from_hz(final);
-						GBA_ATTOTIME_NORMALIZE(time);
 						m_tmr_timer[offset]->adjust(time, offset, time);
 					}
 				}
@@ -1930,7 +1926,7 @@ ADDRESS_MAP_END
 
 static INPUT_PORTS_START( gbadv )
 	PORT_START("INPUTS")
-	PORT_BIT( 0xfc00, IP_ACTIVE_HIGH, IPT_BUTTON5) PORT_UNUSED
+	PORT_BIT( 0xfc00, IP_ACTIVE_HIGH, IPT_UNUSED)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("P1 L") PORT_PLAYER(1) // L
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("P1 R") PORT_PLAYER(1) // R
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)

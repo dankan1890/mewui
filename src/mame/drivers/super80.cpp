@@ -216,6 +216,7 @@ ToDo:
 
 ***********************************************************************************************************/
 
+#include "emu.h"
 #include "super80.lh"
 #include "includes/super80.h"
 
@@ -699,13 +700,13 @@ static MACHINE_CONFIG_START( super80, super80_state )
 	MCFG_Z80PIO_OUT_PA_CB(WRITE8(super80_state, pio_port_a_w))
 	MCFG_Z80PIO_IN_PB_CB(READ8(super80_state,pio_port_b_r))
 
-	MCFG_SCREEN_ADD("screen", RASTER)
+	MCFG_SCREEN_ADD_MONOCHROME("screen", RASTER, rgb_t::green)
 	MCFG_SCREEN_REFRESH_RATE(48.8)
 	MCFG_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 	MCFG_SCREEN_UPDATE_DRIVER(super80_state, screen_update_super80)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_PALETTE_ADD_MONOCHROME_GREEN("palette")
+	MCFG_PALETTE_ADD_MONOCHROME("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", super80)
 	MCFG_DEFAULT_LAYOUT( layout_super80 )

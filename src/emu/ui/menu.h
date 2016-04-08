@@ -2,9 +2,9 @@
 // copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
 /***************************************************************************
 
-	ui/menu.h
+    ui/menu.h
 
-	Internal MAME menus for the user interface.
+    Internal MAME menus for the user interface.
 
 ***************************************************************************/
 
@@ -17,7 +17,7 @@
 
 
 /***************************************************************************
-	CONSTANTS
+    CONSTANTS
 ***************************************************************************/
 
 // flags for menu items
@@ -27,11 +27,12 @@
 #define MENU_FLAG_MULTILINE         (1 << 3)
 #define MENU_FLAG_REDTEXT           (1 << 4)
 #define MENU_FLAG_DISABLE           (1 << 5)
-#define MENU_FLAG_MEWUI             (1 << 6)
-#define MENU_FLAG_MEWUI_HISTORY     (1 << 7)
-#define MENU_FLAG_MEWUI_SWLIST      (1 << 8)
-#define MENU_FLAG_MEWUI_FAVORITE    (1 << 9)
-#define MENU_FLAG_MEWUI_PALETTE     (1 << 10)
+#define MENU_FLAG_UI                (1 << 6)
+#define MENU_FLAG_UI_DATS           (1 << 7)
+#define MENU_FLAG_UI_SWLIST         (1 << 8)
+#define MENU_FLAG_UI_FAVORITE       (1 << 9)
+#define MENU_FLAG_UI_PALETTE        (1 << 10)
+#define MENU_FLAG_UI_HEADING        (1 << 11)
 
 // special menu item for separators
 #define MENU_SEPARATOR_ITEM         "---"
@@ -55,7 +56,7 @@ enum ui_menu_reset_options
 
 
 /***************************************************************************
-	TYPE DEFINITIONS
+    TYPE DEFINITIONS
 ***************************************************************************/
 
 // menu-related events
@@ -191,10 +192,19 @@ private:
 	static void clear_free_list(running_machine &machine);
 	static void render_triangle(bitmap_argb32 &dest, bitmap_argb32 &source, const rectangle &sbounds, void *param);
 
-/*****************************************
-		MEWUI SECTION
-*****************************************/
 public:
+	// tab navigation
+	enum class focused_menu
+	{
+		main,
+		left,
+		righttop,
+		rightbottom
+	};
+
+	focused_menu m_focus;
+	void *m_prev_selected;
+
 	int  visible_items;
 	bool ui_error;
 
@@ -203,9 +213,6 @@ public:
 	render_target *mouse_target;
 	INT32 mouse_target_x, mouse_target_y;
 	float mouse_x, mouse_y;
-
-	// draw UME box
-	void draw_ume_box(float x1, float y1, float x2, float y2);
 
 	// draw toolbar
 	void draw_toolbar(float x1, float y1, float x2, float y2, bool software = false);
@@ -220,7 +227,7 @@ public:
 	void draw_star(float x0, float y0);
 
 	// Global initialization
-	static void init_mewui(running_machine &machine);
+	static void init_ui(running_machine &machine);
 
 	// get arrows status
 	template <typename _T1, typename _T2, typename _T3>
@@ -238,6 +245,7 @@ protected:
 	int l_sw_hover;
 	int l_hover;
 	int totallines;
+	int skip_main_items;
 
 	// draw right box
 	float draw_right_box_title(float x1, float y1, float x2, float y2);
@@ -256,10 +264,19 @@ protected:
 	static std::unique_ptr<bitmap_argb32> snapx_bitmap;
 	static render_texture *snapx_texture;
 
-private:
-	static std::unique_ptr<bitmap_argb32> no_avail_bitmap, bgrnd_bitmap, star_bitmap;
 	static std::unique_ptr<bitmap_rgb32> hilight_main_bitmap;
-	static render_texture *hilight_main_texture, *bgrnd_texture, *star_texture;
+	static render_texture *hilight_main_texture;
+private:
+
+	// mouse button held down
+	bool m_pressed = false;
+	osd_ticks_t m_repeat = 0;
+	void reset_pressed() { m_pressed = false; m_repeat = 0; }
+	bool mouse_pressed() { return (osd_ticks() >= m_repeat); }
+	void set_pressed();
+
+	static std::unique_ptr<bitmap_argb32> no_avail_bitmap, bgrnd_bitmap, star_bitmap;
+	static render_texture *bgrnd_texture, *star_texture;
 	static bitmap_argb32 *icons_bitmap[];
 	static render_texture *icons_texture[];
 
@@ -270,8 +287,11 @@ private:
 	// draw game list
 	void draw_select_game(bool noinput);
 
-	// draw game list
+	// draw palette menu
 	void draw_palette_menu();
+
+	// draw dats menu
+	void draw_dats_menu();
 
 	void get_title_search(std::string &title, std::string &search);
 

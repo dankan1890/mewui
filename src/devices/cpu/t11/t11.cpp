@@ -49,7 +49,7 @@ t11_device::t11_device(const machine_config &mconfig, device_type type, const ch
 	, m_program_config("program", ENDIANNESS_LITTLE, 16, 16, 0)
 	, c_initial_mode(0)
 {
-	m_is_octal = true;
+	m_program_config.m_is_octal = true;
 	memset(m_reg, 0x00, sizeof(m_reg));
 	memset(&m_psw, 0x00, sizeof(m_psw));
 }
@@ -59,7 +59,7 @@ t11_device::t11_device(const machine_config &mconfig, const char *tag, device_t 
 	, m_program_config("program", ENDIANNESS_LITTLE, 16, 16, 0)
 	, c_initial_mode(0)
 {
-	m_is_octal = true;
+	m_program_config.m_is_octal = true;
 	memset(m_reg, 0x00, sizeof(m_reg));
 	memset(&m_psw, 0x00, sizeof(m_psw));
 }
@@ -296,7 +296,7 @@ void t11_device::state_string_export(const device_state_entry &entry, std::strin
 	switch (entry.index())
 	{
 		case STATE_GENFLAGS:
-			strprintf(str, "%c%c%c%c%c%c%c%c",
+			str = string_format("%c%c%c%c%c%c%c%c",
 				m_psw.b.l & 0x80 ? '?':'.',
 				m_psw.b.l & 0x40 ? 'I':'.',
 				m_psw.b.l & 0x20 ? 'I':'.',
@@ -315,7 +315,7 @@ void k1801vm2_device::state_string_export(const device_state_entry &entry, std::
 	switch (entry.index())
 	{
 		case STATE_GENFLAGS:
-			strprintf(str, "%c%c%c%c%c%c%c%c%c",
+			str = string_format("%c%c%c%c%c%c%c%c%c",
 				m_psw.b.l & 0x100 ? 'H':'.',
 				m_psw.b.l & 0x80 ? 'P':'.',
 				m_psw.b.l & 0x40 ? '?':'.',

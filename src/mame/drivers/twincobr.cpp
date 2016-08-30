@@ -449,7 +449,6 @@ static ADDRESS_MAP_START( DSP_io_map, AS_IO, 16, twincobr_state )
 	AM_RANGE(1, 1) AM_READWRITE(twincobr_dsp_r, twincobr_dsp_w)
 	AM_RANGE(2, 2) AM_READWRITE(fsharkbt_dsp_r, fsharkbt_dsp_w)
 	AM_RANGE(3, 3) AM_WRITE(twincobr_dsp_bio_w)
-	AM_RANGE(TMS32010_BIO, TMS32010_BIO) AM_READ(twincobr_BIO_r)
 ADDRESS_MAP_END
 
 
@@ -614,6 +613,12 @@ static INPUT_PORTS_START( hishouza )
 
 	PORT_MODIFY("DSWA")
 	TOAPLAN_COINAGE_JAPAN_LOC(SW1)  /* table at 0x000316 (COIN1 AND COIN2) */
+
+	PORT_MODIFY("DSWB")
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Allow_Continue ) ) PORT_DIPLOCATION("SW2:!8")
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+
 INPUT_PORTS_END
 
 
@@ -663,6 +668,7 @@ static MACHINE_CONFIG_START( twincobr, twincobr_state )
 	MCFG_CPU_PROGRAM_MAP(DSP_program_map)
 	/* Data Map is internal to the CPU */
 	MCFG_CPU_IO_MAP(DSP_io_map)
+	MCFG_TMS32010_BIO_IN_CB(READLINE(twincobr_state, twincobr_BIO_r))
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(6000))
 

@@ -69,7 +69,7 @@ TILE_GET_INFO_MEMBER(strnskil_state::get_bg_tile_info)
 
 void strnskil_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(strnskil_state::get_bg_tile_info),this), TILEMAP_SCAN_COLS,
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(strnskil_state::get_bg_tile_info),this), TILEMAP_SCAN_COLS,
 			8, 8, 32, 32);
 
 	m_bg_tilemap->set_scroll_rows(32);
@@ -107,7 +107,7 @@ void strnskil_state::draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprec
 			sx = sx - 256;
 
 
-			m_gfxdecode->gfx(1)->transmask(bitmap,cliprect,
+		m_gfxdecode->gfx(1)->transmask(bitmap,cliprect,
 			code, color,
 			flipx, flipy,
 			px, py,

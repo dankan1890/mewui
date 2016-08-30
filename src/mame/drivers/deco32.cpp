@@ -368,9 +368,10 @@ NOTE: There are several unpopulated locations (denoted by *) for additional rom 
 #include "cpu/h6280/h6280.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
-#include "includes/decocrpt.h"
+#include "machine/decocrpt.h"
+#include "machine/deco156.h"
 #include "includes/deco32.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 
 /**********************************************************************************/
 
@@ -392,15 +393,15 @@ READ32_MEMBER(deco32_state::irq_controller_r)
 
 	case 3: /* Irq controller
 
-        Bit 0:  1 = Vblank active
-        Bit 1:  ? (Hblank active?  Captain America raster IRQ waits for this to go low)
-        Bit 2:
-        Bit 3:
-        Bit 4:  VBL Irq
-        Bit 5:  Raster IRQ
-        Bit 6:  Lightgun IRQ (on Lock N Load only)
-        Bit 7:
-        */
+	    Bit 0:  1 = Vblank active
+	    Bit 1:  ? (Hblank active?  Captain America raster IRQ waits for this to go low)
+	    Bit 2:
+	    Bit 3:
+	    Bit 4:  VBL Irq
+	    Bit 5:  Raster IRQ
+	    Bit 6:  Lightgun IRQ (on Lock N Load only)
+	    Bit 7:
+	    */
 
 		/* ZV03082007 - video_screen_get_vblank() doesn't work for Captain America, as it expects
 		   that this bit is NOT set in rows 0-7. */
@@ -442,13 +443,13 @@ WRITE32_MEMBER(deco32_state::irq_controller_w)
 
 WRITE32_MEMBER(deco32_state::sound_w)
 {
-	soundlatch_byte_w(space,0,data & 0xff);
+	m_soundlatch->write(space, 0, data & 0xff);
 	m_audiocpu->set_input_line(0, HOLD_LINE);
 }
 
 void deco32_state::deco32_sound_cb( address_space &space, UINT16 data, UINT16 mem_mask )
 {
-	soundlatch_byte_w(space,0,data & 0xff);
+	m_soundlatch->write(space, 0, data & 0xff);
 	m_audiocpu->set_input_line(0, HOLD_LINE);
 }
 
@@ -553,8 +554,6 @@ WRITE32_MEMBER(dragngun_state::eeprom_w)
 
 WRITE32_MEMBER(deco32_state::tattass_control_w)
 {
-	address_space &eeprom_space = m_eeprom->space();
-
 	/* Eprom in low byte */
 	if (mem_mask==0x000000ff) { /* Byte write to low byte only (different from word writing including low byte) */
 		/*
@@ -603,7 +602,7 @@ WRITE32_MEMBER(deco32_state::tattass_control_w)
 				int d=m_readBitCount/8;
 				int m=7-(m_readBitCount%8);
 				int a=(m_byteAddr+d)%1024;
-				int b=eeprom_space.read_byte(a);
+				int b=m_eeprom->internal_read(a);
 
 				m_tattass_eprom_bit=(b>>m)&1;
 
@@ -620,7 +619,7 @@ WRITE32_MEMBER(deco32_state::tattass_control_w)
 					int b=(m_buffer[24]<<7)|(m_buffer[25]<<6)|(m_buffer[26]<<5)|(m_buffer[27]<<4)
 						|(m_buffer[28]<<3)|(m_buffer[29]<<2)|(m_buffer[30]<<1)|(m_buffer[31]<<0);
 
-					eeprom_space.write_byte(m_byteAddr, b);
+					m_eeprom->internal_write(m_byteAddr, b);
 				}
 				m_lastClock=data&0x20;
 				return;
@@ -635,7 +634,7 @@ WRITE32_MEMBER(deco32_state::tattass_control_w)
 
 				/* Check for read command */
 				if (m_buffer[0] && m_buffer[1]) {
-					m_tattass_eprom_bit=(eeprom_space.read_byte(m_byteAddr)>>7)&1;
+					m_tattass_eprom_bit=(m_eeprom->internal_read(m_byteAddr)>>7)&1;
 					m_readBitCount=1;
 					m_pendingCommand=1;
 				}
@@ -693,7 +692,7 @@ UINT16 deco32_state::port_b_nslasher(int unused)
 void deco32_state::nslasher_sound_cb( address_space &space, UINT16 data, UINT16 mem_mask )
 {
 	/* bit 1 of nslasher_sound_irq specifies IRQ command writes */
-	soundlatch_byte_w(space,0,(data)&0xff);
+	m_soundlatch->write(space,0,(data)&0xff);
 	m_nslasher_sound_irq |= 0x02;
 	m_audiocpu->set_input_line(0, (m_nslasher_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
 }
@@ -809,7 +808,7 @@ READ32_MEMBER( deco32_state::fghthist_protection_region_0_146_r )
 {
 	UINT32 retdata = 0x0000ffff;
 
-	if (mem_mask & 0xffff0000)
+	if (ACCESSING_BITS_16_31)
 	{
 		mem_mask >>=16;
 
@@ -827,7 +826,7 @@ READ32_MEMBER( deco32_state::fghthist_protection_region_0_146_r )
 
 WRITE32_MEMBER( deco32_state::fghthist_protection_region_0_146_w )
 {
-	if (mem_mask & 0xffff0000)
+	if (ACCESSING_BITS_16_31)
 	{
 		data >>=16;
 		mem_mask >>=16;
@@ -1157,7 +1156,7 @@ static ADDRESS_MAP_START( sound_map, AS_PROGRAM, 8, deco32_state )
 	AM_RANGE(0x110000, 0x110001) AM_DEVREADWRITE("ymsnd", ym2151_device, read, write)
 	AM_RANGE(0x120000, 0x120001) AM_DEVREADWRITE("oki1", okim6295_device, read, write)
 	AM_RANGE(0x130000, 0x130001) AM_DEVREADWRITE("oki2", okim6295_device, read, write)
-	AM_RANGE(0x140000, 0x140001) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x140000, 0x140001) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x1f0000, 0x1f1fff) AM_RAMBANK("bank8")
 	AM_RANGE(0x1fec00, 0x1fec01) AM_DEVWRITE("audiocpu", h6280_device, timer_w)
 	AM_RANGE(0x1ff400, 0x1ff403) AM_DEVWRITE("audiocpu", h6280_device, irq_status_w)
@@ -1168,7 +1167,7 @@ READ8_MEMBER(deco32_state::latch_r)
 	/* bit 1 of nslasher_sound_irq specifies IRQ command writes */
 	m_nslasher_sound_irq &= ~0x02;
 	m_audiocpu->set_input_line(0, (m_nslasher_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
-	return soundlatch_byte_r(space,0);
+	return m_soundlatch->read(space,0);
 }
 
 static ADDRESS_MAP_START( nslasher_sound, AS_PROGRAM, 8, deco32_state )
@@ -1869,6 +1868,8 @@ static MACHINE_CONFIG_START( captaven, deco32_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ymsnd", XTAL_32_22MHz/9) /* verified on pcb */
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("audiocpu", 1))
 	MCFG_YM2151_PORT_WRITE_HANDLER(WRITE8(deco32_state,sound_bankswitch_w))
@@ -1976,6 +1977,8 @@ static MACHINE_CONFIG_START( fghthist, deco32_state ) /* DE-0380-2 PCB */
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ymsnd", 32220000/9)
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("audiocpu", 1))
 	MCFG_YM2151_PORT_WRITE_HANDLER(WRITE8(deco32_state,sound_bankswitch_w))
@@ -2057,6 +2060,8 @@ static MACHINE_CONFIG_START( fghthsta, deco32_state ) /* DE-0395-1 PCB */
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", 32220000/9)
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("audiocpu", 1))
@@ -2182,6 +2187,8 @@ static MACHINE_CONFIG_START( dragngun, dragngun_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ymsnd", 32220000/9)
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("audiocpu", 1))
 	MCFG_YM2151_PORT_WRITE_HANDLER(WRITE8(deco32_state,sound_bankswitch_w))
@@ -2291,6 +2298,8 @@ static MACHINE_CONFIG_START( lockload, dragngun_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", 32220000/9)
 	MCFG_YM2151_IRQ_HANDLER(WRITELINE(deco32_state,sound_irq_nslasher))
@@ -2461,6 +2470,8 @@ static MACHINE_CONFIG_START( nslasher, deco32_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", 32220000/9)
 	MCFG_YM2151_IRQ_HANDLER(WRITELINE(deco32_state,sound_irq_nslasher))
@@ -4075,7 +4086,7 @@ DRIVER_INIT_MEMBER(deco32_state,nslasher)
 
 	deco156_decrypt(machine());
 
-	soundlatch_setclearedvalue(0xff);
+	m_soundlatch->preset_w(0xff);
 
 	save_item(NAME(m_nslasher_sound_irq));
 

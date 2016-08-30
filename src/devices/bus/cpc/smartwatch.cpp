@@ -36,7 +36,7 @@ ROM_START( cpc_smartwatch )
 	ROM_LOAD( "timerom+.rom",   0x0000, 0x4000, CRC(ed42a147) SHA1(61750d0535a1fbf2a4addad9def332cbcf8917c3) )
 ROM_END
 
-const rom_entry *cpc_smartwatch_device::device_rom_region() const
+const tiny_rom_entry *cpc_smartwatch_device::device_rom_region() const
 {
 	return ROM_NAME( cpc_smartwatch );
 }
@@ -69,8 +69,8 @@ void cpc_smartwatch_device::device_reset()
 {
 	device_t* cpu = machine().device(":maincpu");
 	address_space& space = cpu->memory().space(AS_PROGRAM);
-	space.install_read_handler(0xc000,0xc001,0,0,read8_delegate(FUNC(cpc_smartwatch_device::rtc_w),this));
-	space.install_read_handler(0xc004,0xc004,0,0,read8_delegate(FUNC(cpc_smartwatch_device::rtc_r),this));
+	space.install_read_handler(0xc000,0xc001,read8_delegate(FUNC(cpc_smartwatch_device::rtc_w),this));
+	space.install_read_handler(0xc004,0xc004,read8_delegate(FUNC(cpc_smartwatch_device::rtc_r),this));
 	m_bank = membank(":bank7");
 }
 

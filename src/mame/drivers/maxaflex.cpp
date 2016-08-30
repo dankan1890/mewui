@@ -15,7 +15,7 @@
 #include "emu.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6805/m6805.h"
-#include "includes/atari.h"
+#include "includes/atari400.h"
 #include "sound/speaker.h"
 #include "sound/pokey.h"
 #include "machine/6821pia.h"
@@ -228,7 +228,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(maxaflex_state::mcu_timer_proc)
 		if ( (m_tcr & 0x40) == 0 )
 		{
 			//timer interrupt!
-			generic_pulse_irq_line(m_mcu, M68705_INT_TIMER, 1);
+			generic_pulse_irq_line(*m_mcu, M68705_INT_TIMER, 1);
 		}
 	}
 }
@@ -389,12 +389,12 @@ INPUT_PORTS_END
 
 READ8_MEMBER(maxaflex_state::pia_pa_r)
 {
-	return atari_input_disabled() ? 0xff : read_safe(m_joy01, 0);
+	return atari_input_disabled() ? 0xff : m_joy01.read_safe(0);
 }
 
 READ8_MEMBER(maxaflex_state::pia_pb_r)
 {
-	return atari_input_disabled() ? 0xff : read_safe(m_joy23, 0);
+	return atari_input_disabled() ? 0xff : m_joy23.read_safe(0);
 }
 
 

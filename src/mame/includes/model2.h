@@ -8,6 +8,7 @@
 #include "sound/scsp.h"
 #include "machine/315-5881_crypt.h"
 #include "machine/315-5838_317-0229_comp.h"
+#include "machine/m2comm.h"
 
 class model2_renderer;
 struct raster_state;
@@ -30,6 +31,7 @@ public:
 		m_maincpu(*this,"maincpu"),
 		m_dsbz80(*this, DSBZ80_TAG),
 		m_m1audio(*this, "m1audio"),
+		m_m2comm(*this, "m2comm"),
 		m_audiocpu(*this, "audiocpu"),
 		m_tgp(*this, "tgp"),
 		m_dsp(*this, "dsp"),
@@ -40,8 +42,11 @@ public:
 		m_palette(*this, "palette"),
 		m_scsp(*this, "scsp"),
 		m_cryptdevice(*this, "315_5881"),
-		m_0229crypt(*this, "317_0229")
-
+		m_0229crypt(*this, "317_0229"),
+		m_in0(*this, "IN0"),
+		m_gears(*this, "GEARS"),
+		m_analog_ports(*this, {"ANA0", "ANA1", "ANA2", "ANA3"}),
+		m_lightgun_ports(*this, {"P1_Y", "P1_X", "P2_Y", "P2_X"})
 		{ }
 
 	required_shared_ptr<UINT32> m_workram;
@@ -53,11 +58,12 @@ public:
 	required_shared_ptr<UINT32> m_lumaram;
 	optional_shared_ptr<UINT16> m_soundram;
 	optional_shared_ptr<UINT32> m_tgp_program;
-	optional_shared_ptr<UINT32> m_tgpx4_program;
+	optional_shared_ptr<UINT64> m_tgpx4_program;
 
 	required_device<i960_cpu_device> m_maincpu;
 	optional_device<dsbz80_device> m_dsbz80;    // Z80-based MPEG Digital Sound Board
 	optional_device<segam1audio_device> m_m1audio;  // Model 1 standard sound board
+	optional_device<m2comm_device> m_m2comm;        // Model 2 communication board
 	optional_device<cpu_device> m_audiocpu;
 	optional_device<cpu_device> m_tgp;
 	optional_device<cpu_device> m_dsp;
@@ -69,6 +75,11 @@ public:
 	optional_device<scsp_device> m_scsp;
 	optional_device<sega_315_5881_crypt_device> m_cryptdevice;
 	optional_device<sega_315_5838_comp_device> m_0229crypt;
+
+	required_ioport m_in0;
+	optional_ioport m_gears;
+	optional_ioport_array<4> m_analog_ports;
+	optional_ioport_array<4> m_lightgun_ports;
 
 	UINT32 m_intreq;
 	UINT32 m_intena;
@@ -100,11 +111,6 @@ public:
 	int m_to_68k;
 
 	int m_maxxstate;
-	UINT32 m_netram[0x8000/4];
-	int m_zflagi;
-	int m_zflag;
-	int m_sysres;
-	int m_jnet_time_out;
 	UINT32 m_geo_read_start_address;
 	UINT32 m_geo_write_start_address;
 	model2_renderer *m_poly;
@@ -160,8 +166,6 @@ public:
 	int first_read;
 
 	DECLARE_READ32_MEMBER(maxx_r);
-	DECLARE_READ32_MEMBER(network_r);
-	DECLARE_WRITE32_MEMBER(network_w);
 	DECLARE_WRITE32_MEMBER(mode_w);
 	DECLARE_WRITE32_MEMBER(model2o_tex_w0);
 	DECLARE_WRITE32_MEMBER(model2o_tex_w1);
@@ -181,8 +185,6 @@ public:
 	DECLARE_READ8_MEMBER(driveio_port_r);
 	DECLARE_WRITE8_MEMBER(driveio_port_w);
 	DECLARE_READ8_MEMBER(driveio_port_str_r);
-	DECLARE_READ32_MEMBER(jaleco_network_r);
-	DECLARE_WRITE32_MEMBER(jaleco_network_w);
 	void push_geo_data(UINT32 data);
 	DECLARE_DRIVER_INIT(overrev);
 	DECLARE_DRIVER_INIT(pltkids);
@@ -293,56 +295,56 @@ public:
 	/* checker = 0, textured = 0, transparent = 0 */
 	#define MODEL2_FUNC 0
 	#define MODEL2_FUNC_NAME    model2_3d_render_0
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 0, textured = 0, translucent = 1 */
 	#define MODEL2_FUNC 1
 	#define MODEL2_FUNC_NAME    model2_3d_render_1
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 0, textured = 1, translucent = 0 */
 	#define MODEL2_FUNC 2
 	#define MODEL2_FUNC_NAME    model2_3d_render_2
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 0, textured = 1, translucent = 1 */
 	#define MODEL2_FUNC 3
 	#define MODEL2_FUNC_NAME    model2_3d_render_3
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 1, textured = 0, translucent = 0 */
 	#define MODEL2_FUNC 4
 	#define MODEL2_FUNC_NAME    model2_3d_render_4
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 1, textured = 0, translucent = 1 */
 	#define MODEL2_FUNC 5
 	#define MODEL2_FUNC_NAME    model2_3d_render_5
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 1, textured = 1, translucent = 0 */
 	#define MODEL2_FUNC 6
 	#define MODEL2_FUNC_NAME    model2_3d_render_6
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 
 	/* checker = 1, textured = 1, translucent = 1 */
 	#define MODEL2_FUNC 7
 	#define MODEL2_FUNC_NAME    model2_3d_render_7
-	#include "video/model2rd.inc"
+	#include "video/model2rd.hxx"
 	#undef MODEL2_FUNC
 	#undef MODEL2_FUNC_NAME
 

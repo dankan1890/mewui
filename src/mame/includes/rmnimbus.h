@@ -190,7 +190,7 @@ public:
 		UINT8   reg400;
 	} m_nimbus_drives;
 
-	/* 8031 Peripheral controler */
+	/* 8031 Peripheral controller */
 	struct
 	{
 		UINT8   ipc_in;
@@ -218,4 +218,8 @@ public:
 
 		emu_timer   *m_mouse_timer;
 	} m_nimbus_mouse;
+
+private:
+	void debug_command(int ref, int params, const char *param[]);
+	void video_debug(int ref, int params, const char *param[]);
 };

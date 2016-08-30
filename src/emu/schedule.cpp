@@ -243,10 +243,15 @@ void emu_timer::register_save()
 	// for non-device timers, it is an index based on the callback function name
 	if (m_device == nullptr)
 	{
-		name = m_callback.name();
+		name = m_callback.name() ? m_callback.name() : "unnamed";
 		for (emu_timer *curtimer = machine().scheduler().first_timer(); curtimer != nullptr; curtimer = curtimer->next())
-			if (!curtimer->m_temporary && curtimer->m_device == nullptr && strcmp(curtimer->m_callback.name(), m_callback.name()) == 0)
-				index++;
+			if (!curtimer->m_temporary && curtimer->m_device == nullptr)
+			{
+				if (curtimer->m_callback.name() != nullptr && m_callback.name() != nullptr && strcmp(curtimer->m_callback.name(), m_callback.name()) == 0)
+					index++;
+				else if (curtimer->m_callback.name() == nullptr && m_callback.name() == nullptr)
+					index++;
+			}
 	}
 
 	// for device timers, it is an index based on the device and timer ID
@@ -727,7 +732,7 @@ void device_scheduler::compute_perfect_interleave()
 			// adjust all the actuals; this doesn't affect the current
 			m_quantum_minimum = perfect;
 			for (quantum_slot &quant : m_quantum_list)
-				quant.m_actual = MAX(quant.m_requested, m_quantum_minimum);
+				quant.m_actual = std::max(quant.m_requested, m_quantum_minimum);
 		}
 	}
 }
@@ -781,20 +786,19 @@ void device_scheduler::rebuild_execute_list()
 	device_execute_interface **suspend_tailptr = &suspend_list;
 
 	// iterate over all devices
-	execute_interface_iterator iter(machine().root_device());
-	for (device_execute_interface *exec = iter.first(); exec != nullptr; exec = iter.next())
+	for (device_execute_interface &exec : execute_interface_iterator(machine().root_device()))
 	{
 		// append to the appropriate list
-		exec->m_nextexec = nullptr;
-		if (exec->m_suspend == 0)
+		exec.m_nextexec = nullptr;
+		if (exec.m_suspend == 0)
 		{
-			*active_tailptr = exec;
-			active_tailptr = &exec->m_nextexec;
+			*active_tailptr = &exec;
+			active_tailptr = &exec.m_nextexec;
 		}
 		else
 		{
-			*suspend_tailptr = exec;
-			suspend_tailptr = &exec->m_nextexec;
+			*suspend_tailptr = &exec;
+			suspend_tailptr = &exec.m_nextexec;
 		}
 	}
 
@@ -963,7 +967,7 @@ void device_scheduler::add_scheduling_quantum(const attotime &quantum, const att
 	{
 		quantum_slot &quant = *m_quantum_allocator.alloc();
 		quant.m_requested = quantum_attos;
-		quant.m_actual = MAX(quantum_attos, m_quantum_minimum);
+		quant.m_actual = std::max(quantum_attos, m_quantum_minimum);
 		quant.m_expire = expire;
 		m_quantum_list.insert_after(quant, insert_after);
 	}

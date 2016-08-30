@@ -16,7 +16,7 @@
 *****************************************************************************************
 
   You can find more about this game and the emulation evolution at
-  http://www.robertofresca.com.ar/
+  http://www.robertofresca.com/
 
 *****************************************************************************************
 
@@ -267,7 +267,7 @@ TILE_GET_INFO_MEMBER(jubilee_state::get_bg_tile_info)
 
 void jubilee_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jubilee_state::get_bg_tile_info), this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jubilee_state::get_bg_tile_info), this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 	m_bg_tilemap->set_scrolldx(8, 0); /* guess */
 }
 
@@ -566,7 +566,7 @@ READ8_MEMBER(jubilee_state::mux_port_r)
 
 static ADDRESS_MAP_START( jubileep_cru_map, AS_IO, 8, jubilee_state )
 	AM_RANGE(0x00c8, 0x00c8) AM_READ(mux_port_r)    /* multiplexed input port */
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(unk_w)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(unk_w)
 ADDRESS_MAP_END
 
 /* I/O byte R/W

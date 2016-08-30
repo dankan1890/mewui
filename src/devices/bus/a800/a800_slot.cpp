@@ -236,7 +236,7 @@ static const char *a800_get_slot(int type)
 	return "a800_8k";
 }
 
-bool a800_cart_slot_device::call_load()
+image_init_result a800_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
@@ -277,6 +277,10 @@ bool a800_cart_slot_device::call_load()
 					m_type = A800_8K;
 				if (len == 0x1000)
 					m_type = A5200_4K;
+				// also make a try with .hsi file (for .a52 files)
+				std::string info;
+				if (hashfile_extrainfo(*this, info) && info.compare("A13MIRRORING")==0)
+					m_type = A5200_16K_2CHIPS;
 			}
 
 			m_cart->rom_alloc(len, tag());
@@ -285,9 +289,9 @@ bool a800_cart_slot_device::call_load()
 		if (m_type == A800_TELELINK2)
 			m_cart->nvram_alloc(0x100);
 
-		printf("%s loaded cartridge '%s' size %dK\n", machine().system().name, filename(), len/1024);
+		logerror("%s loaded cartridge '%s' size %dK\n", machine().system().name, filename(), len/1024);
 	}
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -297,16 +301,6 @@ bool a800_cart_slot_device::call_load()
 
 void a800_cart_slot_device::call_unload()
 {
-}
-
-/*-------------------------------------------------
- call softlist load
- -------------------------------------------------*/
-
-bool a800_cart_slot_device::call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry)
-{
-	machine().rom_load().load_software_part_region(*this, swlist, swname, start_entry);
-	return TRUE;
 }
 
 /*-------------------------------------------------
@@ -457,7 +451,9 @@ std::string a5200_cart_slot_device::get_default_card_software()
 		{
 			m_file->read(&head[0], 0x10);
 			type = identify_cart_type(&head[0]);
-
+		}
+		else
+		{
 			std::string info;
 			if (hashfile_extrainfo(*this, info) && info.compare("A13MIRRORING")==0)
 				type = A5200_16K_2CHIPS;

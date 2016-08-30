@@ -16,7 +16,8 @@
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6809/konami.h" /* for the callback and the firq irq definition */
-#include "sound/2151intf.h"
+#include "machine/watchdog.h"
+#include "sound/ym2151.h"
 #include "includes/konamipt.h"
 #include "includes/crimfght.h"
 
@@ -55,7 +56,7 @@ WRITE8_MEMBER(crimfght_state::k052109_051960_w)
 WRITE8_MEMBER(crimfght_state::sound_w)
 {
 	// writing the latch asserts the irq line
-	soundlatch_write(0, data);
+	m_soundlatch->write(space, offset, data);
 	m_audiocpu->set_input_line(INPUT_LINE_IRQ0, ASSERT_LINE);
 }
 
@@ -89,7 +90,7 @@ static ADDRESS_MAP_START( crimfght_map, AS_PROGRAM, 8, crimfght_state )
 	AM_RANGE(0x3f85, 0x3f85) AM_READ_PORT("P3")
 	AM_RANGE(0x3f86, 0x3f86) AM_READ_PORT("P4")
 	AM_RANGE(0x3f87, 0x3f87) AM_READ_PORT("DSW1")
-	AM_RANGE(0x3f88, 0x3f88) AM_MIRROR(0x03) AM_READ(watchdog_reset_r) AM_WRITE(crimfght_coin_w) // 051550
+	AM_RANGE(0x3f88, 0x3f88) AM_MIRROR(0x03) AM_DEVREAD("watchdog", watchdog_timer_device, reset_r) AM_WRITE(crimfght_coin_w) // 051550
 	AM_RANGE(0x3f8c, 0x3f8c) AM_MIRROR(0x03) AM_WRITE(sound_w)
 	AM_RANGE(0x2000, 0x5fff) AM_READWRITE(k052109_051960_r, k052109_051960_w)   /* video RAM + sprite RAM */
 	AM_RANGE(0x6000, 0x7fff) AM_ROMBANK("rombank")                        /* banked ROM */
@@ -106,7 +107,7 @@ static ADDRESS_MAP_START( crimfght_sound_map, AS_PROGRAM, 8, crimfght_state )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0x87ff) AM_MIRROR(0x1800) AM_RAM
 	AM_RANGE(0xa000, 0xa001) AM_MIRROR(0x1ffe) AM_DEVREADWRITE("ymsnd", ym2151_device, read, write)
-	AM_RANGE(0xc000, 0xc000) AM_MIRROR(0x1fff) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xc000, 0xc000) AM_MIRROR(0x1fff) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0xe000, 0xe00f) AM_MIRROR(0x1ff0) AM_DEVREADWRITE("k007232", k007232_device, read, write)
 ADDRESS_MAP_END
 
@@ -178,7 +179,7 @@ static INPUT_PORTS_START( crimfght )
 	PORT_DIPUNUSED_DIPLOC(0x02, IP_ACTIVE_LOW, "SW3:2")
 	PORT_SERVICE_DIPLOC(  0x04, IP_ACTIVE_LOW, "SW3:3")
 	PORT_DIPUNUSED_DIPLOC(0x08, IP_ACTIVE_LOW, "SW3:4")
-	PORT_BIT(0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM_MEMBER(DEVICE_SELF, crimfght_state, system_r, NULL)
+	PORT_BIT(0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM_MEMBER(DEVICE_SELF, crimfght_state, system_r, nullptr)
 
 	PORT_START("P1")
 	KONAMI8_B123_START(1)
@@ -312,6 +313,8 @@ static MACHINE_CONFIG_START( crimfght, crimfght_state )
 	MCFG_ADDRESS_MAP_BANK_ADDRBUS_WIDTH(11)
 	MCFG_ADDRESS_MAP_BANK_STRIDE(0x400)
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_RAW_PARAMS(XTAL_24MHz/3, 528, 96, 416, 256, 16, 240) // measured 59.17
@@ -336,6 +339,8 @@ static MACHINE_CONFIG_START( crimfght, crimfght_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", XTAL_3_579545MHz)  /* verified on pcb */
 	MCFG_YM2151_PORT_WRITE_HANDLER(WRITE8(crimfght_state, ym2151_ct_w))

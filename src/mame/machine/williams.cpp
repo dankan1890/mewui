@@ -7,12 +7,7 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "cpu/m6800/m6800.h"
-#include "cpu/m6809/m6809.h"
-#include "machine/ticket.h"
 #include "includes/williams.h"
-#include "sound/dac.h"
-#include "sound/hc55516.h"
 
 
 /*************************************
@@ -83,7 +78,7 @@ WRITE_LINE_MEMBER(williams_state::williams_snd_irq)
 	int combined_state = pia_2->irq_a_state() | pia_2->irq_b_state();
 
 	/* IRQ to the sound CPU */
-	m_soundcpu->set_input_line(M6800_IRQ_LINE, combined_state ? ASSERT_LINE : CLEAR_LINE);
+	m_soundcpu->set_input_line(M6808_IRQ_LINE, combined_state ? ASSERT_LINE : CLEAR_LINE);
 }
 /* Same as above, but for second sound board */
 WRITE_LINE_MEMBER(blaster_state::williams_snd_irq_b)
@@ -92,7 +87,7 @@ WRITE_LINE_MEMBER(blaster_state::williams_snd_irq_b)
 	int combined_state = pia_2->irq_a_state() | pia_2->irq_b_state();
 
 	/* IRQ to the sound CPU */
-	m_soundcpu_b->set_input_line(M6800_IRQ_LINE, combined_state ? ASSERT_LINE : CLEAR_LINE);
+	m_soundcpu_b->set_input_line(M6808_IRQ_LINE, combined_state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -423,7 +418,7 @@ WRITE8_MEMBER(williams_state::williams_watchdog_reset_w)
 {
 	/* yes, the data bits are checked for this specific value */
 	if (data == 0x39)
-		watchdog_reset_w(space,0,0);
+		m_watchdog->reset_w(space,0,0);
 }
 
 
@@ -431,7 +426,7 @@ WRITE8_MEMBER(williams2_state::williams2_watchdog_reset_w)
 {
 	/* yes, the data bits are checked for this specific value */
 	if ((data & 0x3f) == 0x14)
-		watchdog_reset_w(space,0,0);
+		m_watchdog->reset_w(space,0,0);
 }
 
 

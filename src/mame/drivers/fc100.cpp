@@ -58,7 +58,7 @@ public:
 		, m_cart(*this, "cartslot")
 		, m_uart(*this, "uart")
 		, m_centronics(*this, "centronics")
-		, m_keyboard(*this, "KEY")
+		, m_keyboard(*this, "KEY.%u", 0)
 	{ }
 
 	DECLARE_READ8_MEMBER(mc6847_videoram_r);
@@ -529,7 +529,7 @@ static MACHINE_CONFIG_START( fc100, fc100_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 	MCFG_SOUND_WAVE_ADD(WAVE_TAG, "cassette")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.05)
 	MCFG_SOUND_ADD("psg", AY8910, XTAL_7_15909MHz/3/2)  /* AY-3-8910 - clock not verified */
 	MCFG_AY8910_PORT_A_READ_CB(IOPORT("JOY0"))
 	MCFG_AY8910_PORT_B_READ_CB(IOPORT("JOY1"))

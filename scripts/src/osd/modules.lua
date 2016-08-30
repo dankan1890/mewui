@@ -35,6 +35,14 @@ function addoptionsfromstring(str)
 	end
 end
 
+function pkgconfigcmd()
+	local pkgconfig = os.getenv("PKG_CONFIG")
+	if pkgconfig == nil then
+		return "pkg-config"
+	end
+	return pkgconfig
+end
+
 function osdmodulesbuild()
 
 	removeflags {
@@ -44,16 +52,21 @@ function osdmodulesbuild()
 	files {
 		MAME_DIR .. "src/osd/osdnet.cpp",
 		MAME_DIR .. "src/osd/osdnet.h",
+		MAME_DIR .. "src/osd/watchdog.cpp",
+		MAME_DIR .. "src/osd/watchdog.h",
 		MAME_DIR .. "src/osd/modules/debugger/debug_module.h",
 		MAME_DIR .. "src/osd/modules/font/font_module.h",
 		MAME_DIR .. "src/osd/modules/midi/midi_module.h",
 		MAME_DIR .. "src/osd/modules/netdev/netdev_module.h",
 		MAME_DIR .. "src/osd/modules/sound/sound_module.h",
+		MAME_DIR .. "src/osd/modules/diagnostics/diagnostics_module.h",
 		MAME_DIR .. "src/osd/modules/lib/osdobj_common.cpp",
 		MAME_DIR .. "src/osd/modules/lib/osdobj_common.h",
+		MAME_DIR .. "src/osd/modules/diagnostics/none.cpp",
+		MAME_DIR .. "src/osd/modules/diagnostics/diagnostics_win32.cpp",
 		MAME_DIR .. "src/osd/modules/debugger/none.cpp",
-		MAME_DIR .. "src/osd/modules/debugger/debugint.cpp",
 		MAME_DIR .. "src/osd/modules/debugger/debugwin.cpp",
+		MAME_DIR .. "src/osd/modules/debugger/debugimgui.cpp",
 		MAME_DIR .. "src/osd/modules/font/font_sdl.cpp",
 		MAME_DIR .. "src/osd/modules/font/font_windows.cpp",
 		MAME_DIR .. "src/osd/modules/font/font_dwrite.cpp",
@@ -87,6 +100,27 @@ function osdmodulesbuild()
 		MAME_DIR .. "src/osd/modules/input/input_xinput.cpp",
 		MAME_DIR .. "src/osd/modules/input/input_xinput.h",
 		MAME_DIR .. "src/osd/modules/input/input_winhybrid.cpp",
+		MAME_DIR .. "src/osd/modules/output/output_module.h",
+		MAME_DIR .. "src/osd/modules/output/none.cpp",
+		MAME_DIR .. "src/osd/modules/output/console.cpp",
+		MAME_DIR .. "src/osd/modules/output/network.cpp",
+		MAME_DIR .. "src/osd/modules/output/win32_output.cpp",
+		MAME_DIR .. "src/osd/modules/output/win32_output.h",
+		MAME_DIR .. "src/osd/modules/ipc/tcp_connection.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/tcp_connection.h",
+		MAME_DIR .. "src/osd/modules/ipc/tcp_server.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/tcp_server.h",
+		MAME_DIR .. "src/osd/modules/ipc/raw_tcp_connection.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/raw_tcp_connection.h",
+		MAME_DIR .. "src/osd/modules/ipc/raw_tcp_server.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/raw_tcp_server.h",
+		MAME_DIR .. "src/osd/modules/ipc/rtc_tcp_connection.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/rtc_tcp_connection.h",
+		MAME_DIR .. "src/osd/modules/ipc/rtc_tcp_server.cpp",
+		MAME_DIR .. "src/osd/modules/ipc/rtc_tcp_server.h",
+	}
+	includedirs {
+		ext_includedir("uv"),
 	}
 
 	if _OPTIONS["targetos"]=="windows" then
@@ -95,11 +129,9 @@ function osdmodulesbuild()
 			MAME_DIR .. "3rdparty/compat/mingw",
 		}
 
-		if _OPTIONS["MODERN_WIN_API"]~="1" then
-			includedirs {
-				MAME_DIR .. "3rdparty/compat/winsdk-override",
-			}
-		end
+		includedirs {
+			MAME_DIR .. "3rdparty/compat/winsdk-override",
+		}
 	end
 
 	if _OPTIONS["NO_OPENGL"]=="1" then
@@ -134,6 +166,8 @@ function osdmodulesbuild()
 
 	files {
 		MAME_DIR .. "src/osd/modules/render/drawbgfx.cpp",
+		MAME_DIR .. "src/osd/modules/render/aviwrite.cpp",
+		MAME_DIR .. "src/osd/modules/render/aviwrite.h",
 		MAME_DIR .. "src/osd/modules/render/bgfxutil.cpp",
 		MAME_DIR .. "src/osd/modules/render/bgfxutil.h",
 		MAME_DIR .. "src/osd/modules/render/binpacker.cpp",
@@ -143,6 +177,10 @@ function osdmodulesbuild()
 		MAME_DIR .. "src/osd/modules/render/bgfx/chainentryreader.cpp",
 		MAME_DIR .. "src/osd/modules/render/bgfx/chainmanager.cpp",
 		MAME_DIR .. "src/osd/modules/render/bgfx/chainreader.cpp",
+		MAME_DIR .. "src/osd/modules/render/bgfx/clear.cpp",
+		MAME_DIR .. "src/osd/modules/render/bgfx/clear.h",
+		MAME_DIR .. "src/osd/modules/render/bgfx/clearreader.cpp",
+		MAME_DIR .. "src/osd/modules/render/bgfx/clearreader.h",
 		MAME_DIR .. "src/osd/modules/render/bgfx/cullreader.cpp",
 		MAME_DIR .. "src/osd/modules/render/bgfx/depthreader.cpp",
 		MAME_DIR .. "src/osd/modules/render/bgfx/effect.cpp",
@@ -212,12 +250,13 @@ function qtdebuggerbuild()
 	}
 	local version = str_to_version(_OPTIONS["gcc_version"])
 	if _OPTIONS["gcc"]~=nil and (string.find(_OPTIONS["gcc"], "clang") or string.find(_OPTIONS["gcc"], "asmjs")) then
-		configuration { "gmake" }
-		if (version >= 30600) then
-			buildoptions {
-				"-Wno-inconsistent-missing-override",
-			}
-		end
+		configuration { "gmake or ninja" }
+			if (version >= 30600) then
+				buildoptions {
+					"-Wno-inconsistent-missing-override",
+				}
+			end
+		configuration { }
 	end
 
 	files {
@@ -313,7 +352,7 @@ function qtdebuggerbuild()
 				}
 			else
 				buildoptions {
-					backtick("pkg-config --cflags Qt5Widgets"),
+					backtick(pkgconfigcmd() .. " --cflags Qt5Widgets"),
 				}
 			end
 		end
@@ -348,7 +387,7 @@ function osdmodulestargetconf()
 
 	if _OPTIONS["NO_USE_MIDI"]~="1" then
 		if _OPTIONS["targetos"]=="linux" then
-			local str = backtick("pkg-config --libs alsa")
+			local str = backtick(pkgconfigcmd() .. " --libs alsa")
 			addlibfromstring(str)
 			addoptionsfromstring(str)
 		elseif _OPTIONS["targetos"]=="macosx" then
@@ -389,7 +428,7 @@ function osdmodulestargetconf()
 					"Qt5Widgets",
 				}
 			else
-				local str = backtick("pkg-config --libs Qt5Widgets")
+				local str = backtick(pkgconfigcmd() .. " --libs Qt5Widgets")
 				addlibfromstring(str)
 				addoptionsfromstring(str)
 			end

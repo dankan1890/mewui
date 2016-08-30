@@ -394,7 +394,7 @@ void sc499_device::device_reset()
 		m_irq = m_irqdrq->read() & 7;
 		m_drq = m_irqdrq->read()>>4;
 
-		m_isa->install_device(base, base+7, 0, 0, read8_delegate(FUNC(sc499_device::read), this), write8_delegate(FUNC(sc499_device::write), this));
+		m_isa->install_device(base, base+7, read8_delegate(FUNC(sc499_device::read), this), write8_delegate(FUNC(sc499_device::write), this));
 		m_isa->set_dma_channel(m_drq, this, true);
 
 		m_installed = true;
@@ -411,8 +411,8 @@ const char *sc499_device::cpu_context()
 
 	device_t *cpu = machine().firstcpu;
 	osd_ticks_t t = osd_ticks();
-	int s = t / osd_ticks_per_second();
-	int ms = (t % osd_ticks_per_second()) / 1000;
+	int s = (t / osd_ticks_per_second()) % 3600;
+	int ms = (t / (osd_ticks_per_second() / 1000)) % 1000;
 
 	/* if we have an executing CPU, output data */
 	if (cpu != nullptr)
@@ -1325,7 +1325,7 @@ void sc499_ctape_image_device::write_block(int block_num, UINT8 *ptr)
 		memcpy(&m_ctape_data[block_num * SC499_CTAPE_BLOCK_SIZE], ptr, SC499_CTAPE_BLOCK_SIZE);
 }
 
-bool sc499_ctape_image_device::call_load()
+image_init_result sc499_ctape_image_device::call_load()
 {
 	UINT32 size;
 	io_generic io;
@@ -1338,14 +1338,14 @@ bool sc499_ctape_image_device::call_load()
 
 	io_generic_read(&io, &m_ctape_data[0], 0, size);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 void sc499_ctape_image_device::call_unload()
 {
 	m_ctape_data.resize(0);
 	// TODO: add save tape on exit?
-	//if (software_entry() == NULL)
+	//if (software_entry() == nullptr)
 	//{
 	//    fseek(0, SEEK_SET);
 	//    fwrite(m_ctape_data, m_ctape_data.size);

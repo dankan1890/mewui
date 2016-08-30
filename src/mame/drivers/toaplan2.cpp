@@ -347,7 +347,15 @@ To Do / Unknowns:
     - Need to sort out the video status register.
     - Find out how exactly how sound CPU communication really works in bgaregga/batrider/bbakraid
         current emulation seems to work (plays all sounds), but there are still some unknown reads/writes
-    - Write a RTC core for uPD4992, needed by Othello Derby and Power Kick
+
+Notes on Power Kick coin inputs:
+- The 10 yen input is "Key In" according to the bookkeeping screen, but is
+  an otherwise normal coin input with a counter and a lockout (sharing the
+  latter with the "medal" coin).
+- The 100 yen input never adds any credits except in "Coin Function Check,"
+  instead dispensing its value into the hopper immediately.
+
+To reset the NVRAM in Othello Derby, hold P1 Button 1 down while booting.
 
 *****************************************************************************/
 
@@ -356,11 +364,15 @@ To Do / Unknowns:
 #include "cpu/nec/v25.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z180/z180.h"
-#include "sound/2151intf.h"
+#include "machine/nvram.h"
+#include "sound/ym2151.h"
 #include "sound/3812intf.h"
 #include "sound/ymz280b.h"
 #include "includes/toaplan2.h"
 #include "includes/toaplipt.h"
+
+#define UNICODE_YEN             "\xC2\xA5"
+#define PWRKICK_HOPPER_PULSE    50          // time between hopper pulses in milliseconds (probably wrong)
 
 
 /***************************************************************************
@@ -556,9 +568,17 @@ WRITE8_MEMBER(toaplan2_state::toaplan2_coin_w)
 
 WRITE8_MEMBER(toaplan2_state::pwrkick_coin_w)
 {
-	machine().bookkeeping().coin_counter_w(0, (data & 2) >> 1 );
-	machine().bookkeeping().coin_counter_w(1, (data & 8) >> 3 );
-	m_pwrkick_hopper = (data & 0x80) >> 7;
+	machine().bookkeeping().coin_counter_w(0, (data & 2) >> 1 ); // medal
+	machine().bookkeeping().coin_counter_w(1, (data & 8) >> 3 ); // 10 yen
+	machine().bookkeeping().coin_counter_w(2, (data & 1) ); // 100 yen
+	m_hopper->write(space, 0, data & 0x80);
+}
+
+WRITE8_MEMBER(toaplan2_state::pwrkick_coin_lockout_w)
+{
+	machine().bookkeeping().coin_lockout_w(0, (data & 4) ? 0 : 1);
+	machine().bookkeeping().coin_lockout_w(1, (data & 4) ? 0 : 1);
+	machine().bookkeeping().coin_lockout_w(2, (data & 2) ? 0 : 1);
 }
 
 
@@ -776,25 +796,6 @@ WRITE16_MEMBER(toaplan2_state::fixeightbl_oki_bankswitch_w)
 	}
 }
 
-
-READ8_MEMBER(toaplan2_state::v25_dswa_r)
-{
-	return ioport("DSWA")->read() ^ 0xff;
-}
-
-
-READ8_MEMBER(toaplan2_state::v25_dswb_r)
-{
-	return ioport("DSWB")->read() ^ 0xff;
-}
-
-
-READ8_MEMBER(toaplan2_state::v25_jmpr_r)
-{
-	return ioport("JMPR")->read() ^ 0xff;
-}
-
-
 READ8_MEMBER(toaplan2_state::fixeight_region_r)
 {
 	// this must match the eeprom region!
@@ -850,7 +851,7 @@ WRITE16_MEMBER(toaplan2_state::bgaregga_soundlatch_w)
 {
 	if (ACCESSING_BITS_0_7)
 	{
-		soundlatch_byte_w(space, offset, data & 0xff);
+		m_soundlatch->write(space, offset, data & 0xff);
 		m_audiocpu->set_input_line(0, HOLD_LINE);
 	}
 }
@@ -906,7 +907,7 @@ WRITE16_MEMBER(toaplan2_state::batrider_soundlatch_w)
 {
 	if (ACCESSING_BITS_0_7)
 	{
-		soundlatch_byte_w(space, offset, data & 0xff);
+		m_soundlatch->write(space, offset, data & 0xff);
 		m_audiocpu->set_input_line(INPUT_LINE_NMI, ASSERT_LINE);
 	}
 }
@@ -916,7 +917,7 @@ WRITE16_MEMBER(toaplan2_state::batrider_soundlatch2_w)
 {
 	if (ACCESSING_BITS_0_7)
 	{
-		soundlatch2_byte_w(space, offset, data & 0xff);
+		m_soundlatch2->write(space, offset, data & 0xff);
 		m_audiocpu->set_input_line(INPUT_LINE_NMI, ASSERT_LINE);
 	}
 }
@@ -1201,7 +1202,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pwrkick_68k_mem, AS_PROGRAM, 16, toaplan2_state )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
-	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM AM_SHARE("nvram") // Only 10022C-10037B is actually saved as NVRAM
+	AM_RANGE(0x104000, 0x10ffff) AM_RAM
 
 	AM_RANGE(0x200000, 0x20000f) AM_DEVREADWRITE8("rtc", upd4992_device, read, write, 0x00ff )
 	AM_RANGE(0x300000, 0x30000d) AM_DEVREADWRITE("gp9001", gp9001vdp_device, gp9001_vdp_r, gp9001_vdp_w)
@@ -1216,13 +1218,14 @@ static ADDRESS_MAP_START( pwrkick_68k_mem, AS_PROGRAM, 16, toaplan2_state )
 	AM_RANGE(0x700018, 0x700019) AM_READ_PORT("DSWC")
 	AM_RANGE(0x70001c, 0x70001d) AM_READ_PORT("SYS")
 	AM_RANGE(0x700030, 0x700031) AM_WRITE(oki_bankswitch_w)
-	AM_RANGE(0x700034, 0x700035) AM_WRITE8(pwrkick_coin_w,0x00ff)
-	AM_RANGE(0x700038, 0x700039) AM_WRITENOP // lamps?
+	AM_RANGE(0x700034, 0x700035) AM_WRITE8(pwrkick_coin_w, 0x00ff)
+	AM_RANGE(0x700038, 0x700039) AM_WRITE8(pwrkick_coin_lockout_w, 0x00ff)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( othldrby_68k_mem, AS_PROGRAM, 16, toaplan2_state )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
-	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM AM_SHARE("nvram") // Only 10331E-103401 is actually saved as NVRAM
+	AM_RANGE(0x104000, 0x10ffff) AM_RAM
 
 	AM_RANGE(0x200000, 0x20000f) AM_DEVREADWRITE8("rtc", upd4992_device, read, write, 0x00ff )
 	AM_RANGE(0x300000, 0x30000d) AM_DEVREADWRITE("gp9001", gp9001vdp_device, gp9001_vdp_r, gp9001_vdp_w)
@@ -1343,8 +1346,8 @@ static ADDRESS_MAP_START( batrider_68k_mem, AS_PROGRAM, 16, toaplan2_state )
 	AM_RANGE(0x500002, 0x500003) AM_READ_PORT("SYS-DSW")
 	AM_RANGE(0x500004, 0x500005) AM_READ_PORT("DSW")
 	AM_RANGE(0x500006, 0x500007) AM_READ(video_count_r)
-	AM_RANGE(0x500008, 0x500009) AM_READ(soundlatch3_word_r)
-	AM_RANGE(0x50000a, 0x50000b) AM_READ(soundlatch4_word_r)
+	AM_RANGE(0x500008, 0x500009) AM_DEVREAD8("soundlatch3", generic_latch_8_device, read, 0x00ff)
+	AM_RANGE(0x50000a, 0x50000b) AM_DEVREAD8("soundlatch4", generic_latch_8_device, read, 0x00ff)
 	AM_RANGE(0x50000c, 0x50000d) AM_READ(batrider_z80_busack_r)
 	AM_RANGE(0x500010, 0x500011) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x500020, 0x500021) AM_WRITE(batrider_soundlatch_w)
@@ -1374,8 +1377,8 @@ static ADDRESS_MAP_START( bbakraid_68k_mem, AS_PROGRAM, 16, toaplan2_state )
 	AM_RANGE(0x500004, 0x500005) AM_READ_PORT("DSW")
 	AM_RANGE(0x500006, 0x500007) AM_READ(video_count_r)
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(toaplan2_coin_word_w)
-	AM_RANGE(0x500010, 0x500011) AM_READ(soundlatch3_word_r)
-	AM_RANGE(0x500012, 0x500013) AM_READ(soundlatch4_word_r)
+	AM_RANGE(0x500010, 0x500011) AM_DEVREAD8("soundlatch3", generic_latch_8_device, read, 0x00ff)
+	AM_RANGE(0x500012, 0x500013) AM_DEVREAD8("soundlatch4", generic_latch_8_device, read, 0x00ff)
 	AM_RANGE(0x500014, 0x500015) AM_WRITE(batrider_soundlatch_w)
 	AM_RANGE(0x500016, 0x500017) AM_WRITE(batrider_soundlatch2_w)
 	AM_RANGE(0x500018, 0x500019) AM_READ(bbakraid_eeprom_r)
@@ -1414,7 +1417,7 @@ static ADDRESS_MAP_START( bgaregga_sound_z80_mem, AS_PROGRAM, 8, toaplan2_state 
 	AM_RANGE(0xe006, 0xe008) AM_WRITE(raizing_oki_bankswitch_w)
 	AM_RANGE(0xe00a, 0xe00a) AM_WRITE(raizing_z80_bankswitch_w)
 	AM_RANGE(0xe00c, 0xe00c) AM_WRITE(bgaregga_E00C_w)
-	AM_RANGE(0xe01c, 0xe01c) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xe01c, 0xe01c) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0xe01d, 0xe01d) AM_READ(bgaregga_E01D_r)
 ADDRESS_MAP_END
 
@@ -1428,12 +1431,12 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( batrider_sound_z80_port, AS_IO, 8, toaplan2_state )
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x40, 0x40) AM_WRITE(soundlatch3_byte_w)
-	AM_RANGE(0x42, 0x42) AM_WRITE(soundlatch4_byte_w)
+	AM_RANGE(0x40, 0x40) AM_DEVWRITE("soundlatch3", generic_latch_8_device, write)
+	AM_RANGE(0x42, 0x42) AM_DEVWRITE("soundlatch4", generic_latch_8_device, write)
 	AM_RANGE(0x44, 0x44) AM_WRITE(batrider_sndirq_w)
 	AM_RANGE(0x46, 0x46) AM_WRITE(batrider_clear_nmi_w)
-	AM_RANGE(0x48, 0x48) AM_READ(soundlatch_byte_r)
-	AM_RANGE(0x4a, 0x4a) AM_READ(soundlatch2_byte_r)
+	AM_RANGE(0x48, 0x48) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
+	AM_RANGE(0x4a, 0x4a) AM_DEVREAD("soundlatch2", generic_latch_8_device, read)
 	AM_RANGE(0x80, 0x81) AM_DEVREADWRITE("ymsnd", ym2151_device, read, write)
 	AM_RANGE(0x82, 0x82) AM_DEVREADWRITE("oki1", okim6295_device, read, write)
 	AM_RANGE(0x84, 0x84) AM_DEVREADWRITE("oki2", okim6295_device, read, write)
@@ -1450,12 +1453,12 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bbakraid_sound_z80_port, AS_IO, 8, toaplan2_state )
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x40, 0x40) AM_WRITE(soundlatch3_byte_w)
-	AM_RANGE(0x42, 0x42) AM_WRITE(soundlatch4_byte_w)
+	AM_RANGE(0x40, 0x40) AM_DEVWRITE("soundlatch3", generic_latch_8_device, write)
+	AM_RANGE(0x42, 0x42) AM_DEVWRITE("soundlatch4", generic_latch_8_device, write)
 	AM_RANGE(0x44, 0x44) AM_WRITE(batrider_sndirq_w)
 	AM_RANGE(0x46, 0x46) AM_WRITE(batrider_clear_nmi_w)
-	AM_RANGE(0x48, 0x48) AM_READ(soundlatch_byte_r)
-	AM_RANGE(0x4a, 0x4a) AM_READ(soundlatch2_byte_r)
+	AM_RANGE(0x48, 0x48) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
+	AM_RANGE(0x4a, 0x4a) AM_DEVREAD("soundlatch2", generic_latch_8_device, read)
 	AM_RANGE(0x80, 0x81) AM_DEVREADWRITE("ymz", ymz280b_device, read, write)
 ADDRESS_MAP_END
 
@@ -1494,27 +1497,6 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( vfive_v25_mem, AS_PROGRAM, 8, toaplan2_state )
 	AM_RANGE(0x00000, 0x00001) AM_DEVREADWRITE("ymsnd", ym2151_device, read, write)
 	AM_RANGE(0x80000, 0x87fff) AM_MIRROR(0x78000) AM_RAM AM_SHARE("shared_ram")
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( v25_port, AS_IO, 8, toaplan2_state )
-	AM_RANGE(V25_PORT_PT, V25_PORT_PT) AM_READ(v25_dswa_r)
-	AM_RANGE(V25_PORT_P0, V25_PORT_P0) AM_READ(v25_dswb_r)
-	AM_RANGE(V25_PORT_P1, V25_PORT_P1) AM_READ(v25_jmpr_r)
-	AM_RANGE(V25_PORT_P2, V25_PORT_P2) AM_WRITENOP  // bit 0 is FAULT according to kbash schematic
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( dogyuun_v25_port, AS_IO, 8, toaplan2_state )
-	AM_RANGE(V25_PORT_PT, V25_PORT_PT) AM_READ(v25_dswb_r)
-	AM_RANGE(V25_PORT_P0, V25_PORT_P0) AM_READ(v25_dswa_r)
-	AM_RANGE(V25_PORT_P1, V25_PORT_P1) AM_READ(v25_jmpr_r)
-	AM_RANGE(V25_PORT_P2, V25_PORT_P2) AM_WRITENOP  // bit 0 is FAULT according to kbash schematic
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( fixeight_v25_port, AS_IO, 8, toaplan2_state )
-	AM_RANGE(V25_PORT_P0, V25_PORT_P0) AM_READWRITE_PORT("EEPROM")
 ADDRESS_MAP_END
 
 
@@ -1668,7 +1650,7 @@ static INPUT_PORTS_START( tekipaki )
 //  PORT_CONFSETTING(        0x000d, DEF_STR( Japan ) )
 //  PORT_CONFSETTING(        0x000e, DEF_STR( Japan ) )
 	PORT_CONFSETTING(       0x000f, "Japan (Distributed by Tecmo)" )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, toaplan2_state,c2map_r, NULL)
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, toaplan2_state,c2map_r, nullptr)
 INPUT_PORTS_END
 
 
@@ -2056,7 +2038,7 @@ static INPUT_PORTS_START( whoopee )
 	PORT_INCLUDE( pipibibs )
 
 	PORT_MODIFY("JMPR")
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, toaplan2_state,c2map_r, NULL)   // bit 0x10 sound ready
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, toaplan2_state,c2map_r, nullptr)   // bit 0x10 sound ready
 INPUT_PORTS_END
 
 
@@ -2344,139 +2326,90 @@ static INPUT_PORTS_START( batsugun )
 INPUT_PORTS_END
 
 
-CUSTOM_INPUT_MEMBER(toaplan2_state::pwrkick_hopper_status_r)
-{
-	/* TODO: hopper mechanism */
-	return machine().rand() & 1;
-	//return m_pwrkick_hopper & (machine().rand() & 1);
-}
-
 static INPUT_PORTS_START( pwrkick )
 	PORT_START("DSWA")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) ) PORT_DIPLOCATION("SW1:!1,!2")
 	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Very_Hard ) )
-	PORT_DIPNAME( 0x1c, 0x00, "Payout" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x04, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x0c, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x14, "6" )
-	PORT_DIPSETTING(    0x18, "7" )
-	PORT_DIPSETTING(    0x1c, "8" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x5c, 0x00, "Payout" ) PORT_DIPLOCATION("SW1:!3,!4,!5,!7")
+	PORT_DIPSETTING(    0x00, "110" ) // Service mode displays values as 1-8, ignoring SW1:7
+	PORT_DIPSETTING(    0x04, "105" )
+	PORT_DIPSETTING(    0x08, "100" )
+	PORT_DIPSETTING(    0x0c, "95" )
+	PORT_DIPSETTING(    0x10, "90" )
+	PORT_DIPSETTING(    0x14, "85" )
+	PORT_DIPSETTING(    0x18, "80" )
+	PORT_DIPSETTING(    0x1c, "75" )
+	PORT_DIPSETTING(    0x40, "70" )
+	PORT_DIPSETTING(    0x44, "65" )
+	PORT_DIPSETTING(    0x48, "60" )
+	PORT_DIPSETTING(    0x4c, "55" )
+	PORT_DIPSETTING(    0x50, "50" )
+	PORT_DIPSETTING(    0x54, "45" )
+	PORT_DIPSETTING(    0x58, "40" )
+	PORT_DIPSETTING(    0x5c, "35" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) ) PORT_DIPLOCATION("SW1:!6")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Diagnostic" )
+	PORT_DIPNAME( 0x80, 0x00, "Diagnostic" ) PORT_DIPLOCATION("SW1:!8")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START("DSWB")
-	PORT_DIPNAME( 0x03, 0x00, "Play Credit" )
-	PORT_DIPSETTING(    0x00, "10 \xC2\xA5" )
-	PORT_DIPSETTING(    0x01, "20 \xC2\xA5" )
-	PORT_DIPSETTING(    0x02, "30 \xC2\xA5" )
-	PORT_DIPSETTING(    0x03, "40 \xC2\xA5" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin Exchange" )
+	PORT_DIPNAME( 0x03, 0x00, "Play Credit" ) PORT_DIPLOCATION("SW2:!1,!2")
+	PORT_DIPSETTING(    0x00, UNICODE_YEN "10" )
+	PORT_DIPSETTING(    0x01, UNICODE_YEN "20" )
+	PORT_DIPSETTING(    0x02, UNICODE_YEN "30" )
+	PORT_DIPSETTING(    0x03, UNICODE_YEN "40" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coin Exchange" ) PORT_DIPLOCATION("SW2:!3,!4")
 	PORT_DIPSETTING(    0x00, "12" )
 	PORT_DIPSETTING(    0x04, "10" )
 	PORT_DIPSETTING(    0x08, "6" )
 	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x30, 0x00, "Game Mode" )
+	PORT_DIPNAME( 0x30, 0x00, "Game Mode" ) PORT_DIPLOCATION("SW2:!5,!6")
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x10, "Shot" )
 	PORT_DIPSETTING(    0x20, "Auto" )
 	PORT_DIPSETTING(    0x30, "S-Manual" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPUNUSED_DIPLOC( 0x40, 0x00, "SW2:!7" )
+	PORT_DIPUNUSED_DIPLOC( 0x80, 0x00, "SW2:!8" )
 
 	PORT_START("DSWC")
-	PORT_DIPNAME( 0x01, 0x00, "DSWC" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPUNUSED_DIPLOC( 0x01, 0x00, "SW3:!1" )
+	PORT_DIPUNUSED_DIPLOC( 0x02, 0x00, "SW3:!2" )
+	PORT_DIPUNUSED_DIPLOC( 0x04, 0x00, "SW3:!3" )
+	PORT_DIPUNUSED_DIPLOC( 0x08, 0x00, "SW3:!4" )
+	PORT_DIPUNUSED_DIPLOC( 0x10, 0x00, "SW3:!5" )
+	PORT_DIPUNUSED_DIPLOC( 0x20, 0x00, "SW3:!6" )
+	PORT_DIPUNUSED_DIPLOC( 0x40, 0x00, "SW3:!7" )
+	PORT_DIPUNUSED_DIPLOC( 0x80, 0x00, "SW3:!8" )
 
 	PORT_START("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Left Button")
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Center Button")
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("Right Button")
-	PORT_DIPNAME( 0x10, 0x00, "IN1" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_GAMBLE_KEYIN ) // 10 Yen
-	PORT_SERVICE( 0x02, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_NAME("Coin 2 (" UNICODE_YEN "10)")
+	PORT_SERVICE_NO_TOGGLE( 0x02, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("Down Button")
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, toaplan2_state, pwrkick_hopper_status_r, NULL)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE3 ) PORT_NAME("Memory Reset")
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_READ_LINE_DEVICE_MEMBER("hopper", ticket_dispenser_device, line_r)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_MEMORY_RESET )
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START("SYS")
-	PORT_DIPNAME( 0x01, 0x00, "SYS" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) // 100 Yen
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 ) PORT_NAME("Bookkeeping")
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SERVICE4 ) PORT_NAME("Attendant Key")
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_NAME("Coin Exchange (" UNICODE_YEN "100)")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_GAMBLE_BOOK )
+	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_GAMBLE_SERVICE ) PORT_NAME("Attendant Key")
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_NAME("Coin 1 (Medal)")
+
+	// The specific "Payout" button shown on the test screen and diagnostic menu does not exist.
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( othldrby )
@@ -3219,8 +3152,11 @@ static MACHINE_CONFIG_START( dogyuun, toaplan2_state )
 
 	MCFG_CPU_ADD("audiocpu", V25, XTAL_25MHz/2)         /* NEC V25 type Toaplan marked CPU ??? */
 	MCFG_CPU_PROGRAM_MAP(v25_mem)
-	MCFG_CPU_IO_MAP(dogyuun_v25_port)
 	MCFG_V25_CONFIG(nitro_decryption_table)
+	MCFG_V25_PORT_PT_READ_CB(IOPORT("DSWB")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P0_READ_CB(IOPORT("DSWA")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P1_READ_CB(IOPORT("JMPR")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P2_WRITE_CB(NOOP)  // bit 0 is FAULT according to kbash schematic
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 
@@ -3264,8 +3200,11 @@ static MACHINE_CONFIG_START( kbash, toaplan2_state )
 	/* ROM based v25 */
 	MCFG_CPU_ADD("audiocpu", V25, XTAL_16MHz)           /* NEC V25 type Toaplan marked CPU ??? */
 	MCFG_CPU_PROGRAM_MAP(kbash_v25_mem)
-	MCFG_CPU_IO_MAP(v25_port)
 	MCFG_V25_CONFIG(nitro_decryption_table)
+	MCFG_V25_PORT_PT_READ_CB(IOPORT("DSWA")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P0_READ_CB(IOPORT("DSWB")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P1_READ_CB(IOPORT("JMPR")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P2_WRITE_CB(NOOP)  // bit 0 is FAULT according to kbash schematic
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 
@@ -3519,8 +3458,9 @@ static MACHINE_CONFIG_START( fixeight, toaplan2_state )
 
 	MCFG_CPU_ADD("audiocpu", V25, XTAL_16MHz)           /* NEC V25 type Toaplan marked CPU ??? */
 	MCFG_CPU_PROGRAM_MAP(fixeight_v25_mem)
-	MCFG_CPU_IO_MAP(fixeight_v25_port)
 	MCFG_V25_CONFIG(ts001turbo_decryption_table)
+	MCFG_V25_PORT_P0_READ_CB(IOPORT("EEPROM"))
+	MCFG_V25_PORT_P0_WRITE_CB(IOPORT("EEPROM"))
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 
@@ -3601,8 +3541,11 @@ static MACHINE_CONFIG_START( vfive, toaplan2_state )
 
 	MCFG_CPU_ADD("audiocpu", V25, XTAL_20MHz/2) /* Verified on pcb, NEC V25 type Toaplan mark scratched out */
 	MCFG_CPU_PROGRAM_MAP(vfive_v25_mem)
-	MCFG_CPU_IO_MAP(v25_port)
 	MCFG_V25_CONFIG(nitro_decryption_table)
+	MCFG_V25_PORT_PT_READ_CB(IOPORT("DSWA")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P0_READ_CB(IOPORT("DSWB")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P1_READ_CB(IOPORT("JMPR")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P2_WRITE_CB(NOOP)  // bit 0 is FAULT according to kbash schematic
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 
@@ -3639,7 +3582,10 @@ static MACHINE_CONFIG_START( batsugun, toaplan2_state )
 
 	MCFG_CPU_ADD("audiocpu", V25, XTAL_32MHz/2)         /* NEC V25 type Toaplan marked CPU ??? */
 	MCFG_CPU_PROGRAM_MAP(v25_mem)
-	MCFG_CPU_IO_MAP(v25_port)
+	MCFG_V25_PORT_PT_READ_CB(IOPORT("DSWA")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P0_READ_CB(IOPORT("DSWB")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P1_READ_CB(IOPORT("JMPR")) MCFG_DEVCB_XOR(0xff)
+	MCFG_V25_PORT_P2_WRITE_CB(NOOP)  // bit 0 is FAULT according to kbash schematic
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 
@@ -3685,6 +3631,10 @@ static MACHINE_CONFIG_START( pwrkick, toaplan2_state )
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 	MCFG_UPD4992_ADD("rtc")
 
+	MCFG_NVRAM_ADD_0FILL("nvram")
+
+	MCFG_TICKET_DISPENSER_ADD("hopper", attotime::from_msec(PWRKICK_HOPPER_PULSE), TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_HIGH)
+
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK)
@@ -3716,6 +3666,8 @@ static MACHINE_CONFIG_START( othldrby, toaplan2_state )
 
 	MCFG_MACHINE_START_OVERRIDE(toaplan2_state,toaplan2)
 	MCFG_UPD4992_ADD("rtc")
+
+	MCFG_NVRAM_ADD_0FILL("nvram")
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -3908,6 +3860,8 @@ static MACHINE_CONFIG_START( bgaregga, toaplan2_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ymsnd", XTAL_32MHz/8)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
@@ -3964,6 +3918,11 @@ static MACHINE_CONFIG_START( batrider, toaplan2_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch2")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch3")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch4")
+
 	MCFG_YM2151_ADD("ymsnd", XTAL_32MHz/8)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
@@ -4019,6 +3978,11 @@ static MACHINE_CONFIG_START( bbakraid, toaplan2_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch2")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch3")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch4")
 
 	MCFG_SOUND_ADD("ymz", YMZ280B, XTAL_16_9344MHz)
 	// IRQ not used ???  Connected to a test pin (TP082)
@@ -4342,85 +4306,85 @@ ROM_END
 
 ROM_START( fixeightkt )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightkt.nv", 0x00, 0x80, CRC(08fa73ba) SHA1(b7761d3dd3f4485e55c8ef2cf1a840ca771ee2fc) )
 ROM_END
 
 ROM_START( fixeightk )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightk.nv", 0x00, 0x80, CRC(cac91c6f) SHA1(55b284f081753d60abff63493094322756b7f0c5) )
 ROM_END
 
 ROM_START( fixeightht )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightht.nv", 0x00, 0x80, CRC(57edaa51) SHA1(b8d50e82590b8cbbbcafec5f9cfbc91e4c286db5) )
 ROM_END
 
 ROM_START( fixeighth )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeighth.nv", 0x00, 0x80, CRC(95dec584) SHA1(1c309074b51da5a5263dee00403296946e41067b) )
 ROM_END
 
 ROM_START( fixeighttwt )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeighttwt.nv", 0x00, 0x80, CRC(b6d5c06c) SHA1(7fda380ac6835a983c57d093ccad7bd76893c9ba))
 ROM_END
 
 ROM_START( fixeighttw )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeighttw.nv", 0x00, 0x80, CRC(74e6afb9) SHA1(87bdc95eb0d2d54375de2c622557d503e14154be))
 ROM_END
 
 ROM_START( fixeightat )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightat.nv", 0x00, 0x80,CRC(e9c21987) SHA1(7f699e38deb84902ed62b857a3d2b4e3ea1475bb) )
 ROM_END
 
 ROM_START( fixeighta )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeighta.nv", 0x00, 0x80, CRC(2bf17652) SHA1(4ec6f188e63610d258cd6b2432d2200d61d80bed))
 ROM_END
 
 ROM_START( fixeightt )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightt.nv", 0x00, 0x80, CRC(c0da4a05) SHA1(3686161244e3e8be0e2fdb5fc5c24e39a7aeba85) )
 ROM_END
 
 ROM_START( fixeight )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeight.nv", 0x00, 0x80, CRC(02e925d0) SHA1(5839d10aceff84916ea99e9c6afcdc90eef7468b) )
 ROM_END
 
 ROM_START( fixeightut )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightut.nv", 0x00, 0x80, CRC(9fcd93ee) SHA1(4f2750f09d9b8ff358a2fd6c7a4a8ba6de67017a) )
 ROM_END
 
 ROM_START( fixeightu )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightu.nv", 0x00, 0x80, CRC(5dfefc3b) SHA1(5203525c58e2ae10575af2e277a5696bd64c5b60) )
 ROM_END
 
 ROM_START( fixeightj )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightj.nv", 0x00, 0x80, CRC(21e22038) SHA1(29fb10061e62799bb5e4171e144daac49f0cdf06) )
 ROM_END
 
 ROM_START( fixeightjt )
 	ROMS_FIXEIGHT
-	ROM_REGION( 0x80, "eeprom", 0 )
+	ROM_REGION16_BE( 0x80, "eeprom", 0 )
 	ROM_LOAD( "fixeightjt.nv", 0x00, 0x80, CRC(e3d14fed) SHA1(ee4982ef195240c5eaa5005ca1d591901fb01b47) )
 ROM_END
 

@@ -121,8 +121,8 @@ ADDRESS_MAP_END
 
 static INPUT_PORTS_START( by17 )
 	PORT_START("TEST")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Self Test") PORT_CHANGED_MEMBER(DEVICE_SELF, by17_state, self_test, NULL)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Activity")  PORT_CHANGED_MEMBER(DEVICE_SELF, by17_state, activity_button, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Self Test") PORT_CHANGED_MEMBER(DEVICE_SELF, by17_state, self_test, nullptr)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Activity")  PORT_CHANGED_MEMBER(DEVICE_SELF, by17_state, activity_button, nullptr)
 
 	PORT_START("DSW0")
 	PORT_DIPNAME( 0x1f, 0x02, "Coin Slot 1")                PORT_DIPLOCATION("SW0:!1,!2,!3,!4,!5") // same as 03
@@ -673,25 +673,19 @@ WRITE8_MEMBER( by17_state::u11_a_w )
 
 	m_digit = 0;
 
-	if BIT(data, 7)
+	if (BIT(data, 7))
 		m_digit = 1;
-	else
-	if BIT(data, 6)
+	else if (BIT(data, 6))
 		m_digit = 2;
-	else
-	if BIT(data, 5)
+	else if (BIT(data, 5))
 		m_digit = 3;
-	else
-	if BIT(data, 4)
+	else if (BIT(data, 4))
 		m_digit = 4;
-	else
-	if BIT(data, 3)
+	else if (BIT(data, 3))
 		m_digit = 5;
-	else
-	if BIT(data, 2)
+	else if (BIT(data, 2))
 		m_digit = 6;
-	else
-	if (BIT(data, 2) && BIT(data, 3))   // Aftermarket 7th digit strobe for 6 digit games
+	else if (BIT(data, 2) && BIT(data, 3))   // Aftermarket 7th digit strobe for 6 digit games
 		m_digit = 7;
 
 	if ((m_u10_ca2==0) && m_digit)
@@ -1003,8 +997,8 @@ static MACHINE_CONFIG_START( by17, by17_state )
 	MCFG_PIA_READCB1_HANDLER(READLINE(by17_state, u10_cb1_r))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(by17_state, u10_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(by17_state, u10_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_z_freq", by17_state, timer_z_freq, attotime::from_hz(100)) // Mains Line Frequency * 2
 	MCFG_TIMER_DRIVER_ADD("timer_z_pulse", by17_state, timer_z_pulse)                                // Active pulse length from Zero Crossing detector
 
@@ -1016,8 +1010,8 @@ static MACHINE_CONFIG_START( by17, by17_state )
 	MCFG_PIA_READCB1_HANDLER(READLINE(by17_state, u11_cb1_r))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(by17_state, u11_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(by17_state, u11_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_d_freq", by17_state, u11_timer, attotime::from_hz(317)) // 555 timer
 	MCFG_TIMER_DRIVER_ADD("timer_d_pulse", by17_state, timer_d_pulse)                             // 555 Active pulse length
 MACHINE_CONFIG_END

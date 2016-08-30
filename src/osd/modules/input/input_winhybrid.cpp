@@ -25,14 +25,14 @@
 #include <dinput.h>
 
 #undef interface
+#undef min
+#undef max
 
 // MAME headers
 #include "emu.h"
-#include "osdepend.h"
 
 // MAMEOS headers
 #include "strconv.h"
-#include "winutil.h"
 #include "winmain.h"
 
 #include "input_common.h"
@@ -144,7 +144,10 @@ public:
 		// Create and initialize our helpers
 		status = init_helpers();
 		if (status != 0)
+		{
+			osd_printf_error("Hybrid joystick module helpers failed to initialize. Error 0x%X\n", static_cast<unsigned int>(status));
 			return status;
+		}
 
 		return 0;
 	}
@@ -164,7 +167,7 @@ public:
 			goto exit;
 		}
 
-		if (win_window_list != nullptr && win_window_list->win_has_menu())
+		if (!osd_common_t::s_window_list.empty() && osd_common_t::s_window_list.front()->win_has_menu())
 			cooperative_level = DISCL_BACKGROUND | DISCL_NONEXCLUSIVE;
 
 		// allocate and link in a new device
@@ -215,7 +218,7 @@ protected:
 			{
 				XINPUT_STATE state = { 0 };
 
-				if (m_xinput_helper->XInputGetState(i, &state) == ERROR_SUCCESS)
+				if (m_xinput_helper->xinput_get_state(i, &state) == ERROR_SUCCESS)
 				{
 					// allocate and link in a new device
 					devinfo = m_xinput_helper->create_xinput_device(machine, i, *this);
@@ -240,7 +243,7 @@ private:
 			status = m_xinput_helper->initialize();
 			if (status != 0)
 			{
-				osd_printf_error("xinput_api_helper failed to initialize! Error: %u\n", static_cast<unsigned int>(status));
+				osd_printf_verbose("xinput_api_helper failed to initialize! Error: %u\n", static_cast<unsigned int>(status));
 				return -1;
 			}
 		}
@@ -251,7 +254,7 @@ private:
 			status = m_dinput_helper->initialize();
 			if (status != DI_OK)
 			{
-				osd_printf_error("dinput_api_helper failed to initialize! Error: %u\n", static_cast<unsigned int>(status));
+				osd_printf_verbose("dinput_api_helper failed to initialize! Error: %u\n", static_cast<unsigned int>(status));
 				return -1;
 			}
 		}
@@ -275,10 +278,10 @@ private:
 	}
 
 	//-----------------------------------------------------------------------------
-	// Enum each PNP device using WMI and check each device ID to see if it contains 
-	// "IG_" (ex. "VID_045E&PID_028E&IG_00").  If it does, then it’s an XInput device
+	// Enum each PNP device using WMI and check each device ID to see if it contains
+	// "IG_" (ex. "VID_045E&PID_028E&IG_00").  If it does, then it's an XInput device
 	// Unfortunately this information can not be found by just using DirectInput.
-	// Checking against a VID/PID of 0x028E/0x045E won't find 3rd party or future 
+	// Checking against a VID/PID of 0x028E/0x045E won't find 3rd party or future
 	// XInput devices.
 	//-----------------------------------------------------------------------------
 	HRESULT get_xinput_devices(std::list<DWORD> &xinput_id_list) const
@@ -291,7 +294,7 @@ private:
 		bstr_ptr bstrClassName;
 		bstr_ptr bstrNamespace;
 		DWORD uReturned = 0;
-		UINT iDevice = 0;
+		UINT iDevice;
 		VARIANT var;
 		HRESULT hr;
 
@@ -317,7 +320,7 @@ private:
 		bstrDeviceID = bstr_ptr(SysAllocString(L"DeviceID"));
 		bstrClassName = bstr_ptr(SysAllocString(L"Win32_PNPEntity"));
 
-		// Connect to WMI 
+		// Connect to WMI
 		hr = pIWbemLocator->ConnectServer(
 			bstrNamespace.get(),
 			nullptr,
@@ -376,8 +379,8 @@ private:
 				hr = pDevices[iDevice]->Get(bstrDeviceID.get(), 0L, &var, nullptr, nullptr);
 				if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal != nullptr)
 				{
-					// Check if the device ID contains "IG_".  If it does, then it’s an XInput device
-					// Unfortunately this information can not be found by just using DirectInput 
+					// Check if the device ID contains "IG_".  If it does, then it's an XInput device
+					// Unfortunately this information can not be found by just using DirectInput
 					if (wcsstr(var.bstrVal, L"IG_"))
 					{
 						// If it does, then get the VID/PID from var.bstrVal

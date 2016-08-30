@@ -458,14 +458,14 @@ UINT32 tms340x0_device::raster_op_21(UINT32 newpix, UINT32 oldpix) { return (old
     OPCODE TABLE & IMPLEMENTATIONS
 ***************************************************************************/
 
-#include "34010fld.inc"
+#include "34010fld.hxx"
 
 /* includes the static function prototypes and the master opcode table */
-#include "34010tbl.inc"
+#include "34010tbl.hxx"
 
 /* includes the actual opcode implementations */
-#include "34010ops.inc"
-#include "34010gfx.inc"
+#include "34010ops.hxx"
+#include "34010gfx.hxx"
 
 
 
@@ -849,7 +849,7 @@ TIMER_CALLBACK_MEMBER( tms340x0_device::scanline_callback )
 	vtotal = SMART_IOREG(VTOTAL);
 	if (!master)
 	{
-		vtotal = MIN(m_screen->height() - 1, vtotal);
+		vtotal = std::min(m_screen->height() - 1, vtotal);
 		vcount = m_screen->vpos();
 	}
 

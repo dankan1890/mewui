@@ -16,18 +16,9 @@
 #include "osdcore.h"
 #include "corealloc.h"
 
+#include <iterator>
+#include <utility>
 #include <vector>
-
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-#include <yvals.h>
-#define noexcept _NOEXCEPT
-#endif
-
-// TEMPORARY helper to catch is_pod assertions in the debugger
-#if 0
-#undef assert
-#define assert(x) do { if (!(x)) { fprintf(stderr, "Assert: %s\n", #x); osd_break_into_debugger("Assertion failed"); } } while (0)
-#endif
 
 
 typedef std::vector<UINT8> dynamic_buffer;
@@ -43,32 +34,53 @@ class simple_list final
 public:
 	class auto_iterator
 	{
-public:
+	public:
+		typedef int difference_type;
+		typedef _ElementType value_type;
+		typedef _ElementType *pointer;
+		typedef _ElementType &reference;
+		typedef std::forward_iterator_tag iterator_category;
+
 		// construction/destruction
+		auto_iterator() noexcept : m_current(nullptr) { }
 		auto_iterator(_ElementType *ptr) noexcept : m_current(ptr) { }
 
-		// required operator overrides
+		// required operator overloads
+		bool operator==(const auto_iterator &iter) const noexcept { return m_current == iter.m_current; }
 		bool operator!=(const auto_iterator &iter) const noexcept { return m_current != iter.m_current; }
 		_ElementType &operator*() const noexcept { return *m_current; }
+		_ElementType *operator->() const noexcept { return m_current; }
 		// note that _ElementType::next() must not return a const ptr
-		const auto_iterator &operator++() noexcept { m_current = m_current->next(); return *this; }
+		auto_iterator &operator++() noexcept { m_current = m_current->next(); return *this; }
+		auto_iterator operator++(int) noexcept { auto_iterator result(*this); m_current = m_current->next(); return result; }
 
-private:
+	private:
 		// private state
 		_ElementType *m_current;
 	};
+
+	// construction/destruction
+	simple_list() noexcept
+		: m_head(nullptr)
+		, m_tail(nullptr)
+		, m_count(0)
+	{
+	}
+	~simple_list() noexcept { reset(); }
 
 	// we don't support deep copying
 	simple_list(const simple_list &) = delete;
 	simple_list &operator=(const simple_list &) = delete;
 
-	// construction/destruction
-	simple_list() noexcept
-		: m_head(nullptr),
-			m_tail(nullptr),
-			m_count(0) { }
-
-	~simple_list() noexcept { reset(); }
+	// but we do support cheap swap/move
+	simple_list(simple_list &&list) : simple_list() { operator=(std::move(list)); }
+	simple_list &operator=(simple_list &&list)
+	{
+		using std::swap;
+		swap(m_head, list.m_head);
+		swap(m_tail, list.m_tail);
+		swap(m_count, list.m_count);
+	}
 
 	// simple getters
 	_ElementType *first() const noexcept { return m_head; }
@@ -141,7 +153,7 @@ private:
 		m_count += count;
 	}
 
-	// insert the given object after a particular object (NULL means prepend)
+	// insert the given object after a particular object (nullptr means prepend)
 	_ElementType &insert_after(_ElementType &object, _ElementType *insert_after) noexcept
 	{
 		if (insert_after == nullptr)
@@ -154,7 +166,7 @@ private:
 		return object;
 	}
 
-	// insert the given object before a particular object (NULL means append)
+	// insert the given object before a particular object (nullptr means append)
 	_ElementType &insert_before(_ElementType &object, _ElementType *insert_before) noexcept
 	{
 		if (insert_before == nullptr)

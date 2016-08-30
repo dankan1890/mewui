@@ -3,6 +3,9 @@
 #ifndef __GB_SLOT_H
 #define __GB_SLOT_H
 
+#include "softlist_dev.h"
+
+
 /***************************************************************************
  TYPE DEFINITIONS
  ***************************************************************************/
@@ -12,7 +15,7 @@
 enum
 {
 	GB_MBC_NONE = 0,     /*  32KB ROM - No memory bank controller         */
-	GB_MBC_MBC1,         /*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
+	GB_MBC_MBC1,         /*   2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
 	GB_MBC_MBC2,         /* 256KB ROM,  32KB RAM                          */
 	GB_MBC_MBC3,         /*   2MB ROM,  32KB RAM, RTC                     */
 	GB_MBC_MBC4,         /*    ?? ROM,    ?? RAM                          */
@@ -22,12 +25,12 @@ enum
 	GB_MBC_HUC3,         /*    ?? ROM,    ?? RAM - Hudson Soft Controller */
 	GB_MBC_MBC6,         /*    ?? ROM,  32KB SRAM                         */
 	GB_MBC_MBC7,         /*    ?? ROM,    ?? RAM                          */
-	GB_MBC_M161,         /*    ?? ROM,    ?? RAM                          */
-	GB_MBC_MMM01,        /*    ?? ROM,    ?? RAM                          */
+	GB_MBC_M161,         /* 256kB ROM,    No RAM                          */
+	GB_MBC_MMM01,        /*   8MB ROM, 128KB RAM                          */
 	GB_MBC_WISDOM,       /*    ?? ROM,    ?? RAM - Wisdom tree controller */
 	GB_MBC_MBC1_COL,     /*   1MB ROM,  32KB RAM - workaround for MBC1 on PCB that maps rom address lines differently */
-	GB_MBC_SACHEN1,      /*    ?? ROM,    ?? RAM - Sachen MMC-1 variant */
-	GB_MBC_SACHEN2,      /*    ?? ROM,    ?? RAM - Sachen MMC-2 variant */
+	GB_MBC_SACHEN1,      /*   4MB ROM,    No RAM - Sachen MMC-1 variant */
+	GB_MBC_SACHEN2,      /*   4MB ROM,    No RAM - Sachen MMC-2 variant */
 	GB_MBC_YONGYONG,     /*    ?? ROM,    ?? RAM - Appears in Sonic 3D Blast 5 pirate */
 	GB_MBC_LASAMA,       /*    ?? ROM,    ?? RAM - Appears in La Sa Ma */
 	GB_MBC_ATVRACIN,
@@ -116,9 +119,9 @@ public:
 	virtual void device_config_complete() override;
 
 	// image-level overrides
-	virtual bool call_load() override;
+	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
-	virtual bool call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry) override;
+	virtual const software_list_loader &get_software_list_loader() const override { return rom_software_list_loader::instance(); }
 
 	int get_type() { return m_type; }
 	int get_cart_type(UINT8 *ROM, UINT32 len);
@@ -136,7 +139,6 @@ public:
 	virtual bool is_creatable() const override { return 0; }
 	virtual bool must_be_loaded() const override { return 0; }
 	virtual bool is_reset_on_load() const override { return 1; }
-	virtual const option_guide *create_option_guide() const override { return nullptr; }
 	virtual const char *image_interface() const override { return "gameboy_cart"; }
 	virtual const char *file_extensions() const override { return "bin,gb,gbc"; }
 
@@ -177,7 +179,7 @@ public:
 	megaduck_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
 	// image-level overrides
-	virtual bool call_load() override;
+	virtual image_init_result call_load() override;
 	virtual const char *image_interface() const override { return "megaduck_cart"; }
 	virtual const char *file_extensions() const override { return "bin"; }
 

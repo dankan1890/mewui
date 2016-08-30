@@ -638,11 +638,8 @@ Notes:
 
 READ16_MEMBER(model1_state::io_r)
 {
-	static const char *const analognames[] = { "AN0", "AN1", "AN2", "AN3", "AN4", "AN5", "AN6", "AN7" };
-	static const char *const inputnames[] = { "IN0", "IN1", "IN2" };
-
 	if(offset < 0x8)
-		return read_safe(ioport(analognames[offset]), 0x00);
+		return m_analog_ports[offset].read_safe(0x00);
 
 	if(offset == 0x0f)
 		return m_lamp_state;
@@ -651,7 +648,7 @@ READ16_MEMBER(model1_state::io_r)
 	{
 		offset -= 0x8;
 		if(offset < 3)
-			return ioport(inputnames[offset])->read();
+			return m_digital_ports[offset]->read();
 		return 0xff;
 	}
 
@@ -662,7 +659,9 @@ READ16_MEMBER(model1_state::io_r)
 WRITE16_MEMBER(model1_state::io_w)
 {
 	if(offset == 0x0f){
-		// tested in vr, vf, swa, wingwar
+		// lamp and coinmeters
+		// 0x01 = COIN METER 1
+		// 0x02 = COIN METER 2
 		output().set_led_value(0, data & 0x4);   // START (1)
 		output().set_led_value(1, data & 0x8);   // VIEW1 (START2 - VF)
 		output().set_led_value(2, data & 0x10);  // VIEW2 (VIEW - SWA)
@@ -670,6 +669,11 @@ WRITE16_MEMBER(model1_state::io_w)
 		output().set_led_value(4, data & 0x40);  // VIEW4
 		output().set_led_value(5, data & 0x80);  // RACE LEADER
 		m_lamp_state = data;
+		output().set_digit_value(1, data);
+		return;
+	} else if (offset == 0x11) {
+		// drive board commands
+		output().set_digit_value(0, data);
 		return;
 	}
 	logerror("IOW: %02x %02x\n", offset, data);
@@ -789,7 +793,7 @@ WRITE16_MEMBER(model1_state::md1_w)
 	// never executed
 	//if(0 && offset)
 	//  return;
-	if(1 && m_dump)
+	if(true && m_dump)
 		logerror("TGP: md1_w %x, %04x @ %04x (%x)\n", offset, data, mem_mask, space.device().safe_pc());
 }
 
@@ -799,7 +803,7 @@ WRITE16_MEMBER(model1_state::md0_w)
 	// never executed
 	//if(0 && offset)
 	//  return;
-	if(1 && m_dump)
+	if(true && m_dump)
 		logerror("TGP: md0_w %x, %04x @ %04x (%x)\n", offset, data, mem_mask, space.device().safe_pc());
 }
 
@@ -988,7 +992,7 @@ static ADDRESS_MAP_START( model1_vr_io, AS_IO, 16, model1_state )
 ADDRESS_MAP_END
 
 static INPUT_PORTS_START( vf )
-	PORT_START("IN0")
+	PORT_START("IN.0")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_LOW)
@@ -999,7 +1003,7 @@ static INPUT_PORTS_START( vf )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN1")
+	PORT_START("IN.1")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
@@ -1010,7 +1014,7 @@ static INPUT_PORTS_START( vf )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN2")
+	PORT_START("IN.2")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
@@ -1023,16 +1027,16 @@ static INPUT_PORTS_START( vf )
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( vr )
-	PORT_START("AN0")   /* Steering */
+	PORT_START("AN.0")   /* Steering */
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_SENSITIVITY(100) PORT_KEYDELTA(3)
 
-	PORT_START("AN1")   /* Accel / Decel */
+	PORT_START("AN.1")   /* Accel / Decel */
 	PORT_BIT( 0xff, 0x30, IPT_PEDAL ) PORT_MINMAX(1,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 
-	PORT_START("AN2")   /* Brake */
+	PORT_START("AN.2")   /* Brake */
 	PORT_BIT( 0xff, 0x30, IPT_PEDAL2 ) PORT_MINMAX(1,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 
-	PORT_START("IN0")
+	PORT_START("IN.0")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_LOW)
@@ -1043,7 +1047,7 @@ static INPUT_PORTS_START( vr )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("VR3 (Yellow)") PORT_PLAYER(1)
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN1")
+	PORT_START("IN.1")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("VR4 (Green)") PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1054,22 +1058,22 @@ static INPUT_PORTS_START( vr )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN2")
+	PORT_START("IN.2")
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( wingwar )
-	PORT_START("AN0")   /* X */
+	PORT_START("AN.0")   /* X */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START("AN1")   /* Y */
+	PORT_START("AN.1")   /* Y */
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START("AN2")   /* Throttle */
+	PORT_START("AN.2")   /* Throttle */
 	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(1,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 
-	PORT_START("IN0")
+	PORT_START("IN.0")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_LOW)
@@ -1080,7 +1084,7 @@ static INPUT_PORTS_START( wingwar )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) PORT_NAME("View 3")
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN1")
+	PORT_START("IN.1")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1) PORT_NAME("View 4")
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1091,28 +1095,28 @@ static INPUT_PORTS_START( wingwar )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN2")
+	PORT_START("IN.2")
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( swa )
-	PORT_START("AN0")   /* X */
+	PORT_START("AN.0")   /* X */
 	PORT_BIT( 0xff, 127, IPT_AD_STICK_X ) PORT_MINMAX(27,227) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START("AN1")   /* Y */
+	PORT_START("AN.1")   /* Y */
 	PORT_BIT( 0xff, 127, IPT_AD_STICK_Y ) PORT_MINMAX(27,227) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
 
-	PORT_START("AN2")   /* Throttle */
+	PORT_START("AN.2")   /* Throttle */
 	PORT_BIT( 0xff, 228, IPT_PEDAL ) PORT_MINMAX(28,228) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_REVERSE
 
-	PORT_START("AN4")   /* X */
+	PORT_START("AN.4")   /* X */
 	PORT_BIT( 0xff, 127, IPT_AD_STICK_X ) PORT_MINMAX(27,227) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE PORT_PLAYER(2)
 
-	PORT_START("AN5")   /* Y */
+	PORT_START("AN.5")   /* Y */
 	PORT_BIT( 0xff, 127, IPT_AD_STICK_Y ) PORT_MINMAX(27,227) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_PLAYER(2)
 
-	PORT_START("IN0")
+	PORT_START("IN.0")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_LOW)
@@ -1122,7 +1126,7 @@ static INPUT_PORTS_START( swa )
 	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN1")
+	PORT_START("IN.1")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
@@ -1131,7 +1135,7 @@ static INPUT_PORTS_START( swa )
 	PORT_BIT( 0x00e0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START("IN2")
+	PORT_START("IN.2")
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -1239,6 +1243,11 @@ ROM_START( vr )
 
 	ROM_REGION( 0x100, "nvram", 0 ) // default nvram
 	ROM_LOAD( "vr_defaults.nv", 0x000, 0x100, CRC(5ccdc835) SHA1(7e809de470f78fb897b938ca2aee2e12f1c8f3a4) )
+
+	ROM_REGION ( 0x10000, "io_board", 0)
+	ROM_LOAD("epr-14869.25",  0x00000, 0x10000, CRC(6187cd7a) SHA1(b65fdd0ad31794a565a0ca4dc67a3f16b329fd71) )
+	ROM_LOAD("epr-14869b.25", 0x00000, 0x10000, CRC(b410f22b) SHA1(75c5009ca4d21ebb53d54d4e3fb8aa55a4c74a07) )
+	// there is also epr-14869c in model2 daytona
 ROM_END
 
 ROM_START( vformula )

@@ -65,7 +65,7 @@ public:
 		, m_p_chargen(*this, "chargen")
 		, m_p_videoram(*this, "videoram")
 		, m_cass(*this, "cassette")
-		, m_io_keyboard(*this, "KEY")
+		, m_io_keyboard(*this, "KEY.%u", 0)
 	{ }
 
 	DECLARE_READ8_MEMBER(keyboard_r);
@@ -105,7 +105,7 @@ READ8_MEMBER( bcs3_state::keyboard_r )
 	offset ^= 0x3ff;
 
 	for (i = 0; i < 10; i++)
-		if BIT(offset, i)
+		if (BIT(offset, i))
 			data |= m_io_keyboard[i]->read();
 
 	return data;
@@ -378,7 +378,7 @@ static MACHINE_CONFIG_START( bcs3, bcs3_state )
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_5MHz /2)
 	MCFG_CPU_PROGRAM_MAP(bcs3_mem)
 	MCFG_CPU_IO_MAP(bcs3_io)
-	MCFG_CPU_CONFIG(daisy_chain_intf)
+	MCFG_Z80_DAISY_CHAIN(daisy_chain_intf)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -405,7 +405,7 @@ static MACHINE_CONFIG_START( bcs3a, bcs3_state )
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_7MHz /2)
 	MCFG_CPU_PROGRAM_MAP(bcs3a_mem)
 	MCFG_CPU_IO_MAP(bcs3_io)
-	MCFG_CPU_CONFIG(daisy_chain_intf)
+	MCFG_Z80_DAISY_CHAIN(daisy_chain_intf)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

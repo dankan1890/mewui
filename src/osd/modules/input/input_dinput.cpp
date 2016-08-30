@@ -22,13 +22,13 @@
 #undef WINNT
 #include <dinput.h>
 #undef interface
+#undef min
+#undef max
 
 #include <mutex>
-#include <thread>
 
 // MAME headers
 #include "emu.h"
-#include "osdepend.h"
 #include "strconv.h"
 
 // MAMEOS headers
@@ -47,7 +47,11 @@ static INT32 dinput_joystick_pov_get_state(void *device_internal, void *item_int
 //  dinput_set_dword_property
 //============================================================
 
+#if DIRECTINPUT_VERSION >= 0x0800
+static HRESULT dinput_set_dword_property(ComPtr<IDirectInputDevice8> device, REFGUID property_guid, DWORD object, DWORD how, DWORD value)
+#else
 static HRESULT dinput_set_dword_property(ComPtr<IDirectInputDevice> device, REFGUID property_guid, DWORD object, DWORD how, DWORD value)
+#endif
 {
 	DIPROPDWORD dipdw;
 
@@ -81,8 +85,12 @@ HRESULT dinput_device::poll_dinput(LPVOID pState) const
 	HRESULT result;
 
 	// first poll the device, then get the state
+#if DIRECTINPUT_VERSION >= 0x0800
+	dinput.device->Poll();
+#else
 	if (dinput.device2 != nullptr)
 		dinput.device2->Poll();
+#endif
 
 	// GetDeviceState returns the immediate state
 	result = dinput.device->GetDeviceState(dinput.format->dwDataSize, pState);
@@ -129,7 +137,7 @@ void dinput_keyboard_device::reset()
 dinput_api_helper::dinput_api_helper(int version)
 	: m_dinput(nullptr),
 	  m_dinput_version(version),
-	  m_pfn_DirectInputCreate("DirectInputCreateW", L"dinput.dll")
+	  m_dinput_create_prt(nullptr)
 {
 }
 
@@ -142,6 +150,7 @@ int dinput_api_helper::initialize()
 {
 	HRESULT result;
 
+#if DIRECTINPUT_VERSION >= 0x0800
 	if (m_dinput_version >= 0x0800)
 	{
 		result = DirectInput8Create(GetModuleHandleUni(), m_dinput_version, IID_IDirectInput8, reinterpret_cast<void **>(m_dinput.GetAddressOf()), nullptr);
@@ -152,19 +161,25 @@ int dinput_api_helper::initialize()
 		}
 	}
 	else
+#endif
 	{
-		result = m_pfn_DirectInputCreate.initialize();
-		if (result != DI_OK)
-			return result;
+		m_dinput_dll = osd::dynamic_module::open({ "dinput.dll" });
+
+		m_dinput_create_prt = m_dinput_dll->bind<dinput_create_fn>("DirectInputCreateW");
+		if (m_dinput_create_prt == nullptr)
+		{
+			osd_printf_verbose("Legacy DirectInput library dinput.dll is not available\n");
+			return ERROR_DLL_NOT_FOUND;
+		}
 
 		// first attempt to initialize DirectInput at v7
 		m_dinput_version = 0x0700;
-		result = m_pfn_DirectInputCreate(GetModuleHandleUni(), m_dinput_version, m_dinput.GetAddressOf(), nullptr);
+		result = (*m_dinput_create_prt)(GetModuleHandleUni(), m_dinput_version, m_dinput.GetAddressOf(), nullptr);
 		if (result != DI_OK)
 		{
 			// if that fails, try version 5
 			m_dinput_version = 0x0500;
-			result = m_pfn_DirectInputCreate(GetModuleHandleUni(), m_dinput_version, m_dinput.GetAddressOf(), nullptr);
+			result = (*m_dinput_create_prt)(GetModuleHandleUni(), m_dinput_version, m_dinput.GetAddressOf(), nullptr);
 			if (result != DI_OK)
 			{
 				m_dinput_version = 0;
@@ -200,7 +215,7 @@ protected:
 public:
 	dinput_module(const char* type, const char* name)
 		: wininput_module(type, name),
-		  m_dinput_helper(nullptr)
+			m_dinput_helper(nullptr)
 	{
 	}
 
@@ -236,7 +251,7 @@ public:
 		instance.dwSize = sizeof(instance);
 		result = devinfo->dinput.device->GetObjectInfo(&instance, offset, DIPH_BYOFFSET);
 
-		// if we got an error and have no default string, just return NULL
+		// if we got an error and have no default string, just return nullptr
 		if (result != DI_OK)
 		{
 			if (defstring == nullptr)
@@ -246,29 +261,18 @@ public:
 			return std::string(defstring);
 		}
 
-		auto osd_free_deleter = [](char *p) { osd_free(p); };
-
 		// convert the name to utf8
-		auto namestring = std::unique_ptr<char, decltype(osd_free_deleter)>(utf8_from_tstring(instance.tszName), osd_free_deleter);
+		std::string namestring = utf8_from_tstring(instance.tszName);
 
 		// if no suffix, return as-is
 		if (suffix == nullptr)
-		{
-			return std::string(namestring.get());
-		}
-
-		// otherwise, allocate space to add the suffix
-		auto combined = std::make_unique<char[]>(strlen(namestring.get()) + 1 + _tcslen(suffix) + 1);
+			return namestring;
 
 		// convert the suffix to utf8
-		auto suffix_utf8 = std::unique_ptr<char, decltype(osd_free_deleter)>(utf8_from_tstring(suffix), osd_free_deleter);
+		std::string suffix_utf8 = utf8_from_tstring(suffix);
 
 		// Concat the name and suffix
-		strcpy(combined.get(), namestring.get());
-		strcat(combined.get(), " ");
-		strcat(combined.get(), suffix_utf8.get());
-
-		return std::string(combined.get());
+		return namestring + " " + suffix_utf8;
 	}
 
 protected:
@@ -285,7 +289,7 @@ public:
 
 	int dinput_devclass() override
 	{
-#if DIRECTINPUT_VERSION >= 0x800
+#if DIRECTINPUT_VERSION >= 0x0800
 		return DI8DEVCLASS_KEYBOARD;
 #else
 		return DIDEVTYPE_KEYBOARD;
@@ -315,7 +319,7 @@ public:
 			name = device_item_name(devinfo, keynum, defname, nullptr);
 
 			// add the item to the device
-			devinfo->device()->add_item(name.c_str(), itemid, generic_button_get_state, &devinfo->keyboard.state[keynum]);
+			devinfo->device()->add_item(name.c_str(), itemid, generic_button_get_state<std::uint8_t>, &devinfo->keyboard.state[keynum]);
 		}
 
 	exit:
@@ -356,7 +360,7 @@ public:
 
 	int dinput_devclass() override
 	{
-#if DIRECTINPUT_VERSION >= 0x800
+#if DIRECTINPUT_VERSION >= 0x0800
 		return DI8DEVCLASS_POINTER;
 #else
 		return DIDEVTYPE_MOUSE;
@@ -379,20 +383,24 @@ public:
 		result = dinput_set_dword_property(devinfo->dinput.device, DIPROP_AXISMODE, 0, DIPH_DEVICE, DIPROPAXISMODE_REL);
 		if (result != DI_OK && result != DI_PROPNOEFFECT)
 		{
-			osd_printf_error("DirectInput: Unable to set relative mode for mouse %d (%s)\n", devicelist()->size(), devinfo->name());
+			osd_printf_error("DirectInput: Unable to set relative mode for mouse %u (%s)\n", static_cast<unsigned int>(devicelist()->size()), devinfo->name());
 			goto error;
 		}
 
 		// cap the number of axes and buttons based on the format
-		devinfo->dinput.caps.dwAxes = MIN(devinfo->dinput.caps.dwAxes, 3);
-		devinfo->dinput.caps.dwButtons = MIN(devinfo->dinput.caps.dwButtons, (devinfo->dinput.format == &c_dfDIMouse) ? 4 : 8);
+		devinfo->dinput.caps.dwAxes = std::min(devinfo->dinput.caps.dwAxes, DWORD(3));
+		devinfo->dinput.caps.dwButtons = std::min(devinfo->dinput.caps.dwButtons, DWORD((devinfo->dinput.format == &c_dfDIMouse) ? 4 : 8));
 
 		// populate the axes
 		for (axisnum = 0; axisnum < devinfo->dinput.caps.dwAxes; axisnum++)
 		{
 			// add to the mouse device and optionally to the gun device as well
 			std::string name = device_item_name(devinfo, offsetof(DIMOUSESTATE, lX) + axisnum * sizeof(LONG), default_axis_name[axisnum], nullptr);
-			devinfo->device()->add_item(name.c_str(), static_cast<input_item_id>(ITEM_ID_XAXIS + axisnum), generic_axis_get_state, &devinfo->mouse.lX + axisnum);
+			devinfo->device()->add_item(
+				name.c_str(),
+				static_cast<input_item_id>(ITEM_ID_XAXIS + axisnum),
+				generic_axis_get_state<LONG>,
+				&devinfo->mouse.lX + axisnum);
 		}
 
 		// populate the buttons
@@ -402,7 +410,11 @@ public:
 
 			// add to the mouse device
 			std::string name = device_item_name(devinfo, offset, default_button_name(butnum), nullptr);
-			devinfo->device()->add_item(name.c_str(), static_cast<input_item_id>(ITEM_ID_BUTTON1 + butnum), generic_button_get_state, &devinfo->mouse.rgbButtons[butnum]);
+			devinfo->device()->add_item(
+				name.c_str(),
+				static_cast<input_item_id>(ITEM_ID_BUTTON1 + butnum),
+				generic_button_get_state<BYTE>,
+				&devinfo->mouse.rgbButtons[butnum]);
 		}
 
 	exit:
@@ -468,9 +480,9 @@ int dinput_joystick_device::configure()
 		osd_printf_warning("DirectInput: Unable to reset saturation for joystick %d (%s)\n", devindex, name());
 
 	// cap the number of axes, POVs, and buttons based on the format
-	dinput.caps.dwAxes = MIN(dinput.caps.dwAxes, 8);
-	dinput.caps.dwPOVs = MIN(dinput.caps.dwPOVs, 4);
-	dinput.caps.dwButtons = MIN(dinput.caps.dwButtons, 128);
+	dinput.caps.dwAxes = std::min(dinput.caps.dwAxes, DWORD(8));
+	dinput.caps.dwPOVs = std::min(dinput.caps.dwPOVs, DWORD(4));
+	dinput.caps.dwButtons = std::min(dinput.caps.dwButtons, DWORD(128));
 
 	// populate the axes
 	for (axisnum = axiscount = 0; axiscount < dinput.caps.dwAxes && axisnum < 8; axisnum++)
@@ -492,7 +504,11 @@ int dinput_joystick_device::configure()
 
 		// populate the item description as well
 		name = dinput_module::device_item_name(this, offsetof(DIJOYSTATE2, lX) + axisnum * sizeof(LONG), default_axis_name[axisnum], nullptr);
-		device()->add_item(name.c_str(), static_cast<input_item_id>(ITEM_ID_XAXIS + axisnum), generic_axis_get_state, &joystick.state.lX + axisnum);
+		device()->add_item(
+			name.c_str(),
+			static_cast<input_item_id>(ITEM_ID_XAXIS + axisnum),
+			generic_axis_get_state<LONG>,
+			&joystick.state.lX + axisnum);
 
 		axiscount++;
 	}
@@ -534,7 +550,7 @@ int dinput_joystick_device::configure()
 		else
 			itemid = ITEM_ID_OTHER_SWITCH;
 
-		device()->add_item(name.c_str(), itemid, generic_button_get_state, &joystick.state.rgbButtons[butnum]);
+		device()->add_item(name.c_str(), itemid, generic_button_get_state<BYTE>, &joystick.state.rgbButtons[butnum]);
 	}
 
 	return 0;
@@ -550,7 +566,7 @@ public:
 
 	int dinput_devclass() override
 	{
-#if DIRECTINPUT_VERSION >= 0x800
+#if DIRECTINPUT_VERSION >= 0x0800
 		return DI8DEVCLASS_GAMECTRL;
 #else
 		return DIDEVTYPE_JOYSTICK;
@@ -564,7 +580,7 @@ public:
 		dinput_joystick_device *devinfo;
 		int result = 0;
 
-		if (win_window_list != nullptr && win_window_list->win_has_menu())
+		if (!osd_common_t::s_window_list.empty() && osd_common_t::s_window_list.front()->win_has_menu())
 			cooperative_level = DISCL_BACKGROUND | DISCL_NONEXCLUSIVE;
 
 		// allocate and link in a new device

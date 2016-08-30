@@ -3,7 +3,7 @@
 /*
 
   Known chips: (* means not emulated yet)
-  
+
   Sharp SM510 MCU family:
   - SM510: 2.7Kx8 ROM, 128x4 RAM(32x4 for LCD)
   - SM511: 4Kx8 ROM, 128x4 RAM(32x4 for LCD), melody controller
@@ -12,10 +12,11 @@
 
   Sharp SM500 MCU family:
   - *SM500: x
+  - *SM4A: x
   - *SM530: x
   - *SM531: x
   - *KB1013VK1-2: Soviet-era clone of SM500, minor differences
-  
+
   References:
   - 1990 Sharp Microcomputers Data Book
   - 1996 Sharp Microcomputer Databook
@@ -125,6 +126,7 @@ void sm510_base_device::device_reset()
 	// ACL
 	m_skip = false;
 	m_halt = false;
+	m_sbm = false;
 	m_op = m_prev_op = 0;
 	do_branch(3, 7, 0);
 	m_prev_pc = m_pc;

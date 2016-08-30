@@ -116,6 +116,11 @@ void n2a03_device::mi_2a03_nd::write(UINT16 adr, UINT8 val)
 	program->write_byte(adr, val);
 }
 
+void n2a03_device::device_clock_changed()
+{
+	m_apu->set_unscaled_clock(clock());
+}
+
 const address_space_config *n2a03_device::memory_space_config(address_spacenum spacenum) const
 {
 	switch(spacenum)
@@ -139,4 +144,4 @@ machine_config_constructor n2a03_device::device_mconfig_additions() const
 }
 
 
-#include "cpu/m6502/n2a03.inc"
+#include "cpu/m6502/n2a03.hxx"

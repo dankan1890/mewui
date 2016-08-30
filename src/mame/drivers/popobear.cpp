@@ -80,7 +80,7 @@ Component Side   A   B   Solder Side
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 
 class popobear_state : public driver_device
 {
@@ -217,10 +217,10 @@ void popobear_state::video_start()
 
 	m_gfxdecode->gfx(0)->set_source(reinterpret_cast<UINT8 *>(&m_vram_rearranged[0]));
 
-	m_bg_tilemap[0] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg0_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
-	m_bg_tilemap[1] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg1_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
-	m_bg_tilemap[2] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg2_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
-	m_bg_tilemap[3] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg3_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
+	m_bg_tilemap[0] = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg0_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
+	m_bg_tilemap[1] = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg1_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
+	m_bg_tilemap[2] = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg2_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
+	m_bg_tilemap[3] = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(popobear_state::get_bg3_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 128, 64);
 
 	m_bg_tilemap[0]->set_transparent_pen(0);
 	m_bg_tilemap[1]->set_transparent_pen(0);

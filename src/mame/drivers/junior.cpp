@@ -45,7 +45,6 @@ public:
 	DECLARE_READ8_MEMBER(junior_riot_b_r);
 	DECLARE_WRITE8_MEMBER(junior_riot_a_w);
 	DECLARE_WRITE8_MEMBER(junior_riot_b_w);
-	DECLARE_WRITE_LINE_MEMBER(junior_riot_irq);
 	UINT8 m_port_a;
 	UINT8 m_port_b;
 	UINT8 m_led_time[6];
@@ -111,7 +110,7 @@ PORT_START("LINE0")         /* IN0 keys row 0 */
 	PORT_START("LINE3")         /* IN3 STEP and RESET keys, MODE switch */
 	PORT_BIT( 0x80, 0x00, IPT_UNUSED )
 	PORT_BIT( 0x40, 0x40, IPT_KEYBOARD ) PORT_NAME("sw1: ST") PORT_CODE(KEYCODE_F7)
-	PORT_BIT( 0x20, 0x20, IPT_KEYBOARD ) PORT_NAME("sw2: RST") PORT_CODE(KEYCODE_F3) PORT_CHANGED_MEMBER(DEVICE_SELF, junior_state, junior_reset, NULL)
+	PORT_BIT( 0x20, 0x20, IPT_KEYBOARD ) PORT_NAME("sw2: RST") PORT_CODE(KEYCODE_F3) PORT_CHANGED_MEMBER(DEVICE_SELF, junior_state, junior_reset, nullptr)
 	PORT_DIPNAME(0x10, 0x10, "sw3: SS (NumLock)") PORT_CODE(KEYCODE_NUMLOCK) PORT_TOGGLE
 	PORT_DIPSETTING( 0x00, "single step")
 	PORT_DIPSETTING( 0x10, "run")
@@ -182,12 +181,6 @@ WRITE8_MEMBER( junior_state::junior_riot_b_w )
 }
 
 
-WRITE_LINE_MEMBER( junior_state::junior_riot_irq )
-{
-	m_maincpu->set_input_line(M6502_IRQ_LINE, state ? HOLD_LINE : CLEAR_LINE);
-}
-
-
 TIMER_DEVICE_CALLBACK_MEMBER(junior_state::junior_update_leds)
 {
 	int i;
@@ -233,7 +226,7 @@ static MACHINE_CONFIG_START( junior, junior_state )
 	MCFG_MOS6530n_OUT_PA_CB(WRITE8(junior_state, junior_riot_a_w))
 	MCFG_MOS6530n_IN_PB_CB(READ8(junior_state, junior_riot_b_r))
 	MCFG_MOS6530n_OUT_PB_CB(WRITE8(junior_state, junior_riot_b_w))
-	MCFG_MOS6530n_IRQ_CB(WRITELINE(junior_state, junior_riot_irq))
+	MCFG_MOS6530n_IRQ_CB(INPUTLINE("maincpu", M6502_IRQ_LINE))
 
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("led_timer", junior_state, junior_update_leds, attotime::from_hz(50))
 MACHINE_CONFIG_END

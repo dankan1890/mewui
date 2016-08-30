@@ -12,6 +12,7 @@
 #import "debugcommandhistory.h"
 #import "debugview.h"
 
+#include "debugger.h"
 
 //============================================================
 //  NOTIFICATIONS
@@ -131,7 +132,7 @@ NSString *const MAMEAuxiliaryDebugWindowWillCloseNotification = @"MAMEAuxiliaryD
 + (device_debug::breakpoint *)findBreakpointAtAddress:(offs_t)address forDevice:(device_t &)device {
 	device_debug *const cpuinfo = device.debug();
 	device_debug::breakpoint *bp = cpuinfo->breakpoint_first();
-	while ((bp != NULL) && (address != bp->address())) bp = bp->next();
+	while ((bp != nullptr) && (address != bp->address())) bp = bp->next();
 	return bp;
 }
 
@@ -187,12 +188,12 @@ NSString *const MAMEAuxiliaryDebugWindowWillCloseNotification = @"MAMEAuxiliaryD
 
 - (IBAction)debugBreak:(id)sender {
 	if (machine->debug_flags & DEBUG_FLAG_ENABLED)
-		debug_cpu_get_visible_cpu(*machine)->debug()->halt_on_next_instruction("User-initiated break\n");
+		machine->debugger().cpu().get_visible_cpu()->debug()->halt_on_next_instruction("User-initiated break\n");
 }
 
 
 - (IBAction)debugRun:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->go();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go();
 }
 
 
@@ -201,43 +202,43 @@ NSString *const MAMEAuxiliaryDebugWindowWillCloseNotification = @"MAMEAuxiliaryD
 														object:self
 													  userInfo:[NSDictionary dictionaryWithObject:[NSValue valueWithPointer:machine]
 																						   forKey:@"MAMEDebugMachine"]];
-	debug_cpu_get_visible_cpu(*machine)->debug()->go();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go();
 }
 
 
 - (IBAction)debugRunToNextCPU:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->go_next_device();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go_next_device();
 }
 
 
 - (IBAction)debugRunToNextInterrupt:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->go_interrupt();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go_interrupt();
 }
 
 
 - (IBAction)debugRunToNextVBLANK:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->go_vblank();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go_vblank();
 }
 
 
 - (IBAction)debugStepInto:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->single_step();
+	machine->debugger().cpu().get_visible_cpu()->debug()->single_step();
 }
 
 
 - (IBAction)debugStepOver:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->single_step_over();
+	machine->debugger().cpu().get_visible_cpu()->debug()->single_step_over();
 }
 
 
 - (IBAction)debugStepOut:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->single_step_out();
+	machine->debugger().cpu().get_visible_cpu()->debug()->single_step_out();
 }
 
 
 - (IBAction)debugSoftReset:(id)sender {
 	machine->schedule_soft_reset();
-	debug_cpu_get_visible_cpu(*machine)->debug()->go();
+	machine->debugger().cpu().get_visible_cpu()->debug()->go();
 }
 
 
@@ -340,16 +341,16 @@ NSString *const MAMEAuxiliaryDebugWindowWillCloseNotification = @"MAMEAuxiliaryD
 
 	// limit the size to the minimum size
 	NSSize const minimum = [window minSize];
-	windowFrame.size.width = MAX(windowFrame.size.width, minimum.width);
-	windowFrame.size.height = MAX(windowFrame.size.height, minimum.height);
+	windowFrame.size.width = std::max(windowFrame.size.width, minimum.width);
+	windowFrame.size.height = std::max(windowFrame.size.height, minimum.height);
 
 	// limit the size to the main screen size
 	NSRect const available = [[NSScreen mainScreen] visibleFrame];
-	windowFrame.size.width = MIN(windowFrame.size.width, available.size.width);
-	windowFrame.size.height = MIN(windowFrame.size.height, available.size.height);
+	windowFrame.size.width = std::min(windowFrame.size.width, available.size.width);
+	windowFrame.size.height = std::min(windowFrame.size.height, available.size.height);
 
 	// arbitrary additional height limit
-	windowFrame.size.height = MIN(windowFrame.size.height, 320);
+	windowFrame.size.height = std::min(windowFrame.size.height, CGFloat(320));
 
 	// place it in the bottom right corner and apply
 	windowFrame.origin.x = available.origin.x + available.size.width - windowFrame.size.width;

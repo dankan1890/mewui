@@ -435,11 +435,11 @@ WRITE8_MEMBER( sol20_state::sol20_fe_w )
 
 static ADDRESS_MAP_START( sol20_mem, AS_PROGRAM, 8, sol20_state)
 	AM_RANGE(0x0000, 0x07ff) AM_RAMBANK("boot")
-	AM_RANGE(0X0800, 0Xbfff) AM_RAM // optional s100 ram
+	AM_RANGE(0x0800, 0xbfff) AM_RAM // optional s100 ram
 	AM_RANGE(0xc000, 0xc7ff) AM_ROM
-	AM_RANGE(0Xc800, 0Xcbff) AM_RAM // system ram
-	AM_RANGE(0Xcc00, 0Xcfff) AM_RAM AM_SHARE("videoram")
-	AM_RANGE(0Xd000, 0Xffff) AM_RAM // optional s100 ram
+	AM_RANGE(0xc800, 0xcbff) AM_RAM // system ram
+	AM_RANGE(0xcc00, 0xcfff) AM_RAM AM_SHARE("videoram")
+	AM_RANGE(0xd000, 0xffff) AM_RAM // optional s100 ram
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sol20_io, AS_IO, 8, sol20_state)
@@ -742,9 +742,9 @@ static MACHINE_CONFIG_START( sol20, sol20_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 	MCFG_SOUND_WAVE_ADD(WAVE_TAG, "cassette")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25) // cass1 speaker
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.05) // cass1 speaker
 	MCFG_SOUND_WAVE_ADD(WAVE2_TAG, "cassette2")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25) // cass2 speaker
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.05) // cass2 speaker
 
 	// devices
 	MCFG_CASSETTE_ADD("cassette")

@@ -157,7 +157,8 @@ adsp21xx_device::adsp21xx_device(const machine_config &mconfig, device_type type
 					(m_chip_type >= CHIP_TYPE_ADSP2101) ? 0x3f : 0x0f),
 		m_sport_rx_cb(*this),
 		m_sport_tx_cb(*this),
-		m_timer_fired_cb(*this)
+		m_timer_fired_cb(*this),
+		m_dmovlay_cb(*this)
 {
 	// initialize remaining state
 	memset(&m_core, 0, sizeof(m_core));
@@ -405,6 +406,7 @@ void adsp21xx_device::device_start()
 	m_sport_rx_cb.resolve();
 	m_sport_tx_cb.resolve();
 	m_timer_fired_cb.resolve();
+	m_dmovlay_cb.resolve();
 
 	// get our address spaces
 	m_program = &space(AS_PROGRAM);
@@ -637,7 +639,7 @@ void adsp21xx_device::device_reset()
 
 //-------------------------------------------------
 //  memory_space_config - return the configuration
-//  of the specified address space, or NULL if
+//  of the specified address space, or nullptr if
 //  the space doesn't exist
 //-------------------------------------------------
 
@@ -818,7 +820,7 @@ inline UINT32 adsp21xx_device::opcode_read()
     IMPORT CORE UTILITIES
 ***************************************************************************/
 
-#include "2100ops.inc"
+#include "2100ops.hxx"
 
 
 

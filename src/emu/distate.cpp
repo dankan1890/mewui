@@ -51,7 +51,6 @@ const UINT64 device_state_entry::k_decimal_divisor[] =
 
 device_state_entry::device_state_entry(int index, const char *symbol, void *dataptr, UINT8 size, device_state_interface *dev)
 	: m_device_state(dev),
-		m_next(nullptr),
 		m_index(index),
 		m_dataptr(dataptr),
 		m_datamask(0),
@@ -89,7 +88,6 @@ device_state_entry::device_state_entry(int index, const char *symbol, void *data
 
 device_state_entry::device_state_entry(int index, device_state_interface *dev)
 	: m_device_state(dev),
-		m_next(nullptr),
 		m_index(index),
 		m_dataptr(nullptr),
 		m_datamask(0),
@@ -111,7 +109,7 @@ device_state_entry &device_state_entry::formatstr(const char *_format)
 	m_format.assign(_format);
 	m_default_format = false;
 
-	// set the DSF_CUSTOM_STRING flag by formatting with a NULL string
+	// set the DSF_CUSTOM_STRING flag by formatting with a nullptr string
 	m_flags &= ~DSF_CUSTOM_STRING;
 	format(nullptr);
 
@@ -417,7 +415,7 @@ device_state_interface::~device_state_interface()
 
 UINT64 device_state_interface::state_int(int index)
 {
-	// NULL or out-of-range entry returns 0
+	// nullptr or out-of-range entry returns 0
 	const device_state_entry *entry = state_find_entry(index);
 	if (entry == nullptr)
 		return 0;
@@ -438,7 +436,7 @@ UINT64 device_state_interface::state_int(int index)
 
 std::string device_state_interface::state_string(int index) const
 {
-	// NULL or out-of-range entry returns bogus string
+	// nullptr or out-of-range entry returns bogus string
 	const device_state_entry *entry = state_find_entry(index);
 	if (entry == nullptr)
 		return std::string("???");
@@ -460,7 +458,7 @@ std::string device_state_interface::state_string(int index) const
 
 int device_state_interface::state_string_max_length(int index)
 {
-	// NULL or out-of-range entry returns bogus string
+	// nullptr or out-of-range entry returns bogus string
 	const device_state_entry *entry = state_find_entry(index);
 	if (entry == nullptr)
 		return 3;
@@ -477,7 +475,7 @@ int device_state_interface::state_string_max_length(int index)
 
 void device_state_interface::set_state_int(int index, UINT64 value)
 {
-	// NULL or out-of-range entry is a no-op
+	// nullptr or out-of-range entry is a no-op
 	const device_state_entry *entry = state_find_entry(index);
 	if (entry == nullptr)
 		return;
@@ -498,7 +496,7 @@ void device_state_interface::set_state_int(int index, UINT64 value)
 
 void device_state_interface::set_state_string(int index, const char *string)
 {
-	// NULL or out-of-range entry is a no-op
+	// nullptr or out-of-range entry is a no-op
 	const device_state_entry *entry = state_find_entry(index);
 	if (entry == nullptr)
 		return;
@@ -523,17 +521,14 @@ device_state_entry &device_state_interface::state_add(int index, const char *sym
 	assert(size == 1 || size == 2 || size == 4 || size == 8);
 	assert(symbol != nullptr);
 
-	// allocate new entry
-	auto entry = global_alloc(device_state_entry(index, symbol, data, size, this));
-
 	// append to the end of the list
-	m_state_list.append(*entry);
+	m_state_list.push_back(std::make_unique<device_state_entry>(index, symbol, data, size, this));
 
 	// set the fast entry if applicable
 	if (index >= FAST_STATE_MIN && index <= FAST_STATE_MAX)
-		m_fast_state[index - FAST_STATE_MIN] = entry;
+		m_fast_state[index - FAST_STATE_MIN] = m_state_list.back().get();
 
-	return *entry;
+	return *m_state_list.back().get();
 }
 
 //-------------------------------------------------
@@ -543,13 +538,10 @@ device_state_entry &device_state_interface::state_add(int index, const char *sym
 
 device_state_entry &device_state_interface::state_add_divider(int index)
 {
-	// allocate new entry
-	auto entry = global_alloc(device_state_entry(index, this));
-
 	// append to the end of the list
-	m_state_list.append(*entry);
+	m_state_list.push_back(std::make_unique<device_state_entry>(index, this));
 
-	return *entry;
+	return *m_state_list.back().get();
 }
 
 //-------------------------------------------------
@@ -604,7 +596,7 @@ void device_state_interface::state_string_export(const device_state_entry &entry
 void device_state_interface::interface_post_start()
 {
 	// make sure we got something during startup
-	if (m_state_list.count() == 0)
+	if (m_state_list.size() == 0)
 		throw emu_fatalerror("No state registered for device '%s' that supports it!", m_device.tag());
 }
 
@@ -621,10 +613,10 @@ const device_state_entry *device_state_interface::state_find_entry(int index) co
 		return m_fast_state[index - FAST_STATE_MIN];
 
 	// otherwise, scan the first
-	for (const device_state_entry *entry = m_state_list.first(); entry != nullptr; entry = entry->m_next)
+	for (auto &entry : m_state_list)
 		if (entry->m_index == index)
-			return entry;
+			return entry.get();
 
-	// handle failure by returning NULL
+	// handle failure by returning nullptr
 	return nullptr;
 }

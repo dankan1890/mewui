@@ -107,7 +107,7 @@ Notes:
 
 static ADDRESS_MAP_START( main_map, AS_PROGRAM, 16, midwunit_state )
 	AM_RANGE(0x00000000, 0x003fffff) AM_READWRITE(midtunit_vram_r, midtunit_vram_w)
-	AM_RANGE(0x01000000, 0x013fffff) AM_RAM
+	AM_RANGE(0x01000000, 0x013fffff) AM_RAM AM_SHARE("mainram")
 	AM_RANGE(0x01400000, 0x0145ffff) AM_READWRITE(midwunit_cmos_r, midwunit_cmos_w) AM_SHARE("nvram")
 	AM_RANGE(0x01480000, 0x014fffff) AM_WRITE(midwunit_cmos_enable_w)
 	AM_RANGE(0x01600000, 0x0160001f) AM_READWRITE(midwunit_security_r, midwunit_security_w)
@@ -812,9 +812,10 @@ ROM_START( mk3p40 )
 	ROM_LOAD32_BYTE( "mk3-u114.bin",  0x1000003, 0x080000, CRC(a8d99922) SHA1(04ff8d85448701070672f44dbf5bcfd744f1bc8a) )
 ROM_END
 
+// TODO: we're currently using version 1.0 roms for sound for all sets, see MT #00751
 ROM_START( umk3 )
 	ROM_REGION16_LE( 0x800000, "dcs", ROMREGION_ERASEFF )   /* sound data */
-	ROM_LOAD16_BYTE( "umk3-u2.bin", 0x000000, 0x100000, CRC(3838cfe5) SHA1(e3d2901f3bae1362742fc6ee0aa31c9f63b4dfa3) )
+	ROM_LOAD16_BYTE( "umk3-u2.bin", 0x000000, 0x100000, BAD_DUMP CRC(3838cfe5) SHA1(e3d2901f3bae1362742fc6ee0aa31c9f63b4dfa3) )
 	ROM_LOAD16_BYTE( "mk3-u3.bin",  0x200000, 0x100000, CRC(856fe411) SHA1(6165ebecfce7500e948d84492ffa19eed7f47091) )
 	ROM_LOAD16_BYTE( "mk3-u4.bin",  0x400000, 0x100000, CRC(428a406f) SHA1(e70ec83cd054de0da1e178720ed0035b8887f797) )
 	ROM_LOAD16_BYTE( "mk3-u5.bin",  0x600000, 0x100000, CRC(3b98a09f) SHA1(edf1d02a56dcf3349e6b4bb4097acfe7592305f4) )
@@ -853,7 +854,7 @@ ROM_END
 
 ROM_START( umk3r11 )
 	ROM_REGION16_LE( 0x800000, "dcs", ROMREGION_ERASEFF )   /* sound data */
-	ROM_LOAD16_BYTE( "umk3-u2.bin", 0x000000, 0x100000, CRC(3838cfe5) SHA1(e3d2901f3bae1362742fc6ee0aa31c9f63b4dfa3) )
+	ROM_LOAD16_BYTE( "umk3-u2.bin", 0x000000, 0x100000, BAD_DUMP CRC(3838cfe5) SHA1(e3d2901f3bae1362742fc6ee0aa31c9f63b4dfa3) )
 	ROM_LOAD16_BYTE( "mk3-u3.bin",  0x200000, 0x100000, CRC(856fe411) SHA1(6165ebecfce7500e948d84492ffa19eed7f47091) )
 	ROM_LOAD16_BYTE( "mk3-u4.bin",  0x400000, 0x100000, CRC(428a406f) SHA1(e70ec83cd054de0da1e178720ed0035b8887f797) )
 	ROM_LOAD16_BYTE( "mk3-u5.bin",  0x600000, 0x100000, CRC(3b98a09f) SHA1(edf1d02a56dcf3349e6b4bb4097acfe7592305f4) )

@@ -26,7 +26,7 @@ Ports:
 20      R   DSW #2
 40      R   Input Ports Player 1
 60      R   Input Ports Player 2
-80       W  Sound Commnand
+80       W  Sound Command
 c0       W  Flip Screen
 c1       W  ???
 c2-c4    W  ???
@@ -81,7 +81,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
   - Press START1 while in "test mode" to cycle through different screens
     (colors, Dip Switches, Inputs)
   - When "Freeze" Dip Switch is ON, press START1 to freeze and START2 to unfreeze.
-    This setting (as well as others) must be defined before reseting the games.
+    This setting (as well as others) must be defined before resetting the games.
   - "Test mode" crashes when trying to display "Difficult" ("Hard") because the full string
     is 15 bytes long while other string are 14, so the 15th "char" is NOT 0x00 :
       * 0xd49f : mask (0x30)
@@ -95,7 +95,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
   - Press START1 while in "test mode" to cycle through different screens
     (colors, Dip Switches, Inputs)
   - When "Freeze" Dip Switch is ON, press START1 to freeze and START2 to unfreeze.
-    This setting (as well as others) must be defined before reseting the games.
+    This setting (as well as others) must be defined before resetting the games.
 
 2a) 'trckydoc'
 
@@ -127,18 +127,19 @@ Stephh's notes (based on the games Z80 code and some tests) :
 #include "sound/3812intf.h"
 #include "includes/sauro.h"
 #include "machine/nvram.h"
+#include "machine/watchdog.h"
 
 
 WRITE8_MEMBER(sauro_state::sauro_sound_command_w)
 {
 	data |= 0x80;
-	soundlatch_byte_w(space, offset, data);
+	m_soundlatch->write(space, offset, data);
 }
 
 READ8_MEMBER(sauro_state::sauro_sound_command_r)
 {
-	int ret = soundlatch_byte_r(space, offset);
-	soundlatch_clear_byte_w(space, offset, 0);
+	int ret = m_soundlatch->read(space, offset);
+	m_soundlatch->clear_w(space, offset, 0);
 	return ret;
 }
 
@@ -196,7 +197,7 @@ static ADDRESS_MAP_START( sauro_io_map, AS_IO, 8, sauro_state )
 	AM_RANGE(0xcc, 0xcc) AM_WRITENOP        /* same as 0xca */
 	AM_RANGE(0xcd, 0xcd) AM_WRITENOP        /* same as 0xcb */
 	AM_RANGE(0xce, 0xce) AM_WRITENOP        /* only written at startup */
-	AM_RANGE(0xe0, 0xe0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xe0, 0xe0) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sauro_sound_map, AS_PROGRAM, 8, sauro_state )
@@ -221,13 +222,13 @@ static ADDRESS_MAP_START( trckydoc_map, AS_PROGRAM, 8, sauro_state )
 	AM_RANGE(0xf810, 0xf810) AM_READ_PORT("P1")
 	AM_RANGE(0xf818, 0xf818) AM_READ_PORT("P2")
 	AM_RANGE(0xf820, 0xf821) AM_DEVWRITE("ymsnd", ym3812_device, write)
-	AM_RANGE(0xf828, 0xf828) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xf828, 0xf828) AM_DEVREAD("watchdog", watchdog_timer_device, reset_r)
 	AM_RANGE(0xf830, 0xf830) AM_WRITE(scroll_bg_w)
 	AM_RANGE(0xf838, 0xf838) AM_WRITENOP                /* only written at startup */
 	AM_RANGE(0xf839, 0xf839) AM_WRITE(flip_screen_w)
 	AM_RANGE(0xf83a, 0xf83a) AM_WRITE(coin1_w)
 	AM_RANGE(0xf83b, 0xf83b) AM_WRITE(coin2_w)
-	AM_RANGE(0xf83c, 0xf83c) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xf83c, 0xf83c) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0xf83f, 0xf83f) AM_WRITENOP                /* only written at startup */
 ADDRESS_MAP_END
 
@@ -370,6 +371,8 @@ static MACHINE_CONFIG_START( tecfri, sauro_state )
 
 	MCFG_NVRAM_ADD_1FILL("nvram")
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_REFRESH_RATE(55.72)   /* verified on pcb */
@@ -416,6 +419,8 @@ static MACHINE_CONFIG_DERIVED( sauro, tecfri )
 	MCFG_VIDEO_START_OVERRIDE(sauro_state,sauro)
 	MCFG_SCREEN_MODIFY("screen")
 	MCFG_SCREEN_UPDATE_DRIVER(sauro_state, screen_update_sauro)
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("speech", SP0256, 3120000)
 	MCFG_SP0256_DATA_REQUEST_CB(INPUTLINE("audiocpu", INPUT_LINE_NMI))

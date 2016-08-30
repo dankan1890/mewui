@@ -11,19 +11,19 @@ local dummy = exports
 
 function dummy.startplugin()
 	emu.register_start(function()
-		print("Starting " .. emu.gamename())
+		emu.print_verbose("Starting " .. emu.gamename())
 	end)
-    
+
 	emu.register_stop(function()
-		print("Exiting " .. emu.gamename())
+		emu.print_verbose("Exiting " .. emu.gamename())
 	end)
 
 	local function menu_populate()
-		return {{ "This is a", "test", 32 }, { "Also a", "test", 0 }} -- 32 is MENU_FLAG_DISABLE
+		return {{ "This is a", "test", "off" }, { "Also a", "test", 0 }}
 	end
 
 	local function menu_callback(index, event)
-		print("index: " .. index .. " event: " .. event)
+		emu.print_verbose("index: " .. index .. " event: " .. event)
 		return false
 	end
 

@@ -5,6 +5,8 @@
 #ifndef __Z8000_H__
 #define __Z8000_H__
 
+#include "cpu/z80/z80daisy.h"
+
 
 enum
 {
@@ -31,7 +33,7 @@ enum
 #define MCFG_Z8000_MO(_devcb) \
 	devcb = &z8002_device::set_mo_callback(*device, DEVCB_##_devcb);
 
-class z8002_device : public cpu_device
+class z8002_device : public cpu_device, public z80_daisy_chain_interface
 {
 public:
 	// construction/destruction
@@ -663,6 +665,9 @@ protected:
 	virtual UINT32 F_SEG_Z8001() override;
 	virtual UINT32 PSA_ADDR() override;
 	virtual UINT32 read_irq_vector() override;
+
+private:
+	void z8k_disass_mode(int ref, int params, const char *param[]);
 };
 
 

@@ -8,7 +8,7 @@
 
 #include "emu.h"
 #include "cpu/upd7810/upd7810.h"
-#include "audio/upd1771.h"
+#include "sound/upd1771.h"
 #include "bus/scv/slot.h"
 #include "bus/scv/rom.h"
 #include "softlist.h"
@@ -23,7 +23,7 @@ public:
 		m_maincpu(*this, "maincpu"),
 		m_upd1771c(*this, "upd1771c"),
 		m_cart(*this, "cartslot"),
-		m_pa(*this, "PA"),
+		m_pa(*this, "PA.%u", 0),
 		m_pc0(*this, "PC0"),
 		m_charrom(*this, "charrom") { }
 

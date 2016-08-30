@@ -77,7 +77,7 @@
 
 ****************************************************************************
 
-    See also sega.c for the Sega G-80 Vector games.
+    See also segag80v.cpp for the Sega G-80 Vector games.
 
     Many thanks go to Dave Fish for the fine detective work he did into the
     G-80 security chips (315-0064, 315-0070, 315-0076, 315-0082) which provided
@@ -112,7 +112,7 @@
 #include "sound/sn76496.h"
 #include "sound/samples.h"
 #include "machine/i8255.h"
-#include "machine/segacrpt.h"
+#include "machine/segacrpt_device.h"
 #include "machine/segag80.h"
 #include "includes/segag80r.h"
 
@@ -283,7 +283,7 @@ WRITE8_MEMBER(segag80r_state::coin_count_w)
 
 WRITE8_MEMBER(segag80r_state::sindbadm_soundport_w)
 {
-	soundlatch_byte_w(space, 0, data);
+	m_soundlatch->write(space, 0, data);
 	m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 	machine().scheduler().boost_interleave(attotime::zero, attotime::from_usec(50));
 }
@@ -371,7 +371,7 @@ static ADDRESS_MAP_START( sindbadm_sound_map, AS_PROGRAM, 8, segag80r_state )
 	AM_RANGE(0x8000, 0x87ff) AM_MIRROR(0x1800) AM_RAM
 	AM_RANGE(0xa000, 0xa003) AM_MIRROR(0x1ffc) AM_WRITE(sindbadm_sn1_SN76496_w)
 	AM_RANGE(0xc000, 0xc003) AM_MIRROR(0x1ffc) AM_WRITE(sindbadm_sn2_SN76496_w)
-	AM_RANGE(0xe000, 0xe000) AM_MIRROR(0x1fff) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xe000, 0xe000) AM_MIRROR(0x1fff) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 ADDRESS_MAP_END
 
 
@@ -885,8 +885,12 @@ static MACHINE_CONFIG_DERIVED( monsterb, g80r_base )
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( monster2, monsterb )
-	MCFG_CPU_MODIFY("maincpu")
+	MCFG_CPU_REPLACE("maincpu", SEGA_315_SPAT, VIDEO_CLOCK/4)
+	MCFG_CPU_PROGRAM_MAP(main_map)
+	MCFG_CPU_IO_MAP(main_ppi8255_portmap)
+	MCFG_CPU_VBLANK_INT_DRIVER("screen", segag80r_state,  segag80r_vblank_start)
 	MCFG_CPU_DECRYPTED_OPCODES_MAP(decrypted_opcodes_map)
+	MCFG_SEGACRPT_SET_DECRYPTED_TAG(":decrypted_opcodes")
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( pignewt, g80r_base )
@@ -906,10 +910,12 @@ MACHINE_CONFIG_END
 static MACHINE_CONFIG_DERIVED( sindbadm, g80r_base )
 
 	/* basic machine hardware */
-	MCFG_CPU_MODIFY("maincpu")
+	MCFG_CPU_REPLACE("maincpu", SEGA_315_5028, VIDEO_CLOCK/4)
+	MCFG_CPU_PROGRAM_MAP(main_map)
 	MCFG_CPU_IO_MAP(sindbadm_portmap)
 	MCFG_CPU_DECRYPTED_OPCODES_MAP(decrypted_opcodes_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", segag80r_state,  sindbadm_vblank_start)
+	MCFG_SEGACRPT_SET_DECRYPTED_TAG(":decrypted_opcodes")
 
 	MCFG_DEVICE_ADD("ppi8255", I8255A, 0)
 	MCFG_I8255_OUT_PORTA_CB(WRITE8(segag80r_state, sindbadm_soundport_w))
@@ -926,6 +932,8 @@ static MACHINE_CONFIG_DERIVED( sindbadm, g80r_base )
 	MCFG_CPU_ADD("audiocpu", Z80, SINDBADM_SOUND_CLOCK/2)
 	MCFG_CPU_PROGRAM_MAP(sindbadm_sound_map)
 	MCFG_CPU_PERIODIC_INT_DRIVER(segag80r_state, irq0_line_hold, 4*60)
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	/* sound hardware */
 	MCFG_SOUND_ADD("sn1", SN76496, SINDBADM_SOUND_CLOCK/4)
@@ -1509,30 +1517,6 @@ DRIVER_INIT_MEMBER(segag80r_state,monsterb)
 
 DRIVER_INIT_MEMBER(segag80r_state,monster2)
 {
-	static const UINT8 convtable[32][4] =
-	{
-		/*       opcode                   data                     address      */
-		/*  A    B    C    D         A    B    C    D                           */
-		{ 0x88,0x08,0x80,0x00 }, { 0x00,0x08,0x20,0x28 },   /* ...0...0...0...0 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x28,0xa8,0x08,0x88 },   /* ...0...0...0...1 */
-		{ 0x28,0x20,0xa8,0xa0 }, { 0x28,0x20,0xa8,0xa0 },   /* ...0...0...1...0 */
-		{ 0x88,0x08,0x80,0x00 }, { 0x88,0x08,0x80,0x00 },   /* ...0...0...1...1 */
-		{ 0x00,0x08,0x20,0x28 }, { 0x88,0x08,0x80,0x00 },   /* ...0...1...0...0 */
-		{ 0xa0,0x80,0x20,0x00 }, { 0x80,0x88,0x00,0x08 },   /* ...0...1...0...1 */
-		{ 0x88,0x08,0x80,0x00 }, { 0xa0,0x80,0x20,0x00 },   /* ...0...1...1...0 */
-		{ 0x88,0x08,0x80,0x00 }, { 0x28,0x20,0xa8,0xa0 },   /* ...0...1...1...1 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x80,0x88,0x00,0x08 },   /* ...1...0...0...0 */
-		{ 0x80,0x88,0x00,0x08 }, { 0x00,0x08,0x20,0x28 },   /* ...1...0...0...1 */
-		{ 0x28,0x20,0xa8,0xa0 }, { 0x28,0xa8,0x08,0x88 },   /* ...1...0...1...0 */
-		{ 0x00,0x08,0x20,0x28 }, { 0x80,0xa0,0x88,0xa8 },   /* ...1...0...1...1 */
-		{ 0x80,0x88,0x00,0x08 }, { 0xa0,0x80,0x20,0x00 },   /* ...1...1...0...0 */
-		{ 0x80,0xa0,0x88,0xa8 }, { 0xa0,0x80,0x20,0x00 },   /* ...1...1...0...1 */
-		{ 0xa0,0x80,0x20,0x00 }, { 0x80,0xa0,0x88,0xa8 },   /* ...1...1...1...0 */
-		{ 0x28,0x20,0xa8,0xa0 }, { 0x00,0x08,0x20,0x28 }    /* ...1...1...1...1 */
-	};
-
-	sega_decode(memregion("maincpu")->base(), m_decrypted_opcodes, 0x8000, convtable);
-
 	address_space &iospace = m_maincpu->space(AS_IO);
 	address_space &pgmspace = m_maincpu->space(AS_PROGRAM);
 
@@ -1581,30 +1565,6 @@ DRIVER_INIT_MEMBER(segag80r_state,pignewt)
 
 DRIVER_INIT_MEMBER(segag80r_state,sindbadm)
 {
-	static const UINT8 convtable[32][4] =
-	{
-		/*       opcode                   data                     address      */
-		/*  A    B    C    D         A    B    C    D                           */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...0...0...0...0 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...0...0...0...1 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...0...0...1...0 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...0...0...1...1 */
-		{ 0xa8,0x88,0xa0,0x80 }, { 0xa0,0x20,0xa8,0x28 },   /* ...0...1...0...0 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...0...1...0...1 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...0...1...1...0 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...0...1...1...1 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...1...0...0...0 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...1...0...0...1 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...1...0...1...0 */
-		{ 0xa8,0xa0,0x88,0x80 }, { 0x00,0x20,0x80,0xa0 },   /* ...1...0...1...1 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...1...1...0...0 */
-		{ 0xa8,0x88,0xa0,0x80 }, { 0xa0,0x20,0xa8,0x28 },   /* ...1...1...0...1 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 },   /* ...1...1...1...0 */
-		{ 0x28,0xa8,0x08,0x88 }, { 0x88,0x80,0x08,0x00 }    /* ...1...1...1...1 */
-	};
-
-	sega_decode(memregion("maincpu")->base(), m_decrypted_opcodes, 0x8000, convtable);
-
 	address_space &iospace = m_maincpu->space(AS_IO);
 	address_space &pgmspace = m_maincpu->space(AS_PROGRAM);
 

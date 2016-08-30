@@ -367,7 +367,7 @@ static void copy_integer_array_be(UINT32 *dest, const UINT32 *source, int size)
 
 	for (i = 0; i < size; i++)
 	{
-		dest[i] = BIG_ENDIANIZE_INT32(source[i]);
+		dest[i] = big_endianize_int32(source[i]);
 	}
 }
 
@@ -375,9 +375,9 @@ static void copy_integer_array_be(UINT32 *dest, const UINT32 *source, int size)
 /* This function converts an array of UINT32s to an amiga_date */
 static void copy_date_be(amiga_date *dest, const UINT32 *source)
 {
-	dest->days  = BIG_ENDIANIZE_INT32(source[0]);
-	dest->mins  = BIG_ENDIANIZE_INT32(source[1]);
-	dest->ticks = BIG_ENDIANIZE_INT32(source[2]);
+	dest->days  = big_endianize_int32(source[0]);
+	dest->mins  = big_endianize_int32(source[1]);
+	dest->ticks = big_endianize_int32(source[2]);
 }
 
 
@@ -2184,16 +2184,16 @@ static imgtoolerr_t amiga_image_deletefile(imgtool_partition *partition, const c
 }
 
 
-static imgtoolerr_t amiga_image_writefile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t amiga_image_writefile(imgtool_partition *partition, const char *filename, const char *fork, imgtool_stream *sourcef, util::option_resolution *opts)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
 
 
-static imgtoolerr_t amiga_image_create(imgtool_image *img, imgtool_stream *stream, option_resolution *opts)
+static imgtoolerr_t amiga_image_create(imgtool_image *img, imgtool_stream *stream, util::option_resolution *opts)
 {
 	amiga_floppy *f = (amiga_floppy *) imgtool_image_extra_bytes(img);
-	const char *dskname = option_resolution_lookup_string(opts, 'N');
+	const char *dskname = opts->lookup_string('N');
 	imgtoolerr_t ret;
 	UINT8 buffer[BSIZE];
 	root_block root;
@@ -2203,7 +2203,7 @@ static imgtoolerr_t amiga_image_create(imgtool_image *img, imgtool_stream *strea
 
 	f->stream = stream;
 
-	switch (option_resolution_lookup_int(opts, 'S'))
+	switch (opts->lookup_int('S'))
 	{
 	case 0: f->sectors = 11; break;
 	case 1: f->sectors = 22; break;
@@ -2220,10 +2220,10 @@ static imgtoolerr_t amiga_image_create(imgtool_image *img, imgtool_stream *strea
 	buffer[3] = 0;
 
 	/* File system */
-	buffer[3] += (option_resolution_lookup_int(opts, 'F'));
+	buffer[3] += (opts->lookup_int('F'));
 
 	/* File system mode */
-	buffer[3] += (option_resolution_lookup_int(opts, 'M'));
+	buffer[3] += (opts->lookup_int('M'));
 
 	/* write first bootblock sector */
 	ret = write_block(img, 0, buffer);

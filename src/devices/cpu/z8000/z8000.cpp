@@ -25,7 +25,6 @@
 
 extern int z8k_segm;
 extern int z8k_segm_mode;
-extern void z8k_disass_mode(running_machine &machine, int ref, int params, const char *param[]);
 
 #include "z8000cpu.h"
 
@@ -35,6 +34,7 @@ const device_type Z8002 = &device_creator<z8002_device>;
 
 z8002_device::z8002_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
 	: cpu_device(mconfig, Z8002, "Z8002", tag, owner, clock, "z8002", __FILE__)
+	, z80_daisy_chain_interface(mconfig, *this)
 	, m_program_config("program", ENDIANNESS_BIG, 16, 16, 0)
 	, m_io_config("io", ENDIANNESS_BIG, 8, 16, 0)
 	, m_mo_out(*this), m_ppc(0), m_pc(0), m_psapseg(0), m_psapoff(0), m_fcw(0), m_refresh(0), m_nspseg(0), m_nspoff(0), m_irq_req(0), m_irq_vec(0), m_op_valid(0), m_nmi_state(0), m_mi(0), m_program(nullptr), m_data(nullptr), m_direct(nullptr), m_io(nullptr), m_icount(0)
@@ -45,6 +45,7 @@ z8002_device::z8002_device(const machine_config &mconfig, const char *tag, devic
 
 z8002_device::z8002_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, UINT32 clock, const char *shortname, const char *source)
 	: cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
+	, z80_daisy_chain_interface(mconfig, *this)
 	, m_program_config("program", ENDIANNESS_BIG, 16, 20, 0)
 	, m_io_config("io", ENDIANNESS_BIG, 16, 16, 0)
 	, m_mo_out(*this), m_ppc(0), m_pc(0), m_psapseg(0), m_psapoff(0), m_fcw(0), m_refresh(0), m_nspseg(0), m_nspoff(0), m_irq_req(0), m_irq_vec(0), m_op_valid(0), m_nmi_state(0), m_mi(0), m_program(nullptr), m_data(nullptr), m_direct(nullptr), m_io(nullptr), m_icount(0)
@@ -358,8 +359,8 @@ void z8002_device::cycles(int cycles)
 	m_icount -= cycles;
 }
 
-#include "z8000ops.inc"
-#include "z8000tbl.inc"
+#include "z8000ops.hxx"
+#include "z8000tbl.hxx"
 
 void z8002_device::set_irq(int type)
 {
@@ -640,7 +641,49 @@ void z8002_device::state_string_export(const device_state_entry &entry, std::str
 				m_fcw & 0x0001 ? '?':'.');
 			break;
 	}
+}
 
+void z8001_device::z8k_disass_mode(int ref, int params, const char *param[])
+{
+	size_t len;
+	if (params == 1)
+	{
+		len = strlen(param[0]);
+		if (!core_strnicmp(param[0], "segmented", len) || !core_stricmp(param[0], "z8001")) {
+			z8k_segm = true;
+			z8k_segm_mode = Z8K_SEGM_MODE_SEG;
+			machine().debugger().console().printf("Disassembler mode set to Z8001/segmented\n");
+		}
+		else if (!core_strnicmp(param[0], "non-segmented", len) || !core_stricmp(param[0], "z8002"))
+		{
+			z8k_segm = false;
+			z8k_segm_mode = Z8K_SEGM_MODE_NONSEG;
+			machine().debugger().console().printf("Disassembler mode set to Z8002/non-segmented\n");
+		}
+		else if (!core_strnicmp(param[0], "automatic", len))
+		{
+			z8k_segm_mode = Z8K_SEGM_MODE_AUTO;
+			machine().debugger().console().printf("Disassembler mode set to automatic\n");
+		}
+		else
+			goto usage;
+	}
+	else if (params > 1)
+	{
+	usage:
+		machine().debugger().console().printf("Usage: z8k_disass_mode <mode>\n");
+		machine().debugger().console().printf("       set disassembler mode\n");
+		machine().debugger().console().printf("       mode: \"segmented\" or \"z8001\"     - Z8001 mode\n");
+		machine().debugger().console().printf("             \"non-segmented\" or \"z8002\" - Z8002 mode\n");
+		machine().debugger().console().printf("             \"automatic\"                  - automatic mode\n");
+	}
+	else
+	{
+		machine().debugger().console().printf("Current disassembler mode: ");
+		if (z8k_segm_mode == Z8K_SEGM_MODE_AUTO)
+			machine().debugger().console().printf("automatic, currently ");
+		machine().debugger().console().printf("%s\n", z8k_segm ? "Z8001/segmented" : "Z8002/non-segmented");
+	}
 }
 
 void z8001_device::device_start()
@@ -662,7 +705,10 @@ void z8001_device::device_start()
 		z8000_init_tables();
 
 	if (machine().debug_flags & DEBUG_FLAG_ENABLED)
-		debug_console_register_command(machine(), "z8k_disass_mode", CMDFLAG_NONE, 0, 0, 1, z8k_disass_mode);
+	{
+		using namespace std::placeholders;
+		machine().debugger().console().register_command("z8k_disass_mode", CMDFLAG_NONE, 0, 0, 1, std::bind(&z8001_device::z8k_disass_mode, this, _1, _2, _3));
+	}
 
 	z8k_segm = true;
 

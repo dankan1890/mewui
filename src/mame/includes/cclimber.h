@@ -1,5 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
+
+#include "machine/gen_latch.h"
+
 class cclimber_state : public driver_device
 {
 public:
@@ -9,6 +12,7 @@ public:
 		m_audiocpu(*this, "audiocpu"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
+		m_soundlatch(*this, "soundlatch"),
 		m_bigsprite_videoram(*this, "bigspriteram"),
 		m_videoram(*this, "videoram"),
 		m_column_scroll(*this, "column_scroll"),
@@ -27,6 +31,7 @@ public:
 	optional_device<cpu_device> m_audiocpu;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
+	optional_device<generic_latch_8_device> m_soundlatch;
 
 	required_shared_ptr<UINT8> m_bigsprite_videoram;
 	required_shared_ptr<UINT8> m_videoram;
@@ -70,6 +75,7 @@ public:
 	DECLARE_DRIVER_INIT(cannonb2);
 	DECLARE_DRIVER_INIT(cannonb);
 	DECLARE_DRIVER_INIT(dking);
+	DECLARE_DRIVER_INIT(rpatrol);
 	DECLARE_MACHINE_RESET(cclimber);
 	DECLARE_VIDEO_START(cclimber);
 	DECLARE_PALETTE_INIT(cclimber);
@@ -100,4 +106,5 @@ public:
 	void cclimber_decode(const UINT8 convtable[8][16]);
 
 	INTERRUPT_GEN_MEMBER(vblank_irq);
+	INTERRUPT_GEN_MEMBER(bagmanf_vblank_irq);
 };

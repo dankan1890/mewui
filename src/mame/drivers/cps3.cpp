@@ -910,12 +910,12 @@ void cps3_state::video_start()
 	save_pointer(NAME(m_char_ram.get()), 0x800000 /4);
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(0, std::make_unique<gfx_element>(m_palette, cps3_tiles8x8_layout, (UINT8 *)m_ss_ram.get(), 0, m_palette->entries() / 16, 0));
+	m_gfxdecode->set_gfx(0, std::make_unique<gfx_element>(*m_palette, cps3_tiles8x8_layout, (UINT8 *)m_ss_ram.get(), 0, m_palette->entries() / 16, 0));
 
 	//decode_ssram();
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(1, std::make_unique<gfx_element>(m_palette, cps3_tiles16x16_layout, (UINT8 *)m_char_ram.get(), 0, m_palette->entries() / 64, 0));
+	m_gfxdecode->set_gfx(1, std::make_unique<gfx_element>(*m_palette, cps3_tiles16x16_layout, (UINT8 *)m_char_ram.get(), 0, m_palette->entries() / 64, 0));
 	m_gfxdecode->gfx(1)->set_granularity(64);
 
 	//decode_charram();
@@ -1331,7 +1331,7 @@ UINT32 cps3_state::screen_update_cps3(screen_device &screen, bitmap_rgb32 &bitma
 READ32_MEMBER(cps3_state::cps3_ssram_r)
 {
 	if (offset>0x8000/4)
-		return LITTLE_ENDIANIZE_INT32(m_ss_ram[offset]);
+		return little_endianize_int32(m_ss_ram[offset]);
 	else
 		return m_ss_ram[offset];
 }
@@ -1341,8 +1341,8 @@ WRITE32_MEMBER(cps3_state::cps3_ssram_w)
 	if (offset>0x8000/4)
 	{
 		// we only want to endian-flip the character data, the tilemap info is fine
-		data = LITTLE_ENDIANIZE_INT32(data);
-		mem_mask = LITTLE_ENDIANIZE_INT32(mem_mask);
+		data = little_endianize_int32(data);
+		mem_mask = little_endianize_int32(mem_mask);
 		m_gfxdecode->gfx(0)->mark_dirty(offset/16);
 	}
 
@@ -1389,14 +1389,14 @@ READ32_MEMBER(cps3_state::cram_data_r)
 {
 	UINT32 fulloffset = (((m_cram_bank&0x7)*0x100000)/4) + offset;
 
-	return LITTLE_ENDIANIZE_INT32(m_char_ram[fulloffset]);
+	return little_endianize_int32(m_char_ram[fulloffset]);
 }
 
 WRITE32_MEMBER(cps3_state::cram_data_w)
 {
 	UINT32 fulloffset = (((m_cram_bank&0x7)*0x100000)/4) + offset;
-	mem_mask = LITTLE_ENDIANIZE_INT32(mem_mask);
-	data = LITTLE_ENDIANIZE_INT32(data);
+	mem_mask = little_endianize_int32(mem_mask);
+	data = little_endianize_int32(data);
 	COMBINE_DATA(&m_char_ram[fulloffset]);
 	m_gfxdecode->gfx(1)->mark_dirty(fulloffset/0x40);
 }
@@ -1417,22 +1417,22 @@ READ32_MEMBER(cps3_state::cps3_gfxflash_r)
 
 	if (ACCESSING_BITS_24_31)   // GFX Flash 1
 	{
-		logerror("read GFX flash chip %s addr %02x\n", chip0->tag(), (offset<<1));
+		//logerror("read GFX flash chip %s addr %02x\n", chip0->tag(), (offset<<1));
 		result |= chip0->read( (offset<<1) ) << 24;
 	}
 	if (ACCESSING_BITS_16_23)   // GFX Flash 2
 	{
-		logerror("read GFX flash chip %s addr %02x\n", chip1->tag(), (offset<<1));
+		//logerror("read GFX flash chip %s addr %02x\n", chip1->tag(), (offset<<1));
 		result |= chip1->read( (offset<<1) ) << 16;
 	}
 	if (ACCESSING_BITS_8_15)    // GFX Flash 1
 	{
-		logerror("read GFX flash chip %s addr %02x\n", chip0->tag(), (offset<<1)+1);
+		//logerror("read GFX flash chip %s addr %02x\n", chip0->tag(), (offset<<1)+1);
 		result |= chip0->read( (offset<<1)+0x1 ) << 8;
 	}
 	if (ACCESSING_BITS_0_7) // GFX Flash 2
 	{
-		logerror("read GFX flash chip %s addr %02x\n", chip1->tag(), (offset<<1)+1);
+		//logerror("read GFX flash chip %s addr %02x\n", chip1->tag(), (offset<<1)+1);
 		result |= chip1->read( (offset<<1)+0x1 ) << 0;
 	}
 
@@ -1457,19 +1457,19 @@ WRITE32_MEMBER(cps3_state::cps3_gfxflash_w)
 	if (ACCESSING_BITS_24_31)   // GFX Flash 1
 	{
 		command = (data >> 24) & 0xff;
-		logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip0->tag(), (offset<<1), command);
+		//logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip0->tag(), (offset<<1), command);
 		chip0->write( (offset<<1), command);
 	}
 	if (ACCESSING_BITS_16_23)   // GFX Flash 2
 	{
 		command = (data >> 16) & 0xff;
-		logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip1->tag(), (offset<<1), command);
+		//logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip1->tag(), (offset<<1), command);
 		chip1->write( (offset<<1), command);
 	}
 	if (ACCESSING_BITS_8_15)    // GFX Flash 1
 	{
 		command = (data >> 8) & 0xff;
-		logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip0->tag(), (offset<<1)+1, command);
+		//logerror("write to GFX flash chip %s addr %02x cmd %02x\n", chip0->tag(), (offset<<1)+1, command);
 		chip0->write( (offset<<1)+0x1, command);
 	}
 	if (ACCESSING_BITS_0_7) // GFX Flash 2
@@ -1508,22 +1508,22 @@ UINT32 cps3_state::cps3_flashmain_r(address_space &space, int which, UINT32 offs
 
 	if (ACCESSING_BITS_24_31)   // Flash 1
 	{
-//      logerror("read flash chip %d addr %02x\n", base+0, offset*4 );
+		//logerror("read flash chip %d addr %02x\n", base+0, offset*4 );
 		result |= (m_simm[which][0]->read(offset)<<24);
 	}
 	if (ACCESSING_BITS_16_23)   // Flash 1
 	{
-//      logerror("read flash chip %d addr %02x\n", base+1, offset*4 );
+		//logerror("read flash chip %d addr %02x\n", base+1, offset*4 );
 		result |= (m_simm[which][1]->read(offset)<<16);
 	}
 	if (ACCESSING_BITS_8_15)    // Flash 1
 	{
-//      logerror("read flash chip %d addr %02x\n", base+2, offset*4 );
+		//logerror("read flash chip %d addr %02x\n", base+2, offset*4 );
 		result |= (m_simm[which][2]->read(offset)<<8);
 	}
 	if (ACCESSING_BITS_0_7) // Flash 1
 	{
-//      logerror("read flash chip %d addr %02x\n", base+3, offset*4 );
+		//logerror("read flash chip %d addr %02x\n", base+3, offset*4 );
 		result |= (m_simm[which][3]->read(offset)<<0);
 	}
 
@@ -1564,25 +1564,25 @@ void cps3_state::cps3_flashmain_w(int which, UINT32 offset, UINT32 data, UINT32 
 	if (ACCESSING_BITS_24_31)   // Flash 1
 	{
 		command = (data >> 24) & 0xff;
-		logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][0]->tag(), offset, command);
+		//logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][0]->tag(), offset, command);
 		m_simm[which][0]->write(offset, command);
 	}
 	if (ACCESSING_BITS_16_23)   // Flash 2
 	{
 		command = (data >> 16) & 0xff;
-		logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][1]->tag(), offset, command);
+		//logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][1]->tag(), offset, command);
 		m_simm[which][1]->write(offset, command);
 	}
 	if (ACCESSING_BITS_8_15)    // Flash 2
 	{
 		command = (data >> 8) & 0xff;
-		logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][2]->tag(), offset, command);
+		//logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][2]->tag(), offset, command);
 		m_simm[which][2]->write(offset, command);
 	}
 	if (ACCESSING_BITS_0_7) // Flash 2
 	{
 		command = (data >> 0) & 0xff;
-		logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][3]->tag(), offset, command);
+		//logerror("write to flash chip %s addr %02x cmd %02x\n", m_simm[which][3]->tag(), offset, command);
 		m_simm[which][3]->write(offset, command);
 	}
 
@@ -2016,9 +2016,9 @@ void cps3_state::cps3_process_character_dma(UINT32 address)
 
 	for (i = 0; i < 0x1000; i += 3)
 	{
-		UINT32 dat1 = LITTLE_ENDIANIZE_INT32(m_char_ram[i + 0 + (address)]);
-		UINT32 dat2 = LITTLE_ENDIANIZE_INT32(m_char_ram[i + 1 + (address)]);
-		UINT32 dat3 = LITTLE_ENDIANIZE_INT32(m_char_ram[i + 2 + (address)]);
+		UINT32 dat1 = little_endianize_int32(m_char_ram[i + 0 + (address)]);
+		UINT32 dat2 = little_endianize_int32(m_char_ram[i + 1 + (address)]);
+		UINT32 dat3 = little_endianize_int32(m_char_ram[i + 2 + (address)]);
 		UINT32 real_source      = (dat3 << 1) - 0x400000;
 		UINT32 real_destination =  dat2 << 3;
 		UINT32 real_length      = (((dat1 & 0x001fffff) + 1) << 3);
@@ -2207,6 +2207,7 @@ static ADDRESS_MAP_START( cps3_map, AS_PROGRAM, 32, cps3_state )
 	AM_RANGE(0x06000000, 0x067fffff) AM_READWRITE(cps3_flash1_r, cps3_flash1_w ) /* Flash ROMs simm 1 */
 	AM_RANGE(0x06800000, 0x06ffffff) AM_READWRITE(cps3_flash2_r, cps3_flash2_w ) /* Flash ROMs simm 2 */
 
+	AM_RANGE(0x07ff0048, 0x07ff004b) AM_WRITENOP // bit 0 toggles during programming
 	AM_RANGE(0xc0000000, 0xc00003ff) AM_RAM_WRITE(cps3_0xc0000000_ram_w ) AM_SHARE("0xc0000000_ram") /* Executes code from here */
 ADDRESS_MAP_END
 

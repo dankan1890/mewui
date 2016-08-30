@@ -19,12 +19,12 @@
 #include "machine/wd_fdc.h"
 #include "video/mc6845.h"
 #include "sound/sn76496.h"
-#include "machine/apricotkb_hle.h"
 #include "imagedev/flopdrv.h"
 #include "formats/apridisk.h"
 #include "bus/centronics/ctronics.h"
 #include "bus/rs232/rs232.h"
-#include "bus/apricot/expansion.h"
+#include "bus/apricot/expansion/expansion.h"
+#include "bus/apricot/keyboard/keyboard.h"
 
 
 //**************************************************************************
@@ -346,7 +346,7 @@ WRITE_LINE_MEMBER( apricot_state::i8086_lock_w )
 static ADDRESS_MAP_START( apricot_mem, AS_PROGRAM, 16, apricot_state )
 	AM_RANGE(0x00000, 0x3ffff) AM_RAMBANK("ram")
 	AM_RANGE(0xf0000, 0xf0fff) AM_MIRROR(0x7000) AM_RAM AM_SHARE("screen_buffer")
-	AM_RANGE(0xfc000, 0xfffff) AM_MIRROR(0x4000) AM_ROM AM_REGION("bootstrap", 0)
+	AM_RANGE(0xf8000, 0xfbfff) AM_MIRROR(0x4000) AM_ROM AM_REGION("bootstrap", 0)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( apricot_io, AS_IO, 16, apricot_state )
@@ -419,7 +419,7 @@ static MACHINE_CONFIG_START( apricot, apricot_state )
 	MCFG_I8255_IN_PORTC_CB(READ8(apricot_state, i8255_portc_r))
 	MCFG_I8255_OUT_PORTC_CB(WRITE8(apricot_state, i8255_portc_w))
 
-	MCFG_PIC8259_ADD("ic31", INPUTLINE("ic91", 0), VCC, NULL)
+	MCFG_PIC8259_ADD("ic31", INPUTLINE("ic91", 0), VCC, NOOP)
 
 	MCFG_DEVICE_ADD("ic16", PIT8253, 0)
 	MCFG_PIT8253_CLK0(XTAL_4MHz / 16)
@@ -434,7 +434,7 @@ static MACHINE_CONFIG_START( apricot, apricot_state )
 	MCFG_Z80DART_OUT_DTRA_CB(DEVWRITELINE("rs232", rs232_port_device, write_dtr))
 	MCFG_Z80DART_OUT_RTSA_CB(DEVWRITELINE("rs232", rs232_port_device, write_rts))
 	MCFG_Z80DART_OUT_WRDYA_CB(DEVWRITELINE("ic71", i8089_device, drq2_w))
-	MCFG_Z80DART_OUT_TXDB_CB(DEVWRITELINE("keyboard", apricot_keyboard_hle_device, rxd_w))
+	MCFG_Z80DART_OUT_TXDB_CB(DEVWRITELINE("kbd", apricot_keyboard_bus_device, out_w))
 	MCFG_Z80DART_OUT_DTRB_CB(WRITELINE(apricot_state, data_selector_dtr_w))
 	MCFG_Z80DART_OUT_RTSB_CB(WRITELINE(apricot_state, data_selector_rts_w))
 	MCFG_Z80DART_OUT_INT_CB(DEVWRITELINE("ic31", pic8259_device, ir5_w))
@@ -448,9 +448,9 @@ static MACHINE_CONFIG_START( apricot, apricot_state )
 	MCFG_RS232_DSR_HANDLER(DEVWRITELINE("ic15", z80sio0_device, synca_w))
 	MCFG_RS232_CTS_HANDLER(DEVWRITELINE("ic15", z80sio0_device, ctsa_w))
 
-	// keyboard (hle)
-	MCFG_APRICOT_KEYBOARD_ADD("keyboard")
-	MCFG_APRICOT_KEYBOARD_TXD_HANDLER(DEVWRITELINE("ic15", z80sio0_device, rxb_w))
+	// keyboard
+	MCFG_APRICOT_KEYBOARD_INTERFACE_ADD("kbd", "hle")
+	MCFG_APRICOT_KEYBOARD_IN_HANDLER(DEVWRITELINE("ic15", z80sio0_device, rxb_w))
 
 	// centronics printer
 	MCFG_CENTRONICS_ADD("centronics", centronics_devices, "printer")

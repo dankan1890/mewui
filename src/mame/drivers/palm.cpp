@@ -16,7 +16,6 @@
 #include "machine/mc68328.h"
 #include "machine/ram.h"
 #include "sound/dac.h"
-#include "debugger.h"
 #include "rendlay.h"
 
 #define MC68328_TAG "dragonball"
@@ -64,9 +63,9 @@ public:
 	required_ioport m_io_peny;
 	required_ioport m_io_penb;
 	required_ioport m_io_portd;
-};
 
-static offs_t palm_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options);
+	offs_t palm_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options);
+};
 
 
 /***************************************************************************
@@ -134,15 +133,12 @@ WRITE_LINE_MEMBER(palm_state::palm_spim_exchange)
 void palm_state::machine_start()
 {
 	address_space &space = m_maincpu->space(AS_PROGRAM);
-	space.install_read_bank (0x000000, m_ram->size() - 1, m_ram->size() - 1, 0, "bank1");
-	space.install_write_bank(0x000000, m_ram->size() - 1, m_ram->size() - 1, 0, "bank1");
+	space.install_read_bank (0x000000, m_ram->size() - 1, "bank1");
+	space.install_write_bank(0x000000, m_ram->size() - 1, "bank1");
 	membank("bank1")->set_base(m_ram->pointer());
 
 	save_item(NAME(m_port_f_latch));
 	save_item(NAME(m_spim_data));
-
-	if (m_maincpu->debug())
-		m_maincpu->debug()->set_dasm_override(palm_dasm_override);
 }
 
 void palm_state::machine_reset()
@@ -191,6 +187,7 @@ static MACHINE_CONFIG_START( palm, palm_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD( "maincpu", M68000, 32768*506 )        /* 16.580608 MHz */
 	MCFG_CPU_PROGRAM_MAP( palm_map)
+	MCFG_CPU_DISASSEMBLE_OVERRIDE(palm_state, palm_dasm_override)
 
 	MCFG_QUANTUM_TIME( attotime::from_hz(60) )
 
@@ -232,7 +229,7 @@ static INPUT_PORTS_START( palm )
 	PORT_BIT( 0xff, 0x50, IPT_LIGHTGUN_Y ) PORT_NAME("Pen Y") PORT_MINMAX(0, 0xa0) PORT_SENSITIVITY(50) PORT_CROSSHAIR(Y, 1.0, 0.0, 0)
 
 	PORT_START( "PENB" )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Pen Button") PORT_CODE(MOUSECODE_BUTTON1) PORT_CHANGED_MEMBER(DEVICE_SELF, palm_state, pen_check, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Pen Button") PORT_CODE(MOUSECODE_BUTTON1) PORT_CHANGED_MEMBER(DEVICE_SELF, palm_state, pen_check, nullptr)
 
 	PORT_START( "PORTD" )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Power") PORT_CODE(KEYCODE_D)   PORT_CHANGED_MEMBER(DEVICE_SELF, palm_state, button_check, (void*)0)
@@ -501,4 +498,4 @@ COMP( 19??, spt1500,  pilot1k,  0,       palmvx,      palm, driver_device,     0
 COMP( 19??, spt1700,  pilot1k,  0,       palmvx,      palm, driver_device,     0,     "Symbol", "SPT 1700", MACHINE_NOT_WORKING )
 COMP( 19??, spt1740,  pilot1k,  0,       palmvx,      palm, driver_device,     0,     "Symbol", "SPT 1740", MACHINE_NOT_WORKING )
 
-#include "palm_dbg.inc"
+#include "palm_dbg.hxx"

@@ -67,9 +67,8 @@
 
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
-#include "cpu/dsp56k/dsp56k.h"
 #include "sound/k054539.h"
-#include "machine/eepromser.h"
+#include "machine/watchdog.h"
 #include "includes/plygonet.h"
 
 enum { BANK_GROUP_A, BANK_GROUP_B, INVALID_BANK_GROUP };
@@ -143,7 +142,7 @@ READ8_MEMBER(polygonet_state::sound_comms_r)
 			return 0;
 
 		case 2:
-			return soundlatch_byte_r(space, 0);
+			return m_soundlatch->read(space, 0);
 
 		default:
 			break;
@@ -173,11 +172,11 @@ WRITE8_MEMBER(polygonet_state::sound_comms_w)
 			break;
 
 		case 6:
-			soundlatch2_byte_w(space, 0, data);
+			m_soundlatch2->write(space, 0, data);
 			break;
 
 		case 7:
-			soundlatch3_byte_w(space, 0, data);
+			m_soundlatch3->write(space, 0, data);
 			break;
 
 		default:
@@ -237,13 +236,13 @@ WRITE32_MEMBER(polygonet_state::shared_ram_write)
 	}
 
 	/* write to the current dsp56k word */
-	if (mem_mask & 0xffff0000)
+	if (ACCESSING_BITS_16_31)
 	{
 		m_dsp56k_shared_ram_16[(offset<<1)] = (m_shared_ram[offset] & 0xffff0000) >> 16 ;
 	}
 
 	/* write to the next dsp56k word */
-	if (mem_mask & 0x0000ffff)
+	if (ACCESSING_BITS_0_15)
 	{
 		m_dsp56k_shared_ram_16[(offset<<1)+1] = (m_shared_ram[offset] & 0x0000ffff) ;
 	}
@@ -480,7 +479,7 @@ static ADDRESS_MAP_START( main_map, AS_PROGRAM, 32, polygonet_state )
 	AM_RANGE(0x600000, 0x600007) AM_WRITE8(sound_comms_w, 0xffffffff)
 	AM_RANGE(0x600008, 0x60000b) AM_READ8(sound_comms_r, 0xffffffff)
 	AM_RANGE(0x640000, 0x640003) AM_WRITE(sound_irq_w)
-	AM_RANGE(0x680000, 0x680003) AM_WRITE(watchdog_reset32_w)
+	AM_RANGE(0x680000, 0x680003) AM_DEVWRITE("watchdog", watchdog_timer_device, reset32_w)
 	AM_RANGE(0x700000, 0x73ffff) AM_ROM AM_REGION("gfx2", 0)
 	AM_RANGE(0x780000, 0x79ffff) AM_ROM AM_REGION("gfx1", 0)
 	AM_RANGE(0xff8000, 0xffffff) AM_RAM
@@ -531,9 +530,9 @@ static ADDRESS_MAP_START( sound_map, AS_PROGRAM, 8, polygonet_state )
 	AM_RANGE(0xe230, 0xe3ff) AM_RAM
 	AM_RANGE(0xe400, 0xe62f) AM_READNOP AM_WRITENOP // Second 054539 (not present)
 	AM_RANGE(0xe630, 0xe7ff) AM_RAM
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch_byte_w)
-	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch2_byte_r)
-	AM_RANGE(0xf003, 0xf003) AM_READ(soundlatch3_byte_r)
+	AM_RANGE(0xf000, 0xf000) AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
+	AM_RANGE(0xf002, 0xf002) AM_DEVREAD("soundlatch2", generic_latch_8_device, read)
+	AM_RANGE(0xf003, 0xf003) AM_DEVREAD("soundlatch3", generic_latch_8_device, read)
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_ctrl_w)
 ADDRESS_MAP_END
 
@@ -618,6 +617,8 @@ static MACHINE_CONFIG_START( plygonet, polygonet_state )
 
 	MCFG_EEPROM_SERIAL_ER5911_8BIT_ADD("eeprom")
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", plygonet)
 
 	/* video hardware */
@@ -636,6 +637,10 @@ static MACHINE_CONFIG_START( plygonet, polygonet_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch2")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch3")
 
 	MCFG_DEVICE_ADD("k054539_1", K054539, XTAL_18_432MHz)
 	MCFG_K054539_REGION_OVERRRIDE("shared")

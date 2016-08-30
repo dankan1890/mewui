@@ -226,7 +226,7 @@ QUICKLOAD_LOAD_MEMBER( binbug_state, binbug )
 	int quick_length;
 	dynamic_buffer quick_data;
 	int read_;
-	int result = IMAGE_INIT_FAIL;
+	image_init_result result = image_init_result::FAIL;
 
 	quick_length = image.length();
 	if (quick_length < 0x0444)
@@ -273,7 +273,7 @@ QUICKLOAD_LOAD_MEMBER( binbug_state, binbug )
 				// Start the quickload
 				m_maincpu->set_state_int(S2650_PC, exec_addr);
 
-				result = IMAGE_INIT_PASS;
+				result = image_init_result::PASS;
 			}
 		}
 	}
@@ -531,7 +531,7 @@ static MACHINE_CONFIG_START( dg680, dg680_state )
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_8MHz / 4)
 	MCFG_CPU_PROGRAM_MAP(dg680_mem)
 	MCFG_CPU_IO_MAP(dg680_io)
-	MCFG_CPU_CONFIG(dg680_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(dg680_daisy_chain)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD_MONOCHROME("screen", RASTER, rgb_t::amber)

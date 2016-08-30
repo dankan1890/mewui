@@ -4,6 +4,7 @@
 #define __NES_KARASTUDIO_H
 
 #include "nxrom.h"
+#include "softlist_dev.h"
 
 
 //-----------------------------------------
@@ -50,8 +51,8 @@ public:
 	virtual void device_config_complete() override { update_names(); }
 
 	// image-level overrides
-	virtual bool call_load() override;
-	virtual bool call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry) override;
+	virtual image_init_result call_load() override;
+	virtual const software_list_loader &get_software_list_loader() const override { return rom_software_list_loader::instance(); }
 
 	virtual iodevice_t image_type() const override { return IO_CARTSLOT; }
 	virtual bool is_readable()  const override { return 1; }
@@ -61,7 +62,6 @@ public:
 	virtual bool is_reset_on_load() const override { return 1; }
 	virtual const char *image_interface() const override { return "ks_cart"; }
 	virtual const char *file_extensions() const override { return "bin"; }
-	virtual const option_guide *create_option_guide() const override { return nullptr; }
 
 	// slot interface overrides
 	virtual std::string get_default_card_software() override;
@@ -78,7 +78,7 @@ extern const device_type NES_KSEXPANSION_SLOT;
 
 #define MCFG_KSTUDIO_MINICART_ADD(_tag, _slot_intf) \
 	MCFG_DEVICE_ADD(_tag, NES_KSEXPANSION_SLOT, 0) \
-MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, NULL, false)
+MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, nullptr, false)
 
 
 //-----------------------------------------------
@@ -97,7 +97,7 @@ public:
 	nes_kstudio_rom_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
 	// optional information overrides
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 	virtual UINT8* get_cart_base();
 
 protected:

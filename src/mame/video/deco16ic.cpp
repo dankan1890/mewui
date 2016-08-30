@@ -172,7 +172,6 @@ Rowscroll style:
 
 #include "emu.h"
 #include "video/deco16ic.h"
-#include "ui/ui.h"
 #include "render.h"
 
 const device_type DECO16IC = &device_creator<deco16ic_device>;
@@ -202,7 +201,7 @@ deco16ic_device::deco16ic_device(const machine_config &mconfig, const char *tag,
 		m_pf2_colourmask(0xf),
 		m_pf12_8x8_gfx_bank(0),
 		m_pf12_16x16_gfx_bank(0),
-		m_gfxdecode(*this)
+		m_gfxdecode(*this, finder_base::DUMMY_TAG)
 {
 }
 
@@ -237,16 +236,16 @@ void deco16ic_device::device_start()
 	if (m_full_width12&1)
 		fullwidth = 1;
 
-	m_pf1_tilemap_16x16 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ?64 : 32);
-//  m_pf1_tilemap_8x8 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, m_full_width12 ? 64 : 32, 32);
-	m_pf1_tilemap_8x8 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, 64 , 32); // nitroball
+	m_pf1_tilemap_16x16 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ?64 : 32);
+//  m_pf1_tilemap_8x8 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, m_full_width12 ? 64 : 32, 32);
+	m_pf1_tilemap_8x8 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf1_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, 64 , 32); // nitroball
 
 	if (m_split)
-		m_pf2_tilemap_16x16 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ? 64 : 32);
+		m_pf2_tilemap_16x16 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ? 64 : 32);
 	else
-		m_pf2_tilemap_16x16 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ? 64 : 32);
+		m_pf2_tilemap_16x16 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info),this), tilemap_mapper_delegate(FUNC(deco16ic_device::deco16_scan_rows),this), 16, 16, fullwidth ? 64 : 32, fullheight ? 64 : 32);
 
-	m_pf2_tilemap_8x8 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, fullwidth ? 64 : 32, fullheight ? 64 : 32);
+	m_pf2_tilemap_8x8 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(deco16ic_device::get_pf2_tile_info_b),this), TILEMAP_SCAN_ROWS, 8, 8, fullwidth ? 64 : 32, fullheight ? 64 : 32);
 
 	m_pf1_tilemap_8x8->set_transparent_pen(0);
 	m_pf2_tilemap_8x8->set_transparent_pen(0);
@@ -866,20 +865,20 @@ void deco16ic_device::pf_update( const UINT16 *rowscroll_1_ptr, const UINT16 *ro
 
 void deco16ic_device::print_debug_info(bitmap_ind16 &bitmap)
 {
-	char buf[64*5];
+/*  char buf[64*5];
 
-	if (machine().input().code_pressed(KEYCODE_O))
-		return;
+    if (machine().input().code_pressed(KEYCODE_O))
+        return;
 
-	if (m_pf12_control)
-	{
-		sprintf(buf,"%04X %04X %04X %04X\n", m_pf12_control[0], m_pf12_control[1], m_pf12_control[2], m_pf12_control[3]);
-		sprintf(&buf[strlen(buf)],"%04X %04X %04X %04X\n", m_pf12_control[4], m_pf12_control[5], m_pf12_control[6], m_pf12_control[7]);
-	}
-	else
-		sprintf(buf, "\n\n");
+    if (m_pf12_control)
+    {
+        sprintf(buf,"%04X %04X %04X %04X\n", m_pf12_control[0], m_pf12_control[1], m_pf12_control[2], m_pf12_control[3]);
+        sprintf(&buf[strlen(buf)],"%04X %04X %04X %04X\n", m_pf12_control[4], m_pf12_control[5], m_pf12_control[6], m_pf12_control[7]);
+    }
+    else
+        sprintf(buf, "\n\n");
 
-	machine().ui().draw_text(&machine().render().ui_container(), buf, 60, 40);
+    machine().ui().draw_text(&machine().render().ui_container(), buf, 60, 40);*/
 }
 
 /*****************************************************************************************/

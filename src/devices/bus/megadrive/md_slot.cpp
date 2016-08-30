@@ -235,11 +235,13 @@ static const md_slot slot_list[] =
 	{ SEGA_FRAM, "rom_fram" },
 	{ HARDBALL95, "rom_hardbl95" },
 	{ XINQIG, "rom_xinqig"},
-	{ BEGGARP, "rom_beggarp"},
-	{ WUKONG, "rom_wukong"},
+	{ BEGGARP, "rom_sf001"},
+	{ WUKONG, "rom_sf002"},
+	{ STARODYS, "rom_sf004"},
 
 	{ SEGA_EEPROM, "rom_eeprom" },
 	{ NBA_JAM, "rom_nbajam" },
+	{ NBA_JAM_ALT, "rom_nbajam_alt" },
 	{ NBA_JAM_TE, "rom_nbajamte" },
 	{ NFL_QB_96, "rom_nflqb" },
 	{ C_SLAM, "rom_cslam" },
@@ -268,6 +270,7 @@ static const md_slot slot_list[] =
 	{ LIONK3, "rom_lion3" },
 	{ MC_PIRATE, "rom_mcpir" },
 	{ MJLOVER, "rom_mjlov" },
+	{ CJMJCLUB, "rom_cjmjclub" },
 	{ POKEMONA, "rom_pokea" },
 	{ REALTEC, "rom_realtec" },
 	{ REDCL_EN, "rom_redcl" },
@@ -319,12 +322,12 @@ static const char *md_get_slot(int type)
  -------------------------------------------------*/
 
 
-bool base_md_cart_slot_device::call_load()
+image_init_result base_md_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
 		m_type = SEGA_STD;
-		int res;
+		image_init_result res;
 
 		// STEP 1: load the file image and keep a copy for later banking
 		// STEP 2: identify the cart type
@@ -336,7 +339,7 @@ bool base_md_cart_slot_device::call_load()
 
 		//printf("cart type: %d\n", m_type);
 
-		if (res == IMAGE_INIT_PASS)
+		if (res == image_init_result::PASS)
 		{
 			//speed-up rom access from SVP add-on, if present
 			if (m_type == SEGA_SVP)
@@ -357,11 +360,11 @@ bool base_md_cart_slot_device::call_load()
 		return res;
 	}
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
-int base_md_cart_slot_device::load_list()
+image_init_result base_md_cart_slot_device::load_list()
 {
 	UINT16 *ROM;
 	UINT32 length = get_software_region_length("rom");
@@ -387,7 +390,7 @@ int base_md_cart_slot_device::load_list()
 	if (m_type != SSF2 && m_type != PSOLAR && m_type != CM_2IN1)
 		m_cart->rom_map_setup(length);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -463,7 +466,7 @@ static int genesis_is_SMD(unsigned char *buf, unsigned int len)
  *  softlist
  *************************************/
 
-int base_md_cart_slot_device::load_nonlist()
+image_init_result base_md_cart_slot_device::load_nonlist()
 {
 	unsigned char *ROM;
 	bool is_smd, is_md;
@@ -525,7 +528,7 @@ int base_md_cart_slot_device::load_nonlist()
 
 
 	// STEP 4: determine the cart type (to deal with sram/eeprom & pirate mappers)
-	m_type = get_cart_type(ROM, len);
+	m_type = get_cart_type(ROM, tmplen - offset);
 
 	// handle mirroring of ROM, unless it's SSF2 or Pier Solar
 	if (m_type != SSF2 && m_type != PSOLAR)
@@ -543,7 +546,7 @@ int base_md_cart_slot_device::load_nonlist()
 	}
 #endif
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 /*-------------------------------------------------
@@ -666,20 +669,19 @@ void base_md_cart_slot_device::setup_nvram()
 			m_cart->nvram_alloc(m_cart->m_nvram_end - m_cart->m_nvram_start + 1);
 			m_cart->m_nvram_active = 1;
 			break;
+		case STARODYS:
+			m_cart->m_nvram_start = 0x200000;
+			m_cart->m_nvram_end = m_cart->m_nvram_start + 0xfffff;
+			m_cart->nvram_alloc(0x8000/2); // 32K mirrored
+			m_cart->m_nvram_active = 1;
+			break;
+		case NBA_JAM_ALT:
+			m_cart->nvram_alloc(0x100);
+			break;
 	}
 }
 
 
-
-/*-------------------------------------------------
- call softlist load
- -------------------------------------------------*/
-
-bool base_md_cart_slot_device::call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry)
-{
-	machine().rom_load().load_software_part_region(*this, swlist, swname, start_entry);
-	return TRUE;
-}
 
 int base_md_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 {
@@ -812,11 +814,19 @@ int base_md_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 			if (!memcmp((char *)&ROM[0x0150], "Virtua Racing", 13))
 				type = SEGA_SVP;
 
+			if (!memcmp((char *)&ROM[0x0180], "SF-004", 6)) // Star Odyssey
+				type = STARODYS;
+
 			break;
 
 		case 0x200005:
 			if (!memcmp(&ROM[0xce564], redcl_en_sig, sizeof(redcliff_sig)))
 				type = REDCL_EN;
+			break;
+
+		case 0x220000:
+			if (!memcmp((char *)&ROM[0x0180], "SF-002", 6)) // Legend of Wukong
+				type = WUKONG;
 			break;
 
 		case 0x300000:
@@ -853,6 +863,9 @@ int base_md_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 
 			if (!memcmp((char *)&ROM[0x0180], "GM T-81476", 10)) // Big Hurt Baseball
 				type = C_SLAM;
+
+			if (!memcmp((char *)&ROM[0x0180], "SF-001", 6)) // Beggar Prince
+				type = BEGGARP;
 
 			break;
 

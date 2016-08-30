@@ -17,6 +17,8 @@ namespace bgfx
 
 #if BGFX_CONFIG_DEBUG
 #	define OVR_CHECK(_call) _OVR_CHECK(_call)
+#else
+#	define OVR_CHECK(_call) _call
 #endif // BGFX_CONFIG_DEBUG
 
 	OVR::OVR()
@@ -152,6 +154,7 @@ namespace bgfx
 
 		for (uint32_t ii = 0; ii < 2; ++ii)
 		{
+			m_eyeBuffers[ii]->postRender(m_hmd);
 			result = ovr_CommitTextureSwapChain(m_hmd, m_eyeBuffers[ii]->m_textureSwapChain);
 			if (!OVR_SUCCESS(result) )
 			{
@@ -245,9 +248,9 @@ namespace bgfx
 					}
 				}
 
-				eye.viewOffset[0] = erd.HmdToEyeOffset.x;
-				eye.viewOffset[1] = erd.HmdToEyeOffset.y;
-				eye.viewOffset[2] = erd.HmdToEyeOffset.z;
+				eye.viewOffset[0] = -erd.HmdToEyeOffset.x;
+				eye.viewOffset[1] = -erd.HmdToEyeOffset.y;
+				eye.viewOffset[2] = -erd.HmdToEyeOffset.z;
 
 				eye.pixelsPerTanAngle[0] = erd.PixelsPerTanAngleAtCenter.x;
 				eye.pixelsPerTanAngle[1] = erd.PixelsPerTanAngleAtCenter.y;

@@ -19,6 +19,7 @@ sound system appears to be the same as 'spartanxtec.cpp'
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
+#include "machine/gen_latch.h"
 #include "sound/ay8910.h"
 #include "spyhunttec.lh"
 
@@ -30,7 +31,7 @@ public:
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
 		m_analog_timer(*this, "analog_timer"),
-		m_analog_input(*this, "AN"),
+		m_analog_input(*this, "AN.%u", 0),
 		m_videoram(*this, "videoram"),
 		m_spriteram(*this, "spriteram"),
 		m_spriteram2(*this, "spriteram2"),
@@ -38,7 +39,8 @@ public:
 		m_spyhunt_alpharam(*this, "spyhunt_alpha"),
 		m_palette(*this, "palette"),
 		m_gfxdecode(*this, "gfxdecode"),
-		m_screen(*this, "screen")
+		m_screen(*this, "screen"),
+		m_soundlatch(*this, "soundlatch")
 	{ }
 
 
@@ -54,6 +56,7 @@ public:
 	required_device<palette_device> m_palette;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<screen_device> m_screen;
+	required_device<generic_latch_8_device> m_soundlatch;
 
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
@@ -228,10 +231,10 @@ TILE_GET_INFO_MEMBER(spyhuntertec_state::spyhunt_get_alpha_tile_info)
 void spyhuntertec_state::video_start()
 {
 	/* initialize the background tilemap */
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(spyhuntertec_state::spyhunt_get_bg_tile_info),this), tilemap_mapper_delegate(FUNC(spyhuntertec_state::spyhunt_bg_scan),this),  64,16, 64,32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(spyhuntertec_state::spyhunt_get_bg_tile_info),this), tilemap_mapper_delegate(FUNC(spyhuntertec_state::spyhunt_bg_scan),this),  64,16, 64,32);
 
 	/* initialize the text tilemap */
-	m_alpha_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(spyhuntertec_state::spyhunt_get_alpha_tile_info),this), TILEMAP_SCAN_COLS,  16,8, 32,32);
+	m_alpha_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(spyhuntertec_state::spyhunt_get_alpha_tile_info),this), TILEMAP_SCAN_COLS,  16,8, 32,32);
 	m_alpha_tilemap->set_transparent_pen(0);
 	m_alpha_tilemap->set_scrollx(0, 16);
 
@@ -334,7 +337,7 @@ UINT32 spyhuntertec_state::screen_update_spyhuntertec(screen_device &screen, bit
 WRITE8_MEMBER(spyhuntertec_state::spyhuntertec_fd00_w)
 {
 //  printf("%04x spyhuntertec_fd00_w %02x\n", space.device().safe_pc(), data);
-	soundlatch_byte_w(space, 0, data);
+	m_soundlatch->write(space, 0, data);
 	m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
 
@@ -409,7 +412,7 @@ READ8_MEMBER(spyhuntertec_state::spyhuntertec_in2_r)
 
 	*/
 //  printf("%04x spyhuntertec_in2_r\n", space.device().safe_pc());
-	
+
 	return (ioport("IN2")->read() & ~0x40) | ((m_analog_count == 0) ? 0x40 : 0x00);
 }
 
@@ -468,7 +471,7 @@ static ADDRESS_MAP_START( spyhuntertec_sound_map, AS_PROGRAM, 8, spyhuntertec_st
 	AM_RANGE(0x0000, 0x1fff) AM_ROM
 	AM_RANGE(0x8000, 0x83ff) AM_RAM
 
-	AM_RANGE(0xc000, 0xc000) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xc000, 0xc000) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 ADDRESS_MAP_END
 
 
@@ -693,6 +696,8 @@ static MACHINE_CONFIG_START( spyhuntertec, spyhuntertec_state )
 	MCFG_CPU_PERIODIC_INT_DRIVER(spyhuntertec_state, irq0_line_assert, 1000)
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ay1", AY8912, 3000000/2) // AY-3-8912
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

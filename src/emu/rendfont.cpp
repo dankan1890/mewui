@@ -18,6 +18,12 @@
 
 #include "ui/cmdrender.h"
 
+#include <cstddef>
+#include <cstring>
+
+
+const UINT64 render_font::CACHED_BDF_HASH_SIZE;
+
 //**************************************************************************
 //  INLINE FUNCTIONS
 //**************************************************************************
@@ -32,7 +38,7 @@ inline const char *next_line(const char *ptr)
 	// scan forward until we hit the end or a carriage return
 	while (*ptr != 13 && *ptr != 10 && *ptr != 0) ptr++;
 
-	// if we hit the end, return NULL
+	// if we hit the end, return nullptr
 	if (*ptr == 0)
 		return nullptr;
 
@@ -53,6 +59,8 @@ inline render_font::glyph &render_font::get_char(unicode_char chnum)
 	static glyph dummy_glyph;
 
 	// grab the table; if none, return the dummy character
+	if ((chnum / 256) >= ARRAY_LENGTH(m_glyphs))
+		return dummy_glyph;
 	if (!m_glyphs[chnum / 256] && m_format == FF_OSD)
 		m_glyphs[chnum / 256] = new glyph[256];
 	if (!m_glyphs[chnum / 256])
@@ -420,11 +428,11 @@ float render_font::string_width(float height, float aspect, const char *string)
 	const char *ends = string + strlen(string);
 	const char *s = string;
 	unicode_char schar;
-	
+
 	// loop over characters
 	while (*s != 0)
 	{
-		int	scharcount = uchar_from_utf8(&schar, s, ends - s);
+		int scharcount = uchar_from_utf8(&schar, s, ends - s);
 		totwidth += get_char(schar).width;
 		s += scharcount;
 	}
@@ -442,19 +450,19 @@ float render_font::string_width(float height, float aspect, const char *string)
 
 float render_font::utf8string_width(float height, float aspect, const char *utf8string)
 {
-	int length = strlen(utf8string);
+	std::size_t const length = std::strlen(utf8string);
 
 	// loop over the string and accumulate widths
 	int count;
-	int totwidth = 0;
-	for (int offset = 0; offset < length; offset += count)
+	INT32 totwidth = 0;
+	for (std::size_t offset = 0U; offset < length; offset += unsigned(count))
 	{
 		unicode_char uchar;
 		count = uchar_from_utf8(&uchar, utf8string + offset, length - offset);
-		if (count == -1)
+		if (count < 0)
 			break;
-		if (uchar < 0x10000)
-			totwidth += get_char(uchar).width;
+
+		totwidth += get_char(uchar).width;
 	}
 
 	// scale the final result based on height
@@ -472,7 +480,7 @@ float render_font::utf8string_width(float height, float aspect, const char *utf8
 bool render_font::load_cached_bdf(const char *filename)
 {
 	// first try to open the BDF itself
-	emu_file file(manager().machine().options().font_path(), OPEN_FLAG_READ);
+	emu_file file(m_manager.machine().options().font_path(), OPEN_FLAG_READ);
 	osd_file::error filerr = file.open(filename);
 	if (filerr != osd_file::error::NONE)
 		return false;
@@ -482,8 +490,8 @@ bool render_font::load_cached_bdf(const char *filename)
 	m_rawdata.resize(m_rawsize + 1);
 
 	// read the first chunk
-	UINT32 bytes = file.read(&m_rawdata[0], MIN(CACHED_BDF_HASH_SIZE, m_rawsize));
-	if (bytes != MIN(CACHED_BDF_HASH_SIZE, m_rawsize))
+	UINT32 bytes = file.read(&m_rawdata[0], std::min(CACHED_BDF_HASH_SIZE, m_rawsize));
+	if (bytes != std::min(CACHED_BDF_HASH_SIZE, m_rawsize))
 		return false;
 
 	// has the chunk
@@ -495,7 +503,7 @@ bool render_font::load_cached_bdf(const char *filename)
 
 	// attempt to open the cached version of the font
 	{
-		emu_file cachefile(manager().machine().options().font_path(), OPEN_FLAG_READ);
+		emu_file cachefile(m_manager.machine().options().font_path(), OPEN_FLAG_READ);
 		filerr = cachefile.open(cachedname.c_str());
 		if (filerr == osd_file::error::NONE)
 		{
@@ -615,7 +623,7 @@ bool render_font::load_bdf()
 			}
 
 			// if we have everything, allocate a new character
-			if (charnum >= 0 && charnum < 65536 && rawdata != nullptr && bmwidth >= 0 && bmheight >= 0)
+			if (charnum >= 0 && charnum < (256 * ARRAY_LENGTH(m_glyphs)) && rawdata != nullptr && bmwidth >= 0 && bmheight >= 0)
 			{
 				// if we don't have a subtable yet, make one
 				if (!m_glyphs[charnum / 256])
@@ -732,14 +740,14 @@ bool render_font::save_cached(const char *filename, UINT32 hash)
 	osd_printf_warning("Generating cached BDF font...\n");
 
 	// attempt to open the file
-	emu_file file(manager().machine().options().font_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+	emu_file file(m_manager.machine().options().font_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
 	osd_file::error filerr = file.open(filename);
 	if (filerr != osd_file::error::NONE)
 		return false;
 
 	// determine the number of characters
 	int numchars = 0;
-	for (int chnum = 0; chnum < 65536; chnum++)
+	for (int chnum = 0; chnum < (256 * ARRAY_LENGTH(m_glyphs)); chnum++)
 	{
 		if (m_glyphs[chnum / 256])
 		{
@@ -787,7 +795,7 @@ bool render_font::save_cached(const char *filename, UINT32 hash)
 
 		// loop over all characters
 		int tableindex = 0;
-		for (int chnum = 0; chnum < 65536; chnum++)
+		for (int chnum = 0; chnum < (256 * ARRAY_LENGTH(m_glyphs)); chnum++)
 		{
 			glyph &gl = get_char(chnum);
 			if (gl.width > 0)

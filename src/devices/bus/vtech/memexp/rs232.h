@@ -2,7 +2,7 @@
 // copyright-holders:Dirk Best
 /***************************************************************************
 
-    Dick Smith VZ-200/300 RS-232 Cartridge
+    Dick Smith VZ-200/300 RS-232 Cartridge (K-6317)
 
 ***************************************************************************/
 
@@ -33,7 +33,7 @@ public:
 	DECLARE_WRITE8_MEMBER( transmit_data_w );
 
 protected:
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;

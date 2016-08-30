@@ -156,12 +156,10 @@ struct LightProbe
 	{
 		char filePath[512];
 
-		strcpy(filePath, _name);
-		strcat(filePath, "_lod.dds");
+		bx::snprintf(filePath, BX_COUNTOF(filePath), "textures/%s_lod.dds", _name);
 		m_tex = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 
-		strcpy(filePath, _name);
-		strcat(filePath, "_irr.dds");
+		bx::snprintf(filePath, BX_COUNTOF(filePath), "textures/%s_irr.dds", _name);
 		m_texIrr = loadTexture(filePath, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_W_CLAMP);
 	}
 
@@ -733,7 +731,7 @@ int _main_(int _argc, char** _argv)
 		camera.envViewMtx(mtxEnvView);
 		float mtxEnvRot[16];
 		bx::mtxRotateY(mtxEnvRot, settings.m_envRotCurr);
-		bx::mtxMul(uniforms.m_mtx, mtxEnvView, mtxEnvRot);
+		bx::mtxMul(uniforms.m_mtx, mtxEnvView, mtxEnvRot); // Used for Skybox.
 
 		// Submit view 0.
 		bgfx::setTexture(0, s_texCube, lightProbes[currentLightProbe].m_tex);
@@ -744,6 +742,7 @@ int _main_(int _argc, char** _argv)
 		bgfx::submit(0, programSky);
 
 		// Submit view 1.
+		memcpy(uniforms.m_mtx, mtxEnvRot, 16*sizeof(float)); // Used for IBL.
 		if (0 == settings.m_meshSelection)
 		{
 			// Submit bunny.
@@ -751,6 +750,7 @@ int _main_(int _argc, char** _argv)
 			bx::mtxSRT(mtx, 1.0f, 1.0f, 1.0f, 0.0f, bx::pi, 0.0f, 0.0f, -0.80f, 0.0f);
 			bgfx::setTexture(0, s_texCube,    lightProbes[currentLightProbe].m_tex);
 			bgfx::setTexture(1, s_texCubeIrr, lightProbes[currentLightProbe].m_texIrr);
+			uniforms.submit();
 			meshSubmit(meshBunny, 1, programMesh, mtx);
 		}
 		else

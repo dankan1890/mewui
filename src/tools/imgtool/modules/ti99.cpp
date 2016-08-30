@@ -1489,7 +1489,7 @@ struct ti99_lvl2_imgref_dsk
 	UINT16 totphysrecs;             /* total number of aphysrecs (extracted from vib record in aphysrec 0) */
 	ti99_catalog catalogs[4];       /* catalog of root directory and up to 3 subdirectories */
 	UINT16 fdir_aphysrec[4];        /* fdir aphysrec address for root directory
-                                        and up to 3 subdirectories */
+	                                    and up to 3 subdirectories */
 };
 
 enum win_vib_t
@@ -1513,11 +1513,11 @@ struct ti99_lvl2_imgref
 	ti99_lvl1_imgref l1_img;/* image format, imgtool image handle, image geometry */
 	ti99_AUformat AUformat; /* AU format */
 	int data_offset;        /* In order to reduce seek times when searching the
-                                disk for a given file name, fdr (and ddr, and
-                                fdir) records are preferentially allocated in
-                                AUs n to data_offset, whereas data records are
-                                preferentially allocated in AUs starting at
-                                data_offset. */
+	                            disk for a given file name, fdr (and ddr, and
+	                            fdir) records are preferentially allocated in
+	                            AUs n to data_offset, whereas data records are
+	                            preferentially allocated in AUs starting at
+	                            data_offset. */
 							/* With the DSK disk structure, n is always 2 (if 1
 							    physrec per AU) or 1 (if 2 physrecs per AU or
 							    more), and data_offset is arbitrarily chosen as
@@ -2620,7 +2620,7 @@ static int win_alloc_file_physrecs(ti99_lvl2_fileref_win *win_file, int nb_alloc
 	}
 	if ((get_UINT16BE(win_file->curfdr.clusters[0][0]) == 0) && (get_UINT16BE(win_file->curfdr.prevsibFDR_AU) != 0))
 	{   /* this is annoying: we have found a sibling FDR filled with 0s: rewind
-        to last non-empty sibling if applicable */
+	    to last non-empty sibling if applicable */
 		errorcode = win_goto_prev_sibFDR(win_file);
 		if (errorcode)
 			return errorcode;
@@ -3861,11 +3861,11 @@ static imgtoolerr_t win_image_beginenum(imgtool_directory *enumeration, const ch
 static imgtoolerr_t win_image_nextenum(imgtool_directory *enumeration, imgtool_dirent *ent);
 static imgtoolerr_t ti99_image_freespace(imgtool_partition *partition, UINT64 *size);
 static imgtoolerr_t ti99_image_readfile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *destf);
-static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, util::option_resolution *writeoptions);
 static imgtoolerr_t dsk_image_deletefile(imgtool_partition *partition, const char *fpath);
 static imgtoolerr_t win_image_deletefile(imgtool_partition *partition, const char *fpath);
-static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
-static imgtoolerr_t dsk_image_create_v9t9(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
+static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, util::option_resolution *createoptions);
+static imgtoolerr_t dsk_image_create_v9t9(imgtool_image *image, imgtool_stream *f, util::option_resolution *createoptions);
 
 enum
 {
@@ -4282,7 +4282,7 @@ static imgtoolerr_t dsk_image_nextenum(imgtool_directory *enumeration, imgtool_d
 
 			/* recurse subdirectory */
 			iter->listing_subdirs = 0;  /* no need to list subdirs as only the
-                                        root dir has subdirs in DSK format */
+			                            root dir has subdirs in DSK format */
 			iter->level = 1;
 			iter->cur_catalog = &iter->image->dsk.catalogs[iter->index[0]+1];
 			iter->index[iter->level] = 0;
@@ -4644,7 +4644,7 @@ static imgtoolerr_t ti99_image_readfile(imgtool_partition *partition, const char
 /*
     Add a file to a ti99_image.  The file must be in tifile format.
 */
-static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti99_image_writefile(imgtool_partition *partition, const char *fpath, const char *fork, imgtool_stream *sourcef, util::option_resolution *writeoptions)
 {
 	imgtool_image *img = imgtool_partition_image(partition);
 	struct ti99_lvl2_imgref *image = (struct ti99_lvl2_imgref *) imgtool_image_extra_bytes(img);
@@ -5226,7 +5226,7 @@ static imgtoolerr_t win_image_deletefile(imgtool_partition *partition, const cha
 
     Supports MESS and V9T9 formats only
 */
-static imgtoolerr_t dsk_image_create(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions, ti99_img_format img_format)
+static imgtoolerr_t dsk_image_create(imgtool_image *image, imgtool_stream *f, util::option_resolution *createoptions, ti99_img_format img_format)
 {
 	const char *volname;
 	int density;
@@ -5244,12 +5244,12 @@ static imgtoolerr_t dsk_image_create(imgtool_image *image, imgtool_stream *f, op
 	l1_img.file_handle = f;
 
 	/* read options */
-	volname = option_resolution_lookup_string(createoptions, dsk_createopts_volname);
-	l1_img.geometry.heads = option_resolution_lookup_int(createoptions, dsk_createopts_sides);
-	l1_img.geometry.cylinders = option_resolution_lookup_int(createoptions, dsk_createopts_tracks);
-	l1_img.geometry.secspertrack = option_resolution_lookup_int(createoptions, dsk_createopts_sectors);
-	protected_var = option_resolution_lookup_int(createoptions, dsk_createopts_protection);
-	density = option_resolution_lookup_int(createoptions, dsk_createopts_density);
+	volname = createoptions->lookup_string(dsk_createopts_volname);
+	l1_img.geometry.heads = createoptions->lookup_int(dsk_createopts_sides);
+	l1_img.geometry.cylinders = createoptions->lookup_int(dsk_createopts_tracks);
+	l1_img.geometry.secspertrack = createoptions->lookup_int(dsk_createopts_sectors);
+	protected_var = createoptions->lookup_int(dsk_createopts_protection);
+	density = createoptions->lookup_int(dsk_createopts_density);
 
 	/* NPW 03-DEC-2003 - Fixes a crash if volname is NULL */
 	if (!volname)
@@ -5346,7 +5346,7 @@ static imgtoolerr_t dsk_image_create(imgtool_image *image, imgtool_stream *f, op
 /*
     Create a blank ti99_image (MESS format).
 */
-static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *f, util::option_resolution *createoptions)
 {
 	return dsk_image_create(image, f, createoptions, if_mess);
 }
@@ -5354,7 +5354,7 @@ static imgtoolerr_t dsk_image_create_mess(imgtool_image *image, imgtool_stream *
 /*
     Create a blank ti99_image (V9T9 format).
 */
-static imgtoolerr_t dsk_image_create_v9t9(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_v9t9(imgtool_image *image, imgtool_stream *f, util::option_resolution *createoptions)
 {
 	return dsk_image_create(image, f, createoptions, if_v9t9);
 }

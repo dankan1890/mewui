@@ -11,9 +11,17 @@
 #ifndef INPUT_COMMON_H_
 #define INPUT_COMMON_H_
 
-#include <memory>
+#include "input_module.h"
+
 #include <chrono>
+#include <memory>
+#include <mutex>
 #include <queue>
+#include <algorithm>
+#include <functional>
+#undef min
+#undef max
+
 
 //============================================================
 //  PARAMETERS
@@ -215,10 +223,10 @@ public:
 
 	// Getters
 	running_machine &         machine() const { return m_machine; }
-	const char *              name() { return m_name.c_str(); }
-	input_device *            device() { return m_device; }
+	const char *              name() const { return m_name.c_str(); }
+	input_device *            device() const { return m_device; }
 	input_module &            module() const { return m_module; }
-	input_device_class        deviceclass() { return m_deviceclass; }
+	input_device_class        deviceclass() const { return m_deviceclass; }
 
 	// Poll and reset methods
 	virtual void poll() {};
@@ -279,55 +287,37 @@ public:
 
 class input_device_list
 {
-protected:
+private:
 	std::vector<std::unique_ptr<device_info>> m_list;
 
 public:
-	input_device_list()
-	{
-	}
+	size_t size() const { return m_list.size(); }
+	auto begin() { return m_list.begin(); }
+	auto end() { return m_list.end(); }
 
 	void poll_devices()
 	{
-		for (auto iter = m_list.begin(); iter != m_list.end(); iter++)
-			iter->get()->poll();
+		for (auto &device: m_list)
+			device->poll();
 	}
 
 	void reset_devices()
 	{
-		for (auto iter = m_list.begin(); iter != m_list.end(); iter++)
-			iter->get()->reset();
+		for (auto &device: m_list)
+			device->reset();
 	}
 
-	void free_device(device_info * devinfo)
+	void free_device(device_info* devinfo)
 	{
-		// remove us from the list
-		for (auto iter = m_list.begin(); iter != m_list.end(); iter++)
-		{
-			if (iter->get() == devinfo)
-			{
-				m_list.erase(iter);
-				break;
-			}
-		}
+		// find the device to remove
+		auto device_matches = [devinfo](std::unique_ptr<device_info> &device) { return devinfo == device.get(); };
+		m_list.erase(std::remove_if(std::begin(m_list), std::end(m_list), device_matches), m_list.end());
 	}
 
-	int find_index(device_info* devinfo)
+	void for_each_device(std::function<void (device_info*)> action)
 	{
-		// remove us from the list
-		int i = 0;
-		for (auto iter = m_list.begin(); iter != m_list.end(); iter++)
-		{
-			if (iter->get() == devinfo)
-			{
-				break;
-			}
-
-			i++;
-		}
-
-		// return the index or -1 if we couldn't find it
-		return i == m_list.size() ? -1 : i;
+		for (auto &device: m_list)
+			action(device.get());
 	}
 
 	void free_all_devices()
@@ -336,49 +326,17 @@ public:
 			m_list.pop_back();
 	}
 
-	int size()
-	{
-		return m_list.size();
-	}
-
-	device_info* at(int index)
-	{
-		return m_list.at(index).get();
-	}
-
-	template <typename TActual>
-	TActual* create_device(running_machine &machine, const char *name, input_module &module)
+	template <typename TActual, typename... TArgs>
+	TActual* create_device(running_machine &machine, const char *name, input_module &module, TArgs&&... args)
 	{
 		// allocate the device object
-		auto devinfo = std::make_unique<TActual>(machine, name, module);
+		auto devinfo = std::make_unique<TActual>(machine, name, module, std::forward<TArgs>(args)...);
 
-		return add_device_internal(machine, name, module, std::move(devinfo));
-	}
-
-	template <typename TActual, typename TArg>
-	TActual* create_device1(running_machine &machine, const char *name, input_module &module, TArg arg1)
-	{
-		// allocate the device object
-		auto devinfo = std::make_unique<TActual>(machine, name, module, arg1);
-
-		return add_device_internal(machine, name, module, std::move(devinfo));
-	}
-
-	template <class TActual>
-	TActual* at(int index)
-	{
-		return static_cast<TActual*>(m_list.at(index).get());
-	}
-
-private:
-	template <typename TActual>
-	TActual* add_device_internal(running_machine &machine, const char *name, input_module &module, std::unique_ptr<TActual> allocated)
-	{
 		// Add the device to the machine
-		allocated->m_device = machine.input().device_class(allocated->deviceclass()).add_device(allocated->name(), allocated.get());
+		devinfo->m_device = machine.input().device_class(devinfo->deviceclass()).add_device(devinfo->name(), devinfo.get());
 
 		// append us to the list
-		m_list.push_back(std::move(allocated));
+		m_list.push_back(std::move(devinfo));
 
 		return static_cast<TActual*>(m_list.back().get());
 	}
@@ -419,7 +377,7 @@ public:
 	keyboard_trans_table(std::unique_ptr<key_trans_entry[]> table, unsigned int size);
 
 	// getters/setters
-	UINT32 size() { return m_table_size; }
+	UINT32 size() const { return m_table_size; }
 
 	// public methods
 	input_item_id lookup_mame_code(const char * scode) const;
@@ -436,7 +394,7 @@ public:
 		return s_instance;
 	}
 
-	key_trans_entry & operator [](int i) { return m_table[i]; }
+	key_trans_entry & operator [](int i) const { return m_table[i]; }
 };
 
 //============================================================
@@ -456,10 +414,10 @@ class input_module_base : public input_module
 public:
 	input_module_base(const char *type, const char* name)
 		: input_module(type, name),
-		m_input_enabled(FALSE),
-		m_mouse_enabled(FALSE),
-		m_lightgun_enabled(FALSE),
-		m_input_paused(FALSE),
+		m_input_enabled(false),
+		m_mouse_enabled(false),
+		m_lightgun_enabled(false),
+		m_input_paused(false),
 		m_options(nullptr)
 	{
 	}
@@ -479,12 +437,12 @@ protected:
 
 public:
 
-	const osd_options *   options() { return m_options; }
+	const osd_options *   options() const { return m_options; }
 	input_device_list *   devicelist() { return &m_devicelist; }
-	bool                  input_enabled() { return m_input_enabled; }
-	bool                  input_paused() { return m_input_paused; }
-	bool                  mouse_enabled() { return m_mouse_enabled; }
-	bool                  lightgun_enabled() { return m_lightgun_enabled; }
+	bool                  input_enabled() const { return m_input_enabled; }
+	bool                  input_paused() const { return m_input_paused; }
+	bool                  mouse_enabled() const { return m_mouse_enabled; }
+	bool                  lightgun_enabled() const { return m_lightgun_enabled; }
 
 	int init(const osd_options &options) override;
 
@@ -546,20 +504,22 @@ protected:
 	virtual void before_poll(running_machine &machine) {}
 };
 
-inline static int generic_button_get_state(void *device_internal, void *item_internal)
+template <class TItem>
+int generic_button_get_state(void *device_internal, void *item_internal)
 {
-	device_info *devinfo = (device_info *)device_internal;
-	unsigned char *itemdata = (unsigned char*)item_internal;
+	device_info *devinfo = static_cast<device_info *>(device_internal);
+	TItem *itemdata = static_cast<TItem*>(item_internal);
 
 	// return the current state
 	devinfo->module().poll_if_necessary(devinfo->machine());
 	return *itemdata >> 7;
 }
 
-inline static int generic_axis_get_state(void *device_internal, void *item_internal)
+template <class TItem>
+int generic_axis_get_state(void *device_internal, void *item_internal)
 {
-	device_info *devinfo = (device_info *)device_internal;
-	int *axisdata = (int*)item_internal;
+	device_info *devinfo = static_cast<device_info *>(device_internal);
+	TItem *axisdata = static_cast<TItem*>(item_internal);
 
 	// return the current state
 	devinfo->module().poll_if_necessary(devinfo->machine());
@@ -607,15 +567,15 @@ inline static INT32 normalize_absolute_axis(INT32 raw, INT32 rawmin, INT32 rawma
 	if (raw >= center)
 	{
 		INT32 result = (INT64)(raw - center) * (INT64)INPUT_ABSOLUTE_MAX / (INT64)(rawmax - center);
-		return MIN(result, INPUT_ABSOLUTE_MAX);
+		return std::min(result, INPUT_ABSOLUTE_MAX);
 	}
 
 	// below center
 	else
 	{
 		INT32 result = -((INT64)(center - raw) * (INT64)-INPUT_ABSOLUTE_MIN / (INT64)(center - rawmin));
-		return MAX(result, INPUT_ABSOLUTE_MIN);
+		return std::max(result, INPUT_ABSOLUTE_MIN);
 	}
 }
 
-#endif
+#endif // INPUT_COMMON_H_

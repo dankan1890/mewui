@@ -16,7 +16,6 @@
 #include "debugger.h"
 #include "tlcs90.h"
 
-enum _e_op {    UNKNOWN,    NOP,    EX,     EXX,    LD,     LDW,    LDA,    LDI,    LDIR,   LDD,    LDDR,   CPI,    CPIR,   CPD,    CPDR,   PUSH,   POP,    JP,     JR,     CALL,   CALLR,      RET,    RETI,   HALT,   DI,     EI,     SWI,    DAA,    CPL,    NEG,    LDAR,   RCF,    SCF,    CCF,    TSET,   BIT,    SET,    RES,    INC,    DEC,    INCX,   DECX,   INCW,   DECW,   ADD,    ADC,    SUB,    SBC,    AND,    XOR,    OR,     CP,     RLC,    RRC,    RL,     RR,     SLA,    SRA,    SLL,    SRL,    RLD,    RRD,    DJNZ,   MUL,    DIV     };
 static const char *const op_names[] =   {   "??",       "nop",  "ex",   "exx",  "ld",   "ldw",  "lda",  "ldi",  "ldir", "ldd",  "lddr", "cpi",  "cpir", "cpd",  "cpdr", "push", "pop",  "jp",   "jr",   "call", "callr",    "ret",  "reti", "halt", "di",   "ei",   "swi",  "daa",  "cpl",  "neg",  "ldar", "rcf",  "scf",  "ccf",  "tset", "bit",  "set",  "res",  "inc",  "dec",  "incx", "decx", "incw", "decw", "add",  "adc",  "sub",  "sbc",  "and",  "xor",  "or",   "cp",   "rlc",  "rrc",  "rl",   "rr",   "sla",  "sra",  "sll",  "srl",  "rld",  "rrd",  "djnz", "mul",  "div"   };
 
 ALLOW_SAVE_TYPE(tlcs90_device::e_mode); // allow save_item on a non-fundamental type
@@ -24,6 +23,7 @@ ALLOW_SAVE_TYPE(tlcs90_device::e_mode); // allow save_item on a non-fundamental 
 
 const device_type TMP90840 = &device_creator<tmp90840_device>;
 const device_type TMP90841 = &device_creator<tmp90841_device>;
+const device_type TMP90845 = &device_creator<tmp90845_device>;
 const device_type TMP91640 = &device_creator<tmp91640_device>;
 const device_type TMP91641 = &device_creator<tmp91641_device>;
 
@@ -70,6 +70,12 @@ tmp90841_device::tmp90841_device(const machine_config &mconfig, const char *tag,
 	: tlcs90_device(mconfig, TMP90841, "TMP90841", tag, owner, clock, "tmp90841", __FILE__, ADDRESS_MAP_NAME(tmp90841_mem))
 {
 }
+
+tmp90845_device::tmp90845_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
+	: tlcs90_device(mconfig, TMP90841, "TMP90845", tag, owner, clock, "tmp90845", __FILE__, ADDRESS_MAP_NAME(tmp90841_mem))
+{
+}
+
 
 
 tmp91640_device::tmp91640_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
@@ -2475,7 +2481,7 @@ TIMER_CALLBACK_MEMBER( tlcs90_device::t90_timer_callback )
 
 TIMER_CALLBACK_MEMBER( tlcs90_device::t90_timer4_callback )
 {
-//  logerror("CPU Timer 4 fired! value = %d\n", (unsigned)m_timer_value[4]);
+//  logerror("CPU Timer 4 fired! value = %d\n", (unsigned)m_timer4_value);
 
 	m_timer4_value++;
 
@@ -2496,7 +2502,7 @@ TIMER_CALLBACK_MEMBER( tlcs90_device::t90_timer4_callback )
 
 	// Overflow
 
-	if ( m_timer_value == nullptr )
+	if ( m_timer4_value == 0 )
 	{
 //      logerror("CPU Timer 4 overflow\n");
 	}

@@ -19,12 +19,12 @@
  */
 static UINT32 ones_u32(UINT32 val)
 {
-		val -= ((val >> 1) & 0x55555555);
-		val = (((val >> 2) & 0x33333333) + (val & 0x33333333));
-		val = (((val >> 4) + val) & 0x0f0f0f0f);
-		val += (val >> 8);
-		val += (val >> 16);
-		return (val & 0x0000003f);
+	val -= ((val >> 1) & 0x55555555);
+	val = (((val >> 2) & 0x33333333) + (val & 0x33333333));
+	val = (((val >> 4) + val) & 0x0f0f0f0f);
+	val += (val >> 8);
+	val += (val >> 16);
+	return val & 0x3f;
 }
 
 /**
@@ -43,10 +43,10 @@ static UINT32 log2_u32(UINT32 val)
 /**
  * @brief map a number of data or address lines using a lookup table
  *
- * @param map pointer to an array of values, or NULL for default
+ * @param map pointer to an array of values, or nullptr for default
  * @param lines number of data or address lines
  * @param val value to map
- * @result returns the remapped value, or just val, if map was NULL
+ * @result returns the remapped value, or just val, if map was nullptr
  */
 static UINT32 map_lines(const UINT8 *map, int lines, UINT32 val)
 {

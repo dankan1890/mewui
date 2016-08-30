@@ -15,7 +15,7 @@ Notes:
 
 TODO:
 - 02851: tetriskr: Corrupt game graphics after some time of gameplay, caused by a wrong
-  reading of the i/o $3c8 bit 1.
+  reading of the i/o $3c8 bit 1. (seems fixed?)
 - Add a proper FDC device.
 - Filetto: Add UM5100 sound chip, might be connected to the prototyping card;
 - buzzer sound has issues in both games
@@ -101,7 +101,7 @@ public:
 	// construction/destruction
 	isa8_cga_filetto_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 };
 
 const device_type ISA8_CGA_FILETTO = &device_creator<isa8_cga_filetto_device>;
@@ -120,7 +120,7 @@ ROM_START( filetto_cga )
 	ROM_LOAD("u67.bin", 0x0000, 0x2000, CRC(09710122) SHA1(de84bdd9245df287bbd3bb808f0c3531d13a3545) )
 ROM_END
 
-const rom_entry *isa8_cga_filetto_device::device_rom_region() const
+const tiny_rom_entry *isa8_cga_filetto_device::device_rom_region() const
 {
 	return ROM_NAME( filetto_cga );
 }
@@ -135,7 +135,7 @@ public:
 
 	virtual UINT32 screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect) override;
 	virtual void device_start() override;
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 
 	DECLARE_READ8_MEMBER(bg_bank_r);
 	DECLARE_WRITE8_MEMBER(bg_bank_w);
@@ -161,7 +161,7 @@ void isa8_cga_tetriskr_device::device_start()
 {
 	m_bg_bank = 0;
 	isa8_cga_superimpose_device::device_start();
-	m_isa->install_device(0x3c0, 0x3c0, 0, 0,  read8_delegate( FUNC(isa8_cga_tetriskr_device::bg_bank_r), this ), write8_delegate( FUNC(isa8_cga_tetriskr_device::bg_bank_w), this ) );
+	m_isa->install_device(0x3c0, 0x3c0, read8_delegate( FUNC(isa8_cga_tetriskr_device::bg_bank_r), this ), write8_delegate( FUNC(isa8_cga_tetriskr_device::bg_bank_w), this ) );
 }
 
 WRITE8_MEMBER(isa8_cga_tetriskr_device::bg_bank_w)
@@ -228,7 +228,7 @@ ROM_START( tetriskr_cga )
 	ROM_LOAD( "b-9.u43", 0x70000, 0x10000, CRC(4ea22349) SHA1(14dfd3dbd51f8bd6f3290293b8ea1c165e8cf7fd))
 ROM_END
 
-const rom_entry *isa8_cga_tetriskr_device::device_rom_region() const
+const tiny_rom_entry *isa8_cga_tetriskr_device::device_rom_region() const
 {
 	return ROM_NAME( tetriskr_cga );
 }
@@ -540,4 +540,4 @@ ROM_START( tetriskr )
 ROM_END
 
 GAME( 1990, filetto,  0, filetto,  filetto, driver_device,  0,  ROT0,  "Novarmatic", "Filetto (v1.05 901009)",MACHINE_IMPERFECT_SOUND )
-GAME( 1988?,tetriskr, 0, tetriskr, tetriskr, driver_device,  0, ROT0,  "bootleg",    "Tetris (bootleg of Mirrorsoft PC-XT Tetris version)", MACHINE_IMPERFECT_SOUND | MACHINE_NOT_WORKING )
+GAME( 1988?,tetriskr, 0, tetriskr, tetriskr, driver_device,  0, ROT0,  "bootleg",    "Tetris (Korean bootleg of Mirrorsoft PC-XT Tetris)", MACHINE_IMPERFECT_SOUND )

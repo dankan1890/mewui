@@ -18,7 +18,7 @@ struct nbfilectx {
 	UINT32 curcmd;
 	UINT8 filename[128];
 	UINT8 curdir[1024];
-	osd_directory *dirp;
+		osd::directory::ptr dirp;
 	osd_file::ptr fd;
 	UINT64 filelen;
 	UINT32 bytecount;
@@ -37,7 +37,7 @@ public:
 
 		// optional information overrides
 		virtual machine_config_constructor device_mconfig_additions() const override;
-		virtual const rom_entry *device_rom_region() const override;
+		virtual const tiny_rom_entry *device_rom_region() const override;
 
 protected:
 		// device-level overrides

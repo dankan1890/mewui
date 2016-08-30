@@ -42,7 +42,7 @@ public:
 	virtual error read(void *buffer, std::uint64_t offset, std::uint32_t count, std::uint32_t &actual) override
 	{
 		DWORD bytes_read;
-		if (!ReadFile(m_handle, buffer, count, &bytes_read, NULL))
+		if (!ReadFile(m_handle, buffer, count, &bytes_read, nullptr))
 			return win_error_to_file_error(GetLastError());
 
 		actual = bytes_read;
@@ -52,7 +52,7 @@ public:
 	virtual error write(void const *buffer, std::uint64_t offset, std::uint32_t count, std::uint32_t &actual) override
 	{
 		DWORD bytes_written;
-		if (!WriteFile(m_handle, buffer, count, &bytes_written, NULL))
+		if (!WriteFile(m_handle, buffer, count, &bytes_written, nullptr))
 			return win_error_to_file_error(GetLastError());
 
 		actual = bytes_written;
@@ -87,12 +87,9 @@ bool win_check_ptty_path(std::string const &path)
 
 osd_file::error win_open_ptty(std::string const &path, std::uint32_t openflags, osd_file::ptr &file, std::uint64_t &filesize)
 {
-	TCHAR *t_name = tstring_from_utf8(path.c_str());
-	if (!t_name)
-		return osd_file::error::OUT_OF_MEMORY;
+	auto t_name = tstring_from_utf8(path.c_str());
 
-	HANDLE pipe = CreateNamedPipe(t_name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT, 1, 32, 32, 0, NULL);
-	osd_free(t_name);
+	HANDLE pipe = CreateNamedPipe(t_name.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT, 1, 32, 32, 0, nullptr);
 
 	if (INVALID_HANDLE_VALUE == pipe)
 		return osd_file::error::ACCESS_DENIED;

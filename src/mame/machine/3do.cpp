@@ -117,7 +117,7 @@ void _3do_state::m_3do_request_fiq(UINT32 irq_req, UINT8 type)
 	if((m_clio.irq0 & m_clio.irq0_enable) || (m_clio.irq1 & m_clio.irq1_enable))
 	{
 		//printf("Go irq %08x & %08x %08x & %08x\n",m_clio.irq0, m_clio.irq0_enable, m_clio.irq1, m_clio.irq1_enable);
-		generic_pulse_irq_line(m_maincpu, ARM7_FIRQ_LINE, 1);
+		generic_pulse_irq_line(*m_maincpu, ARM7_FIRQ_LINE, 1);
 	}
 }
 
@@ -771,8 +771,8 @@ READ32_MEMBER(_3do_state::_3do_clio_r)
 		return m_clio.uncle_rom;
 
 	default:
-	if (!space.debugger_access())
-		logerror( "%08X: unhandled CLIO read offset = %08X\n", m_maincpu->pc(), offset * 4 );
+		if (!space.debugger_access())
+			logerror( "%08X: unhandled CLIO read offset = %08X\n", m_maincpu->pc(), offset * 4 );
 		break;
 	}
 	return 0;
@@ -1004,7 +1004,7 @@ WRITE32_MEMBER(_3do_state::_3do_clio_w)
 	case 0x17fc/4:
 		/* TODO: DSPP enabled just before enabling DSPP irq! */
 		if(data & 1)
-			debugger_break(machine());
+			machine().debug_break();
 
 		//printf("%08x\n",data);
 		break;

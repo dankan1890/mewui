@@ -456,12 +456,6 @@ void cosmicos_state::machine_start()
 	/* initialize LED display */
 	m_led->rbi_w(1);
 
-	// find keyboard rows
-	m_key_row[0] = m_y1;
-	m_key_row[1] = m_y2;
-	m_key_row[2] = m_y3;
-	m_key_row[3] = m_y4;
-
 	/* register for state saving */
 	save_item(NAME(m_wait));
 	save_item(NAME(m_clear));
@@ -495,7 +489,7 @@ QUICKLOAD_LOAD_MEMBER( cosmicos_state, cosmicos )
 	/* load image to RAM */
 	image.fread(ptr, size);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 /* Machine Driver */
@@ -530,7 +524,7 @@ static MACHINE_CONFIG_START( cosmicos, cosmicos_state )
 	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
-	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL_1_75MHz, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), WRITELINE(cosmicos_state, dmaout_w), WRITELINE(cosmicos_state, efx_w), NULL, VCC, VCC, VCC)
+	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL_1_75MHz, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), WRITELINE(cosmicos_state, dmaout_w), WRITELINE(cosmicos_state, efx_w), NOOP, VCC, VCC, VCC)
 	MCFG_CDP1864_CHROMINANCE(RES_K(2), 0, 0, 0) // R2
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 

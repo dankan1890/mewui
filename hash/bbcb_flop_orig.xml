@@ -268,7 +268,7 @@
 			</dataarea>
 		</part>
 		<part name="flop2" interface="floppy_5_25">
-			<feature name="part_id" value="Data"/>
+			<feature name="part_id" value="Database"/>
 			<dataarea name="flop" size="105079">
 				<rom name="033 acheton data.fsd" size="105079" crc="86fdca91" sha1="57f448a17868f0bdbbc6a415464220da0c418f72" offset="0" />
 			</dataarea>
@@ -636,7 +636,7 @@
 
 	<software name="omegaorb">
 		<description>Omega Orb</description>
-		<year>1986</year>
+		<year>1987</year>
 		<publisher>Audiogenic</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104939">
@@ -815,7 +815,7 @@
 
 	<software name="sphdest">
 		<description>Sphere of Destiny</description>
-		<year>1986</year>
+		<year>1987</year>
 		<publisher>Audiogenic</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="105084">
@@ -825,17 +825,17 @@
 	</software>
 
 	<software name="colos4ch">
-		<description>Colossus 4 Chess</description>
-		<year>1988</year>
+		<description>Colossus Chess 4</description>
+		<year>1986</year>
 		<publisher>CDS</publisher>
 		<part name="flop1" interface="floppy_5_25">
-			<feature name="part_id" value="Side 1"/>
+			<feature name="part_id" value="Game &amp; Files G31-G34/G100-G118"/>
 			<dataarea name="flop" size="104953">
 				<rom name="000 colossus chess 4 side 1.fsd" size="104953" crc="c759e652" sha1="04a92c17cfec2827b4c6e85e4a271831346c9d00" offset="0" />
 			</dataarea>
 		</part>
 		<part name="flop2" interface="floppy_5_25">
-			<feature name="part_id" value="Side 2"/>
+			<feature name="part_id" value="Files G0-G30"/>
 			<dataarea name="flop" size="104953">
 				<rom name="000 colossus chess 4 side 2.fsd" size="104953" crc="2eda7e43" sha1="2b25c2d66c2d9ab40a90710ea931e01471b7a5d6" offset="0" />
 			</dataarea>
@@ -956,6 +956,7 @@
 		<description>The Sentinel</description>
 		<year>1986</year>
 		<publisher>Firebird</publisher>
+		<info name="author" value="Geoff Crammond" />
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="78834">
 				<rom name="073 the sentinel.fsd" size="78834" crc="ca2e8436" sha1="54fc3d458c86f571f43214e760408fccc190bc1a" offset="0" />
@@ -1107,8 +1108,8 @@
 	</software>
 
 	<software name="yiear">
-		<description>Yie Ar Kung Fu</description>
-		<year>1984</year>
+		<description>Yie Ar Kung-Fu</description>
+		<year>1985</year>
 		<publisher>Imagine</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="105081">
@@ -1341,6 +1342,7 @@
 		<description>Cholo</description>
 		<year>1986</year>
 		<publisher>Firebird</publisher>
+		<info name="author" value="Solid Image" />
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="105072">
 				<rom name="135 cholo.fsd" size="105072" crc="8f23bd24" sha1="464bec1cf14d34f902d783e62f7ea4789458cee8" offset="0" />
@@ -1460,7 +1462,7 @@
 
 	<software name="phancomb">
 		<description>Phantom Combat (BBC Series)</description>
-		<year>1985</year>
+		<year>1987</year>
 		<publisher>Doctor Soft</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104944">
@@ -1532,7 +1534,7 @@
 	</software>
 
 	<software name="wediag">
-		<description>Diagnostics Disc</description>
+		<description>WE Diagnostics Utility Disc</description>
 		<year>1985</year>
 		<publisher>Watford Electronics</publisher>
 		<part name="flop1" interface="floppy_5_25">
@@ -1609,9 +1611,9 @@
 	</software>
 
 	<software name="tcrosswd">
-		<description>The Times Crosswords Vol.1</description>
+		<description>The Times Computer Crosswords Vol.1</description>
 		<year>1988</year>
-		<publisher>The Times</publisher>
+		<publisher>Akom Limited</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="Side 1"/>
 			<dataarea name="flop" size="209879">
@@ -1988,7 +1990,7 @@
 
 	<software name="hobbit">
 		<description>The Hobbit</description>
-		<year>1983</year>
+		<year>1985</year>
 		<publisher>Melbourne House</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="Side 1"/>
@@ -2346,7 +2348,7 @@
 
 	<software name="nevryon">
 		<description>Nevyron</description>
-		<year>1991</year>
+		<year>1990</year>
 		<publisher>4th Dimension</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104937">
@@ -2478,7 +2480,7 @@
 
 	<software name="holedoc1">
 		<description>Holed Out Extra Courses Vol.1</description>
-		<year>1990</year>
+		<year>1989</year>
 		<publisher>4th Dimension</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104959">
@@ -2489,7 +2491,7 @@
 
 	<software name="holedoc2">
 		<description>Holed Out Extra Courses Vol.2</description>
-		<year>1990</year>
+		<year>1989</year>
 		<publisher>4th Dimension</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104959">
@@ -3036,7 +3038,7 @@
 
 	<software name="ravskull">
 		<description>Ravenskull</description>
-		<year>1987</year>
+		<year>1986</year>
 		<publisher>Superior Software/Acornsoft</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104940">
@@ -3887,7 +3889,7 @@
 
 	<software name="mathsnap">
 		<description>Maths Snap</description>
-		<year>198?</year>
+		<year>1983</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="105077">
@@ -3920,7 +3922,7 @@
 
 	<software name="wbuild">
 		<description>Word Builder</description>
-		<year>198?</year>
+		<year>1983</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="105079">
@@ -4040,7 +4042,7 @@
 
 	<software name="teachcup">
 		<description>The Teachers Cupboard</description>
-		<year>198?</year>
+		<year>1988</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="The Apple"/>
@@ -4069,7 +4071,7 @@
 
 	<software name="magice">
 		<description>Magic E</description>
-		<year>198?</year>
+		<year>1983</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="107122">
@@ -4080,7 +4082,7 @@
 
 	<software name="storysta">
 		<description>Story Starts</description>
-		<year>198?</year>
+		<year>1986</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="1 The House on the Hill"/>
@@ -4257,7 +4259,7 @@
 			</dataarea>
 		</part>
 		<part name="flop3" interface="floppy_5_25">
-			<feature name="part_id" value="Punch + Judy-Rockpools"/>
+			<feature name="part_id" value="Punch &amp; Judy/Rockpools"/>
 			<dataarea name="flop" size="105052">
 				<rom name="290 toby at the beach punch + judy-rockpools (80 track).fsd" size="105052" crc="1becee05" sha1="9e6459a380a56bff5e682f40c82ca3019c43d721" offset="0" />
 			</dataarea>
@@ -4272,7 +4274,7 @@
 
 	<software name="anialpha">
 		<description>The Animated Alphabet</description>
-		<year>198?</year>
+		<year>1988</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="Side 0"/>
@@ -4355,7 +4357,7 @@
 
 	<software name="aninumbr">
 		<description>Animated Numbers</description>
-		<year>198?</year>
+		<year>1990</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<dataarea name="flop" size="104946">
@@ -4366,7 +4368,7 @@
 
 	<software name="typesett">
 		<description>Typesetter!</description>
-		<year>198?</year>
+		<year>1987</year>
 		<publisher>Sherston Software</publisher>
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="Startup Disk"/>

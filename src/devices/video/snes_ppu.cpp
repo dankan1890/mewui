@@ -203,7 +203,12 @@ const device_type SNES_PPU = &device_creator<snes_ppu_device>;
 snes_ppu_device::snes_ppu_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
 				: device_t(mconfig, SNES_PPU, "SNES PPU", tag, owner, clock, "snes_ppu", __FILE__),
 					device_video_interface(mconfig, *this),
-					m_openbus_cb(*this)
+					m_openbus_cb(*this),
+					m_options(*this, ":OPTIONS"),
+					m_debug1(*this, ":DEBUG1"),
+					m_debug2(*this, ":DEBUG2"),
+					m_debug3(*this, ":DEBUG3"),
+					m_debug4(*this, ":DEBUG4")
 {
 }
 
@@ -371,7 +376,10 @@ void snes_ppu_device::device_reset()
 	m_beam.latch_vert = 0;
 	m_beam.latch_horz = 0;
 	m_beam.current_vert = 0;
-	m_beam.last_visible_line = 225; /* TODO: PAL setting */
+
+	/* Set STAT78 to NTSC or PAL */
+	m_stat78 = (ATTOSECONDS_TO_HZ(m_screen->frame_period().attoseconds()) >= 59.0) ? SNES_NTSC : SNES_PAL;
+	m_beam.last_visible_line = m_stat78 & SNES_PAL ? 240 : 225;
 	m_mode = 0;
 	m_ppu1_version = 1;  // 5C77 chip version number, read by STAT77, only '1' is known
 	m_ppu2_version = 3;  // 5C78 chip version number, read by STAT78, only '2' & '3' encountered so far.
@@ -400,8 +408,6 @@ void snes_ppu_device::device_reset()
 
 	/* Init oam RAM */
 	memset((UINT8 *)m_oam_ram.get(), 0xff, SNES_OAM_SIZE);
-
-	m_stat78 = 0;
 
 	// other initializations to 0
 	memset(m_regs, 0, sizeof(m_regs));
@@ -1818,7 +1824,7 @@ void snes_ppu_device::refresh_scanline( bitmap_rgb32 &bitmap, UINT16 curline )
 	struct SNES_SCANLINE *scanline1, *scanline2;
 	UINT16 c;
 	UINT16 prev_colour = 0;
-	int blurring = read_safe(machine().root_device().ioport("OPTIONS"), 0) & 0x01;
+	int blurring = m_options.read_safe(0) & 0x01;
 
 	g_profiler.start(PROFILER_VIDEO);
 
@@ -2795,6 +2801,8 @@ void snes_ppu_device::write(address_space &space, UINT32 offset, UINT8 data)
 		case SETINI:    /* Screen mode/video select */
 			m_interlace = (data & 0x01) ? 2 : 1;
 			m_obj_interlace = (data & 0x02) ? 2 : 1;
+			// TODO: this should actually be always 240, then fill black remaining lines if bit is 0.
+			//m_beam.last_visible_line = (m_stat78 & SNES_PAL) ? 240 : (data & 0x04) ? 240 : 225;
 			m_beam.last_visible_line = (data & 0x04) ? 240 : 225;
 			m_pseudo_hires = BIT(data, 3);
 			m_mode7.extbg = BIT(data, 6);
@@ -2828,13 +2836,13 @@ void snes_ppu_device::write(address_space &space, UINT32 offset, UINT8 data)
 UINT8 snes_ppu_device::dbg_video( UINT16 curline )
 {
 	int i;
-	UINT8 toggles = read_safe(machine().root_device().ioport("DEBUG1"), 0);
+	UINT8 toggles = m_debug1.read_safe(0);
 	m_debug_options.select_pri[SNES_BG1] = (toggles & 0x03);
 	m_debug_options.select_pri[SNES_BG2] = (toggles & 0x0c) >> 2;
 	m_debug_options.select_pri[SNES_BG3] = (toggles & 0x30) >> 4;
 	m_debug_options.select_pri[SNES_BG4] = (toggles & 0xc0) >> 6;
 
-	toggles = read_safe(machine().root_device().ioport("DEBUG2"), 0);
+	toggles = m_debug2.read_safe(0);
 	for (i = 0; i < 4; i++)
 		DEBUG_TOGGLE(i, m_debug_options.bg_disabled[i], ("Debug: Disabled BG%d.\n", i + 1), ("Debug: Enabled BG%d.\n", i + 1))
 	DEBUG_TOGGLE(4, m_debug_options.bg_disabled[SNES_OAM], ("Debug: Disabled OAM.\n"), ("Debug: Enabled OAM.\n"))
@@ -2842,11 +2850,11 @@ UINT8 snes_ppu_device::dbg_video( UINT16 curline )
 	DEBUG_TOGGLE(6, m_debug_options.colormath_disabled, ("Debug: Disabled Color Math.\n"), ("Debug: Enabled Color Math.\n"))
 	DEBUG_TOGGLE(7, m_debug_options.windows_disabled, ("Debug: Disabled Window Masks.\n"), ("Debug: Enabled Window Masks.\n"))
 
-	toggles = read_safe(machine().root_device().ioport("DEBUG4"), 0);
+	toggles = m_debug4.read_safe(0);
 	for (i = 0; i < 8; i++)
 		DEBUG_TOGGLE(i, m_debug_options.mode_disabled[i], ("Debug: Disabled Mode %d drawing.\n", i), ("Debug: Enabled Mode %d drawing.\n", i))
 
-	toggles = read_safe(machine().root_device().ioport("DEBUG3"), 0);
+	toggles = m_debug3.read_safe(0);
 	DEBUG_TOGGLE(2, m_debug_options.mosaic_disabled, ("Debug: Disabled Mosaic.\n"), ("Debug: Enabled Mosaic.\n"))
 	m_debug_options.sprite_reversed = BIT(toggles, 7);
 	m_debug_options.select_pri[SNES_OAM] = (toggles & 0x70) >> 4;

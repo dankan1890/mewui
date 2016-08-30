@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail
+#include "machine/watchdog.h"
 #include "sound/okim6295.h"
 
 /* This it the best way to allow game specific kludges until the system is fully understood */
@@ -56,20 +57,22 @@ public:
 		: driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "taito_en:audiocpu"),
+		m_watchdog(*this, "watchdog"),
 		m_oki(*this, "oki"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_screen(*this, "screen"),
 		m_palette(*this, "palette"),
 		m_f3_ram(*this,"f3_ram"),
 		m_paletteram32(*this, "paletteram"),
-		m_input(*this, "IN"),
-		m_dial(*this, "DIAL"),
+		m_input(*this, "IN.%u", 0),
+		m_dial(*this, "DIAL.%u", 0),
 		m_eepromin(*this, "EEPROMIN")
 
 	{ }
 
 	required_device<cpu_device> m_maincpu;
 	optional_device<cpu_device> m_audiocpu;
+	optional_device<watchdog_timer_device> m_watchdog;
 	optional_device<okim6295_device> m_oki;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<screen_device> m_screen;

@@ -171,7 +171,7 @@ static ADDRESS_MAP_START( xerox820_io, AS_IO, 8, xerox820_state )
 	AM_RANGE(0x08, 0x0b) AM_MIRROR(0xff00) AM_DEVREADWRITE(Z80PIO_GP_TAG, z80pio_device, read_alt, write_alt)
 	AM_RANGE(0x0c, 0x0c) AM_MIRROR(0xff03) AM_DEVWRITE(COM8116_TAG, com8116_device, stt_w)
 	AM_RANGE(0x10, 0x13) AM_MIRROR(0xff00) AM_READWRITE(fdc_r, fdc_w)
-	AM_RANGE(0x14, 0x14) AM_MIRROR(0xff03) AM_MASK(0xff00) AM_WRITE(scroll_w)
+	AM_RANGE(0x14, 0x14) AM_MIRROR(0x0003) AM_SELECT(0xff00) AM_WRITE(scroll_w)
 	AM_RANGE(0x18, 0x1b) AM_MIRROR(0xff00) AM_DEVREADWRITE(Z80CTC_TAG, z80ctc_device, read, write)
 	AM_RANGE(0x1c, 0x1f) AM_MIRROR(0xff00) AM_DEVREADWRITE(Z80PIO_KB_TAG, z80pio_device, read_alt, write_alt)
 ADDRESS_MAP_END
@@ -544,7 +544,7 @@ static MACHINE_CONFIG_START( xerox820, xerox820_state )
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_20MHz/8)
 	MCFG_CPU_PROGRAM_MAP(xerox820_mem)
 	MCFG_CPU_IO_MAP(xerox820_io)
-	MCFG_CPU_CONFIG(xerox820_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(xerox820_daisy_chain)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD(SCREEN_TAG, RASTER)
@@ -618,7 +618,7 @@ static MACHINE_CONFIG_START( xerox820ii, xerox820ii_state )
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_16MHz/4)
 	MCFG_CPU_PROGRAM_MAP(xerox820ii_mem)
 	MCFG_CPU_IO_MAP(xerox820ii_io)
-	MCFG_CPU_CONFIG(xerox820_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(xerox820_daisy_chain)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD(SCREEN_TAG, RASTER)

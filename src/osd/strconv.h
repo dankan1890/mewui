@@ -27,11 +27,15 @@
 
 // the result of these functions has to be released with osd_free()
 
-CHAR *astring_from_utf8(const char *s);
-char *utf8_from_astring(const CHAR *s);
+std::string astring_from_utf8(const char *s);
+std::string &astring_from_utf8(std::string &dst, const char *s);
+std::string utf8_from_astring(const CHAR *s);
+std::string &utf8_from_astring(std::string &dst, const CHAR *s);
 
-WCHAR *wstring_from_utf8(const char *s);
-char *utf8_from_wstring(const WCHAR *s);
+std::wstring wstring_from_utf8(const char *s);
+std::wstring &wstring_from_utf8(std::wstring &dst, const char *s);
+std::string utf8_from_wstring(const WCHAR *s);
+std::string &utf8_from_wstring(std::string &dst, const WCHAR *s);
 
 #ifdef UNICODE
 #define tstring_from_utf8   wstring_from_utf8

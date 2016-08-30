@@ -31,13 +31,16 @@ public:
 	~target_manager();
 
 	bgfx_target* create_target(std::string name, bgfx::TextureFormat::Enum format, uint16_t width, uint16_t height, uint32_t style, bool double_buffer, bool filter, uint16_t scale, uint32_t screen);
+	void destroy_target(std::string name, uint32_t screen = -1);
 	bgfx_target* create_backbuffer(void *handle, uint16_t width, uint16_t height);
 
-	void update_target_sizes(uint32_t screen, uint16_t width, uint16_t height, uint32_t style);
+	bool update_target_sizes(uint32_t screen, uint16_t width, uint16_t height, uint32_t style);
 	void update_screen_count(uint32_t count);
 
 	// Getters
 	bgfx_target* target(uint32_t screen, std::string name);
+	uint16_t width(uint32_t style, uint32_t screen);
+	uint16_t height(uint32_t style, uint32_t screen);
 
 private:
 	void rebuild_targets(uint32_t screen, uint32_t style);

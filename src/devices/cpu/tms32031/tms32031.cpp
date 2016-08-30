@@ -323,7 +323,7 @@ tms3203x_device::~tms3203x_device()
 //  internal ROM region
 //-------------------------------------------------
 
-const rom_entry *tms3203x_device::device_rom_region() const
+const tiny_rom_entry *tms3203x_device::device_rom_region() const
 {
 	switch (m_chip_type)
 	{
@@ -394,6 +394,7 @@ void tms3203x_device::device_start()
 	save_item(NAME(m_delayed));
 	save_item(NAME(m_irq_pending));
 	save_item(NAME(m_is_idling));
+	save_item(NAME(m_mcbl_mode));
 
 	// register our state for the debugger
 	state_add(TMS3203X_PC,      "PC",        m_pc);
@@ -462,7 +463,7 @@ void tms3203x_device::device_reset()
 
 //-------------------------------------------------
 //  memory_space_config - return the configuration
-//  of the specified address space, or NULL if
+//  of the specified address space, or nullptr if
 //  the space doesn't exist
 //-------------------------------------------------
 
@@ -814,7 +815,7 @@ void tms3203x_device::execute_run()
 		{
 			// watch for out-of-range stack pointers
 			if (IREG(TMR_SP) & 0xff000000)
-				debugger_break(machine());
+				machine().debug_break();
 			if ((IREG(TMR_ST) & RMFLAG) && m_pc == IREG(TMR_RE) + 1)
 			{
 				if ((INT32)--IREG(TMR_RC) >= 0)
@@ -846,4 +847,4 @@ void tms3203x_device::execute_run()
 //  CORE OPCODES
 //**************************************************************************
 
-#include "32031ops.inc"
+#include "32031ops.hxx"

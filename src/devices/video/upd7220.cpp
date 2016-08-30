@@ -175,7 +175,7 @@ const address_space_config *upd7220_device::memory_space_config(address_spacenum
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *upd7220_device::device_rom_region() const
+const tiny_rom_entry *upd7220_device::device_rom_region() const
 {
 	return ROM_NAME( upd7220 );
 }
@@ -388,7 +388,7 @@ inline void upd7220_device::recompute_parameters()
 	else if((m_mode & UPD7220_MODE_INTERLACE_MASK) == UPD7220_MODE_INTERLACE_ON)
 	{
 		// in interlaced mode every line contains both fields
-		horiz_mult = 8;
+		horiz_mult = 8; // TODO this breaks compis uhrg video, characters are 16 pixels wide in interlaced mode too
 		vert_mult = 2;
 	}
 
@@ -993,22 +993,35 @@ void upd7220_device::draw_char(int x, int y)
 
 	LOG(("uPD7220 char check: %d %d %02x %08x %d %d %02x\n",x,y,m_figs.m_dir,m_ead,m_figs.m_d,m_figs.m_dc,m_figs.m_figure_type));
 
-	isize = m_figs.m_d & 0x3ff;
-	/* Guess: D has presumably upper bits for ysize, QX-10 relies on this (TODO: check this on any real HW) */
-	psize = ((m_figs.m_d & 0x400) + m_figs.m_dc) + 1;
+	/* QX10 may require upper bits for psize, VT240 requires the opposite */
+	isize = m_figs.m_d;
+	psize = m_figs.m_dc + 1;
 
 	for(int pi = 0; pi < psize; pi++)
 	{
 		tile_data = (m_ra[((psize-1-pi) & 7) | 8] << 8) | m_ra[((psize-1-pi) & 7) | 8];
 		for(int pz = 0; pz <= m_gchr; pz++)
 		{
-			for(int ii = 0, curpixel = 0; ii < isize; ii++)
+			int ii = 0, curpixel = 0;
+			if(pi & 1)
+			{
+				ii = isize - 1;
+				curpixel = (isize * (m_gchr + 1)) - 1;
+			}
+			while(pi & 1 ? ii >= 0 : ii < isize)
 			{
 				for(int iz = 0; iz <= m_gchr; iz++)
 				{
 					draw_pixel(x + (curpixel * x_dir[m_figs.m_dir]), y + (curpixel * y_dir[m_figs.m_dir]), ii, tile_data);
-					curpixel++;
+					if(pi & 1)
+						curpixel--;
+					else
+						curpixel++;
 				}
+				if(pi & 1)
+					ii--;
+				else
+					ii++;
 			}
 			if(m_figs.m_figure_type == 2)
 			{

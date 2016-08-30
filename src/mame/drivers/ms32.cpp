@@ -82,7 +82,7 @@ Priorities (code in tetrisp2.c doesn't use all of the priority ram.. and doesn't
  - some games require completely reversed list processing!
 
 Dip switches/inputs in t2m32 and f1superb
-some games (hayaosi2) don't seeem to have service mode even if it's listed among the dips
+some games (hayaosi2) don't seem to have service mode even if it's listed among the dips
 service mode is still accessible through F1 though
 
 Fix Anything Else (Palette etc.)
@@ -105,7 +105,7 @@ horizontal position of tx and bg tilemaps is off by 1 pixel in some games
 bbbxing: some sprite/roz/bg alignment issues
 
 gratia: at the beginning of a level it shows the level name in the bottom right corner, scrolling it up
-    and making the score display scroll out of the screen. Is this correct ar should there be a raster
+    and making the score display scroll out of the screen. Is this correct or should there be a raster
     effect keeping the score on screen? And why didn't they just use sprites to do that?
 
 gratia: the 3d sky shown at the beginning of the game has a black gap near the end. It would not be visible
@@ -117,7 +117,7 @@ gratia: the 3d sky seems to be the only place needed the "wrap" parameter to dra
 gratia: at the beginning of the game, before the sky appears, the city background appears for
     an instant. Missing layer enable register?
 
-background color: pen 0 is correct for gametngk, but wrong for f1superb. Maybe it dpeends on the layer
+background color: pen 0 is correct for gametngk, but wrong for f1superb. Maybe it depends on the layer
     priority order?
 
 roz layer wrapping: currently it's always ON, breaking places where it gets very small so it gets
@@ -221,7 +221,7 @@ READ32_MEMBER(ms32_state::ms32_read_inputs3)
 
 WRITE32_MEMBER(ms32_state::ms32_sound_w)
 {
-	soundlatch_byte_w(space, 0, data & 0xff);
+	m_soundlatch->write(space, 0, data & 0xff);
 	m_audiocpu->set_input_line(INPUT_LINE_NMI, ASSERT_LINE);
 
 	// give the Z80 time to respond
@@ -339,7 +339,7 @@ WRITE32_MEMBER(ms32_state::pip_w)
 
 static ADDRESS_MAP_START( ms32_map, AS_PROGRAM, 32, ms32_state )
 	/* RAM areas verified by testing on real hw - usually accessed at the 0xfc000000 + mirror */
-	AM_RANGE(0xc0000000, 0xc0007fff) AM_READWRITE8(ms32_nvram_r8,   ms32_nvram_w8,   0x000000ff) AM_MIRROR(0x3c1fe000)  // nvram is 8-bit wide, 0x2000 in size */
+	AM_RANGE(0xc0000000, 0xc0007fff) AM_READWRITE8(ms32_nvram_r8,   ms32_nvram_w8,   0x000000ff) AM_MIRROR(0x3c1f8000)  // nvram is 8-bit wide, 0x2000 in size */
 /*  AM_RANGE(0xc0008000, 0xc01fffff) // mirrors of nvramram, handled above */
 	AM_RANGE(0xc1180000, 0xc1187fff) AM_READWRITE8(ms32_priram_r8,  ms32_priram_w8,  0x000000ff) AM_MIRROR(0x3c038000) AM_SHARE("priram") /* priram is 8-bit wide, 0x2000 in size */
 /*  AM_RANGE(0xc1188000, 0xc11bffff) // mirrors of priram, handled above */
@@ -623,7 +623,7 @@ static INPUT_PORTS_START( ms32_mahjong )
 	PORT_INCLUDE( ms32 )
 
 	PORT_MODIFY("INPUTS")
-	PORT_BIT( 0x000000ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ms32_state,mahjong_ctrl_r, NULL)    // here we read mahjong keys
+	PORT_BIT( 0x000000ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ms32_state,mahjong_ctrl_r, nullptr)    // here we read mahjong keys
 	PORT_BIT( 0x0000ff00, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x00010000, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x00020000, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1343,7 +1343,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(ms32_state::ms32_interrupt)
 READ8_MEMBER(ms32_state::latch_r)
 {
 	m_audiocpu->set_input_line(INPUT_LINE_NMI, CLEAR_LINE);
-	return soundlatch_byte_r(space,0)^0xff;
+	return m_soundlatch->read(space,0)^0xff;
 }
 
 WRITE8_MEMBER(ms32_state::ms32_snd_bank_w)
@@ -1413,6 +1413,8 @@ static MACHINE_CONFIG_START( ms32, ms32_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ymf", YMF271, 16934400)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

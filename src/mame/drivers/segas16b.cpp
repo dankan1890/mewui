@@ -870,7 +870,6 @@ S11 S13 S15 S17  |EPR12194 -        -        -        EPR12195 -        -       
 
 #include "emu.h"
 #include "includes/segas16b.h"
-#include "machine/segaic16.h"
 #include "machine/mc8123.h"
 #include "includes/segaipt.h"
 #include "sound/okim6295.h"
@@ -983,7 +982,8 @@ UINT8 segas16b_state::mapper_sound_r()
 
 void segas16b_state::mapper_sound_w(UINT8 data)
 {
-	soundlatch_write(data & 0xff);
+	if (m_soundlatch != nullptr)
+		m_soundlatch->write(m_soundcpu->space(AS_PROGRAM), 0, data & 0xff);
 	if (m_soundcpu != nullptr)
 		m_soundcpu->set_input_line(0, HOLD_LINE);
 }
@@ -1590,14 +1590,30 @@ READ16_MEMBER( segas16b_state::hwchamp_custom_io_r )
 
 WRITE16_MEMBER( segas16b_state::hwchamp_custom_io_w )
 {
-	static const char *const portname[4] = { "MONITOR", "LEFT", "RIGHT", "DUMMY" };
 	switch (offset & (0x3000/2))
 	{
 		case 0x3000/2:
 			switch (offset & 0x30/2)
 			{
 				case 0x20/2:
-					m_hwc_input_value = read_safe(ioport(portname[offset & 3]), 0xff);
+					switch (offset & 3)
+					{
+						case 0:
+							m_hwc_input_value = m_hwc_monitor->read();
+							break;
+
+						case 1:
+							m_hwc_input_value = m_hwc_left->read();
+							break;
+
+						case 2:
+							m_hwc_input_value = m_hwc_right->read();
+							break;
+
+						default:
+							m_hwc_input_value = 0xff;
+							break;
+					}
 					break;
 
 				case 0x30/2:
@@ -1668,20 +1684,18 @@ READ16_MEMBER( segas16b_state::sdi_custom_io_r )
 
 READ16_MEMBER( segas16b_state::sjryuko_custom_io_r )
 {
-	static const char *const portname[] = { "MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5" };
-
 	switch (offset & (0x3000/2))
 	{
 		case 0x1000/2:
 			switch (offset & 3)
 			{
 				case 1:
-					if (read_safe(ioport(portname[m_mj_input_num]), 0xff) != 0xff)
+					if (m_mj_inputs[m_mj_input_num].read_safe(0xff) != 0xff)
 						return 0xff & ~(1 << m_mj_input_num);
 					return 0xff;
 
 				case 2:
-					return read_safe(ioport(portname[m_mj_input_num]), 0xff);
+					return m_mj_inputs[m_mj_input_num].read_safe(0xff);
 			}
 			break;
 	}
@@ -1775,7 +1789,7 @@ static ADDRESS_MAP_START( lockonph_map, AS_PROGRAM, 16, segas16b_state )
 	AM_RANGE(0xC42000, 0xC42001) AM_READ_PORT("DSW1")
 	AM_RANGE(0xC42002, 0xC42003) AM_READ_PORT("DSW2")
 
-	AM_RANGE(0x777706, 0x777707) AM_WRITE(sound_w16) // AM_WRITE8(soundlatch_byte_w, 0xff00)
+	AM_RANGE(0x777706, 0x777707) AM_WRITE(sound_w16) // AM_DEVWRITE8("soundlatch", generic_latch_8_device, write, 0xff00)
 
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM AM_SHARE("workram")
 ADDRESS_MAP_END
@@ -1810,7 +1824,7 @@ ADDRESS_MAP_END
 */
 static ADDRESS_MAP_START( fpointbl_sound_map, AS_PROGRAM, 8, segas16b_state )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
-	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xe000, 0xe000) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -1834,7 +1848,7 @@ static ADDRESS_MAP_START( sound_map, AS_PROGRAM, 8, segas16b_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0xdfff) AM_ROMBANK("soundbank")
-	AM_RANGE(0xe800, 0xe800) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xe800, 0xe800) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
@@ -1850,7 +1864,7 @@ static ADDRESS_MAP_START( sound_portmap, AS_IO, 8, segas16b_state )
 	AM_RANGE(0x00, 0x01) AM_MIRROR(0x3e) AM_DEVREADWRITE("ym2151", ym2151_device, read, write)
 	AM_RANGE(0x40, 0x40) AM_MIRROR(0x3f) AM_WRITE(upd7759_control_w)
 	AM_RANGE(0x80, 0x80) AM_MIRROR(0x3f) AM_READ(upd7759_status_r) AM_DEVWRITE("upd", upd7759_device, port_w)
-	AM_RANGE(0xc0, 0xc0) AM_MIRROR(0x3f) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xc0, 0xc0) AM_MIRROR(0x3f) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 ADDRESS_MAP_END
 
 // similar to whizz / other philko games in sidearms.cpp, but with the m6295
@@ -1865,7 +1879,7 @@ static ADDRESS_MAP_START( lockonph_sound_iomap, AS_IO, 8, segas16b_state )
 	AM_RANGE(0x00, 0x01) AM_DEVREADWRITE("ymsnd", ym2151_device, read, write)
 	AM_RANGE(0x40, 0x40) AM_WRITENOP // ??
 	AM_RANGE(0x80, 0x80) AM_DEVREADWRITE("oki", okim6295_device, read, write)
-	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xc0, 0xc0) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 ADDRESS_MAP_END
 
 
@@ -3606,6 +3620,8 @@ static MACHINE_CONFIG_START( system16b, segas16b_state )
 	// sound hardware
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ym2151", MASTER_CLOCK_8MHz/2)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.43)
 
@@ -3755,6 +3771,8 @@ static MACHINE_CONFIG_START( lockonph, segas16b_state )
 	// sound hardware
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_YM2151_ADD("ymsnd", XTAL_16MHz/4) // ??
 //  MCFG_YM2151_IRQ_HANDLER(INPUTLINE("soundcpu", 0)) // does set up the timer, but end up with no sound?
 	MCFG_SOUND_ROUTE(0, "mono", 0.5)
@@ -3779,6 +3797,7 @@ static MACHINE_CONFIG_DERIVED( atomicp, system16b ) // 10MHz CPU Clock verified
 	MCFG_DEVICE_REMOVE("sprites")
 
 	// sound hardware
+	MCFG_DEVICE_REMOVE("soundlatch")
 	MCFG_DEVICE_REMOVE("ym2151")
 	MCFG_SOUND_ADD("ym2413", YM2413, XTAL_20MHz/4) // 20MHz OSC divided by 4 (verified)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
@@ -8025,6 +8044,8 @@ ROM_END
 //  Wonder Boy III, Sega System 16B
 //  CPU: FD1094 (317-0087)
 //  ROM Board type: 171-5704
+// Sega ID# for Game Nunmber: 833-6851-01  MONSTER LAIR
+// Sega ID# for ROM board: 834-6854-01
 //
 ROM_START( wb34 )
 	ROM_REGION( 0x40000, "maincpu", 0 ) // 68000 code
@@ -8137,6 +8158,7 @@ ROM_END
 //  Wonder Boy III, Sega System 16B
 //  CPU: FD1094 (317-0085)
 //  ROM Board type: 171-5358
+// Sega ID# for ROM board: 834-6854
 //
 //  Pos.   Silk        Type        Part                Pos.   Silk        Type        Part
 //  A1     EPR-12198   27C512      68000 program       B1     EPR-12190   27C512      Sprite data

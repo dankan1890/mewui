@@ -18,18 +18,13 @@
 //  TYPE DEFINITIONS
 //============================================================
 
-inline osd_rect SDL_Rect_to_osd_rect(const SDL_Rect &r)
-{
-	return osd_rect(r.x, r.y, r.w, r.h);
-}
-
 class sdl_monitor_info : public osd_monitor_info
 {
 public:
 	sdl_monitor_info(const UINT64 handle, const char *monitor_device, float aspect)
 	: osd_monitor_info(&m_handle, monitor_device, aspect), m_handle(handle)
 	{
-		refresh();
+		sdl_monitor_info::refresh();
 	}
 
 	// STATIC

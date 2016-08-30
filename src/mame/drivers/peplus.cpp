@@ -227,6 +227,14 @@ public:
 		m_screen(*this, "screen"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
+		m_in0(*this, "IN0"),
+		m_door(*this, "DOOR"),
+		m_sensor(*this, "SENSOR"),
+		m_dbv(*this, "DBV"),
+		m_bc(*this, "BC"),
+		m_bp(*this, "BP"),
+		m_touch_x(*this, "TOUCH_X"),
+		m_touch_y(*this, "TOUCH_Y"),
 		m_cmos_ram(*this, "cmos"),
 		m_program_ram(*this, "prograram"),
 		m_s3000_ram(*this, "s3000_ram"),
@@ -246,6 +254,15 @@ public:
 	required_device<screen_device> m_screen;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
+
+	optional_ioport m_in0;
+	optional_ioport m_door;
+	optional_ioport m_sensor;
+	optional_ioport m_dbv;
+	optional_ioport m_bc;
+	optional_ioport m_bp;
+	optional_ioport m_touch_x;
+	optional_ioport m_touch_y;
 
 	required_shared_ptr<UINT8> m_cmos_ram;
 	required_shared_ptr<UINT8> m_program_ram;
@@ -406,8 +423,8 @@ void peplus_state::device_timer(emu_timer &timer, device_timer_id id, int param,
 
 void peplus_state::handle_lightpen()
 {
-	int x_val = read_safe(ioport("TOUCH_X"), 0x00);
-	int y_val = read_safe(ioport("TOUCH_Y"), 0x00);
+	int x_val = m_touch_x.read_safe(0x00);
+	int y_val = m_touch_y.read_safe(0x00);
 	const rectangle &vis_area = m_screen->visible_area();
 	int xt, yt;
 
@@ -581,14 +598,14 @@ READ8_MEMBER(peplus_state::peplus_input0_r)
 	UINT64 curr_cycles = m_maincpu->total_cycles();
 
 	// Allow Bill Insert if DBV Enabled
-	if (m_bv_enable_state == 0x01 && ((read_safe(ioport("DBV"), 0xff) & 0x01) == 0x00)) {
+	if (m_bv_enable_state == 0x01 && ((m_dbv.read_safe(0xff) & 0x01) == 0x00)) {
 		// If not busy
 		if (m_bv_busy == 0) {
 			m_bv_busy = 1;
 
 			// Fetch Current Denomination and Protocol
-			m_bv_denomination = ioport("BC")->read();
-			m_bv_protocol = ioport("BP")->read();
+			m_bv_denomination = m_bc->read();
+			m_bv_protocol = m_bp->read();
 
 			if (m_bv_protocol == 0) {
 				// ID-022
@@ -775,9 +792,9 @@ READ8_MEMBER(peplus_state::peplus_input0_r)
 	}
 
 	if (m_bv_pulse == 1) {
-		return (0x70 || ioport("IN0")->read()); // Add Bill Validator Credit Pulse
+		return (0x70 || m_in0->read()); // Add Bill Validator Credit Pulse
 	} else {
-		return ioport("IN0")->read();
+		return m_in0->read();
 	}
 }
 
@@ -804,7 +821,7 @@ READ8_MEMBER(peplus_state::peplus_input_bank_a_r)
 		sda = m_i2cmem->read_sda();
 	}
 
-	if ((read_safe(ioport("SENSOR"), 0x00) & 0x01) == 0x01 && m_coin_state == 0) {
+	if ((m_sensor.read_safe(0x00) & 0x01) == 0x01 && m_coin_state == 0) {
 		m_coin_state = 1; // Start Coin Cycle
 		m_last_cycles = m_maincpu->total_cycles();
 	} else {
@@ -840,7 +857,7 @@ READ8_MEMBER(peplus_state::peplus_input_bank_a_r)
 	}
 
 	if (curr_cycles - m_last_door > door_wait) {
-		if ((read_safe(ioport("DOOR"), 0xff) & 0x01) == 0x01) {
+		if ((m_door.read_safe(0xff) & 0x01) == 0x01) {
 			if (m_doorcycle) {
 				m_door_open = (m_door_open ^ 0x01) & 0x01;
 			} else {
@@ -910,7 +927,7 @@ TILE_GET_INFO_MEMBER(peplus_state::get_bg_tile_info)
 
 void peplus_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(peplus_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 40, 25);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(peplus_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 40, 25);
 	m_palette_ram = std::make_unique<UINT8[]>(0x3000);
 	memset(m_palette_ram.get(), 0, 0x3000);
 	m_palette_ram2 = std::make_unique<UINT8[]>(0x3000);
@@ -5375,7 +5392,7 @@ PayTable   Ks+  2P  3K  STR  FL  FH  4K  SF  RF  5K  RF  (Bonus)
 	ROM_LOAD( "cap740.u50", 0x0000, 0x0100, CRC(6fe619c4) SHA1(49e43dafd010ce0fe9b2a63b96a4ddedcb933c6d) ) /* BPROM type DM74LS471 (compatible with N82S135N) verified */
 ROM_END
 
-ROM_START( pepp0467 ) /* Normal board : Uknown Bonus Poker (PP0467) */
+ROM_START( pepp0467 ) /* Normal board : Unknown Bonus Poker (PP0467) */
 /*
 PayTable   Js+  2P  3K  STR  FL  FH  4K  ?? SF  RF  (Bonus)
 -----------------------------------------------------------
@@ -11406,7 +11423,7 @@ ROM_START( pex2306p ) /* Superboard : Triple Double Bonus Poker (X002306P+XP0000
                                       5-K 2-4     with   with
 PayTable   Js+  2PR  3K  STR  FL  FH  4K  4K  4A  A,2-4  2-4  SF  RF  (Bonus)
 -----------------------------------------------------------------------------
- P908BM     1    1    2   4    7   9  50  80 160   400   400  50 400    800
+ P907BM     1    1    2   4    7   9  50  80 160   400   400  50 400    800
   % Range: 95.6-97.6%  Optimum: 99.6%  Hit Frequency: 43.3%
      Programs Available: X002306P
 */
@@ -11414,7 +11431,7 @@ PayTable   Js+  2PR  3K  STR  FL  FH  4K  4K  4A  A,2-4  2-4  SF  RF  (Bonus)
 	ROM_LOAD( "xp000038.u67",   0x00000, 0x10000, CRC(8707ab9e) SHA1(3e00a2ad8017e1495c6d6fe900d0efa68a1772b8) ) /*  09/05/95   @ IGT  L95-2452 */
 
 	ROM_REGION( 0x10000, "user1", 0 )
-	ROM_LOAD( "x002306p.u66",   0x00000, 0x10000, CRC(ef36ea67) SHA1(8914ad20526fd63e14d9fa1901e9c779a11eb29d) ) /* Triple Double Bonus Poker */
+	ROM_LOAD( "x002306p.u66",   0x00000, 0x10000, CRC(ef36ea67) SHA1(8914ad20526fd63e14d9fa1901e9c779a11eb29d) ) /* Triple Double Bonus Poker - 03/05/97   @ IGT  L97-0613 */
 
 	ROM_REGION( 0x020000, "gfx1", 0 )
 	ROM_LOAD( "mro-cg2242.u77",  0x00000, 0x8000, CRC(963a7e7d) SHA1(ebb159f6c731a3f912382745ef9a9c6d4fa2fc99) ) /*  03/19/96   @ IGT  L96-0703 */
@@ -11441,7 +11458,7 @@ PayTable   Js+  2PR  3K  STR  FL  FH  4K  4K  4A  A,2-4  2-4  SF  RF  (Bonus)
 	ROM_LOAD( "xp000038.u67",   0x00000, 0x10000, CRC(8707ab9e) SHA1(3e00a2ad8017e1495c6d6fe900d0efa68a1772b8) ) /*  09/05/95   @ IGT  L95-2452 */
 
 	ROM_REGION( 0x10000, "user1", 0 )
-	ROM_LOAD( "x002307p.u66",   0x00000, 0x10000, CRC(c6d5db70) SHA1(017e1e382fb789e4cd8b410362ad5e82b61f61db) ) /* Triple Double Bonus Poker */
+	ROM_LOAD( "x002307p.u66",   0x00000, 0x10000, CRC(c6d5db70) SHA1(017e1e382fb789e4cd8b410362ad5e82b61f61db) ) /* Triple Double Bonus Poker - 03/05/97   @ IGT  L97-0614 */
 
 	ROM_REGION( 0x020000, "gfx1", 0 )
 	ROM_LOAD( "mro-cg2242.u77",  0x00000, 0x8000, CRC(963a7e7d) SHA1(ebb159f6c731a3f912382745ef9a9c6d4fa2fc99) ) /*  03/19/96   @ IGT  L96-0703 */
@@ -12743,8 +12760,7 @@ ROM_START( pexmp013 ) /* Superboard : 5-in-1 Wingboard (XMP00013) Program in Spa
 /*
 
 The CG2346 set seems to support all games supported in CG2298 as well as graphics support for the following XnnnnnnP Data game types:
-  Triple Double Bonus
-  Black Jack Bonus (comes up as Black Jack Poker)
+  Triple Double Bonus, Black Jack Poker
 
 */
 	ROM_REGION( 0x10000, "maincpu", 0 )
@@ -12783,7 +12799,7 @@ Known Wingboard compatible program roms:
    XMP00009 (CG2230+CAPX2230 - not dumped - MGM exclusive)
    XMP00011 (CG2298+CAPX2298 - not dumped)
    XMP00013 - Spanish
-   XMP00014 - International (not dumped)
+   XMP00014 - International (CG2352+CAPX2352 - not dumped)
    XMP00017
    XMP00022 - Spanish
    XMP00026 - Spanish
@@ -12793,16 +12809,14 @@ Wingboard programs are not compatible with:
  Lucky Deal Poker, Shockwave Poker, Ace$ Bonus Poker, Dealt Deuces Bonus, Barbaric Deuces, Pay the Ace (No Face)
  and many other "specialty" poker games.
 
-The CG2298 graphics can support the following XnnnnnnP Data game types:
+The CG2298 graphics can support the following XnnnnnnP Data game types (as displayed):
 
-  Bonus Poker, Bonus Poker Deluxe, Double Bonus Poker, Double Double Bonus Poker, Triple Bonus Poker
-  Deuces Wild Poker, Deluxe Deuces Wild, Loose Deuces, Deuces Bonus, Double Deuces, Royal Deuces Poker
-  Joker Poker, Double Joker Poker, Deuces Joker Wild Poker, Sevens or Better, Tens or Better, Jacks or Better
-  Nevada Draw Poker, Nevada Bonus Poker, White Hot Aces, Double Double Aces & Faces, Odds & Ends Poker
-  Two Pair, Crazy Eights and Full House Bonus
+  Bonus Poker, Bonus Poker Dlx, Crazy Eights, Deluxe Deuces, Deuces Joker, Deuces Bonus, Deuces Wild
+  Double Bonus, Double Deuces, Dbl Dbl Bonus, Double Joker, Jacks or Better, Joker Poker, Loose Deuces
+  Nevada Bonus, Nevada Draw, Odds & Ends, Full House Bonus, Royal Deuces, Sevens or Better, Tens or Better
+  Triple Bonus, Two Pair, White Hot Aces
 
-  Super Aces shows as just Bonus Poker
-  Triple Bonus Poker Plus shows as just Triple Bonus
+  Super Aces shows as just Bonus Poker, Triple Bonus Poker Plus shows as just Triple Bonus
 
 */
 	ROM_REGION( 0x10000, "maincpu", 0 )
@@ -12836,7 +12850,8 @@ ROM_END
 ROM_START( pexmp017a ) /* Superboard : 5-in-1 Wingboard (XMP00017) */
 /*
 
-The CG2352 set is meant to be used with XMP00014 - But use here now as a place holder
+The CG2352 set is meant to be used with XMP00014 or other International program sets - But use here now as a place holder
+Same set of games as CG2298 but includes graphics for International currency.
 
 */
 	ROM_REGION( 0x10000, "maincpu", 0 )
@@ -12871,10 +12886,8 @@ ROM_END
 ROM_START( pexmp017b ) /* Superboard : 5-in-1 Wingboard (XMP00017) */
 /*
 
-The CG2426 set supersedes CG2298 and adds graphics support for the following XnnnnnnP Data game types:
-  Black Jack Bonus
-  Super Double Bonus
-  Triple Double Bonus
+The CG2426 set supersedes CG2298 and adds graphics support for the following XnnnnnnP Data game types (as displayed):
+  BlackJack Bonus, Tpl Dbl Bonus, Super Dbl Bonus
 
 */
 	ROM_REGION( 0x10000, "maincpu", 0 )
@@ -12966,8 +12979,8 @@ ROM_END
 ROM_START( pexmp030 ) /* Superboard : 5-in-1 Wingboard (XMP00030) */
 /*
 
-The CG2451 set supersedes CG2298 & CG2426 and adds graphics support for the following XnnnnnnP Data game types:
-  Double Double Bonus Plus
+The CG2451 set supersedes CG2298 & CG2426 and adds graphics support for the following XnnnnnnP Data game types (as displayed):
+  Dbl Dbl Bonus Plus
 
 */
 	ROM_REGION( 0x10000, "maincpu", 0 )

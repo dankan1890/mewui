@@ -101,8 +101,8 @@ public:
 		, m_fdc(*this, "fdc")
 		, m_floppy0(*this, "fdc:0")
 		, m_floppy1(*this, "fdc:1")
-		, m_joy(*this, "joy")
-		, m_key(*this, "key")
+		, m_joy(*this, "joy.%u", 0)
+		, m_key(*this, "key.%u", 0)
 		, m_p_videoram(*this, "videoram")
 	{ }
 
@@ -145,7 +145,7 @@ private:
 
 READ8_MEMBER( apf_state::videoram_r )
 {
-	if BIT(m_pad_data, 7) // AG line
+	if (BIT(m_pad_data, 7)) // AG line
 	{
 		// Need the cpu and crtc to be locked together for proper graphics
 		// This is a hack to fix Rocket Patrol and Blackjack
@@ -308,7 +308,7 @@ WRITE8_MEMBER( apf_state::serial_w)
 
 static ADDRESS_MAP_START( apfm1000_map, AS_PROGRAM, 8, apf_state )
 	AM_RANGE(0x0000, 0x03ff) AM_MIRROR(0x1c00) AM_RAM AM_SHARE("videoram")
-	AM_RANGE(0x2000, 0x3fff) AM_MIRROR(0x1ffc) AM_DEVREADWRITE("pia0", pia6821_device, read, write)
+	AM_RANGE(0x2000, 0x2003) AM_MIRROR(0x1ffc) AM_DEVREADWRITE("pia0", pia6821_device, read, write)
 	AM_RANGE(0x4000, 0x4fff) AM_MIRROR(0x1000) AM_ROM AM_REGION("roms", 0)
 	AM_RANGE(0x6800, 0x7fff) AM_NOP // BASIC accesses ROM here too, but this is installed at machine_start
 	AM_RANGE(0x8000, 0x9fff) AM_DEVREAD("cartslot", apf_cart_slot_device, read_rom)
@@ -317,7 +317,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( apfimag_map, AS_PROGRAM, 8, apf_state )
 	AM_IMPORT_FROM(apfm1000_map)
-	AM_RANGE(0x6000, 0x63ff) AM_MIRROR(0x03fc) AM_DEVREADWRITE("pia1", pia6821_device, read, write)
+	AM_RANGE(0x6000, 0x6003) AM_MIRROR(0x03fc) AM_DEVREADWRITE("pia1", pia6821_device, read, write)
 	// These need to be confirmed, disk does not work
 	AM_RANGE(0x6400, 0x64ff) AM_READWRITE(serial_r, serial_w)
 	AM_RANGE(0x6500, 0x6503) AM_DEVREADWRITE("fdc", fd1771_t, read, write)
@@ -531,8 +531,8 @@ static MACHINE_CONFIG_START( apfm1000, apf_state )
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(apf_state, pia0_portb_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(apf_state, pia0_ca2_w))
 	MCFG_PIA_CB2_HANDLER(DEVWRITELINE("speaker", speaker_sound_device, level_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 
 	MCFG_APF_CARTRIDGE_ADD("cartslot", apf_cart, nullptr)
 
@@ -560,6 +560,7 @@ static MACHINE_CONFIG_DERIVED( apfimag, apfm1000 )
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_FORMATS(apf_cassette_formats)
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED | CASSETTE_MOTOR_DISABLED)
+	MCFG_CASSETTE_INTERFACE("apf_cass")
 
 	MCFG_FD1771_ADD("fdc", 1000000) // guess
 	MCFG_FLOPPY_DRIVE_ADD("fdc:0", apf_floppies, "525dd", floppy_image_device::default_floppy_formats)

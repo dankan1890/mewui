@@ -417,10 +417,9 @@ each direction to assign the boundries.
 #include "emu.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/s2650/s2650.h"
-#include "machine/eepromser.h"
+#include "machine/watchdog.h"
 #include "machine/atari_vg.h"
 #include "includes/centiped.h"
-#include "sound/ay8910.h"
 #include "sound/sn76496.h"
 #include "sound/pokey.h"
 
@@ -665,7 +664,7 @@ static ADDRESS_MAP_START( centiped_base_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x1c00, 0x1c02) AM_WRITE(coin_count_w)
 	AM_RANGE(0x1c03, 0x1c04) AM_WRITE(led_w)
 	AM_RANGE(0x1c07, 0x1c07) AM_WRITE(centiped_flip_screen_w)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2000, 0x2000) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x2000, 0x3fff) AM_ROM
 ADDRESS_MAP_END
 
@@ -689,8 +688,8 @@ static ADDRESS_MAP_START( centipdb_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x0c01, 0x0c01) AM_MIRROR(0x4000) AM_READ_PORT("IN1")
 	AM_RANGE(0x0c02, 0x0c02) AM_MIRROR(0x4000) AM_READ(centiped_IN2_r)
 	AM_RANGE(0x0c03, 0x0c03) AM_MIRROR(0x4000) AM_READ_PORT("IN3")
-	AM_RANGE(0x1000, 0x1001) AM_MIRROR(0x4000) AM_DEVWRITE("pokey", ay8910_device, data_address_w)
-	AM_RANGE(0x1001, 0x1001) AM_MIRROR(0x4000) AM_DEVREAD("pokey", ay8910_device, data_r)
+	AM_RANGE(0x1000, 0x1001) AM_MIRROR(0x4000) AM_DEVWRITE("aysnd", ay8910_device, data_address_w)
+	AM_RANGE(0x1001, 0x1001) AM_MIRROR(0x4000) AM_DEVREAD("aysnd", ay8910_device, data_r)
 	AM_RANGE(0x1400, 0x140f) AM_MIRROR(0x4000) AM_WRITE(centiped_paletteram_w) AM_SHARE("paletteram")
 	AM_RANGE(0x1600, 0x163f) AM_MIRROR(0x4000) AM_DEVWRITE("earom", atari_vg_earom_device, write)
 	AM_RANGE(0x1680, 0x1680) AM_MIRROR(0x4000) AM_DEVWRITE("earom", atari_vg_earom_device, ctrl_w)
@@ -707,8 +706,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( magworm_map, AS_PROGRAM, 8, centiped_state )
 	AM_IMPORT_FROM(centiped_base_map)
-	AM_RANGE(0x1001, 0x1001) AM_DEVWRITE("pokey", ay8910_device, address_w)
-	AM_RANGE(0x1003, 0x1003) AM_DEVREADWRITE("pokey", ay8910_device, data_r, data_w)
+	AM_RANGE(0x1001, 0x1001) AM_DEVWRITE("aysnd", ay8910_device, address_w)
+	AM_RANGE(0x1003, 0x1003) AM_DEVREADWRITE("aysnd", ay8910_device, data_r, data_w)
 ADDRESS_MAP_END
 
 
@@ -720,16 +719,14 @@ ADDRESS_MAP_END
 
 WRITE8_MEMBER(centiped_state::caterplr_AY8910_w)
 {
-	ay8910_device *ay8910 = machine().device<ay8910_device>("pokey");
-	ay8910->address_w(space, 0, offset);
-	ay8910->data_w(space, 0, data);
+	m_aysnd->address_w(space, 0, offset);
+	m_aysnd->data_w(space, 0, data);
 }
 
 READ8_MEMBER(centiped_state::caterplr_AY8910_r)
 {
-	ay8910_device *ay8910 = machine().device<ay8910_device>("pokey");
-	ay8910->address_w(space, 0, offset);
-	return ay8910->data_r(space, 0);
+	m_aysnd->address_w(space, 0, offset);
+	return m_aysnd->data_r(space, 0);
 }
 
 
@@ -759,7 +756,7 @@ static ADDRESS_MAP_START( milliped_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x2506, 0x2506) AM_WRITE(centiped_flip_screen_w)
 	AM_RANGE(0x2507, 0x2507) AM_WRITE(control_select_w) /* CNTRLSEL */
 	AM_RANGE(0x2600, 0x2600) AM_WRITE(irq_ack_w)
-	AM_RANGE(0x2680, 0x2680) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2680, 0x2680) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x2700, 0x2700) AM_DEVWRITE("earom", atari_vg_earom_device, ctrl_w)
 	AM_RANGE(0x2780, 0x27bf) AM_DEVWRITE("earom", atari_vg_earom_device, write)
 	AM_RANGE(0x4000, 0x7fff) AM_ROM
@@ -807,7 +804,7 @@ static ADDRESS_MAP_START( multiped_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x2506, 0x2506) AM_WRITE(centiped_flip_screen_w)
 	AM_RANGE(0x2507, 0x2507) AM_WRITE(control_select_w)
 	AM_RANGE(0x2600, 0x2600) AM_WRITE(irq_ack_w)
-	AM_RANGE(0x2680, 0x2680) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2680, 0x2680) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x2700, 0x2700) AM_WRITENOP
 	AM_RANGE(0x2780, 0x27bf) AM_WRITENOP
 	AM_RANGE(0x4000, 0x5fff) AM_ROM
@@ -878,7 +875,7 @@ static ADDRESS_MAP_START( warlords_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x1800, 0x1800) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x1c00, 0x1c02) AM_WRITE(coin_count_w)
 	AM_RANGE(0x1c03, 0x1c06) AM_WRITE(led_w)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x4000, 0x4000) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x5000, 0x7fff) AM_ROM
 ADDRESS_MAP_END
 
@@ -910,7 +907,7 @@ static ADDRESS_MAP_START( mazeinv_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x2506, 0x2506) AM_WRITE(centiped_flip_screen_w)
 	AM_RANGE(0x2580, 0x2583) AM_WRITE(mazeinv_input_select_w)
 	AM_RANGE(0x2600, 0x2600) AM_WRITE(irq_ack_w)
-	AM_RANGE(0x2680, 0x2680) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x2680, 0x2680) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x2700, 0x2700) AM_DEVWRITE("earom", atari_vg_earom_device, ctrl_w)
 	AM_RANGE(0x2780, 0x27bf) AM_DEVWRITE("earom", atari_vg_earom_device, write)
 	AM_RANGE(0x3000, 0x7fff) AM_ROM
@@ -937,7 +934,7 @@ static ADDRESS_MAP_START( bullsdrt_map, AS_PROGRAM, 8, centiped_state )
 	AM_RANGE(0x1481, 0x1481) AM_MIRROR(0x6000) AM_WRITE(bullsdrt_coin_count_w)
 	AM_RANGE(0x1483, 0x1484) AM_MIRROR(0x6000) AM_WRITE(led_w)
 	AM_RANGE(0x1487, 0x1487) AM_MIRROR(0x6000) AM_WRITE(centiped_flip_screen_w)
-	AM_RANGE(0x1500, 0x1500) AM_MIRROR(0x6000) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1500, 0x1500) AM_MIRROR(0x6000) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x1580, 0x1580) AM_MIRROR(0x6000) AM_NOP
 	AM_RANGE(0x1800, 0x1bbf) AM_MIRROR(0x6000) AM_WRITE(centiped_videoram_w) AM_SHARE("videoram")
 	AM_RANGE(0x1bc0, 0x1bff) AM_MIRROR(0x6000) AM_RAM AM_SHARE("spriteram")
@@ -1690,6 +1687,8 @@ static MACHINE_CONFIG_START( centiped_base, centiped_state )
 
 	MCFG_ATARIVGEAROM_ADD("earom")
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	/* timer */
 	MCFG_TIMER_DRIVER_ADD_SCANLINE("32v", centiped_state, generate_interrupt, "screen", 0, 16)
 
@@ -1731,20 +1730,22 @@ static MACHINE_CONFIG_DERIVED( caterplr, centiped_base )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_SOUND_ADD("pokey", AY8910, 12096000/8)
+	MCFG_SOUND_ADD("aysnd", AY8910, 12096000/8)
 
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_DERIVED( centipdb, centiped )
+static MACHINE_CONFIG_DERIVED( centipdb, centiped_base )
 
 	/* basic machine hardware */
 	MCFG_CPU_MODIFY("maincpu")
 	MCFG_CPU_PROGRAM_MAP(centipdb_map)
 
 	/* sound hardware */
-	MCFG_SOUND_REPLACE("pokey", AY8910, 12096000/8)
+	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_SOUND_ADD("aysnd", AY8910, 12096000/8)
 	MCFG_AY8910_PORT_A_READ_CB(READ8(centiped_state, caterplr_unknown_r))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 2.0)
 MACHINE_CONFIG_END
@@ -1760,8 +1761,7 @@ static MACHINE_CONFIG_DERIVED( magworm, centiped_base )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_SOUND_ADD("pokey", AY8910, 12096000/8)
-	MCFG_AY8910_PORT_A_READ_CB(READ8(centiped_state, caterplr_unknown_r))
+	MCFG_SOUND_ADD("aysnd", AY8910, 12096000/8)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 2.0)
 
 MACHINE_CONFIG_END
@@ -1848,6 +1848,8 @@ static MACHINE_CONFIG_START( bullsdrt, centiped_state )
 	MCFG_CPU_IO_MAP(bullsdrt_port_map)
 
 	MCFG_ATARIVGEAROM_ADD("earom")
+
+	MCFG_WATCHDOG_ADD("watchdog")
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

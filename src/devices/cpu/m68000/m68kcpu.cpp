@@ -29,7 +29,7 @@ static const char copyright_notice[] =
 #include "m68kcpu.h"
 #include "m68kops.h"
 
-#include "m68kfpu.inc"
+#include "m68kfpu.hxx"
 #include "m68kmmu.h"
 
 extern void m68040_fpu_op0(m68000_base_device *m68k);
@@ -598,18 +598,18 @@ const UINT8 m68ki_exception_cycle_table[7][256] =
 const UINT8 m68ki_ea_idx_cycle_table[64] =
 {
 		0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-		0, /* ..01.000 no memory indirect, base NULL             */
-		5, /* ..01..01 memory indirect,    base NULL, outer NULL */
-		7, /* ..01..10 memory indirect,    base NULL, outer 16   */
-		7, /* ..01..11 memory indirect,    base NULL, outer 32   */
+		0, /* ..01.000 no memory indirect, base nullptr             */
+		5, /* ..01..01 memory indirect,    base nullptr, outer nullptr */
+		7, /* ..01..10 memory indirect,    base nullptr, outer 16   */
+		7, /* ..01..11 memory indirect,    base nullptr, outer 32   */
 		0,  5,  7,  7,  0,  5,  7,  7,  0,  5,  7,  7,
 		2, /* ..10.000 no memory indirect, base 16               */
-		7, /* ..10..01 memory indirect,    base 16,   outer NULL */
+		7, /* ..10..01 memory indirect,    base 16,   outer nullptr */
 		9, /* ..10..10 memory indirect,    base 16,   outer 16   */
 		9, /* ..10..11 memory indirect,    base 16,   outer 32   */
 		0,  7,  9,  9,  0,  7,  9,  9,  0,  7,  9,  9,
 		6, /* ..11.000 no memory indirect, base 32               */
-	11, /* ..11..01 memory indirect,    base 32,   outer NULL */
+	11, /* ..11..01 memory indirect,    base 32,   outer nullptr */
 	13, /* ..11..10 memory indirect,    base 32,   outer 16   */
 	13, /* ..11..11 memory indirect,    base 32,   outer 32   */
 		0, 11, 13, 13,  0, 11, 13, 13,  0, 11, 13, 13
@@ -702,41 +702,6 @@ static void m68k_cause_bus_error(m68000_base_device *m68k)
 	}
 
 	m68ki_jump_vector(m68k, EXCEPTION_BUS_ERROR);
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq1 )
-{
-	set_input_line( M68K_IRQ_1, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq2 )
-{
-	set_input_line( M68K_IRQ_2, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq3 )
-{
-	set_input_line( M68K_IRQ_3, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq4 )
-{
-	set_input_line( M68K_IRQ_4, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq5 )
-{
-	set_input_line( M68K_IRQ_5, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq6 )
-{
-	set_input_line( M68K_IRQ_6, state );
-}
-
-WRITE_LINE_MEMBER( m68000_base_device::write_irq7 )
-{
-	set_input_line( M68K_IRQ_7, state );
 }
 
 bool m68000_base_device::memory_translate(address_spacenum space, int intention, offs_t &address)

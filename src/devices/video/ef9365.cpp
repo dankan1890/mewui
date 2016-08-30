@@ -124,6 +124,21 @@ const char * commands_names[]=
 // devices
 const device_type EF9365 = &device_creator<ef9365_device>;
 
+ROM_START( ef9365 )
+	ROM_REGION( 0x1E0, "ef9365", 0 )
+	ROM_LOAD( "charset_ef9365.rom", 0x0000, 0x01E0, CRC(8d3053be) SHA1(0f9a64d217a0f7f04ee0720d49c5b680ad0ae359) )
+ROM_END
+
+//-------------------------------------------------
+//  rom_region - return a pointer to the device's
+//  internal ROM region
+//-------------------------------------------------
+
+const tiny_rom_entry *ef9365_device::device_rom_region() const
+{
+	return ROM_NAME( ef9365 );
+}
+
 //-------------------------------------------------
 // default address map
 // Up to 512*512 per bitplane, 8 bitplanes max.
@@ -139,7 +154,7 @@ ADDRESS_MAP_END
 
 const address_space_config *ef9365_device::memory_space_config(address_spacenum spacenum) const
 {
-	return (spacenum == AS_0) ? &m_space_config : NULL;
+	return (spacenum == AS_0) ? &m_space_config : nullptr;
 }
 
 //**************************************************************************
@@ -160,8 +175,8 @@ ef9365_device::ef9365_device(const machine_config &mconfig, const char *tag, dev
 	device_memory_interface(mconfig, *this),
 	device_video_interface(mconfig, *this),
 	m_space_config("videoram", ENDIANNESS_LITTLE, 8, 18, 0, nullptr, *ADDRESS_MAP_NAME(ef9365)),
-	m_charset(*this, DEVICE_SELF),
-	m_palette(*this),
+	m_charset(*this, "ef9365"),
+	m_palette(*this, finder_base::DUMMY_TAG),
 	m_irq_handler(*this)
 {
 	clock_freq = clock;

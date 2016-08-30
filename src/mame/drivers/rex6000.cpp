@@ -126,9 +126,10 @@ class oz750_state : public rex6000_state
 {
 public:
 	oz750_state(const machine_config &mconfig, device_type type, const char *tag)
-		: rex6000_state(mconfig, type, tag),
-			m_keyboard(*this, "COL")
-		{ }
+		: rex6000_state(mconfig, type, tag)
+		, m_keyboard(*this, "COL.%u", 0)
+	{
+	}
 
 	optional_ioport_array<10> m_keyboard;
 
@@ -306,7 +307,7 @@ READ8_MEMBER( rex6000_state::touchscreen_r )
 	switch (offset)
 	{
 		case 0x08:
-			return ((ioport("INPUT")->read() & 0x40) ? 0x20 : 0x00) | 0X10;
+			return ((ioport("INPUT")->read() & 0x40) ? 0x20 : 0x00) | 0x10;
 		case 0x09:
 			if (m_touchscreen[4] & 0x80)
 				return (battery>>0) & 0xff;
@@ -702,22 +703,21 @@ PALETTE_INIT_MEMBER(rex6000_state, rex6000)
 QUICKLOAD_LOAD_MEMBER( rex6000_state,rex6000)
 {
 	static const char magic[] = "ApplicationName:Addin";
-	address_space& flash = m_flash0b->space(0);
 	UINT32 img_start = 0;
 
 	dynamic_buffer data(image.length());
 	image.fread(&data[0], image.length());
 
 	if(strncmp((const char*)&data[0], magic, 21))
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 
 	img_start = strlen((const char*)&data[0]) + 5;
 	img_start += 0xa0;  //skip the icon (40x32 pixel)
 
 	for (UINT32 i=0; i<image.length() - img_start ;i++)
-		flash.write_byte(i, data[img_start + i]);
+		m_flash0b->write_raw(i, data[img_start + i]);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 int oz750_state::oz_wzd_extract_tag(const dynamic_buffer &data, const char *tag, char *dest_buf)
@@ -765,17 +765,17 @@ QUICKLOAD_LOAD_MEMBER(oz750_state,oz750)
 
 	oz_wzd_extract_tag(data, "<DATA TYPE>", data_type);
 	if (strcmp(data_type, "MY PROGRAMS"))
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 
 	oz_wzd_extract_tag(data, "<TITLE>", app_name);
 	oz_wzd_extract_tag(data, "<DATA>", file_name);
 	if (!strncmp(file_name, "PFILE:", 6))
 		strcpy(file_name, file_name + 6);
 
-	UINT32 img_start = oz_wzd_extract_tag(data, "<BIN>", NULL);
+	UINT32 img_start = oz_wzd_extract_tag(data, "<BIN>", nullptr);
 
 	if (img_start == 0)
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 
 	UINT16 icon_size = data[img_start++];
 
@@ -815,7 +815,7 @@ QUICKLOAD_LOAD_MEMBER(oz750_state,oz750)
 	for (int i=img_start; i<image.length(); i++)
 		flash->write_byte(pos++, data[i]);                      // data
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -960,7 +960,7 @@ static MACHINE_CONFIG_START( oz750, oz750_state )
 	MCFG_INS8250_OUT_RTS_CB(DEVWRITELINE("serport", rs232_port_device, write_rts))
 	MCFG_INS8250_OUT_INT_CB(WRITELINE(rex6000_state, serial_irq))
 
-	MCFG_RS232_PORT_ADD( "serport", default_rs232_devices, NULL )
+	MCFG_RS232_PORT_ADD( "serport", default_rs232_devices, nullptr )
 	MCFG_RS232_RXD_HANDLER(DEVWRITELINE("ns16550", ins8250_uart_device, rx_w))
 	MCFG_RS232_DCD_HANDLER(DEVWRITELINE("ns16550", ins8250_uart_device, dcd_w))
 	MCFG_RS232_DSR_HANDLER(DEVWRITELINE("ns16550", ins8250_uart_device, dsr_w))

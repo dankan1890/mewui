@@ -6,6 +6,8 @@
 
 *************************************************************************/
 
+#include "machine/gen_latch.h"
+#include "machine/watchdog.h"
 #include "sound/discrete.h"
 
 class grchamp_state : public driver_device
@@ -16,10 +18,12 @@ public:
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
 		m_subcpu(*this, "sub"),
+		m_watchdog(*this, "watchdog"),
 		m_discrete(*this, "discrete"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
 		m_screen(*this, "screen"),
+		m_soundlatch(*this, "soundlatch"),
 		m_radarram(*this, "radarram"),
 		m_videoram(*this, "videoram"),
 		m_spriteram(*this, "spriteram"),
@@ -30,10 +34,12 @@ public:
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_audiocpu;
 	required_device<cpu_device> m_subcpu;
+	required_device<watchdog_timer_device> m_watchdog;
 	required_device<discrete_device> m_discrete;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
 	required_device<screen_device> m_screen;
+	required_device<generic_latch_8_device> m_soundlatch;
 
 	required_shared_ptr<UINT8> m_radarram;
 	required_shared_ptr<UINT8> m_videoram;

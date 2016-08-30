@@ -368,6 +368,7 @@ private:
 	bool m_lcram, m_lcram2, m_lcwriteenable;
 	bool m_ioudis;
 	bool m_romswitch;
+	bool m_mockingboard4c;
 
 	bool m_isiic, m_isiicplus;
 	UINT8 m_iicplus_ce00[0x200];
@@ -641,6 +642,7 @@ void apple2e_state::machine_start()
 
 	m_inh_slot = -1;
 	m_cnxx_slot = CNXX_UNCLAIMED;
+	m_mockingboard4c = false;
 
 	// setup save states
 	save_item(NAME(m_speaker_state));
@@ -695,6 +697,7 @@ void apple2e_state::machine_start()
 	save_item(NAME(m_lcram));
 	save_item(NAME(m_lcram2));
 	save_item(NAME(m_lcwriteenable));
+	save_item(NAME(m_mockingboard4c));
 }
 
 void apple2e_state::machine_reset()
@@ -713,6 +716,7 @@ void apple2e_state::machine_reset()
 	m_y0edge = false;
 	m_xirq = false;
 	m_yirq = false;
+	m_mockingboard4c = false;
 
 	// IIe prefers INTCXROM default to off, IIc has it always on
 	if (m_rom_ptr[0x3bc0] == 0x00)
@@ -1070,6 +1074,7 @@ void apple2e_state::do_io(address_space &space, int offset, bool is_iic)
 					m_xy = true; break;
 
 				case 0x5a:  // DisVBL
+					lower_irq(IRQ_VBL);
 					m_vblmask = false; break;
 
 				case 0x5b:  // EnVBL
@@ -1941,9 +1946,35 @@ READ8_MEMBER(apple2e_state::c300_int_r)  { return read_int_rom(space, 0x300, off
 READ8_MEMBER(apple2e_state::c300_int_bank_r)  { return read_int_rom(space, 0x4300, offset); }
 WRITE8_MEMBER(apple2e_state::c300_w) { write_slot_rom(space, 3, offset, data); }
 READ8_MEMBER(apple2e_state::c400_r)  { return read_slot_rom(space, 4, offset); }
-READ8_MEMBER(apple2e_state::c400_int_r)  { return read_int_rom(space, 0x400, offset); }
-READ8_MEMBER(apple2e_state::c400_int_bank_r)  { return read_int_rom(space, 0x4400, offset); }
-WRITE8_MEMBER(apple2e_state::c400_w) { write_slot_rom(space, 4, offset, data); }
+READ8_MEMBER(apple2e_state::c400_int_r)
+{
+	if ((offset < 0x100) && (m_mockingboard4c))
+	{
+		return read_slot_rom(space, 4, offset);
+	}
+
+	return read_int_rom(space, 0x400, offset);
+}
+
+READ8_MEMBER(apple2e_state::c400_int_bank_r)
+{
+	if ((offset < 0x100) && (m_mockingboard4c))
+	{
+		return read_slot_rom(space, 4, offset);
+	}
+
+	return read_int_rom(space, 0x4400, offset);
+}
+
+WRITE8_MEMBER(apple2e_state::c400_w)
+{
+	if ((m_isiic) && (offset < 0x100))
+	{
+		m_mockingboard4c = true;
+	}
+
+	write_slot_rom(space, 4, offset, data);
+}
 
 READ8_MEMBER(apple2e_state::c800_r)
 {
@@ -1954,8 +1985,12 @@ READ8_MEMBER(apple2e_state::c800_r)
 
 	if (offset == 0x7ff)
 	{
-		m_cnxx_slot = CNXX_UNCLAIMED;
-		update_slotrom_banks();
+		if (!space.debugger_access())
+		{
+			m_cnxx_slot = CNXX_UNCLAIMED;
+			update_slotrom_banks();
+		}
+
 		return 0xff;
 	}
 
@@ -1974,11 +2009,10 @@ READ8_MEMBER(apple2e_state::c800_int_r)
 		return m_iicplus_ce00[offset-0x600];
 	}
 
-	if (offset == 0x7ff)
+	if ((offset == 0x7ff) && !space.debugger_access())
 	{
 		m_cnxx_slot = CNXX_UNCLAIMED;
 		update_slotrom_banks();
-		return 0xff;
 	}
 
 	return m_rom_ptr[0x800 + offset];
@@ -1991,11 +2025,10 @@ READ8_MEMBER(apple2e_state::c800_b2_int_r)
 		return m_iicplus_ce00[offset-0x600];
 	}
 
-	if (offset == 0x7ff)
+	if ((offset == 0x7ff) && !space.debugger_access())
 	{
 		m_cnxx_slot = CNXX_UNCLAIMED;
 		update_slotrom_banks();
-		return 0xff;
 	}
 
 	return m_rom_ptr[0x4800 + offset];
@@ -2011,8 +2044,12 @@ WRITE8_MEMBER(apple2e_state::c800_w)
 
 	if (offset == 0x7ff)
 	{
-		m_cnxx_slot = CNXX_UNCLAIMED;
-		update_slotrom_banks();
+		if (!space.debugger_access())
+		{
+			m_cnxx_slot = CNXX_UNCLAIMED;
+			update_slotrom_banks();
+		}
+
 		return;
 	}
 
@@ -2417,8 +2454,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( c400bank_map, AS_PROGRAM, 8, apple2e_state )
 	AM_RANGE(0x0000, 0x03ff) AM_READWRITE(c400_r, c400_w)
-	AM_RANGE(0x0400, 0x07ff) AM_READ(c400_int_r) AM_WRITENOP
-	AM_RANGE(0x0800, 0x0bff) AM_READ(c400_int_bank_r) AM_WRITENOP
+	AM_RANGE(0x0400, 0x07ff) AM_READWRITE(c400_int_r, c400_w)
+	AM_RANGE(0x0800, 0x0bff) AM_READWRITE(c400_int_bank_r, c400_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( c800bank_map, AS_PROGRAM, 8, apple2e_state )
@@ -2439,8 +2476,8 @@ static ADDRESS_MAP_START( lcbank_map, AS_PROGRAM, 8, apple2e_state )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( spectred_keyb_map, AS_PROGRAM, 8, apple2e_state )
-        AM_RANGE(0x0000, 0x07ff) AM_ROM
-        AM_RANGE(0x0800, 0x0fff) AM_RAM
+		AM_RANGE(0x0000, 0x07ff) AM_ROM
+		AM_RANGE(0x0800, 0x0fff) AM_RAM
 ADDRESS_MAP_END
 
 /***************************************************************************
@@ -3375,8 +3412,8 @@ static MACHINE_CONFIG_DERIVED( spectred, apple2e )
 	MCFG_CPU_ADD("keyb_mcu", I8035, XTAL_4MHz) /* guessed frequency */
 	MCFG_CPU_PROGRAM_MAP(spectred_keyb_map)
 
-        //TODO: implement the actual interfacing to this 8035 MCU and
-        //      and then remove the keyb CPU inherited from apple2e
+		//TODO: implement the actual interfacing to this 8035 MCU and
+		//      and then remove the keyb CPU inherited from apple2e
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( tk3000, apple2e )
@@ -3428,7 +3465,8 @@ static MACHINE_CONFIG_DERIVED( apple2c, apple2ee )
 	MCFG_RS232_CTS_HANDLER(DEVWRITELINE(IIC_ACIA2_TAG, mos6551_device, write_cts))
 
 	// TODO: populate the IIc's other virtual slots with ONBOARD_ADD
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_DISKIING, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl4", A2BUS_MOCKINGBOARD, NOOP )   // Mockingboard 4C
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_DISKIING, NOOP)
 
 	MCFG_A2EAUXSLOT_SLOT_REMOVE("aux")
 	MCFG_DEVICE_REMOVE(A2_AUXSLOT_TAG)
@@ -3456,6 +3494,7 @@ static const floppy_interface apple2cp_floppy35_floppy_interface =
 };
 
 static MACHINE_CONFIG_DERIVED( apple2cp, apple2c )
+	MCFG_A2BUS_SLOT_REMOVE("sl4")
 	MCFG_A2BUS_SLOT_REMOVE("sl6")
 	MCFG_IWM_ADD(IICP_IWM_TAG, a2cp_interface)
 	MCFG_LEGACY_FLOPPY_SONY_2_DRIVES_ADD(apple2cp_floppy35_floppy_interface)
@@ -3464,7 +3503,7 @@ MACHINE_CONFIG_END
 static MACHINE_CONFIG_DERIVED( apple2c_iwm, apple2c )
 
 	MCFG_A2BUS_SLOT_REMOVE("sl6")
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_IWM_FDC, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_IWM_FDC, NOOP)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( apple2c_mem, apple2c )
@@ -3472,7 +3511,7 @@ static MACHINE_CONFIG_DERIVED( apple2c_mem, apple2c )
 	MCFG_CPU_PROGRAM_MAP(apple2c_memexp_map)
 
 	MCFG_A2BUS_SLOT_REMOVE("sl6")
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_IWM_FDC, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_IWM_FDC, NOOP)
 
 	MCFG_RAM_MODIFY(RAM_TAG)
 	MCFG_RAM_DEFAULT_SIZE("128K")
@@ -3503,14 +3542,15 @@ static MACHINE_CONFIG_DERIVED( laser128, apple2c )
 	MCFG_APPLEFDC_ADD(LASER128_UDC_TAG, fdc_interface)
 	MCFG_LEGACY_FLOPPY_APPLE_2_DRIVES_ADD(floppy_interface,15,16)
 
+	MCFG_A2BUS_SLOT_REMOVE("sl4")
 	MCFG_A2BUS_SLOT_REMOVE("sl6")
 
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl1", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl2", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl3", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl4", A2BUS_LASER128, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl1", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl2", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl3", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl4", A2BUS_LASER128, NOOP)
 	MCFG_A2BUS_SLOT_ADD("a2bus", "sl5", apple2_cards, nullptr)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_LASER128, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_LASER128, NOOP)
 	MCFG_A2BUS_SLOT_ADD("a2bus", "sl7", apple2_cards, nullptr)
 
 	MCFG_RAM_MODIFY(RAM_TAG)
@@ -3525,15 +3565,16 @@ static MACHINE_CONFIG_DERIVED( laser128ex2, apple2c )
 	MCFG_APPLEFDC_ADD(LASER128_UDC_TAG, fdc_interface)
 	MCFG_LEGACY_FLOPPY_APPLE_2_DRIVES_ADD(floppy_interface,15,16)
 
+	MCFG_A2BUS_SLOT_REMOVE("sl4")
 	MCFG_A2BUS_SLOT_REMOVE("sl6")
 
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl1", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl2", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl3", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl4", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl5", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_LASER128, NULL)
-	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl7", A2BUS_LASER128, NULL)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl1", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl2", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl3", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl4", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl5", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl6", A2BUS_LASER128, NOOP)
+	MCFG_A2BUS_ONBOARD_ADD("a2bus", "sl7", A2BUS_LASER128, NOOP)
 
 	MCFG_RAM_MODIFY(RAM_TAG)
 	MCFG_RAM_DEFAULT_SIZE("128K")
@@ -3648,17 +3689,17 @@ ROM_END
 
 
 ROM_START(spectred)
-        ROM_REGION(0x8000,"gfx1",0)
-        ROM_LOAD ( "spm-c_ed_06-08-85.u6", 0x0000, 0x8000, CRC(a1b9ffe4) SHA1(3cb281f19f91372e24685792b7bff778944f99ed) )
+		ROM_REGION(0x8000,"gfx1",0)
+		ROM_LOAD ( "spm-c_ed_06-08-85.u6", 0x0000, 0x8000, CRC(a1b9ffe4) SHA1(3cb281f19f91372e24685792b7bff778944f99ed) )
 
-        ROM_REGION(0x8000,"maincpu",0)
-        ROM_LOAD ( "spm-c_ed_50-09-86.u50.H", 0x0000, 0x4000, CRC(1fccaf24) SHA1(1de1438ee8789f83cbc97f75c0485d1fd0f58a38))
-        ROM_LOAD ( "spm-c_ed_51-09-86.u51.H", 0x4000, 0x4000, CRC(fae8d36c) SHA1(69bed61513482ccb578b89c2fb8e7ba2258e82a5))
+		ROM_REGION(0x8000,"maincpu",0)
+		ROM_LOAD ( "spm-c_ed_50-09-86.u50.H", 0x0000, 0x4000, CRC(1fccaf24) SHA1(1de1438ee8789f83cbc97f75c0485d1fd0f58a38))
+		ROM_LOAD ( "spm-c_ed_51-09-86.u51.H", 0x4000, 0x4000, CRC(fae8d36c) SHA1(69bed61513482ccb578b89c2fb8e7ba2258e82a5))
 
-        ROM_REGION( 0x800, "keyboard", ROMREGION_ERASE00 )
-        ROM_LOAD( "342-0132-c.e12", 0x000, 0x800, BAD_DUMP CRC(e47045f4) SHA1(12a2e718f5f4acd69b6c33a45a4a940b1440a481) ) // copied from apple2e
+		ROM_REGION( 0x800, "keyboard", ROMREGION_ERASE00 )
+		ROM_LOAD( "342-0132-c.e12", 0x000, 0x800, BAD_DUMP CRC(e47045f4) SHA1(12a2e718f5f4acd69b6c33a45a4a940b1440a481) ) // copied from apple2e
 
-        ROM_REGION(0x1000, "keyb_mcu", 0)
+		ROM_REGION(0x1000, "keyb_mcu", 0)
 	ROM_LOAD( "167_8980.u5", 0x0000, 0x1000, CRC(a501f197) SHA1(136c2b562999a6e340fe0e9a3776cea8c2e3647e) )
 ROM_END
 

@@ -23,12 +23,14 @@ class pc1500_state : public driver_device
 {
 public:
 	pc1500_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-			m_maincpu(*this, "maincpu"),
-			m_rtc(*this, "upd1990a"),
-			m_lcd_data(*this, "lcd_data"),
-			m_keyboard(*this, "KEY"),
-			m_io_on(*this, "ON") { }
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_rtc(*this, "upd1990a")
+		, m_lcd_data(*this, "lcd_data")
+		, m_keyboard(*this, "KEY.%u", 0)
+		, m_io_on(*this, "ON")
+	{
+	}
 
 	required_device<cpu_device> m_maincpu;
 	required_device<upd1990a_device> m_rtc;
@@ -283,7 +285,7 @@ static MACHINE_CONFIG_START( pc1500, pc1500_state )
 	MCFG_LH5810_PORTC_W_CB(WRITE8(pc1500_state, port_c_w))
 	MCFG_LH5810_OUT_INT_CB(INPUTLINE("maincpu", LH5801_LINE_MI))
 
-	MCFG_UPD1990A_ADD("upd1990a", XTAL_32_768kHz, NULL, NULL)
+	MCFG_UPD1990A_ADD("upd1990a", XTAL_32_768kHz, NOOP, NOOP)
 MACHINE_CONFIG_END
 
 

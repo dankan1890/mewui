@@ -37,6 +37,7 @@ dy_6.bin (near Z80)
 #include "cpu/z80/z80.h"
 #include "cpu/i8085/i8085.h"
 #include "sound/ay8910.h"
+#include "machine/gen_latch.h"
 #include "machine/nvram.h"
 
 
@@ -116,7 +117,7 @@ static ADDRESS_MAP_START( dynadice_io_map, AS_IO, 8, dynadice_state )
 	AM_RANGE(0x51, 0x51) AM_READ_PORT("IN1")
 	AM_RANGE(0x52, 0x52) AM_READ_PORT("DSW")
 	AM_RANGE(0x62, 0x62) AM_WRITENOP
-	AM_RANGE(0x63, 0x63) AM_WRITE(soundlatch_byte_w)
+	AM_RANGE(0x63, 0x63) AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
 	AM_RANGE(0x70, 0x77) AM_WRITENOP
 ADDRESS_MAP_END
 
@@ -127,8 +128,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dynadice_sound_io_map, AS_IO, 8, dynadice_state )
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_byte_r)
-	AM_RANGE(0x01, 0x01) AM_WRITE(soundlatch_clear_byte_w)
+	AM_RANGE(0x00, 0x00) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
+	AM_RANGE(0x01, 0x01) AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
 	AM_RANGE(0x02, 0x02) AM_WRITE(sound_data_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(sound_control_w)
 ADDRESS_MAP_END
@@ -211,8 +212,8 @@ TILE_GET_INFO_MEMBER(dynadice_state::get_tile_info)
 void dynadice_state::video_start()
 {
 	/* pacman - style videoram layout */
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(dynadice_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
-	m_top_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(dynadice_state::get_tile_info),this), TILEMAP_SCAN_COLS, 8, 8, 2, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(dynadice_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_top_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(dynadice_state::get_tile_info),this), TILEMAP_SCAN_COLS, 8, 8, 2, 32);
 	m_bg_tilemap->set_scrollx(0, -16);
 }
 
@@ -262,6 +263,8 @@ static MACHINE_CONFIG_START( dynadice, dynadice_state )
 	MCFG_PALETTE_ADD_3BIT_BRG("palette")
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("aysnd", AY8910, 2000000)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

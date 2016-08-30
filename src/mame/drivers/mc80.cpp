@@ -52,7 +52,7 @@ static ADDRESS_MAP_START(mc8030_io, AS_IO, 8, mc80_state)
 	AM_RANGE(0x80, 0x83) AM_MIRROR(0xff00) AM_DEVREADWRITE("zve_ctc", z80ctc_device, read, write) // user CTC
 	AM_RANGE(0x84, 0x87) AM_MIRROR(0xff00) AM_DEVREADWRITE("zve_pio", z80pio_device, read, write) // PIO unknown usage
 	AM_RANGE(0x88, 0x8f) AM_MIRROR(0xff00) AM_WRITE(mc8030_zve_write_protect_w)
-	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_WRITE(mc8030_vis_w) AM_MASK(0xffff)
+	AM_RANGE(0xc0, 0xcf) AM_SELECT(0xff00) AM_WRITE(mc8030_vis_w)
 	AM_RANGE(0xd0, 0xd3) AM_MIRROR(0xff00) AM_DEVREADWRITE("asp_sio", z80sio0_device, cd_ba_r, cd_ba_w) // keyboard & IFSS?
 	AM_RANGE(0xd4, 0xd7) AM_MIRROR(0xff00) AM_DEVREADWRITE("asp_ctc", z80ctc_device, read, write) // sio bauds, KMBG? and kbd
 	AM_RANGE(0xd8, 0xdb) AM_MIRROR(0xff00) AM_DEVREADWRITE("asp_pio", z80pio_device, read, write) // external bus
@@ -201,7 +201,7 @@ static MACHINE_CONFIG_START( mc8030, mc80_state )
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_2_4576MHz)
 	MCFG_CPU_PROGRAM_MAP(mc8030_mem)
 	MCFG_CPU_IO_MAP(mc8030_io)
-	MCFG_CPU_CONFIG(mc8030_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(mc8030_daisy_chain)
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DRIVER(mc80_state,mc8030_irq_callback)
 
 	MCFG_MACHINE_RESET_OVERRIDE(mc80_state,mc8030)

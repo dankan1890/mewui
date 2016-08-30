@@ -10,92 +10,93 @@ namespace bgfx
 {
 	static const ImageBlockInfo s_imageBlockInfo[] =
 	{
-		//  +------------------------------- bits per pixel
-		//  |  +---------------------------- block width
-		//  |  |  +------------------------- block height
-		//  |  |  |   +--------------------- block size
-		//  |  |  |   |  +------------------ min blocks x
-		//  |  |  |   |  |  +--------------- min blocks y
-		//  |  |  |   |  |  |   +----------- depth bits
-		//  |  |  |   |  |  |   |  +-------- stencil bits
-		//  |  |  |   |  |  |   |  |  +----- encoding type
-		//  |  |  |   |  |  |   |  |  |
-		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC1
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC2
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC3
-		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC4
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC5
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC6H
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BC7
-		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC1
-		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2
-		{   8, 4, 4, 16, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2A
-		{   4, 4, 4,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // ETC2A1
-		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC12
-		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC14
-		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC12A
-		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC14A
-		{   2, 8, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC22
-		{   4, 4, 4,  8, 2, 2,  0, 0, uint8_t(EncodingType::Unorm) }, // PTC24
-		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // Unknown
-		{   1, 8, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R1
-		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // A8
-		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R8
-		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R8I
-		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R8U
-		{   8, 1, 1,  1, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // R8S
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R16
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R16I
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R16U
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R16F
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // R16S
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // R32I
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // R32U
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // R32F
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RG8
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG8I
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG8U
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RG8S
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RG16
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG16I
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG16U
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG16F
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RG16S
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RG32I
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RG32U
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RG32F
-		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB8
-		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGB8I
-		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGB8U
-		{  24, 1, 1,  3, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGB8S
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGB9E5F
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // BGRA8
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA8
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA8I
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA8U
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGBA8S
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA16
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA16I
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA16U
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA16F
-		{  64, 1, 1,  8, 1, 1,  0, 0, uint8_t(EncodingType::Snorm) }, // RGBA16S
-		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Int  ) }, // RGBA32I
-		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Uint ) }, // RGBA32U
-		{ 128, 1, 1, 16, 1, 1,  0, 0, uint8_t(EncodingType::Float) }, // RGBA32F
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R5G6B5
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGBA4
-		{  16, 1, 1,  2, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB5A1
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // RGB10A2
-		{  32, 1, 1,  4, 1, 1,  0, 0, uint8_t(EncodingType::Unorm) }, // R11G11B10F
-		{   0, 0, 0,  0, 0, 0,  0, 0, uint8_t(EncodingType::Count) }, // UnknownDepth
-		{  16, 1, 1,  2, 1, 1, 16, 0, uint8_t(EncodingType::Unorm) }, // D16
-		{  24, 1, 1,  3, 1, 1, 24, 0, uint8_t(EncodingType::Unorm) }, // D24
-		{  32, 1, 1,  4, 1, 1, 24, 8, uint8_t(EncodingType::Unorm) }, // D24S8
-		{  32, 1, 1,  4, 1, 1, 32, 0, uint8_t(EncodingType::Unorm) }, // D32
-		{  16, 1, 1,  2, 1, 1, 16, 0, uint8_t(EncodingType::Unorm) }, // D16F
-		{  24, 1, 1,  3, 1, 1, 24, 0, uint8_t(EncodingType::Unorm) }, // D24F
-		{  32, 1, 1,  4, 1, 1, 32, 0, uint8_t(EncodingType::Unorm) }, // D32F
-		{   8, 1, 1,  1, 1, 1,  0, 8, uint8_t(EncodingType::Unorm) }, // D0S8
+		//  +-------------------------------------------- bits per pixel
+		//  |  +----------------------------------------- block width
+		//  |  |  +-------------------------------------- block height
+		//  |  |  |   +---------------------------------- block size
+		//  |  |  |   |  +------------------------------- min blocks x
+		//  |  |  |   |  |  +---------------------------- min blocks y
+		//  |  |  |   |  |  |   +------------------------ depth bits
+		//  |  |  |   |  |  |   |  +--------------------- stencil bits
+		//  |  |  |   |  |  |   |  |   +---+---+---+----- r, g, b, a bits
+		//  |  |  |   |  |  |   |  |   r   g   b   a  +-- encoding type
+		//  |  |  |   |  |  |   |  |   |   |   |   |  |
+		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC1
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC2
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC3
+		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC4
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC5
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC6H
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // BC7
+		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // ETC1
+		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // ETC2
+		{   8, 4, 4, 16, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // ETC2A
+		{   4, 4, 4,  8, 1, 1,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // ETC2A1
+		{   2, 8, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC12
+		{   4, 4, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC14
+		{   2, 8, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC12A
+		{   4, 4, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC14A
+		{   2, 8, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC22
+		{   4, 4, 4,  8, 2, 2,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // PTC24
+		{   0, 0, 0,  0, 0, 0,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Count) }, // Unknown
+		{   1, 8, 1,  1, 1, 1,  0, 0,  1,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // R1
+		{   8, 1, 1,  1, 1, 1,  0, 0,  0,  0,  0,  8, uint8_t(EncodingType::Unorm) }, // A8
+		{   8, 1, 1,  1, 1, 1,  0, 0,  8,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // R8
+		{   8, 1, 1,  1, 1, 1,  0, 0,  8,  0,  0,  0, uint8_t(EncodingType::Int  ) }, // R8I
+		{   8, 1, 1,  1, 1, 1,  0, 0,  8,  0,  0,  0, uint8_t(EncodingType::Uint ) }, // R8U
+		{   8, 1, 1,  1, 1, 1,  0, 0,  8,  0,  0,  0, uint8_t(EncodingType::Snorm) }, // R8S
+		{  16, 1, 1,  2, 1, 1,  0, 0, 16,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // R16
+		{  16, 1, 1,  2, 1, 1,  0, 0, 16,  0,  0,  0, uint8_t(EncodingType::Int  ) }, // R16I
+		{  16, 1, 1,  2, 1, 1,  0, 0, 16,  0,  0,  0, uint8_t(EncodingType::Uint ) }, // R16U
+		{  16, 1, 1,  2, 1, 1,  0, 0, 16,  0,  0,  0, uint8_t(EncodingType::Float) }, // R16F
+		{  16, 1, 1,  2, 1, 1,  0, 0, 16,  0,  0,  0, uint8_t(EncodingType::Snorm) }, // R16S
+		{  32, 1, 1,  4, 1, 1,  0, 0, 32,  0,  0,  0, uint8_t(EncodingType::Int  ) }, // R32I
+		{  32, 1, 1,  4, 1, 1,  0, 0, 32,  0,  0,  0, uint8_t(EncodingType::Uint ) }, // R32U
+		{  32, 1, 1,  4, 1, 1,  0, 0, 32,  0,  0,  0, uint8_t(EncodingType::Float) }, // R32F
+		{  16, 1, 1,  2, 1, 1,  0, 0,  8,  8,  0,  0, uint8_t(EncodingType::Unorm) }, // RG8
+		{  16, 1, 1,  2, 1, 1,  0, 0,  8,  8,  0,  0, uint8_t(EncodingType::Int  ) }, // RG8I
+		{  16, 1, 1,  2, 1, 1,  0, 0,  8,  8,  0,  0, uint8_t(EncodingType::Uint ) }, // RG8U
+		{  16, 1, 1,  2, 1, 1,  0, 0,  8,  8,  0,  0, uint8_t(EncodingType::Snorm) }, // RG8S
+		{  32, 1, 1,  4, 1, 1,  0, 0, 16, 16,  0,  0, uint8_t(EncodingType::Unorm) }, // RG16
+		{  32, 1, 1,  4, 1, 1,  0, 0, 16, 16,  0,  0, uint8_t(EncodingType::Int  ) }, // RG16I
+		{  32, 1, 1,  4, 1, 1,  0, 0, 16, 16,  0,  0, uint8_t(EncodingType::Uint ) }, // RG16U
+		{  32, 1, 1,  4, 1, 1,  0, 0, 16, 16,  0,  0, uint8_t(EncodingType::Float) }, // RG16F
+		{  32, 1, 1,  4, 1, 1,  0, 0, 16, 16,  0,  0, uint8_t(EncodingType::Snorm) }, // RG16S
+		{  64, 1, 1,  8, 1, 1,  0, 0, 32, 32,  0,  0, uint8_t(EncodingType::Int  ) }, // RG32I
+		{  64, 1, 1,  8, 1, 1,  0, 0, 32, 32,  0,  0, uint8_t(EncodingType::Uint ) }, // RG32U
+		{  64, 1, 1,  8, 1, 1,  0, 0, 32, 32,  0,  0, uint8_t(EncodingType::Float) }, // RG32F
+		{  24, 1, 1,  3, 1, 1,  0, 0,  8,  8,  8,  0, uint8_t(EncodingType::Unorm) }, // RGB8
+		{  24, 1, 1,  3, 1, 1,  0, 0,  8,  8,  8,  0, uint8_t(EncodingType::Int  ) }, // RGB8I
+		{  24, 1, 1,  3, 1, 1,  0, 0,  8,  8,  8,  0, uint8_t(EncodingType::Uint ) }, // RGB8U
+		{  24, 1, 1,  3, 1, 1,  0, 0,  8,  8,  8,  0, uint8_t(EncodingType::Snorm) }, // RGB8S
+		{  32, 1, 1,  4, 1, 1,  0, 0,  9,  9,  9,  5, uint8_t(EncodingType::Float) }, // RGB9E5F
+		{  32, 1, 1,  4, 1, 1,  0, 0,  8,  8,  8,  8, uint8_t(EncodingType::Unorm) }, // BGRA8
+		{  32, 1, 1,  4, 1, 1,  0, 0,  8,  8,  8,  8, uint8_t(EncodingType::Unorm) }, // RGBA8
+		{  32, 1, 1,  4, 1, 1,  0, 0,  8,  8,  8,  8, uint8_t(EncodingType::Int  ) }, // RGBA8I
+		{  32, 1, 1,  4, 1, 1,  0, 0,  8,  8,  8,  8, uint8_t(EncodingType::Uint ) }, // RGBA8U
+		{  32, 1, 1,  4, 1, 1,  0, 0,  8,  8,  8,  8, uint8_t(EncodingType::Snorm) }, // RGBA8S
+		{  64, 1, 1,  8, 1, 1,  0, 0, 16, 16, 16, 16, uint8_t(EncodingType::Unorm) }, // RGBA16
+		{  64, 1, 1,  8, 1, 1,  0, 0, 16, 16, 16, 16, uint8_t(EncodingType::Int  ) }, // RGBA16I
+		{  64, 1, 1,  8, 1, 1,  0, 0, 16, 16, 16, 16, uint8_t(EncodingType::Uint ) }, // RGBA16U
+		{  64, 1, 1,  8, 1, 1,  0, 0, 16, 16, 16, 16, uint8_t(EncodingType::Float) }, // RGBA16F
+		{  64, 1, 1,  8, 1, 1,  0, 0, 16, 16, 16, 16, uint8_t(EncodingType::Snorm) }, // RGBA16S
+		{ 128, 1, 1, 16, 1, 1,  0, 0, 32, 32, 32, 32, uint8_t(EncodingType::Int  ) }, // RGBA32I
+		{ 128, 1, 1, 16, 1, 1,  0, 0, 32, 32, 32, 32, uint8_t(EncodingType::Uint ) }, // RGBA32U
+		{ 128, 1, 1, 16, 1, 1,  0, 0, 32, 32, 32, 32, uint8_t(EncodingType::Float) }, // RGBA32F
+		{  16, 1, 1,  2, 1, 1,  0, 0,  5,  6,  5,  0, uint8_t(EncodingType::Unorm) }, // R5G6B5
+		{  16, 1, 1,  2, 1, 1,  0, 0,  4,  4,  4,  4, uint8_t(EncodingType::Unorm) }, // RGBA4
+		{  16, 1, 1,  2, 1, 1,  0, 0,  5,  5,  5,  1, uint8_t(EncodingType::Unorm) }, // RGB5A1
+		{  32, 1, 1,  4, 1, 1,  0, 0, 10, 10, 10,  2, uint8_t(EncodingType::Unorm) }, // RGB10A2
+		{  32, 1, 1,  4, 1, 1,  0, 0, 11, 11, 10,  0, uint8_t(EncodingType::Unorm) }, // R11G11B10F
+		{   0, 0, 0,  0, 0, 0,  0, 0,  0,  0,  0,  0, uint8_t(EncodingType::Count) }, // UnknownDepth
+		{  16, 1, 1,  2, 1, 1, 16, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D16
+		{  24, 1, 1,  3, 1, 1, 24, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24
+		{  32, 1, 1,  4, 1, 1, 24, 8,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24S8
+		{  32, 1, 1,  4, 1, 1, 32, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D32
+		{  16, 1, 1,  2, 1, 1, 16, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D16F
+		{  24, 1, 1,  3, 1, 1, 24, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D24F
+		{  32, 1, 1,  4, 1, 1, 32, 0,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D32F
+		{   8, 1, 1,  1, 1, 1,  0, 8,  0,  0,  0,  0, uint8_t(EncodingType::Unorm) }, // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_imageBlockInfo) );
 
@@ -386,70 +387,164 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 
 		using namespace bx;
-		const float4_t unpack = float4_ld(1.0f, 1.0f/256.0f, 1.0f/65536.0f, 1.0f/16777216.0f);
-		const float4_t pack   = float4_ld(1.0f, 256.0f*0.5f, 65536.0f, 16777216.0f*0.5f);
-		const float4_t umask  = float4_ild(0xff, 0xff00, 0xff0000, 0xff000000);
-		const float4_t pmask  = float4_ild(0xff, 0x7f80, 0xff0000, 0x7f800000);
-		const float4_t wflip  = float4_ild(0, 0, 0, 0x80000000);
-		const float4_t wadd   = float4_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
-		const float4_t gamma  = float4_ld(1.0f/2.2f, 1.0f/2.2f, 1.0f/2.2f, 1.0f);
-		const float4_t linear = float4_ld(2.2f, 2.2f, 2.2f, 1.0f);
-		const float4_t quater = float4_splat(0.25f);
+		const simd128_t unpack = simd_ld(1.0f, 1.0f/256.0f, 1.0f/65536.0f, 1.0f/16777216.0f);
+		const simd128_t pack   = simd_ld(1.0f, 256.0f*0.5f, 65536.0f, 16777216.0f*0.5f);
+		const simd128_t umask  = simd_ild(0xff, 0xff00, 0xff0000, 0xff000000);
+		const simd128_t pmask  = simd_ild(0xff, 0x7f80, 0xff0000, 0x7f800000);
+		const simd128_t wflip  = simd_ild(0, 0, 0, 0x80000000);
+		const simd128_t wadd   = simd_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
+		const simd128_t gamma  = simd_ld(1.0f/2.2f, 1.0f/2.2f, 1.0f/2.2f, 1.0f);
+		const simd128_t linear = simd_ld(2.2f, 2.2f, 2.2f, 1.0f);
+		const simd128_t quater = simd_splat(0.25f);
 
 		for (uint32_t yy = 0, ystep = _pitch*2; yy < dstheight; ++yy, src += ystep)
 		{
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 8, dst += 4)
 			{
-				const float4_t abgr0  = float4_splat(rgba);
-				const float4_t abgr1  = float4_splat(rgba+4);
-				const float4_t abgr2  = float4_splat(rgba+_pitch);
-				const float4_t abgr3  = float4_splat(rgba+_pitch+4);
+				const simd128_t abgr0  = simd_splat(rgba);
+				const simd128_t abgr1  = simd_splat(rgba+4);
+				const simd128_t abgr2  = simd_splat(rgba+_pitch);
+				const simd128_t abgr3  = simd_splat(rgba+_pitch+4);
 
-				const float4_t abgr0m = float4_and(abgr0, umask);
-				const float4_t abgr1m = float4_and(abgr1, umask);
-				const float4_t abgr2m = float4_and(abgr2, umask);
-				const float4_t abgr3m = float4_and(abgr3, umask);
-				const float4_t abgr0x = float4_xor(abgr0m, wflip);
-				const float4_t abgr1x = float4_xor(abgr1m, wflip);
-				const float4_t abgr2x = float4_xor(abgr2m, wflip);
-				const float4_t abgr3x = float4_xor(abgr3m, wflip);
-				const float4_t abgr0f = float4_itof(abgr0x);
-				const float4_t abgr1f = float4_itof(abgr1x);
-				const float4_t abgr2f = float4_itof(abgr2x);
-				const float4_t abgr3f = float4_itof(abgr3x);
-				const float4_t abgr0c = float4_add(abgr0f, wadd);
-				const float4_t abgr1c = float4_add(abgr1f, wadd);
-				const float4_t abgr2c = float4_add(abgr2f, wadd);
-				const float4_t abgr3c = float4_add(abgr3f, wadd);
-				const float4_t abgr0n = float4_mul(abgr0c, unpack);
-				const float4_t abgr1n = float4_mul(abgr1c, unpack);
-				const float4_t abgr2n = float4_mul(abgr2c, unpack);
-				const float4_t abgr3n = float4_mul(abgr3c, unpack);
+				const simd128_t abgr0m = simd_and(abgr0, umask);
+				const simd128_t abgr1m = simd_and(abgr1, umask);
+				const simd128_t abgr2m = simd_and(abgr2, umask);
+				const simd128_t abgr3m = simd_and(abgr3, umask);
+				const simd128_t abgr0x = simd_xor(abgr0m, wflip);
+				const simd128_t abgr1x = simd_xor(abgr1m, wflip);
+				const simd128_t abgr2x = simd_xor(abgr2m, wflip);
+				const simd128_t abgr3x = simd_xor(abgr3m, wflip);
+				const simd128_t abgr0f = simd_itof(abgr0x);
+				const simd128_t abgr1f = simd_itof(abgr1x);
+				const simd128_t abgr2f = simd_itof(abgr2x);
+				const simd128_t abgr3f = simd_itof(abgr3x);
+				const simd128_t abgr0c = simd_add(abgr0f, wadd);
+				const simd128_t abgr1c = simd_add(abgr1f, wadd);
+				const simd128_t abgr2c = simd_add(abgr2f, wadd);
+				const simd128_t abgr3c = simd_add(abgr3f, wadd);
+				const simd128_t abgr0n = simd_mul(abgr0c, unpack);
+				const simd128_t abgr1n = simd_mul(abgr1c, unpack);
+				const simd128_t abgr2n = simd_mul(abgr2c, unpack);
+				const simd128_t abgr3n = simd_mul(abgr3c, unpack);
 
-				const float4_t abgr0l = float4_pow(abgr0n, linear);
-				const float4_t abgr1l = float4_pow(abgr1n, linear);
-				const float4_t abgr2l = float4_pow(abgr2n, linear);
-				const float4_t abgr3l = float4_pow(abgr3n, linear);
+				const simd128_t abgr0l = simd_pow(abgr0n, linear);
+				const simd128_t abgr1l = simd_pow(abgr1n, linear);
+				const simd128_t abgr2l = simd_pow(abgr2n, linear);
+				const simd128_t abgr3l = simd_pow(abgr3n, linear);
 
-				const float4_t sum0   = float4_add(abgr0l, abgr1l);
-				const float4_t sum1   = float4_add(abgr2l, abgr3l);
-				const float4_t sum2   = float4_add(sum0, sum1);
-				const float4_t avg0   = float4_mul(sum2, quater);
-				const float4_t avg1   = float4_pow(avg0, gamma);
+				const simd128_t sum0   = simd_add(abgr0l, abgr1l);
+				const simd128_t sum1   = simd_add(abgr2l, abgr3l);
+				const simd128_t sum2   = simd_add(sum0, sum1);
+				const simd128_t avg0   = simd_mul(sum2, quater);
+				const simd128_t avg1   = simd_pow(avg0, gamma);
 
-				const float4_t avg2   = float4_mul(avg1, pack);
-				const float4_t ftoi0  = float4_ftoi(avg2);
-				const float4_t ftoi1  = float4_and(ftoi0, pmask);
-				const float4_t zwxy   = float4_swiz_zwxy(ftoi1);
-				const float4_t tmp0   = float4_or(ftoi1, zwxy);
-				const float4_t yyyy   = float4_swiz_yyyy(tmp0);
-				const float4_t tmp1   = float4_iadd(yyyy, yyyy);
-				const float4_t result = float4_or(tmp0, tmp1);
+				const simd128_t avg2   = simd_mul(avg1, pack);
+				const simd128_t ftoi0  = simd_ftoi(avg2);
+				const simd128_t ftoi1  = simd_and(ftoi0, pmask);
+				const simd128_t zwxy   = simd_swiz_zwxy(ftoi1);
+				const simd128_t tmp0   = simd_or(ftoi1, zwxy);
+				const simd128_t yyyy   = simd_swiz_yyyy(tmp0);
+				const simd128_t tmp1   = simd_iadd(yyyy, yyyy);
+				const simd128_t result = simd_or(tmp0, tmp1);
 
-				float4_stx(dst, result);
+				simd_stx(dst, result);
 			}
 		}
+	}
+
+	void imageRgba32fToLinear(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
+	{
+		      uint8_t* dst = (      uint8_t*)_dst;
+		const uint8_t* src = (const uint8_t*)_src;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src += _pitch)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx, dst += 16)
+			{
+				      float* fd = (      float*)dst;
+				const float* fs = (const float*)src;
+
+				fd[0] = bx::fpow(fs[0], 1.0f/2.2f);
+				fd[1] = bx::fpow(fs[1], 1.0f/2.2f);
+				fd[2] = bx::fpow(fs[2], 1.0f/2.2f);
+				fd[3] =          fs[3];
+			}
+		}
+	}
+
+	void imageRgba32fToGamma(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
+	{
+		      uint8_t* dst = (      uint8_t*)_dst;
+		const uint8_t* src = (const uint8_t*)_src;
+
+		for (uint32_t yy = 0; yy < _height; ++yy, src += _pitch)
+		{
+			for (uint32_t xx = 0; xx < _width; ++xx, dst += 16)
+			{
+				      float* fd = (      float*)dst;
+				const float* fs = (const float*)src;
+
+				fd[0] = bx::fpow(fs[0], 2.2f);
+				fd[1] = bx::fpow(fs[1], 2.2f);
+				fd[2] = bx::fpow(fs[2], 2.2f);
+				fd[3] =          fs[3];
+			}
+		}
+	}
+
+	void imageRgba32fLinearDownsample2x2Ref(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	{
+		const uint32_t dstwidth  = _width/2;
+		const uint32_t dstheight = _height/2;
+
+		if (0 == dstwidth
+		||  0 == dstheight)
+		{
+			return;
+		}
+
+		const uint8_t* src = (const uint8_t*)_src;
+		uint8_t* dst = (uint8_t*)_dst;
+
+		for (uint32_t yy = 0, ystep = _pitch*2; yy < dstheight; ++yy, src += ystep)
+		{
+			const float* rgba0 = (const float*)&src[0];
+			const float* rgba1 = (const float*)&src[_pitch];
+			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba0 += 8, rgba1 += 8, dst += 16)
+			{
+				float xyz[4];
+				xyz[0]  = rgba0[0];
+				xyz[1]  = rgba0[1];
+				xyz[2]  = rgba0[2];
+				xyz[3]  = rgba0[3];
+
+				xyz[0] += rgba0[4];
+				xyz[1] += rgba0[5];
+				xyz[2] += rgba0[6];
+				xyz[3] += rgba0[7];
+
+				xyz[0] += rgba1[0];
+				xyz[1] += rgba1[1];
+				xyz[2] += rgba1[2];
+				xyz[3] += rgba1[3];
+
+				xyz[0] += rgba1[4];
+				xyz[1] += rgba1[5];
+				xyz[2] += rgba1[6];
+				xyz[3] += rgba1[7];
+
+				xyz[0] *= 0.25f;
+				xyz[1] *= 0.25f;
+				xyz[2] *= 0.25f;
+				xyz[3] *= 0.25f;
+			}
+		}
+	}
+
+	void imageRgba32fLinearDownsample2x2(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
+	{
+		imageRgba32fLinearDownsample2x2Ref(_width, _height, _pitch, _src, _dst);
 	}
 
 	void imageRgba32fDownsample2x2NormalMapRef(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst)
@@ -535,8 +630,8 @@ namespace bgfx
 
 		using namespace bx;
 
-		const float4_t mf0f0 = float4_isplat(0xff00ff00);
-		const float4_t m0f0f = float4_isplat(0x00ff00ff);
+		const simd128_t mf0f0 = simd_isplat(0xff00ff00);
+		const simd128_t m0f0f = simd_isplat(0x00ff00ff);
 		const uint8_t* src = (uint8_t*) _src;
 		const uint8_t* next = src + _pitch;
 		uint8_t* dst = (uint8_t*)_dst;
@@ -547,14 +642,14 @@ namespace bgfx
 		{
 			for (uint32_t xx = 0; xx < width; ++xx, src += 16, dst += 16)
 			{
-				const float4_t tabgr = float4_ld(src);
-				const float4_t t00ab = float4_srl(tabgr, 16);
-				const float4_t tgr00 = float4_sll(tabgr, 16);
-				const float4_t tgrab = float4_or(t00ab, tgr00);
-				const float4_t ta0g0 = float4_and(tabgr, mf0f0);
-				const float4_t t0r0b = float4_and(tgrab, m0f0f);
-				const float4_t targb = float4_or(ta0g0, t0r0b);
-				float4_st(dst, targb);
+				const simd128_t tabgr = simd_ld(src);
+				const simd128_t t00ab = simd_srl(tabgr, 16);
+				const simd128_t tgr00 = simd_sll(tabgr, 16);
+				const simd128_t tgrab = simd_or(t00ab, tgr00);
+				const simd128_t ta0g0 = simd_and(tabgr, mf0f0);
+				const simd128_t t0r0b = simd_and(tgrab, m0f0f);
+				const simd128_t targb = simd_or(ta0g0, t0r0b);
+				simd_st(dst, targb);
 			}
 		}
 	}
@@ -612,6 +707,9 @@ namespace bgfx
 	{
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = fromUnorm(src[0], 255.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8S
@@ -625,6 +723,9 @@ namespace bgfx
 	{
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = fromSnorm(src[0], 127.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8I
@@ -638,6 +739,9 @@ namespace bgfx
 	{
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R8U
@@ -651,6 +755,9 @@ namespace bgfx
 	{
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8
@@ -666,6 +773,8 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = fromUnorm(src[0], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8S
@@ -681,6 +790,8 @@ namespace bgfx
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = fromSnorm(src[0], 127.0f);
 		_dst[1] = fromSnorm(src[1], 127.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8I
@@ -696,6 +807,8 @@ namespace bgfx
 		const int8_t* src = (const int8_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG8U
@@ -711,6 +824,8 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8
@@ -728,6 +843,7 @@ namespace bgfx
 		_dst[0] = fromUnorm(src[0], 255.0f);
 		_dst[1] = fromUnorm(src[1], 255.0f);
 		_dst[2] = fromUnorm(src[2], 255.0f);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8S
@@ -745,6 +861,7 @@ namespace bgfx
 		_dst[0] = fromSnorm(src[0], 127.0f);
 		_dst[1] = fromSnorm(src[1], 127.0f);
 		_dst[2] = fromSnorm(src[2], 127.0f);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8I
@@ -762,6 +879,7 @@ namespace bgfx
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
 		_dst[2] = float(src[2]);
+		_dst[3] = 1.0f;
 	}
 
 	// RGB8U
@@ -779,6 +897,7 @@ namespace bgfx
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
 		_dst[2] = float(src[2]);
+		_dst[3] = 1.0f;
 	}
 
 	// BGRA8
@@ -887,6 +1006,9 @@ namespace bgfx
 	{
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = fromUnorm(src[0], 65535.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16S
@@ -900,6 +1022,9 @@ namespace bgfx
 	{
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = fromSnorm(src[0], 32767.0f);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16I
@@ -913,6 +1038,9 @@ namespace bgfx
 	{
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = float(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// R16U
@@ -939,6 +1067,9 @@ namespace bgfx
 	{
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = bx::halfToFloat(src[0]);
+		_dst[1] = 0.0f;
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16
@@ -954,6 +1085,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = fromUnorm(src[0], 65535.0f);
 		_dst[1] = fromUnorm(src[1], 65535.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16S
@@ -969,6 +1102,8 @@ namespace bgfx
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = fromSnorm(src[0], 32767.0f);
 		_dst[1] = fromSnorm(src[1], 32767.0f);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16I
@@ -984,6 +1119,8 @@ namespace bgfx
 		const int16_t* src = (const int16_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16U
@@ -999,6 +1136,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = float(src[0]);
 		_dst[1] = float(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RG16F
@@ -1014,6 +1153,8 @@ namespace bgfx
 		const uint16_t* src = (const uint16_t*)_src;
 		_dst[0] = bx::halfToFloat(src[0]);
 		_dst[1] = bx::halfToFloat(src[1]);
+		_dst[2] = 0.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGBA16
@@ -1294,6 +1435,7 @@ namespace bgfx
 		_dst[0] = float( ( (packed>>11) & 0x1f) ) / 31.0f;
 		_dst[1] = float( ( (packed>> 5) & 0x3f) ) / 63.0f;
 		_dst[2] = float( ( (packed    ) & 0x1f) ) / 31.0f;
+		_dst[3] = 1.0f;
 	}
 
 	// RGBA4
@@ -1412,6 +1554,7 @@ namespace bgfx
 		_dst[0] = bx::halfToFloat( (packed<< 4) & 0x7ff0);
 		_dst[1] = bx::halfToFloat( (packed>> 7) & 0x7ff0);
 		_dst[2] = bx::halfToFloat( (packed>>17) & 0x7fe0);
+		_dst[3] = 1.0f;
 	}
 
 	struct PackUnpack
@@ -1420,7 +1563,7 @@ namespace bgfx
 		UnpackFn unpack;
 	};
 
-	static PackUnpack s_packUnpack[] =
+	static const PackUnpack s_packUnpack[] =
 	{
 		{ NULL,           NULL             }, // BC1
 		{ NULL,           NULL             }, // BC2
@@ -1563,7 +1706,7 @@ namespace bgfx
 	bool imageConvert(void* _dst, TextureFormat::Enum _dstFormat, const void* _src, TextureFormat::Enum _srcFormat, uint32_t _width, uint32_t _height)
 	{
 		const uint32_t srcBpp = s_imageBlockInfo[_srcFormat].bitsPerPixel;
-		return imageConvert(_dst, _dstFormat, _src, _srcFormat, _width, _height, _width*srcBpp);
+		return imageConvert(_dst, _dstFormat, _src, _srcFormat, _width, _height, _width*srcBpp/8);
 	}
 
 	uint8_t bitRangeConvert(uint32_t _in, uint32_t _from, uint32_t _to)
@@ -2112,7 +2255,7 @@ namespace bgfx
 
 		{ 8, 0, 8, 0 },
 		{ 4, 4, 4, 4 },
-		{ 4, 4, 0, 0 },
+		{ 4, 4, 4, 4 },
 		{ 0, 8, 0, 8 },
 	};
 
@@ -2247,7 +2390,7 @@ namespace bgfx
 			*_r += bitRangeConvert( (_block >> 10) & 0x1f, 5, 8) * _factor;
 			*_g += bitRangeConvert( (_block >>  5) & 0x1f, 5, 8) * _factor;
 			*_b += bitRangeConvert( (_block >>  1) & 0x0f, 4, 8) * _factor;
-			*_a += 255;
+			*_a += 255 * _factor;
 		}
 		else
 		{
@@ -2265,7 +2408,7 @@ namespace bgfx
 			*_r += bitRangeConvert( (_block >> 26) & 0x1f, 5, 8) * _factor;
 			*_g += bitRangeConvert( (_block >> 21) & 0x1f, 5, 8) * _factor;
 			*_b += bitRangeConvert( (_block >> 16) & 0x1f, 5, 8) * _factor;
-			*_a += 255;
+			*_a += 255 * _factor;
 		}
 		else
 		{
@@ -2498,7 +2641,7 @@ namespace bgfx
 		bool m_srgb;
 	};
 
-	static TranslateDdsFormat s_translateDdsFourccFormat[] =
+	static const TranslateDdsFormat s_translateDdsFourccFormat[] =
 	{
 		{ DDS_DXT1,                  TextureFormat::BC1,     false },
 		{ DDS_DXT2,                  TextureFormat::BC2,     false },
@@ -2531,7 +2674,7 @@ namespace bgfx
 		{ DDS_A2B10G10R10,           TextureFormat::RGB10A2, false },
 	};
 
-	static TranslateDdsFormat s_translateDxgiFormat[] =
+	static const TranslateDdsFormat s_translateDxgiFormat[] =
 	{
 		{ DDS_FORMAT_BC1_UNORM,           TextureFormat::BC1,        false },
 		{ DDS_FORMAT_BC1_UNORM_SRGB,      TextureFormat::BC1,        true  },
@@ -2578,13 +2721,14 @@ namespace bgfx
 		TextureFormat::Enum m_textureFormat;
 	};
 
-	static TranslateDdsPixelFormat s_translateDdsPixelFormat[] =
+	static const TranslateDdsPixelFormat s_translateDdsPixelFormat[] =
 	{
 		{  8, { 0x000000ff, 0x00000000, 0x00000000, 0x00000000 }, TextureFormat::R8      },
 		{ 16, { 0x0000ffff, 0x00000000, 0x00000000, 0x00000000 }, TextureFormat::R16U    },
 		{ 16, { 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 }, TextureFormat::RGBA4   },
 		{ 16, { 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 }, TextureFormat::R5G6B5  },
 		{ 16, { 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 }, TextureFormat::RGB5A1  },
+		{ 24, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, TextureFormat::RGB8    },
 		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, TextureFormat::BGRA8   },
 		{ 32, { 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 }, TextureFormat::BGRA8   },
 		{ 32, { 0x000003ff, 0x000ffc00, 0x3ff00000, 0xc0000000 }, TextureFormat::RGB10A2 },
@@ -2871,7 +3015,7 @@ namespace bgfx
 		uint32_t m_type;
 	};
 
-	static KtxFormatInfo s_translateKtxFormat[] =
+	static const KtxFormatInfo s_translateKtxFormat[] =
 	{
 		{ KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT,            KTX_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,        KTX_COMPRESSED_RGBA_S3TC_DXT1_EXT,            KTX_ZERO,                         }, // BC1
 		{ KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT,            KTX_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,        KTX_COMPRESSED_RGBA_S3TC_DXT3_EXT,            KTX_ZERO,                         }, // BC2
@@ -2943,6 +3087,18 @@ namespace bgfx
 	};
 	BX_STATIC_ASSERT(TextureFormat::UnknownDepth == BX_COUNTOF(s_translateKtxFormat) );
 
+	struct KtxFormatInfo2
+	{
+		uint32_t m_internalFmt;
+		TextureFormat::Enum m_format;
+	};
+
+	static const KtxFormatInfo2 s_translateKtxFormat2[] =
+	{
+		{ KTX_RED, TextureFormat::R8   },
+		{ KTX_RGB, TextureFormat::RGB8 },
+	};
+
 	bool imageParseKtx(ImageContainer& _imageContainer, bx::ReaderSeekerI* _reader)
 	{
 		uint8_t identifier[8];
@@ -3010,6 +3166,18 @@ namespace bgfx
 			}
 		}
 
+		if (TextureFormat::Unknown == format)
+		{
+			for (uint32_t ii = 0; ii < BX_COUNTOF(s_translateKtxFormat2); ++ii)
+			{
+				if (s_translateKtxFormat2[ii].m_internalFmt == glInternalFormat)
+				{
+					format = s_translateKtxFormat2[ii].m_format;
+					break;
+				}
+			}
+		}
+
 		_imageContainer.m_data     = NULL;
 		_imageContainer.m_size     = 0;
 		_imageContainer.m_offset   = (uint32_t)offset;
@@ -3017,7 +3185,7 @@ namespace bgfx
 		_imageContainer.m_height   = height;
 		_imageContainer.m_depth    = depth;
 		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t(numMips);
+		_imageContainer.m_numMips  = uint8_t(bx::uint32_max(numMips, 1) );
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx      = true;
@@ -3064,13 +3232,14 @@ namespace bgfx
 #define PVR3_CHANNEL_TYPE_ANY   UINT32_MAX
 #define PVR3_CHANNEL_TYPE_FLOAT UINT32_C(12)
 
-	static struct TranslatePvr3Format
+	struct TranslatePvr3Format
 	{
 		uint64_t m_format;
 		uint32_t m_channelTypeMask;
 		TextureFormat::Enum m_textureFormat;
+	};
 
-	} s_translatePvr3Format[] =
+	static const TranslatePvr3Format s_translatePvr3Format[] =
 	{
 		{ PVR3_PVRTC1_2BPP_RGB,  PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12   },
 		{ PVR3_PVRTC1_2BPP_RGBA, PVR3_CHANNEL_TYPE_ANY,   TextureFormat::PTC12A  },
@@ -3165,7 +3334,7 @@ namespace bgfx
 		_imageContainer.m_height   = height;
 		_imageContainer.m_depth    = depth;
 		_imageContainer.m_format   = format;
-		_imageContainer.m_numMips  = uint8_t(numMips);
+		_imageContainer.m_numMips  = uint8_t(bx::uint32_max(numMips, 1) );
 		_imageContainer.m_hasAlpha = hasAlpha;
 		_imageContainer.m_cubeMap  = numFaces > 1;
 		_imageContainer.m_ktx      = false;
@@ -3222,6 +3391,7 @@ namespace bgfx
 			return true;
 		}
 
+		BX_TRACE("Unrecognized image format (magic: 0x%08x)!", magic);
 		return false;
 	}
 
@@ -3432,10 +3602,14 @@ namespace bgfx
 			break;
 
 		default:
-			if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height, _pitch) )
 			{
-				// Failed to convert, just make ugly red-yellow checkerboard texture.
-				imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+				const uint32_t srcBpp   = s_imageBlockInfo[_format].bitsPerPixel;
+				const uint32_t srcPitch = _width * srcBpp / 8;
+				if (!imageConvert(_dst, TextureFormat::BGRA8, _src, _format, _width, _height, srcPitch) )
+				{
+					// Failed to convert, just make ugly red-yellow checkerboard texture.
+					imageCheckerboard(_width, _height, 16, UINT32_C(0xffff0000), UINT32_C(0xffffff00), _dst);
+				}
 			}
 			break;
 		}
@@ -3455,7 +3629,7 @@ namespace bgfx
 
 		default:
 			imageDecodeToBgra8(_dst, _src, _width, _height, _pitch, _format);
-			imageSwizzleBgra8(_width, _height, _pitch, _dst, _dst);
+			imageSwizzleBgra8(_width, _height, _width*4, _dst, _dst);
 			break;
 		}
 	}
@@ -3502,24 +3676,24 @@ namespace bgfx
 		const uint8_t* src = (const uint8_t*)_src;
 
 		using namespace bx;
-		const float4_t unpack = float4_ld(1.0f, 1.0f/256.0f, 1.0f/65536.0f, 1.0f/16777216.0f);
-		const float4_t umask  = float4_ild(0xff, 0xff00, 0xff0000, 0xff000000);
-		const float4_t wflip  = float4_ild(0, 0, 0, 0x80000000);
-		const float4_t wadd   = float4_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
+		const simd128_t unpack = simd_ld(1.0f, 1.0f/256.0f, 1.0f/65536.0f, 1.0f/16777216.0f);
+		const simd128_t umask  = simd_ild(0xff, 0xff00, 0xff0000, 0xff000000);
+		const simd128_t wflip  = simd_ild(0, 0, 0, 0x80000000);
+		const simd128_t wadd   = simd_ld(0.0f, 0.0f, 0.0f, 32768.0f*65536.0f);
 
 		for (uint32_t yy = 0, ystep = _pitch; yy < dstheight; ++yy, src += ystep)
 		{
 			const uint8_t* rgba = src;
 			for (uint32_t xx = 0; xx < dstwidth; ++xx, rgba += 4, dst += 4)
 			{
-				const float4_t abgr0  = float4_splat(rgba);
-				const float4_t abgr0m = float4_and(abgr0, umask);
-				const float4_t abgr0x = float4_xor(abgr0m, wflip);
-				const float4_t abgr0f = float4_itof(abgr0x);
-				const float4_t abgr0c = float4_add(abgr0f, wadd);
-				const float4_t abgr0n = float4_mul(abgr0c, unpack);
+				const simd128_t abgr0  = simd_splat(rgba);
+				const simd128_t abgr0m = simd_and(abgr0, umask);
+				const simd128_t abgr0x = simd_xor(abgr0m, wflip);
+				const simd128_t abgr0f = simd_itof(abgr0x);
+				const simd128_t abgr0c = simd_add(abgr0f, wadd);
+				const simd128_t abgr0n = simd_mul(abgr0c, unpack);
 
-				float4_st(dst, abgr0n);
+				simd_st(dst, abgr0n);
 			}
 		}
 	}
@@ -3574,11 +3748,16 @@ namespace bgfx
 			break;
 
 		default:
+			if (isCompressed(_format) )
 			{
 				void* temp = BX_ALLOC(_allocator, imageGetSize(_format, uint16_t(_pitch/4), uint16_t(_height) ) );
 				imageDecodeToRgba8(temp, _src, _width, _height, _pitch, _format);
 				imageRgba8ToRgba32f(_dst, _width, _height, _pitch, temp);
 				BX_FREE(_allocator, temp);
+			}
+			else
+			{
+				imageConvert(_dst, TextureFormat::RGBA32F, _src, _format, _width, _height, _pitch);
 			}
 			break;
 		}

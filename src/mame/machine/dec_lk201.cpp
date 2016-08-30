@@ -3,8 +3,9 @@
 /*
     DEC LK-201 keyboard
     Emulation by R. Belmont & M. Burke
+with contributions by Cracyc and Karl-Ludwig Deisenhofer (2016)
 
-    This is the later "cost-reduced" 6805 version; there's also an 8048 version.
+This is the later "cost-reduced" 6805 version with green LEDs; there's also an 8048 version.
     The LK-201 mechanical elements are described in US Patent 4,467,150
 */
 
@@ -20,24 +21,24 @@
    to => PORT 0 @ KBD controller.
 
 ________|D7  |D6  |D5  |D4 |D3 |D2 |D1 |D0
-..KBD17:|[R] |F19 |[R] |F20|PF4|N- | N,| Enter
+..KBD17:|[R] |F19 |[R] |F20|PF4|N- | N,| Enter (numpad)
 ........|    |    |    |   |   |   NOTE1)
 ........|    |G22 |    |G23|E23|D23|C23| A23
 --------|----|----|----|---|---|---|---|---
 ..KBD16:|F18 |PF3 |[R] |N9 |C:D|N6 |N3 |N.
 ........|G21 |E22 |    |D22|B17|C22|B22|A22
 --------|----|----|----|---|---|---|---|---
-..KBD15:|F17 |PF2 |[R] |N8 |N5 |C:R| N2|N0
-........|    |    |    |   |   |   |   |NOTE 2)
-........|G20 |E21 |    |D21|C21|B18|B21|
+..KBD15:|F17 |PF2 |[R] |N8 |N5 |C:R| N2|N0 (right)
+........|    |    |    |   |   |   |   |see NOTE 2)
+........|G20 |E21 |    |D21|C21|B18|B21|A21
 --------|----|----|----|---|---|---|---|---
-  KBD14:|PF1 |Next|Rem-|C:U|N7 |N4 |N1 |N0
-........|    |Scrn|move|...|   |   |   |
+  KBD14:|PF1 |Next|Rem-|C:U|N7 |N4 |N1 |N0 (left)
+........|    |Scrn|move|...|   |   |   |see NOTE 2)
 ........|E20 |D18 |E18 |C17|D20|C20|B20|A20
 --------|----|----|----|---|---|---|---|---
-..KBD13:|Ins.|--- |'Do'|Prev { |"  |[R]|[R]
-........|Here|-   |    Scrn| [ |'  |   |
-........|E17 |E11 |G16 |D17|D11|C11|   |
+..KBD13:|Ins.|'_' |'Do'|Prev { |"  |[R]|[R]
+........|Here|'-' |    |Scrn [ |'  |   |
+........|E17 |E11 |G16 |D17|D11|C11|B13|A17
 --------|----|----|----|---|---|---|---|---
 ..KBD12:|Find|+   |Help|Se-| } |Re-|C:L| |
 ........|    |=   |    |lect ] |turn...| \
@@ -93,14 +94,14 @@ ________|D7  |D6  |D5  |D4 |D3 |D2 |D1 |D0
   [R] = Reserved
   NOTE 1) N0-N9, N-, N. and N, refer to numeric keypad
   NOTE 2) N0 can be divided into 2 keys.
-  Normally only the N0 keyswitch is implemented as a double-sized key.
+   Normally only the N0 keyswitch is implemented as a double-sized key.
+   A21 = N0 (right); A20 = N0 (left)
   NOTE 3) Return key occupies 2 positions that are
-  decoded as the Return (C13) key.
+   decoded as the Return (C13) key.  C13 = RETURN (bot.); D13 = RETURN (top)
 
   C:D - Cursor down (B17)
   C:U - Cursor up (C17)
   C:R - Cursor right (B18)
-  C:L - Cursor left (B16)
  */
 
 #include "emu.h"
@@ -179,7 +180,12 @@ const device_type LK201 = &device_creator<lk201_device>;
 
 ROM_START( lk201 )
 	ROM_REGION(0x2000, LK201_CPU_TAG, 0)
+
+//  23-001s9-00.bin is for the newer LK201 version (green LEDs, Motorola 6805)
 	ROM_LOAD( "23-001s9-00.bin", 0x0000, 0x2000, CRC(be293c51) SHA1(a11ae004d2d6055d7279da3560c3e56610a19fdb) )
+
+//  23-004M1 or 23-004M2 are in the older LK201 keyboard with red LEDs (8051)
+
 ROM_END
 
 //-------------------------------------------------
@@ -191,6 +197,7 @@ static ADDRESS_MAP_START( lk201_map, AS_PROGRAM, 8, lk201_device )
 	AM_RANGE(0x0004, 0x0006) AM_READWRITE(ddr_r, ddr_w)
 	AM_RANGE(0x000a, 0x000c) AM_READWRITE(spi_r, spi_w)
 	AM_RANGE(0x000d, 0x0011) AM_READWRITE(sci_r, sci_w)
+	AM_RANGE(0x0012, 0x001b) AM_READWRITE(timer_r, timer_w)
 	AM_RANGE(0x0050, 0x00ff) AM_RAM
 	AM_RANGE(0x0100, 0x1fff) AM_ROM AM_REGION(LK201_CPU_TAG, 0x100)
 ADDRESS_MAP_END
@@ -200,11 +207,11 @@ ADDRESS_MAP_END
 //-------------------------------------------------
 
 static MACHINE_CONFIG_FRAGMENT( lk201 )
-	MCFG_CPU_ADD(LK201_CPU_TAG, M68HC05EG, 2000000) // actually 68HC05C4
+	MCFG_CPU_ADD(LK201_CPU_TAG, M68HC05EG, 4000000) // actually 68HC05C4, clock verified by Lord_Nightmare
 	MCFG_CPU_PROGRAM_MAP(lk201_map)
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD(LK201_SPK_TAG, BEEP, 3250)
+	MCFG_SOUND_ADD(LK201_SPK_TAG, BEEP, 2000)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_CONFIG_END
 
@@ -219,7 +226,7 @@ machine_config_constructor lk201_device::device_mconfig_additions() const
 	return MACHINE_CONFIG_NAME( lk201 );
 }
 
-const rom_entry *lk201_device::device_rom_region() const
+const tiny_rom_entry *lk201_device::device_rom_region() const
 {
 	return ROM_NAME( lk201 );
 }
@@ -259,7 +266,6 @@ const rom_entry *lk201_device::device_rom_region() const
 
 INPUT_PORTS_START( lk201 )
 
-#ifndef KEYBOARD_WORKAROUND
 	PORT_START("KBD0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -440,7 +446,6 @@ INPUT_PORTS_START( lk201 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD ) PORT_NAME("F19")
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-#endif
 INPUT_PORTS_END
 
 
@@ -494,7 +499,10 @@ lk201_device::lk201_device(const machine_config &mconfig, const char *tag, devic
 
 void lk201_device::device_start()
 {
+	m_count = timer_alloc(1);
 	m_tx_handler.resolve_safe();
+
+	m_beeper = timer_alloc(2);
 }
 
 
@@ -504,8 +512,18 @@ void lk201_device::device_start()
 
 void lk201_device::device_reset()
 {
+	m_beeper->adjust(attotime::never);
+
+	m_speaker->set_state(0);
+	m_speaker->set_output_gain(0, 0);
+
+	ddrs[0] = ddrs[1] = ddrs[2] = 0;
+	ports[0] = ports[1] = ports[2] = 0;
+
 	set_data_frame(1, 8, PARITY_NONE, STOP_BITS_1);
 	set_rate(4800);
+	m_count->adjust(attotime::from_hz(1200), 0, attotime::from_hz(1200));
+	memset(m_timer.regs, 0, sizeof(m_timer.regs));
 
 	sci_status = (SCSR_TC | SCSR_TDRE);
 
@@ -521,15 +539,35 @@ void lk201_device::device_reset()
 
 void lk201_device::device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr)
 {
-	device_serial_interface::device_timer(timer, id, param, ptr);
+	switch (id)
+	{
+	case 1:
+		m_timer.tsr |= TSR_OCFL;
+
+		if ((m_timer.tcr & TCR_OCIE) && (m_timer.tsr & TSR_OCFL))
+			m_maincpu->set_input_line(M68HC05EG_INT_TIMER, ASSERT_LINE);
+		break;
+
+	case 2:
+		m_speaker->set_output_gain(0, 0);
+		m_speaker->set_state(0);
+		break;
+
+	default:
+		device_serial_interface::device_timer(timer, id, param, ptr);
 }
+}
+
 
 void lk201_device::rcv_complete()
 {
 	sci_status |= SCSR_RDRF;
 	update_interrupts();
 	receive_register_extract();
-//  printf("lk201 got %02x\n", get_received_char());
+
+	int data = get_received_char();
+	m_kbd_state = data;
+//  printf("\nlk201 got %02x\n", m_kbd_state);
 }
 
 void lk201_device::tra_complete()
@@ -555,6 +593,55 @@ void lk201_device::update_interrupts()
 	}
 }
 
+READ8_MEMBER( lk201_device::timer_r )
+{
+	static UINT16 count;
+
+	UINT8 ret = m_timer.regs[offset];
+
+	switch (offset)
+	{
+	case 8:  // ACRH (high value is stored and reused when reading low)
+		count = (m_maincpu->total_cycles() / 4) & 0x0000ffff;
+		ret = count >> 8;
+		break;
+	case 9:  // ACRL
+		ret = count & 0x00ff;
+		break;
+	}
+
+	if(m_timer.tsr)
+	{
+		m_timer.tsr = 0;
+		m_maincpu->set_input_line(M68HC05EG_INT_TIMER, CLEAR_LINE);
+	}
+	return ret;
+}
+
+WRITE8_MEMBER( lk201_device::timer_w )
+{
+	static UINT16 count;
+	static int save_tsr;
+
+	m_timer.regs[offset] = data;
+
+	switch (offset)
+	{
+	case 4: // OCRH
+		save_tsr = m_timer.tsr; //  prevent crashes in between OCRH / OCRL loads
+		m_timer.tsr &= (255-TSR_OCFL); // OCFL flag tested for zero in TIMER routine
+
+		count = m_timer.ocrh << 8; // store for later (when LOW is written).
+		break;
+	case 5 : // OCRL
+		count |= m_timer.ocrl;
+		m_timer.ocrh = count >> 8;
+
+		m_timer.tsr = save_tsr; // restore flags
+		break;
+	}
+}
+
 READ8_MEMBER( lk201_device::ddr_r )
 {
 	return ddrs[offset];
@@ -564,9 +651,9 @@ WRITE8_MEMBER( lk201_device::ddr_w )
 {
 //  printf("%02x to PORT %c DDR (PC=%x)\n", data, 'A' + offset, m_maincpu->pc());
 
-	send_port(space, offset, ports[offset] & data);
-
+	UINT8 olddata = ddrs[offset];
 	ddrs[offset] = data;
+	send_port(space, offset, ports[offset] & olddata);
 }
 
 READ8_MEMBER( lk201_device::ports_r )
@@ -585,14 +672,17 @@ READ8_MEMBER( lk201_device::ports_r )
 
 WRITE8_MEMBER( lk201_device::ports_w )
 {
-	send_port(space, offset, data);
-
-	ports[offset] = data;
+	UINT8 olddata = ports[offset];
+	ports[offset] = data;            //   "port writes are independent of DDRC"
+	send_port(space, offset, olddata & ddrs[offset]);
+//  printf("\nPORT %c write %02x (OLD = %02x) (DDR = %02x) (PC=%x)\n", 'A' + offset, data, olddata, ddrs[offset], m_maincpu->pc());
 }
 
-void lk201_device::send_port(address_space &space, UINT8 offset, UINT8 data)
+void lk201_device::send_port(address_space &space, UINT8 offset, UINT8 olddata)
 {
-//  printf("PORT %c write %02x (DDR = %02x) (PC=%x)\n", 'A' + offset, data, ddrs[offset], m_maincpu->pc());
+	UINT8 porta = ports[0] & ddrs[0];
+	UINT8 portb = ports[1] & ddrs[1];
+	UINT8 portc = ports[2] & ddrs[2];
 
 	switch (offset)
 	{
@@ -604,41 +694,81 @@ void lk201_device::send_port(address_space &space, UINT8 offset, UINT8 data)
 
 		case 2: // port C
 			// Check for keyboard read strobe
-			if (((data & 0x40) == 0) && (ports[offset] & 0x40))
+			if (((portc & 0x40) == 0) && (olddata & 0x40))
 			{
-#ifndef KEYBOARD_WORKAROUND
-				if (ports[0] & 0x1) kbd_data = m_kbd0->read();
-				if (ports[0] & 0x2) kbd_data = m_kbd1->read();
-				if (ports[0] & 0x4) kbd_data = m_kbd2->read();
-				if (ports[0] & 0x8) kbd_data = m_kbd3->read();
-				if (ports[0] & 0x10) kbd_data = m_kbd4->read();
-				if (ports[0] & 0x20) kbd_data = m_kbd5->read();
-				if (ports[0] & 0x40) kbd_data = m_kbd6->read();
-				if (ports[0] & 0x80) kbd_data = m_kbd7->read();
-				if (ports[1] & 0x1) kbd_data = m_kbd8->read();
-				if (ports[1] & 0x2) kbd_data = m_kbd9->read();
-				if (ports[1] & 0x4) kbd_data = m_kbd10->read();
-				if (ports[1] & 0x8) kbd_data = m_kbd11->read();
-				if (ports[1] & 0x10) kbd_data = m_kbd12->read();
-				if (ports[1] & 0x20) kbd_data = m_kbd13->read();
-				if (ports[1] & 0x40) kbd_data = m_kbd14->read();
-				if (ports[1] & 0x80) kbd_data = m_kbd15->read();
-				if (ports[2] & 0x1) kbd_data = m_kbd16->read();
-				if (ports[2] & 0x2) kbd_data = m_kbd17->read();
+				if (porta & 0x1) kbd_data = m_kbd0->read();
+				if (porta & 0x2) kbd_data = m_kbd1->read();
+				if (porta & 0x4) kbd_data = m_kbd2->read();
+				if (porta & 0x8) kbd_data = m_kbd3->read();
+				if (porta & 0x10) kbd_data = m_kbd4->read();
+				if (porta & 0x20) kbd_data = m_kbd5->read();
+				if (porta & 0x40) kbd_data = m_kbd6->read();
+				if (porta & 0x80) kbd_data = m_kbd7->read();
+				if (portb & 0x1) kbd_data = m_kbd8->read();
+				if (portb & 0x2) kbd_data = m_kbd9->read();
+				if (portb & 0x4) kbd_data = m_kbd10->read();
+				if (portb & 0x8) kbd_data = m_kbd11->read();
+				if (portb & 0x10) kbd_data = m_kbd12->read();
+				if (portb & 0x20) kbd_data = m_kbd13->read();
+				if (portb & 0x40) kbd_data = m_kbd14->read();
+				if (portb & 0x80) kbd_data = m_kbd15->read();
+				if (portc & 0x1) kbd_data = m_kbd16->read();
+				if (portc & 0x2) kbd_data = m_kbd17->read();
 			}
-			// Check for LED update strobe
-			if (((data & 0x80) == 0) && (ports[offset] & 0x80))
-			{
-				// Lower nibble contains the LED values (1 = on, 0 = off)
-				machine().output().set_value("led_wait"   , (led_data & 0x1) == 0);
-				machine().output().set_value("led_compose", (led_data & 0x2) == 0);
-				machine().output().set_value("led_hold"   , (led_data & 0x4) == 0);
-				machine().output().set_value("led_lock"   , (led_data & 0x8) == 0);
-			}
-#endif
 
-			break;
+			// Check for LED update strobe
+			if (((portc & 0x80) == 0) && (olddata & 0x80))
+			{
+			if(ddrs[2] != 0x00)
+			{   // Lower nibble contains the LED values (1 = on, 0 = off)
+				machine().output().set_value("led_wait"   , (led_data & 0x1) == 1);
+				machine().output().set_value("led_compose", (led_data & 0x2) == 2);
+				machine().output().set_value("led_lock"   , (led_data & 0x4) == 4);
+				machine().output().set_value("led_hold"   , (led_data & 0x8) == 8);
+			}
+			if (led_data & 0xf0)
+			{
+				m_speaker->set_state(1);
+				// Beeps < 20 ms are clipped. A key click on a LK201 lasts 2 ms...
+				if(m_kbd_state == LK_CMD_BELL)
+					m_beeper->adjust(attotime::from_msec(125));
+				else
+					m_beeper->adjust(attotime::from_msec(25)); // see note
 	}
+			// Upper 4 bits of LED_DATA contain encoded volume info
+			switch (led_data & 0xf0)
+			{
+				case 0xf0: // 8  - (see TABLE 4 in 68HC05xx ROM)
+					m_speaker->set_output_gain(0, 100.0f);
+					break;
+				case 0xd0: // 7
+					m_speaker->set_output_gain(0, (100 - (12 * 1)) / 100.0f);
+					break;
+				case 0xc0: // 6
+					m_speaker->set_output_gain(0, (100 - (12 * 2)) / 100.0f);
+					break;
+				case 0x60: // 5
+					m_speaker->set_output_gain(0, (100 - (12 * 3)) / 100.0f);
+					break;
+				case 0xb0: // 4
+					m_speaker->set_output_gain(0, (100 - (12 * 4)) / 100.0f);
+					break;
+				case 0xa0: // 3
+					m_speaker->set_output_gain(0, (100 - (12 * 5)) / 100.0f);
+					break;
+				case 0x30: // 2
+					m_speaker->set_output_gain(0, (100 - (12 * 6)) / 100.0f);
+					break;
+				case 0x90: // 1
+					m_speaker->set_output_gain(0, (100 - (12 * 7)) / 100.0f);
+					break;
+				default:
+					;
+			} // switch (volume)
+
+		} // if (update_strobe)
+
+		} // outer switch
 }
 
 READ8_MEMBER( lk201_device::sci_r )

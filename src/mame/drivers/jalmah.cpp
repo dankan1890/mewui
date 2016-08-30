@@ -316,25 +316,25 @@ TILE_GET_INFO_MEMBER(jalmah_state::get_sc3_tile_info)
 
 void jalmah_state::video_start()
 {
-	m_sc0_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
-	m_sc0_tilemap_1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
-	m_sc0_tilemap_2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
-	m_sc0_tilemap_3 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
+	m_sc0_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
+	m_sc0_tilemap_1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
+	m_sc0_tilemap_2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
+	m_sc0_tilemap_3 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
 
-	m_sc1_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
-	m_sc1_tilemap_1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
-	m_sc1_tilemap_2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
-	m_sc1_tilemap_3 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
+	m_sc1_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
+	m_sc1_tilemap_1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
+	m_sc1_tilemap_2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
+	m_sc1_tilemap_3 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc1_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
 
-	m_sc2_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
-	m_sc2_tilemap_1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
-	m_sc2_tilemap_2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
-	m_sc2_tilemap_3 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
+	m_sc2_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
+	m_sc2_tilemap_1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range1_16x16),this),16,16,128,64);
+	m_sc2_tilemap_2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_16x16),this),16,16,64,128);
+	m_sc2_tilemap_3 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc2_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_16x16),this),16,16,32,256);
 
-	m_sc3_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),TILEMAP_SCAN_COLS,8,8,256,32);
-	//m_sc3_tilemap_1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),TILEMAP_SCAN_COLS,8,8,256,32);
-	m_sc3_tilemap_2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_8x8),this),8,8,128,64);
-	m_sc3_tilemap_3 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_8x8),this),8,8,64,128);
+	m_sc3_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),TILEMAP_SCAN_COLS,8,8,256,32);
+	//m_sc3_tilemap_1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),TILEMAP_SCAN_COLS,8,8,256,32);
+	m_sc3_tilemap_2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_8x8),this),8,8,128,64);
+	m_sc3_tilemap_3 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range3_8x8),this),8,8,64,128);
 
 	m_jm_scrollram = std::make_unique<UINT16[]>(0x80/2);
 	m_jm_vregs = std::make_unique<UINT16[]>(0x40/2);
@@ -362,8 +362,8 @@ void jalmah_state::video_start()
 
 VIDEO_START_MEMBER(jalmah_state,urashima)
 {
-	m_sc0_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
-	m_sc3_tilemap_0 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_8x8),this),8,8,128,64);
+	m_sc0_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc0_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range0_16x16),this),16,16,256,32);
+	m_sc3_tilemap_0 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(jalmah_state::get_sc3_tile_info),this),tilemap_mapper_delegate(FUNC(jalmah_state::range2_8x8),this),8,8,128,64);
 
 	m_jm_scrollram = std::make_unique<UINT16[]>(0x80/2);
 	m_jm_vregs = std::make_unique<UINT16[]>(0x40/2);
@@ -1268,13 +1268,13 @@ static INPUT_PORTS_START( kakumei )
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) ) PORT_DIPLOCATION("SW2:1")
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPUNKNOWN_DIPLOC( 0x0002, 0x0002, "SW2:2" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0002, 0x0002, "SW2:2" )   // Unused according to the manual
 	PORT_SERVICE_DIPLOC( 0x0004, IP_ACTIVE_LOW, "SW2:3" )
-	PORT_DIPUNKNOWN_DIPLOC( 0x0008, 0x0008, "SW2:4" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x0010, 0x0010, "SW2:5" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x0020, 0x0020, "SW2:6" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x0040, 0x0040, "SW2:7" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x0080, 0x0080, "SW2:8" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0008, 0x0008, "SW2:4" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0010, 0x0010, "SW2:5" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0020, 0x0020, "SW2:6" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0040, 0x0040, "SW2:7" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x0080, 0x0080, "SW2:8" )   // Unused according to the manual
 	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) ) PORT_DIPLOCATION("SW1:1,2,3")
 	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
@@ -1289,9 +1289,9 @@ static INPUT_PORTS_START( kakumei )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPUNKNOWN_DIPLOC( 0x2000, 0x2000, "SW1:6" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x4000, 0x4000, "SW1:7" )   // Unused according to the manual
-	PORT_DIPUNKNOWN_DIPLOC( 0x8000, 0x8000, "SW1:8" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x2000, 0x2000, "SW1:6" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x4000, 0x4000, "SW1:7" )   // Unused according to the manual
+	PORT_DIPUNUSED_DIPLOC( 0x8000, 0x8000, "SW1:8" )   // Unused according to the manual
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( kakumei2 )

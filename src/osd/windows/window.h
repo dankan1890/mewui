@@ -15,7 +15,11 @@
 #include <windowsx.h>
 #include <mmsystem.h>
 
+#include <chrono>
 #include <mutex>
+#include <memory>
+#include <list>
+
 #include "video.h"
 #include "render.h"
 
@@ -43,22 +47,21 @@
 class win_window_info  : public osd_window
 {
 public:
-	win_window_info(running_machine &machine);
-	virtual ~win_window_info();
+	win_window_info(running_machine &machine, int index, std::shared_ptr<osd_monitor_info> monitor, const osd_window_config *config);
 
 	running_machine &machine() const override { return m_machine; }
 
 	virtual render_target *target() override { return m_target; }
 	int fullscreen() const override { return m_fullscreen; }
 
-	void update();
+	void update() override;
 
-	virtual osd_monitor_info *winwindow_video_window_monitor(const osd_rect *proposed) override;
+	virtual std::shared_ptr<osd_monitor_info> winwindow_video_window_monitor(const osd_rect *proposed) override;
 
 	virtual bool win_has_menu() override
 	{
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-		return GetMenu(m_hwnd) ? true : false;
+		return GetMenu(platform_window<HWND>()) ? true : false;
 #else
 		return false;
 #endif
@@ -68,25 +71,29 @@ public:
 	{
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 		RECT client;
-		GetClientRect(m_hwnd, &client);
+		GetClientRect(platform_window<HWND>(), &client);
 		return osd_dim(client.right - client.left, client.bottom - client.top);
 #else
 		throw ref new Platform::NotImplementedException();
 #endif
 	}
 
-	virtual osd_monitor_info *monitor() const override { return m_monitor; }
+	void capture_pointer() override;
+	void release_pointer() override;
+	void show_pointer() override;
+	void hide_pointer() override;
 
-	void destroy();
+	virtual osd_monitor_info *monitor() const override { return m_monitor.get(); }
+
+	void destroy() override;
 
 	// static
 
-	static void create(running_machine &machine, int index, osd_monitor_info *monitor, const osd_window_config *config);
+	static void create(running_machine &machine, int index, std::shared_ptr<osd_monitor_info> monitor, const osd_window_config *config);
 
 	// static callbacks
 
 	static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-	static unsigned __stdcall thread_entry(void *param);
 
 	// member variables
 
@@ -101,10 +108,10 @@ public:
 	int                 m_ismaximized;
 
 	// monitor info
-	osd_monitor_info *  m_monitor;
-	int                 m_fullscreen;
-	int                 m_fullscreen_safe;
-	float               m_aspect;
+	std::shared_ptr<osd_monitor_info>  m_monitor;
+	int                                m_fullscreen;
+	int                                m_fullscreen_safe;
+	float                              m_aspect;
 
 	// rendering info
 	std::mutex          m_render_lock;
@@ -114,12 +121,9 @@ public:
 	render_layer_config m_targetlayerconfig;
 
 	// input info
-	DWORD               m_lastclicktime;
-	int                 m_lastclickx;
-	int                 m_lastclicky;
-
-	// drawing data
-	osd_renderer *      m_renderer;
+	std::chrono::system_clock::time_point  m_lastclicktime;
+	int                                    m_lastclickx;
+	int                                    m_lastclicky;
 
 private:
 	void draw_video_contents(HDC dc, int update);
@@ -136,6 +140,12 @@ private:
 	void adjust_window_position_after_major_change();
 	void set_fullscreen(int fullscreen);
 
+	static POINT        s_saved_cursor_pos;
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+	static Windows::UI::Core::CoreCursor^ s_cursor;
+#endif
+
 	running_machine &   m_machine;
 };
 
@@ -144,14 +154,6 @@ struct osd_draw_callbacks
 	osd_renderer *(*create)(osd_window *window);
 	void (*exit)(void);
 };
-
-//============================================================
-//  GLOBAL VARIABLES
-//============================================================
-
-// windows
-extern win_window_info *win_window_list;
-
 
 
 //============================================================
@@ -171,11 +173,9 @@ void winwindow_toggle_fsfx(void);
 void winwindow_process_events_periodic(running_machine &machine);
 void winwindow_process_events(running_machine &machine, int ingame, bool nodispatch);
 
-void winwindow_ui_pause_from_window_thread(running_machine &machine, int pause);
-void winwindow_ui_pause_from_main_thread(running_machine &machine, int pause);
+void winwindow_ui_pause(running_machine &machine, int pause);
 int winwindow_ui_is_paused(running_machine &machine);
 
-void winwindow_ui_exec_on_main_thread(void (*func)(void *), void *param);
 void winwindow_dispatch_message(running_machine &machine, MSG *message);
 
 extern int win_create_menu(running_machine &machine, HMENU *menus);

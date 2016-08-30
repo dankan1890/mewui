@@ -41,8 +41,8 @@ public:
 		m_huc6260(*this, "huc6260"),
 		m_cartslot(*this, "cartslot"),
 		m_cd(*this, "pce_cd"),
-		m_joy(*this, "JOY_P"),
-		m_joy6b(*this, "JOY6B_P"),
+		m_joy(*this, "JOY_P.%u", 0),
+		m_joy6b(*this, "JOY6B_P.%u", 0),
 		m_joy_type(*this, "JOY_TYPE"),
 		m_a_card(*this, "A_CARD")
 	{ }
@@ -76,7 +76,6 @@ public:
 	UINT32 screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	DECLARE_MACHINE_START(pce);
 	DECLARE_MACHINE_RESET(mess_pce);
-	DECLARE_WRITE_LINE_MEMBER(pce_irq_changed);
 };
 
 #endif /* PCE_H_ */

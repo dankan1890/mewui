@@ -504,12 +504,16 @@ protected:
 
 private:
 	int m_coin_counter[2];
+	optional_ioport m_test_port;
+	optional_ioport_array<2> m_player_ports;
 };
 
 const device_type COBRA_JVS = &device_creator<cobra_jvs>;
 
 cobra_jvs::cobra_jvs(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-	: jvs_device(mconfig, COBRA_JVS, "JVS (COBRA)", tag, owner, clock, "cobra_jvs", __FILE__)
+	: jvs_device(mconfig, COBRA_JVS, "JVS (COBRA)", tag, owner, clock, "cobra_jvs", __FILE__),
+		m_test_port(*this, ":TEST"),
+		m_player_ports(*this, {":P1", ":P2"})
 {
 	m_coin_counter[0] = 0;
 	m_coin_counter[1] = 0;
@@ -551,13 +555,11 @@ bool cobra_jvs::switches(UINT8 *&buf, UINT8 count_players, UINT8 bytes_per_switc
 	if (count_players > 2 || bytes_per_switch > 2)
 		return false;
 
-	static const char* player_ports[2] = { ":P1", ":P2" };
-
-	*buf++ = read_safe(ioport(":TEST"), 0);
+	*buf++ = m_test_port.read_safe(0);
 
 	for (int i=0; i < count_players; i++)
 	{
-		UINT32 pval = read_safe(ioport(player_ports[i]), 0);
+		UINT32 pval = m_player_ports[i].read_safe(0);
 		for (int j=0; j < bytes_per_switch; j++)
 		{
 			*buf++ = (UINT8)(pval >> ((1-j) * 8));
@@ -578,7 +580,9 @@ bool cobra_jvs::coin_counters(UINT8 *&buf, UINT8 count)
 	*buf++ = m_coin_counter[0] >> 8; *buf++ = m_coin_counter[0];
 
 	if(count > 1)
+	{
 		*buf++ = m_coin_counter[1] >> 8; *buf++ = m_coin_counter[1];
+	}
 
 	return true;
 }
@@ -1726,7 +1730,7 @@ READ32_MEMBER(cobra_state::sub_unk1_r)
 WRITE32_MEMBER(cobra_state::sub_unk1_w)
 {
 	/*
-	if (!(mem_mask & 0xff000000))
+	if (!ACCESSING_BITS_24_31)
 	{
 	    printf("%02X", data >> 24);
 	    ucount++;
@@ -1968,7 +1972,7 @@ WRITE32_MEMBER(cobra_state::sub_sound_dma_w)
 
 	/*
 	static FILE *out;
-	if (out == NULL)
+	if (out == nullptr)
 	    out = fopen("sound.bin", "wb");
 
 	fputc((data >> 24) & 0xff, out);
@@ -2025,26 +2029,26 @@ WRITE8_MEMBER(cobra_state::sub_jvs_w)
 }
 
 static ADDRESS_MAP_START( cobra_sub_map, AS_PROGRAM, 32, cobra_state )
-	AM_RANGE(0x00000000, 0x003fffff) AM_MIRROR(0x80000000) AM_RAM AM_SHARE("sub_ram")                       // Main RAM
-	AM_RANGE(0x70000000, 0x7003ffff) AM_MIRROR(0x80000000) AM_READWRITE(sub_comram_r, sub_comram_w)         // Double buffered shared RAM between Main and Sub
-//  AM_RANGE(0x78000000, 0x780000ff) AM_MIRROR(0x80000000) AM_NOP                                           // SCSI controller (unused)
-	AM_RANGE(0x78040000, 0x7804ffff) AM_MIRROR(0x80000000) AM_DEVREADWRITE16("rfsnd", rf5c400_device, rf5c400_r, rf5c400_w, 0xffffffff)
-	AM_RANGE(0x78080000, 0x7808000f) AM_MIRROR(0x80000000) AM_READWRITE16(sub_ata0_r, sub_ata0_w, 0xffffffff)
-	AM_RANGE(0x780c0010, 0x780c001f) AM_MIRROR(0x80000000) AM_READWRITE16(sub_ata1_r, sub_ata1_w, 0xffffffff)
-	AM_RANGE(0x78200000, 0x782000ff) AM_MIRROR(0x80000000) AM_DEVREADWRITE("k001604", k001604_device, reg_r, reg_w)              // PSAC registers
-	AM_RANGE(0x78210000, 0x78217fff) AM_MIRROR(0x80000000) AM_RAM_WRITE(sub_psac_palette_w) AM_SHARE("paletteram")                      // PSAC palette RAM
-	AM_RANGE(0x78220000, 0x7823ffff) AM_MIRROR(0x80000000) AM_DEVREADWRITE("k001604", k001604_device, tile_r, tile_w)            // PSAC tile RAM
-	AM_RANGE(0x78240000, 0x7827ffff) AM_MIRROR(0x80000000) AM_DEVREADWRITE("k001604", k001604_device, char_r, char_w)            // PSAC character RAM
-	AM_RANGE(0x78280000, 0x7828000f) AM_MIRROR(0x80000000) AM_NOP                                           // ???
-	AM_RANGE(0x78300000, 0x7830000f) AM_MIRROR(0x80000000) AM_READWRITE(sub_psac2_r, sub_psac2_w)           // PSAC
-	AM_RANGE(0x7e000000, 0x7e000003) AM_MIRROR(0x80000000) AM_READWRITE(sub_unk7e_r, sub_debug_w)
-	AM_RANGE(0x7e040000, 0x7e041fff) AM_MIRROR(0x80000000) AM_DEVREADWRITE8("m48t58", timekeeper_device, read, write, 0xffffffff)    /* M48T58Y RTC/NVRAM */
-	AM_RANGE(0x7e180000, 0x7e180003) AM_MIRROR(0x80000000) AM_READWRITE(sub_unk1_r, sub_unk1_w)             // TMS57002?
-	AM_RANGE(0x7e200000, 0x7e200003) AM_MIRROR(0x80000000) AM_READWRITE(sub_config_r, sub_config_w)
-	AM_RANGE(0x7e280000, 0x7e28ffff) AM_MIRROR(0x80000000) AM_NOP                                           // LANC
-	AM_RANGE(0x7e300000, 0x7e30ffff) AM_MIRROR(0x80000000) AM_NOP                                           // LANC
-	AM_RANGE(0x7e380000, 0x7e380003) AM_MIRROR(0x80000000) AM_READWRITE(sub_mainbd_r, sub_mainbd_w)
-	AM_RANGE(0x7ff80000, 0x7fffffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION("user2", 0)                     /* Boot ROM */
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_SHARE("sub_ram")                       // Main RAM
+	AM_RANGE(0x70000000, 0x7003ffff) AM_READWRITE(sub_comram_r, sub_comram_w)         // Double buffered shared RAM between Main and Sub
+//  AM_RANGE(0x78000000, 0x780000ff) AM_NOP                                           // SCSI controller (unused)
+	AM_RANGE(0x78040000, 0x7804ffff) AM_DEVREADWRITE16("rfsnd", rf5c400_device, rf5c400_r, rf5c400_w, 0xffffffff)
+	AM_RANGE(0x78080000, 0x7808000f) AM_READWRITE16(sub_ata0_r, sub_ata0_w, 0xffffffff)
+	AM_RANGE(0x780c0010, 0x780c001f) AM_READWRITE16(sub_ata1_r, sub_ata1_w, 0xffffffff)
+	AM_RANGE(0x78200000, 0x782000ff) AM_DEVREADWRITE("k001604", k001604_device, reg_r, reg_w)              // PSAC registers
+	AM_RANGE(0x78210000, 0x78217fff) AM_RAM_WRITE(sub_psac_palette_w) AM_SHARE("paletteram")                      // PSAC palette RAM
+	AM_RANGE(0x78220000, 0x7823ffff) AM_DEVREADWRITE("k001604", k001604_device, tile_r, tile_w)            // PSAC tile RAM
+	AM_RANGE(0x78240000, 0x7827ffff) AM_DEVREADWRITE("k001604", k001604_device, char_r, char_w)            // PSAC character RAM
+	AM_RANGE(0x78280000, 0x7828000f) AM_NOP                                           // ???
+	AM_RANGE(0x78300000, 0x7830000f) AM_READWRITE(sub_psac2_r, sub_psac2_w)           // PSAC
+	AM_RANGE(0x7e000000, 0x7e000003) AM_READWRITE(sub_unk7e_r, sub_debug_w)
+	AM_RANGE(0x7e040000, 0x7e041fff) AM_DEVREADWRITE8("m48t58", timekeeper_device, read, write, 0xffffffff)    /* M48T58Y RTC/NVRAM */
+	AM_RANGE(0x7e180000, 0x7e180003) AM_READWRITE(sub_unk1_r, sub_unk1_w)             // TMS57002?
+	AM_RANGE(0x7e200000, 0x7e200003) AM_READWRITE(sub_config_r, sub_config_w)
+	AM_RANGE(0x7e280000, 0x7e28ffff) AM_NOP                                           // LANC
+	AM_RANGE(0x7e300000, 0x7e30ffff) AM_NOP                                           // LANC
+	AM_RANGE(0x7e380000, 0x7e380003) AM_READWRITE(sub_mainbd_r, sub_mainbd_w)
+	AM_RANGE(0x7ff80000, 0x7fffffff) AM_ROM AM_REGION("user2", 0)                     /* Boot ROM */
 ADDRESS_MAP_END
 
 

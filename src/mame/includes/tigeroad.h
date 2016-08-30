@@ -1,9 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Phil Stroffolino
+
 #include "video/bufsprite.h"
 #include "sound/msm5205.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "machine/gen_latch.h"
 #include "sound/2203intf.h"
 #include "sound/msm5205.h"
 #include "cpu/m6805/m6805.h"
@@ -24,6 +26,7 @@ public:
 		m_palette(*this, "palette"),
 		m_mcu(*this, "mcu"),
 		m_spritegen(*this, "spritegen"),
+		m_soundlatch(*this, "soundlatch"),
 		m_has_coinlock(1)
 	{ }
 
@@ -48,7 +51,6 @@ public:
 	virtual void video_start() override;
 	UINT32 screen_update_tigeroad(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	void f1dream_protection_w(address_space &space);
-	DECLARE_WRITE_LINE_MEMBER(irqhandler);
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_audiocpu;
 	optional_device<msm5205_device> m_msm;
@@ -56,6 +58,7 @@ public:
 	required_device<palette_device> m_palette;
 	optional_device<cpu_device> m_mcu;
 	required_device<tigeroad_spr_device> m_spritegen;
+	required_device<generic_latch_8_device> m_soundlatch;
 
 	UINT16     m_control[2];
 

@@ -233,7 +233,7 @@ static const char *intv_get_slot(int type)
  call load
  -------------------------------------------------*/
 
-int intv_cart_slot_device::load_fullpath()
+image_init_result intv_cart_slot_device::load_fullpath()
 {
 	UINT8 temp;
 	UINT8 num_segments;
@@ -247,21 +247,20 @@ int intv_cart_slot_device::load_fullpath()
 	UINT8 low_byte;
 
 	UINT8 *ROM;
-	const char *file_type = filetype();
 
 	/* if it is in .rom format, we enter here */
-	if (!core_stricmp (file_type, "rom"))
+	if (is_filetype("rom"))
 	{
 		// header
 		fread(&temp, 1);
 		if (temp != 0xa8)
-			return IMAGE_INIT_FAIL;
+			return image_init_result::FAIL;
 
 		fread(&num_segments, 1);
 
 		fread(&temp, 1);
 		if (temp != (num_segments ^ 0xff))
-			return IMAGE_INIT_FAIL;
+			return image_init_result::FAIL;
 
 		m_cart->rom_alloc(0x20000, tag());
 		ROM = (UINT8 *)m_cart->get_rom_base();
@@ -293,7 +292,7 @@ int intv_cart_slot_device::load_fullpath()
 		{
 			fread(&temp, 1);
 		}
-		return IMAGE_INIT_PASS;
+		return image_init_result::PASS;
 	}
 	/* otherwise, we load it as a .bin file, using extrainfo from intv.hsi in place of .cfg */
 	else
@@ -384,11 +383,11 @@ int intv_cart_slot_device::load_fullpath()
 			}
 		}
 
-		return IMAGE_INIT_PASS;
+		return image_init_result::PASS;
 	}
 }
 
-bool intv_cart_slot_device::call_load()
+image_init_result intv_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
@@ -396,8 +395,8 @@ bool intv_cart_slot_device::call_load()
 			return load_fullpath();
 		else
 		{
-			UINT16 offset[] = { 0x400, 0x2000, 0x4000, 0x4800, 0x5000, 0x6000, 0x7000, 0x8000, 0x9000, 0xa000, 0xb000, 0xc000, 0xd000, 0xe000, 0xf000};
-			const char* region_name[] = {"0400", "2000", "4000", "4800", "5000", "6000", "7000", "8000", "9000", "A000", "B000", "C000", "D000", "E000", "F000"};
+			UINT16 offset[] = { 0x400, 0x2000, 0x4000, 0x4800, 0x5000, 0x6000, 0x7000, 0x8000, 0x8800, 0x9000, 0xa000, 0xb000, 0xc000, 0xd000, 0xe000, 0xf000};
+			const char* region_name[] = {"0400", "2000", "4000", "4800", "5000", "6000", "7000", "8000", "8800", "9000", "A000", "B000", "C000", "D000", "E000", "F000"};
 			const char *pcb_name = get_feature("slot");
 			bool extra_bank = false;
 
@@ -416,7 +415,7 @@ bool intv_cart_slot_device::call_load()
 			m_cart->rom_alloc(extra_bank ? 0x22000 : 0x20000, tag());
 			ROM = m_cart->get_rom_base();
 
-			for (int i = 0; i < 15; i++)
+			for (int i = 0; i < 16; i++)
 			{
 				address = offset[i];
 				size = get_software_region_length(region_name[i]);
@@ -436,22 +435,11 @@ bool intv_cart_slot_device::call_load()
 				m_cart->ram_alloc(get_software_region_length("ram"));
 
 			//printf("Type: %s\n", intv_get_slot(m_type));
-			return IMAGE_INIT_PASS;
+			return image_init_result::PASS;
 		}
 	}
 
-	return IMAGE_INIT_PASS;
-}
-
-
-/*-------------------------------------------------
- call softlist load
- -------------------------------------------------*/
-
-bool intv_cart_slot_device::call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry)
-{
-	machine().rom_load().load_software_part_region(*this, swlist, swname, start_entry);
-	return TRUE;
+	return image_init_result::PASS;
 }
 
 

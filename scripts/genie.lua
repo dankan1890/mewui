@@ -1,5 +1,6 @@
 -- license:BSD-3-Clause
 -- copyright-holders:MAMEdev Team
+STANDALONE = false
 
 newoption {
 	trigger = 'build-dir',
@@ -74,10 +75,17 @@ end
 
 function addprojectflags()
 	local version = str_to_version(_OPTIONS["gcc_version"])
-	if _OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "gcc") and (version >= 50100) then
-		buildoptions_cpp {
-			"-Wsuggest-override",
-		}
+	if _OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "gcc") then
+		if version >= 50100 then
+			buildoptions_cpp {
+				"-Wsuggest-override",
+			}
+		end
+		if version >= 60000 then
+			buildoptions_cpp {
+				"-flifetime-dse=1",
+			}
+		end
 	end
 end
 
@@ -86,6 +94,7 @@ SOUNDS  = {}
 MACHINES  = {}
 VIDEOS = {}
 BUSES  = {}
+FORMATS  = {}
 
 newoption {
 	trigger = "with-tools",
@@ -354,15 +363,6 @@ newoption {
 }
 
 newoption {
-	trigger = "FORCE_VERSION_COMPILE",
-	description = "Force compiling of version.c file.",
-	allowed = {
-		{ "0",   "Disabled"     },
-		{ "1",   "Enabled"      },
-	}
-}
-
-newoption {
 	trigger = "PLATFORM",
 	description = "Target machine platform (x86,arm,...)",
 }
@@ -374,6 +374,16 @@ newoption {
 		{ "0",   "Disabled"     },
 		{ "1",   "Enabled"      },
 	}
+}
+
+newoption {
+	trigger = "DEBUG_DIR",
+	description = "Default directory for debugger.",
+}
+
+newoption {
+	trigger = "DEBUG_ARGS",
+	description = "Arguments for running debug build.",
 }
 
 dofile ("extlib.lua")
@@ -476,7 +486,7 @@ configuration { "Release", "vs*" }
 		"Optimize",
 	}
 
--- Force VS2013/15 targets to use bundled SDL2
+-- Force VS2015 targets to use bundled SDL2
 if string.sub(_ACTION,1,4) == "vs20" and _OPTIONS["osd"]=="sdl" then
 	if _OPTIONS["with-bundled-sdl2"]==nil then
 		_OPTIONS["with-bundled-sdl2"] = "1"
@@ -510,7 +520,7 @@ if (_OPTIONS["SOURCES"] == nil) then
 	dofile (path.join("target", _OPTIONS["target"],_OPTIONS["subtarget"] .. ".lua"))
 end
 
-configuration { "gmake" }
+configuration { "gmake or ninja" }
 	flags {
 		"SingleOutputDir",
 	}
@@ -543,7 +553,7 @@ configuration { "Debug" }
 	defines {
 		"MAME_DEBUG",
 		"MAME_PROFILER",
-		"BGFX_CONFIG_DEBUG=1",
+--      "BGFX_CONFIG_DEBUG=1",
 	}
 
 if _OPTIONS["FASTDEBUG"]=="1" then
@@ -670,7 +680,7 @@ end
 		"LUA_COMPAT_5_2",
 	}
 
-	if _ACTION == "gmake" then
+	if _ACTION == "gmake" or _ACTION == "ninja" then
 
 	--we compile C-only to C99 standard with GNU extensions
 
@@ -703,7 +713,7 @@ end
 -- this speeds it up a bit by piping between the preprocessor/compiler/assembler
 	if not ("pnacl" == _OPTIONS["gcc"]) then
 		buildoptions {
-			"--pipe",
+			"-pipe",
 		}
 	end
 -- add -g if we need symbols, and ensure we have frame pointers
@@ -948,27 +958,20 @@ end
 			buildoptions {
 				"-Wno-cast-align",
 				"-Wno-tautological-compare",
-				"-Wno-dynamic-class-memaccess",
 				"-Wno-unused-value",
-				"-Wno-inline-new-delete",
 				"-Wno-constant-logical-operand",
-				"-Wno-deprecated-register",
+				"-Wno-missing-braces", -- clang is not as permissive as GCC about std::array initialization
+				"-fdiagnostics-show-note-include-stack",
 			}
 			if (version >= 30500) then
 				buildoptions {
-					"-Wno-absolute-value",
 					"-Wno-unknown-warning-option",
 					"-Wno-extern-c-compat",
 				}
 			end
-			if (version >= 70000) then
-				buildoptions {
-					"-Wno-tautological-undefined-compare",
-				}
-			end
 		else
-			if (version < 40900) then
-				print("GCC version 4.9 or later needed")
+			if (version < 50000) then
+				print("GCC version 5.0 or later needed")
 				os.exit(-1)
 			end
 				buildoptions {
@@ -978,6 +981,12 @@ end
 				}
 		end
 	end
+
+if (_OPTIONS["PLATFORM"]=="alpha") then
+	defines {
+		"PTR64=1",
+	}
+end
 
 if (_OPTIONS["PLATFORM"]=="arm") then
 	buildoptions {
@@ -989,6 +998,12 @@ if (_OPTIONS["PLATFORM"]=="arm64") then
 	buildoptions {
 		"-Wno-cast-align",
 	}
+	defines {
+		"PTR64=1",
+	}
+end
+
+if (_OPTIONS["PLATFORM"]=="mips64") then
 	defines {
 		"PTR64=1",
 	}
@@ -1107,6 +1122,7 @@ configuration { "mingw*" }
 			"-static-libgcc",
 			"-static-libstdc++",
 			"-static",
+			"-Wl,--start-group",
 		}
 		links {
 			"user32",
@@ -1133,6 +1149,7 @@ configuration { "vs*" }
 			"_WIN32",
 			"_CRT_NONSTDC_NO_DEPRECATE",
 			"_CRT_SECURE_NO_DEPRECATE",
+			"_CRT_STDIO_LEGACY_WIDE_SPECIFIERS",
 		}
 		links {
 			"user32",
@@ -1253,7 +1270,7 @@ end
 		includedirs {
 			MAME_DIR .. "3rdparty/dxsdk/Include"
 		}
-configuration { "vs2015" }
+configuration { "vs2015*" }
 		buildoptions {
 			"/wd4334", -- warning C4334: '<<': result of 32-bit shift implicitly converted to 64 bits (was 64-bit shift intended?)
 			"/wd4456", -- warning C4456: declaration of 'xxx' hides previous local declaration
@@ -1282,6 +1299,12 @@ configuration { "winphone8* or winstore8*" }
 	}
 
 
+-- adding this till we sort out asserts in debug mode
+configuration { "Debug", "gmake" }
+	buildoptions_cpp {
+		"-Wno-terminate",
+	}
+
 configuration { }
 
 if (_OPTIONS["SOURCES"] ~= nil) then
@@ -1297,6 +1320,13 @@ if (not os.isfile(path.join("src", "osd",  _OPTIONS["osd"] .. ".lua"))) then
 end
 dofile(path.join("src", "osd", _OPTIONS["osd"] .. ".lua"))
 dofile(path.join("src", "lib.lua"))
+if (MACHINES["NETLIST"]~=null or _OPTIONS["with-tools"]) then
+dofile(path.join("src", "netlist.lua"))
+end
+--if (STANDALONE~=true) then
+dofile(path.join("src", "formats.lua"))
+formatsProject(_OPTIONS["target"],_OPTIONS["subtarget"])
+--end
 
 group "3rdparty"
 dofile(path.join("src", "3rdparty.lua"))
@@ -1306,12 +1336,18 @@ group "core"
 
 dofile(path.join("src", "emu.lua"))
 
+if (STANDALONE~=true) then
+	dofile(path.join("src", "mame", "frontend.lua"))
+end
+
 group "devices"
 dofile(path.join("src", "devices.lua"))
 devicesProject(_OPTIONS["target"],_OPTIONS["subtarget"])
 
-group "drivers"
-findfunction("createProjects_" .. _OPTIONS["target"] .. "_" .. _OPTIONS["subtarget"])(_OPTIONS["target"], _OPTIONS["subtarget"])
+if (STANDALONE~=true) then
+	group "drivers"
+	findfunction("createProjects_" .. _OPTIONS["target"] .. "_" .. _OPTIONS["subtarget"])(_OPTIONS["target"], _OPTIONS["subtarget"])
+end
 
 group "emulator"
 dofile(path.join("src", "main.lua"))

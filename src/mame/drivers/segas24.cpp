@@ -339,7 +339,7 @@ Notes:
 #include "cpu/m68000/m68000.h"
 #include "sound/ym2151.h"
 #include "sound/dac.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "machine/fd1094.h"
 #include "machine/nvram.h"
 #include "video/segaic24.h"
@@ -518,19 +518,19 @@ UINT8 segas24_state::hotrod_io_r(UINT8 port)
 	switch(port)
 	{
 	case 0:
-		return ioport("P1")->read();
+		return m_p1->read();
 	case 1:
-		return ioport("P2")->read();
+		return m_p2->read();
 	case 2:
-		return read_safe(ioport("P3"), 0xff);
+		return m_p3.read_safe(0xff);
 	case 3:
 		return 0xff;
 	case 4:
-		return ioport("SERVICE")->read();
+		return m_service->read();
 	case 5: // Dip switches
-		return ioport("COINAGE")->read();
+		return m_coinage->read();
 	case 6:
-		return ioport("DSW")->read();
+		return m_dsw->read();
 	case 7: // DAC
 		return 0xff;
 	}
@@ -544,20 +544,20 @@ UINT8 segas24_state::dcclub_io_r(UINT8 port)
 	case 0:
 	{
 		static const UINT8 pos[16] = { 0, 1, 3, 2, 6, 4, 12, 8, 9 };
-		return (ioport("P1")->read() & 0xf) | ((~pos[ioport("PADDLE")->read()>>4]<<4) & 0xf0);
+		return (m_p1->read() & 0xf) | ((~pos[m_paddle->read()>>4]<<4) & 0xf0);
 	}
 	case 1:
-		return ioport("P2")->read();
+		return m_p2->read();
 	case 2:
 		return 0xff;
 	case 3:
 		return 0xff;
 	case 4:
-		return ioport("SERVICE")->read();
+		return m_service->read();
 	case 5: // Dip switches
-		return ioport("COINAGE")->read();
+		return m_coinage->read();
 	case 6:
-		return ioport("DSW")->read();
+		return m_dsw->read();
 	case 7: // DAC
 		return 0xff;
 	}
@@ -567,8 +567,6 @@ UINT8 segas24_state::dcclub_io_r(UINT8 port)
 
 UINT8 segas24_state::mahmajn_io_r(UINT8 port)
 {
-	static const char *const keynames[] = { "MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5", "P1", "P2" };
-
 	switch(port)
 	{
 	case 0:
@@ -576,15 +574,15 @@ UINT8 segas24_state::mahmajn_io_r(UINT8 port)
 	case 1:
 		return 0xff;
 	case 2:
-		return ioport(keynames[cur_input_line])->read();
+		return m_mj_inputs[cur_input_line].read_safe(0xff);
 	case 3:
 		return 0xff;
 	case 4:
-		return ioport("SERVICE")->read();
+		return m_service->read();
 	case 5: // Dip switches
-		return ioport("COINAGE")->read();
+		return m_coinage->read();
 	case 6:
-		return ioport("DSW")->read();
+		return m_dsw->read();
 	case 7: // DAC
 		return 0xff;
 	}
@@ -624,12 +622,10 @@ void segas24_state::hotrod_io_w(UINT8 port, UINT8 data)
 
 WRITE16_MEMBER( segas24_state::hotrod3_ctrl_w )
 {
-	static const char *const portnames[] = { "PEDAL1", "PEDAL2", "PEDAL3", "PEDAL4" };
-
 	if(ACCESSING_BITS_0_7)
 	{
 		data &= 3;
-		hotrod_ctrl_cur = read_safe(ioport(portnames[data]), 0);
+		hotrod_ctrl_cur = m_pedals[data].read_safe(0);
 	}
 }
 
@@ -641,21 +637,21 @@ READ16_MEMBER( segas24_state::hotrod3_ctrl_r )
 		{
 			// Steering dials
 			case 0:
-				return read_safe(ioport("DIAL1"), 0) & 0xff;
+				return m_dials[0].read_safe(0) & 0xff;
 			case 1:
-				return read_safe(ioport("DIAL1"), 0) >> 8;
+				return m_dials[0].read_safe(0) >> 8;
 			case 2:
-				return read_safe(ioport("DIAL2"), 0) & 0xff;
+				return m_dials[1].read_safe(0) & 0xff;
 			case 3:
-				return read_safe(ioport("DIAL2"), 0) >> 8;
+				return m_dials[1].read_safe(0) >> 8;
 			case 4:
-				return read_safe(ioport("DIAL3"), 0) & 0xff;
+				return m_dials[2].read_safe(0) & 0xff;
 			case 5:
-				return read_safe(ioport("DIAL3"), 0) >> 8;
+				return m_dials[2].read_safe(0) >> 8;
 			case 6:
-				return read_safe(ioport("DIAL4"), 0) & 0xff;
+				return m_dials[3].read_safe(0) & 0xff;
 			case 7:
-				return read_safe(ioport("DIAL4"), 0) >> 8;
+				return m_dials[3].read_safe(0) >> 8;
 
 			case 8:
 			{
@@ -680,6 +676,64 @@ WRITE16_MEMBER( segas24_state::iod_w )
 	logerror("IO daughterboard write %02x, %04x & %04x (%x)\n", offset, data, mem_mask, space.device().safe_pc());
 }
 
+/* HACK for Gain Ground to avoid 'forced free play' issue
+
+Notes from Olivier
+
+The encrypted CPU does:
+
+849c:  moveq #-1, d1
+849e:  move.w 0xa00000, d0
+84a4:  cmp.w 0xa00000, d0
+84aa:  beq.s 84a4
+84ac:  add.w #0x200, d0
+84b0:  andi.w #0xfff, d0
+84b4:  cmp.w 0xa00000, d0 // 16 cycles
+84ba:  dbeq d1, 84b4      // 10 cycles
+84be:  addi.w #0x1b5f, d1
+84c2:  bpl 84c8
+84c4:  st 0x404           // Force freeplay
+84c8:  ...
+
+
+a00000 is the timer 12bit counter.  It is configured to be clocked by
+the hsync pulse.  That code counts how many loops it takes for the
+counter to count 512 times.  The force freeplay happens if the count
+is more than 7007.
+
+Pixel clock is 16MHz, hsync is every 656 pixels, cpu clock is 10MHz.
+So that's 656*10/16=410 cpu clocks per hsync, or 410*512=209902 total.
+With 26 cycles per loop, that's 8073 loops.  Freeplay it is.
+
+--- Update from Charles MacDonald ---
+
+I ran some tests. For the two CPUs, A (68000) and B (FD1094), normally
+there are no wait states when CPU A accesses $A00000. As that address
+is on CPU A's bus, CPU B's accesses to it take twice as long (eight 10 MHz
+clocks instead of four) due to contention. The only exception is when
+CPU A is completely idle from a STOP instruction, at which point CPU B
+can access that memory at full speed (four clocks per access).
+
+Assuming Gain Ground has CPU A running code out of BIOS ROM or work RAM,
+and CPU B is running out of work RAM, then each one of those $A00000
+accesses will eat up double the time.
+
+The other factor is DRAM refresh for the work RAM, both CPUs have some
+memory access stretched out by four cycles every 19 to 20 ms. It looks
+like both DRAM banks are refreshed in parallel which seems to explain
+why refresh on CPU A's bus doesn't count as contention for CPU B and
+vice-versa. So there's only refresh event that eats up time for both
+CPUs to worry about.
+
+
+
+*/
+
+TIMER_CALLBACK_MEMBER(segas24_state::gground_hack_timer_callback)
+{
+	m_subcpu->set_clock_scale(1.0f);
+}
+
 
 // Cpu #1 reset control
 
@@ -691,8 +745,13 @@ void segas24_state::reset_reset()
 		if(resetcontrol & 2) {
 			m_subcpu->set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
 			m_subcpu->set_input_line(INPUT_LINE_RESET, PULSE_LINE);
-//          osd_printf_debug("enable 2nd cpu!\n");
-//          debugger_break(machine);
+			//osd_printf_debug("enable 2nd cpu!\n");
+			//machine().debug_break();
+			if (m_gground_hack_timer)
+			{
+				m_subcpu->set_clock_scale(0.7f); // reduce clock speed temporarily so a check passes, see notes above
+				m_gground_hack_timer->adjust(attotime::from_seconds(2));
+			}
 
 		} else
 			m_subcpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
@@ -714,7 +773,7 @@ void segas24_state::reset_control_w(UINT8 data)
 
 void segas24_state::reset_bank()
 {
-	if (m_romboard != NULL)
+	if (m_romboard != nullptr)
 	{
 		membank("bank1")->set_entry(curbank & 15);
 		membank("bank2")->set_entry(curbank & 15);
@@ -1263,7 +1322,7 @@ void segas24_state::machine_start()
 	if (track_size)
 		machine().device<nvram_device>("floppy_nvram")->set_base(memregion("floppy")->base(), 2*track_size);
 
-	if (m_romboard != NULL)
+	if (m_romboard != nullptr)
 	{
 		UINT8 *usr1 = m_romboard->base();
 		membank("bank1")->configure_entries(0, 16, usr1, 0x40000);
@@ -2450,6 +2509,8 @@ DRIVER_INIT_MEMBER(segas24_state,gground)
 	io_w = &segas24_state::hotrod_io_w;
 	mlatch_table = nullptr;
 	track_size = 0x2d00;
+
+	m_gground_hack_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(segas24_state::gground_hack_timer_callback), this));
 }
 
 DRIVER_INIT_MEMBER(segas24_state,crkdown)

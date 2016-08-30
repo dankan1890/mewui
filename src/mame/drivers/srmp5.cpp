@@ -67,15 +67,16 @@ class srmp5_state : public driver_device
 {
 public:
 	srmp5_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-			m_gfxdecode(*this, "gfxdecode"),
-			m_palette(*this, "palette"),
-			m_maincpu(*this,"maincpu"),
-			m_subcpu(*this, "sub"),
-			m_chrrom(*this, "chr"),
-			m_keys(*this, "KEY"),
-			m_chrbank(0)
-	{ }
+		: driver_device(mconfig, type, tag)
+		, m_gfxdecode(*this, "gfxdecode")
+		, m_palette(*this, "palette")
+		, m_maincpu(*this,"maincpu")
+		, m_subcpu(*this, "sub")
+		, m_chrrom(*this, "chr")
+		, m_keys(*this, "KEY.%u", 0)
+		, m_chrbank(0)
+	{
+	}
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
 	required_device<st0016_cpu_device> m_maincpu;
@@ -377,11 +378,10 @@ static ADDRESS_MAP_START( srmp5_mem, AS_PROGRAM, 32, srmp5_state )
 	AM_RANGE(0x0a180000, 0x0a180003) AM_READNOP // write 0x00000400
 	AM_RANGE(0x0a180000, 0x0a18011f) AM_READWRITE(srmp5_vidregs_r, srmp5_vidregs_w)
 	AM_RANGE(0x0a200000, 0x0a3fffff) AM_READWRITE(tileram_r, tileram_w)
+	AM_RANGE(0x0fc00000, 0x0fdfffff) AM_MIRROR(0x10000000) AM_ROM AM_REGION("sub", 0)
 
 	AM_RANGE(0x1eff0000, 0x1eff001f) AM_WRITEONLY
 	AM_RANGE(0x1eff003c, 0x1eff003f) AM_READ(irq_ack_clear)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_ROM AM_REGION("sub", 0)
-	AM_RANGE(0x2fc00000, 0x2fdfffff) AM_ROM AM_REGION("sub", 0)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( st0016_mem, AS_PROGRAM, 8, srmp5_state )
@@ -610,7 +610,7 @@ ROM_END
 
 DRIVER_INIT_MEMBER(srmp5_state,srmp5)
 {
-	m_maincpu->st0016_game = 9;
+	m_maincpu->set_st0016_game_flag(9);
 
 	m_tileram = std::make_unique<UINT16[]>(0x100000/2);
 	m_sprram  = std::make_unique<UINT16[]>(0x080000/2);

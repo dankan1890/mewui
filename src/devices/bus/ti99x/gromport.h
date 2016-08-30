@@ -1,11 +1,9 @@
 // license:LGPL-2.1+
 // copyright-holders:Michael Zapf
 /***************************************************************************
-    Gromport of the TI-99 consoles
+    Gromport (Cartridge port) of the TI-99 consoles
 
     For details see gromport.c
-
-    Michael Zapf, July 2012
 ***************************************************************************/
 
 #ifndef __GROMPORT__
@@ -14,6 +12,8 @@
 #include "emu.h"
 #include "ti99defs.h"
 #include "machine/tmc0430.h"
+#include "softlist_dev.h"
+
 
 extern const device_type GROMPORT;
 
@@ -42,9 +42,6 @@ public:
 	template<class _Object> static devcb_base &static_set_reset_callback(device_t &device, _Object object) { return downcast<gromport_device &>(device).m_console_reset.set_callback(object); }
 
 	void    cartridge_inserted();
-	// void    set_grom_base(UINT16 grombase, UINT16 grommask);
-	// UINT16  get_grom_base() { return m_grombase; }
-	// UINT16  get_grom_mask() { return m_grommask; }
 
 protected:
 	virtual void device_start() override;
@@ -59,8 +56,6 @@ private:
 	devcb_write_line   m_console_reset;
 	int             m_mask;
 	int m_romgq;
-	// UINT16              m_grombase;
-	// UINT16              m_grommask;
 };
 
 SLOT_INTERFACE_EXTERN(gromport4);
@@ -104,21 +99,18 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(gclock_in);
 
 	bool    is_available() { return m_pcb != nullptr; }
-	bool    has_grom();
 	void    set_slot(int i);
-	// UINT16  grom_base();
-	// UINT16  grom_mask();
 
 protected:
 	virtual void device_start() override { };
 	virtual void device_config_complete() override;
 	virtual machine_config_constructor device_mconfig_additions() const override;
-	virtual const rom_entry* device_rom_region() const override;
+	virtual const tiny_rom_entry* device_rom_region() const override;
 
 	// Image handling: implementation of methods which are abstract in the parent
-	bool call_load() override;
+	image_init_result call_load() override;
 	void call_unload() override;
-	bool call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry) override;
+	virtual const software_list_loader &get_software_list_loader() const override { return rom_software_list_loader::instance(); }
 
 	void prepare_cartridge();
 
@@ -131,16 +123,14 @@ protected:
 	bool is_reset_on_load() const override       { return false; }
 	const char *image_interface() const override { return "ti99_cart"; }
 	const char *file_extensions() const override { return "rpk"; }
-	const option_guide *create_option_guide() const override { return nullptr; }
 
 private:
 	bool    m_readrom;
-	bool    m_softlist;
 	int     m_pcbtype;
 	int     m_slot;
 	int     get_index_from_tagname();
 
-	ti99_cartridge_pcb*                 m_pcb;          // inbound
+	std::unique_ptr<ti99_cartridge_pcb> m_pcb;          // inbound
 	ti99_cartridge_connector_device*    m_connector;    // outbound
 
 	// RPK which is associated to this cartridge
@@ -177,7 +167,7 @@ protected:
 	virtual void device_config_complete() override;
 
 	gromport_device*    m_gromport;
-	int     m_gsel;
+	bool     m_grom_selected;
 };
 
 /*
@@ -229,6 +219,7 @@ public:
 
 	void insert(int index, ti99_cartridge_device* cart) override;
 	void remove(int index) override;
+	DECLARE_INPUT_CHANGED_MEMBER( switch_changed );
 
 protected:
 	virtual void device_start() override;
@@ -272,7 +263,7 @@ protected:
 	virtual void device_reset() override;
 
 	virtual machine_config_constructor device_mconfig_additions() const override;
-	virtual const rom_entry* device_rom_region() const override;
+	virtual const tiny_rom_entry* device_rom_region() const override;
 	virtual ioport_constructor device_input_ports() const override;
 
 	// device_nvram_interface
@@ -283,6 +274,7 @@ protected:
 private:
 	int     m_gk_switch[6];         // Used to cache the switch settings.
 
+	bool    m_romspace_selected;
 	int     m_ram_page;
 	int     m_grom_address;
 	UINT8*  m_ram_ptr;
@@ -316,15 +308,13 @@ protected:
 	virtual DECLARE_WRITE8_MEMBER(cruwrite);
 
 	DECLARE_WRITE_LINE_MEMBER(romgq_line);
-	DECLARE_WRITE8_MEMBER(set_gromlines);
+	virtual DECLARE_WRITE8_MEMBER(set_gromlines);
 	DECLARE_WRITE_LINE_MEMBER(gclock_in);
 
 	DECLARE_READ8Z_MEMBER(gromreadz);
 	DECLARE_WRITE8_MEMBER(gromwrite);
 	inline void         set_grom_pointer(int number, device_t *dev);
 	void                set_cartridge(ti99_cartridge_device *cart);
-	// UINT16              grom_base();
-	// UINT16              grom_mask();
 	const char*         tag() { return m_tag; }
 	void                set_tag(const char* tag) { m_tag = tag; }
 
@@ -336,12 +326,14 @@ protected:
 
 	UINT8*              m_rom_ptr;
 	UINT8*              m_ram_ptr;
-	bool                m_access_cartspace;
+	bool                m_romspace_selected;
 	int                 m_rom_page;     // for some cartridge types
 	UINT8*              m_grom_ptr;     // for gromemu
 	int                 m_grom_address; // for gromemu
 	int                 m_ram_page;     // for super
 	const char*         m_tag;
+	dynamic_buffer      m_nvram;    // for MiniMemory
+	dynamic_buffer      m_ram;  // for MBX
 };
 
 /******************** Standard cartridge ******************************/
@@ -354,10 +346,20 @@ public:
 
 /*********** Paged cartridge (like Extended Basic) ********************/
 
-class ti99_paged_cartridge : public ti99_cartridge_pcb
+class ti99_paged12k_cartridge : public ti99_cartridge_pcb
 {
 public:
-	~ti99_paged_cartridge() { };
+	~ti99_paged12k_cartridge() { };
+	DECLARE_READ8Z_MEMBER(readz) override;
+	DECLARE_WRITE8_MEMBER(write) override;
+};
+
+/*********** Paged cartridge (others) ********************/
+
+class ti99_paged16k_cartridge : public ti99_cartridge_pcb
+{
+public:
+	~ti99_paged16k_cartridge() { };
 	DECLARE_READ8Z_MEMBER(readz) override;
 	DECLARE_WRITE8_MEMBER(write) override;
 };
@@ -443,19 +445,20 @@ public:
 class ti99_gromemu_cartridge : public ti99_cartridge_pcb
 {
 public:
-	ti99_gromemu_cartridge(): m_waddr_LSB(false), m_grom_space(false)
+	ti99_gromemu_cartridge(): m_waddr_LSB(false), m_grom_selected(false), m_grom_read_mode(false), m_grom_address_mode(false)
 	{  m_grom_address = 0; }
 	~ti99_gromemu_cartridge() { };
 	DECLARE_READ8Z_MEMBER(readz) override;
 	DECLARE_WRITE8_MEMBER(write) override;
 	DECLARE_READ8Z_MEMBER(gromemureadz);
 	DECLARE_WRITE8_MEMBER(gromemuwrite);
-
-	DECLARE_WRITE_LINE_MEMBER(gsq_line);
+	DECLARE_WRITE8_MEMBER(set_gromlines) override;
 
 private:
 	bool    m_waddr_LSB;
-	bool    m_grom_space;
+	bool    m_grom_selected;
+	bool    m_grom_read_mode;
+	bool    m_grom_address_mode;
 };
 
 
@@ -472,12 +475,12 @@ class rpk;
 
 class rpk_socket
 {
-	friend class simple_list<rpk_socket>;
 	friend class rpk;
 
 public:
 	rpk_socket(const char *id, int length, UINT8 *contents);
 	rpk_socket(const char *id, int length, UINT8 *contents, const char *pathname);
+	~rpk_socket() {}
 
 	const char*     id() { return m_id; }
 	int             get_content_length() { return m_length; }
@@ -489,7 +492,6 @@ public:
 private:
 	const char*     m_id;
 	UINT32          m_length;
-	rpk_socket*     m_next;
 	UINT8*          m_contents;
 	const char*     m_pathname;
 };
@@ -504,8 +506,8 @@ public:
 
 private:
 	int             find_file(util::archive_file &zip, const char *filename, UINT32 crc);
-	rpk_socket*     load_rom_resource(util::archive_file &zip, xml_data_node* rom_resource_node, const char* socketname);
-	rpk_socket*     load_ram_resource(emu_options &options, xml_data_node* ram_resource_node, const char* socketname, const char* system_name);
+	std::unique_ptr<rpk_socket> load_rom_resource(util::archive_file &zip, xml_data_node* rom_resource_node, const char* socketname);
+	std::unique_ptr<rpk_socket> load_ram_resource(emu_options &options, xml_data_node* ram_resource_node, const char* socketname, const char* system_name);
 	const pcb_type* m_types;
 };
 
@@ -525,9 +527,9 @@ private:
 	emu_options&            m_options;      // need this to find the path to the nvram files
 	int                     m_type;
 	//const char*             m_system_name;  // need this to find the path to the nvram files
-	tagged_list<rpk_socket> m_sockets;
+	std::unordered_map<std::string,std::unique_ptr<rpk_socket>> m_sockets;
 
-	void add_socket(const char* id, rpk_socket *newsock);
+	void add_socket(const char* id, std::unique_ptr<rpk_socket> newsock);
 };
 
 enum rpk_open_error

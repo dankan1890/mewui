@@ -995,7 +995,7 @@ SLOT_INTERFACE_END
 static const z80_daisy_config m5_daisy_chain[] =
 {
 	{ Z80CTC_TAG },
-	{ NULL }
+	{ nullptr }
 };
 
 
@@ -1161,7 +1161,7 @@ READ8_MEMBER( brno_state::fd_r )
 WRITE8_MEMBER( brno_state::fd_w )
 {
 	floppy_image_device *floppy;
-	m_floppy = NULL;
+	m_floppy = nullptr;
 	int disk = 0;
 
 
@@ -1222,13 +1222,15 @@ SLOT_INTERFACE_END
 //-------------------------------------------------
 void m5_state::machine_start()
 {
+	m_cart_ram = nullptr;
+	m_cart = nullptr;
+
 	// register for state saving
 	save_item(NAME(m_fd5_data));
 	save_item(NAME(m_fd5_com));
 	save_item(NAME(m_intra));
 	save_item(NAME(m_ibfa));
 	save_item(NAME(m_obfa));
-
 }
 
 void m5_state::machine_reset()
@@ -1240,26 +1242,28 @@ void m5_state::machine_reset()
 	if (m_cart1->exists())
 	{
 		if (m_cart1->get_type() > 0)
-			m_cart_ram=m_cart1;
+			m_cart_ram = m_cart1;
 		else
-			m_cart=m_cart1;
+			m_cart = m_cart1;
 	}
+
 	if (m_cart2->exists())
 	{
 		if (m_cart2->get_type() > 0)
-			m_cart_ram=m_cart2;
+			m_cart_ram = m_cart2;
 		else
-			m_cart=m_cart2;
+			m_cart = m_cart2;
 	}
+
 	// no cart inserted - there is nothing to do - not allowed in original Sord m5
-	if (m_cart_ram == NULL && m_cart == NULL)
-		{
-			membank("bank1r")->set_base(memregion(Z80_TAG)->base());
-			program.unmap_write(0x0000, 0x1fff);
-		//  program.unmap_readwrite(0x2000, 0x6fff); //if you uncomment this line Sord starts cassette loading but it is not correct on real hw
-			program.unmap_readwrite(0x8000, 0xffff);
-			return;
-		}
+	if (m_cart_ram == nullptr && m_cart == nullptr)
+	{
+		membank("bank1r")->set_base(memregion(Z80_TAG)->base());
+		program.unmap_write(0x0000, 0x1fff);
+	//  program.unmap_readwrite(0x2000, 0x6fff); //if you uncomment this line Sord starts cassette loading but it is not correct on real hw
+		program.unmap_readwrite(0x8000, 0xffff);
+		return;
+	}
 
 	//cart is ram module
 	if (m_cart_ram)
@@ -1381,7 +1385,7 @@ void brno_state::machine_reset()
 	m_romen=true;
 	m_ramen=false;
 
-	floppy_image_device *floppy = NULL;
+	floppy_image_device *floppy = nullptr;
 	floppy = m_floppy0->get_device();
 	m_fdc->set_floppy(floppy);
 	floppy->mon_w(0);
@@ -1400,7 +1404,7 @@ static MACHINE_CONFIG_START( m5, m5_state )
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_14_31818MHz/4)
 	MCFG_CPU_PROGRAM_MAP(m5_mem)
 	MCFG_CPU_IO_MAP(m5_io)
-	MCFG_CPU_CONFIG(m5_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(m5_daisy_chain)
 
 	MCFG_CPU_ADD(Z80_FD5_TAG, Z80, XTAL_14_31818MHz/4)
 	MCFG_CPU_PROGRAM_MAP(fd5_mem)
@@ -1439,8 +1443,8 @@ static MACHINE_CONFIG_START( m5, m5_state )
 	MCFG_FLOPPY_DRIVE_ADD(UPD765_TAG ":0", m5_floppies, "525dd", m5_state::floppy_formats)
 
 	// cartridge
-	MCFG_M5_CARTRIDGE_ADD("cartslot1", m5_cart, NULL)
-	MCFG_M5_CARTRIDGE_ADD("cartslot2", m5_cart, NULL)
+	MCFG_M5_CARTRIDGE_ADD("cartslot1", m5_cart, nullptr)
+	MCFG_M5_CARTRIDGE_ADD("cartslot2", m5_cart, nullptr)
 
 	// software lists
 	MCFG_SOFTWARE_LIST_ADD("cart_list", "m5_cart")
@@ -1492,7 +1496,7 @@ static MACHINE_CONFIG_DERIVED_CLASS( brno, m5, brno_state )
 	MCFG_CPU_MODIFY(Z80_TAG)
 	MCFG_CPU_PROGRAM_MAP(m5_mem_brno)
 	MCFG_CPU_IO_MAP(brno_io)
-//  MCFG_CPU_CONFIG(m5_daisy_chain)
+//  MCFG_Z80_DAISY_CHAIN(m5_daisy_chain)
 
 
 	//remove devices used for fd5 floppy

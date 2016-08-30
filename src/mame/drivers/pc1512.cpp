@@ -604,7 +604,11 @@ ADDRESS_MAP_END
 //-------------------------------------------------
 
 static ADDRESS_MAP_START( pc1512_io, AS_IO, 16, pc1512_state )
-	ADDRESS_MAP_GLOBAL_MASK(0x3ff)
+	// [RH] 29 Aug 2016: I can find no evidence to indicate that Amstrad had only 10 I/O lines, as the
+	// schematic calls for a stock 8086 and the I/O and data lines are multiplexed onto the same bus,
+	// plus address lines 20-10 are towards the middle of a standard ISA slot. If it turns out that this
+	// is not in fact accurate to hardware, please add this back in.
+	// ADDRESS_MAP_GLOBAL_MASK(0x3ff)
 	AM_RANGE(0x000, 0x00f) AM_DEVREADWRITE8(I8237A5_TAG, am9517a_device, read, write, 0xffff)
 	AM_RANGE(0x020, 0x021) AM_DEVREADWRITE8(I8259A2_TAG, pic8259_device, read, write, 0xffff)
 	AM_RANGE(0x040, 0x043) AM_DEVREADWRITE8(I8253_TAG, pit8253_device, read, write, 0xffff)
@@ -745,7 +749,7 @@ static INPUT_PORTS_START( pc1512 )
 	PORT_DIPSETTING( 0x00, "32 KB" )
 	PORT_DIPNAME( 0x60, 0x60, "Character Set")
 	PORT_DIPSETTING( 0x60, "Default (Codepage 437)" )
-	PORT_DIPSETTING( 0x40, "Portugese (Codepage 865)" )
+	PORT_DIPSETTING( 0x40, "Portuguese (Codepage 865)" )
 	PORT_DIPSETTING( 0x20, "Norwegian (Codepage 860)" )
 	PORT_DIPSETTING( 0x00, "Greek")
 	PORT_DIPNAME( 0x80, 0x80, "Floppy Ready Line")
@@ -1237,7 +1241,7 @@ static MACHINE_CONFIG_START( pc1512, pc1512_state )
 	MCFG_I8237_OUT_DACK_1_CB(WRITELINE(pc1512_state, dack1_w))
 	MCFG_I8237_OUT_DACK_2_CB(WRITELINE(pc1512_state, dack2_w))
 	MCFG_I8237_OUT_DACK_3_CB(WRITELINE(pc1512_state, dack3_w))
-	MCFG_PIC8259_ADD(I8259A2_TAG, INPUTLINE(I8086_TAG, INPUT_LINE_IRQ0), VCC, NULL)
+	MCFG_PIC8259_ADD(I8259A2_TAG, INPUTLINE(I8086_TAG, INPUT_LINE_IRQ0), VCC, NOOP)
 
 	MCFG_DEVICE_ADD(I8253_TAG, PIT8253, 0)
 	MCFG_PIT8253_CLK0(XTAL_28_63636MHz/24)
@@ -1357,7 +1361,7 @@ static MACHINE_CONFIG_START( pc1640, pc1640_state )
 	MCFG_I8237_OUT_DACK_1_CB(WRITELINE(pc1512_state, dack1_w))
 	MCFG_I8237_OUT_DACK_2_CB(WRITELINE(pc1512_state, dack2_w))
 	MCFG_I8237_OUT_DACK_3_CB(WRITELINE(pc1512_state, dack3_w))
-	MCFG_PIC8259_ADD(I8259A2_TAG, INPUTLINE(I8086_TAG, INPUT_LINE_IRQ0), VCC, NULL)
+	MCFG_PIC8259_ADD(I8259A2_TAG, INPUTLINE(I8086_TAG, INPUT_LINE_IRQ0), VCC, NOOP)
 
 	MCFG_DEVICE_ADD(I8253_TAG, PIT8253, 0)
 	MCFG_PIT8253_CLK0(XTAL_28_63636MHz/24)

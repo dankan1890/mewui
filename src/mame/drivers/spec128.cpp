@@ -153,6 +153,7 @@ resulting mess can be seen in the F4 viewer display.
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "includes/spectrum.h"
+#include "includes/spec128.h"
 #include "imagedev/snapquik.h"
 #include "imagedev/cassette.h"
 #include "sound/ay8910.h"
@@ -218,7 +219,7 @@ READ8_MEMBER( spectrum_state::spectrum_128_ula_r )
 }
 
 static ADDRESS_MAP_START (spectrum_128_io, AS_IO, 8, spectrum_state )
-	AM_RANGE(0x0000, 0x0000) AM_READWRITE(spectrum_port_fe_r,spectrum_port_fe_w) AM_MIRROR(0xfffe) AM_MASK(0xffff)
+	AM_RANGE(0x0000, 0x0000) AM_READWRITE(spectrum_port_fe_r,spectrum_port_fe_w) AM_SELECT(0xfffe)
 	AM_RANGE(0x001f, 0x001f) AM_READ(spectrum_port_1f_r) AM_MIRROR(0xff00)
 	AM_RANGE(0x007f, 0x007f) AM_READ(spectrum_port_7f_r) AM_MIRROR(0xff00)
 	AM_RANGE(0x00df, 0x00df) AM_READ(spectrum_port_df_r) AM_MIRROR(0xff00)

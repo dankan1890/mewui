@@ -644,15 +644,15 @@ void hp48_state::hp48_apply_modules()
 	m_io_addr = 0x100000;
 
 	/* NCE1 (ROM) is a bit special, so treat it separately */
-	space.unmap_readwrite( 0, 0xfffff, 0, 0 );
+	space.unmap_readwrite( 0, 0xfffff );
 	if ( HP49_G_MODEL )
 	{
 		int bank_lo = (m_bank_switch >> 5) & 3;
 		int bank_hi = (m_bank_switch >> 1) & 15;
 		LOG(( "hp48_apply_modules: low ROM bank is %i\n", bank_lo ));
 		LOG(( "hp48_apply_modules: high ROM bank is %i\n", bank_hi ));
-		space.install_read_bank( 0x00000, 0x3ffff, 0, 0x80000, "bank5" );
-		space.install_read_bank( 0x40000, 0x7ffff, 0, 0x80000, "bank6" );
+		space.install_read_bank( 0x00000, 0x3ffff, 0x80000, "bank5" );
+		space.install_read_bank( 0x40000, 0x7ffff, 0x80000, "bank6" );
 		if ( m_rom )
 		{
 			membank("bank5")->set_base( m_rom + bank_lo * 0x40000 );
@@ -675,21 +675,21 @@ void hp48_state::hp48_apply_modules()
 			/* A19 */
 			LOG(( "hp48_apply_modules: A19 enabled, NCE3 disabled\n" ));
 			nce3_enable = 0;
-			space.install_read_bank( 0, 0xfffff, 0, 0, "bank5" );
+			space.install_read_bank( 0, 0xfffff, "bank5" );
 		}
 		else
 		{
 			/* NCE3 */
 			nce3_enable = m_bank_switch >> 6;
 			LOG(( "hp48_apply_modules: A19 disabled, NCE3 %s\n", nce3_enable ? "enabled" : "disabled" ));
-			space.install_read_bank( 0, 0x7ffff, 0, 0x80000, "bank5" );
+			space.install_read_bank( 0, 0x7ffff, 0x80000, "bank5" );
 		}
 		if ( m_rom )
 			membank("bank5")->set_base( m_rom );
 	}
 	else
 	{
-		space.install_read_bank( 0, 0x7ffff, 0, 0x80000, "bank5" );
+		space.install_read_bank( 0, 0x7ffff, 0x80000, "bank5" );
 		if ( m_rom )
 			membank("bank5")->set_base( m_rom );
 	}
@@ -720,25 +720,25 @@ void hp48_state::hp48_apply_modules()
 		}
 
 		if (m_modules[i].data)
-			space.install_read_bank( base, end, 0, mirror, bank );
+			space.install_read_bank( base, end, mirror, bank );
 		else
 		{
 			if (!m_modules[i].read.isnull())
-				space.install_read_handler( base, end, 0, mirror, m_modules[i].read );
+				space.install_read_handler( base, end, 0, mirror, 0, m_modules[i].read );
 		}
 
 		if (m_modules[i].isnop)
-			space.nop_write(base, end, 0, mirror);
+			space.nop_write(base, end | mirror);
 		else
 		{
 			if (m_modules[i].data)
 			{
-				space.install_write_bank( base, end, 0, mirror, bank );
+				space.install_write_bank( base, end, mirror, bank );
 			}
 			else
 			{
 				if (!m_modules[i].write.isnull())
-					space.install_write_handler( base, end, 0, mirror, m_modules[i].write );
+					space.install_write_handler( base, end, 0, mirror, 0, m_modules[i].write );
 			}
 		}
 
@@ -945,7 +945,7 @@ void hp48_port_image_device::hp48_unfill_port()
 }
 
 
-bool hp48_port_image_device::call_load()
+image_init_result hp48_port_image_device::call_load()
 {
 	hp48_state *state = machine().driver_data<hp48_state>();
 	int size = length();
@@ -956,7 +956,7 @@ bool hp48_port_image_device::call_load()
 	if ( (size < 32*1024) || (size > m_max_size) || (size & (size-1)) )
 	{
 		logerror( "hp48: image size for %s should be a power of two between %i and %i\n", tag(), 32*1024, m_max_size );
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	state->m_port_size[m_port] = size;
@@ -964,10 +964,10 @@ bool hp48_port_image_device::call_load()
 	hp48_fill_port( );
 	fread(state->m_port_data[m_port].get(), state->m_port_size[m_port] );
 	state->hp48_decode_nibble( state->m_port_data[m_port].get(), state->m_port_data[m_port].get(), state->m_port_size[m_port] );
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
-bool hp48_port_image_device::call_create(int format_type, option_resolution *format_options)
+image_init_result hp48_port_image_device::call_create(int format_type, util::option_resolution *format_options)
 {
 	hp48_state *state = machine().driver_data<hp48_state>();
 	int size = m_max_size;
@@ -979,13 +979,13 @@ bool hp48_port_image_device::call_create(int format_type, option_resolution *for
 	if ( (size < 32*1024) || (size > m_max_size) || (size & (size-1)) )
 	{
 		logerror( "hp48: image size for %s should be a power of two between %i and %i\n", tag(), 32*1024, m_max_size );
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	state->m_port_size[m_port] = size;
 	state->m_port_write[m_port] = 1;
 	hp48_fill_port();
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 void hp48_port_image_device::call_unload()

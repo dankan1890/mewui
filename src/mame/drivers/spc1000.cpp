@@ -154,7 +154,7 @@ public:
 		, m_cass(*this, "cassette")
 		, m_ram(*this, RAM_TAG)
 		, m_p_videoram(*this, "videoram")
-		, m_io_kb(*this, "LINE")
+		, m_io_kb(*this, "LINE.%u", 0)
 		, m_io_joy(*this, "JOY")
 		, m_centronics(*this, "centronics")
 	{}
@@ -477,7 +477,7 @@ static MACHINE_CONFIG_START( spc1000, spc1000_state )
 	MCFG_AY8910_PORT_B_WRITE_CB(DEVWRITE8("cent_data_out", output_latch_device, write))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 	MCFG_SOUND_WAVE_ADD(WAVE_TAG, "cassette")
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.05)
 
 	MCFG_DEVICE_ADD("ext1", SPC1000_EXP_SLOT, 0)
 	MCFG_DEVICE_SLOT_INTERFACE(spc1000_exp, nullptr, false)
@@ -490,6 +490,7 @@ static MACHINE_CONFIG_START( spc1000, spc1000_state )
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_FORMATS(spc1000_cassette_formats)
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED | CASSETTE_MOTOR_DISABLED)
+	MCFG_CASSETTE_INTERFACE("spc1000_cass")
 
 	MCFG_SOFTWARE_LIST_ADD("cass_list", "spc1000_cass")
 

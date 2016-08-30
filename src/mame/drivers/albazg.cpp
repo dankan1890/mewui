@@ -37,9 +37,10 @@ PCB:
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "machine/eepromser.h"
+#include "machine/i8255.h"
+#include "machine/watchdog.h"
 #include "sound/ay8910.h"
 #include "video/mc6845.h"
-#include "machine/i8255.h"
 
 #define MASTER_CLOCK XTAL_12MHz
 
@@ -97,7 +98,7 @@ TILE_GET_INFO_MEMBER(albazg_state::y_get_bg_tile_info)
 
 void albazg_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(albazg_state::y_get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(albazg_state::y_get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 }
 
 UINT32 albazg_state::screen_update_yumefuda(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
@@ -222,7 +223,7 @@ static ADDRESS_MAP_START( port_map, AS_IO, 8, albazg_state )
 	AM_RANGE(0x40, 0x40) AM_DEVREAD("aysnd", ay8910_device, data_r)
 	AM_RANGE(0x40, 0x41) AM_DEVWRITE("aysnd", ay8910_device, address_data_w)
 	AM_RANGE(0x80, 0x83) AM_DEVREADWRITE("ppi8255_0", i8255_device, read, write)
-	AM_RANGE(0xc0, 0xc0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xc0, 0xc0) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 ADDRESS_MAP_END
 
 /***************************************************************************************/
@@ -353,7 +354,8 @@ static MACHINE_CONFIG_START( yumefuda, albazg_state )
 
 	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
 
-	MCFG_WATCHDOG_VBLANK_INIT(8) // timing is unknown
+	MCFG_WATCHDOG_ADD("watchdog")
+	MCFG_WATCHDOG_VBLANK_INIT("screen", 8) // timing is unknown
 
 	MCFG_DEVICE_ADD("ppi8255_0", I8255A, 0)
 	MCFG_I8255_OUT_PORTA_CB(WRITE8(albazg_state, mux_w))

@@ -53,7 +53,7 @@ TILE_GET_INFO_MEMBER(skydiver_state::get_tile_info)
 
 void skydiver_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(skydiver_state::get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,32,32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(skydiver_state::get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,32,32);
 
 	save_item(NAME(m_nmion));
 	save_item(NAME(m_width));
@@ -131,7 +131,7 @@ WRITE8_MEMBER(skydiver_state::_2000_201F_w)
 {
 	int bit = offset & 0x01;
 
-	watchdog_reset_w(space,0,0);
+	m_watchdog->reset_w(space,0,0);
 
 	switch (offset & 0x0e)
 	{

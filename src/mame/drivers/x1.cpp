@@ -57,12 +57,13 @@
       Any i/o read disables this extended bitmap ram.
     - I/O port $700 bit 7 of X1 Turbo is a sound (dip-)switch / jumper setting. I don't know yet what is for,
       but King's Knight needs it to be active otherwise it refuses to boot.
-    - ROM format is:
-      0x00 ROM id (must be 0x01)
-      0x01 - 0x0e ROM header
-      0xff16 - 0xff17 start-up vector
-      In theory, you can convert your tape / floppy games into ROM format easily, provided that you know what's the pinout of the
-      cartridge slot and it doesn't exceed 64k (0x10000) of size.
+    - ROM format header:
+      [0x00] ROM identifier, must be 0x01 / SOH
+      [0x01 to 0x0d] ROM header, i.e. title for the loader
+      [0x12 -  0x13] initial copy size
+      [0x14 -  0x15] destination address start address
+      [0x16 to 0x17] start boot jump vector
+      [0x1d to 0x1f] start boot data vector
     - Gruppe: shows a random bitmap graphic then returns "program load error" ... it wants that the floppy has write protection enabled (!) (btanb)
     - Maidum: you need to load BOTH disk with write protection disabled, otherwise it refuses to run. (btanb)
     - Marvelous: needs write protection disabled (btanb)
@@ -2437,7 +2438,7 @@ MACHINE_START_MEMBER(x1_state,x1)
 	save_pointer(NAME(m_emm_ram.get()), 0x1000000);
 	save_pointer(NAME(m_pcg_ram.get()), 0x1800);
 
-	m_gfxdecode->set_gfx(3, std::make_unique<gfx_element>(m_palette, x1_pcg_8x8, m_pcg_ram.get(), 0, 1, 0));
+	m_gfxdecode->set_gfx(3, std::make_unique<gfx_element>(*m_palette, x1_pcg_8x8, m_pcg_ram.get(), 0, 1, 0));
 }
 
 PALETTE_INIT_MEMBER(x1_state,x1)
@@ -2461,7 +2462,7 @@ static MACHINE_CONFIG_START( x1, x1_state )
 	MCFG_CPU_ADD("x1_cpu", Z80, MAIN_CLOCK/4)
 	MCFG_CPU_PROGRAM_MAP(x1_mem)
 	MCFG_CPU_IO_MAP(x1_io)
-	MCFG_CPU_CONFIG(x1_daisy)
+	MCFG_Z80_DAISY_CHAIN(x1_daisy)
 
 	MCFG_DEVICE_ADD("ctc", Z80CTC, MAIN_CLOCK/4)
 	MCFG_Z80CTC_INTR_CB(INPUTLINE("x1_cpu", INPUT_LINE_IRQ0))
@@ -2543,7 +2544,7 @@ static MACHINE_CONFIG_DERIVED( x1turbo, x1 )
 	MCFG_CPU_MODIFY("x1_cpu")
 	MCFG_CPU_PROGRAM_MAP(x1turbo_mem)
 	MCFG_CPU_IO_MAP(x1turbo_io)
-	MCFG_CPU_CONFIG(x1turbo_daisy)
+	MCFG_Z80_DAISY_CHAIN(x1turbo_daisy)
 	MCFG_MACHINE_RESET_OVERRIDE(x1_state,x1turbo)
 
 	MCFG_Z80SIO0_ADD("sio", MAIN_CLOCK/4 , 0, 0, 0, 0)

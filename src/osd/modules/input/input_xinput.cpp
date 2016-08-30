@@ -19,10 +19,11 @@
 #include <xinput.h>
 
 #undef interface
+#undef min
+#undef max
 
 // MAME headers
 #include "emu.h"
-#include "osdepend.h"
 
 // MAMEOS headers
 #include "winutil.h"
@@ -32,49 +33,27 @@
 #include "input_windows.h"
 #include "input_xinput.h"
 
-
-xinput_api_helper::xinput_api_helper()
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-		: XInputGetState("XInputGetState", xinput_dll_names, ARRAY_LENGTH(xinput_dll_names))
-		, XInputGetCapabilities("XInputGetCapabilities", xinput_dll_names, ARRAY_LENGTH(xinput_dll_names))
+#define XINPUT_LIBRARIES { "xinput1_4.dll", "xinput9_1_0.dll" }
+#else
+#define XINPUT_LIBRARIES { "xinput1_4.dll" }
 #endif
-{
-}
 
 int xinput_api_helper::initialize()
 {
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-	int status;
-	status = XInputGetState.initialize();
-	if (status != 0)
-	{
-		osd_printf_error("Failed to initialize function pointer for %s. Error: %d\n", XInputGetState.name(), status);
-		return -1;
-	}
+	m_xinput_dll = osd::dynamic_module::open(XINPUT_LIBRARIES);
 
-	status = XInputGetCapabilities.initialize();
-	if (status != 0)
+	XInputGetState = m_xinput_dll->bind<xinput_get_state_fn>("XInputGetState");
+	XInputGetCapabilities = m_xinput_dll->bind<xinput_get_caps_fn>("XInputGetCapabilities");
+
+	if (!XInputGetState || !XInputGetCapabilities)
 	{
-		osd_printf_error("Failed to initialize function pointer for %s. Error: %d\n", XInputGetCapabilities.name(), status);
+		osd_printf_verbose("Could not find XInput. Please try to reinstall DirectX runtime package.\n");
 		return -1;
 	}
-#endif
 
 	return 0;
 }
-
-#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-// Pass-through functions for Universal Windows
-inline DWORD xinput_api_helper::XInputGetState(DWORD dwUserindex, XINPUT_STATE *pState)
-{
-	return ::XInputGetState(dwUserindex, pState);
-}
-
-inline DWORD xinput_api_helper::XInputGetCapabilities(DWORD dwUserindex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities)
-{
-	return ::XInputGetCapabilities(dwUserindex, dwFlags, pCapabilities);
-}
-#endif
 
 //============================================================
 //  create_xinput_device
@@ -85,7 +64,7 @@ xinput_joystick_device * xinput_api_helper::create_xinput_device(running_machine
 	xinput_joystick_device *devinfo;
 
 	XINPUT_CAPABILITIES caps = { 0 };
-	if (FAILED(XInputGetCapabilities(index, 0, &caps)))
+	if (FAILED(xinput_get_capabilities(index, 0, &caps)))
 	{
 		// If we can't get the capabilities skip this device
 		return nullptr;
@@ -95,10 +74,10 @@ xinput_joystick_device * xinput_api_helper::create_xinput_device(running_machine
 	snprintf(device_name, sizeof(device_name), "XInput Player %u", index + 1);
 
 	// allocate the device object
-	devinfo = module.devicelist()->create_device1<xinput_joystick_device>(machine, device_name, module, shared_from_this());
+	devinfo = module.devicelist()->create_device<xinput_joystick_device>(machine, device_name, module, shared_from_this());
 
 	// Set the player ID
-	devinfo->xinput_state.playerIndex = index;
+	devinfo->xinput_state.player_index = index;
 
 	// Assign the caps we captured earlier
 	devinfo->xinput_state.caps = caps;
@@ -115,7 +94,7 @@ xinput_joystick_device::xinput_joystick_device(running_machine &machine, const c
 		gamepad({{0}}),
 		xinput_state({0}),
 		m_xinput_helper(helper),
-	    m_configured(false)
+		m_configured(false)
 {
 }
 
@@ -125,7 +104,7 @@ void xinput_joystick_device::poll()
 		return;
 
 	// poll the device first
-	HRESULT result = m_xinput_helper->XInputGetState(xinput_state.playerIndex, &xinput_state.xstate);
+	HRESULT result = m_xinput_helper->xinput_get_state(xinput_state.player_index, &xinput_state.xstate);
 
 	// If we can't poll the device, skip
 	if (FAILED(result))
@@ -136,27 +115,27 @@ void xinput_joystick_device::poll()
 	for (int povindex = 0; povindex < XINPUT_MAX_POV; povindex++)
 	{
 		int currentPov = xinput_pov_dir[povindex];
-		gamepad.rgbPov[currentPov] = (xinput_state.xstate.Gamepad.wButtons & currentPov) ? 0xFF : 0;
+		gamepad.povs[povindex] = (xinput_state.xstate.Gamepad.wButtons & currentPov) ? 0xFF : 0;
 	}
 
 	// Now do the buttons
 	for (int buttonindex = 0; buttonindex < XINPUT_MAX_BUTTONS; buttonindex++)
 	{
 		int currentButton = xinput_buttons[buttonindex];
-		gamepad.rgbButtons[buttonindex] = (xinput_state.xstate.Gamepad.wButtons & currentButton) ? 0xFF : 0;
+		gamepad.buttons[buttonindex] = (xinput_state.xstate.Gamepad.wButtons & currentButton) ? 0xFF : 0;
 	}
 
 	// Now grab the axis values
 	// Each of the thumbstick axis members is a signed value between -32768 and 32767 describing the position of the thumbstick
-	// However, the Y axis values are inverted from what MAME expects, so multiply by -1 first
-	gamepad.sThumbLX = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbLX, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
-	gamepad.sThumbLY = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbLY * -1, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
-	gamepad.sThumbRX = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbRX, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
-	gamepad.sThumbRY = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbRY * -1, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
+	// However, the Y axis values are inverted from what MAME expects, so negate the value
+	gamepad.left_thumb_x = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbLX, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
+	gamepad.left_thumb_y = normalize_absolute_axis(-xinput_state.xstate.Gamepad.sThumbLY, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
+	gamepad.right_thumb_x = normalize_absolute_axis(xinput_state.xstate.Gamepad.sThumbRX, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
+	gamepad.right_thumb_y = normalize_absolute_axis(-xinput_state.xstate.Gamepad.sThumbRY, XINPUT_AXIS_MINVALUE, XINPUT_AXIS_MAXVALUE);
 
 	// Now the triggers
-	gamepad.bLeftTrigger = normalize_absolute_axis(xinput_state.xstate.Gamepad.bLeftTrigger, -255, 255);
-	gamepad.bRightTrigger = normalize_absolute_axis(xinput_state.xstate.Gamepad.bRightTrigger, -255, 255);
+	gamepad.left_trigger = normalize_absolute_axis(xinput_state.xstate.Gamepad.bLeftTrigger, 0, 255);
+	gamepad.right_trigger = normalize_absolute_axis(xinput_state.xstate.Gamepad.bRightTrigger, 0, 255);
 }
 
 void xinput_joystick_device::reset()
@@ -177,8 +156,8 @@ void xinput_joystick_device::configure()
 		device()->add_item(
 			xinput_axis_name[axisnum],
 			xinput_axis_ids[axisnum],
-			generic_axis_get_state,
-			&gamepad.sThumbLX + axisnum);
+			generic_axis_get_state<LONG>,
+			&gamepad.left_thumb_x + axisnum);
 	}
 
 	// Populate the POVs
@@ -188,8 +167,8 @@ void xinput_joystick_device::configure()
 		device()->add_item(
 			xinput_pov_names[povnum],
 			ITEM_ID_OTHER_SWITCH,
-			generic_button_get_state,
-			&gamepad.rgbPov[povnum]);
+			generic_button_get_state<BYTE>,
+			&gamepad.povs[povnum]);
 	}
 
 	// populate the buttons
@@ -198,21 +177,21 @@ void xinput_joystick_device::configure()
 		device()->add_item(
 			xinput_button_names[butnum],
 			static_cast<input_item_id>(ITEM_ID_BUTTON1 + butnum),
-			generic_button_get_state,
-			&gamepad.rgbButtons[butnum]);
+			generic_button_get_state<BYTE>,
+			&gamepad.buttons[butnum]);
 	}
 
 	device()->add_item(
 		"Left Trigger",
 		ITEM_ID_ZAXIS,
-		generic_axis_get_state,
-		&gamepad.bLeftTrigger);
+		generic_axis_get_state<LONG>,
+		&gamepad.left_trigger);
 
 	device()->add_item(
 		"Right Trigger",
 		ITEM_ID_RZAXIS,
-		generic_axis_get_state,
-		&gamepad.bRightTrigger);
+		generic_axis_get_state<LONG>,
+		&gamepad.right_trigger);
 
 	m_configured = true;
 }
@@ -262,7 +241,7 @@ protected:
 		{
 			XINPUT_STATE state = {0};
 
-			if (m_xinput_helper->XInputGetState(i, &state) == ERROR_SUCCESS)
+			if (m_xinput_helper->xinput_get_state(i, &state) == ERROR_SUCCESS)
 			{
 				// allocate and link in a new device
 				devinfo = m_xinput_helper->create_xinput_device(machine, i, *this);

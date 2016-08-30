@@ -179,7 +179,7 @@ k052109_device::k052109_device(const machine_config &mconfig, const char *tag, d
 	m_romsubbank(0),
 	m_scrollctrl(0),
 	m_char_rom(*this, DEVICE_SELF),
-	m_screen(*this),
+	m_screen(*this, finder_base::DUMMY_TAG),
 	m_irq_handler(*this),
 	m_firq_handler(*this),
 	m_nmi_handler(*this)
@@ -337,8 +337,8 @@ READ8_MEMBER( k052109_device::read )
 	else
 		m_k052109_cb(0, bank, &code, &color, &flags, &priority);
 
-		addr = (code << 5) + (offset & 0x1f);
-		addr &= m_char_rom.mask();
+	addr = (code << 5) + (offset & 0x1f);
+	addr &= m_char_rom.mask();
 
 //      logerror("%04x: off = %04x sub = %02x (bnk = %x) adr = %06x\n", space.device().safe_pc(), offset, m_romsubbank, bank, addr);
 

@@ -34,6 +34,8 @@ public:
 	TIMER_CALLBACK_MEMBER( t90_timer4_callback );
 
 protected:
+	enum _e_op {    UNKNOWN,    NOP,    EX,     EXX,    LD,     LDW,    LDA,    LDI,    LDIR,   LDD,    LDDR,   CPI,    CPIR,   CPD,    CPDR,   PUSH,   POP,    JP,     JR,     CALL,   CALLR,      RET,    RETI,   HALT,   DI,     EI,     SWI,    DAA,    CPL,    NEG,    LDAR,   RCF,    SCF,    CCF,    TSET,   BIT,    SET,    RES,    INC,    DEC,    INCX,   DECX,   INCW,   DECW,   ADD,    ADC,    SUB,    SBC,    AND,    XOR,    OR,     CP,     RLC,    RRC,    RL,     RR,     SLA,    SRA,    SLL,    SRL,    RLD,    RRD,    DJNZ,   MUL,    DIV     };
+
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -157,6 +159,13 @@ public:
 };
 
 
+class tmp90845_device : public tlcs90_device
+{
+public:
+	// construction/destruction
+	tmp90845_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
+};
+
 class tmp91640_device : public tlcs90_device
 {
 public:
@@ -175,6 +184,7 @@ public:
 
 extern const device_type TMP90840;
 extern const device_type TMP90841;
+extern const device_type TMP90845;
 extern const device_type TMP91640;
 extern const device_type TMP91641;
 

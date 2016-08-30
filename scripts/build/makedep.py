@@ -10,7 +10,7 @@ import sys
 
 files_included = ['src/emu/emu.h']
 
-include_dirs = ['src/emu/', 'src/devices/', 'src/mame/']
+include_dirs = ['src/emu/', 'src/devices/', 'src/mame/', 'src/lib/']
 
 mappings = dict()
 
@@ -160,7 +160,9 @@ def parse_file(root, srcfile, folder):
                    files_included.append(fullname)
                    newfolder = fullname.rsplit('/', 1)[0] + '/'
                    parse_file(root, fullname, newfolder)
-                   if (fullname.endswith('.h')):
+                   if (fullname.endswith('.h') and not("src/emu" in fullname) and not("src/devices" in fullname) and not("src/lib" in fullname) and not("src/osd" in fullname)):
+                       parse_file_for_deps(root, fullname.replace('.h','.cpp'), newfolder)
+                   elif fullname.endswith('.h'):
                        parse_file(root, fullname.replace('.h','.cpp'), newfolder)
                continue
     fp.close()
@@ -199,6 +201,7 @@ parse_lua_file(root +'scripts/src/cpu.lua')
 parse_lua_file(root +'scripts/src/machine.lua')
 parse_lua_file(root +'scripts/src/sound.lua')
 parse_lua_file(root +'scripts/src/video.lua')
+parse_lua_file(root +'scripts/src/formats.lua')
 
 for filename in sys.argv[2].rsplit(',') :
     deps_files_included.append(filename.replace('\\','/'))

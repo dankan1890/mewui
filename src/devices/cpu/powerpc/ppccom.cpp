@@ -409,7 +409,7 @@ inline void ppc_device::set_timebase(UINT64 newtb)
 inline UINT32 ppc_device::get_decrementer()
 {
 	INT64 cycles_until_zero = m_dec_zero_cycles - total_cycles();
-	cycles_until_zero = MAX(cycles_until_zero, 0);
+	cycles_until_zero = std::max<INT64>(cycles_until_zero, 0);
 
 	if (!m_tb_divisor)
 	{
@@ -950,6 +950,20 @@ void ppc_device::device_start()
 			m_regmap[1] = uml::I6;
 		if (beinfo.direct_iregs > 7)
 			m_regmap[2] = uml::I7;
+
+
+		if (beinfo.direct_fregs > 3)
+			m_fdregmap[0] = uml::F3;
+		if (beinfo.direct_fregs > 4)
+			m_fdregmap[1] = uml::F4;
+		if (beinfo.direct_fregs > 5)
+			m_fdregmap[2] = uml::F5;
+		if (beinfo.direct_fregs > 6)
+			m_fdregmap[3] = uml::F6;
+		if (beinfo.direct_fregs > 7)
+			m_fdregmap[30] = uml::F7;
+		if (beinfo.direct_fregs > 8)
+			m_fdregmap[31] = uml::F8;
 	}
 
 	/* mark the cache dirty so it is updated on next execute */
@@ -1221,7 +1235,7 @@ offs_t ppc_device::disasm_disassemble(char *buffer, offs_t pc, const UINT8 *opro
 {
 	extern offs_t ppc_dasm_one(char *buffer, UINT32 pc, UINT32 op);
 	UINT32 op = *(UINT32 *)oprom;
-	op = BIG_ENDIANIZE_INT32(op);
+	op = big_endianize_int32(op);
 	return ppc_dasm_one(buffer, pc, op);
 }
 

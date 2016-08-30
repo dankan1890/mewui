@@ -95,14 +95,14 @@ Notes:
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "machine/watchdog.h"
 #include "sound/3812intf.h"
-#include "sound/msm5205.h"
 #include "sound/3812intf.h"
 #include "includes/toki.h"
 
 WRITE16_MEMBER(toki_state::tokib_soundcommand_w)
 {
-	soundlatch_byte_w(space, 0, data & 0xff);
+	m_soundlatch->write(space, 0, data & 0xff);
 	m_audiocpu->set_input_line(0, HOLD_LINE);
 }
 
@@ -166,7 +166,7 @@ static ADDRESS_MAP_START( tokib_map, AS_PROGRAM, 16, toki_state )
 				/* gets written the same value as 75000a (bg2 scrollx) */
 	AM_RANGE(0x071804, 0x071807) AM_WRITENOP    /* sprite related, always 01be0100 */
 	AM_RANGE(0x07180e, 0x071e45) AM_WRITEONLY AM_SHARE("spriteram")
-	AM_RANGE(0x072000, 0x072001) AM_READ(watchdog_reset16_r)   /* probably */
+	AM_RANGE(0x072000, 0x072001) AM_DEVREAD("watchdog", watchdog_timer_device, reset16_r)   /* probably */
 	AM_RANGE(0x075000, 0x075001) AM_WRITE(tokib_soundcommand_w)
 	AM_RANGE(0x075004, 0x07500b) AM_WRITEONLY AM_SHARE("scrollram")
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ_PORT("DSW")
@@ -186,7 +186,7 @@ static ADDRESS_MAP_START( tokib_audio_map, AS_PROGRAM, 8, toki_state )
 	AM_RANGE(0xe400, 0xe400) AM_WRITE(tokib_adpcm_data_w)
 	AM_RANGE(0xec00, 0xec01) AM_MIRROR(0x0008) AM_DEVREADWRITE("ymsnd", ym3812_device, read, write)
 	AM_RANGE(0xf000, 0xf7ff) AM_RAM
-	AM_RANGE(0xf800, 0xf800) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xf800, 0xf800) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -477,6 +477,8 @@ static MACHINE_CONFIG_START( tokib, toki_state )
 	MCFG_CPU_ADD("audiocpu", Z80, 4000000)  /* verified with PCB */
 	MCFG_CPU_PROGRAM_MAP(tokib_audio_map)
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	/* video hardware */
 	MCFG_BUFFERED_SPRITERAM16_ADD("spriteram")
 
@@ -494,6 +496,8 @@ static MACHINE_CONFIG_START( tokib, toki_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ymsnd", YM3812, 3579545)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)

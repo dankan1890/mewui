@@ -74,7 +74,7 @@ void abc800c_state::hr_update(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 
 	UINT16 addr = 0;
 
-	for (int y = m_hrs; y < MIN(cliprect.max_y + 1, m_hrs + 480); y += 2)
+	for (int y = m_hrs; y < std::min(cliprect.max_y + 1, m_hrs + 480); y += 2)
 	{
 		int x = 0;
 
@@ -204,7 +204,7 @@ void abc800m_state::hr_update(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 
 	const pen_t *pen = m_palette->pens();
 
-	for (int y = m_hrs + VERTICAL_PORCH_HACK; y < MIN(cliprect.max_y + 1, m_hrs + VERTICAL_PORCH_HACK + 240); y++)
+	for (int y = m_hrs + VERTICAL_PORCH_HACK; y < std::min(cliprect.max_y + 1, m_hrs + VERTICAL_PORCH_HACK + 240); y++)
 	{
 		int x = HORIZONTAL_PORCH_HACK;
 
@@ -302,10 +302,7 @@ MACHINE_CONFIG_FRAGMENT( abc800m_video )
 
 	MCFG_SCREEN_ADD_MONOCHROME(SCREEN_TAG, RASTER, rgb_t(0xff, 0xff, 0x00))
 	MCFG_SCREEN_UPDATE_DRIVER(abc800m_state, screen_update)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500))
-	MCFG_SCREEN_SIZE(768, 312)
-	MCFG_SCREEN_VISIBLE_AREA(0,768-1, 0, 312-1)
+	MCFG_SCREEN_RAW_PARAMS(XTAL_12MHz, 0x300, 0, 0x1e0, 0x13a, 0, 0xf0)
 
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 MACHINE_CONFIG_END

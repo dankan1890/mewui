@@ -6,7 +6,7 @@
     driver by Tomasz Slanina
 
   Hacked MSX2 home computer hardware. Romset contains
-  modifed ( (c) strings removed and patched boot sequence)
+  modified ( (c) strings removed and patched boot sequence)
   MSX2 bios. Yamaha VDP v9938 is hidden in huge epoxy block.
   There's also an additional Z80 to drive sound.
 
@@ -155,6 +155,7 @@ DIPSW-2
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "video/v9938.h"
+#include "machine/gen_latch.h"
 #include "machine/i8255.h"
 #include "sound/2203intf.h"
 
@@ -203,7 +204,6 @@ public:
 	void sfkick_remap_banks();
 	void sfkick_bank_set(int num, int data);
 	DECLARE_WRITE_LINE_MEMBER(irqhandler);
-	DECLARE_WRITE_LINE_MEMBER(sfkick_vdp_interrupt);
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_soundcpu;
 	required_memory_region m_region_bios;
@@ -471,7 +471,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sfkick_io_map, AS_IO, 8, sfkick_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE( 0xa0, 0xa7) AM_WRITE(soundlatch_byte_w )
+	AM_RANGE( 0xa0, 0xa7) AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
 	AM_RANGE( 0x98, 0x9b) AM_DEVREADWRITE( "v9938", v9938_device, read, write)
 	AM_RANGE( 0xa8, 0xab) AM_DEVREADWRITE("ppi8255", i8255_device, read, write)
 	AM_RANGE( 0xb4, 0xb5) AM_RAM /* loopback ? req by sfkicka (MSX Bios leftover)*/
@@ -484,7 +484,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sfkick_sound_io_map, AS_IO, 8, sfkick_state )
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x00, 0x00) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x04, 0x05) AM_DEVREADWRITE("ym1", ym2203_device, read, write)
 ADDRESS_MAP_END
 
@@ -557,10 +557,6 @@ static INPUT_PORTS_START( sfkick )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
-WRITE_LINE_MEMBER(sfkick_state::sfkick_vdp_interrupt)
-{
-	m_maincpu->set_input_line(0, (state ? HOLD_LINE : CLEAR_LINE));
-}
 
 void sfkick_state::machine_reset()
 {
@@ -594,7 +590,7 @@ static MACHINE_CONFIG_START( sfkick, sfkick_state )
 	MCFG_CPU_IO_MAP(sfkick_sound_io_map)
 
 	MCFG_V9938_ADD("v9938", "screen", 0x80000, MASTER_CLOCK)
-	MCFG_V99X8_INTERRUPT_CALLBACK(WRITELINE(sfkick_state,sfkick_vdp_interrupt))
+	MCFG_V99X8_INTERRUPT_CALLBACK(INPUTLINE("maincpu", 0))
 	MCFG_V99X8_SCREEN_ADD_NTSC("screen", "v9938", MASTER_CLOCK)
 
 	MCFG_DEVICE_ADD("ppi8255", I8255A, 0)
@@ -603,8 +599,12 @@ static MACHINE_CONFIG_START( sfkick, sfkick_state )
 	MCFG_I8255_OUT_PORTC_CB(WRITE8(sfkick_state, ppi_port_c_w))
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_SOUND_ADD("ym1", YM2203, MASTER_CLOCK/6)
 	MCFG_YM2203_IRQ_HANDLER(WRITELINE(sfkick_state, irqhandler))
+
 	MCFG_SOUND_ROUTE(0, "mono", 0.25)
 	MCFG_SOUND_ROUTE(1, "mono", 0.25)
 	MCFG_SOUND_ROUTE(2, "mono", 0.25)

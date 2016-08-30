@@ -4,7 +4,7 @@
 #define __MSX_CART_YAMAHA_H
 
 #include "bus/msx_cart/cartridge.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "bus/msx_cart/msx_audio_kb.h"
 #include "machine/ym2148.h"
 
@@ -49,7 +49,7 @@ class msx_cart_sfg01 : public msx_cart_sfg
 public:
 	msx_cart_sfg01(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 };
 
 
@@ -58,7 +58,7 @@ class msx_cart_sfg05 : public msx_cart_sfg
 public:
 	msx_cart_sfg05(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
 
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 };
 
 #endif

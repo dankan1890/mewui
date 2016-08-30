@@ -32,7 +32,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *cpc_ddi1_device::device_rom_region() const
+const tiny_rom_entry *cpc_ddi1_device::device_rom_region() const
 {
 	return ROM_NAME( cpc_ddi1 );
 }
@@ -79,9 +79,9 @@ void cpc_ddi1_device::device_start()
 	address_space& space = cpu->memory().space(AS_IO);
 	m_slot = dynamic_cast<cpc_expansion_slot_device *>(owner());
 
-	space.install_write_handler(0xfa7e,0xfa7f,0,0,write8_delegate(FUNC(cpc_ddi1_device::motor_w),this));
-	space.install_readwrite_handler(0xfb7e,0xfb7f,0,0,read8_delegate(FUNC(cpc_ddi1_device::fdc_r),this),write8_delegate(FUNC(cpc_ddi1_device::fdc_w),this));
-	space.install_write_handler(0xdf00,0xdfff,0,0,write8_delegate(FUNC(cpc_ddi1_device::rombank_w),this));
+	space.install_write_handler(0xfa7e,0xfa7f,write8_delegate(FUNC(cpc_ddi1_device::motor_w),this));
+	space.install_readwrite_handler(0xfb7e,0xfb7f,read8_delegate(FUNC(cpc_ddi1_device::fdc_r),this),write8_delegate(FUNC(cpc_ddi1_device::fdc_w),this));
+	space.install_write_handler(0xdf00,0xdfff,write8_delegate(FUNC(cpc_ddi1_device::rombank_w),this));
 }
 
 //-------------------------------------------------

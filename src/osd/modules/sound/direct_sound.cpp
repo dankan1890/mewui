@@ -20,6 +20,8 @@
 #undef WINNT
 #include <dsound.h>
 #undef interface
+#undef min
+#undef max
 
 // MAME headers
 #include "emu.h"
@@ -34,6 +36,7 @@
 #include "winmain.h"
 #include "window.h"
 #endif
+#include <utility>
 
 //============================================================
 //  DEBUGGING
@@ -51,7 +54,7 @@ public:
 	sound_direct_sound() :
 		osd_module(OSD_SOUND_PROVIDER, "dsound"),
 		sound_module(),
-		m_dsound(NULL),
+		m_dsound(nullptr),
 		m_bytes_per_sample(0),
 		m_primary_buffer(),
 		m_stream_buffer(),
@@ -73,13 +76,13 @@ private:
 	class buffer
 	{
 	public:
-		buffer() : m_buffer(NULL) { }
+		buffer() : m_buffer(nullptr) { }
 		~buffer() { release(); }
 
 		ULONG release()
 		{
 			ULONG const result = m_buffer ? m_buffer->Release() : 0;
-			m_buffer = NULL;
+			m_buffer = nullptr;
 			return result;
 		}
 
@@ -99,16 +102,16 @@ private:
 			memset(&desc, 0, sizeof(desc));
 			desc.dwSize = sizeof(desc);
 			desc.dwFlags = DSBCAPS_PRIMARYBUFFER | DSBCAPS_GETCURRENTPOSITION2;
-			desc.lpwfxFormat = NULL;
-			return dsound->CreateSoundBuffer(&desc, &m_buffer, NULL);
+			desc.lpwfxFormat = nullptr;
+			return dsound->CreateSoundBuffer(&desc, &m_buffer, nullptr);
 		}
 
-		HRESULT get_format(WAVEFORMATEX &format)
+		HRESULT get_format(WAVEFORMATEX &format) const
 		{
 			assert(m_buffer);
-			return m_buffer->GetFormat(&format, sizeof(format), NULL);
+			return m_buffer->GetFormat(&format, sizeof(format), nullptr);
 		}
-		HRESULT set_format(WAVEFORMATEX const &format)
+		HRESULT set_format(WAVEFORMATEX const &format) const
 		{
 			assert(m_buffer);
 			return m_buffer->SetFormat(&format);
@@ -118,7 +121,7 @@ private:
 	class stream_buffer : public buffer
 	{
 	public:
-		stream_buffer() : m_size(0), m_bytes1(NULL), m_bytes2(NULL), m_locked1(0), m_locked2(0) { }
+		stream_buffer() : m_size(0), m_bytes1(nullptr), m_bytes2(nullptr), m_locked1(0), m_locked2(0) { }
 
 		HRESULT create(LPDIRECTSOUND dsound, DWORD size, WAVEFORMATEX &format)
 		{
@@ -130,27 +133,27 @@ private:
 			desc.dwBufferBytes = size;
 			desc.lpwfxFormat = &format;
 			m_size = size;
-			return dsound->CreateSoundBuffer(&desc, &m_buffer, NULL);
+			return dsound->CreateSoundBuffer(&desc, &m_buffer, nullptr);
 		}
 
-		HRESULT play_looping()
+		HRESULT play_looping() const
 		{
 			assert(m_buffer);
 			return m_buffer->Play(0, 0, DSBPLAY_LOOPING);
 		}
-		HRESULT stop()
+		HRESULT stop() const
 		{
 			assert(m_buffer);
 			return m_buffer->Stop();
 		}
-		HRESULT set_volume(LONG volume)
+		HRESULT set_volume(LONG volume) const
 		{
 			assert(m_buffer);
 			return m_buffer->SetVolume(volume);
 		}
 		HRESULT set_min_volume() { return set_volume(DSBVOLUME_MIN); }
 
-		HRESULT get_current_positions(DWORD &play_pos, DWORD &write_pos)
+		HRESULT get_current_positions(DWORD &play_pos, DWORD &write_pos) const
 		{
 			assert(m_buffer);
 			return m_buffer->GetCurrentPosition(&play_pos, &write_pos);
@@ -163,7 +166,7 @@ private:
 
 			assert(m_bytes1);
 			assert((m_locked1 + m_locked2) >= bytes);
-			memcpy(m_bytes1, data, MIN(m_locked1, bytes));
+			memcpy(m_bytes1, data, std::min(m_locked1, bytes));
 			if (m_locked1 < bytes)
 			{
 				assert(m_bytes2);
@@ -216,7 +219,7 @@ private:
 					m_locked1,
 					m_bytes2,
 					m_locked2);
-			m_bytes1 = m_bytes2 = NULL;
+			m_bytes1 = m_bytes2 = nullptr;
 			m_locked1 = m_locked2 = 0;
 			return result;
 		}
@@ -359,7 +362,7 @@ void sound_direct_sound::update_audio_stream(
 void sound_direct_sound::set_mastervolume(int attenuation)
 {
 	// clamp the attenuation to 0-32 range
-	attenuation = MAX(MIN(attenuation, 0), -32);
+	attenuation = std::max(std::min(attenuation, 0), -32);
 
 	// set the master volume
 	if (m_stream_buffer)
@@ -382,7 +385,7 @@ HRESULT sound_direct_sound::dsound_init()
 	HRESULT result;
 
 	// create the DirectSound object
-	result = DirectSoundCreate(NULL, &m_dsound, NULL);
+	result = DirectSoundCreate(nullptr, &m_dsound, nullptr);
 	if (result != DS_OK)
 	{
 		osd_printf_error("Error creating DirectSound: %08x\n", (unsigned)result);
@@ -404,10 +407,10 @@ HRESULT sound_direct_sound::dsound_init()
 #ifdef SDLMAME_WIN32
 		SDL_SysWMinfo wminfo;
 		SDL_VERSION(&wminfo.version);
-		SDL_GetWindowWMInfo(sdl_window_list->sdl_window(), &wminfo);
+		SDL_GetWindowWMInfo(osd_common_t::s_window_list.front()->platform_window<SDL_Window*>(), &wminfo);
 		HWND const window = wminfo.info.win.window;
 #else // SDLMAME_WIN32
-		HWND const window = win_window_list->m_hwnd;
+		HWND const window = osd_common_t::s_window_list.front()->platform_window<HWND>();
 #endif // SDLMAME_WIN32
 		result = m_dsound->SetCooperativeLevel(window, DSSCL_PRIORITY);
 	}
@@ -429,7 +432,7 @@ HRESULT sound_direct_sound::dsound_init()
 
 		// compute the buffer size based on the output sample rate
 		DWORD stream_buffer_size = stream_format.nSamplesPerSec * stream_format.nBlockAlign * m_audio_latency / 10;
-		stream_buffer_size = MAX(1024, (stream_buffer_size / 1024) * 1024);
+		stream_buffer_size = std::max(DWORD(1024), (stream_buffer_size / 1024) * 1024);
 
 		LOG(("stream_buffer_size = %u\n", (unsigned)stream_buffer_size));
 
@@ -467,7 +470,7 @@ void sound_direct_sound::dsound_kill()
 	// release the object
 	if (m_dsound)
 		m_dsound->Release();
-	m_dsound = NULL;
+	m_dsound = nullptr;
 }
 
 

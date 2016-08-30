@@ -57,7 +57,7 @@ public:
 	DECLARE_READ8_MEMBER(memory_read_byte);
 	DECLARE_WRITE8_MEMBER(memory_write_byte);
 	DECLARE_FLOPPY_FORMATS( floppy_formats );
-	int floppy_load(floppy_image_device *dev);
+	image_init_result floppy_load(floppy_image_device *dev);
 	void floppy_unload(floppy_image_device *dev);
 
 	UINT8 m_dma0pg;
@@ -157,10 +157,10 @@ WRITE8_MEMBER(peoplepc_state::memory_write_byte)
 	prog_space.write_byte(offset | (m_dma0pg << 16), data);
 }
 
-int peoplepc_state::floppy_load(floppy_image_device *dev)
+image_init_result peoplepc_state::floppy_load(floppy_image_device *dev)
 {
 	dev->mon_w(0);
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 void peoplepc_state::floppy_unload(floppy_image_device *dev)
@@ -248,7 +248,7 @@ static MACHINE_CONFIG_START( olypeopl, peoplepc_state)
 	MCFG_PIT8253_OUT2_HANDLER(DEVWRITELINE("pic8259_0", pic8259_device, ir0_w))
 
 	MCFG_PIC8259_ADD("pic8259_0", INPUTLINE("maincpu", 0), VCC, READ8(peoplepc_state, get_slave_ack))
-	MCFG_PIC8259_ADD("pic8259_1", DEVWRITELINE("pic8259_0", pic8259_device, ir7_w), GND, NULL)
+	MCFG_PIC8259_ADD("pic8259_1", DEVWRITELINE("pic8259_0", pic8259_device, ir7_w), GND, NOOP)
 
 	MCFG_DEVICE_ADD("ppi8255", I8255, 0)
 

@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Kevin Horton,Jonathan Gevaryahu,Sandro Ronco,hap
+// thanks-to:Berger
 /******************************************************************************
 
     Fidelity Electronics Z80 based board driver
@@ -36,7 +37,7 @@
     Program/data cartridges, for various boards, some cross-compatible:
     - CG6: Greatest Chess Games 1
     - CAC: Challenger Advanced Chess - 8KB 101-1038A01
-    - CB9: Challenger Book Openings 1 - 8KB?
+    - CB9: Challenger Book Openings 1 - 8KB (label not known)
     - CB16: Challenger Book Openings 2 - 8+8KB 101-1042A01,02
     - others are alt. titles of these?
 
@@ -739,13 +740,13 @@ DEVICE_IMAGE_LOAD_MEMBER(fidelz80base_state, scc_cartridge)
 	if (size > 0x4000)
 	{
 		image.seterror(IMAGE_ERROR_UNSPECIFIED, "Invalid file size");
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	m_cart->rom_alloc(size, GENERIC_ROM8_WIDTH, ENDIANNESS_LITTLE);
 	m_cart->common_load_rom(m_cart->get_rom_base(), size, "rom");
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 

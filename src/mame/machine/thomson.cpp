@@ -373,12 +373,14 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, to7_cartridge )
 		m_thom_cart_nb_banks = 1;
 	else if ( size == 0x08000 )
 		m_thom_cart_nb_banks = 2;
+	else if ( size == 0x0c000 )
+		m_thom_cart_nb_banks = 3;
 	else if ( size == 0x10000 )
 		m_thom_cart_nb_banks = 4;
 	else
 	{
 		image.seterror(IMAGE_ERROR_UNSUPPORTED, string_format("Invalid cartridge size %u", size).c_str());
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	if (image.software_entry() == nullptr)
@@ -386,7 +388,7 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, to7_cartridge )
 		if ( image.fread( pos, size ) != size )
 		{
 			image.seterror(IMAGE_ERROR_INVALIDIMAGE, "Read error");
-			return IMAGE_INIT_FAIL;
+			return image_init_result::FAIL;
 		}
 	}
 	else
@@ -409,7 +411,7 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, to7_cartridge )
 
 	PRINT (( "to7_cartridge_load: cartridge \"%s\" banks=%i, size=%i\n", name, m_thom_cart_nb_banks, size ));
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -1502,12 +1504,14 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, mo5_cartridge )
 		m_thom_cart_nb_banks = 1;
 	else if ( size == 0x08000 )
 		m_thom_cart_nb_banks = 2;
+	else if ( size == 0x0c000 )
+		m_thom_cart_nb_banks = 3;
 	else if ( size == 0x10000 )
 		m_thom_cart_nb_banks = 4;
 	else
 	{
 		image.seterror(IMAGE_ERROR_UNSUPPORTED, string_format("Invalid cartridge size %d", size).c_str());
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	if (image.software_entry() == nullptr)
@@ -1515,7 +1519,7 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, mo5_cartridge )
 		if ( image.fread(pos, size ) != size )
 		{
 			image.seterror(IMAGE_ERROR_INVALIDIMAGE, "Read error");
-			return IMAGE_INIT_FAIL;
+			return image_init_result::FAIL;
 		}
 	}
 	else
@@ -1538,7 +1542,7 @@ DEVICE_IMAGE_LOAD_MEMBER( thomson_state, mo5_cartridge )
 
 	PRINT (( "mo5_cartridge_load: cartridge \"%s\" banks=%i, size=%u\n", name, m_thom_cart_nb_banks, (unsigned) size ));
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -2993,7 +2997,7 @@ void thomson_state::to8_kbd_reset()
 void thomson_state::to8_kbd_init()
 {
 	m_to8_kbd_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(thomson_state::to8_kbd_timer_cb),this));
-	m_to8_kbd_signal = machine().scheduler().timer_alloc(FUNC_NULL);
+	m_to8_kbd_signal = machine().scheduler().timer_alloc(timer_expired_delegate());
 	save_item(NAME(m_to8_kbd_ack));
 	save_item(NAME(m_to8_kbd_data));
 	save_item(NAME(m_to8_kbd_step));

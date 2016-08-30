@@ -16,7 +16,7 @@
 #include "cpu/z80/z80.h"
 #include "video/mc6845.h"
 #include "machine/ram.h"
-#include "audio/tvc_snd.h"
+#include "audio/tvc.h"
 #include "bus/centronics/ctronics.h"
 #include "imagedev/cassette.h"
 #include "imagedev/snapquik.h"
@@ -39,15 +39,15 @@ class tvc_state : public driver_device
 {
 public:
 	tvc_state(const machine_config &mconfig, device_type type, const char *tag)
-	: driver_device(mconfig, type, tag),
-	m_maincpu(*this, "maincpu"),
-	m_ram(*this, RAM_TAG),
-	m_sound(*this, "custom"),
-	m_cassette(*this, "cassette"),
-	m_cart(*this, "cartslot"),
-	m_centronics(*this, CENTRONICS_TAG),
-	m_palette(*this, "palette"),
-	m_keyboard(*this, "LINE")
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_ram(*this, RAM_TAG)
+		, m_sound(*this, "custom")
+		, m_cassette(*this, "cassette")
+		, m_cart(*this, "cartslot")
+		, m_centronics(*this, CENTRONICS_TAG)
+		, m_palette(*this, "palette")
+		, m_keyboard(*this, "LINE.%u", 0)
 	{ }
 
 	required_device<cpu_device> m_maincpu;
@@ -204,7 +204,7 @@ void tvc_state::set_mem_page(UINT8 data)
 		case 0xc0 : // External ROM selected
 			TVC_INSTALL_ROM_BANK(3, "bank4", 0xc000, 0xffff);
 			membank("bank4")->set_base(m_ext->base());
-			space.install_readwrite_handler (0xc000, 0xdfff, 0, 0, read8_delegate(FUNC(tvc_state::expansion_r), this), write8_delegate(FUNC(tvc_state::expansion_w), this), 0);
+			space.install_readwrite_handler (0xc000, 0xdfff, read8_delegate(FUNC(tvc_state::expansion_r), this), write8_delegate(FUNC(tvc_state::expansion_w), this), 0);
 			m_bank_type[3] = -1;
 			break;
 	}
@@ -742,11 +742,11 @@ QUICKLOAD_LOAD_MEMBER( tvc_state, tvc64)
 	{
 		image.fseek(0x90, SEEK_SET);
 		image.fread(m_ram->pointer() + 0x19ef, image.length() - 0x90);
-		return IMAGE_INIT_PASS;
+		return image_init_result::PASS;
 	}
 	else
 	{
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 }
 

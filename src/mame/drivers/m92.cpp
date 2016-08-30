@@ -206,9 +206,8 @@ psoldier dip locations still need verification.
 #include "includes/m92.h"
 #include "includes/iremipt.h"
 #include "machine/irem_cpu.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "sound/iremga20.h"
-#include "sound/okim6295.h"
 
 
 // I haven't managed to find a way to keep nbbatman happy when using the proper upd71059c device
@@ -338,7 +337,7 @@ WRITE16_MEMBER(m92_state::m92_soundlatch_w)
 	if (m_soundcpu)
 		m_soundcpu->set_input_line(NEC_INPUT_LINE_INTP1, ASSERT_LINE);
 
-	soundlatch_byte_w(space, 0, data & 0xff);
+	m_soundlatch->write(space, 0, data & 0xff);
 }
 
 READ16_MEMBER(m92_state::m92_sound_status_r)
@@ -352,7 +351,7 @@ READ16_MEMBER(m92_state::m92_soundlatch_r)
 	if (m_soundcpu)
 		m_soundcpu->set_input_line(NEC_INPUT_LINE_INTP1, CLEAR_LINE);
 
-	return soundlatch_byte_r(space, offset) | 0xff00;
+	return m_soundlatch->read(space, offset) | 0xff00;
 }
 
 WRITE16_MEMBER(m92_state::m92_sound_irq_ack_w)
@@ -465,7 +464,7 @@ static INPUT_PORTS_START( m92_2player )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, m92_state,m92_sprite_busy_r, NULL)
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, m92_state,m92_sprite_busy_r, nullptr)
 	/* DIP switch bank 3 */
 	PORT_DIPUNKNOWN_DIPLOC( 0x0100, 0x0100, "SW3:1" )
 	PORT_DIPUNKNOWN_DIPLOC( 0x0200, 0x0200, "SW3:2" )
@@ -977,7 +976,7 @@ static MACHINE_CONFIG_START( m92, m92_state )
 	MCFG_CPU_ADD("soundcpu" ,V35, XTAL_14_31818MHz)
 	MCFG_CPU_PROGRAM_MAP(sound_map)
 
-	MCFG_PIC8259_ADD( "upd71059c", INPUTLINE("maincpu", 0), VCC, NULL)
+	MCFG_PIC8259_ADD( "upd71059c", INPUTLINE("maincpu", 0), VCC, NOOP)
 
 	MCFG_MACHINE_START_OVERRIDE(m92_state,m92)
 	MCFG_MACHINE_RESET_OVERRIDE(m92_state,m92)
@@ -1003,6 +1002,8 @@ static MACHINE_CONFIG_START( m92, m92_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", XTAL_14_31818MHz/4)
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("soundcpu", NEC_INPUT_LINE_INTP0))
@@ -1056,6 +1057,7 @@ static MACHINE_CONFIG_DERIVED( ppan, m92 )
 	MCFG_CPU_IO_MAP(ppan_portmap)
 
 	MCFG_DEVICE_REMOVE("soundcpu")
+	MCFG_DEVICE_REMOVE("soundlatch")
 	MCFG_DEVICE_REMOVE("ymsnd")
 	MCFG_DEVICE_REMOVE("irem")
 
@@ -1311,7 +1313,7 @@ ROM_START( majtitl2a )
 
 	ROM_REGION( 0x80000, "irem", 0 )
 	ROM_LOAD( "k0d.ic8", 0x000000, 0x80000, CRC(713b9e9f) SHA1(91384d67d4ba9c7d926fbecb077293c661b8ec83) )
-	
+
 	ROM_REGION( 0x4000, "eeprom", 0 )   /* D28C64C-20 EEPROM */
 	ROM_LOAD( "mt2eep",  0x000000, 0x800, CRC(208af971) SHA1(69384cac24b7af35a031f9b60e035131a8b10cb2) )
 

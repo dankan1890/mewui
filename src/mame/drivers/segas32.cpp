@@ -544,7 +544,12 @@ segas32_state::segas32_state(const machine_config &mconfig, const char *tag, dev
 		m_system32_workram(*this,"workram"),
 		m_system32_videoram(*this,"videoram", 0),
 		m_system32_spriteram(*this,"spriteram", 0),
-		m_system32_paletteram(*this,"paletteram", 0) ,
+		m_system32_paletteram(*this,"paletteram.%u", 0, UINT8(0)),
+		m_ports_a(*this, {"P1_A", "P2_A", "PORTC_A", "PORTD_A", "SERVICE12_A", "SERVICE34_A", "PORTG_A", "PORTH_A"}),
+		m_ports_b(*this, {"P1_B", "P2_B", "PORTC_B", "PORTD_B", "SERVICE12_B", "SERVICE34_B", "PORTG_B", "PORTH_B"}),
+		m_analog_ports(*this, {"ANALOG1", "ANALOG2", "ANALOG3", "ANALOG4", "ANALOG5", "ANALOG6", "ANALOG7", "ANALOG8"}),
+		m_extra_ports(*this, {"EXTRA1", "EXTRA2", "EXTRA3", "EXTRA4"}),
+		m_track_ports(*this, {"TRACKX1", "TRACKY1", "TRACKX2", "TRACKY2", "TRACKX3", "TRACKY3"}),
 		m_maincpu(*this, "maincpu"),
 		m_soundcpu(*this, "soundcpu"),
 		m_multipcm(*this, "sega"),
@@ -805,11 +810,6 @@ INTERRUPT_GEN_MEMBER(segas32_state::start_of_vblank_int)
 
 UINT16 segas32_state::common_io_chip_r(address_space &space, int which, offs_t offset, UINT16 mem_mask)
 {
-	static const char *const portnames[2][8] =
-			{
-				{ "P1_A", "P2_A", "PORTC_A", "PORTD_A", "SERVICE12_A", "SERVICE34_A", "PORTG_A", "PORTH_A" },
-				{ "P1_B", "P2_B", "PORTC_B", "PORTD_B", "SERVICE12_B", "SERVICE34_B", "PORTG_B", "PORTH_B" },
-			};
 	offset &= 0x1f/2;
 
 	switch (offset)
@@ -828,7 +828,7 @@ UINT16 segas32_state::common_io_chip_r(address_space &space, int which, offs_t o
 				return m_misc_io_data[which][offset];
 
 			/* otherwise, return an input port */
-			return read_safe(ioport(portnames[which][offset]), 0xffff);
+			return (which ? m_ports_b : m_ports_a)[offset].read_safe(0xffff);
 
 		/* 'SEGA' protection */
 		case 0x10/2:
@@ -1090,14 +1090,13 @@ READ16_MEMBER(segas32_state::analog_custom_io_r)
 
 WRITE16_MEMBER(segas32_state::analog_custom_io_w)
 {
-	static const char *const names[] = { "ANALOG1", "ANALOG2", "ANALOG3", "ANALOG4" };
 	switch (offset)
 	{
 		case 0x10/2:
 		case 0x12/2:
 		case 0x14/2:
 		case 0x16/2:
-			m_analog_value[offset & 3] = read_safe(ioport(names[offset & 3]), 0);
+			m_analog_value[offset & 3] = m_analog_ports[offset & 3].read_safe(0);
 			return;
 	}
 	logerror("%06X:unknown analog_custom_io_w(%X) = %04X & %04X\n", space.device().safe_pc(), offset*2, data, mem_mask);
@@ -1106,14 +1105,13 @@ WRITE16_MEMBER(segas32_state::analog_custom_io_w)
 
 READ16_MEMBER(segas32_state::extra_custom_io_r)
 {
-	static const char *const names[] = { "EXTRA1", "EXTRA2", "EXTRA3", "EXTRA4" };
 	switch (offset)
 	{
 		case 0x20/2:
 		case 0x22/2:
 		case 0x24/2:
 		case 0x26/2:
-			return read_safe(ioport(names[offset & 3]), 0xffff);
+			return m_extra_ports[offset & 3].read_safe(0xffff);
 	}
 
 	logerror("%06X:unknown extra_custom_io_r(%X) & %04X\n", space.device().safe_pc(), offset*2, mem_mask);
@@ -1123,14 +1121,13 @@ READ16_MEMBER(segas32_state::extra_custom_io_r)
 
 WRITE16_MEMBER(segas32_state::orunners_custom_io_w)
 {
-	static const char *const names[] = { "ANALOG1", "ANALOG2", "ANALOG3", "ANALOG4", "ANALOG5", "ANALOG6", "ANALOG7", "ANALOG8" };
 	switch (offset)
 	{
 		case 0x10/2:
 		case 0x12/2:
 		case 0x14/2:
 		case 0x16/2:
-			m_analog_value[offset & 3] = read_safe(ioport(names[m_analog_bank * 4 + (offset & 3)]), 0);
+			m_analog_value[offset & 3] = m_analog_ports[m_analog_bank * 4 + (offset & 3)].read_safe(0);
 			return;
 
 		case 0x20/2:
@@ -1143,8 +1140,6 @@ WRITE16_MEMBER(segas32_state::orunners_custom_io_w)
 
 READ16_MEMBER(segas32_state::sonic_custom_io_r)
 {
-	static const char *const names[] = { "TRACKX1", "TRACKY1", "TRACKX2", "TRACKY2", "TRACKX3", "TRACKY3" };
-
 	switch (offset)
 	{
 		case 0x00/2:
@@ -1153,7 +1148,7 @@ READ16_MEMBER(segas32_state::sonic_custom_io_r)
 		case 0x0c/2:
 		case 0x10/2:
 		case 0x14/2:
-			return (UINT8)(ioport(names[offset/2])->read() - m_sonic_last[offset/2]);
+			return (UINT8)(m_track_ports[offset/2]->read() - m_sonic_last[offset/2]);
 	}
 
 	logerror("%06X:unknown sonic_custom_io_r(%X) & %04X\n", space.device().safe_pc(), offset*2, mem_mask);
@@ -1163,15 +1158,13 @@ READ16_MEMBER(segas32_state::sonic_custom_io_r)
 
 WRITE16_MEMBER(segas32_state::sonic_custom_io_w)
 {
-	static const char *const names[] = { "TRACKX1", "TRACKY1", "TRACKX2", "TRACKY2", "TRACKX3", "TRACKY3" };
-
 	switch (offset)
 	{
 		case 0x00/2:
 		case 0x08/2:
 		case 0x10/2:
-			m_sonic_last[offset/2 + 0] = ioport(names[offset/2 + 0])->read();
-			m_sonic_last[offset/2 + 1] = ioport(names[offset/2 + 1])->read();
+			m_sonic_last[offset/2 + 0] = m_track_ports[offset/2 + 0]->read();
+			m_sonic_last[offset/2 + 1] = m_track_ports[offset/2 + 1]->read();
 			return;
 	}
 
@@ -4777,6 +4770,34 @@ ROM_END
 */
 ROM_START( jleague )
 	ROM_REGION( 0x200000, "mainpcb:maincpu", 0 ) /* v60 code + data */
+	ROM_LOAD_x4( "epr-16782a.ic17",    0x000000, 0x020000, CRC(b399ac47) SHA1(b7a2bfaf6ea2f98e177e3f4542f5b37ec9b00c8a) )
+	ROM_LOAD_x4( "epr-16781a.ic8",     0x080000, 0x020000, CRC(e6d80225) SHA1(bc9fd6b9e4019e01b9a496064e3b3209f31590e4) )
+	ROM_LOAD16_BYTE( "epr-16776.ic18", 0x100000, 0x080000, CRC(e8694626) SHA1(d4318a9a6b1cc5c719bff9c25b7398dd2ea1e18b) )
+	ROM_LOAD16_BYTE( "epr-16775.ic9",  0x100001, 0x080000, CRC(e81e2c3d) SHA1(2900710f1dec6cf71875c82a56584ba45ed3a545) )
+
+	ROM_REGION( 0x500000, "mainpcb:soundcpu", 0 ) /* sound CPU */
+	ROM_LOAD_x4( "epr-16780.ic36", 0x100000, 0x040000, CRC(47aa4ec7) SHA1(baea18aaac0314f769f1e36fdbe8aedf62862544) )
+	ROM_LOAD( "mpr-16779.ic35",    0x200000, 0x100000, CRC(7055e859) SHA1(cde27fa4aaf0ee54063ee68794e9a6075581fff5) )
+	ROM_LOAD( "mpr-16778.ic34",    0x300000, 0x100000, CRC(feedaecf) SHA1(25c14ccb85c467dc0c8e85b61f8f86f4396c0cc7) )
+	ROM_LOAD( "mpr-16777.ic24",    0x400000, 0x100000, CRC(14b5d5df) SHA1(1b0b0a31294b1bbc16d2046b374d584a1b00a78c) )
+
+	ROM_REGION( 0x200000, "mainpcb:gfx1", 0 ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr-16784.ic14", 0x000000, 0x100000, CRC(4608efe2) SHA1(9b41aa28f50af770e854ef9fdff1a55da7b7b131) )
+	ROM_LOAD16_BYTE( "mpr-16783.ic5",  0x000001, 0x100000, CRC(042eabe7) SHA1(a11df5c21d85f0c96dbdcaf57be37a79658ad648) )
+
+	ROM_REGION32_BE( 0x1000000, "mainpcb:gfx2", 0 ) /* sprites */
+	ROMX_LOAD( "mpr-16785.ic32", 0x000000, 0x200000, CRC(51f775ce) SHA1(125b40bf47304d37b92e81df5081c81d9af6c8a2) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16787.ic30", 0x000002, 0x200000, CRC(dee7a204) SHA1(29acff4d5dd68609ac46853860788206d18262ab) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16789.ic28", 0x000004, 0x200000, CRC(6b6c8ad3) SHA1(97b0078c851845c31dcf0fe4b2a88393dcdf8988) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16791.ic26", 0x000006, 0x200000, CRC(4f7236da) SHA1(d1c29f6aa82d60a626217f1430bc8a76ef012007) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16786.ic31", 0x800000, 0x200000, CRC(d08a2d32) SHA1(baac63cbacbe38e057684174040384a7152eb523) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16788.ic29", 0x800002, 0x200000, CRC(cd9d3605) SHA1(7c4402be1a1ddde6766cfdd5fe7e2a088c4a59e8) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16790.ic27", 0x800004, 0x200000, CRC(2ea75746) SHA1(c91e5d678917886cc23fbef7a577c5a70665c7b2) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr-16792.ic25", 0x800006, 0x200000, CRC(9f416072) SHA1(18107cf64f918888aa5a54432f8e9137910101b8) , ROM_SKIP(6)|ROM_GROUPWORD )
+ROM_END
+
+ROM_START( jleagueo )
+	ROM_REGION( 0x200000, "mainpcb:maincpu", 0 ) /* v60 code + data */
 	ROM_LOAD_x4( "epr-16782.ic17",     0x000000, 0x020000, CRC(f0278944) SHA1(49e3842231ee5abdd6205b598309153d6b4ddc02) )
 	ROM_LOAD_x4( "epr-16781.ic8",      0x080000, 0x020000, CRC(7df9529b) SHA1(de3633f4941ff3877c4cb8b53e080eccea19f22e) )
 	ROM_LOAD16_BYTE( "epr-16776.ic18", 0x100000, 0x080000, CRC(e8694626) SHA1(d4318a9a6b1cc5c719bff9c25b7398dd2ea1e18b) )
@@ -4958,8 +4979,8 @@ void segas32_state::radm_sw2_output( int which, UINT16 data )
 {
 	if (which == 0)
 	{
-		machine().output().set_value("Wiper_lamp", BIT(data, 0));
-		machine().output().set_value("Lights_lamp", BIT(data, 1));
+		machine().output().set_value("Lights_lamp", BIT(data, 0));
+		machine().output().set_value("Wiper_lamp", BIT(data, 1));
 	}
 }
 
@@ -5466,7 +5487,8 @@ GAME( 1991, spidmanj,  spidman,  sega_system32,     spidman,  segas32_new_state,
 
 GAME( 1994, svf,       0,        sega_system32,     svf,      segas32_new_state, svf,      ROT0, "Sega",   "Super Visual Football: European Sega Cup", MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1994, svs,       svf,      sega_system32,     svf,      segas32_new_state, svf,      ROT0, "Sega",   "Super Visual Soccer: Sega Cup (US)", MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1994, jleague,   svf,      sega_system32,     svf,      segas32_new_state, jleague,  ROT0, "Sega",   "The J.League 1994 (Japan)", MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1994, jleague,   svf,      sega_system32,     svf,      segas32_new_state, jleague,  ROT0, "Sega",   "The J.League 1994 (Japan, Rev A)", MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1994, jleagueo,  svf,      sega_system32,     svf,      segas32_new_state, jleague,  ROT0, "Sega",   "The J.League 1994 (Japan)", MACHINE_IMPERFECT_GRAPHICS )
 
 
 GAME( 1994, harddunk,  0,        sega_multi32,      harddunk, segas32_new_state, harddunk, ROT0, "Sega",   "Hard Dunk (World)", MACHINE_IMPERFECT_GRAPHICS )

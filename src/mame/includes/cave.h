@@ -1,11 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia
+
 /***************************************************************************
 
     Cave hardware
 
 ***************************************************************************/
+
 #include "machine/eepromser.h"
+#include "machine/gen_latch.h"
 #include "machine/nmk112.h"
 #include "sound/okim6295.h"
 
@@ -30,23 +33,24 @@ class cave_state : public driver_device
 {
 public:
 	cave_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-			m_videoregs(*this, "videoregs"),
-			m_vram(*this, "vram"),
-			m_vctrl(*this, "vctrl"),
-			m_spriteram(*this, "spriteram"),
-			m_spriteram_2(*this, "spriteram_2"),
-			m_paletteram(*this, "paletteram"),
-			m_maincpu(*this, "maincpu"),
-			m_audiocpu(*this, "audiocpu"),
-			m_oki(*this, "oki"),
-			m_int_timer(*this, "int_timer"),
-			m_int_timer_left(*this, "int_timer_left"),
-			m_int_timer_right(*this, "int_timer_right"),
-			m_eeprom(*this, "eeprom"),
-			m_gfxdecode(*this, "gfxdecode"),
-			m_screen(*this, "screen"),
-			m_palette(*this, "palette") { }
+		: driver_device(mconfig, type, tag)
+		, m_videoregs(*this, "videoregs.%u", 0)
+		, m_vram(*this, "vram.%u", 0)
+		, m_vctrl(*this, "vctrl.%u", 0)
+		, m_spriteram(*this, "spriteram.%u", 0)
+		, m_spriteram_2(*this, "spriteram_2.%u", 0)
+		, m_paletteram(*this, "paletteram.%u", 0)
+		, m_maincpu(*this, "maincpu")
+		, m_audiocpu(*this, "audiocpu")
+		, m_oki(*this, "oki")
+		, m_int_timer(*this, "int_timer")
+		, m_int_timer_left(*this, "int_timer_left")
+		, m_int_timer_right(*this, "int_timer_right")
+		, m_eeprom(*this, "eeprom")
+		, m_gfxdecode(*this, "gfxdecode")
+		, m_screen(*this, "screen")
+		, m_palette(*this, "palette")
+		, m_soundlatch(*this, "soundlatch") { }
 
 	/* memory pointers */
 	optional_shared_ptr_array<UINT16, 4> m_videoregs;
@@ -131,6 +135,8 @@ public:
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<screen_device> m_screen;
 	required_device<palette_device> m_palette;
+	optional_device<generic_latch_16_device> m_soundlatch;
+
 	int m_rasflag;
 	int m_old_rasflag;
 	DECLARE_READ16_MEMBER(cave_irq_cause_r);
@@ -210,6 +216,7 @@ public:
 	TILE_GET_INFO_MEMBER(get_tile_info_3);
 	DECLARE_MACHINE_START(cave);
 	DECLARE_MACHINE_RESET(cave);
+	DECLARE_MACHINE_RESET(sailormn);
 	DECLARE_VIDEO_START(cave_2_layers);
 	DECLARE_PALETTE_INIT(dfeveron);
 	DECLARE_VIDEO_START(cave_3_layers);
@@ -235,10 +242,10 @@ public:
 	TIMER_DEVICE_CALLBACK_MEMBER(cave_vblank_start_left);
 	TIMER_DEVICE_CALLBACK_MEMBER(cave_vblank_start_right);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_lev2_cb);
+	TIMER_DEVICE_CALLBACK_MEMBER(sailormn_startup);
 	void cave_get_sprite_info(int chip);
 	void cave_get_sprite_info_all();
 	void sailormn_tilebank_w(int bank);
-	DECLARE_WRITE_LINE_MEMBER(irqhandler);
 	DECLARE_WRITE_LINE_MEMBER(sound_irq_gen);
 	void update_irq_state();
 	void unpack_sprites(const char *region);

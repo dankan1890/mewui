@@ -370,24 +370,32 @@ void megasys1_state::create_tilemaps()
 	for (layer = 0; layer < 3; layer++)
 	{
 		/* 16x16 tilemaps */
-		m_tilemap[layer][0][0] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 16, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][0][1] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 4);
-		m_tilemap[layer][0][2] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 8);
-		m_tilemap[layer][0][3] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 16);
+		m_tilemap[layer][0][0] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 16, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][0][1] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 4);
+		m_tilemap[layer][0][2] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 8);
+		m_tilemap[layer][0][3] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 16);
 
 		/* 8x8 tilemaps */
-		m_tilemap[layer][1][0] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 1);
-		m_tilemap[layer][1][1] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][1][2] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][1][3] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 4);
+		m_tilemap[layer][1][0] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 1);
+		m_tilemap[layer][1][1] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][1][2] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][1][3] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(megasys1_state::megasys1_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(megasys1_state::megasys1_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 4);
 
 		/* set user data and transparency */
 		for (i = 0; i < 8; i++)
@@ -446,8 +454,16 @@ WRITE16_MEMBER(megasys1_state::megasys1_vregs_A_w)
 							}
 							break;
 
-		case 0x308/2   :    soundlatch_word_w(space,0,new_data,0xffff);
-							m_audiocpu->set_input_line(4, HOLD_LINE);
+		case 0x308/2   :    if (!m_hardware_type_z)
+							{
+								m_soundlatch->write(space,0,new_data,0xffff);
+								m_audiocpu->set_input_line(4, HOLD_LINE);
+							}
+							else
+							{
+								m_soundlatch_z->write(space,0,new_data&0xff);
+								m_audiocpu->set_input_line(5, HOLD_LINE);
+							}
 							break;
 
 		default      :  SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -490,7 +506,7 @@ WRITE16_MEMBER(megasys1_state::megasys1_vregs_monkelf_w)
 							}
 							break;
 
-		case 0x308/2   :    soundlatch_word_w(space,0,new_data,0xffff);
+		case 0x308/2   :    m_soundlatch->write(space,0,new_data,0xffff);
 							m_audiocpu->set_input_line(4, HOLD_LINE);
 							break;
 
@@ -505,7 +521,7 @@ READ16_MEMBER(megasys1_state::megasys1_vregs_C_r)
 {
 	switch (offset)
 	{
-		case 0x8000/2:  return soundlatch2_word_r(space,0,0xffff);
+		case 0x8000/2:  return m_soundlatch2->read(space,0,0xffff);
 		default:        return m_vregs[offset];
 	}
 }
@@ -540,7 +556,7 @@ WRITE16_MEMBER(megasys1_state::megasys1_vregs_C_w)
 							break;
 
 		case 0x8000/2   :   /* Cybattler reads sound latch on irq 2 */
-							soundlatch_word_w(space, 0, new_data, 0xffff);
+							m_soundlatch->write(space, 0, new_data, 0xffff);
 							m_audiocpu->set_input_line(2, HOLD_LINE);
 							break;
 

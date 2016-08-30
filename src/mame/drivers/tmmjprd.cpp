@@ -45,7 +45,7 @@ public:
 		m_eeprom(*this, "eeprom"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
-		m_tilemap_regs(*this, "tilemap_regs"),
+		m_tilemap_regs(*this, "tilemap_regs.%u", 0),
 		m_spriteregs(*this, "spriteregs"),
 		m_spriteram(*this, "spriteram") { }
 
@@ -497,7 +497,7 @@ void tmmjprd_state::do_blit()
 				break;
 
 			default: /* unknown / illegal */
-				if(BLITLOG) osd_printf_debug("uknown blit command %02x\n",blt_commnd);
+				if(BLITLOG) osd_printf_debug("unknown blit command %02x\n",blt_commnd);
 				break;
 		}
 	}

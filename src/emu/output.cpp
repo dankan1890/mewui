@@ -9,6 +9,11 @@
 
 #include "emu.h"
 #include "coreutil.h"
+#include "modules/output/output_module.h"
+
+
+#define OUTPUT_VERBOSE  0
+
 
 //**************************************************************************
 //  OUTPUT MANAGER
@@ -33,10 +38,9 @@ output_manager::output_manager(running_machine &machine)
 
 output_manager::output_item* output_manager::find_item(const char *string)
 {
-	/* use the hash as a starting point and find an entry */
-	for (auto &item : m_itemtable)
-		if (strcmp(string, item.second.name.c_str()) == 0)
-			return &item.second;
+	auto item = m_itemtable.find(std::string(string));
+	if (item != m_itemtable.end())
+		return &item->second;
 
 	return nullptr;
 }
@@ -101,6 +105,9 @@ void output_manager::set_value(const char *outname, INT32 value)
 	/* if the value is different, signal the notifier */
 	if (oldval != value)
 	{
+		if (OUTPUT_VERBOSE)
+			machine().logerror("Output %s = %d (was %d)\n", outname, value, oldval);
+
 		/* call the local notifiers first */
 		for (auto notify : item->notifylist)
 			(*notify.m_notifier)(outname, value, notify.m_param);
@@ -183,7 +190,7 @@ INT32 output_manager::get_indexed_value(const char *basename, int index)
 /*-------------------------------------------------
     output_set_notifier - sets a notifier callback
     for a particular output, or for all outputs
-    if NULL is specified
+    if nullptr is specified
 -------------------------------------------------*/
 
 void output_manager::set_notifier(const char *outname, output_notifier_func callback, void *param)
@@ -210,10 +217,10 @@ void output_manager::set_notifier(const char *outname, output_notifier_func call
     notifier for all outputs
 -------------------------------------------------*/
 
-void output_manager::notify_all(output_notifier_func callback, void *param)
+void output_manager::notify_all(output_module *module)
 {
 	for (auto &item : m_itemtable)
-		(*callback)(item.second.name.c_str(), item.second.value, param);
+		module->notify(item.second.name.c_str(), item.second.value);
 }
 
 

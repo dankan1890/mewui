@@ -115,21 +115,32 @@ end
 		targetextension ".bc"
 		if os.getenv("EMSCRIPTEN") then
 			local emccopts = ""
-			emccopts = emccopts .. " -O3"
-			emccopts = emccopts .. " -s USE_SDL=2"
-			emccopts = emccopts .. " -s USE_SDL_TTF=2"
-			emccopts = emccopts .. " --memory-init-file 0"
-			emccopts = emccopts .. " -s ALLOW_MEMORY_GROWTH=0"
-			emccopts = emccopts .. " -s TOTAL_MEMORY=268435456"
-			emccopts = emccopts .. " -s DISABLE_EXCEPTION_CATCHING=2"
-			emccopts = emccopts .. " -s EXCEPTION_CATCHING_WHITELIST='[\"__ZN15running_machine17start_all_devicesEv\",\"__ZN12cli_frontend7executeEiPPc\"]'"
-			emccopts = emccopts .. " -s EXPORTED_FUNCTIONS=\"['_main', '_malloc', '__Z14js_get_machinev', '__Z9js_get_uiv', '__Z12js_get_soundv', '__ZN10ui_manager12set_show_fpsEb', '__ZNK10ui_manager8show_fpsEv', '__ZN13sound_manager4muteEbh', '_SDL_PauseAudio']\""
-			emccopts = emccopts .. " --pre-js " .. _MAKE.esc(MAME_DIR) .. "src/osd/modules/sound/js_sound.js"
-			emccopts = emccopts .. " --post-js " .. _MAKE.esc(MAME_DIR) .. "scripts/resources/emscripten/emscripten_post.js"
-			emccopts = emccopts .. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/chains@bgfx/chains"
-			emccopts = emccopts .. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/effects@bgfx/effects"
-			emccopts = emccopts .. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/shaders/gles@bgfx/shaders/gles"
-			emccopts = emccopts .. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "artwork/slot-mask.png@artwork/slot-mask.png"
+				.. " -O" .. _OPTIONS["OPTIMIZE"]
+				.. " -s USE_SDL=2"
+				.. " -s USE_SDL_TTF=2"
+				.. " --memory-init-file 0"
+				.. " -s ALLOW_MEMORY_GROWTH=0"
+				.. " -s TOTAL_MEMORY=268435456"
+				.. " -s DISABLE_EXCEPTION_CATCHING=2"
+				.. " -s EXCEPTION_CATCHING_WHITELIST='[\"__ZN15running_machine17start_all_devicesEv\",\"__ZN12cli_frontend7executeEiPPc\"]'"
+				.. " -s EXPORTED_FUNCTIONS=\"['_main', '_malloc', '__Z14js_get_machinev', '__Z9js_get_uiv', '__Z12js_get_soundv', '__ZN15mame_ui_manager12set_show_fpsEb', '__ZNK15mame_ui_manager8show_fpsEv', '__ZN13sound_manager4muteEbh', '_SDL_PauseAudio', '_SDL_SendKeyboardKey']\""
+				.. " --pre-js " .. _MAKE.esc(MAME_DIR) .. "src/osd/modules/sound/js_sound.js"
+				.. " --post-js " .. _MAKE.esc(MAME_DIR) .. "scripts/resources/emscripten/emscripten_post.js"
+				.. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/chains@bgfx/chains"
+				.. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/effects@bgfx/effects"
+				.. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "bgfx/shaders/gles@bgfx/shaders/gles"
+				.. " --embed-file " .. _MAKE.esc(MAME_DIR) .. "artwork/slot-mask.png@artwork/slot-mask.png"
+
+			if _OPTIONS["SYMBOLS"]~=nil and _OPTIONS["SYMBOLS"]~="0" then
+				emccopts = emccopts
+					.. " -g" .. _OPTIONS["SYMLEVEL"]
+					.. " -s DEMANGLE_SUPPORT=1"
+			end
+
+			if _OPTIONS["ARCHOPTS"] then
+				emccopts = emccopts .. " " .. _OPTIONS["ARCHOPTS"]
+			end
+
 			postbuildcommands {
 				os.getenv("EMSCRIPTEN") .. "/emcc " .. emccopts .. " $(TARGET) -o " .. _MAKE.esc(MAME_DIR) .. _OPTIONS["target"] .. _OPTIONS["subtarget"] .. ".js",
 			}
@@ -172,19 +183,34 @@ end
 		end
 	end
 
+if (STANDALONE~=true) then
 	findfunction("linkProjects_" .. _OPTIONS["target"] .. "_" .. _OPTIONS["subtarget"])(_OPTIONS["target"], _OPTIONS["subtarget"])
+end
 	links {
 		"osd_" .. _OPTIONS["osd"],
 	}
 	links {
 		"qtdbg_" .. _OPTIONS["osd"],
 	}
+if (STANDALONE~=true) then
+	links {
+		"frontend",
+	}
+end
+if (MACHINES["NETLIST"]~=null) then
 	links {
 		"netlist",
+	}
+end
+	links {
 		"optional",
 		"emu",
+	}
+--if (STANDALONE~=true) then
+	links {
 		"formats",
 	}
+--end
 if #disasm_files > 0 then
 	links {
 		"dasm",
@@ -196,20 +222,21 @@ end
 		"softfloat",
 		ext_lib("jpeg"),
 		"7z",
+	}
+if (STANDALONE~=true) then
+	links {
 		ext_lib("lua"),
 		"lualibs",
 	}
-
+end
 	if _OPTIONS["USE_LIBUV"]=="1" then
 		links {
 			ext_lib("uv"),
-			"http-parser",
 		}
 	end
 	links {
 		ext_lib("zlib"),
 		ext_lib("flac"),
-		ext_lib("sqlite3"),
 	}
 
 	if _OPTIONS["NO_USE_MIDI"]~="1" then
@@ -240,12 +267,18 @@ end
 		ext_includedir("flac"),
 	}
 
+
+if (STANDALONE==true) then
+	standalone();
+end
+
+if (STANDALONE~=true) then
 	if _OPTIONS["targetos"]=="macosx" and (not override_resources) then
 		linkoptions {
 			"-sectcreate __TEXT __info_plist " .. _MAKE.esc(GEN_DIR) .. "resource/" .. _subtarget .. "-Info.plist"
 		}
 		custombuildtask {
-			{ MAME_DIR .. "src/version.cpp" ,  GEN_DIR .. "resource/" .. _subtarget .. "-Info.plist",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. _subtarget .. "-Info.plist" .. "...",    PYTHON .. " $(1)  -p -b " .. _subtarget .. " $(<) > $(@)" }},
+			{ GEN_DIR .. "version.cpp" ,  GEN_DIR .. "resource/" .. _subtarget .. "-Info.plist",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. _subtarget .. "-Info.plist" .. "...",    PYTHON .. " $(1)  -p -b " .. _subtarget .. " $(<) > $(@)" }},
 		}
 		dependency {
 			{ "$(TARGET)" ,  GEN_DIR  .. "resource/" .. _subtarget .. "-Info.plist", true  },
@@ -280,68 +313,71 @@ end
 	end
 	files {
 		mainfile,
-		MAME_DIR .. "src/version.cpp",
+		GEN_DIR .. "version.cpp",
 		GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",
 	}
 
-if (_OPTIONS["SOURCES"] == nil) then
+	if (_OPTIONS["SOURCES"] == nil) then
 
-	if os.isfile(MAME_DIR .. "src/".._target .."/" .. _subtarget ..".flt") then
-		dependency {
-		{
-			GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
-		}
-		custombuildtask {
-			{ MAME_DIR .. "src/".._target .."/" .. _subtarget ..".flt" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py", MAME_DIR .. "src/".._target .."/" .. _target ..".lst"  }, {"@echo Building driver list...",    PYTHON .. " $(1) $(2) $(<) > $(@)" }},
-		}
-	else
-		if os.isfile(MAME_DIR .. "src/".._target .."/" .. _subtarget ..".lst") then
-			custombuildtask {
-				{ MAME_DIR .. "src/".._target .."/" .. _subtarget ..".lst" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py" }, {"@echo Building driver list...",    PYTHON .. " $(1) $(<) > $(@)" }},
-			}
-		else
+		if os.isfile(MAME_DIR .. "src/".._target .."/" .. _subtarget ..".flt") then
 			dependency {
 			{
-				GEN_DIR  .. _target .. "/" .. _target .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
+				GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
 			}
 			custombuildtask {
-				{ MAME_DIR .. "src/".._target .."/" .. _target ..".lst" ,  GEN_DIR  .. _target .. "/" .. _target .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py" }, {"@echo Building driver list...",    PYTHON .. " $(1) $(<) > $(@)" }},
+				{ MAME_DIR .. "src/".._target .."/" .. _subtarget ..".flt" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py", MAME_DIR .. "src/".._target .."/" .. _target ..".lst"  }, {"@echo Building driver list...",    PYTHON .. " $(1) $(2) $(<) > $(@)" }},
 			}
+		else
+			if os.isfile(MAME_DIR .. "src/".._target .."/" .. _subtarget ..".lst") then
+				custombuildtask {
+					{ MAME_DIR .. "src/".._target .."/" .. _subtarget ..".lst" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py" }, {"@echo Building driver list...",    PYTHON .. " $(1) $(<) > $(@)" }},
+				}
+			else
+				dependency {
+				{
+					GEN_DIR  .. _target .. "/" .. _target .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
+				}
+				custombuildtask {
+					{ MAME_DIR .. "src/".._target .."/" .. _target ..".lst" ,  GEN_DIR  .. _target .. "/" .. _target .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py" }, {"@echo Building driver list...",    PYTHON .. " $(1) $(<) > $(@)" }},
+				}
+			end
 		end
 	end
-end
 
-if (_OPTIONS["SOURCES"] ~= nil) then
-		dependency {
-		{
-			GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
-		}
-		custombuildtask {
-			{ GEN_DIR .. _target .."/" .. _subtarget ..".flt" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py", MAME_DIR .. "src/".._target .."/" .. _target ..".lst"  }, {"@echo Building driver list...",    PYTHON .. " $(1) $(2) $(<) > $(@)" }},
-		}
-end
+	if (_OPTIONS["SOURCES"] ~= nil) then
+			dependency {
+			{
+				GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",  MAME_DIR .. "src/".._target .."/" .. _target ..".lst", true },
+			}
+			custombuildtask {
+				{ GEN_DIR .. _target .."/" .. _subtarget ..".flt" ,  GEN_DIR  .. _target .. "/" .. _subtarget .."/drivlist.cpp",    {  MAME_DIR .. "scripts/build/makelist.py", MAME_DIR .. "src/".._target .."/" .. _target ..".lst"  }, {"@echo Building driver list...",    PYTHON .. " $(1) $(2) $(<) > $(@)" }},
+			}
+	end
 
-if _OPTIONS["FORCE_VERSION_COMPILE"]=="1" then
-	configuration { "gmake" }
-		dependency {
-			{ ".PHONY", ".FORCE", true },
-			{ "$(OBJDIR)/src/version.o", ".FORCE", true },
-		}
-end
 	configuration { "mingw*" }
 		custombuildtask {
-			{ MAME_DIR .. "src/version.cpp" ,  GEN_DIR  .. "resource/" .. rctarget .. "vers.rc",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. rctarget .. "vers.rc" .. "...",    PYTHON .. " $(1)  -r -b " .. rctarget .. " $(<) > $(@)" }},
+			{ GEN_DIR .. "version.cpp" ,  GEN_DIR  .. "resource/" .. rctarget .. "vers.rc",    {  MAME_DIR .. "scripts/build/verinfo.py" }, {"@echo Emitting " .. rctarget .. "vers.rc" .. "...",    PYTHON .. " $(1)  -r -b " .. rctarget .. " $(<) > $(@)" }},
 		}
 
 	configuration { "vs*" }
 		prebuildcommands {
 			"mkdir " .. path.translate(GEN_DIR  .. "resource/","\\") .. " 2>NUL",
 			"@echo Emitting ".. rctarget .. "vers.rc...",
-			PYTHON .. " " .. path.translate(MAME_DIR .. "scripts/build/verinfo.py","\\") .. " -r -b " .. rctarget .. " " .. path.translate(MAME_DIR .. "src/version.cpp","\\") .. " > " .. path.translate(GEN_DIR  .. "resource/" .. rctarget .. "vers.rc", "\\") ,
+			PYTHON .. " " .. path.translate(MAME_DIR .. "scripts/build/verinfo.py","\\") .. " -r -b " .. rctarget .. " " .. path.translate(GEN_DIR .. "version.cpp","\\") .. " > " .. path.translate(GEN_DIR  .. "resource/" .. rctarget .. "vers.rc", "\\") ,
 		}
+end
 
 	configuration { }
 
-	debugdir (MAME_DIR)
-	debugargs ("-window")
+	if _OPTIONS["DEBUG_DIR"]~=nil then
+		debugdir(_OPTIONS["DEBUG_DIR"])
+	else
+		debugdir (MAME_DIR)
+	end
+	if _OPTIONS["DEBUG_ARGS"]~=nil then
+		debugargs (_OPTIONS["DEBUG_ARGS"])
+	else
+		debugargs ("-window")
+	end
+
 end

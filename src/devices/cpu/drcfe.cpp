@@ -90,8 +90,8 @@ const opcode_desc *drc_frontend::describe_code(offs_t startpc)
 	pcstackptr++;
 
 	// loop while we still have a stack
-	offs_t minpc = startpc - MIN(m_window_start, startpc);
-	offs_t maxpc = startpc + MIN(m_window_end, 0xffffffff - startpc);
+	offs_t minpc = startpc - std::min(m_window_start, startpc);
+	offs_t maxpc = startpc + std::min(m_window_end, 0xffffffff - startpc);
 	while (pcstackptr != &pcstack[0])
 	{
 		// if we've already hit this PC, just mark it a branch target and continue
@@ -156,7 +156,7 @@ const opcode_desc *drc_frontend::describe_code(offs_t startpc)
 //  slots of branches as well
 //-------------------------------------------------
 
-opcode_desc *drc_frontend::describe_one(offs_t curpc, const opcode_desc *prevdesc)
+opcode_desc *drc_frontend::describe_one(offs_t curpc, const opcode_desc *prevdesc, bool in_delay_slot)
 {
 	// initialize the description
 	opcode_desc *desc = m_desc_allocator.alloc();
@@ -170,7 +170,10 @@ opcode_desc *drc_frontend::describe_one(offs_t curpc, const opcode_desc *prevdes
 	desc->length = 0;
 	desc->delayslots = 0;
 	desc->skipslots = 0;
-	desc->flags = 0;
+	// set the delay slot flag
+	desc->flags = in_delay_slot ? OPFLAG_IN_DELAY_SLOT : 0;
+	desc->userflags = 0;
+	desc->userdata0 = 0;
 	desc->cycles = 0;
 	memset(desc->regin, 0x00, sizeof(desc->regin));
 	memset(desc->regout, 0x00, sizeof(desc->regout));
@@ -195,18 +198,26 @@ opcode_desc *drc_frontend::describe_one(offs_t curpc, const opcode_desc *prevdes
 	{
 		// iterate over slots and describe them
 		offs_t delaypc = curpc + desc->length;
+		// If this is a delay slot it is the true branch fork and the pc should be the previous branch target
+		if (desc->flags & OPFLAG_IN_DELAY_SLOT) {
+			if (prevdesc->targetpc != BRANCH_TARGET_DYNAMIC) {
+				delaypc = prevdesc->targetpc;
+				//printf("drc_frontend::describe_one Branch in delay slot. curpc=%08X delaypc=%08X\n", curpc, delaypc);
+			} else {
+				//printf("drc_frontend::describe_one Warning! Branch in delay slot of dynamic target. curpc=%08X\n", curpc);
+			}
+		}
 		opcode_desc *prev = desc;
 		for (UINT8 slotnum = 0; slotnum < desc->delayslots; slotnum++)
 		{
 			// recursively describe the next instruction
-			opcode_desc *delaydesc = describe_one(delaypc, prev);
+			opcode_desc *delaydesc = describe_one(delaypc, prev, true);
 			if (delaydesc == nullptr)
 				break;
 			desc->delay.append(*delaydesc);
 			prev = desc;
 
-			// set the delay slot flag and a pointer back to the original branch
-			delaydesc->flags |= OPFLAG_IN_DELAY_SLOT;
+			// set a pointer back to the original branch
 			delaydesc->branch = desc;
 
 			// stop if we hit a page fault

@@ -555,32 +555,32 @@ INPUT_CHANGED_MEMBER( avigo_state::power_down_irq )
 
 static INPUT_PORTS_START(avigo)
 	PORT_START("LINE0")
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("PAGE UP")      PORT_CODE(KEYCODE_PGUP) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("PAGE DOWN")    PORT_CODE(KEYCODE_PGDN) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("LIGHT")        PORT_CODE(KEYCODE_L)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("PAGE UP")      PORT_CODE(KEYCODE_PGUP) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("PAGE DOWN")    PORT_CODE(KEYCODE_PGDN) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("LIGHT")        PORT_CODE(KEYCODE_L)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
 	PORT_BIT(0xf8, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START("LINE1")
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("TO DO")        PORT_CODE(KEYCODE_T)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
-	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("ADDRESS")      PORT_CODE(KEYCODE_A)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
-	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("SCHEDULE")     PORT_CODE(KEYCODE_S)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("TO DO")        PORT_CODE(KEYCODE_T)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("ADDRESS")      PORT_CODE(KEYCODE_A)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("SCHEDULE")     PORT_CODE(KEYCODE_S)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
 	PORT_BIT(0xf8, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START("LINE2")
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("MEMO")         PORT_CODE(KEYCODE_M)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, NULL )
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_KEYPAD) PORT_NAME("MEMO")         PORT_CODE(KEYCODE_M)    PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, kb_irq, nullptr )
 	PORT_BIT(0xfe, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START("LINE3")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_NAME("Pen/Stylus pressed") PORT_CODE(KEYCODE_ENTER) PORT_CODE(MOUSECODE_BUTTON1)  PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_irq, NULL )
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_NAME("Pen/Stylus pressed") PORT_CODE(KEYCODE_ENTER) PORT_CODE(MOUSECODE_BUTTON1)  PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_irq, nullptr )
 	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_NAME("?? Causes a NMI") PORT_CODE(KEYCODE_W) PORT_CODE(JOYCODE_BUTTON2)
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_NAME("Power Down")       PORT_CODE(KEYCODE_Q) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, power_down_irq, NULL )
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_NAME("Power Down")       PORT_CODE(KEYCODE_Q) PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, power_down_irq, nullptr )
 
 	/* these two ports are used to emulate the position of the pen/stylus on the screen */
 	PORT_START("POSX") /* Mouse - X AXIS */
-	PORT_BIT(0x3ff, 0x060, IPT_LIGHTGUN_X) PORT_SENSITIVITY(100) PORT_CROSSHAIR(X, 1, 0, 0) PORT_MINMAX(0x060, 0x3a0) PORT_KEYDELTA(10) PORT_PLAYER(1)              PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_move_irq, NULL )
+	PORT_BIT(0x3ff, 0x060, IPT_LIGHTGUN_X) PORT_SENSITIVITY(100) PORT_CROSSHAIR(X, 1, 0, 0) PORT_MINMAX(0x060, 0x3a0) PORT_KEYDELTA(10) PORT_PLAYER(1)              PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_move_irq, nullptr )
 
 	PORT_START("POSY") /* Mouse - Y AXIS */
-	PORT_BIT(0x3ff, 0x044, IPT_LIGHTGUN_Y) PORT_SENSITIVITY(100) PORT_CROSSHAIR(Y, 1, 0, 0) PORT_MINMAX(0x044, 0x3a6) PORT_INVERT PORT_KEYDELTA(10) PORT_PLAYER(1)  PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_move_irq, NULL )
+	PORT_BIT(0x3ff, 0x044, IPT_LIGHTGUN_Y) PORT_SENSITIVITY(100) PORT_CROSSHAIR(Y, 1, 0, 0) PORT_MINMAX(0x044, 0x3a6) PORT_INVERT PORT_KEYDELTA(10) PORT_PLAYER(1)  PORT_CHANGED_MEMBER( DEVICE_SELF, avigo_state, pen_move_irq, nullptr )
 INPUT_PORTS_END
 
 /* F4 Character Displayer */
@@ -688,7 +688,6 @@ TIMER_DEVICE_CALLBACK_MEMBER(avigo_state::avigo_1hz_timer)
 
 QUICKLOAD_LOAD_MEMBER( avigo_state,avigo)
 {
-	address_space& flash1 = m_flash1->space(0);
 	const char *systemname = machine().system().name;
 	UINT32 first_app_page = (0x50000>>14);
 	int app_page;
@@ -704,7 +703,7 @@ QUICKLOAD_LOAD_MEMBER( avigo_state,avigo)
 
 		for (int offset=0; offset<0x4000; offset++)
 		{
-			if (flash1.read_byte((app_page<<14) + offset) != 0xff)
+			if (m_flash1->read_raw((app_page<<14) + offset) != 0xff)
 			{
 				empty_page = false;
 				break;
@@ -721,19 +720,19 @@ QUICKLOAD_LOAD_MEMBER( avigo_state,avigo)
 		logerror("Application loaded at 0x%05x-0x%05x\n", app_page<<14, (app_page<<14) + (UINT32)image.length());
 
 		// copy app file into flash memory
-		image.fread((UINT8*)flash1.get_read_ptr(app_page<<14), image.length());
+		image.fread(m_flash1->base() + (app_page<<14), image.length());
 
 		// update the application ID
-		flash1.write_byte((app_page<<14) + 0x1a5, 0x80 + (app_page - (first_app_page>>14)));
+		m_flash1->write_raw((app_page<<14) + 0x1a5, 0x80 + (app_page - (first_app_page>>14)));
 
 		// reset the CPU for allow at the Avigo OS to recognize the installed app
 		m_warm_start = 1;
 		m_maincpu->reset();
 
-		return IMAGE_INIT_PASS;
+		return image_init_result::PASS;
 	}
 
-	return IMAGE_INIT_FAIL;
+	return image_init_result::FAIL;
 }
 
 void avigo_state::nvram_init(nvram_device &nvram, void *base, size_t size)

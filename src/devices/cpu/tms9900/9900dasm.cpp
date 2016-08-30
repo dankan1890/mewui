@@ -51,7 +51,7 @@ enum
 	/* processor set on which opcodes are available */
 	ps_any      = 0x01,     /* every processor in the tms9900/ti990 family */
 	ps_mapper   = 0x02,     /* processors with memory mapper (ti990/10, ti990/12,
-                                    and tms99000 with mapper coprocessor) */
+	                                and tms99000 with mapper coprocessor) */
 	ps_tms9995  = 0x04,     /* ti990/12, tms9995, and later */
 	ps_tms99000 = 0x08,     /* ti990/12, tms99000, and later */
 	ps_ti990_12 = 0x10,     /* ti990/12 only */
@@ -360,7 +360,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, const UINT8 *oprom, 
 
 	if ((model_id == TI990_10_ID) /*|| (model_id == TI990_12_ID)*/ || (model_id >= TMS99000_ID))
 		processor_mask |= ps_mapper;        /* processors with memory mapper (ti990/10, ti990/12,
-                                                and tms99000 with mapper coprocessor) */
+		                                        and tms99000 with mapper coprocessor) */
 	if (/*(model_id == TI990_12_ID) ||*/ (model_id >= TMS9995_ID))
 		processor_mask |= ps_tms9995;       /* ti990/12, tms9995, and later */
 
@@ -444,7 +444,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, const UINT8 *oprom, 
 		case 1:
 			/* opcode is dcs */
 			opc = _dcs;
-				break;
+			break;
 
 		case 2:
 		case 3: /* should be 2, but instruction decoding is incomplete */
@@ -458,11 +458,11 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, const UINT8 *oprom, 
 				instead of the immediate.  Since I do not know, I handle this
 				as an illegal instruction. */
 				opc = _ill;
-				break;
+			break;
 
 		default:
 			/* this is still a software xop */
-				break;
+			break;
 		}
 	}
 

@@ -196,7 +196,7 @@
 #include "emu.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/ay8910.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "video/mc6845.h"
 #include "machine/nvram.h"
 
@@ -268,7 +268,7 @@ TILE_GET_INFO_MEMBER(gluck2_state::get_tile_info)
 
 void gluck2_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(gluck2_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(gluck2_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 }
 
 

@@ -21,6 +21,7 @@
 #include <list>
 #include <vector>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -29,9 +30,11 @@
 #include "eminline.h"
 #include "profiler.h"
 
-// commonly-referenecd utilities imported from lib/util
+// commonly-referenced utilities imported from lib/util
 #include "palette.h"
 #include "unicode.h"
+#include "strformat.h"
+#include "vecstream.h"
 
 // emulator-specific utilities
 #include "attotime.h"
@@ -64,6 +67,7 @@ typedef device_t * (*machine_config_constructor)(machine_config &config, device_
 #include "devfind.h"
 #include "distate.h"
 #include "dimemory.h"
+#include "dirom.h"
 #include "diexec.h"
 #include "opresolv.h"
 #include "digfx.h"
@@ -90,8 +94,7 @@ typedef device_t * (*machine_config_constructor)(machine_config &config, device_
 #include "devcpu.h"
 
 // the running machine
-#include "mame.h"
-#include "language.h"
+#include "main.h"
 #include "machine.h"
 #include "driver.h"
 
@@ -106,9 +109,6 @@ typedef device_t * (*machine_config_constructor)(machine_config &config, device_
 #include "sound.h"
 #include "speaker.h"
 
-// user interface
-#include "ui/ui.h"
-
 // generic helpers
 #include "devcb.h"
 #include "dispatch.h"
@@ -118,6 +118,5 @@ typedef device_t * (*machine_config_constructor)(machine_config &config, device_
 
 // member templates that don't like incomplete types
 #include "device.ipp"
-#include "machine.ipp"
 
 #endif  /* __EMU_H__ */

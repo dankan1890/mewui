@@ -32,7 +32,7 @@ header and leader bytes.
 #define WAVEENTRY_LOW  -32768
 #define WAVEENTRY_HIGH  32767
 
-#define SORCERER_WAV_FREQUENCY   4800
+#define SORCERER_WAV_FREQUENCY   4788
 
 // image size
 static int sorcerer_image_size;
@@ -135,12 +135,12 @@ static const struct CassetteLegacyWaveFiller sorcerer_legacy_fill_wave =
 	0                                       /* trailer_samples */
 };
 
-static casserr_t sorcerer_cassette_identify(cassette_image *cassette, struct CassetteOptions *opts)
+static cassette_image::error sorcerer_cassette_identify(cassette_image *cassette, struct CassetteOptions *opts)
 {
 	return cassette_legacy_identify(cassette, opts, &sorcerer_legacy_fill_wave);
 }
 
-static casserr_t sorcerer_cassette_load(cassette_image *cassette)
+static cassette_image::error sorcerer_cassette_load(cassette_image *cassette)
 {
 	return cassette_legacy_construct(cassette, &sorcerer_legacy_fill_wave);
 }

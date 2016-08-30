@@ -622,28 +622,28 @@ READ64_MEMBER(bebox_state::scsi53c810_r )
 {
 	int reg = offset*8;
 	UINT64 r = 0;
-	if (!(mem_mask & U64(0xff00000000000000))) {
+	if (!ACCESSING_BITS_56_63) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+0) << 56;
 	}
-	if (!(mem_mask & U64(0x00ff000000000000))) {
+	if (!ACCESSING_BITS_48_55) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+1) << 48;
 	}
-	if (!(mem_mask & U64(0x0000ff0000000000))) {
+	if (!ACCESSING_BITS_40_47) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+2) << 40;
 	}
-	if (!(mem_mask & U64(0x000000ff00000000))) {
+	if (!ACCESSING_BITS_32_39) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+3) << 32;
 	}
-	if (!(mem_mask & U64(0x00000000ff000000))) {
+	if (!ACCESSING_BITS_24_31) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+4) << 24;
 	}
-	if (!(mem_mask & U64(0x0000000000ff0000))) {
+	if (!ACCESSING_BITS_16_23) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+5) << 16;
 	}
-	if (!(mem_mask & U64(0x000000000000ff00))) {
+	if (!ACCESSING_BITS_8_15) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+6) << 8;
 	}
-	if (!(mem_mask & U64(0x00000000000000ff))) {
+	if (!ACCESSING_BITS_0_7) {
 		r |= (UINT64)m_lsi53c810->lsi53c810_reg_r(reg+7) << 0;
 	}
 
@@ -654,28 +654,28 @@ READ64_MEMBER(bebox_state::scsi53c810_r )
 WRITE64_MEMBER(bebox_state::scsi53c810_w )
 {
 	int reg = offset*8;
-	if (!(mem_mask & U64(0xff00000000000000))) {
+	if (!ACCESSING_BITS_56_63) {
 		m_lsi53c810->lsi53c810_reg_w(reg+0, data >> 56);
 	}
-	if (!(mem_mask & U64(0x00ff000000000000))) {
+	if (!ACCESSING_BITS_48_55) {
 		m_lsi53c810->lsi53c810_reg_w(reg+1, data >> 48);
 	}
-	if (!(mem_mask & U64(0x0000ff0000000000))) {
+	if (!ACCESSING_BITS_40_47) {
 		m_lsi53c810->lsi53c810_reg_w(reg+2, data >> 40);
 	}
-	if (!(mem_mask & U64(0x000000ff00000000))) {
+	if (!ACCESSING_BITS_32_39) {
 		m_lsi53c810->lsi53c810_reg_w(reg+3, data >> 32);
 	}
-	if (!(mem_mask & U64(0x00000000ff000000))) {
+	if (!ACCESSING_BITS_24_31) {
 		m_lsi53c810->lsi53c810_reg_w(reg+4, data >> 24);
 	}
-	if (!(mem_mask & U64(0x0000000000ff0000))) {
+	if (!ACCESSING_BITS_16_23) {
 		m_lsi53c810->lsi53c810_reg_w(reg+5, data >> 16);
 	}
-	if (!(mem_mask & U64(0x000000000000ff00))) {
+	if (!ACCESSING_BITS_8_15) {
 		m_lsi53c810->lsi53c810_reg_w(reg+6, data >> 8);
 	}
-	if (!(mem_mask & U64(0x00000000000000ff))) {
+	if (!ACCESSING_BITS_0_7) {
 		m_lsi53c810->lsi53c810_reg_w(reg+7, data >> 0);
 	}
 }
@@ -770,7 +770,8 @@ void bebox_state::machine_reset()
 	m_ppc1->set_input_line(INPUT_LINE_RESET, CLEAR_LINE);
 	m_ppc2->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
 
-	memcpy(m_flash->space().get_read_ptr(0),memregion("user1")->base(),0x200000);
+	// Endianness? Bah!
+	memcpy(m_flash->base(),memregion("user1")->base(),0x200000);
 }
 
 void bebox_state::machine_start()
@@ -786,8 +787,8 @@ DRIVER_INIT_MEMBER(bebox_state,bebox)
 	membank("bank2")->set_base(memregion("user2")->base());
 
 	/* install MESS managed RAM */
-	space_0.install_readwrite_bank(0, m_ram->size() - 1, 0, 0x02000000, "bank3");
-	space_1.install_readwrite_bank(0, m_ram->size() - 1, 0, 0x02000000, "bank3");
+	space_0.install_readwrite_bank(0, m_ram->size() - 1, 0x02000000, "bank3");
+	space_1.install_readwrite_bank(0, m_ram->size() - 1, 0x02000000, "bank3");
 	membank("bank3")->set_base(m_ram->pointer());
 
 	/* The following is a verrrry ugly hack put in to support NetBSD for

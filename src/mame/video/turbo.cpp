@@ -163,14 +163,14 @@ TILE_GET_INFO_MEMBER(turbo_state::get_fg_tile_info)
 VIDEO_START_MEMBER(turbo_state,turbo)
 {
 	/* initialize the foreground tilemap */
-	m_fg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(turbo_state::get_fg_tile_info),this), TILEMAP_SCAN_ROWS,  8,8, 32,32);
+	m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(turbo_state::get_fg_tile_info),this), TILEMAP_SCAN_ROWS,  8,8, 32,32);
 }
 
 
 VIDEO_START_MEMBER(turbo_state,buckrog)
 {
 	/* initialize the foreground tilemap */
-	m_fg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(turbo_state::get_fg_tile_info),this), TILEMAP_SCAN_ROWS,  8,8, 32,32);
+	m_fg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(turbo_state::get_fg_tile_info),this), TILEMAP_SCAN_ROWS,  8,8, 32,32);
 
 	/* allocate the bitmap RAM */
 	m_buckrog_bitmap_ram = std::make_unique<UINT8[]>(0xe000);
@@ -276,7 +276,7 @@ void turbo_state::turbo_prepare_sprites(UINT8 y, sprite_info *info)
 	/* compute the sprite information, which was done on the previous scanline during HBLANK */
 	for (sprnum = 0; sprnum < 16; sprnum++)
 	{
-		UINT8 *rambase = &m_spriteram[sprnum * 0x10];
+		UINT8 *rambase = &m_alt_spriteram[sprnum * 8];
 		int level = sprnum & 7;
 		UINT8 clo, chi;
 		UINT32 sum;

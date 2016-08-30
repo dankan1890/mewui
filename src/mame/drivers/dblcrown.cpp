@@ -48,6 +48,7 @@
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
 #include "machine/nvram.h"
+#include "machine/watchdog.h"
 
 #include "dblcrown.lh"
 #define DEBUG_VRAM
@@ -58,12 +59,14 @@ public:
 	dblcrown_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag),
 			m_maincpu(*this, "maincpu"),
+			m_watchdog(*this, "watchdog"),
 			m_gfxdecode(*this, "gfxdecode"),
 			m_palette(*this, "palette")
 	{ }
 
 	// devices
 	required_device<cpu_device> m_maincpu;
+	required_device<watchdog_timer_device> m_watchdog;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
 
@@ -341,7 +344,7 @@ WRITE8_MEMBER(dblcrown_state::watchdog_w)
 {
 	if (data & 0x01)      /* check for refresh value (0x01) */
 	{
-		machine().watchdog_reset();
+		m_watchdog->watchdog_reset();
 	}
 	else
 	{
@@ -384,7 +387,7 @@ ADDRESS_MAP_END
 
 static INPUT_PORTS_START( dblcrown )
 	PORT_START("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Memory Reset")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_MEMORY_RESET )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Credit Reset")
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_GAMBLE_KEYIN ) PORT_NAME("Note")
@@ -615,6 +618,8 @@ static MACHINE_CONFIG_START( dblcrown, dblcrown_state )
 	MCFG_CPU_PROGRAM_MAP(dblcrown_map)
 	MCFG_CPU_IO_MAP(dblcrown_io)
 	MCFG_TIMER_DRIVER_ADD_SCANLINE("scantimer", dblcrown_state, dblcrown_irq_scanline, "screen", 0, 1)
+
+	MCFG_WATCHDOG_ADD("watchdog")
 	MCFG_WATCHDOG_TIME_INIT(attotime::from_msec(1000))   /* 1000 ms. (minimal of MAX693A watchdog long timeout period with internal oscillator) */
 
 	/* video hardware */

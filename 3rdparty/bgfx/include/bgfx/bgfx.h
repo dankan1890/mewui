@@ -285,6 +285,7 @@ namespace bgfx
 	///
 	struct OcclusionQueryResult
 	{
+		/// Occlusion query results:
 		enum Enum
 		{
 			Invisible, //!< Query failed test.
@@ -301,12 +302,39 @@ namespace bgfx
 	///
 	struct TopologyConvert
 	{
+		/// Topology conversion functions:
 		enum Enum
 		{
 			TriListFlipWinding,  //!< Flip winding order of triangle list.
 			TriListToLineList,   //!< Convert triangle list to line list.
 			TriStripToTriList,   //!< Convert triangle strip to triangle list.
 			LineStripToLineList, //!< Convert line strip to line list.
+
+			Count
+		};
+	};
+
+	/// Topology sort order.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_sort_t`.
+	///
+	struct TopologySort
+	{
+		/// Topology sort order:
+		enum Enum
+		{
+			DirectionFrontToBackMin, //!<
+			DirectionFrontToBackAvg, //!<
+			DirectionFrontToBackMax, //!<
+			DirectionBackToFrontMin, //!<
+			DirectionBackToFrontAvg, //!<
+			DirectionBackToFrontMax, //!<
+			DistanceFrontToBackMin,  //!<
+			DistanceFrontToBackAvg,  //!<
+			DistanceFrontToBackMax,  //!<
+			DistanceBackToFrontMin,  //!<
+			DistanceBackToFrontAvg,  //!<
+			DistanceBackToFrontMax,  //!<
 
 			Count
 		};
@@ -515,10 +543,24 @@ namespace bgfx
 		GPU gpu[4]; //!< Enumerated GPUs.
 
 		/// Supported texture formats.
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - not supported
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D` - supported
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED` - emulated
-		///   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - supported vertex texture
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_NONE` - Texture format is not supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D` - Texture format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D_SRGB` - Texture as sRGB format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED` - Texture format is emulated.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_3D` - Texture format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_3D_SRGB` - Texture as sRGB format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_3D_EMULATED` - Texture format is emulated.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE` - Texture format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_SRGB` - Texture as sRGB format is supported.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_CUBE_EMULATED` - Texture format is emulated.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_VERTEX` - Texture format can be used from vertex shader.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_IMAGE` - Texture format can be used as image from compute
+		///     shader.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER` - Texture format can be used as frame
+		///     buffer.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA` - Texture format can be used as MSAA
+		///     frame buffer.
+		///   - `BGFX_CAPS_FORMAT_TEXTURE_MSAA` - Texture can be sampled as MSAA.
 		uint16_t formats[TextureFormat::Count];
 	};
 
@@ -640,6 +682,10 @@ namespace bgfx
 		uint64_t gpuTimeBegin; //!< GPU frame begin time.
 		uint64_t gpuTimeEnd;   //!< GPU frame end time.
 		uint64_t gpuTimerFreq; //!< GPU timer frequency.
+
+		int64_t waitRender;    //!< Time spent waiting for render backend thread to finish issuing
+		                       //!  draw commands to underlying graphics API.
+		int64_t waitSubmit;    //!< Time spent waiting for submit thread to advance to next frame.
 	};
 
 	/// Vertex declaration.
@@ -795,7 +841,7 @@ namespace bgfx
 	/// @param[in] _dstSize Destination index buffer in bytes. It must be
 	///    large enough to contain output indices. If destination size is
 	///    insufficient index buffer will be truncated.
-	/// @param[in] _indices Source indices.
+	/// @param[in]_indices Source indices.
 	/// @param[in] _numIndices Number of input indices.
 	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
 	///
@@ -807,6 +853,38 @@ namespace bgfx
 		  TopologyConvert::Enum _conversion
 		, void* _dst
 		, uint32_t _dstSize
+		, const void* _indices
+		, uint32_t _numIndices
+		, bool _index32
+		);
+
+	/// Sort indices.
+	///
+	/// @param[in] _sort Sort order, see `TopologySort::Enum`.
+	/// @param[in] _dst Destination index buffer.
+	/// @param[in] _dstSize Destination index buffer in bytes. It must be
+	///    large enough to contain output indices. If destination size is
+	///    insufficient index buffer will be truncated.
+	/// @param[in] _dir Direction (vector must be normalized).
+	/// @param[in] _pos Position.
+	/// @param[in] _vertices Pointer to first vertex represented as
+	///    float x, y, z. Must contain at least number of vertices
+	///    referencende by index buffer.
+	/// @param[in] _stride Vertex stride.
+	/// @param[in] _indices Source indices.
+	/// @param[in] _numIndices Number of input indices.
+	/// @param[in] _index32 Set to `true` if input indices are 32-bit.
+	///
+	/// @attention C99 equivalent is `bgfx_topology_sort_tri_list`.
+	///
+	void topologySortTriList(
+		  TopologySort::Enum _sort
+		, void* _dst
+		, uint32_t _dstSize
+		, const float _dir[3]
+		, const float _pos[3]
+		, const void* _vertices
+		, uint32_t _stride
 		, const void* _indices
 		, uint32_t _numIndices
 		, bool _index32
@@ -935,13 +1013,15 @@ namespace bgfx
 	/// just swaps internal buffers, kicks render thread, and returns. In
 	/// singlethreaded renderer this call does frame rendering.
 	///
+	/// @param[in] _capture Capture frame with graphics debugger.
+	///
 	/// @returns Current frame number. This might be used in conjunction with
 	///   double/multi buffering data outside the library and passing it to
 	///   library via `bgfx::makeRef` calls.
 	///
 	/// @attention C99 equivalent is `bgfx_frame`.
 	///
-	uint32_t frame();
+	uint32_t frame(bool _capture = false);
 
 	/// Returns current renderer backend API type.
 	///
@@ -1668,11 +1748,13 @@ namespace bgfx
 	/// @param[in] _handle Texture handle.
 	/// @param[in] _data Destination buffer.
 	///
+	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 	/// @attention C99 equivalent is `bgfx_read_texture`.
 	///
-	void readTexture(TextureHandle _handle, void* _data);
+	uint32_t readTexture(TextureHandle _handle, void* _data);
 
 	/// Read back texture content.
 	///
@@ -1680,11 +1762,13 @@ namespace bgfx
 	/// @param[in] _attachment Frame buffer attachment index.
 	/// @param[in] _data Destination buffer.
 	///
+	/// @returns Frame number when the result will be available. See: `bgfx::frame`.
+	///
 	/// @attention Texture must be created with `BGFX_TEXTURE_READ_BACK` flag.
 	/// @attention Availability depends on: `BGFX_CAPS_TEXTURE_READ_BACK`.
 	/// @attention C99 equivalent is `bgfx_read_frame_buffer`.
 	///
-	void readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data);
+	uint32_t readTexture(FrameBufferHandle _handle, uint8_t _attachment, void* _data);
 
 	/// Destroy texture.
 	///
@@ -1705,6 +1789,8 @@ namespace bgfx
 	///     mode.
 	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
+	///
+	/// @returns Handle to frame buffer object.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer`.
 	///
@@ -1728,6 +1814,8 @@ namespace bgfx
 	///   - `BGFX_TEXTURE_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic
 	///     sampling.
 	///
+	/// @returns Handle to frame buffer object.
+	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_scaled`.
 	///
 	FrameBufferHandle createFrameBuffer(
@@ -1743,6 +1831,8 @@ namespace bgfx
 	/// @param[in] _destroyTextures If true, textures will be destroyed when
 	///   frame buffer is destroyed.
 	///
+	/// @returns Handle to frame buffer object.
+	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
 	///
 	FrameBufferHandle createFrameBuffer(
@@ -1757,6 +1847,8 @@ namespace bgfx
 	/// @param[in] _attachment Attachment texture info. See: `Attachment`.
 	/// @param[in] _destroyTextures If true, textures will be destroyed when
 	///   frame buffer is destroyed.
+	///
+	/// @returns Handle to frame buffer object.
 	///
 	/// @attention C99 equivalent is `bgfx_create_frame_buffer_from_handles`.
 	///

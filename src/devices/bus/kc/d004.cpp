@@ -67,7 +67,7 @@ static MACHINE_CONFIG_FRAGMENT(kc_d004)
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_8MHz/2)
 	MCFG_CPU_PROGRAM_MAP(kc_d004_mem)
 	MCFG_CPU_IO_MAP(kc_d004_io)
-	MCFG_CPU_CONFIG(kc_d004_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(kc_d004_daisy_chain)
 
 	MCFG_DEVICE_ADD(Z80CTC_TAG, Z80CTC, XTAL_8MHz/2)
 	MCFG_Z80CTC_INTR_CB(INPUTLINE(Z80_TAG, 0))
@@ -192,7 +192,7 @@ machine_config_constructor kc_d004_device::device_mconfig_additions() const
 //  device_rom_region
 //-------------------------------------------------
 
-const rom_entry *kc_d004_device::device_rom_region() const
+const tiny_rom_entry *kc_d004_device::device_rom_region() const
 {
 	return ROM_NAME( kc_d004 );
 }
@@ -402,7 +402,7 @@ machine_config_constructor kc_d004_gide_device::device_mconfig_additions() const
 //  device_rom_region
 //-------------------------------------------------
 
-const rom_entry *kc_d004_gide_device::device_rom_region() const
+const tiny_rom_entry *kc_d004_gide_device::device_rom_region() const
 {
 	return ROM_NAME( kc_d004_gide );
 }

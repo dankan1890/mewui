@@ -12,6 +12,7 @@
 #include "debugvw.h"
 #include "dvmemory.h"
 #include "debugcpu.h"
+#include "debugger.h"
 #include <ctype.h>
 
 
@@ -66,7 +67,7 @@ debug_view_memory_source::debug_view_memory_source(const char *name, memory_regi
 		m_length(region.bytes()),
 		m_offsetxor(ENDIAN_VALUE_NE_NNE(region.endianness(), 0, region.bytewidth() - 1)),
 		m_endianness(region.endianness()),
-		m_prefsize(MIN(region.bytewidth(), 8))
+		m_prefsize(std::min<UINT8>(region.bytewidth(), 8))
 {
 }
 
@@ -78,7 +79,7 @@ debug_view_memory_source::debug_view_memory_source(const char *name, void *base,
 		m_length(element_size * num_elements),
 		m_offsetxor(0),
 		m_endianness(ENDIANNESS_NATIVE),
-		m_prefsize(MIN(element_size, 8))
+		m_prefsize(std::min(element_size, 8))
 {
 }
 
@@ -135,22 +136,21 @@ void debug_view_memory::enumerate_sources()
 	std::string name;
 
 	// first add all the devices' address spaces
-	memory_interface_iterator iter(machine().root_device());
-	for (device_memory_interface *memintf = iter.first(); memintf != nullptr; memintf = iter.next())
-		if (&memintf->device() != &machine().root_device())
+	for (device_memory_interface &memintf : memory_interface_iterator(machine().root_device()))
+		if (&memintf.device() != &machine().root_device())
 			for (address_spacenum spacenum = AS_0; spacenum < ADDRESS_SPACES; ++spacenum)
-				if (memintf->has_space(spacenum))
+				if (memintf.has_space(spacenum))
 				{
-					address_space &space = memintf->space(spacenum);
-					name = string_format("%s '%s' %s space memory", memintf->device().name(), memintf->device().tag(), space.name());
+					address_space &space = memintf.space(spacenum);
+					name = string_format("%s '%s' %s space memory", memintf.device().name(), memintf.device().tag(), space.name());
 					m_source_list.append(*global_alloc(debug_view_memory_source(name.c_str(), space)));
 				}
 
 	// then add all the memory regions
-	for (memory_region &region : machine().memory().regions())
+	for (auto &region : machine().memory().regions())
 	{
-		name = string_format("Region '%s'", region.name());
-		m_source_list.append(*global_alloc(debug_view_memory_source(name.c_str(), region)));
+		name = string_format("Region '%s'", region.second->name());
+		m_source_list.append(*global_alloc(debug_view_memory_source(name.c_str(), *region.second.get())));
 	}
 
 	// finally add all global array symbols
@@ -556,7 +556,7 @@ void debug_view_memory::recompute()
 			m_bytes_per_chunk *= 2;
 			m_chunks_per_row /= 2;
 		}
-		m_chunks_per_row = MAX(1, m_chunks_per_row);
+		m_chunks_per_row = std::max(1U, m_chunks_per_row);
 	}
 
 	// recompute the byte offset based on the most recent expression result
@@ -612,8 +612,8 @@ bool debug_view_memory::needs_recompute()
 	{
 		recompute = true;
 		m_topleft.y = (m_expression.value() - m_byte_offset) / m_bytes_per_row;
-		m_topleft.y = MAX(m_topleft.y, 0);
-		m_topleft.y = MIN(m_topleft.y, m_total.y - 1);
+		m_topleft.y = std::max(m_topleft.y, 0);
+		m_topleft.y = std::min(m_topleft.y, m_total.y - 1);
 
 		const debug_view_memory_source &source = downcast<const debug_view_memory_source &>(*m_source);
 		offs_t resultbyte;
@@ -720,8 +720,8 @@ void debug_view_memory::set_cursor_pos(cursor_pos pos)
 	}
 
 	// clamp to the window bounds
-	m_cursor.x = MIN(m_cursor.x, m_total.x);
-	m_cursor.y = MIN(m_cursor.y, m_total.y);
+	m_cursor.x = std::min(m_cursor.x, m_total.x);
+	m_cursor.y = std::min(m_cursor.y, m_total.y);
 
 	// scroll if out of range
 	adjust_visible_x_for_cursor();
@@ -748,10 +748,10 @@ bool debug_view_memory::read(UINT8 size, offs_t offs, UINT64 &data)
 		{
 			switch (size)
 			{
-				case 1: data = debug_read_byte(*source.m_space, offs, !m_no_translation); break;
-				case 2: data = debug_read_word(*source.m_space, offs, !m_no_translation); break;
-				case 4: data = debug_read_dword(*source.m_space, offs, !m_no_translation); break;
-				case 8: data = debug_read_qword(*source.m_space, offs, !m_no_translation); break;
+				case 1: data = machine().debugger().cpu().read_byte(*source.m_space, offs, !m_no_translation); break;
+				case 2: data = machine().debugger().cpu().read_word(*source.m_space, offs, !m_no_translation); break;
+				case 4: data = machine().debugger().cpu().read_dword(*source.m_space, offs, !m_no_translation); break;
+				case 8: data = machine().debugger().cpu().read_qword(*source.m_space, offs, !m_no_translation); break;
 			}
 		}
 		return ismapped;
@@ -820,10 +820,10 @@ void debug_view_memory::write(UINT8 size, offs_t offs, UINT64 data)
 	{
 		switch (size)
 		{
-			case 1: debug_write_byte(*source.m_space, offs, data, !m_no_translation); break;
-			case 2: debug_write_word(*source.m_space, offs, data, !m_no_translation); break;
-			case 4: debug_write_dword(*source.m_space, offs, data, !m_no_translation); break;
-			case 8: debug_write_qword(*source.m_space, offs, data, !m_no_translation); break;
+			case 1: machine().debugger().cpu().write_byte(*source.m_space, offs, data, !m_no_translation); break;
+			case 2: machine().debugger().cpu().write_word(*source.m_space, offs, data, !m_no_translation); break;
+			case 4: machine().debugger().cpu().write_dword(*source.m_space, offs, data, !m_no_translation); break;
+			case 8: machine().debugger().cpu().write_qword(*source.m_space, offs, data, !m_no_translation); break;
 		}
 		return;
 	}

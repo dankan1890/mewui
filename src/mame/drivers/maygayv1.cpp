@@ -133,7 +133,7 @@ Find lamps/reels after UPD changes.
 #include "machine/i8279.h"
 #include "machine/6821pia.h"
 #include "machine/mc68681.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "sound/upd7759.h"
 #include "machine/nvram.h"
 
@@ -399,7 +399,7 @@ UINT32 maygayv1_state::screen_update_maygayv1(screen_device &screen, bitmap_ind1
 				bmpptr = (UINT8*)objptr;
 
 				// 4bpp
-				for (x = xpos; x < MIN(xbound, xpos + width * 8); ++x)
+				for (x = xpos; x < std::min(xbound, int(xpos + width * 8)); ++x)
 				{
 					if (x >= 0)
 					{
@@ -643,7 +643,7 @@ static ADDRESS_MAP_START( sound_prg, AS_PROGRAM, 8, maygayv1_state )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_data, AS_DATA, 8, maygayv1_state )
-	AM_RANGE(0x0000, 0xffff) AM_RAM // nothing?
+	AM_RANGE(0x0000, 0x1ff) AM_RAM // nothing?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_io, AS_IO, 8, maygayv1_state )
@@ -842,9 +842,6 @@ void maygayv1_state::machine_start()
 	i82716.line_buf = std::make_unique<UINT8[]>(512);
 
 	save_pointer(NAME(i82716.dram.get()), 0x40000);
-
-	m_soundcpu->i8051_set_serial_tx_callback(write8_delegate(FUNC(maygayv1_state::data_from_i8031),this));
-	m_soundcpu->i8051_set_serial_rx_callback(read8_delegate(FUNC(maygayv1_state::data_to_i8031),this));
 }
 
 void maygayv1_state::machine_reset()
@@ -872,6 +869,8 @@ static MACHINE_CONFIG_START( maygayv1, maygayv1_state )
 	MCFG_CPU_PROGRAM_MAP(sound_prg)
 	MCFG_CPU_DATA_MAP(sound_data)
 	MCFG_CPU_IO_MAP(sound_io)
+	MCFG_MCS51_SERIAL_TX_CB(WRITE8(maygayv1_state, data_from_i8031))
+	MCFG_MCS51_SERIAL_RX_CB(READ8(maygayv1_state, data_to_i8031))
 
 	/* U25 ST 2 9148 EF68B21P */
 	MCFG_DEVICE_ADD("pia", PIA6821, 0)

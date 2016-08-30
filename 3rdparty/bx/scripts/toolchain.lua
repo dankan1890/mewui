@@ -18,26 +18,27 @@ function toolchain(_buildDir, _libDir)
 			{ "android-x86",     "Android - x86"              },
 			{ "asmjs",           "Emscripten/asm.js"          },
 			{ "freebsd",         "FreeBSD"                    },
-			{ "ios-arm",         "iOS - ARM"                  },
-			{ "ios-simulator",   "iOS - Simulator"            },
 			{ "linux-gcc",       "Linux (GCC compiler)"       },
+			{ "linux-gcc-afl",   "Linux (GCC + AFL fuzzer)"   },
 			{ "linux-gcc-5",     "Linux (GCC-5 compiler)"     },
 			{ "linux-clang",     "Linux (Clang compiler)"     },
+			{ "linux-clang-afl", "Linux (Clang + AFL fuzzer)" },
 			{ "linux-mips-gcc",  "Linux (MIPS, GCC compiler)" },
 			{ "linux-arm-gcc",   "Linux (ARM, GCC compiler)"  },
-			{ "linux-steamlink", "Steam Link"                 },
+			{ "ios-arm",         "iOS - ARM"                  },
+			{ "ios-simulator",   "iOS - Simulator"            },
 			{ "tvos-arm64",      "tvOS - ARM64"               },
 			{ "tvos-simulator",  "tvOS - Simulator"           },
 			{ "mingw-gcc",       "MinGW"                      },
 			{ "mingw-clang",     "MinGW (clang compiler)"     },
 			{ "nacl",            "Native Client"              },
 			{ "nacl-arm",        "Native Client - ARM"        },
+			{ "netbsd",          "NetBSD"                     },
 			{ "osx",             "OSX"                        },
 			{ "pnacl",           "Native Client - PNaCl"      },
 			{ "ps4",             "PS4"                        },
 			{ "qnx-arm",         "QNX/Blackberry - ARM"       },
 			{ "rpi",             "RaspberryPi"                },
-			{ "riscv",           "RISC-V"                     },
 		},
 	}
 
@@ -101,7 +102,9 @@ function toolchain(_buildDir, _libDir)
 	location (path.join(_buildDir, "projects", _ACTION))
 
 	if _ACTION == "clean" then
-		os.rmdir(BUILD_DIR)
+		os.rmdir(_buildDir)
+		os.mkdir(_buildDir)
+		os.exit(1)
 	end
 
 	local androidPlatform = "android-14"
@@ -119,7 +122,7 @@ function toolchain(_buildDir, _libDir)
 		tvosPlatform = _OPTIONS["with-tvos"]
 	end
 
-	if _ACTION == "gmake" then
+	if _ACTION == "gmake" or _ACTION == "ninja" then
 
 		if nil == _OPTIONS["gcc"] then
 			print("GCC flavor must be specified!")
@@ -169,9 +172,9 @@ function toolchain(_buildDir, _libDir)
 				print("Set EMSCRIPTEN enviroment variable.")
 			end
 
-			premake.gcc.cc   = "$(EMSCRIPTEN)/emcc"
-			premake.gcc.cxx  = "$(EMSCRIPTEN)/em++"
-			premake.gcc.ar   = "$(EMSCRIPTEN)/emar"
+			premake.gcc.cc   = "\"$(EMSCRIPTEN)/emcc\""
+			premake.gcc.cxx  = "\"$(EMSCRIPTEN)/em++\""
+			premake.gcc.ar   = "\"$(EMSCRIPTEN)/emar\""
 			premake.gcc.llvm = true
 			location (path.join(_buildDir, "projects", _ACTION .. "-asmjs"))
 
@@ -205,6 +208,12 @@ function toolchain(_buildDir, _libDir)
 		elseif "linux-gcc" == _OPTIONS["gcc"] then
 			location (path.join(_buildDir, "projects", _ACTION .. "-linux"))
 
+		elseif "linux-gcc-afl" == _OPTIONS["gcc"] then
+			premake.gcc.cc  = "afl-gcc"
+			premake.gcc.cxx = "afl-g++"
+			premake.gcc.ar  = "ar"
+			location (path.join(_buildDir, "projects", _ACTION .. "-linux"))
+
 		elseif "linux-gcc-5" == _OPTIONS["gcc"] then
 			premake.gcc.cc  = "gcc-5"
 			premake.gcc.cxx = "g++-5"
@@ -214,6 +223,12 @@ function toolchain(_buildDir, _libDir)
 		elseif "linux-clang" == _OPTIONS["gcc"] then
 			premake.gcc.cc  = "clang"
 			premake.gcc.cxx = "clang++"
+			premake.gcc.ar  = "ar"
+			location (path.join(_buildDir, "projects", _ACTION .. "-linux-clang"))
+
+		elseif "linux-clang-afl" == _OPTIONS["gcc"] then
+			premake.gcc.cc  = "afl-clang"
+			premake.gcc.cxx = "afl-clang++"
 			premake.gcc.ar  = "ar"
 			location (path.join(_buildDir, "projects", _ACTION .. "-linux-clang"))
 
@@ -283,10 +298,13 @@ function toolchain(_buildDir, _libDir)
 			premake.gcc.ar  = naclToolchain .. "ar"
 			location (path.join(_buildDir, "projects", _ACTION .. "-nacl-arm"))
 
+		elseif "netbsd" == _OPTIONS["gcc"] then
+			location (path.join(_buildDir, "projects", _ACTION .. "-netbsd"))
+
 		elseif "osx" == _OPTIONS["gcc"] then
 
 			if os.is("linux") then
-				local osxToolchain = "x86_64-apple-darwin13-"
+				local osxToolchain = "x86_64-apple-darwin15-"
 				premake.gcc.cc  = osxToolchain .. "clang"
 				premake.gcc.cxx = osxToolchain .. "clang++"
 				premake.gcc.ar  = osxToolchain .. "ar"
@@ -339,9 +357,9 @@ function toolchain(_buildDir, _libDir)
 			location (path.join(_buildDir, "projects", _ACTION .. "-rpi"))
 
 		elseif "riscv" == _OPTIONS["gcc"] then
-			premake.gcc.cc  = "/opt/riscv/bin/riscv64-unknown-elf-gcc"
-			premake.gcc.cxx = "/opt/riscv/bin/riscv64-unknown-elf-g++"
-			premake.gcc.ar  = "/opt/riscv/bin/riscv64-unknown-elf-ar"
+			premake.gcc.cc  = "$(RISCV_DIR)/bin/riscv64-unknown-elf-gcc"
+			premake.gcc.cxx = "$(RISCV_DIR)/bin/riscv64-unknown-elf-g++"
+			premake.gcc.ar  = "$(RISCV_DIR)/bin/riscv64-unknown-elf-ar"
 			location (path.join(_buildDir, "projects", _ACTION .. "-riscv"))
 
 		end
@@ -426,6 +444,7 @@ function toolchain(_buildDir, _libDir)
 		"NoRTTI",
 		"NoExceptions",
 		"NoEditAndContinue",
+		"NoFramePointer",
 		"Symbols",
 	}
 
@@ -440,6 +459,7 @@ function toolchain(_buildDir, _libDir)
 
 	configuration { "Release" }
 		flags {
+			"NoBufferSecurityCheck",
 			"OptimizeSpeed",
 		}
 		targetsuffix "Release"
@@ -463,8 +483,9 @@ function toolchain(_buildDir, _libDir)
 			"_CRT_SECURE_NO_DEPRECATE",
 		}
 		buildoptions {
-			"/Oy-", -- Suppresses creation of frame pointers on the call stack.
-			"/Ob2", -- The Inline Function Expansion
+			"/wd4201", -- warning C4201: nonstandard extension used: nameless struct/union
+			"/wd4324", -- warning C4324: '': structure was padded due to alignment specifier
+			"/Ob2",    -- The Inline Function Expansion
 		}
 		linkoptions {
 			"/ignore:4221", -- LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
@@ -543,7 +564,10 @@ function toolchain(_buildDir, _libDir)
 		libdirs {
 			path.join(_libDir, "lib/win32_mingw-gcc"),
 		}
-		buildoptions { "-m32" }
+		buildoptions {
+			"-m32",
+			"-mstackrealign",
+		}
 
 	configuration { "x64", "mingw-gcc" }
 		targetdir (path.join(_buildDir, "win64_mingw-gcc/bin"))
@@ -600,7 +624,7 @@ function toolchain(_buildDir, _libDir)
 			"-mfpmath=sse",
 		}
 
-	configuration { "linux-gcc or linux-clang" }
+	configuration { "linux-gcc* or linux-clang*" }
 		buildoptions {
 			"-msse2",
 			"-Wunused-value",
@@ -633,7 +657,7 @@ function toolchain(_buildDir, _libDir)
 			"-m64",
 		}
 
-	configuration { "linux-clang", "x32" }
+	configuration { "linux-clang*", "x32" }
 		targetdir (path.join(_buildDir, "linux32_clang/bin"))
 		objdir (path.join(_buildDir, "linux32_clang/obj"))
 		libdirs { path.join(_libDir, "lib/linux32_clang") }
@@ -641,7 +665,7 @@ function toolchain(_buildDir, _libDir)
 			"-m32",
 		}
 
-	configuration { "linux-clang", "x64" }
+	configuration { "linux-clang*", "x64" }
 		targetdir (path.join(_buildDir, "linux64_clang/bin"))
 		objdir (path.join(_buildDir, "linux64_clang/obj"))
 		libdirs { path.join(_libDir, "lib/linux64_clang") }
@@ -693,7 +717,7 @@ function toolchain(_buildDir, _libDir)
 			"NoImportLib",
 		}
 		includedirs {
-			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.8/include",
+			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/include",
 			"$(ANDROID_NDK_ROOT)/sources/android/native_app_glue",
 		}
 		linkoptions {
@@ -787,10 +811,10 @@ function toolchain(_buildDir, _libDir)
 		objdir (path.join(_buildDir, "android-mips/obj"))
 		libdirs {
 			path.join(_libDir, "lib/android-mips"),
-			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.8/libs/mips",
+			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips",
 		}
 		includedirs {
-			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.8/libs/mips/include",
+			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips/include",
 		}
 		buildoptions {
 			"--sysroot=" .. path.join("$(ANDROID_NDK_ROOT)/platforms", androidPlatform, "arch-mips"),
@@ -808,10 +832,10 @@ function toolchain(_buildDir, _libDir)
 		objdir (path.join(_buildDir, "android-x86/obj"))
 		libdirs {
 			path.join(_libDir, "lib/android-x86"),
-			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86",
+			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86",
 		}
 		includedirs {
-			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/include",
+			"$(ANDROID_NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include",
 		}
 		buildoptions {
 			"--sysroot=" .. path.join("$(ANDROID_NDK_ROOT)/platforms", androidPlatform, "arch-x86"),
@@ -834,8 +858,8 @@ function toolchain(_buildDir, _libDir)
 		objdir (path.join(_buildDir, "asmjs/obj"))
 		libdirs { path.join(_libDir, "lib/asmjs") }
 		buildoptions {
-			"-isystem$(EMSCRIPTEN)/system/include",
-			"-isystem$(EMSCRIPTEN)/system/include/libc",
+			"-i\"system$(EMSCRIPTEN)/system/include\"",
+			"-i\"system$(EMSCRIPTEN)/system/include/libc\"",
 			"-Wunused-value",
 			"-Wundef",
 		}
@@ -942,6 +966,14 @@ function toolchain(_buildDir, _libDir)
 		removeflags { "StaticRuntime" }
 		defines {
 			"NOMINMAX",
+		}
+
+	configuration { "netbsd" }
+		targetdir (path.join(_buildDir, "netbsd/bin"))
+		objdir (path.join(_buildDir, "netbsd/obj"))
+		libdirs { path.join(_libDir, "lib/netbsd") }
+		includedirs {
+			path.join(bxDir, "include/compat/freebsd"),
 		}
 
 	configuration { "osx", "x32" }
@@ -1139,9 +1171,13 @@ function toolchain(_buildDir, _libDir)
 	configuration { "riscv" }
 		targetdir (path.join(_buildDir, "riscv/bin"))
 		objdir (path.join(_buildDir, "riscv/obj"))
+		includedirs {
+			"$(RISCV_DIR)/sysroot/usr/include",
+		}
 		buildoptions {
 			"-Wunused-value",
 			"-Wundef",
+			"--sysroot=$(RISCV_DIR)/sysroot",
 		}
 		buildoptions_cpp {
 			"-std=c++0x",
@@ -1205,7 +1241,7 @@ function strip()
 	configuration { "asmjs" }
 		postbuildcommands {
 			"$(SILENT) echo Running asmjs finalize.",
-			"$(SILENT) $(EMSCRIPTEN)/emcc -O2 "
+			"$(SILENT) \"$(EMSCRIPTEN)/emcc\" -O2 "
 --				.. "-s EMTERPRETIFY=1 "
 --				.. "-s EMTERPRETIFY_ASYNC=1 "
 				.. "-s TOTAL_MEMORY=268435456 "

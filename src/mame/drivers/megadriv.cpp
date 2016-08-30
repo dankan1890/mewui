@@ -2,7 +2,7 @@
 // copyright-holders:David Haywood
 
 #include "emu.h"
-#include "includes/md_cons.h"
+#include "includes/megadriv.h"
 #include "sound/sn76496.h"
 
 #include "imagedev/chd_cd.h"
@@ -356,7 +356,7 @@ MACHINE_RESET_MEMBER(md_cons_state, ms_megadriv)
 // same as screen_eof_megadriv but with addition of 32x and SegaCD/MegaCD pieces
 void md_cons_state::screen_eof_console(screen_device &screen, bool state)
 {
-	if (m_io_reset && (m_io_reset->read() & 0x01))
+	if (m_io_reset.read_safe(0) & 0x01)
 		m_maincpu->set_input_line(INPUT_LINE_RESET, PULSE_LINE);
 
 	// rising edge
@@ -406,6 +406,9 @@ static MACHINE_CONFIG_START( ms_megadpal, md_cons_state )
 	MCFG_SOFTWARE_LIST_ADD("cart_list","megadriv")
 MACHINE_CONFIG_END
 
+static MACHINE_CONFIG_DERIVED( genesis_tmss, ms_megadriv )
+	MCFG_SOFTWARE_LIST_FILTER("cart_list","TMSS")
+MACHINE_CONFIG_END
 
 
 
@@ -556,7 +559,7 @@ DEVICE_IMAGE_LOAD_MEMBER( md_cons_state, _32x_cart )
 	for (i = 0x00; i < length; i += 2)
 		ROM16[i / 2] = pick_integer_be(&temp_copy[0], i, 2);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -1058,7 +1061,7 @@ CONS( 1990, megadriv,   genesis,   0,      ms_megadpal,     md, md_cons_state,  
 CONS( 1988, megadrij,   genesis,   0,      ms_megadriv,     md, md_cons_state,     md_jpn,    "Sega",   "Mega Drive (Japan, NTSC)", MACHINE_SUPPORTS_SAVE )
 
 // 1990+ models had the TMSS security chip, leave this as a clone, it reduces compatibility and nothing more.
-CONS( 1990, genesis_tmss, genesis, 0,      ms_megadriv,     md, md_cons_state,     genesis,   "Sega",   "Genesis (USA, NTSC, with TMSS chip)",  MACHINE_SUPPORTS_SAVE )
+CONS( 1990, genesis_tmss, genesis, 0,      genesis_tmss,    md, md_cons_state,     genesis,   "Sega",   "Genesis (USA, NTSC, with TMSS chip)",  MACHINE_SUPPORTS_SAVE )
 
 
 // the 32X plugged in the cart slot, games plugged into the 32x.  Maybe it should be handled as an expansion device?

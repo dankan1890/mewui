@@ -43,7 +43,7 @@ public:
 		, m_maincpu(*this, "maincpu")
 		, m_u4(*this, "u4")
 		, m_u5(*this, "u5")
-		, m_switches(*this, "X")
+		, m_switches(*this, "X.%u", 0)
 	{ }
 
 	DECLARE_DRIVER_INIT(gts3);
@@ -229,7 +229,7 @@ WRITE8_MEMBER( gts3_state::u4b_w )
 	bool clk_bit = BIT(data, 6);
 	if ((!m_dispclk) && clk_bit) // 0->1 is valid
 	{
-		if BIT(data, 5)
+		if (BIT(data, 5))
 			m_digit = 0;
 		else
 			m_digit++;
@@ -239,7 +239,7 @@ WRITE8_MEMBER( gts3_state::u4b_w )
 	clk_bit = BIT(data, 1);
 	if ((!m_lampclk) && clk_bit) // 0->1 is valid
 	{
-		if BIT(data, 0)
+		if (BIT(data, 0))
 			m_row = 0;
 		else
 			m_row++;
@@ -286,7 +286,7 @@ static MACHINE_CONFIG_START( gts3, gts3_state )
 	MCFG_FRAGMENT_ADD( genpin_audio )
 
 	MCFG_DEVICE_ADD("u4", VIA6522, 0)
-	MCFG_VIA6522_IRQ_HANDLER(DEVWRITELINE("maincpu", m65c02_device, irq_line))
+	MCFG_VIA6522_IRQ_HANDLER(INPUTLINE("maincpu", M65C02_IRQ_LINE))
 	MCFG_VIA6522_READPA_HANDLER(READ8(gts3_state, u4a_r))
 	MCFG_VIA6522_READPB_HANDLER(READ8(gts3_state, u4b_r))
 	MCFG_VIA6522_WRITEPB_HANDLER(WRITE8(gts3_state, u4b_w))
@@ -294,7 +294,7 @@ static MACHINE_CONFIG_START( gts3, gts3_state )
 	MCFG_VIA6522_CB2_HANDLER(WRITELINE(gts3_state, nmi_w))
 
 	MCFG_DEVICE_ADD("u5", VIA6522, 0)
-	MCFG_VIA6522_IRQ_HANDLER(DEVWRITELINE("maincpu", m65c02_device, irq_line))
+	MCFG_VIA6522_IRQ_HANDLER(INPUTLINE("maincpu", M65C02_IRQ_LINE))
 	//MCFG_VIA6522_READPA_HANDLER(READ8(gts3_state, u5a_r))
 	//MCFG_VIA6522_READPB_HANDLER(READ8(gts3_state, u5b_r))
 	//MCFG_VIA6522_WRITEPB_HANDLER(WRITE8(gts3_state, u5b_w))

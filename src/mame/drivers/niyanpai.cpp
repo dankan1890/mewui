@@ -53,7 +53,7 @@ WRITE8_MEMBER(niyanpai_state::soundbank_w)
 
 WRITE8_MEMBER(niyanpai_state::soundlatch_clear_w)
 {
-	if (!(data & 0x01)) soundlatch_clear_byte_w(space, 0, 0);
+	if (!(data & 0x01)) m_soundlatch->clear_w(space, 0, 0);
 }
 
 
@@ -144,7 +144,7 @@ static ADDRESS_MAP_START( niyanpai_map, AS_PROGRAM, 16, niyanpai_state )
 
 	AM_RANGE(0x0bf800, 0x0bffff) AM_RAM
 
-	AM_RANGE(0x200000, 0x200001) AM_WRITE8(soundlatch_byte_w, 0xff00)
+	AM_RANGE(0x200000, 0x200001) AM_DEVWRITE8("soundlatch", generic_latch_8_device, write, 0xff00)
 
 	AM_RANGE(0x200200, 0x200201) AM_WRITENOP            // unknown
 	AM_RANGE(0x240000, 0x240009) AM_WRITENOP            // unknown
@@ -180,7 +180,7 @@ static ADDRESS_MAP_START( musobana_map, AS_PROGRAM, 16, niyanpai_state )
 	AM_RANGE(0x0a8000, 0x0a87ff) AM_RAM AM_SHARE("nvram")
 	AM_RANGE(0x0bf800, 0x0bffff) AM_RAM
 
-	AM_RANGE(0x200000, 0x200001) AM_WRITE8(soundlatch_byte_w, 0xff00)
+	AM_RANGE(0x200000, 0x200001) AM_DEVWRITE8("soundlatch", generic_latch_8_device, write, 0xff00)
 
 	AM_RANGE(0x200200, 0x200201) AM_WRITE(musobana_inputport_w) // inputport select
 	AM_RANGE(0x240000, 0x240009) AM_WRITENOP            // unknown
@@ -219,7 +219,7 @@ static ADDRESS_MAP_START( mhhonban_map, AS_PROGRAM, 16, niyanpai_state )
 	AM_RANGE(0x0a8000, 0x0a87ff) AM_RAM AM_SHARE("nvram")
 	AM_RANGE(0x0bf000, 0x0bffff) AM_RAM
 
-	AM_RANGE(0x200000, 0x200001) AM_WRITE8(soundlatch_byte_w, 0xff00)
+	AM_RANGE(0x200000, 0x200001) AM_DEVWRITE8("soundlatch", generic_latch_8_device, write, 0xff00)
 
 	AM_RANGE(0x200200, 0x200201) AM_WRITE(musobana_inputport_w) // inputport select
 	AM_RANGE(0x240000, 0x240009) AM_WRITENOP            // unknown
@@ -258,7 +258,7 @@ static ADDRESS_MAP_START( zokumahj_map, AS_PROGRAM, 16, niyanpai_state )
 	AM_RANGE(0x0a8000, 0x0a87ff) AM_RAM AM_SHARE("nvram")
 	AM_RANGE(0x0c0000, 0x0cffff) AM_RAM
 
-	AM_RANGE(0x200000, 0x200001) AM_WRITE8(soundlatch_byte_w, 0xff00)
+	AM_RANGE(0x200000, 0x200001) AM_DEVWRITE8("soundlatch", generic_latch_8_device, write, 0xff00)
 
 	AM_RANGE(0x200200, 0x200201) AM_WRITE(musobana_inputport_w) // inputport select
 	AM_RANGE(0x240000, 0x240009) AM_WRITENOP            // unknown
@@ -295,8 +295,7 @@ static ADDRESS_MAP_START( niyanpai_sound_map, AS_PROGRAM, 8, niyanpai_state )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( niyanpai_sound_io_map, AS_IO, 8, niyanpai_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x80, 0x81) AM_DEVWRITE("ymsnd", ym3812_device, write)
+	AM_RANGE(0x80, 0x81) AM_MIRROR(0xff00) AM_DEVWRITE("ymsnd", ym3812_device, write)
 ADDRESS_MAP_END
 
 
@@ -509,9 +508,9 @@ static INPUT_PORTS_START( musobana )    // I don't have manual for this game.
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )            // COIN1
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )            // COIN2
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )           // CREDIT CLEAR
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3 )         // MEMORY RESET
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_MEMORY_RESET )     // MEMORY RESET
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE2 )         // ANALYZER
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, NULL)   // OUT COIN
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, nullptr)   // OUT COIN
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )                   // TEST
 
@@ -575,9 +574,9 @@ static INPUT_PORTS_START( 4psimasy )    // I don't have manual for this game.
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )            // COIN1
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )            // COIN2
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )           // CREDIT CLEAR
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3 )         // MEMORY RESET
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_MEMORY_RESET )     // MEMORY RESET
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE2 )         // ANALYZER
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, NULL)   // OUT COIN
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, nullptr)   // OUT COIN
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )                   // TEST
 
@@ -641,9 +640,9 @@ static INPUT_PORTS_START( mhhonban )    // I don't have manual for this game.
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )            // COIN1
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )            // COIN2
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )           // CREDIT CLEAR
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3 )         // MEMORY RESET
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_MEMORY_RESET )     // MEMORY RESET
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE2 )         // ANALYZER
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, NULL)   // OUT COIN
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, nullptr)   // OUT COIN
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )                   // TEST
 
@@ -707,9 +706,9 @@ static INPUT_PORTS_START( zokumahj )    // I don't have manual for this game.
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )            // COIN1
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )            // COIN2
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )           // CREDIT CLEAR
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE3 )         // MEMORY RESET
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_MEMORY_RESET )     // MEMORY RESET
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE2 )         // ANALYZER
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, NULL)   // OUT COIN
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, niyanpai_state,musobana_outcoin_flag_r, nullptr)   // OUT COIN
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )                   // TEST
 
@@ -740,10 +739,10 @@ static MACHINE_CONFIG_START( niyanpai, niyanpai_state )
 	MCFG_TMP68301_OUT_PARALLEL_CB(WRITE16(niyanpai_state, tmp68301_parallel_port_w))
 
 	MCFG_CPU_ADD("audiocpu", TMPZ84C011, 8000000) /* TMPZ84C011, 8.00 MHz */
-	MCFG_CPU_CONFIG(daisy_chain_sound)
+	MCFG_Z80_DAISY_CHAIN(daisy_chain_sound)
 	MCFG_CPU_PROGRAM_MAP(niyanpai_sound_map)
 	MCFG_CPU_IO_MAP(niyanpai_sound_io_map)
-	MCFG_TMPZ84C011_PORTD_READ_CB(READ8(niyanpai_state, soundlatch_byte_r))
+	MCFG_TMPZ84C011_PORTD_READ_CB(DEVREAD8("soundlatch", generic_latch_8_device, read))
 	MCFG_TMPZ84C011_PORTA_WRITE_CB(WRITE8(niyanpai_state, soundbank_w))
 	MCFG_TMPZ84C011_PORTB_WRITE_CB(DEVWRITE8("dac1", dac_device, write_unsigned8))
 	MCFG_TMPZ84C011_PORTC_WRITE_CB(DEVWRITE8("dac2", dac_device, write_unsigned8))
@@ -765,6 +764,8 @@ static MACHINE_CONFIG_START( niyanpai, niyanpai_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ymsnd", YM3812, 4000000)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)

@@ -159,7 +159,7 @@ UINT32 palette_device::transpen_mask(gfx_element &gfx, int color, int transcolor
 	assert(gfx.depth() <= 32);
 
 	// either gfx->color_depth entries or as many as we can get up until the end
-	int count = MIN(gfx.depth(), m_indirect_pens.size() - entry);
+	int count = std::min(size_t(gfx.depth()), m_indirect_pens.size() - entry);
 
 	// set a bit anywhere the transcolor matches
 	UINT32 mask = 0;
@@ -301,14 +301,10 @@ inline void palette_device::update_for_write(offs_t byte_offset, int bytes_modif
 	offs_t base = byte_offset / bpe;
 	for (int index = 0; index < count; index++)
 	{
-		UINT32 data = m_paletteram.read(base + index);
-		if (m_paletteram_ext.base() != nullptr)
-			data |= m_paletteram_ext.read(base + index) << (8 * bpe);
-
 		if (indirect)
-			set_indirect_color(base + index, m_raw_to_rgb(data));
+			set_indirect_color(base + index, m_raw_to_rgb(read_entry(base + index)));
 		else
-			m_palette->entry_set_color(base + index, m_raw_to_rgb(data));
+			m_palette->entry_set_color(base + index, m_raw_to_rgb(read_entry(base + index)));
 	}
 }
 
@@ -466,7 +462,7 @@ void palette_device::device_start()
 			for (int color = 0; color < m_indirect_entries; color++)
 			{
 				// alpha = 0 ensures change is detected the first time set_indirect_color() is called
-				m_indirect_colors[color] = rgb_t(0, 0, 0, 0);
+				m_indirect_colors[color] = rgb_t::transparent;
 			}
 
 			m_indirect_pens.resize(m_entries);

@@ -105,7 +105,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *grip_device::device_rom_region() const
+const tiny_rom_entry *grip_device::device_rom_region() const
 {
 	return ROM_NAME( grip21 );
 }
@@ -454,7 +454,7 @@ WRITE8_MEMBER( grip_device::kb_w )
 static MACHINE_CONFIG_FRAGMENT( grip )
 	// basic machine hardware
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_16MHz/4)
-	MCFG_CPU_CONFIG(grip_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(grip_daisy_chain)
 	MCFG_CPU_PROGRAM_MAP(grip_mem)
 	MCFG_CPU_IO_MAP(grip_io)
 

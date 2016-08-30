@@ -91,7 +91,7 @@ static int x07_handle_cassette(INT16 *buffer, const UINT8 *bytes)
 	}
 	else
 	{
-		// remove the NULL chars at start
+		// remove the nullptr chars at start
 		while (!bytes[img_start])
 			img_start++;
 
@@ -151,12 +151,12 @@ static const struct CassetteLegacyWaveFiller x07_legacy_fill_wave =
 	0                                       /* trailer_samples */
 };
 
-static casserr_t x07_cassette_identify(cassette_image *cassette, struct CassetteOptions *opts)
+static cassette_image::error x07_cassette_identify(cassette_image *cassette, struct CassetteOptions *opts)
 {
 	return cassette_legacy_identify(cassette, opts, &x07_legacy_fill_wave);
 }
 
-static casserr_t x07_cassette_load(cassette_image *cassette)
+static cassette_image::error x07_cassette_load(cassette_image *cassette)
 {
 	return cassette_legacy_construct(cassette, &x07_legacy_fill_wave);
 }

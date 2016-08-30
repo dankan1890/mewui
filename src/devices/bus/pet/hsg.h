@@ -31,14 +31,12 @@ public:
 	cbm8000_hsg_t(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, UINT32 clock, const char *shortname, const char *source);
 
 	// optional information overrides
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 
 	// device_pet_expansion_card_interface overrides
 	virtual int pet_norom_r(address_space &space, offs_t offset, int sel) override;
 	virtual UINT8 pet_bd_r(address_space &space, offs_t offset, UINT8 data, int &sel) override;
 	virtual void pet_bd_w(address_space &space, offs_t offset, UINT8 data, int &sel) override;
-
-	UINT32 screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 
 protected:
 	// device-level overrides

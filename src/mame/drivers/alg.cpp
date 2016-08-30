@@ -26,7 +26,7 @@
 #include "cpu/m68000/m68000.h"
 #include "render.h"
 #include "includes/amiga.h"
-#include "machine/ldstub.h"
+#include "machine/ldp1450.h"
 #include "machine/nvram.h"
 #include "machine/amigafdc.h"
 
@@ -87,8 +87,8 @@ int alg_state::get_lightgun_pos(int player, int *x, int *y)
 {
 	const rectangle &visarea = m_screen->visible_area();
 
-	int xpos = (player == 0) ? m_gun1x->read() : (m_gun2x ? m_gun2x->read() : 0xffffffff);
-	int ypos = (player == 0) ? m_gun1y->read() : (m_gun2y ? m_gun2y->read() : 0xffffffff);
+	int xpos = (player == 0) ? m_gun1x->read() : m_gun2x.read_safe(0xffffffff);
+	int ypos = (player == 0) ? m_gun1y->read() : m_gun2y.read_safe(0xffffffff);
 
 	if (xpos == -1 || ypos == -1)
 		return FALSE;
@@ -228,7 +228,7 @@ static INPUT_PORTS_START( alg )
 	PORT_BIT( 0xaaff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START("HVPOS")     /* read by Amiga core */
-	PORT_BIT( 0x1ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_pos_r, NULL)
+	PORT_BIT( 0x1ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_pos_r, nullptr)
 
 	PORT_START("FIRE")
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
@@ -259,13 +259,13 @@ static INPUT_PORTS_START( alg_2p )
 
 	PORT_MODIFY("potgo")
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_trigger_r, NULL)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_trigger_r, nullptr)
 
 	PORT_MODIFY("FIRE")
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("p2_joy")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_holster_r, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, alg_state,lightgun_holster_r, nullptr)
 
 	PORT_START("GUN2X")     /* referenced by lightgun_pos_r */
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.0, 0.0, 0) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
@@ -306,7 +306,7 @@ static MACHINE_CONFIG_START( alg_r1, alg_state )
 	/* video hardware */
 	MCFG_FRAGMENT_ADD(ntsc_video)
 
-	MCFG_LASERDISC_LDP1450_ADD("laserdisc")
+	MCFG_LASERDISC_LDP1450_ADD("laserdisc",9600)
 	MCFG_LASERDISC_SCREEN("screen")
 	MCFG_LASERDISC_OVERLAY_DRIVER(512*2, 262, amiga_state, screen_update_amiga)
 	MCFG_LASERDISC_OVERLAY_CLIP((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
@@ -408,7 +408,7 @@ ROM_START( maddoga )
 	ROM_LOAD16_BYTE( "maddog_02.dat", 0x000001, 0x10000, CRC(f64014ec) SHA1(d343a2cb5d8992153b8c916f39b11d3db736543d))
 
 	DISK_REGION( "laserdisc" )
-	DISK_IMAGE_READONLY( "maddog", 0, NO_DUMP )
+	DISK_IMAGE_READONLY( "maddoga", 0, NO_DUMP )
 ROM_END
 
 

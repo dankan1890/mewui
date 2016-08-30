@@ -74,7 +74,7 @@ static MACHINE_CONFIG_FRAGMENT( dmv_k235 )
 	MCFG_CPU_IO_MAP(k235_io)
 	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("pic8259", pic8259_device, inta_cb)
 
-	MCFG_PIC8259_ADD("pic8259", INPUTLINE("maincpu", 0), VCC, NULL)
+	MCFG_PIC8259_ADD("pic8259", INPUTLINE("maincpu", 0), VCC, NOOP)
 MACHINE_CONFIG_END
 
 
@@ -165,7 +165,7 @@ void dmv_k230_device::device_start()
 void dmv_k234_device::device_start()
 {
 	dmv_k230_device::device_start();
-	m_io->install_readwrite_handler(0xd8, 0xdf, 0, 0, read8_delegate(FUNC(dmv_k234_device::snr_r), this), write8_delegate(FUNC(dmv_k234_device::snr_w), this), 0);
+	m_io->install_readwrite_handler(0xd8, 0xdf, read8_delegate(FUNC(dmv_k234_device::snr_r), this), write8_delegate(FUNC(dmv_k234_device::snr_w), this), 0);
 }
 
 //-------------------------------------------------
@@ -208,22 +208,22 @@ machine_config_constructor dmv_k235_device::device_mconfig_additions() const
 //  device_rom_region
 //-------------------------------------------------
 
-const rom_entry *dmv_k230_device::device_rom_region() const
+const tiny_rom_entry *dmv_k230_device::device_rom_region() const
 {
 	return ROM_NAME( dmv_k230 );
 }
 
-const rom_entry *dmv_k231_device::device_rom_region() const
+const tiny_rom_entry *dmv_k231_device::device_rom_region() const
 {
 	return ROM_NAME( dmv_k231 );
 }
 
-const rom_entry *dmv_k234_device::device_rom_region() const
+const tiny_rom_entry *dmv_k234_device::device_rom_region() const
 {
 	return nullptr;
 }
 
-const rom_entry *dmv_k235_device::device_rom_region() const
+const tiny_rom_entry *dmv_k235_device::device_rom_region() const
 {
 	return ROM_NAME( dmv_k235 );
 }

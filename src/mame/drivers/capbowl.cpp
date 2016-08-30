@@ -181,7 +181,7 @@ WRITE8_MEMBER(capbowl_state::track_reset_w)
 	m_last_trackball_val[0] = ioport("TRACKY")->read();
 	m_last_trackball_val[1] = ioport("TRACKX")->read();
 
-	watchdog_reset_w(space, offset, data);
+	m_watchdog->reset_w(space, offset, data);
 }
 
 
@@ -195,7 +195,7 @@ WRITE8_MEMBER(capbowl_state::track_reset_w)
 WRITE8_MEMBER(capbowl_state::sndcmd_w)
 {
 	m_audiocpu->set_input_line(M6809_IRQ_LINE, HOLD_LINE);
-	soundlatch_byte_w(space, offset, data);
+	m_soundlatch->write(space, offset, data);
 }
 
 
@@ -244,7 +244,7 @@ static ADDRESS_MAP_START( sound_map, AS_PROGRAM, 8, capbowl_state )
 	AM_RANGE(0x1000, 0x1001) AM_DEVREADWRITE("ymsnd", ym2203_device, read, write)
 	AM_RANGE(0x2000, 0x2000) AM_WRITENOP /* watchdog */
 	AM_RANGE(0x6000, 0x6000) AM_DEVWRITE("dac", dac_device, write_unsigned8)
-	AM_RANGE(0x7000, 0x7000) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x7000, 0x7000) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -316,6 +316,8 @@ static MACHINE_CONFIG_START( capbowl, capbowl_state )
 	MCFG_CPU_ADD("maincpu", M6809E, MASTER_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(capbowl_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", capbowl_state,  interrupt)
+
+	MCFG_WATCHDOG_ADD("watchdog")
 	MCFG_WATCHDOG_TIME_INIT(PERIOD_OF_555_ASTABLE(100000.0, 100000.0, 0.1e-6) * 15.5) // ~0.3s
 
 	MCFG_CPU_ADD("audiocpu", M6809E, MASTER_CLOCK)
@@ -340,6 +342,8 @@ static MACHINE_CONFIG_START( capbowl, capbowl_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ymsnd", YM2203, MASTER_CLOCK/2)
 	MCFG_YM2203_IRQ_HANDLER(INPUTLINE("audiocpu", M6809_FIRQ_LINE))

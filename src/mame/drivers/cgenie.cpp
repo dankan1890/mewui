@@ -42,7 +42,7 @@ public:
 		m_char_rom(*this, "gfx1"),
 		m_color_ram(*this, "colorram"),
 		m_font_ram(*this, "fontram"),
-		m_keyboard(*this, "KEY"),
+		m_keyboard(*this, "KEY.%u", 0),
 		m_palette(nullptr),
 		m_control(0xff),
 		m_rs232_rx(1),
@@ -209,7 +209,7 @@ static INPUT_PORTS_START( cgenie )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("L.P.") // marked as "L.P." in the manual, lightpen?
 
 	PORT_START("RST")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_CODE(KEYCODE_F5) PORT_NAME("Rst") PORT_CHAR(UCHAR_MAMEKEY(F5)) PORT_CHANGED_MEMBER(DEVICE_SELF, cgenie_state, rst_callback, NULL)
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_CODE(KEYCODE_F5) PORT_NAME("Rst") PORT_CHAR(UCHAR_MAMEKEY(F5)) PORT_CHANGED_MEMBER(DEVICE_SELF, cgenie_state, rst_callback, nullptr)
 INPUT_PORTS_END
 
 

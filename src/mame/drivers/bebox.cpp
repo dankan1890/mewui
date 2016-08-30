@@ -61,8 +61,8 @@ static ADDRESS_MAP_START( bebox_mem, AS_PROGRAM, 64, bebox_state )
 	//AM_RANGE(0x800042E8, 0x800042EF) AM_DEVWRITE8("cirrus", cirrus_device, cirrus_42E8_w, U64(0xffffffffffffffff) )
 
 	AM_RANGE(0xBFFFFFF0, 0xBFFFFFFF) AM_READ(bebox_interrupt_ack_r )
-	AM_RANGE(0xC00A0000, 0XC00BFFFF) AM_DEVREADWRITE8("vga", cirrus_gd5428_device, mem_r, mem_w, U64(0xffffffffffffffff) )
-	AM_RANGE(0xC1000000, 0XC11FFFFF) AM_DEVREADWRITE8("vga", cirrus_gd5428_device, mem_linear_r, mem_linear_w, U64(0xffffffffffffffff) )
+	AM_RANGE(0xC00A0000, 0xC00BFFFF) AM_DEVREADWRITE8("vga", cirrus_gd5428_device, mem_r, mem_w, U64(0xffffffffffffffff) )
+	AM_RANGE(0xC1000000, 0xC11FFFFF) AM_DEVREADWRITE8("vga", cirrus_gd5428_device, mem_linear_r, mem_linear_w, U64(0xffffffffffffffff) )
 	AM_RANGE(0xFFF00000, 0xFFF03FFF) AM_ROMBANK("bank2")
 	AM_RANGE(0xFFF04000, 0xFFFFFFFF) AM_READWRITE8(bebox_flash_r, bebox_flash_w, U64(0xffffffffffffffff) )
 ADDRESS_MAP_END
@@ -173,7 +173,7 @@ static MACHINE_CONFIG_START( bebox, bebox_state )
 
 	MCFG_PIC8259_ADD( "pic8259_1", WRITELINE(bebox_state,bebox_pic8259_master_set_int_line), VCC, READ8(bebox_state,get_slave_ack) )
 
-	MCFG_PIC8259_ADD( "pic8259_2", WRITELINE(bebox_state,bebox_pic8259_slave_set_int_line), GND, NULL )
+	MCFG_PIC8259_ADD( "pic8259_2", WRITELINE(bebox_state,bebox_pic8259_slave_set_int_line), GND, NOOP)
 
 	MCFG_DEVICE_ADD( "ns16550_0", NS16550, 0 )   /* TODO: Verify model */
 	MCFG_DEVICE_ADD( "ns16550_1", NS16550, 0 )   /* TODO: Verify model */
@@ -210,7 +210,7 @@ static MACHINE_CONFIG_START( bebox, bebox_state )
 
 	MCFG_PCI_BUS_DEVICE("pcibus:1", pci_devices, "cirrus", true)
 
-	/*MCFG_PCI_BUS_DEVICE(12, NULL, scsi53c810_pci_read, scsi53c810_pci_write)*/
+	/*MCFG_PCI_BUS_DEVICE(12, nullptr, scsi53c810_pci_read, scsi53c810_pci_write)*/
 
 	MCFG_SMC37C78_ADD("smc37c78")
 	MCFG_UPD765_INTRQ_CALLBACK(WRITELINE(bebox_state, fdc_interrupt))

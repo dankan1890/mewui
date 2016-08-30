@@ -240,6 +240,11 @@ static const code_string_table itemid_token_table[] =
 	{ ITEM_ID_F13,           "F13" },
 	{ ITEM_ID_F14,           "F14" },
 	{ ITEM_ID_F15,           "F15" },
+	{ ITEM_ID_F16,           "F16" },
+	{ ITEM_ID_F17,           "F17" },
+	{ ITEM_ID_F18,           "F18" },
+	{ ITEM_ID_F19,           "F19" },
+	{ ITEM_ID_F20,           "F20" },
 	{ ITEM_ID_ESC,           "ESC" },
 	{ ITEM_ID_TILDE,         "TILDE" },
 	{ ITEM_ID_MINUS,         "MINUS" },
@@ -718,7 +723,7 @@ bool input_seq::is_valid() const
 			// non-switch items can't have a NOT
 			input_item_class itemclass = code.item_class();
 			if (itemclass != ITEM_CLASS_SWITCH && lastcode == not_code)
-				return FALSE;
+				return false;
 
 			// absolute/relative items must all be the same class
 			if ((lastclass == ITEM_CLASS_ABSOLUTE && itemclass != ITEM_CLASS_ABSOLUTE) ||
@@ -863,7 +868,7 @@ input_item_id input_device::add_item(const char *name, input_item_id itemid, ite
 	}
 
 	// assign the new slot and update the maximum
-	m_maxitem = MAX(m_maxitem, itemid);
+	m_maxitem = std::max(m_maxitem, itemid);
 	return itemid;
 }
 
@@ -986,7 +991,7 @@ input_device *input_class::add_device(int devindex, const char *name, void *inte
 	m_device[devindex] = std::make_unique<input_device>(*this, devindex, name, internal);
 
 	// update the maximum index found
-	m_maxindex = MAX(m_maxindex, devindex);
+	m_maxindex = std::max(m_maxindex, devindex);
 
 	osd_printf_verbose("Input: Adding %s #%d: %s\n", (*devclass_string_table)[m_devclass], devindex, name);
 	return m_device[devindex].get();
@@ -1184,7 +1189,7 @@ void input_manager::reset_polling()
 	for (input_device_class devclass = DEVICE_CLASS_FIRST_VALID; devclass <= DEVICE_CLASS_LAST_VALID; ++devclass)
 		for (int devnum = 0; devnum <= m_class[devclass]->maxindex(); devnum++)
 		{
-			// fetch the device; ignore if NULL
+			// fetch the device; ignore if nullptr
 			input_device *device = m_class[devclass]->device(devnum);
 			if (device == nullptr)
 				continue;
@@ -1211,7 +1216,7 @@ input_code input_manager::poll_switches()
 	for (input_device_class devclass = DEVICE_CLASS_FIRST_VALID; devclass <= DEVICE_CLASS_LAST_VALID; ++devclass)
 		for (int devnum = 0; devnum <= m_class[devclass]->maxindex(); devnum++)
 		{
-			// fetch the device; ignore if NULL
+			// fetch the device; ignore if nullptr
 			input_device *device = m_class[devclass]->device(devnum);
 			if (device == nullptr)
 				continue;
@@ -1291,7 +1296,7 @@ input_code input_manager::poll_keyboard_switches()
 	// iterate over devices within each class
 	for (int devnum = 0; devnum < m_keyboard_class.maxindex(); devnum++)
 	{
-		// fetch the device; ignore if NULL
+		// fetch the device; ignore if nullptr
 		input_device *device = m_keyboard_class.device(devnum);
 		if (device == nullptr)
 			continue;
@@ -1365,7 +1370,7 @@ input_code input_manager::poll_axes()
 	for (input_device_class devclass = DEVICE_CLASS_FIRST_VALID; devclass <= DEVICE_CLASS_LAST_VALID; ++devclass)
 		for (int devnum = 0; devnum <= m_class[devclass]->maxindex(); devnum++)
 		{
-			// fetch the device; ignore if NULL
+			// fetch the device; ignore if nullptr
 			input_device *device = m_class[devclass]->device(devnum);
 			if (device == nullptr)
 				continue;
@@ -1400,7 +1405,7 @@ input_device *input_manager::device_from_code(input_code code) const
 	if (devclass >= DEVICE_CLASS_FIRST_VALID && devclass <= DEVICE_CLASS_LAST_VALID)
 		return m_class[devclass]->device(code.device_index());
 
-	// otherwise, return NULL
+	// otherwise, return nullptr
 	return nullptr;
 }
 
@@ -2363,8 +2368,8 @@ INT32 input_device_absolute_item::read_as_absolute(input_item_modifier modifier)
 
 	// positive/negative: scale to full axis
 	if (modifier == ITEM_MODIFIER_POS)
-		result = MAX(result, 0) * 2 + INPUT_ABSOLUTE_MIN;
+		result = std::max(result, 0) * 2 + INPUT_ABSOLUTE_MIN;
 	if (modifier == ITEM_MODIFIER_NEG)
-		result = MAX(-result, 0) * 2 + INPUT_ABSOLUTE_MIN;
+		result = std::max(-result, 0) * 2 + INPUT_ABSOLUTE_MIN;
 	return result;
 }

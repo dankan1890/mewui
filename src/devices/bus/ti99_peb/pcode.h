@@ -40,12 +40,13 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	virtual void device_config_complete() override;
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual ioport_constructor device_input_ports() const override;
 
 private:
-	tmc0430_device*   m_grom[8];
+	void                debugger_read(address_space& space, UINT16 addr, UINT8& value);
+	tmc0430_device*     m_grom[8];
 	UINT8*              m_rom;
 	int                 m_bank_select;
 	bool                m_active;
@@ -53,8 +54,7 @@ private:
 	bool                m_clockhigh;
 
 	// Address in card area
-	bool m_inDsrArea;
-
+	bool    m_inDsrArea;
 	bool    m_isrom0;
 	bool    m_isrom12;
 	bool    m_isgrom;

@@ -239,7 +239,7 @@ Dip location verified from manual for: cclimber, guzzler, swimmer
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/segacrpt.h"
+#include "machine/segacrpt_device.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
 #include "audio/cclimber.h"
@@ -256,7 +256,7 @@ void cclimber_state::machine_start()
 
 WRITE8_MEMBER(cclimber_state::swimmer_sh_soundlatch_w)
 {
-	soundlatch_byte_w(space,offset,data);
+	m_soundlatch->write(space,offset,data);
 	m_audiocpu->set_input_line_and_vector(0, HOLD_LINE, 0xff);
 }
 
@@ -454,7 +454,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( swimmer_audio_map, AS_PROGRAM, 8, cclimber_state )
 	AM_RANGE(0x0000, 0x0fff) AM_ROM
 	AM_RANGE(0x2000, 0x23ff) AM_RAM
-	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x3000, 0x3000) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x4000, 0x4001) AM_RAM             /* ??? */
 ADDRESS_MAP_END
 
@@ -589,6 +589,54 @@ static INPUT_PORTS_START( ckong )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( bagmanf )
+	PORT_START("P1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+
+	PORT_START("DSW")
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )            PORT_DIPLOCATION("SW1:1,2")
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )          PORT_DIPLOCATION("SW1:3")
+	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )       PORT_DIPLOCATION("SW1:4,5")
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Language ) )         PORT_DIPLOCATION("SW1:6")
+	PORT_DIPSETTING(    0x20, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( French ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )       PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(    0x40, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) ) /* Cabinet type set through edge connector, not dip switch (verified on real pcb) */
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START("SYSTEM")
 INPUT_PORTS_END
 
 /* Similar to normal Crazy Kong except for the lives per game */
@@ -1035,6 +1083,12 @@ INTERRUPT_GEN_MEMBER(cclimber_state::vblank_irq)
 		device.execute().set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
 
+INTERRUPT_GEN_MEMBER(cclimber_state::bagmanf_vblank_irq)
+{
+	if(m_nmi_mask)
+		device.execute().set_input_line(0, HOLD_LINE);
+}
+
 static MACHINE_CONFIG_START( root, cclimber_state )
 
 	/* basic machine hardware */
@@ -1086,14 +1140,23 @@ static MACHINE_CONFIG_DERIVED( cannonb, cclimber )
 	MCFG_GFXDECODE_MODIFY("gfxdecode", cannonb)
 MACHINE_CONFIG_END
 
+static MACHINE_CONFIG_DERIVED( bagmanf, cclimber )
+
+	/* basic machine hardware */
+	MCFG_CPU_MODIFY("maincpu")
+	MCFG_CPU_VBLANK_INT_DRIVER("screen", cclimber_state, bagmanf_vblank_irq)
+MACHINE_CONFIG_END
+
 
 static MACHINE_CONFIG_DERIVED( yamato, root )
 
 	/* basic machine hardware */
-	MCFG_CPU_MODIFY("maincpu")
+	MCFG_CPU_REPLACE("maincpu", SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
 	MCFG_CPU_PROGRAM_MAP(yamato_map)
 	MCFG_CPU_IO_MAP(yamato_portmap)
+	MCFG_CPU_VBLANK_INT_DRIVER("screen", cclimber_state,  vblank_irq)
 	MCFG_CPU_DECRYPTED_OPCODES_MAP(yamato_decrypted_opcodes_map)
+	MCFG_SEGACRPT_SET_DECRYPTED_TAG(":decrypted_opcodes")
 
 	MCFG_CPU_ADD("audiocpu", Z80, 3072000) /* 3.072 MHz ? */
 	MCFG_CPU_PROGRAM_MAP(yamato_audio_map)
@@ -1119,10 +1182,15 @@ MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( toprollr, cclimber )
 
-	/* basic machine hardware */
-	MCFG_CPU_MODIFY("maincpu")
+	MCFG_CPU_REPLACE("maincpu", SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
 	MCFG_CPU_PROGRAM_MAP(toprollr_map)
+	MCFG_CPU_IO_MAP(cclimber_portmap)
+	MCFG_CPU_VBLANK_INT_DRIVER("screen", cclimber_state,  vblank_irq)
 	MCFG_CPU_DECRYPTED_OPCODES_MAP(toprollr_decrypted_opcodes_map)
+	MCFG_SEGACRPT_SET_SIZE(0)
+	MCFG_SEGACRPT_SET_NUMBANKS(3)
+	MCFG_SEGACRPT_SET_BANKSIZE(0x6000)
+
 
 	/* video hardware */
 	MCFG_GFXDECODE_MODIFY("gfxdecode", toprollr)
@@ -1165,6 +1233,9 @@ static MACHINE_CONFIG_START( swimmer, cclimber_state )
 
 	/* audio hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_SOUND_ADD("ay1", AY8910, XTAL_4MHz/2)  /* verified on pcb */
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
@@ -1923,13 +1994,41 @@ ROM_START( ckongdks )
 	ROM_LOAD( "ck07.bin",    0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
 ROM_END
 
+/* Original ORCA PCB, with a suicide battery attached
+
+ */
+ROM_START( rpatrol )
+	ROM_REGION( 0x6000, "maincpu", 0 )  // encrypted
+	ROM_LOAD( "1.1h",    0x000000, 0x001000, CRC(065197f0) SHA1(6e482967949bdb126b7ac484abb84c24f4687a3a) )
+	ROM_LOAD( "2.1f",    0x001000, 0x001000, CRC(3614b820) SHA1(01966e6ae2ead93797d402bc8d789458b0bdcd75) )
+	ROM_LOAD( "3.1d",    0x002000, 0x001000, CRC(ba428bbf) SHA1(ac4cd6ac0adab79bc2cfec3ec2683291c5f0f376) )
+	ROM_LOAD( "4.1c",    0x003000, 0x001000, CRC(41497a94) SHA1(7550e74f93c1fd1d5e7fc70c4a2cd2d1b4c22ce5) )
+	ROM_LOAD( "5.1a",    0x004000, 0x001000, CRC(e20ee7e7) SHA1(53f7ec5c6805043d3e8f014ade2480cd6dbd94db) )
+
+	ROM_REGION( 0x4000, "gfx1", 0 )
+	ROM_LOAD( "6.6l.2732",    0x000000, 0x000800, CRC(b38d8aca) SHA1(b93aa0010b0c0ab23284188a881d4a9bb0fd4582) )
+	ROM_CONTINUE(             0x001000, 0x000800 )
+	ROM_LOAD( "7.6p.2732",    0x002000, 0x000800, CRC(bc2bddf9) SHA1(4057fc535b1a2db943f893290afe9bfd865ac84b) )
+	ROM_CONTINUE(             0x003000, 0x000800 )
+
+	ROM_REGION( 0x1000, "gfx2", 0 )
+	ROM_LOAD( "9.2t",    0x000000, 0x000800, CRC(d373fc48) SHA1(f06017190955d7458ac652b37c47cee033bc5498) )
+	ROM_LOAD( "8.2s",    0x000800, 0x000800, CRC(59747c31) SHA1(92acf07489f3e17f0c1769a0df15b6ddb117830f) )
+
+	ROM_REGION( 0x0060, "proms", 0 )
+	// probably matches with existing sets
+	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, BAD_DUMP CRC(f9a2383b) SHA1(4d88c177740efdb27708474c9ee0fcdca5a78c36) )
+	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, BAD_DUMP CRC(1743bd26) SHA1(9bb50f6e24a7ac3c9ddf3923e57c5532603009e5) )
+	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, BAD_DUMP CRC(ee03bc96) SHA1(45e33e750a536a904f30136d84dd7993d97e8e54) )
+ROM_END
+
 /* This set came from a 'Silver Land' board with Silver Land GFX roms, however, the program roms are nearly
    the same as River Patrol but appear to have an original ORCA copyright
 
    I think the board was a half-converted board as 'Water Gage' and 'Bon Voyage' don't really fit the theme
    of Silver Land so I'm loading the River Patrol GFX instead as they fit better
 */
-ROM_START( rpatrol )
+ROM_START( rpatrola )
 	ROM_REGION( 0x6000, "maincpu", 0 )
 	ROM_LOAD( "sci1.bin",       0x0000, 0x1000, CRC(33b01c90) SHA1(9c8da6dd963bfb0544ef99b8fdedcf86c32cdb6b) )
 	ROM_LOAD( "sci2.bin",       0x1000, 0x1000, CRC(03f53340) SHA1(35336945f4b634fc4c7791ac9c9e6643c8cd8006) )
@@ -2461,30 +2560,6 @@ ROM_END
 
 DRIVER_INIT_MEMBER(cclimber_state,yamato)
 {
-	static const UINT8 convtable[32][4] =
-	{
-		/*       opcode                   data                     address      */
-		/*  A    B    C    D         A    B    C    D                           */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...0...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...0...1 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...1...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x20,0xa0,0x28,0xa8 },   /* ...0...0...1...1 */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },   /* ...0...1...0...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...1...0...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x20,0xa0,0x28,0xa8 },   /* ...0...1...1...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...1...1...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...0...0...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x28,0x20,0xa8,0xa0 },   /* ...1...0...0...1 */
-		{ 0xa0,0x20,0x80,0x00 }, { 0x20,0xa0,0x28,0xa8 },   /* ...1...0...1...0 */
-		{ 0x28,0x20,0xa8,0xa0 }, { 0x20,0xa0,0x28,0xa8 },   /* ...1...0...1...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...1...0...0 */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...1...0...1 */
-		{ 0xa0,0x20,0x80,0x00 }, { 0x88,0x08,0x80,0x00 },   /* ...1...1...1...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x00,0x08,0x20,0x28 }    /* ...1...1...1...1 */
-	};
-
-	sega_decode(memregion("maincpu")->base(), m_decrypted_opcodes, 0x8000, convtable);
-
 	save_item(NAME(m_yamato_p0));
 	save_item(NAME(m_yamato_p1));
 }
@@ -2492,30 +2567,20 @@ DRIVER_INIT_MEMBER(cclimber_state,yamato)
 
 DRIVER_INIT_MEMBER(cclimber_state,toprollr)
 {
-	static const UINT8 convtable[32][4] =
-	{
-		/*       opcode                   data                     address      */
-		/*  A    B    C    D         A    B    C    D                           */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...0...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...0...1 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...0...1...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x20,0xa0,0x28,0xa8 },   /* ...0...0...1...1 */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },   /* ...0...1...0...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...1...0...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x20,0xa0,0x28,0xa8 },   /* ...0...1...1...0 */
-		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },   /* ...0...1...1...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...0...0...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x28,0x20,0xa8,0xa0 },   /* ...1...0...0...1 */
-		{ 0xa0,0x20,0x80,0x00 }, { 0x20,0xa0,0x28,0xa8 },   /* ...1...0...1...0 */
-		{ 0x28,0x20,0xa8,0xa0 }, { 0x20,0xa0,0x28,0xa8 },   /* ...1...0...1...1 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...1...0...0 */
-		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },   /* ...1...1...0...1 */
-		{ 0xa0,0x20,0x80,0x00 }, { 0x88,0x08,0x80,0x00 },   /* ...1...1...1...0 */
-		{ 0x20,0xa0,0x28,0xa8 }, { 0x00,0x08,0x20,0x28 }    /* ...1...1...1...1 */
-	};
-
 	m_opcodes = std::make_unique<UINT8[]>(0x6000*3);
-	sega_decode(memregion("user1")->base(), m_opcodes.get(), 0, convtable, 3, 0x6000);
+
+	segacrpt_z80_device* cpu = (segacrpt_z80_device*)machine().device(":maincpu");
+
+	// this seems to be a messy abuse / use of the encryption, investigate
+	if (!cpu)
+	{
+		fatalerror("can't find cpu!\n");
+	}
+	else
+	{
+		cpu->set_region_p(memregion("user1")->base());
+		cpu->set_decrypted_p(m_opcodes.get());
+	}
 
 	membank("bank1")->configure_entries(0, 3, memregion("user1")->base(), 0x6000);
 	membank("bank1d")->configure_entries(0, 3, m_opcodes.get(), 0x6000);
@@ -2538,6 +2603,19 @@ DRIVER_INIT_MEMBER(cclimber_state,dking)
 		for (i=0x0d00;i<0x1000;i++)  rom[i+j] ^=0xff;
 	}
 
+}
+
+DRIVER_INIT_MEMBER(cclimber_state,rpatrol)
+{
+	UINT8 *rom = memregion( "maincpu" )->base();
+
+	/* Bits are inverted */
+	for (int i = 0x0000; i < 0x5000; i++)
+	{
+		rom[i] = rom[i] ^ 0x79;
+		i++;
+		rom[i] = rom[i] ^ 0x5b;
+	}
 }
 
 
@@ -2572,14 +2650,15 @@ GAME( 1981, ckongpt2j,   ckongpt2, cclimber, ckong, driver_device,    0,        
 GAME( 1981, ckongpt2jeu, ckongpt2, cclimber, ckong, driver_device,    0,        ROT270, "bootleg (Jeutel)", "Crazy Kong Part II (Jeutel bootleg)", MACHINE_SUPPORTS_SAVE )
 GAME( 1981, ckongpt2b,   ckongpt2, cclimber, ckongb, cclimber_state,   ckongb,   ROT270, "bootleg", "Crazy Kong Part II (alternative levels)", MACHINE_SUPPORTS_SAVE )
 
-// see bagman.c for parent
-GAME( 1981, bagmanf,     bagman,   cclimber, ckong, driver_device,    0,        ROT270, "bootleg", "Bagman (bootleg on Crazy Kong hardware)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+// see bagman.cpp for parent
+GAME( 1981, bagmanf,     bagman,   bagmanf,  bagmanf, driver_device,    0,        ROT270, "bootleg", "Bagman (bootleg on Crazy Kong hardware)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
 
-GAME( 1981, rpatrol,     0,        cclimber, rpatrol, driver_device,  0,        ROT0,   "Orca", "River Patrol (Orca)", MACHINE_SUPPORTS_SAVE )
-GAME( 1981, rpatrolb,    rpatrol,  cclimber, rpatrol, driver_device,  0,        ROT0,   "bootleg", "River Patrol (bootleg)", MACHINE_SUPPORTS_SAVE )
+GAME( 1981, rpatrol,     0,        cclimber, rpatrol, cclimber_state,  rpatrol,  ROT0,   "Orca", "River Patrol (Japan)", MACHINE_SUPPORTS_SAVE)
+GAME( 1981, rpatrola,    rpatrol,  cclimber, rpatrol, driver_device,  0,        ROT0,   "bootleg", "River Patrol (bootleg set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 1981, rpatrolb,    rpatrol,  cclimber, rpatrol, driver_device,  0,        ROT0,   "bootleg", "River Patrol (bootleg set 2)", MACHINE_SUPPORTS_SAVE )
 GAME( 1981, silvland,    rpatrol,  cclimber, rpatrol, driver_device,  0,        ROT0,   "Falcon", "Silver Land", MACHINE_SUPPORTS_SAVE )
 
-// see pacman.c for parent
+// see pacman.cpp for parent
 GAME( 1985, cannonb,     cannonbp, cannonb,  cannonb, cclimber_state,  cannonb,  ROT90,  "bootleg (Soft)", "Cannon Ball (bootleg on Crazy Kong hardware) (set 1, buggy)" , MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE ) // bootleggers missed protection after bonus game
 GAME( 1985, cannonb2,    cannonbp, cannonb,  cannonb, cclimber_state,  cannonb2, ROT90,  "bootleg (TV Game Gruenberg)", "Cannon Ball (bootleg on Crazy Kong hardware) (set 2, buggy)", MACHINE_SUPPORTS_SAVE ) // bootleggers missed protection after bonus game
 GAME( 1985, cannonb3,    cannonbp, cannonb,  cannonb, cclimber_state,  cannonb2, ROT90,  "bootleg (Soft)", "Cannon Ball (bootleg on Crazy Kong hardware) (set 3, no bonus game)", MACHINE_SUPPORTS_SAVE ) // the bonus game is patched out, thus avoiding the protection issue

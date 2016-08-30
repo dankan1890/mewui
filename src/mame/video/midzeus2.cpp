@@ -9,6 +9,7 @@
 #include "emu.h"
 #include "cpu/tms32031/tms32031.h"
 #include "includes/midzeus.h"
+#include "includes/midzeus2.h"
 #include "video/poly.h"
 #include "video/rgbutil.h"
 
@@ -340,7 +341,7 @@ void midzeus2_state::exit_handler2()
 		else
 		{
 			printf("\tWritten %d times\n", regwrite_count[regnum]);
-			for (info = regdata[regnum]; info != NULL; info = info->next)
+			for (info = regdata[regnum]; info != nullptr; info = info->next)
 				printf("\t%08X\n", info->value);
 		}
 	}
@@ -349,7 +350,7 @@ void midzeus2_state::exit_handler2()
 		if (subregwrite_count[regnum] != 0)
 		{
 			printf("Sub-Register %02X (%d writes)\n", regnum, subregwrite_count[regnum]);
-			for (info = subregdata[regnum]; info != NULL; info = info->next)
+			for (info = subregdata[regnum]; info != nullptr; info = info->next)
 				printf("\t%08X\n", info->value);
 		}
 }
@@ -501,13 +502,13 @@ if (regdata_count[offset] < 256)
 {
 	reg_info **tailptr;
 
-	for (tailptr = &regdata[offset]; *tailptr != NULL; tailptr = &(*tailptr)->next)
+	for (tailptr = &regdata[offset]; *tailptr != nullptr; tailptr = &(*tailptr)->next)
 		if ((*tailptr)->value == data)
 			break;
-	if (*tailptr == NULL)
+	if (*tailptr == nullptr)
 	{
 		*tailptr = alloc_or_die(reg_info);
-		(*tailptr)->next = NULL;
+		(*tailptr)->next = nullptr;
 		(*tailptr)->value = data;
 		regdata_count[offset]++;
 	}
@@ -741,13 +742,13 @@ if (subregdata_count[which] < 256)
 {
 	reg_info **tailptr;
 
-	for (tailptr = &subregdata[which]; *tailptr != NULL; tailptr = &(*tailptr)->next)
+	for (tailptr = &subregdata[which]; *tailptr != nullptr; tailptr = &(*tailptr)->next)
 		if ((*tailptr)->value == value)
 			break;
-	if (*tailptr == NULL)
+	if (*tailptr == nullptr)
 	{
 		*tailptr = alloc_or_die(reg_info);
-		(*tailptr)->next = NULL;
+		(*tailptr)->next = nullptr;
 		(*tailptr)->value = value;
 		subregdata_count[which]++;
 	}
@@ -1212,8 +1213,8 @@ In memory:
 		clipvert[i].y += 200.5f;
 		clipvert[i].p[0] *= 65536.0f * 16.0f;
 
-		maxx = MAX(maxx, clipvert[i].x);
-		maxy = MAX(maxy, clipvert[i].y);
+		maxx = std::max(maxx, clipvert[i].x);
+		maxy = std::max(maxy, clipvert[i].y);
 		if (logit)
 			m_state.logerror("\t\t\tTranslated=(%f,%f)\n", (double) clipvert[i].x, (double) clipvert[i].y);
 	}

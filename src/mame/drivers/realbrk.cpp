@@ -46,7 +46,7 @@ To Do:
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "includes/realbrk.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "sound/ymz280b.h"
 
 
@@ -793,7 +793,7 @@ static MACHINE_CONFIG_DERIVED( pkgnsh, realbrk )
 	MCFG_CPU_PROGRAM_MAP(pkgnsh_mem)
 
 	MCFG_DEVICE_MODIFY("tmp68301")
-	MCFG_TMP68301_OUT_PARALLEL_CB(NULL)
+	MCFG_TMP68301_OUT_PARALLEL_CB(NOOP)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( pkgnshdx, pkgnsh )

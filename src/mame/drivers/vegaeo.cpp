@@ -16,6 +16,7 @@
 #include "emu.h"
 #include "cpu/e132xs/e132xs.h"
 #include "machine/at28c16.h"
+#include "machine/gen_latch.h"
 #include "sound/qs1000.h"
 #include "includes/eolith.h"
 
@@ -24,7 +25,10 @@ class vegaeo_state : public eolith_state
 {
 public:
 	vegaeo_state(const machine_config &mconfig, device_type type, const char *tag)
-		: eolith_state(mconfig, type, tag) { }
+		: eolith_state(mconfig, type, tag),
+		m_soundlatch(*this, "soundlatch") { }
+
+	required_device<generic_latch_8_device> m_soundlatch;
 
 	std::unique_ptr<UINT32[]> m_vega_vram;
 	UINT8 m_vega_vbuffer;
@@ -47,7 +51,7 @@ public:
 
 READ8_MEMBER( vegaeo_state::qs1000_p1_r )
 {
-	return soundlatch_byte_r(space, 0);
+	return m_soundlatch->read(space, 0);
 }
 
 WRITE8_MEMBER( vegaeo_state::qs1000_p1_w )
@@ -121,7 +125,7 @@ READ32_MEMBER(vegaeo_state::vegaeo_custom_read)
 
 WRITE32_MEMBER(vegaeo_state::soundlatch_w)
 {
-	soundlatch_byte_w(space, 0, data);
+	m_soundlatch->write(space, 0, data);
 	m_qs1000->set_irq(ASSERT_LINE);
 
 	machine().scheduler().boost_interleave(attotime::zero, attotime::from_usec(100));
@@ -150,7 +154,7 @@ static INPUT_PORTS_START( crazywar )
 	PORT_BIT( 0x00000008, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x00000010, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE( 0x00000020, IP_ACTIVE_LOW )
-	PORT_BIT( 0x00000040, IP_ACTIVE_LOW, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, vegaeo_state, eolith_speedup_getvblank, NULL)
+	PORT_BIT( 0x00000040, IP_ACTIVE_LOW, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, vegaeo_state, eolith_speedup_getvblank, nullptr)
 	PORT_BIT( 0x00000080, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xffffff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -216,7 +220,7 @@ static MACHINE_CONFIG_START( vega, vegaeo_state )
 	MCFG_CPU_PROGRAM_MAP(vega_map)
 	MCFG_TIMER_DRIVER_ADD_SCANLINE("scantimer", vegaeo_state, eolith_speedup, "screen", 0, 1)
 
-	MCFG_AT28C16_ADD("at28c16", NULL)
+	MCFG_AT28C16_ADD("at28c16", nullptr)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -235,6 +239,8 @@ static MACHINE_CONFIG_START( vega, vegaeo_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("qs1000", QS1000, XTAL_24MHz)
 	MCFG_QS1000_EXTERNAL_ROM(true)

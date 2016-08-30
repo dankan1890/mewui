@@ -42,13 +42,13 @@ public:
 
 //  required_device<cpu_device>  m_maincpu;
 	required_device<ym2608_device>  m_opn3;
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 protected:
 	// device-level overrides
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	void install_device(offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_delegate rhandler, write8_delegate whandler);
+	void install_device(offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler);
 
 private:
 	UINT8 m_joy_sel;

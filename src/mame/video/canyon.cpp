@@ -27,7 +27,7 @@ TILE_GET_INFO_MEMBER(canyon_state::get_bg_tile_info)
 
 void canyon_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(canyon_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(canyon_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 }
 
 
@@ -78,7 +78,7 @@ UINT32 canyon_state::screen_update_canyon(screen_device &screen, bitmap_ind16 &b
 	draw_bombs(bitmap, cliprect);
 
 	/* watchdog is disabled during service mode */
-	machine().watchdog_enable(!(ioport("IN2")->read() & 0x10));
+	m_watchdog->watchdog_enable(!(ioport("IN2")->read() & 0x10));
 
 	return 0;
 }

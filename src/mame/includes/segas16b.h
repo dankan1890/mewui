@@ -9,10 +9,11 @@
 #include "cpu/m68000/m68000.h"
 #include "cpu/mcs51/mcs51.h"
 #include "cpu/z80/z80.h"
+#include "machine/gen_latch.h"
 #include "machine/nvram.h"
 #include "machine/segaic16.h"
-#include "sound/2151intf.h"
-#include "sound/2413intf.h"
+#include "sound/ym2151.h"
+#include "sound/ym2413.h"
 #include "sound/upd7759.h"
 #include "video/segaic16.h"
 #include "video/sega16sp.h"
@@ -39,6 +40,7 @@ public:
 			m_nvram(*this, "nvram"),
 			m_sprites(*this, "sprites"),
 			m_segaic16vid(*this, "segaic16vid"),
+			m_soundlatch(*this, "soundlatch"),
 			m_workram(*this, "workram"),
 			m_romboard(ROM_BOARD_INVALID),
 			m_tilemap_type(SEGAIC16_TILEMAP_16B),
@@ -47,8 +49,12 @@ public:
 			m_atomicp_sound_divisor(0),
 			m_atomicp_sound_count(0),
 			m_hwc_input_value(0),
+			m_hwc_monitor(*this, "MONITOR"),
+			m_hwc_left(*this, "LEFT"),
+			m_hwc_right(*this, "RIGHT"),
 			m_mj_input_num(0),
 			m_mj_last_val(0),
+			m_mj_inputs(*this, {"MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5"}),
 			m_spritepalbase(0x400),
 			m_gfxdecode(*this, "gfxdecode"),
 			m_sound_decrypted_opcodes(*this, "sound_decrypted_opcodes"),
@@ -196,6 +202,7 @@ protected:
 	required_device<nvram_device> m_nvram;
 	optional_device<sega_sys16b_sprite_device> m_sprites;
 	required_device<segaic16_video_device> m_segaic16vid;
+	optional_device<generic_latch_8_device> m_soundlatch; // not for atomicp
 
 	// memory pointers
 	required_shared_ptr<UINT16> m_workram;
@@ -213,8 +220,12 @@ protected:
 	// game-specific state
 	UINT8               m_atomicp_sound_count;
 	UINT8               m_hwc_input_value;
+	optional_ioport     m_hwc_monitor;
+	optional_ioport     m_hwc_left;
+	optional_ioport     m_hwc_right;
 	UINT8               m_mj_input_num;
 	UINT8               m_mj_last_val;
+	optional_ioport_array<6> m_mj_inputs;
 	int                 m_spritepalbase;
 
 	required_device<gfxdecode_device> m_gfxdecode;

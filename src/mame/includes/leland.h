@@ -7,7 +7,7 @@
 *************************************************************************/
 
 #include "machine/eepromser.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "sound/dac.h"
 #include "machine/pit8253.h"
 #include "cpu/i86/i186.h"
@@ -31,6 +31,7 @@ public:
 		: driver_device(mconfig, type, tag),
 		m_master(*this, "master"),
 		m_slave(*this, "slave"),
+		m_mainram(*this, "mainram"),
 		m_eeprom(*this, "eeprom"),
 		m_sound(*this, "custom"),
 		m_dac0(*this, "dac0"),
@@ -40,6 +41,7 @@ public:
 
 	required_device<cpu_device> m_master;
 	required_device<cpu_device> m_slave;
+	required_shared_ptr<UINT8> m_mainram;
 	required_device<eeprom_serial_93cxx_device> m_eeprom;
 	optional_device<leland_80186_sound_device> m_sound;
 	optional_device<dac_device> m_dac0;

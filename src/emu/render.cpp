@@ -45,7 +45,7 @@
 #include "config.h"
 #include "drivenum.h"
 #include "xmlfile.h"
-#include "ui/ui.h"
+#include "ui/uimain.h"
 #include <zlib.h>
 
 
@@ -71,15 +71,6 @@ enum
 	CONTAINER_ITEM_QUAD,
 	CONTAINER_ITEM_MAX
 };
-
-
-
-//**************************************************************************
-//  MACROS
-//**************************************************************************
-
-#define ISWAP(var1, var2) do { int temp = var1; var1 = var2; var2 = temp; } while (0)
-#define FSWAP(var1, var2) do { float temp = var1; var1 = var2; var2 = temp; } while (0)
 
 
 
@@ -136,8 +127,8 @@ inline void apply_orientation(render_bounds &bounds, int orientation)
 	// swap first
 	if (orientation & ORIENTATION_SWAP_XY)
 	{
-		FSWAP(bounds.x0, bounds.y0);
-		FSWAP(bounds.x1, bounds.y1);
+		std::swap(bounds.x0, bounds.y0);
+		std::swap(bounds.x1, bounds.y1);
 	}
 
 	// apply X flip
@@ -164,9 +155,9 @@ inline void apply_orientation(render_bounds &bounds, int orientation)
 inline void normalize_bounds(render_bounds &bounds)
 {
 	if (bounds.x0 > bounds.x1)
-		FSWAP(bounds.x0, bounds.x1);
+		std::swap(bounds.x0, bounds.x1);
 	if (bounds.y0 > bounds.y1)
-		FSWAP(bounds.y0, bounds.y1);
+		std::swap(bounds.y0, bounds.y1);
 }
 
 
@@ -458,6 +449,8 @@ void render_texture::get_scaled(UINT32 dwidth, UINT32 dheight, render_texinfo &t
 	// are we scaler-free? if so, just return the source bitmap
 	if (m_scaler == nullptr || (m_bitmap != nullptr && swidth == dwidth && sheight == dheight))
 	{
+		if (m_bitmap == nullptr) return;
+
 		// add a reference and set up the source bitmap
 		primlist.add_reference(m_bitmap);
 		texinfo.base = m_bitmap->raw_pixptr(m_sbounds.min_y, m_sbounds.min_x);
@@ -546,7 +539,7 @@ const rgb_t *render_texture::get_adjusted_palette(render_container &container)
 		case TEXFORMAT_ARGB32:
 		case TEXFORMAT_YUY16:
 
-			// if no adjustment necessary, return NULL
+			// if no adjustment necessary, return nullptr
 			if (!container.has_brightness_contrast_gamma_changes())
 				return nullptr;
 			return container.bcg_lookup_table(m_format);
@@ -772,6 +765,11 @@ render_container::item &render_container::add_generic(UINT8 type, float x0, floa
 {
 	item *newitem = m_item_allocator.alloc();
 
+	assert(x0 == x0);
+	assert(x1 == x1);
+	assert(y0 == y0);
+	assert(y1 == y1);
+
 	// copy the data into the new item
 	newitem->m_type = type;
 	newitem->m_bounds.x0 = x0;
@@ -922,7 +920,7 @@ render_target::render_target(render_manager &manager, const internal_layout *lay
 		m_base_orientation(ROT0),
 		m_maxtexwidth(65536),
 		m_maxtexheight(65536),
-		m_transform_primitives(true)
+		m_transform_container(true)
 {
 	// determine the base layer configuration based on options
 	m_base_layerconfig.set_backdrops_enabled(manager.machine().options().use_backdrops());
@@ -937,10 +935,16 @@ render_target::render_target(render_manager &manager, const internal_layout *lay
 	m_int_overscan = manager.machine().options().int_overscan();
 	m_int_scale_x = manager.machine().options().int_scale_x();
 	m_int_scale_y = manager.machine().options().int_scale_y();
-	if (manager.machine().options().uneven_stretch() && !manager.machine().options().uneven_stretch_x())
+	if (m_manager.machine().options().auto_stretch_xy())
+		m_scale_mode = SCALE_FRACTIONAL_AUTO;
+	else if (manager.machine().options().uneven_stretch_x())
+		m_scale_mode = SCALE_FRACTIONAL_X;
+	else if (manager.machine().options().uneven_stretch_y())
+		m_scale_mode = SCALE_FRACTIONAL_Y;
+	else if (manager.machine().options().uneven_stretch())
 		m_scale_mode = SCALE_FRACTIONAL;
 	else
-		m_scale_mode = manager.machine().options().uneven_stretch_x()? SCALE_FRACTIONAL_X : SCALE_INTEGER;
+		m_scale_mode = SCALE_INTEGER;
 
 	// determine the base orientation based on options
 	if (!manager.machine().options().rotate())
@@ -1103,11 +1107,14 @@ int render_target::configured_view(const char *viewname, int targetindex, int nu
 					break;
 				if (viewscreens.count() >= scrcount)
 				{
-					screen_device *screen;
-					for (screen = iter.first(); screen != nullptr; screen = iter.next())
-						if (!viewscreens.contains(*screen))
+					bool has_screen = false;
+					for (screen_device &screen : iter)
+						if (!viewscreens.contains(screen))
+						{
+							has_screen = true;
 							break;
-					if (screen == nullptr)
+						}
+					if (!has_screen)
 						break;
 				}
 			}
@@ -1167,7 +1174,7 @@ void render_target::compute_visible_area(INT32 target_width, INT32 target_height
 
 				// first apply target orientation
 				if (target_orientation & ORIENTATION_SWAP_XY)
-					FSWAP(width, height);
+					std::swap(width, height);
 
 				// apply the target pixel aspect ratio
 				height *= target_pixel_aspect;
@@ -1193,8 +1200,7 @@ void render_target::compute_visible_area(INT32 target_width, INT32 target_height
 			break;
 		}
 
-		case SCALE_FRACTIONAL_X:
-		case SCALE_INTEGER:
+		default:
 		{
 			// get source size and aspect
 			INT32 src_width, src_height;
@@ -1207,26 +1213,37 @@ void render_target::compute_visible_area(INT32 target_width, INT32 target_height
 
 			// get target aspect
 			float target_aspect = (float)target_width / (float)target_height * target_pixel_aspect;
+			bool target_is_portrait = (target_aspect < 1.0f);
+
+			// apply automatic axial stretching if required
+			int scale_mode = m_scale_mode;
+			if (m_scale_mode == SCALE_FRACTIONAL_AUTO)
+			{
+				bool is_rotated = (m_manager.machine().system().flags & ORIENTATION_SWAP_XY) ^ (target_orientation & ORIENTATION_SWAP_XY);
+				scale_mode = is_rotated ^ target_is_portrait ? SCALE_FRACTIONAL_Y : SCALE_FRACTIONAL_X;
+			}
 
 			// determine the scale mode for each axis
-			bool x_is_integer = !(target_aspect >= 1.0f && m_scale_mode == SCALE_FRACTIONAL_X);
-			bool y_is_integer = !(target_aspect < 1.0f && m_scale_mode == SCALE_FRACTIONAL_X);
+			bool x_is_integer = !((!target_is_portrait && scale_mode == SCALE_FRACTIONAL_X) || (target_is_portrait && scale_mode == SCALE_FRACTIONAL_Y));
+			bool y_is_integer = !((target_is_portrait && scale_mode == SCALE_FRACTIONAL_X) || (!target_is_portrait && scale_mode == SCALE_FRACTIONAL_Y));
 
 			// first compute scale factors to fit the screen
 			float xscale = (float)target_width / src_width;
 			float yscale = (float)target_height / src_height;
-			float maxxscale = MAX(1, m_int_overscan? render_round_nearest(xscale) : floor(xscale));
-			float maxyscale = MAX(1, m_int_overscan? render_round_nearest(yscale) : floor(yscale));
+			float maxxscale = std::max(1.0f, float(m_int_overscan ? render_round_nearest(xscale) : floor(xscale)));
+			float maxyscale = std::max(1.0f, float(m_int_overscan ? render_round_nearest(yscale) : floor(yscale)));
 
 			// now apply desired scale mode and aspect correction
 			if (m_keepaspect && target_aspect > src_aspect) xscale *= src_aspect / target_aspect * (maxyscale / yscale);
 			if (m_keepaspect && target_aspect < src_aspect) yscale *= target_aspect / src_aspect * (maxxscale / xscale);
-			if (x_is_integer) xscale = MIN(maxxscale, MAX(1, render_round_nearest(xscale)));
-			if (y_is_integer) yscale = MIN(maxyscale, MAX(1, render_round_nearest(yscale)));
+			if (x_is_integer) xscale = std::min(maxxscale, std::max(1.0f, render_round_nearest(xscale)));
+			if (y_is_integer) yscale = std::min(maxyscale, std::max(1.0f, render_round_nearest(yscale)));
 
 			// check if we have user defined scale factors, if so use them instead
-			xscale = m_int_scale_x? m_int_scale_x : xscale;
-			yscale = m_int_scale_y? m_int_scale_y : yscale;
+			int user_scale_x = target_is_portrait? m_int_scale_y : m_int_scale_x;
+			int user_scale_y = target_is_portrait? m_int_scale_x : m_int_scale_y;
+			xscale = user_scale_x > 0 ? user_scale_x : xscale;
+			yscale = user_scale_y > 0 ? user_scale_y : yscale;
 
 			// set the final width/height
 			visible_width = render_round_nearest(src_width * xscale);
@@ -1291,8 +1308,8 @@ void render_target::compute_minimum_size(INT32 &minwidth, INT32 &minheight)
 				}
 
 				// pick the greater
-				maxxscale = MAX(xscale, maxxscale);
-				maxyscale = MAX(yscale, maxyscale);
+				maxxscale = std::max(xscale, maxxscale);
+				maxyscale = std::max(yscale, maxyscale);
 				screens_considered++;
 			}
 
@@ -1373,7 +1390,7 @@ render_primitive_list &render_target::get_primitives()
 
 					// if there is no associated element, it must be a screen element
 					if (curitem.screen() != nullptr)
-						add_container_primitives(list, item_xform, curitem.screen()->container(), blendmode);
+						add_container_primitives(list, root_xform, item_xform, curitem.screen()->container(), blendmode);
 					else
 						add_element_primitives(list, item_xform, *curitem.element(), curitem.state(), blendmode);
 				}
@@ -1415,7 +1432,7 @@ render_primitive_list &render_target::get_primitives()
 		ui_xform.no_center = true;
 
 		// add UI elements
-		add_container_primitives(list, ui_xform, debug, BLENDMODE_ALPHA);
+		add_container_primitives(list, root_xform, ui_xform, debug, BLENDMODE_ALPHA);
 	}
 
 	// process the UI if we are the UI target
@@ -1432,7 +1449,7 @@ render_primitive_list &render_target::get_primitives()
 		ui_xform.no_center = false;
 
 		// add UI elements
-		add_container_primitives(list, ui_xform, m_manager.ui_container(), BLENDMODE_ALPHA);
+		add_container_primitives(list, root_xform, ui_xform, m_manager.ui_container(), BLENDMODE_ALPHA);
 	}
 
 	// optimize the list before handing it off
@@ -1695,7 +1712,7 @@ bool render_target::load_layout_file(const char *dirname, const char *filename)
 			fname.insert(0, PATH_SEPARATOR).insert(0, dirname);
 
 		// attempt to open the file; bail if we can't
-		emu_file layoutfile(manager().machine().options().art_path(), OPEN_FLAG_READ);
+		emu_file layoutfile(m_manager.machine().options().art_path(), OPEN_FLAG_READ);
 		osd_file::error filerr = layoutfile.open(fname.c_str());
 		if (filerr != osd_file::error::NONE)
 			return false;
@@ -1729,6 +1746,8 @@ bool render_target::load_layout_file(const char *dirname, const char *filename)
 		result = false;
 	}
 
+	emulator_info::layout_file_cb(*rootnode);
+
 	// free the root node
 	xml_file_free(rootnode);
 	return result;
@@ -1740,7 +1759,7 @@ bool render_target::load_layout_file(const char *dirname, const char *filename)
 //  based on the container
 //-------------------------------------------------
 
-void render_target::add_container_primitives(render_primitive_list &list, const object_transform &xform, render_container &container, int blendmode)
+void render_target::add_container_primitives(render_primitive_list &list, const object_transform &root_xform, const object_transform &xform, render_container &container, int blendmode)
 {
 	// first update the palette for the container, if it is dirty
 	container.update_palette();
@@ -1753,6 +1772,16 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 	cliprect.y1 = xform.yoffs + xform.yscale;
 	sect_render_bounds(&cliprect, &m_bounds);
 
+	float root_xoffs = root_xform.xoffs + fabsf(root_xform.xscale - xform.xscale) * 0.5f;
+	float root_yoffs = root_xform.yoffs + fabsf(root_xform.yscale - xform.yscale) * 0.5f;
+
+	render_bounds root_cliprect;
+	root_cliprect.x0 = root_xoffs;
+	root_cliprect.y0 = root_yoffs;
+	root_cliprect.x1 = root_xoffs + root_xform.xscale;
+	root_cliprect.y1 = root_yoffs + root_xform.yscale;
+	sect_render_bounds(&root_cliprect, &m_bounds);
+
 	// compute the container transform
 	object_transform container_xform;
 	container_xform.orientation = orientation_add(container.orientation(), xform.orientation);
@@ -1763,7 +1792,7 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 		float yoffs = (container_xform.orientation & ORIENTATION_SWAP_XY) ? container.xoffset() : container.yoffset();
 		if (container_xform.orientation & ORIENTATION_FLIP_X) xoffs = -xoffs;
 		if (container_xform.orientation & ORIENTATION_FLIP_Y) yoffs = -yoffs;
-		if (!m_transform_primitives)
+		if (!m_transform_container)
 		{
 			xscale = 1.0f;
 			yscale = 1.0f;
@@ -1792,22 +1821,32 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 		render_bounds bounds = curitem.bounds();
 		apply_orientation(bounds, container_xform.orientation);
 
+		float xscale = container_xform.xscale;
+		float yscale = container_xform.yscale;
+		float xoffs = container_xform.xoffs;
+		float yoffs = container_xform.yoffs;
+		if (!m_transform_container && PRIMFLAG_GET_VECTOR(curitem.flags()))
+		{
+			xoffs = root_xoffs;
+			yoffs = root_yoffs;
+		}
+
 		// allocate the primitive and set the transformed bounds/color data
 		render_primitive *prim = list.alloc(render_primitive::INVALID);
 
 		prim->container = &container; /* pass the container along for access to user_settings */
 
-		prim->bounds.x0 = render_round_nearest(container_xform.xoffs + bounds.x0 * container_xform.xscale);
-		prim->bounds.y0 = render_round_nearest(container_xform.yoffs + bounds.y0 * container_xform.yscale);
+		prim->bounds.x0 = render_round_nearest(xoffs + bounds.x0 * xscale);
+		prim->bounds.y0 = render_round_nearest(yoffs + bounds.y0 * yscale);
 		if (curitem.internal() & INTERNAL_FLAG_CHAR)
 		{
-			prim->bounds.x1 = prim->bounds.x0 + render_round_nearest((bounds.x1 - bounds.x0) * container_xform.xscale);
-			prim->bounds.y1 = prim->bounds.y0 + render_round_nearest((bounds.y1 - bounds.y0) * container_xform.yscale);
+			prim->bounds.x1 = prim->bounds.x0 + render_round_nearest((bounds.x1 - bounds.x0) * xscale);
+			prim->bounds.y1 = prim->bounds.y0 + render_round_nearest((bounds.y1 - bounds.y0) * yscale);
 		}
 		else
 		{
-			prim->bounds.x1 = render_round_nearest(container_xform.xoffs + bounds.x1 * container_xform.xscale);
-			prim->bounds.y1 = render_round_nearest(container_xform.yoffs + bounds.y1 * container_xform.yscale);
+			prim->bounds.x1 = render_round_nearest(xoffs + bounds.x1 * xscale);
+			prim->bounds.y1 = render_round_nearest(yoffs + bounds.y1 * yscale);
 		}
 
 		// compute the color of the primitive
@@ -1832,11 +1871,18 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 				prim->flags |= PRIMFLAG_TYPE_LINE;
 
 				// scale the width by the minimum of X/Y scale factors
-				prim->width = curitem.width() * MIN(container_xform.xscale, container_xform.yscale);
+				prim->width = curitem.width() * std::min(container_xform.xscale, container_xform.yscale);
 				prim->flags |= curitem.flags();
 
 				// clip the primitive
-				clipped = render_clip_line(&prim->bounds, &cliprect);
+				if (!m_transform_container && PRIMFLAG_GET_VECTOR(curitem.flags()))
+				{
+					clipped = render_clip_line(&prim->bounds, &root_cliprect);
+				}
+				else
+				{
+					clipped = render_clip_line(&prim->bounds, &cliprect);
+				}
 				break;
 
 			case CONTAINER_ITEM_QUAD:
@@ -1856,8 +1902,8 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 					// based on the swap values, get the scaled final texture
 					int width = (finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.y1 - prim->bounds.y0) : (prim->bounds.x1 - prim->bounds.x0);
 					int height = (finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0);
-					width = MIN(width, m_maxtexwidth);
-					height = MIN(height, m_maxtexheight);
+					width = std::min(width, m_maxtexwidth);
+					height = std::min(height, m_maxtexheight);
 
 					curitem.texture()->get_scaled(width, height, prim->texture, list, curitem.flags());
 
@@ -1880,12 +1926,6 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 				}
 				else
 				{
-					if (curitem.flags() & PRIMFLAG_VECTORBUF_MASK)
-					{
-						// determine UV coordinates
-						prim->texcoords = oriented_texcoords[0];
-					}
-
 					// adjust the color for brightness/contrast/gamma
 					prim->color.r = container.apply_brightness_contrast_gamma_fp(prim->color.r);
 					prim->color.g = container.apply_brightness_contrast_gamma_fp(prim->color.g);
@@ -1894,12 +1934,64 @@ void render_target::add_container_primitives(render_primitive_list &list, const 
 					// no texture
 					prim->texture.base = nullptr;
 
-					// set the basic flags
-					prim->flags = (curitem.flags() & ~PRIMFLAG_BLENDMODE_MASK)
-						| PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+					if (PRIMFLAG_GET_VECTORBUF(curitem.flags()))
+					{
+						// flags X(1) flip-x, Y(2) flip-y, S(4) swap-xy
+						//
+						// X  Y  S   e.g.       flips
+						// 0  0  0   asteroid   !X !Y
+						// 0  0  1   -           X  Y
+						// 0  1  0   speedfrk   !X  Y
+						// 0  1  1   tempest    !X  Y
+						// 1  0  0   -           X !Y
+						// 1  0  1   -           x !Y
+						// 1  1  0   solarq      X  Y
+						// 1  1  1   barrier    !X !Y
 
-					// apply clipping
-					clipped = render_clip_quad(&prim->bounds, &cliprect, nullptr);
+						bool flip_x = (m_manager.machine().system().flags & ORIENTATION_FLIP_X) == ORIENTATION_FLIP_X;
+						bool flip_y = (m_manager.machine().system().flags & ORIENTATION_FLIP_Y) == ORIENTATION_FLIP_Y;
+						bool swap_xy = (m_manager.machine().system().flags & ORIENTATION_SWAP_XY) == ORIENTATION_SWAP_XY;
+
+						int vectororient = 0;
+						if (flip_x)
+						{
+							vectororient |= ORIENTATION_FLIP_X;
+						}
+						if (flip_y)
+						{
+							vectororient |= ORIENTATION_FLIP_Y;
+						}
+						if ((flip_x && flip_y && swap_xy) || (!flip_x && !flip_y && swap_xy))
+						{
+							vectororient ^= ORIENTATION_FLIP_X;
+							vectororient ^= ORIENTATION_FLIP_Y;
+						}
+
+						// determine the final orientation (textures are up-side down, so flip axis for vectors to immitate that behavior)
+						int finalorient = orientation_add(vectororient, container_xform.orientation);
+
+						// determine UV coordinates
+						prim->texcoords = oriented_texcoords[finalorient];
+
+						// apply clipping
+						clipped = render_clip_quad(&prim->bounds, &cliprect, &prim->texcoords);
+
+						// apply the final orientation from the quad flags and then build up the final flags
+						prim->flags = (curitem.flags() & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK))
+							| PRIMFLAG_TEXORIENT(finalorient);
+						prim->flags |= blendmode != -1
+							? PRIMFLAG_BLENDMODE(blendmode)
+							: PRIMFLAG_BLENDMODE(PRIMFLAG_GET_BLENDMODE(curitem.flags()));
+					}
+					else
+					{
+						// set the basic flags
+						prim->flags = (curitem.flags() & ~PRIMFLAG_BLENDMODE_MASK)
+							| PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+
+						// apply clipping
+						clipped = render_clip_quad(&prim->bounds, &cliprect, nullptr);
+					}
 				}
 				break;
 		}
@@ -1966,9 +2058,9 @@ void render_target::add_element_primitives(render_primitive_list &list, const ob
 		INT32 height = render_round_nearest(xform.yscale);
 		set_render_bounds_wh(&prim->bounds, render_round_nearest(xform.xoffs), render_round_nearest(xform.yoffs), (float) width, (float) height);
 		if (xform.orientation & ORIENTATION_SWAP_XY)
-			ISWAP(width, height);
-		width = MIN(width, m_maxtexwidth);
-		height = MIN(height, m_maxtexheight);
+			std::swap(width, height);
+		width = std::min(width, m_maxtexwidth);
+		height = std::min(height, m_maxtexheight);
 
 		// get the scaled texture and append it
 
@@ -2017,7 +2109,7 @@ bool render_target::map_point_internal(INT32 target_x, INT32 target_y, render_co
 	// convert target coordinates to float
 	float target_fx = (float)(target_x - root_xform.xoffs) / viswidth;
 	float target_fy = (float)(target_y - root_xform.yoffs) / visheight;
-	if (manager().machine().ui().is_menu_active())
+	if (m_manager.machine().ui().is_menu_active())
 	{
 		target_fx = (float)target_x / m_width;
 		target_fy = (float)target_y / m_height;
@@ -2074,7 +2166,7 @@ bool render_target::map_point_internal(INT32 target_x, INT32 target_y, render_co
 
 //-------------------------------------------------
 //  view_name - return the name of the indexed
-//  view, or NULL if it doesn't exist
+//  view, or nullptr if it doesn't exist
 //-------------------------------------------------
 
 layout_view *render_target::view_by_index(int index) const
@@ -2521,9 +2613,8 @@ render_manager::render_manager(running_machine &machine)
 	machine.configuration().config_register("video", config_saveload_delegate(FUNC(render_manager::config_load), this), config_saveload_delegate(FUNC(render_manager::config_save), this));
 
 	// create one container per screen
-	screen_device_iterator iter(machine.root_device());
-	for (screen_device *screen = iter.first(); screen != nullptr; screen = iter.next())
-		screen->set_container(*container_alloc(screen));
+	for (screen_device &screen : screen_device_iterator(machine.root_device()))
+		screen.set_container(*container_alloc(&screen));
 }
 
 
@@ -2571,7 +2662,7 @@ float render_manager::max_update_rate() const
 			if (minimum == 0)
 				minimum = target.max_update_rate();
 			else
-				minimum = MIN(target.max_update_rate(), minimum);
+				minimum = std::min(target.max_update_rate(), minimum);
 		}
 
 	return minimum;
@@ -2722,7 +2813,7 @@ void render_manager::font_free(render_font *font)
 
 void render_manager::invalidate_all(void *refptr)
 {
-	// permit NULL
+	// permit nullptr
 	if (refptr == nullptr)
 		return;
 

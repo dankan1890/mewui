@@ -32,10 +32,11 @@ address_map_entry::address_map_entry(device_t &device, address_map &map, offs_t 
 	: m_next(nullptr),
 		m_map(map),
 		m_devbase(device),
-		m_addrstart((map.m_globalmask == 0) ? start : start & map.m_globalmask),
-		m_addrend((map.m_globalmask == 0) ? end : end & map.m_globalmask),
+		m_addrstart(start),
+		m_addrend(end),
 		m_addrmirror(0),
 		m_addrmask(0),
+		m_addrselect(0),
 		m_share(nullptr),
 		m_region(nullptr),
 		m_rgnoffs(0),
@@ -46,6 +47,17 @@ address_map_entry::address_map_entry(device_t &device, address_map &map, offs_t 
 		m_bytemirror(0),
 		m_bytemask(0)
 {
+	if (map.m_globalmask != 0 && (start & ~map.m_globalmask) != 0)
+	{
+		osd_printf_warning("AS_%d map entry start %08X lies outside global address mask %08X\n", map.m_spacenum, start, map.m_globalmask);
+		m_addrstart &= map.m_globalmask;
+	}
+
+	if (map.m_globalmask != 0 && (end & ~map.m_globalmask) != 0)
+	{
+		osd_printf_warning("AS_%d map entry end %08X lies outside global address mask %08X\n", map.m_spacenum, end, map.m_globalmask);
+		m_addrend &= map.m_globalmask;
+	}
 }
 
 
@@ -445,7 +457,7 @@ void address_map::configure(address_spacenum spacenum, UINT8 databits)
 
 void address_map::set_global_mask(offs_t mask)
 {
-//  if (m_entrylist != NULL)
+//  if (m_entrylist != nullptr)
 //      throw emu_fatalerror("AM_GLOBALMASK must be specified before any entries");
 	m_globalmask = mask;
 }
@@ -578,6 +590,9 @@ void address_map::uplift_submaps(running_machine &machine, device_t &device, dev
 				if (entry->m_addrmask || subentry->m_addrmask)
 					throw emu_fatalerror("uplift_submaps unhandled case: address masks.\n");
 
+				if (entry->m_addrselect || subentry->m_addrselect)
+					throw emu_fatalerror("uplift_submaps unhandled case: select masks.\n");
+
 				if (subentry->m_addrmirror & mirror_address_mask)
 					throw emu_fatalerror("uplift_submaps unhandled case: address mirror bit within subentry.\n");
 
@@ -681,6 +696,28 @@ void address_map::map_validity_check(validity_checker &valid, const device_t &de
 		if ((bytestart & (alignunit - 1)) != 0 || (byteend & (alignunit - 1)) != (alignunit - 1))
 			osd_printf_error("Wrong %s memory read handler start = %08x, end = %08x ALIGN = %d\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, alignunit);
 
+		// verify mask/mirror/select
+		offs_t set_bits = entry.m_addrstart | entry.m_addrend;
+		offs_t changing_bits = entry.m_addrstart ^ entry.m_addrend;
+		changing_bits |= changing_bits >> 1;
+		changing_bits |= changing_bits >> 2;
+		changing_bits |= changing_bits >> 4;
+		changing_bits |= changing_bits >> 8;
+		changing_bits |= changing_bits >> 16;
+
+		if (entry.m_addrmask & ~changing_bits)
+			osd_printf_error("In %s memory range %x-%x, mask %x is trying to unmask an unchanging address bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrmask, entry.m_addrmask & ~changing_bits);
+		if (entry.m_addrmirror & changing_bits)
+			osd_printf_error("In %s memory range %x-%x, mirror %x touches a changing address bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrmirror, entry.m_addrmirror & changing_bits);
+		if (entry.m_addrselect & changing_bits)
+			osd_printf_error("In %s memory range %x-%x, select %x touches a changing address bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrselect, entry.m_addrselect & changing_bits);
+		if (entry.m_addrmirror & set_bits)
+			osd_printf_error("In %s memory range %x-%x, mirror %x touches a set address bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrmirror, entry.m_addrmirror & set_bits);
+		if (entry.m_addrselect & set_bits)
+			osd_printf_error("In %s memory range %x-%x, select %x touches a set address bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrselect, entry.m_addrselect & set_bits);
+		if (entry.m_addrmirror & entry.m_addrselect)
+			osd_printf_error("In %s memory range %x-%x, mirror %x touches a select bit (%x)\n", spaceconfig.m_name, entry.m_addrstart, entry.m_addrend, entry.m_addrmirror, entry.m_addrmirror & entry.m_addrselect);
+
 		// if this is a program space, auto-assign implicit ROM entries
 		if (entry.m_read.m_type == AMH_ROM && entry.m_region == nullptr)
 		{
@@ -696,11 +733,10 @@ void address_map::map_validity_check(validity_checker &valid, const device_t &de
 			std::string entry_region = entry.m_devbase.subtag(entry.m_region);
 
 			// look for the region
-			device_iterator deviter(device.mconfig().root_device());
-			for (device_t *dev = deviter.first(); dev != nullptr; dev = deviter.next())
-				for (const rom_entry *romp = rom_first_region(*dev); romp != nullptr && !found; romp = rom_next_region(romp))
+			for (device_t &dev : device_iterator(device.mconfig().root_device()))
+				for (const rom_entry *romp = rom_first_region(dev); romp != nullptr && !found; romp = rom_next_region(romp))
 				{
-					if (rom_region_name(*dev, romp) == entry_region)
+					if (rom_region_name(dev, romp) == entry_region)
 					{
 						// verify the address range is within the region's bounds
 						offs_t length = ROMREGION_GETLENGTH(romp);
@@ -728,7 +764,7 @@ void address_map::map_validity_check(validity_checker &valid, const device_t &de
 				case 64: devtag = entry.m_rproto64.device_name(); break;
 			}
 			if (entry.m_devbase.subdevice(devtag) == nullptr)
-				osd_printf_error("%s space memory map entry reads from nonexistant device '%s'\n", spaceconfig.m_name,
+				osd_printf_error("%s space memory map entry reads from nonexistent device '%s'\n", spaceconfig.m_name,
 					devtag != nullptr ? devtag : "<unspecified>");
 		}
 		if (entry.m_write.m_type == AMH_DEVICE_DELEGATE)
@@ -743,7 +779,7 @@ void address_map::map_validity_check(validity_checker &valid, const device_t &de
 				case 64: devtag = entry.m_wproto64.device_name(); break;
 			}
 			if (entry.m_devbase.subdevice(devtag) == nullptr)
-				osd_printf_error("%s space memory map entry writes to nonexistant device '%s'\n", spaceconfig.m_name,
+				osd_printf_error("%s space memory map entry writes to nonexistent device '%s'\n", spaceconfig.m_name,
 					devtag != nullptr ? devtag : "<unspecified>");
 		}
 		if (entry.m_setoffsethd.m_type == AMH_DEVICE_DELEGATE)
@@ -751,14 +787,14 @@ void address_map::map_validity_check(validity_checker &valid, const device_t &de
 			// extract the device tag from the proto-delegate
 			const char *devtag = entry.m_soproto.device_name();
 			if (entry.m_devbase.subdevice(devtag) == nullptr)
-				osd_printf_error("%s space memory map entry references nonexistant device '%s'\n", spaceconfig.m_name,
+				osd_printf_error("%s space memory map entry references nonexistent device '%s'\n", spaceconfig.m_name,
 					devtag != nullptr ? devtag : "<unspecified>");
 		}
 
 		// make sure ports exist
-//      if ((entry.m_read.m_type == AMH_PORT && entry.m_read.m_tag != NULL && portlist.find(entry.m_read.m_tag) == NULL) ||
-//          (entry.m_write.m_type == AMH_PORT && entry.m_write.m_tag != NULL && portlist.find(entry.m_write.m_tag) == NULL))
-//          osd_printf_error("%s space memory map entry references nonexistant port tag '%s'\n", spaceconfig.m_name, entry.m_read.m_tag);
+//      if ((entry.m_read.m_type == AMH_PORT && entry.m_read.m_tag != nullptr && portlist.find(entry.m_read.m_tag) == nullptr) ||
+//          (entry.m_write.m_type == AMH_PORT && entry.m_write.m_tag != nullptr && portlist.find(entry.m_write.m_tag) == nullptr))
+//          osd_printf_error("%s space memory map entry references nonexistent port tag '%s'\n", spaceconfig.m_name, entry.m_read.m_tag);
 
 		// validate bank and share tags
 		if (entry.m_read.m_type == AMH_BANK)

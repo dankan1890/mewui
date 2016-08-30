@@ -20,6 +20,7 @@ DIP Locations verified for:
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
+#include "machine/watchdog.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "includes/bking.h"
@@ -44,7 +45,7 @@ WRITE8_MEMBER(bking_state::bking_soundlatch_w)
 		if (data & (1 << i))
 			code |= 0x80 >> i;
 
-	soundlatch_byte_w(space, offset, code);
+	m_soundlatch->write(space, offset, code);
 	if (m_sound_nmi_enable)
 		m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
@@ -91,7 +92,7 @@ static ADDRESS_MAP_START( bking_io_map, AS_IO, 8, bking_state )
 	AM_RANGE(0x04, 0x04) AM_READ_PORT("DSWC") AM_WRITE(bking_xld3_w)
 	AM_RANGE(0x05, 0x05) AM_READWRITE(bking_input_port_5_r, bking_yld3_w)
 	AM_RANGE(0x06, 0x06) AM_READWRITE(bking_input_port_6_r, bking_msk_w)
-	AM_RANGE(0x07, 0x07) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x07, 0x07) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(bking_cont1_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(bking_cont2_w)
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(bking_cont3_w)
@@ -110,7 +111,7 @@ static ADDRESS_MAP_START( bking3_io_map, AS_IO, 8, bking_state )
 	AM_RANGE(0x04, 0x04) AM_READ_PORT("DSWC") AM_WRITE(bking_xld3_w)
 	AM_RANGE(0x05, 0x05) AM_READWRITE(bking_input_port_5_r, bking_yld3_w)
 	AM_RANGE(0x06, 0x06) AM_READWRITE(bking_input_port_6_r, bking_msk_w)
-	AM_RANGE(0x07, 0x07) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x07, 0x07) AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(bking_cont1_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(bking_cont2_w)
 	AM_RANGE(0x0a, 0x0a) AM_WRITE(bking_cont3_w)
@@ -133,7 +134,7 @@ static ADDRESS_MAP_START( bking_audio_map, AS_PROGRAM, 8, bking_state )
 	AM_RANGE(0x4401, 0x4401) AM_DEVREAD("ay1", ay8910_device, data_r)
 	AM_RANGE(0x4402, 0x4403) AM_DEVWRITE("ay2", ay8910_device, address_data_w)
 	AM_RANGE(0x4403, 0x4403) AM_DEVREAD("ay2", ay8910_device, data_r)
-	AM_RANGE(0x4800, 0x4800) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x4800, 0x4800) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x4802, 0x4802) AM_READWRITE(bking_sndnmi_disable_r, bking_sndnmi_enable_w)
 	AM_RANGE(0xe000, 0xefff) AM_ROM   /* Space for diagnostic ROM */
 ADDRESS_MAP_END
@@ -463,6 +464,8 @@ static MACHINE_CONFIG_START( bking, bking_state )
 	/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
 	MCFG_CPU_PERIODIC_INT_DRIVER(bking_state, irq0_line_hold,  (double)6000000/(4*16*16*10*16))
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_REFRESH_RATE(60)
@@ -479,6 +482,8 @@ static MACHINE_CONFIG_START( bking, bking_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ay1", AY8910, XTAL_6MHz/4)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

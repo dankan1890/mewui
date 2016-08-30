@@ -124,7 +124,7 @@ A Korean version has been seen too (unless this can be switched?)
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "video/315_5124.h"
 #include "includes/sms_bootleg.h"
 
@@ -167,7 +167,7 @@ ADDRESS_MAP_END
 
 static MACHINE_CONFIG_START( sms_supergame, smsbootleg_state )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, XTAL_53_693175MHz/15) // check - I can only see a 10.738635 on this PCB
+	MCFG_CPU_ADD("maincpu", Z80, XTAL_10_738635MHz/3)
 	MCFG_CPU_PROGRAM_MAP(sms_supergame_map)
 	MCFG_CPU_IO_MAP(sms_supergame_io)
 
@@ -179,20 +179,20 @@ static MACHINE_CONFIG_START( sms_supergame, smsbootleg_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_SOUND_ADD("segapsg", SEGAPSG, XTAL_53_693175MHz/15)
+	MCFG_SOUND_ADD("segapsg", SEGAPSG, XTAL_10_738635MHz/3)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_RAW_PARAMS(XTAL_53_693175MHz/10, \
+	MCFG_SCREEN_RAW_PARAMS(XTAL_10_738635MHz/2, \
 		SEGA315_5124_WIDTH , SEGA315_5124_LBORDER_START + SEGA315_5124_LBORDER_WIDTH - 2, SEGA315_5124_LBORDER_START + SEGA315_5124_LBORDER_WIDTH + 256 + 10, \
 		SEGA315_5124_HEIGHT_NTSC, SEGA315_5124_TBORDER_START + SEGA315_5124_NTSC_224_TBORDER_HEIGHT, SEGA315_5124_TBORDER_START + SEGA315_5124_NTSC_224_TBORDER_HEIGHT + 224)
-	MCFG_SCREEN_REFRESH_RATE((double) XTAL_53_693175MHz/10 / (SEGA315_5124_WIDTH * SEGA315_5124_HEIGHT_NTSC))
+	MCFG_SCREEN_REFRESH_RATE((double) XTAL_10_738635MHz/2 / (SEGA315_5124_WIDTH * SEGA315_5124_HEIGHT_NTSC))
 	MCFG_SCREEN_UPDATE_DRIVER(sms_state, screen_update_sms)
 
 	MCFG_DEVICE_ADD("sms_vdp", SEGA315_5246, 0)
 	MCFG_SEGA315_5246_SET_SCREEN("screen")
 	MCFG_SEGA315_5246_IS_PAL(false)
-	MCFG_SEGA315_5246_INT_CB(WRITELINE(sms_state, sms_int_callback))
+	MCFG_SEGA315_5246_INT_CB(INPUTLINE("maincpu", 0))
 	MCFG_SEGA315_5246_PAUSE_CB(WRITELINE(sms_state, sms_pause_callback))
 
 MACHINE_CONFIG_END

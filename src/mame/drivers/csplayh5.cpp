@@ -30,6 +30,7 @@
 #include "cpu/z80/tmpz84c011.h"
 #include "sound/dac.h"
 #include "sound/3812intf.h"
+#include "machine/gen_latch.h"
 #include "machine/nvram.h"
 #include "cpu/h8/h83002.h"
 
@@ -44,7 +45,8 @@ public:
 		m_v9958(*this, "v9958"),
 		m_dac1(*this, "dac1"),
 		m_dac2(*this, "dac2"),
-		m_key(*this, "KEY"),
+		m_soundlatch(*this, "soundlatch"),
+		m_key(*this, "KEY.%u", 0),
 		m_region_maincpu(*this, "maincpu"),
 		m_region_audiocpu(*this, "audiocpu"),
 		m_bank1(*this, "bank1")
@@ -55,6 +57,7 @@ public:
 	required_device<v9958_device> m_v9958;
 	required_device<dac_device> m_dac1;
 	required_device<dac_device> m_dac2;
+	required_device<generic_latch_8_device> m_soundlatch;
 	required_ioport_array<5> m_key;
 	required_memory_region m_region_maincpu;
 	required_memory_region m_region_audiocpu;
@@ -123,7 +126,7 @@ WRITE16_MEMBER(csplayh5_state::csplayh5_mux_w)
 
 WRITE16_MEMBER(csplayh5_state::csplayh5_sound_w)
 {
-	soundlatch_byte_w(space, 0, ((data >> 8) & 0xff));
+	m_soundlatch->write(space, 0, ((data >> 8) & 0xff));
 }
 
 
@@ -186,12 +189,12 @@ void csplayh5_state::soundbank_w(int data)
 
 READ8_MEMBER(csplayh5_state::csplayh5_sound_r)
 {
-	return soundlatch_byte_r(space, 0);
+	return m_soundlatch->read(space, 0);
 }
 
 WRITE8_MEMBER(csplayh5_state::csplayh5_soundclr_w)
 {
-	soundlatch_clear_byte_w(space, 0, 0);
+	m_soundlatch->clear_w(space, 0, 0);
 }
 
 
@@ -232,8 +235,7 @@ static ADDRESS_MAP_START( csplayh5_sound_map, AS_PROGRAM, 8, csplayh5_state )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csplayh5_sound_io_map, AS_IO, 8, csplayh5_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x80, 0x81) AM_DEVWRITE("ymsnd", ym3812_device, write)
+	AM_RANGE(0x80, 0x81) AM_MIRROR(0xff00) AM_DEVWRITE("ymsnd", ym3812_device, write)
 ADDRESS_MAP_END
 
 
@@ -466,7 +468,7 @@ static MACHINE_CONFIG_START( csplayh5, csplayh5_state )
 #endif
 
 	MCFG_CPU_ADD("audiocpu", TMPZ84C011, 8000000)  /* TMPZ84C011, unknown clock */
-	MCFG_CPU_CONFIG(daisy_chain_sound)
+	MCFG_Z80_DAISY_CHAIN(daisy_chain_sound)
 	MCFG_CPU_PROGRAM_MAP(csplayh5_sound_map)
 	MCFG_CPU_IO_MAP(csplayh5_sound_io_map)
 	MCFG_TMPZ84C011_PORTA_WRITE_CB(WRITE8(csplayh5_state, soundcpu_porta_w))
@@ -485,6 +487,8 @@ static MACHINE_CONFIG_START( csplayh5, csplayh5_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("ymsnd", YM3812, 4000000)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)

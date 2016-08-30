@@ -73,8 +73,8 @@ void apple2_state::adjust_begin_and_end_row(const rectangle &cliprect, int *begi
 	assert((*beginrow % 8) == 0);
 	assert((*endrow % 8) == 7);
 
-	*beginrow = MAX(*beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	*endrow = MIN(*endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	*beginrow = std::max(*beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	*endrow = std::min(*endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	/* sanity check again */
 	assert((*beginrow % 8) == 0);
@@ -101,7 +101,7 @@ inline void apple2_state::apple2_plot_text_character(bitmap_ind16 &bitmap, int x
 	const UINT8 *chardata;
 	UINT16 color;
 
-	if (m_sysconfig != nullptr)
+	if (m_sysconfig.found())
 	{
 		switch (m_sysconfig->read() & 0x03)
 		{
@@ -289,12 +289,7 @@ void apple2_state::apple2_hires_draw(bitmap_ind16 &bitmap, const rectangle &clip
 	UINT16 *p;
 	UINT32 w;
 	UINT16 *artifact_map_ptr;
-	int mon_type = 0;
-
-	if (m_sysconfig != nullptr)
-	{
-		mon_type = m_sysconfig->read() & 0x03;
-	}
+	int mon_type = m_sysconfig.read_safe(0) & 0x03;
 
 	/* sanity checks */
 	if (beginrow < cliprect.min_y)
@@ -827,6 +822,58 @@ void a2_video_device::plot_text_character_orig(bitmap_ind16 &bitmap, int xpos, i
 			bg = i;
 		}
 	}
+	else if (code < 0x40)   // inverse: flip FG and BG
+	{
+			i = fg;
+			fg = bg;
+			bg = i;
+	}
+
+	/* look up the character data */
+	chardata = &textgfx_data[(code * 8)];
+
+	for (y = 0; y < 8; y++)
+	{
+		for (x = 0; x < 7; x++)
+		{
+			color = (chardata[y] & (1 << (6-x))) ? fg : bg;
+
+			for (i = 0; i < xscale; i++)
+			{
+				bitmap.pix16(ypos + y, xpos + (x * xscale) + i) = color;
+			}
+		}
+	}
+}
+
+void a2_video_device::plot_text_character_jplus(bitmap_ind16 &bitmap, int xpos, int ypos, int xscale, UINT32 code,
+	const UINT8 *textgfx_data, UINT32 textgfx_datalen, int fg, int bg)
+{
+	int x, y, i;
+	const UINT8 *chardata;
+	UINT16 color;
+
+	if ((code >= 0x40) && (code <= 0x7f))
+	{
+		code &= 0x3f;
+		if (m_flash)
+		{
+			i = fg;
+			fg = bg;
+			bg = i;
+		}
+	}
+	else if (code < 0x40)   // inverse: flip FG and BG
+	{
+			i = fg;
+			fg = bg;
+			bg = i;
+	}
+
+	if (m_an2)
+	{
+		code |= 0x80;
+	}
 
 	/* look up the character data */
 	chardata = &textgfx_data[(code * 8)];
@@ -896,8 +943,8 @@ void a2_video_device::lores_update(screen_device &screen, bitmap_ind16 &bitmap, 
 	}
 
 	/* perform adjustments */
-	beginrow = MAX(beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	endrow = MIN(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	if (!(m_sysconfig & 0x03))
 	{
@@ -978,8 +1025,8 @@ void a2_video_device::dlores_update(screen_device &screen, bitmap_ind16 &bitmap,
 	}
 
 	/* perform adjustments */
-	beginrow = MAX(beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	endrow = MIN(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	if (!(m_sysconfig & 0x03))
 	{
@@ -1124,8 +1171,8 @@ void a2_video_device::text_update(screen_device &screen, bitmap_ind16 &bitmap, c
 		start_address = m_page2 ? 0x800 : 0x400;
 	}
 
-	beginrow = MAX(beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	endrow = MIN(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	switch (m_sysconfig & 0x03)
 	{
@@ -1171,8 +1218,8 @@ void a2_video_device::text_update_orig(screen_device &screen, bitmap_ind16 &bitm
 	int fg = 0;
 	int bg = 0;
 
-	beginrow = MAX(beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	endrow = MIN(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	switch (m_sysconfig & 0x03)
 	{
@@ -1194,6 +1241,37 @@ void a2_video_device::text_update_orig(screen_device &screen, bitmap_ind16 &bitm
 	}
 }
 
+void a2_video_device::text_update_jplus(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int beginrow, int endrow)
+{
+	int row, col;
+	UINT32 start_address = m_page2 ? 0x800 : 0x400;
+	UINT32 address;
+	int fg = 0;
+	int bg = 0;
+
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+
+	switch (m_sysconfig & 0x03)
+	{
+		case 0: fg = WHITE; break;
+		case 1: fg = WHITE; break;
+		case 2: fg = GREEN; break;
+		case 3: fg = ORANGE; break;
+	}
+
+	for (row = beginrow; row <= endrow; row += 8)
+	{
+		for (col = 0; col < 40; col++)
+		{
+			/* calculate address */
+			address = start_address + ((((row/8) & 0x07) << 7) | (((row/8) & 0x18) * 5 + col));
+			plot_text_character_jplus(bitmap, col * 14, row, 2, m_ram_ptr[address],
+				m_char_ptr, m_char_size, fg, bg);
+		}
+	}
+}
+
 void a2_video_device::text_update_ultr(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int beginrow, int endrow)
 {
 	int row, col;
@@ -1202,8 +1280,8 @@ void a2_video_device::text_update_ultr(screen_device &screen, bitmap_ind16 &bitm
 	int fg = 0;
 	int bg = 0;
 
-	beginrow = MAX(beginrow, cliprect.min_y - (cliprect.min_y % 8));
-	endrow = MIN(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
+	beginrow = std::max(beginrow, cliprect.min_y - (cliprect.min_y % 8));
+	endrow = std::min(endrow, cliprect.max_y - (cliprect.max_y % 8) + 7);
 
 	switch (m_sysconfig & 0x03)
 	{

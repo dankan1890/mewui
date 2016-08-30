@@ -42,7 +42,7 @@ Note:   if MAME_DEBUG is defined, pressing Z or X with:
 
     Each of the 256 (not all visible) lines of the screen
     can display any of the lines of gfx in ROM, which are
-    larger than the sceen and can therefore be scrolled
+    larger than the screen and can therefore be scrolled
 
                                     Cisco Heat              F1 GP Star
                 Line Width          1024                    1024
@@ -189,24 +189,32 @@ void cischeat_state::create_tilemaps()
 	for (layer = 0; layer < 3; layer++)
 	{
 		/* 16x16 tilemaps */
-		m_tilemap[layer][0][0] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 16, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][0][1] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 4);
-		m_tilemap[layer][0][2] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 8);
-		m_tilemap[layer][0][3] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
-									8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 16);
+		m_tilemap[layer][0][0] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 16, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][0][1] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 4);
+		m_tilemap[layer][0][2] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 8);
+		m_tilemap[layer][0][3] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_16x16),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_16x16),this),
+				8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 16);
 
 		/* 8x8 tilemaps */
-		m_tilemap[layer][1][0] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 1);
-		m_tilemap[layer][1][1] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][1][2] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
-		m_tilemap[layer][1][3] = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
-									8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 4);
+		m_tilemap[layer][1][0] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 8, TILES_PER_PAGE_Y * 1);
+		m_tilemap[layer][1][1] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][1][2] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 4, TILES_PER_PAGE_Y * 2);
+		m_tilemap[layer][1][3] = &machine().tilemap().create(
+				*m_gfxdecode, tilemap_get_info_delegate(FUNC(cischeat_state::cischeat_get_scroll_tile_info_8x8),this), tilemap_mapper_delegate(FUNC(cischeat_state::cischeat_scan_8x8),this),
+				8,8, TILES_PER_PAGE_X * 2, TILES_PER_PAGE_Y * 4);
 
 		/* set user data and transparency */
 		for (i = 0; i < 8; i++)
@@ -299,7 +307,7 @@ READ16_MEMBER(cischeat_state::bigrun_vregs_r)
 		case 0x0004/2 : return ioport("IN3")->read();   // Motor Limit Switches
 		case 0x0006/2 : return ioport("IN4")->read();   // DSW 1 & 2
 
-		case 0x0008/2 : return soundlatch2_word_r(space,0,0xffff);  // From sound cpu
+		case 0x0008/2 : return m_soundlatch2->read(space,0,0xffff);  // From sound cpu
 
 		case 0x0010/2 :
 			switch (m_ip_select & 0x3)
@@ -348,7 +356,7 @@ WRITE16_MEMBER(cischeat_state::bigrun_vregs_w)
 			break;
 
 		case 0x000a/2   :   // to sound cpu
-			soundlatch_word_w(space,0,new_data,0xffff);
+			m_soundlatch->write(space,0,new_data,0xffff);
 			break;
 
 		case 0x000c/2   :   break;  // ??
@@ -405,7 +413,7 @@ READ16_MEMBER(cischeat_state::cischeat_vregs_r)
 			}
 
 		case 0x2200/2 : return ioport("IN5")->read();   // DSW 3 (4 bits)
-		case 0x2300/2 : return soundlatch2_byte_r(space,0); // From sound cpu
+		case 0x2300/2 : return m_soundlatch2->read(space,0,0xffff); // From sound cpu
 
 		default:    SHOW_READ_ERROR("vreg %04X read!",offset*2);
 					return m_vregs[offset];
@@ -459,7 +467,7 @@ WRITE16_MEMBER(cischeat_state::cischeat_vregs_w)
 		case 0x2208/2   : break;    // watchdog reset
 
 		case 0x2300/2   :   /* Sound CPU: reads latch during int 4, and stores command */
-							soundlatch_word_w(space, 0, new_data, 0xffff);
+							m_soundlatch->write(space, 0, new_data, 0xffff);
 							m_soundcpu->set_input_line(4, HOLD_LINE);
 							break;
 
@@ -491,7 +499,7 @@ READ16_MEMBER(cischeat_state::f1gpstar_vregs_r)
 
 		case 0x0006/2 : return ioport("IN3")->read();   // ? Read at boot only
 
-		case 0x0008/2 : return soundlatch2_byte_r(space,0);     // From sound cpu
+		case 0x0008/2 : return m_soundlatch2->read(space,0,0xffff);     // From sound cpu
 
 		case 0x000c/2 : return ioport("IN4")->read();   // DSW 3
 
@@ -533,7 +541,7 @@ READ16_MEMBER(cischeat_state::wildplt_vregs_r)
 
 		case 0x0004/2 : return ioport("IN1")->read(); // Buttons
 
-		case 0x0008/2 : return soundlatch2_byte_r(space,0); // From sound cpu
+		case 0x0008/2 : return m_soundlatch2->read(space,0,0xffff); // From sound cpu
 
 		case 0x0010/2 : // X, Y
 			return ioport("IN2")->read() | (ioport("IN3")->read()<<8);
@@ -574,7 +582,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 		case 0x0014/2   :   break;
 
 		/* Usually written in sequence, but not always */
-		case 0x0008/2   :   soundlatch_word_w(space, 0, new_data, 0xffff);  break;
+		case 0x0008/2   :   m_soundlatch->write(space, 0, new_data, 0xffff);  break;
 		case 0x0018/2   :   m_soundcpu->set_input_line(4, HOLD_LINE);   break;
 
 		case 0x0010/2   :   break;
@@ -655,7 +663,7 @@ WRITE16_MEMBER(cischeat_state::scudhamm_vregs_w)
 		case 0x100/2+1 : CISCHEAT_VREG_SCROLL(2,y);     break;
 		case 0x100/2+2 : cischeat_set_vreg_flag(2,new_data);break;
 
-		case 0x208/2   : watchdog_reset_w(space,0,0);   break;
+		case 0x208/2   : m_watchdog->reset_w(space,0,0);   break;
 
 		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
 	}

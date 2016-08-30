@@ -42,8 +42,7 @@
 // MAME output header file
 typedef int running_machine;
 #include "osdcomm.h"
-#include "output.h"
-
+#include "modules/output/win32_output.h"
 
 
 //============================================================

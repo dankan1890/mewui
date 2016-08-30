@@ -1442,10 +1442,10 @@ void x68k_state::floppy_load_unload(bool load, floppy_image_device *dev)
 	}
 }
 
-int x68k_state::floppy_load(floppy_image_device *dev)
+image_init_result x68k_state::floppy_load(floppy_image_device *dev)
 {
 	floppy_load_unload(true, dev);
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 void x68k_state::floppy_unload(floppy_image_device *dev)
@@ -1546,7 +1546,7 @@ MACHINE_START_MEMBER(x68k_state,x68000)
 	address_space &space = m_maincpu->space(AS_PROGRAM);
 	/*  Install RAM handlers  */
 	m_spriteram = (UINT16*)(memregion("user1")->base());
-	space.install_readwrite_bank(0x000000,m_ram->size()-1,0xffffffff,0,"bank1");
+	space.install_readwrite_bank(0x000000,m_ram->size()-1,"bank1");
 	membank("bank1")->set_base(m_ram->pointer());
 
 	// start mouse timer

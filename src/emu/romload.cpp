@@ -2,7 +2,7 @@
 // copyright-holders:Nicola Salmoria,Paul Priest,Aaron Giles
 /*********************************************************************
 
-    romload.c
+    romload.cpp
 
     ROM loading functions.
 *********************************************************************/
@@ -10,8 +10,8 @@
 #include "emu.h"
 #include "emuopts.h"
 #include "drivenum.h"
-#include "softlist.h"
-#include "ui/ui.h"
+#include "softlist_dev.h"
+#include "ui/uimain.h"
 
 
 #define LOG_LOAD 0
@@ -164,7 +164,7 @@ std::string rom_region_name(const device_t &device, const rom_entry *romp)
 
 std::string rom_parameter_name(const device_t &device, const rom_entry *romp)
 {
-	return device.subtag(romp->_name);
+	return device.subtag(romp->name().c_str());
 }
 
 
@@ -175,7 +175,7 @@ std::string rom_parameter_name(const device_t &device, const rom_entry *romp)
 
 std::string rom_parameter_value(const rom_entry *romp)
 {
-	return std::string(romp->_hashdata);
+	return romp->hashdata();
 }
 
 
@@ -199,7 +199,7 @@ UINT32 rom_file_size(const rom_entry *romp)
 			curlength += ROM_GETLENGTH(romp++);
 
 		/* track the maximum length */
-		maxlength = MAX(maxlength, curlength);
+		maxlength = std::max(maxlength, curlength);
 	}
 	while (ROMENTRY_ISRELOAD(romp));
 
@@ -265,39 +265,38 @@ int rom_load_manager::set_disk_handle(const char *region, const char *fullpath)
     from SystemBios structure and OPTION_BIOS
 -------------------------------------------------*/
 
-void rom_load_manager::determine_bios_rom(device_t *device, const char *specbios)
+void rom_load_manager::determine_bios_rom(device_t &device, const char *specbios)
 {
 	const char *defaultname = nullptr;
-	const rom_entry *rom;
 	int default_no = 1;
 	int bios_count = 0;
 
-	device->set_system_bios(0);
+	device.set_system_bios(0);
 
 	/* first determine the default BIOS name */
-	for (rom = device->rom_region(); !ROMENTRY_ISEND(rom); rom++)
-		if (ROMENTRY_ISDEFAULT_BIOS(rom))
-			defaultname = ROM_GETNAME(rom);
+	for (const rom_entry &rom : device.rom_region_vector())
+		if (ROMENTRY_ISDEFAULT_BIOS(&rom))
+			defaultname = ROM_GETNAME(&rom);
 
 	/* look for a BIOS with a matching name */
-	for (rom = device->rom_region(); !ROMENTRY_ISEND(rom); rom++)
-		if (ROMENTRY_ISSYSTEM_BIOS(rom))
+	for (const rom_entry &rom : device.rom_region_vector())
+		if (ROMENTRY_ISSYSTEM_BIOS(&rom))
 		{
-			const char *biosname = ROM_GETNAME(rom);
-			int bios_flags = ROM_GETBIOSFLAGS(rom);
+			const char *biosname = ROM_GETNAME(&rom);
+			int bios_flags = ROM_GETBIOSFLAGS(&rom);
 			char bios_number[20];
 
 			/* Allow '-bios n' to still be used */
 			sprintf(bios_number, "%d", bios_flags - 1);
 			if (core_stricmp(bios_number, specbios) == 0 || core_stricmp(biosname, specbios) == 0)
-				device->set_system_bios(bios_flags);
+				device.set_system_bios(bios_flags);
 			if (defaultname != nullptr && core_stricmp(biosname, defaultname) == 0)
 				default_no = bios_flags;
 			bios_count++;
 		}
 
 	/* if none found, use the default */
-	if (device->system_bios() == 0 && bios_count > 0)
+	if (device.system_bios() == 0 && bios_count > 0)
 	{
 		/* if we got neither an empty string nor 'default' then warn the user */
 		if (specbios[0] != 0 && strcmp(specbios, "default") != 0)
@@ -307,10 +306,10 @@ void rom_load_manager::determine_bios_rom(device_t *device, const char *specbios
 		}
 
 		/* set to default */
-		device->set_system_bios(default_no);
+		device.set_system_bios(default_no);
 	}
-	device->set_default_bios(default_no);
-	LOG(("For \"%s\" using System BIOS: %d\n", device->tag(), device->system_bios()));
+	device.set_default_bios(default_no);
+	LOG(("For \"%s\" using System BIOS: %d\n", device.tag(), device.system_bios()));
 }
 
 
@@ -328,11 +327,10 @@ void rom_load_manager::count_roms()
 	m_romstotalsize = 0;
 
 	/* loop over regions, then over files */
-	device_iterator deviter(machine().config().root_device());
-	for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-		for (region = rom_first_region(*device); region != nullptr; region = rom_next_region(region))
+	for (device_t &device : device_iterator(machine().config().root_device()))
+		for (region = rom_first_region(device); region != nullptr; region = rom_next_region(region))
 			for (rom = rom_first_file(region); rom != nullptr; rom = rom_next_file(rom))
-				if (ROM_GETBIOSFLAGS(rom) == 0 || ROM_GETBIOSFLAGS(rom) == device->system_bios())
+				if (ROM_GETBIOSFLAGS(rom) == 0 || ROM_GETBIOSFLAGS(rom) == device.system_bios())
 				{
 					m_romstotal++;
 					m_romstotalsize += rom_file_size(rom);
@@ -381,7 +379,7 @@ void rom_load_manager::handle_missing_file(const rom_entry *romp, std::string tr
 	}
 
 	/* no good dumps are okay */
-	else if (hash_collection(ROM_GETHASHDATA(romp)).flag(hash_collection::FLAG_NO_DUMP))
+	else if (util::hash_collection(ROM_GETHASHDATA(romp)).flag(util::hash_collection::FLAG_NO_DUMP))
 	{
 		if (!is_chd_error)
 			m_errorstring.append(string_format("%s NOT FOUND (NO GOOD DUMP KNOWN)%s\n", name, tried_file_names));
@@ -404,7 +402,7 @@ void rom_load_manager::handle_missing_file(const rom_entry *romp, std::string tr
     correct checksums for a given ROM
 -------------------------------------------------*/
 
-void rom_load_manager::dump_wrong_and_correct_checksums(const hash_collection &hashes, const hash_collection &acthashes)
+void rom_load_manager::dump_wrong_and_correct_checksums(const util::hash_collection &hashes, const util::hash_collection &acthashes)
 {
 	m_errorstring.append(string_format("    EXPECTED: %s\n", hashes.macro_string().c_str()));
 	m_errorstring.append(string_format("       FOUND: %s\n", acthashes.macro_string().c_str()));
@@ -416,7 +414,7 @@ void rom_load_manager::dump_wrong_and_correct_checksums(const hash_collection &h
     and hash signatures of a file
 -------------------------------------------------*/
 
-void rom_load_manager::verify_length_and_hash(const char *name, UINT32 explength, const hash_collection &hashes)
+void rom_load_manager::verify_length_and_hash(const char *name, UINT32 explength, const util::hash_collection &hashes)
 {
 	/* we've already complained if there is no file */
 	if (m_file == nullptr)
@@ -431,8 +429,8 @@ void rom_load_manager::verify_length_and_hash(const char *name, UINT32 explength
 	}
 
 	/* If there is no good dump known, write it */
-	hash_collection &acthashes = m_file->hashes(hashes.hash_types().c_str());
-	if (hashes.flag(hash_collection::FLAG_NO_DUMP))
+	util::hash_collection &acthashes = m_file->hashes(hashes.hash_types().c_str());
+	if (hashes.flag(util::hash_collection::FLAG_NO_DUMP))
 	{
 		m_errorstring.append(string_format("%s NO GOOD DUMP KNOWN\n", name));
 		m_knownbad++;
@@ -446,7 +444,7 @@ void rom_load_manager::verify_length_and_hash(const char *name, UINT32 explength
 		m_warnings++;
 	}
 	/* If it matches, but it is actually a bad dump, write it */
-	else if (hashes.flag(hash_collection::FLAG_BAD_DUMP))
+	else if (hashes.flag(util::hash_collection::FLAG_BAD_DUMP))
 	{
 		m_errorstring.append(string_format("%s ROM NEEDS REDUMP\n", name));
 		m_knownbad++;
@@ -488,7 +486,7 @@ void rom_load_manager::display_rom_load_results(bool from_list)
 	{
 		/* create the error message and exit fatally */
 		osd_printf_error("%s", m_errorstring.c_str());
-		fatalerror_exitcode(machine(), MAMERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
+		fatalerror_exitcode(machine(), EMU_ERR_MISSING_FILES, "Required files are missing, the machine cannot be run.");
 	}
 
 	/* if we had warnings, output them, but continue */
@@ -558,7 +556,7 @@ int rom_load_manager::open_rom_file(const char *regiontag, const rom_entry *romp
 
 	/* extract CRC to use for searching */
 	UINT32 crc = 0;
-	bool has_crc = hash_collection(ROM_GETHASHDATA(romp)).crc(crc);
+	bool has_crc = util::hash_collection(ROM_GETHASHDATA(romp)).crc(crc);
 
 	/* attempt reading up the chain through the parents. It automatically also
 	 attempts any kind of load by checksum supported by the archives. */
@@ -577,13 +575,13 @@ int rom_load_manager::open_rom_file(const char *regiontag, const rom_entry *romp
 		// is actually a concatenation of: listname + setname + parentname
 		// separated by '%' (parentname being present only for clones)
 		std::string tag1(regiontag), tag2, tag3, tag4, tag5;
-		bool is_list = FALSE;
-		bool has_parent = FALSE;
+		bool is_list = false;
+		bool has_parent = false;
 
 		int separator1 = tag1.find_first_of('%');
 		if (separator1 != -1)
 		{
-			is_list = TRUE;
+			is_list = true;
 
 			// we are loading through softlists, split the listname from the regiontag
 			tag4.assign(tag1.substr(separator1 + 1, tag1.length() - separator1 + 1));
@@ -594,7 +592,7 @@ int rom_load_manager::open_rom_file(const char *regiontag, const rom_entry *romp
 			int separator2 = tag4.find_first_of('%');
 			if (separator2 != -1)
 			{
-				has_parent = TRUE;
+				has_parent = true;
 
 				// we are loading a clone through softlists, split the setname from the parentname
 				tag5.assign(tag4.substr(separator2 + 1, tag4.length() - separator2 + 1));
@@ -662,7 +660,7 @@ int rom_load_manager::open_rom_file(const char *regiontag, const rom_entry *romp
 
 /*-------------------------------------------------
     rom_fread - cheesy fread that fills with
-    random data for a NULL file
+    random data for a nullptr file
 -------------------------------------------------*/
 
 int rom_load_manager::rom_fread(UINT8 *buffer, int length, const rom_entry *parent_region)
@@ -716,7 +714,7 @@ int rom_load_manager::read_rom_data(const rom_entry *parent_region, const rom_en
 		return rom_fread(base, numbytes, parent_region);
 
 	/* use a temporary buffer for complex loads */
-	tempbufsize = MIN(TEMPBUFFER_MAX_SIZE, numbytes);
+	tempbufsize = std::min(TEMPBUFFER_MAX_SIZE, numbytes);
 	dynamic_buffer tempbuf(tempbufsize);
 
 	/* chunky reads for complex loads */
@@ -802,18 +800,28 @@ int rom_load_manager::read_rom_data(const rom_entry *parent_region, const rom_en
 void rom_load_manager::fill_rom_data(const rom_entry *romp)
 {
 	UINT32 numbytes = ROM_GETLENGTH(romp);
+	int skip = ROM_GETSKIPCOUNT(romp);
 	UINT8 *base = m_region->base() + ROM_GETOFFSET(romp);
 
-	/* make sure we fill within the region space */
+	// make sure we fill within the region space
 	if (ROM_GETOFFSET(romp) + numbytes > m_region->bytes())
 		fatalerror("Error in RomModule definition: FILL out of memory region space\n");
 
-	/* make sure the length was valid */
+	// make sure the length was valid
 	if (numbytes == 0)
 		fatalerror("Error in RomModule definition: FILL has an invalid length\n");
 
-	/* fill the data (filling value is stored in place of the hashdata) */
-	memset(base, (FPTR)ROM_GETHASHDATA(romp) & 0xff, numbytes);
+	// for fill bytes, the byte that gets filled is the first byte of the hashdata string
+	UINT8 fill_byte = (UINT8)strtol(ROM_GETHASHDATA(romp), nullptr, 0);
+
+	// fill the data (filling value is stored in place of the hashdata)
+	if(skip != 0)
+	{
+		for (int i = 0; i < numbytes; i+= skip + 1)
+			base[i] = fill_byte;
+	}
+	else
+		memset(base, fill_byte, numbytes);
 }
 
 
@@ -826,7 +834,7 @@ void rom_load_manager::copy_rom_data(const rom_entry *romp)
 	UINT8 *base = m_region->base() + ROM_GETOFFSET(romp);
 	const char *srcrgntag = ROM_GETNAME(romp);
 	UINT32 numbytes = ROM_GETLENGTH(romp);
-	UINT32 srcoffs = (FPTR)ROM_GETHASHDATA(romp);  /* srcoffset in place of hashdata */
+	UINT32 srcoffs = (UINT32) strtol(ROM_GETHASHDATA(romp), nullptr, 0);  /* srcoffset in place of hashdata */
 
 	/* make sure we copy within the region space */
 	if (ROM_GETOFFSET(romp) + numbytes > m_region->bytes())
@@ -906,9 +914,9 @@ void rom_load_manager::process_rom_entries(const char *regiontag, const rom_entr
 
 					/* handle flag inheritance */
 					if (!ROM_INHERITSFLAGS(&modified_romp))
-						lastflags = modified_romp._flags;
+						lastflags = modified_romp.flags();
 					else
-						modified_romp._flags = (modified_romp._flags & ~ROM_INHERITEDFLAGS) | lastflags;
+						modified_romp.set_flags((modified_romp.flags() & ~ROM_INHERITEDFLAGS) | lastflags);
 
 					explength += ROM_GETLENGTH(&modified_romp);
 
@@ -922,7 +930,7 @@ void rom_load_manager::process_rom_entries(const char *regiontag, const rom_entr
 				if (baserom)
 				{
 					LOG(("Verifying length (%X) and checksums\n", explength));
-					verify_length_and_hash(ROM_GETNAME(baserom), explength, hash_collection(ROM_GETHASHDATA(baserom)));
+					verify_length_and_hash(ROM_GETNAME(baserom), explength, util::hash_collection(ROM_GETHASHDATA(baserom)));
 					LOG(("Verify finished\n"));
 				}
 
@@ -977,13 +985,13 @@ int open_disk_image(emu_options &options, const game_driver *gamedrv, const rom_
 		// is actually a concatenation of: listname + setname + parentname
 		// separated by '%' (parentname being present only for clones)
 		std::string tag1(locationtag), tag2, tag3, tag4, tag5;
-		bool is_list = FALSE;
-		bool has_parent = FALSE;
+		bool is_list = false;
+		bool has_parent = false;
 
 		int separator1 = tag1.find_first_of('%');
 		if (separator1 != -1)
 		{
-			is_list = TRUE;
+			is_list = true;
 
 			// we are loading through softlists, split the listname from the regiontag
 			tag4.assign(tag1.substr(separator1 + 1, tag1.length() - separator1 + 1));
@@ -994,7 +1002,7 @@ int open_disk_image(emu_options &options, const game_driver *gamedrv, const rom_
 			int separator2 = tag4.find_first_of('%');
 			if (separator2 != -1)
 			{
-				has_parent = TRUE;
+				has_parent = true;
 
 				// we are loading a clone through softlists, split the setname from the parentname
 				tag5.assign(tag4.substr(separator2 + 1, tag4.length() - separator2 + 1));
@@ -1058,19 +1066,18 @@ int open_disk_image(emu_options &options, const game_driver *gamedrv, const rom_
 
 	/* otherwise, look at our parents for a CHD with an identical checksum */
 	/* and try to open that */
-	hash_collection romphashes(ROM_GETHASHDATA(romp));
+	util::hash_collection romphashes(ROM_GETHASHDATA(romp));
 	for (int drv = driver_list::find(*gamedrv); drv != -1; drv = driver_list::clone(drv))
 	{
 		machine_config config(driver_list::driver(drv), options);
-		device_iterator deviter(config.root_device());
-		for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-			for (region = rom_first_region(*device); region != nullptr; region = rom_next_region(region))
+		for (device_t &device : device_iterator(config.root_device()))
+			for (region = rom_first_region(device); region != nullptr; region = rom_next_region(region))
 				if (ROMREGION_ISDISKDATA(region))
 					for (rom = rom_first_file(region); rom != nullptr; rom = rom_next_file(rom))
 
 						/* look for a differing name but with the same hash data */
 						if (strcmp(ROM_GETNAME(romp), ROM_GETNAME(rom)) != 0 &&
-							romphashes == hash_collection(ROM_GETHASHDATA(rom)))
+							romphashes == util::hash_collection(ROM_GETHASHDATA(rom)))
 						{
 							/* attempt to open the properly named file, scanning up through parent directories */
 							filerr = osd_file::error::NOT_FOUND;
@@ -1156,7 +1163,7 @@ void rom_load_manager::process_disk_entries(const char *regiontag, const rom_ent
 		{
 			auto chd = std::make_unique<open_chd>(regiontag);
 
-			hash_collection hashes(ROM_GETHASHDATA(romp));
+			util::hash_collection hashes(ROM_GETHASHDATA(romp));
 			chd_error err;
 
 			/* make the filename of the source */
@@ -1173,7 +1180,7 @@ void rom_load_manager::process_disk_entries(const char *regiontag, const rom_ent
 			}
 
 			/* get the header and extract the SHA1 */
-			hash_collection acthashes;
+			util::hash_collection acthashes;
 			acthashes.add_sha1(chd->orig_chd().sha1());
 
 			/* verify the hash */
@@ -1183,7 +1190,7 @@ void rom_load_manager::process_disk_entries(const char *regiontag, const rom_ent
 				dump_wrong_and_correct_checksums(hashes, acthashes);
 				m_warnings++;
 			}
-			else if (hashes.flag(hash_collection::FLAG_BAD_DUMP))
+			else if (hashes.flag(util::hash_collection::FLAG_BAD_DUMP))
 			{
 				m_errorstring.append(string_format("%s CHD NEEDS REDUMP\n", filename));
 				m_knownbad++;
@@ -1270,7 +1277,7 @@ void rom_load_manager::load_software_part_region(device_t &device, software_list
 	m_romstotalsize = 0;
 	m_romsloadedsize = 0;
 
-	software_info *swinfo = swlist.find(swname);
+	const software_info *swinfo = swlist.find(swname);
 	if (swinfo != nullptr)
 	{
 		UINT32 supported = swinfo->supported();
@@ -1294,8 +1301,7 @@ void rom_load_manager::load_software_part_region(device_t &device, software_list
 		while (swinfo != nullptr)
 		{
 			locationtag.append(swinfo->shortname()).append(breakstr);
-			const char *parentname = swinfo->parentname();
-			swinfo = (parentname != nullptr) ? swlist.find(parentname) : nullptr;
+			swinfo = !swinfo->parentname().empty() ? swlist.find(swinfo->parentname().c_str()) : nullptr;
 		}
 		// strip the final '%'
 		locationtag.erase(locationtag.length() - 1, 1);
@@ -1353,7 +1359,7 @@ void rom_load_manager::load_software_part_region(device_t &device, software_list
 
 		/* now process the entries in the region */
 		if (ROMREGION_ISROMDATA(region))
-			process_rom_entries(locationtag.c_str(), region, region + 1, &device, TRUE);
+			process_rom_entries(locationtag.c_str(), region, region + 1, &device, true);
 		else if (ROMREGION_ISDISKDATA(region))
 			process_disk_entries(regiontag.c_str(), region, region + 1, locationtag.c_str());
 	}
@@ -1366,7 +1372,7 @@ void rom_load_manager::load_software_part_region(device_t &device, software_list
 	}
 
 	/* display the results and exit */
-	display_rom_load_results(TRUE);
+	display_rom_load_results(true);
 }
 
 
@@ -1380,12 +1386,12 @@ void rom_load_manager::process_region_list()
 
 	/* loop until we hit the end */
 	device_iterator deviter(machine().root_device());
-	for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-		for (const rom_entry *region = rom_first_region(*device); region != nullptr; region = rom_next_region(region))
+	for (device_t &device : deviter)
+		for (const rom_entry *region = rom_first_region(device); region != nullptr; region = rom_next_region(region))
 		{
 			UINT32 regionlength = ROMREGION_GETLENGTH(region);
 
-			regiontag = rom_region_name(*device, region);
+			regiontag = rom_region_name(device, region);
 			LOG(("Processing region \"%s\" (length=%X)\n", regiontag.c_str(), regionlength));
 
 			/* the first entry must be a region */
@@ -1418,25 +1424,25 @@ void rom_load_manager::process_region_list()
 #endif
 
 				/* now process the entries in the region */
-				process_rom_entries(device->shortname(), region, region + 1, device, FALSE);
+				process_rom_entries(device.shortname(), region, region + 1, &device, false);
 			}
 			else if (ROMREGION_ISDISKDATA(region))
 				process_disk_entries(regiontag.c_str(), region, region + 1, nullptr);
 		}
 
 	/* now go back and post-process all the regions */
-	for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-		for (const rom_entry *region = rom_first_region(*device); region != nullptr; region = rom_next_region(region))
+	for (device_t &device : deviter)
+		for (const rom_entry *region = rom_first_region(device); region != nullptr; region = rom_next_region(region))
 		{
-			regiontag = rom_region_name(*device, region);
+			regiontag = rom_region_name(device, region);
 			region_post_process(regiontag.c_str(), ROMREGION_ISINVERTED(region));
 		}
 
 	/* and finally register all per-game parameters */
-	for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-		for (const rom_entry *param = rom_first_parameter(*device); param != nullptr; param = rom_next_parameter(param))
+	for (device_t &device : deviter)
+		for (const rom_entry *param = rom_first_parameter(device); param != nullptr; param = rom_next_parameter(param))
 		{
-			regiontag = rom_parameter_name(*device, param);
+			regiontag = rom_parameter_name(device, param);
 			machine().parameters().add(regiontag, rom_parameter_value(param));
 		}
 }
@@ -1451,17 +1457,19 @@ rom_load_manager::rom_load_manager(running_machine &machine)
 	: m_machine(machine)
 {
 	/* figure out which BIOS we are using */
-	device_iterator deviter(machine.config().root_device());
-	for (device_t *device = deviter.first(); device != nullptr; device = deviter.next()) {
-		if (device->rom_region()) {
+
+	for (device_t &device : device_iterator(machine.config().root_device()))
+	{
+		if (device.rom_region())
+		{
 			std::string specbios;
-			if (device->owner() == nullptr) {
+			if (device.owner() == nullptr)
 				specbios.assign(machine.options().bios());
-			} else {
-				specbios = machine.options().sub_value(device->owner()->tag()+1,"bios");
-				if (specbios.empty()) {
-					specbios = device->default_bios_tag();
-				}
+			else
+			{
+				specbios = machine.options().sub_value(device.owner()->tag()+1,"bios");
+				if (specbios.empty())
+					specbios = device.default_bios_tag();
 			}
 			determine_bios_rom(device, specbios.c_str());
 		}
@@ -1477,5 +1485,32 @@ rom_load_manager::rom_load_manager(running_machine &machine)
 	process_region_list();
 
 	/* display the results and exit */
-	display_rom_load_results(FALSE);
+	display_rom_load_results(false);
 }
+
+
+// -------------------------------------------------
+// rom_build_entries - builds a rom_entry vector
+// from a tiny_rom_entry array
+// -------------------------------------------------
+
+std::vector<rom_entry> rom_build_entries(const tiny_rom_entry *tinyentries)
+{
+	std::vector<rom_entry> result;
+
+	if (tinyentries != nullptr)
+	{
+		int i = 0;
+		do
+		{
+			result.emplace_back(tinyentries[i]);
+		} while ((tinyentries[i++].flags & ROMENTRY_TYPEMASK) != ROMENTRYTYPE_END);
+	}
+	else
+	{
+		const tiny_rom_entry end_entry = { nullptr, nullptr, 0, 0, ROMENTRYTYPE_END };
+		result.emplace_back(end_entry);
+	}
+	return result;
+}
+

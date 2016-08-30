@@ -45,7 +45,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *wangpc_rtc_device::device_rom_region() const
+const tiny_rom_entry *wangpc_rtc_device::device_rom_region() const
 {
 	return ROM_NAME( wangpc_rtc );
 }
@@ -104,7 +104,7 @@ static const z80_daisy_config wangpc_rtc_daisy_chain[] =
 
 static MACHINE_CONFIG_FRAGMENT( wangpc_rtc )
 	MCFG_CPU_ADD(Z80_TAG, Z80, 2000000)
-	MCFG_CPU_CONFIG(wangpc_rtc_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(wangpc_rtc_daisy_chain)
 	MCFG_CPU_PROGRAM_MAP(wangpc_rtc_mem)
 	MCFG_CPU_IO_MAP(wangpc_rtc_io)
 

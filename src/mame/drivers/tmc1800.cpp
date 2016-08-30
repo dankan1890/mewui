@@ -177,7 +177,7 @@ void tmc2000_state::bankswitch()
 	if (m_roc)
 	{
 		// monitor ROM
-		program.install_rom(0x0000, 0x01ff, 0, 0x7e00, rom);
+		program.install_rom(0x0000, 0x01ff, 0x7e00, rom);
 	}
 	else
 	{
@@ -185,11 +185,11 @@ void tmc2000_state::bankswitch()
 		switch (m_ram->size())
 		{
 		case 4 * 1024:
-			program.install_ram(0x0000, 0x0fff, 0, 0x7000, ram);
+			program.install_ram(0x0000, 0x0fff, 0x7000, ram);
 			break;
 
 		case 16 * 1024:
-			program.install_ram(0x0000, 0x3fff, 0, 0x4000, ram);
+			program.install_ram(0x0000, 0x3fff, 0x4000, ram);
 			break;
 
 		case 32 * 1024:
@@ -201,13 +201,13 @@ void tmc2000_state::bankswitch()
 	if (m_rac)
 	{
 		// color RAM
-		program.install_ram(0x8000, 0x81ff, 0, 0x7e00, m_colorram);
-		program.unmap_read(0x8000, 0x81ff, 0, 0x7e00);
+		program.install_ram(0x8000, 0x81ff, 0x7e00, m_colorram);
+		program.unmap_read(0x8000, 0xffff);
 	}
 	else
 	{
 		// monitor ROM
-		program.install_rom(0x8000, 0x81ff, 0, 0x7e00, rom);
+		program.install_rom(0x8000, 0x81ff, 0x7e00, rom);
 	}
 }
 
@@ -225,7 +225,7 @@ WRITE8_MEMBER( nano_state::bankswitch_w )
 	/* enable RAM */
 	address_space &program = m_maincpu->space(AS_PROGRAM);
 	UINT8 *ram = m_ram->pointer();
-	program.install_ram(0x0000, 0x0fff, 0, 0x7000, ram);
+	program.install_ram(0x0000, 0x0fff, 0x7000, ram);
 
 	/* write to CDP1864 tone latch */
 	m_cti->tone_latch_w(space, 0, data);
@@ -634,16 +634,6 @@ void tmc2000_state::machine_start()
 		m_colorram[addr] = machine().rand() & 0xff;
 	}
 
-	// find keyboard rows
-	m_key_row[0] = m_y0;
-	m_key_row[1] = m_y1;
-	m_key_row[2] = m_y2;
-	m_key_row[3] = m_y3;
-	m_key_row[4] = m_y4;
-	m_key_row[5] = m_y5;
-	m_key_row[6] = m_y6;
-	m_key_row[7] = m_y7;
-
 	// state saving
 	save_item(NAME(m_keylatch));
 	save_item(NAME(m_rac));
@@ -690,7 +680,7 @@ void nano_state::machine_reset()
 	/* enable ROM */
 	address_space &program = m_maincpu->space(AS_PROGRAM);
 	UINT8 *rom = m_rom->base();
-	program.install_rom(0x0000, 0x01ff, 0, 0x7e00, rom);
+	program.install_rom(0x0000, 0x01ff, 0x7e00, rom);
 }
 
 /* Machine Drivers */
@@ -702,12 +692,12 @@ QUICKLOAD_LOAD_MEMBER( tmc1800_base_state, tmc1800 )
 
 	if (size > m_ram->size())
 	{
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	image.fread( ptr, size);
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 static MACHINE_CONFIG_START( tmc1800, tmc1800_state )

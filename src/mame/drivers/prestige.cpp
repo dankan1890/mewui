@@ -90,17 +90,17 @@ class prestige_state : public driver_device
 {
 public:
 	prestige_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-			m_maincpu(*this, "maincpu"),
-			m_ram(*this, RAM_TAG),
-			m_cart(*this, "cartslot"),
-			m_keyboard(*this, "KEY"),
-			m_cart_type(*this, "CART_TYPE"),
-			m_bank1(*this, "bank1"),
-			m_bank2(*this, "bank2"),
-			m_bank3(*this, "bank3"),
-			m_bank4(*this, "bank4"),
-			m_bank5(*this, "bank5")
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_ram(*this, RAM_TAG)
+		, m_cart(*this, "cartslot")
+		, m_keyboard(*this, "KEY.%u", 0)
+		, m_cart_type(*this, "CART_TYPE")
+		, m_bank1(*this, "bank1")
+		, m_bank2(*this, "bank2")
+		, m_bank3(*this, "bank3")
+		, m_bank4(*this, "bank4")
+		, m_bank5(*this, "bank5")
 		{ }
 
 	required_device<cpu_device> m_maincpu;
@@ -253,8 +253,8 @@ READ8_MEMBER( prestige_state::mouse_r )
 			break;
 	}
 
-	data = MIN(data, +127);
-	data = MAX(data, -127);
+	data = (std::min)(data, INT16(+127));
+	data = (std::max)(data, INT16(-127));
 
 	return 0x80 + data;
 }
@@ -625,8 +625,8 @@ void prestige_state::machine_start()
 	m_cart_rom = memregion(region_tag.assign(m_cart->tag()).append(GENERIC_ROM_REGION_TAG).c_str());
 
 	UINT8 *rom = memregion("maincpu")->base();
-	UINT8 *cart = NULL;
-	if (m_cart_rom != NULL)
+	UINT8 *cart = nullptr;
+	if (m_cart_rom != nullptr)
 	{
 		cart = m_cart_rom->base();
 	}
@@ -893,6 +893,11 @@ ROM_START( cars2lap )
 	ROM_LOAD("n25s16.u6", 0x00000, 0x200000, CRC(ec1ba96e) SHA1(51b8844ae77adf20f74f268d380d268c9ce19785))
 ROM_END
 
+ROM_START( princ )
+	ROM_REGION( 0x100000, "maincpu", 0 )
+	ROM_LOAD("29F800T.U4", 0x00000, 0x100000, CRC(30b6b864) SHA1(7ada3af85dd8dd3f95ca8965ad8e642c26445293))
+ROM_END
+
 
 /* Driver */
 
@@ -922,3 +927,7 @@ COMP( 2012, cars2lap,  0,       0,  prestige,   prestige, driver_device,     0, 
 // gl6600cx use a NSC1028 system-on-a-chip designed by National Semiconductor specifically for VTech
 // http://web.archive.org/web/19991127134657/http://www.national.com/news/item/0,1735,425,00.html
 COMP( 1999, gl6600cx,  0,       0,  prestige,   prestige, driver_device,     0,  "VTech",   "Genius Leader 6600CX (Germany)", MACHINE_IS_SKELETON)
+
+// TODO: move into a separate driver
+// Prin-C use a Fujitsu MB90611A MCU (F2MC-16L)
+COMP( ????, princ,   0,  0,  prestige ,  prestige , driver_device,   0, "Tomy",   "Prin-C",  MACHINE_IS_SKELETON)

@@ -221,7 +221,7 @@ READ8_MEMBER( eti660_state::pia_pa_r )
 	UINT8 i, data = 0xff;
 
 	for (i = 0; i < 4; i++)
-		if BIT(m_keylatch, i)
+		if (BIT(m_keylatch, i))
 			return m_io_keyboard[i]->read();
 
 	return data;
@@ -269,7 +269,7 @@ QUICKLOAD_LOAD_MEMBER( eti660_state, eti660 )
 	int quick_length;
 	dynamic_buffer quick_data;
 	int read_;
-	int result = IMAGE_INIT_FAIL;
+	image_init_result result = image_init_result::FAIL;
 
 	quick_length = image.length();
 	quick_data.resize(quick_length);
@@ -286,12 +286,12 @@ QUICKLOAD_LOAD_MEMBER( eti660_state, eti660 )
 				space.write_byte(i + quick_addr, quick_data[i]);
 
 		/* display a message about the loaded quickload */
-		if (strcmp(image.filetype(), "bin") == 0)
+		if (image.is_filetype("bin"))
 			image.message(" Quickload: size=%04X : start=%04X : end=%04X : Press 6 to start",quick_length,quick_addr,quick_addr+quick_length);
 		else
 			image.message(" Quickload: size=%04X : start=%04X : end=%04X : Press 8 to start",quick_length,quick_addr,quick_addr+quick_length);
 
-		result = IMAGE_INIT_PASS;
+		result = image_init_result::PASS;
 	}
 
 	return result;
@@ -317,7 +317,7 @@ static MACHINE_CONFIG_START( eti660, eti660_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL_8_867238MHz/5, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NULL, READLINE(eti660_state, rdata_r), READLINE(eti660_state, bdata_r), READLINE(eti660_state, gdata_r))
+	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL_8_867238MHz/5, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NOOP, READLINE(eti660_state, rdata_r), READLINE(eti660_state, bdata_r), READLINE(eti660_state, gdata_r))
 	MCFG_CDP1864_CHROMINANCE(RES_K(2.2), RES_K(1), RES_K(4.7), RES_K(4.7)) // R7, R5, R6, R4
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
@@ -325,8 +325,8 @@ static MACHINE_CONFIG_START( eti660, eti660_state )
 	MCFG_DEVICE_ADD(MC6821_TAG, PIA6821, 0)
 	MCFG_PIA_READPA_HANDLER(READ8(eti660_state, pia_pa_r))
 	MCFG_PIA_WRITEPA_HANDLER(WRITE8(eti660_state, pia_pa_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE(CDP1802_TAG, cosmac_device, int_w)) MCFG_DEVCB_INVERT
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE(CDP1802_TAG, cosmac_device, int_w)) MCFG_DEVCB_INVERT
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT)) MCFG_DEVCB_INVERT
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT)) MCFG_DEVCB_INVERT
 
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_MUTED)

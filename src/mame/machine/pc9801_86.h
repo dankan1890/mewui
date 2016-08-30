@@ -41,13 +41,13 @@ public:
 	DECLARE_READ8_MEMBER(pcm_r);
 	DECLARE_WRITE8_MEMBER(pcm_w);
 	DECLARE_WRITE_LINE_MEMBER(sound_irq);
-	virtual const rom_entry *device_rom_region() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 protected:
 	// device-level overrides
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	void install_device(offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_delegate rhandler, write8_delegate whandler);
+	void install_device(offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler);
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 
 private:

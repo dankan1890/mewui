@@ -42,7 +42,7 @@ function maintargetosdoptions(_target,_subtarget)
 		links {
 			"SDL2_ttf",
 		}
-		local str = backtick("pkg-config --libs fontconfig")
+		local str = backtick(pkgconfigcmd() .. " --libs fontconfig")
 		addlibfromstring(str)
 		addoptionsfromstring(str)
 	end
@@ -132,7 +132,7 @@ function sdlconfigcmd()
 	if _OPTIONS["targetos"]=="asmjs" then
 		return "sdl2-config"
 	elseif not _OPTIONS["SDL_INSTALL_ROOT"] then
-		return _OPTIONS['TOOLCHAIN'] .. "pkg-config sdl2"
+		return pkgconfigcmd() .. " sdl2"
 	else
 		return path.join(_OPTIONS["SDL_INSTALL_ROOT"],"bin","sdl2") .. "-config"
 	end
@@ -239,7 +239,7 @@ elseif _OPTIONS["targetos"]=="macosx" then
 	SDL_NETWORK         = "pcap"
 end
 
-if _OPTIONS["with-bundled-sdl2"]~=nil or _OPTIONS["targetos"]=="android" then
+if _OPTIONS["with-bundled-sdl2"]~=nil then
 	includedirs {
 		GEN_DIR .. "includes",
 	}
@@ -295,10 +295,12 @@ if BASE_TARGETOS=="unix" then
 				"/usr/openwin/lib",
 			}
 		end
-		if _OPTIONS["with-bundled-sdl2"]~=nil and _OPTIONS["targetos"]~="android" then
-			links {
-				"SDL2",
-			}
+		if _OPTIONS["with-bundled-sdl2"]~=nil then
+			if _OPTIONS["targetos"]~="android" then
+				links {
+					"SDL2",
+				}
+			end
 		else
 			local str = backtick(sdlconfigcmd() .. " --libs")
 			addlibfromstring(str)
@@ -338,7 +340,7 @@ project ("qtdbg_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/modules/render",
 		MAME_DIR .. "3rdparty",
 	}
-	configuration { "linux-*" }
+	configuration { "linux-* or freebsd" }
 		buildoptions {
 			"-fPIC",
 		}
@@ -425,9 +427,6 @@ project ("osd_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/sdl/window.h",
 		MAME_DIR .. "src/osd/modules/osdwindow.cpp",
 		MAME_DIR .. "src/osd/modules/osdwindow.h",
-		MAME_DIR .. "src/osd/sdl/output.cpp",
-		MAME_DIR .. "src/osd/sdl/watchdog.cpp",
-		MAME_DIR .. "src/osd/sdl/watchdog.h",
 		MAME_DIR .. "src/osd/modules/render/drawsdl.cpp",
 	}
 	files {
@@ -460,18 +459,17 @@ project ("ocore_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd/osdcore.h",
 		MAME_DIR .. "src/osd/strconv.cpp",
 		MAME_DIR .. "src/osd/strconv.h",
-		MAME_DIR .. "src/osd/sdl/sdldir.cpp",
+		MAME_DIR .. "src/osd/osdsync.cpp",
+		MAME_DIR .. "src/osd/osdsync.h",
 		MAME_DIR .. "src/osd/modules/osdmodule.cpp",
 		MAME_DIR .. "src/osd/modules/osdmodule.h",
 		MAME_DIR .. "src/osd/modules/lib/osdlib_" .. SDLOS_TARGETOS .. ".cpp",
 		MAME_DIR .. "src/osd/modules/lib/osdlib.h",
-		MAME_DIR .. "src/osd/modules/sync/osdsync.cpp",
-		MAME_DIR .. "src/osd/modules/sync/osdsync.h",
-		MAME_DIR .. "src/osd/modules/sync/work_osd.cpp",
 	}
 
 	if BASE_TARGETOS=="unix" then
 		files {
+			MAME_DIR .. "src/osd/modules/file/posixdir.cpp",
 			MAME_DIR .. "src/osd/modules/file/posixfile.cpp",
 			MAME_DIR .. "src/osd/modules/file/posixfile.h",
 			MAME_DIR .. "src/osd/modules/file/posixptty.cpp",
@@ -482,6 +480,7 @@ project ("ocore_" .. _OPTIONS["osd"])
 			MAME_DIR .. "src/osd/windows",
 		}
 		files {
+			MAME_DIR .. "src/osd/modules/file/windir.cpp",
 			MAME_DIR .. "src/osd/modules/file/winfile.cpp",
 			MAME_DIR .. "src/osd/modules/file/winfile.h",
 			MAME_DIR .. "src/osd/modules/file/winptty.cpp",

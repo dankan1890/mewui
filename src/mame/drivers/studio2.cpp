@@ -535,7 +535,7 @@ DEVICE_IMAGE_LOAD_MEMBER( studio2_state, studio2_cart_load )
 
 	if (image.software_entry() == nullptr)
 	{
-		if (!strcmp(image.filetype(), "st2"))
+		if (image.is_filetype("st2"))
 		{
 			UINT8 header[0x100];
 			UINT8 catalogue[10], title[32], pages[64];
@@ -544,7 +544,7 @@ DEVICE_IMAGE_LOAD_MEMBER( studio2_state, studio2_cart_load )
 			if (image.length() <= 0x100)
 			{
 				image.seterror(IMAGE_ERROR_UNSPECIFIED, "Invalid ROM file");
-				return IMAGE_INIT_FAIL;
+				return image_init_result::FAIL;
 			}
 
 			image.fread(&header, 0x100);
@@ -553,7 +553,7 @@ DEVICE_IMAGE_LOAD_MEMBER( studio2_state, studio2_cart_load )
 			if (strncmp((const char *)header, "RCA2", 4))
 			{
 				image.seterror(IMAGE_ERROR_UNSPECIFIED, "Not an .ST2 file");
-				return IMAGE_INIT_FAIL;
+				return image_init_result::FAIL;
 			}
 
 			blocks = header[4];
@@ -583,7 +583,7 @@ DEVICE_IMAGE_LOAD_MEMBER( studio2_state, studio2_cart_load )
 			if (size > 0x400)
 			{
 				image.seterror(IMAGE_ERROR_UNSPECIFIED, "Unsupported cartridge size");
-				return IMAGE_INIT_FAIL;
+				return image_init_result::FAIL;
 			}
 			else
 				image.fread(m_cart->get_rom_base(), size);
@@ -603,7 +603,7 @@ DEVICE_IMAGE_LOAD_MEMBER( studio2_state, studio2_cart_load )
 			memcpy(m_cart->get_rom_base() + 0xa00, image.get_software_region("rom_e00"), image.get_software_region_length("rom_e00"));
 	}
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -698,7 +698,7 @@ static MACHINE_CONFIG_START( mpt02, mpt02_state )
 	MCFG_SOUND_ADD("beeper", BEEP, 300)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
-	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, CDP1864_CLOCK, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NULL, READLINE(mpt02_state, rdata_r), READLINE(mpt02_state, bdata_r), READLINE(mpt02_state, gdata_r))
+	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, CDP1864_CLOCK, GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NOOP, READLINE(mpt02_state, rdata_r), READLINE(mpt02_state, bdata_r), READLINE(mpt02_state, gdata_r))
 	MCFG_CDP1864_CHROMINANCE(RES_K(4.7), RES_K(8.2), RES_K(4.7), RES_K(22))
 
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

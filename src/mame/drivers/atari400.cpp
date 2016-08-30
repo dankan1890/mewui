@@ -46,7 +46,7 @@
 #include "machine/ram.h"
 #include "sound/dac.h"
 #include "sound/pokey.h"
-#include "includes/atari.h"
+#include "includes/atari400.h"
 #include "machine/atarifdc.h"
 #include "bus/a800/a800_slot.h"
 #include "bus/a800/a800_carts.h"
@@ -1015,7 +1015,7 @@ static const UINT8 atari_palette[256*3] =
 	0xE6,0xD3,0x5E, 0xF7,0xE4,0x6F, 0xFF,0xF5,0x83, 0xFF,0xF7,0x97,
 	/* Orange */
 	0x31,0x00,0x00, 0x42,0x06,0x00, 0x53,0x17,0x00, 0x64,0x28,0x00,
-	0x75,0x39,0x00, 0x86,0X4A,0x00, 0x97,0x5B,0x0B, 0xA8,0x6C,0x1C,
+	0x75,0x39,0x00, 0x86,0x4A,0x00, 0x97,0x5B,0x0B, 0xA8,0x6C,0x1C,
 	0xB9,0x7D,0x2D, 0xCA,0x8E,0x3E, 0xDB,0x9F,0x4F, 0xEC,0xB0,0x60,
 	0xFD,0xC1,0x71, 0xFF,0xD2,0x86, 0xFF,0xE3,0x9D, 0xFF,0xF4,0xB3,
 	/* Red-Orange */
@@ -1707,29 +1707,29 @@ void a400_state::setup_ram(int bank, UINT32 size)
 	switch (bank)
 	{
 		case 0: // 0x0000-0x7fff
-			ram_top = MIN(size, 0x8000) - 1;
+			ram_top = std::min(size, UINT32(0x8000)) - 1;
 			m_maincpu->space(AS_PROGRAM).install_readwrite_bank(0x0000, ram_top, "0000");
 			if (m_0000 == nullptr)
-				m_0000.findit();
+				m_0000.findit(false);
 			m_0000->set_base(m_ram->pointer());
 			break;
 		case 1: // 0x8000-0x9fff
-			ram_top = MIN(size, 0xa000) - 1;
+			ram_top = std::min(size, UINT32(0xa000)) - 1;
 			if (ram_top > 0x8000)
 			{
 				m_maincpu->space(AS_PROGRAM).install_readwrite_bank(0x8000, ram_top, "8000");
 				if (m_8000 == nullptr)
-					m_8000.findit();
+					m_8000.findit(false);
 				m_8000->set_base(m_ram->pointer() + 0x8000);
 			}
 			break;
 		case 2: // 0xa000-0xbfff
-			ram_top = MIN(size, 0xc000) - 1;
+			ram_top = std::min(size, UINT32(0xc000)) - 1;
 			if (ram_top > 0xa000)
 			{
 				m_maincpu->space(AS_PROGRAM).install_readwrite_bank(0xa000, ram_top, "a000");
 				if (m_a000 == nullptr)
-					m_a000.findit();
+					m_a000.findit(false);
 				m_a000->set_base(m_ram->pointer() + 0xa000);
 			}
 			break;
@@ -2314,8 +2314,8 @@ static MACHINE_CONFIG_DERIVED( a5200, atari_common_nodac )
 
 	// FIXME: should there be anything connected where other system have the fdc?
 	MCFG_SOUND_MODIFY("pokey")
-	MCFG_POKEY_SERIN_R_CB(NULL)
-	MCFG_POKEY_SEROUT_W_CB(NULL)
+	MCFG_POKEY_SERIN_R_CB(NOOP)
+	MCFG_POKEY_SEROUT_W_CB(NOOP)
 	MCFG_POKEY_KEYBOARD_CB(atari_common_state, a5200_keypads)
 	MCFG_POKEY_INTERRUPT_CB(atari_common_state, interrupt_cb)
 
@@ -2327,9 +2327,9 @@ static MACHINE_CONFIG_DERIVED( a5200, atari_common_nodac )
 	MCFG_ANTIC_GTIA("gtia")
 
 	MCFG_DEVICE_MODIFY("pia")
-	MCFG_PIA_READPA_HANDLER(NULL) // FIXME: is there anything connected here
-	MCFG_PIA_READPB_HANDLER(NULL) // FIXME: is there anything connected here
-	MCFG_PIA_CB2_HANDLER(NULL) // FIXME: is there anything connected here
+	MCFG_PIA_READPA_HANDLER(NOOP) // FIXME: is there anything connected here
+	MCFG_PIA_READPB_HANDLER(NOOP) // FIXME: is there anything connected here
+	MCFG_PIA_CB2_HANDLER(NOOP) // FIXME: is there anything connected here
 
 	MCFG_MACHINE_START_OVERRIDE( a400_state, a5200 )
 

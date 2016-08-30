@@ -57,13 +57,10 @@ MB89372 - Uses 3 serial data transfer protocols: ASYNC, COP & BOP. Has a built
 ***************************************************************************/
 
 #include "emu.h"
-#include "cpu/z80/z80.h"
 #include "includes/segaybd.h"
-#include "cpu/m68000/m68000.h"
 #include "machine/mb8421.h"
-#include "machine/segaic16.h"
 #include "machine/nvram.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "sound/segapcm.h"
 #include "includes/segaipt.h"
 
@@ -109,16 +106,13 @@ READ16_MEMBER( segaybd_state::analog_r )
 WRITE16_MEMBER( segaybd_state::analog_w )
 {
 	int selected = ((offset & 3) == 3) ? (3 + (m_misc_io_data[0x08/2] & 3)) : (offset & 3);
-	m_analog_data[offset & 3] = read_safe(m_adc_ports[selected], 0xff);
+	m_analog_data[offset & 3] = m_adc_ports[selected].read_safe(0xff);
 }
 
 
 //-------------------------------------------------
 //  io_chip_r - handle reads from the I/O chip
 //-------------------------------------------------
-
-IOPORT_ARRAY_MEMBER( segaybd_state::digital_ports )
-{ "P1", "GENERAL", "LIMITSW", "PORTD", "PORTE", "DSW", "COINAGE", "PORTH" };
 
 READ16_MEMBER( segaybd_state::io_chip_r )
 {
@@ -209,7 +203,7 @@ WRITE16_MEMBER( segaybd_state::io_chip_w )
 			//
 			m_segaic16vid->set_display_enable(data & 0x80);
 			if (((old ^ data) & 0x20) && !(data & 0x20))
-				machine().watchdog_reset();
+				m_watchdog->watchdog_reset();
 			m_soundcpu->set_input_line(INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 			m_subx->set_input_line(INPUT_LINE_RESET, (data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 			m_suby->set_input_line(INPUT_LINE_RESET, (data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
@@ -257,7 +251,7 @@ WRITE16_MEMBER( segaybd_state::sound_data_w )
 READ8_MEMBER( segaybd_state::sound_data_r )
 {
 	m_soundcpu->set_input_line(INPUT_LINE_NMI, CLEAR_LINE);
-	return soundlatch_read();
+	return m_soundlatch->read(space, 0);
 }
 
 
@@ -373,7 +367,7 @@ void segaybd_state::device_timer(emu_timer &timer, device_timer_id id, int param
 			break;
 
 		case TID_SOUND_WRITE:
-			soundlatch_write(param);
+			m_soundlatch->write(m_soundcpu->space(AS_PROGRAM), 0, param);
 			m_soundcpu->set_input_line(INPUT_LINE_NMI, ASSERT_LINE);
 			break;
 
@@ -1380,6 +1374,8 @@ static MACHINE_CONFIG_START( yboard, segaybd_state )
 	MCFG_NVRAM_ADD_0FILL("backupram")
 	MCFG_QUANTUM_TIME(attotime::from_hz(6000))
 
+	MCFG_WATCHDOG_ADD("watchdog")
+
 	MCFG_SEGA_315_5248_MULTIPLIER_ADD("multiplier_main")
 	MCFG_SEGA_315_5248_MULTIPLIER_ADD("multiplier_subx")
 	MCFG_SEGA_315_5248_MULTIPLIER_ADD("multiplier_suby")
@@ -1406,6 +1402,8 @@ static MACHINE_CONFIG_START( yboard, segaybd_state )
 
 	// sound hardware
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_YM2151_ADD("ymsnd", SOUND_CLOCK/8)
 	MCFG_YM2151_IRQ_HANDLER(INPUTLINE("soundcpu", 0))

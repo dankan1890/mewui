@@ -173,7 +173,7 @@ VIDEO_START_MEMBER(pacman_state,pacman)
 	/* one pixel to the left to get a more correct placement */
 	m_xoffsethack = 1;
 
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::pacman_get_tile_info),this), tilemap_mapper_delegate(FUNC(pacman_state::pacman_scan_rows),this),  8, 8, 36, 28 );
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::pacman_get_tile_info),this), tilemap_mapper_delegate(FUNC(pacman_state::pacman_scan_rows),this),  8, 8, 36, 28 );
 }
 
 VIDEO_START_MEMBER(pacman_state,birdiy)
@@ -291,7 +291,7 @@ UINT32 pacman_state::screen_update_pacman(screen_device &screen, bitmap_ind16 &b
 			m_gfxdecode->gfx(1)->transmask(bitmap,spriteclip,
 					( spriteram[offs] >> 2 ) | (m_spritebank << 6),
 					color,
-					fy,fx,          //FIXME: flipping bits are really supposed to be inverted here?
+					fx,fy,
 					sx - 256,sy + m_xoffsethack,
 					m_palette->transpen_mask(*m_gfxdecode->gfx(1), color & 0x3f, 0));
 		}
@@ -322,7 +322,7 @@ VIDEO_START_MEMBER(pacman_state,pengo)
 	m_inv_spr = 0;
 	m_xoffsethack = 0;
 
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::pacman_get_tile_info),this), tilemap_mapper_delegate(FUNC(pacman_state::pacman_scan_rows),this),  8, 8, 36, 28 );
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::pacman_get_tile_info),this), tilemap_mapper_delegate(FUNC(pacman_state::pacman_scan_rows),this),  8, 8, 36, 28 );
 }
 
 WRITE8_MEMBER(pacman_state::pengo_palettebank_w)
@@ -385,7 +385,7 @@ VIDEO_START_MEMBER(pacman_state,s2650games)
 	m_inv_spr = 0;
 	m_xoffsethack = 1;
 
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::s2650_get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,32,32 );
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::s2650_get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,32,32 );
 
 	m_bg_tilemap->set_scroll_cols(32);
 }
@@ -553,7 +553,7 @@ VIDEO_START_MEMBER(pacman_state,jrpacman)
 	m_inv_spr = 0;
 	m_xoffsethack = 1;
 
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::jrpacman_get_tile_info),this),tilemap_mapper_delegate(FUNC(pacman_state::jrpacman_scan_rows),this),8,8,36,54 );
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pacman_state::jrpacman_get_tile_info),this),tilemap_mapper_delegate(FUNC(pacman_state::jrpacman_scan_rows),this),8,8,36,54 );
 
 	m_bg_tilemap->set_transparent_pen(0 );
 	m_bg_tilemap->set_scroll_cols(36 );

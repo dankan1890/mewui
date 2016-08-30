@@ -79,7 +79,7 @@ harddisk_image_device::~harddisk_image_device()
 
 void harddisk_image_device::device_config_complete()
 {
-	m_formatlist.append(*global_alloc(image_device_format("chd", "CHD Hard drive", "chd,hd", hd_option_spec)));
+	add_format("chd", "CHD Hard drive", "chd,hd", hd_option_spec);
 
 	// set brief and instance name
 	update_names();
@@ -116,9 +116,9 @@ void harddisk_image_device::device_stop()
 		hard_disk_close(m_hard_disk_handle);
 }
 
-bool harddisk_image_device::call_load()
+image_init_result harddisk_image_device::call_load()
 {
-	int our_result;
+	image_init_result our_result;
 
 	our_result = internal_load_hd();
 
@@ -132,17 +132,18 @@ bool harddisk_image_device::call_load()
 
 }
 
-bool harddisk_image_device::call_create(int create_format, option_resolution *create_args)
+image_init_result harddisk_image_device::call_create(int create_format, util::option_resolution *create_args)
 {
 	int err;
 	UINT32 sectorsize, hunksize;
 	UINT32 cylinders, heads, sectors, totalsectors;
 
-	cylinders   = option_resolution_lookup_int(create_args, 'C');
-	heads       = option_resolution_lookup_int(create_args, 'H');
-	sectors     = option_resolution_lookup_int(create_args, 'S');
-	sectorsize  = option_resolution_lookup_int(create_args, 'L');
-	hunksize    = option_resolution_lookup_int(create_args, 'K');
+	assert_always(create_args != nullptr, "Expected create_args to not be nullptr");
+	cylinders   = create_args->lookup_int('C');
+	heads       = create_args->lookup_int('H');
+	sectors     = create_args->lookup_int('S');
+	sectorsize  = create_args->lookup_int('L');
+	hunksize    = create_args->lookup_int('K');
 
 	totalsectors = cylinders * heads * sectors;
 
@@ -162,7 +163,7 @@ bool harddisk_image_device::call_create(int create_format, option_resolution *cr
 	return internal_load_hd();
 
 error:
-	return IMAGE_INIT_FAIL;
+	return image_init_result::FAIL;
 }
 
 void harddisk_image_device::call_unload()
@@ -227,7 +228,7 @@ static chd_error open_disk_diff(emu_options &options, const char *name, chd_file
 	return CHDERR_FILE_NOT_FOUND;
 }
 
-int harddisk_image_device::internal_load_hd()
+image_init_result harddisk_image_device::internal_load_hd()
 {
 	chd_error err = CHDERR_NONE;
 
@@ -267,7 +268,7 @@ int harddisk_image_device::internal_load_hd()
 		/* open the hard disk file */
 		m_hard_disk_handle = hard_disk_open(m_chd);
 		if (m_hard_disk_handle != nullptr)
-			return IMAGE_INIT_PASS;
+			return image_init_result::PASS;
 	}
 
 	/* if we had an error, close out the CHD */
@@ -276,7 +277,7 @@ int harddisk_image_device::internal_load_hd()
 	m_chd = nullptr;
 	seterror(IMAGE_ERROR_UNSPECIFIED, chd_file::error_string(err));
 
-	return IMAGE_INIT_FAIL;
+	return image_init_result::FAIL;
 }
 
 /*************************************

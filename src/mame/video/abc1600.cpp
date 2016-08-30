@@ -55,32 +55,38 @@ DEVICE_ADDRESS_MAP_START( crtc_map, 8, abc1600_mover_device )
 	AM_RANGE(0x01, 0x01) AM_MIRROR(0xfe) AM_DEVREADWRITE(SY6845E_TAG, mc6845_device, register_r, register_w)
 ADDRESS_MAP_END
 
-DEVICE_ADDRESS_MAP_START( io_map, 8, abc1600_mover_device )
-	AM_RANGE(0x000, 0x000) AM_MIRROR(0xff) AM_READ(iord0_r)
-	AM_RANGE(0x000, 0x000) AM_MIRROR(0xf8) AM_WRITE(ldsx_hb_w)
-	AM_RANGE(0x001, 0x001) AM_MIRROR(0xf8) AM_WRITE(ldsx_lb_w)
-	AM_RANGE(0x002, 0x002) AM_MIRROR(0xf8) AM_WRITE(ldsy_hb_w)
-	AM_RANGE(0x003, 0x003) AM_MIRROR(0xf8) AM_WRITE(ldsy_lb_w)
-	AM_RANGE(0x004, 0x004) AM_MIRROR(0xf8) AM_WRITE(ldtx_hb_w)
-	AM_RANGE(0x005, 0x005) AM_MIRROR(0xf8) AM_WRITE(ldtx_lb_w)
-	AM_RANGE(0x006, 0x006) AM_MIRROR(0xf8) AM_WRITE(ldty_hb_w)
-	AM_RANGE(0x007, 0x007) AM_MIRROR(0xf8) AM_WRITE(ldty_lb_w)
-	AM_RANGE(0x100, 0x100) AM_MIRROR(0xf8) AM_WRITE(ldfx_hb_w)
-	AM_RANGE(0x101, 0x101) AM_MIRROR(0xf8) AM_WRITE(ldfx_lb_w)
-	AM_RANGE(0x102, 0x102) AM_MIRROR(0xf8) AM_WRITE(ldfy_hb_w)
-	AM_RANGE(0x103, 0x103) AM_MIRROR(0xf8) AM_WRITE(ldfy_lb_w)
-	AM_RANGE(0x105, 0x105) AM_MIRROR(0xf8) AM_WRITE(wrml_w)
-	AM_RANGE(0x107, 0x107) AM_MIRROR(0xf8) AM_WRITE(wrdl_w)
-	AM_RANGE(0x200, 0x200) AM_MIRROR(0xf8) AM_WRITE(wrmask_strobe_hb_w)
-	AM_RANGE(0x201, 0x201) AM_MIRROR(0xf8) AM_WRITE(wrmask_strobe_lb_w)
-	AM_RANGE(0x202, 0x202) AM_MIRROR(0xf8) AM_WRITE(enable_clocks_w)
-	AM_RANGE(0x203, 0x203) AM_MIRROR(0xf8) AM_WRITE(flag_strobe_w)
-	AM_RANGE(0x204, 0x204) AM_MIRROR(0xf8) AM_WRITE(endisp_w)
+DEVICE_ADDRESS_MAP_START( iowr0_map, 8, abc1600_mover_device )
+	AM_RANGE(0x00, 0x00) AM_MIRROR(0xff) AM_READ(iord0_r)
+	AM_RANGE(0x00, 0x00) AM_MIRROR(0xf8) AM_WRITE(ldsx_hb_w)
+	AM_RANGE(0x01, 0x01) AM_MIRROR(0xf8) AM_WRITE(ldsx_lb_w)
+	AM_RANGE(0x02, 0x02) AM_MIRROR(0xf8) AM_WRITE(ldsy_hb_w)
+	AM_RANGE(0x03, 0x03) AM_MIRROR(0xf8) AM_WRITE(ldsy_lb_w)
+	AM_RANGE(0x04, 0x04) AM_MIRROR(0xf8) AM_WRITE(ldtx_hb_w)
+	AM_RANGE(0x05, 0x05) AM_MIRROR(0xf8) AM_WRITE(ldtx_lb_w)
+	AM_RANGE(0x06, 0x06) AM_MIRROR(0xf8) AM_WRITE(ldty_hb_w)
+	AM_RANGE(0x07, 0x07) AM_MIRROR(0xf8) AM_WRITE(ldty_lb_w)
+ADDRESS_MAP_END
+
+DEVICE_ADDRESS_MAP_START( iowr1_map, 8, abc1600_mover_device )
+	AM_RANGE(0x00, 0x00) AM_MIRROR(0xf8) AM_WRITE(ldfx_hb_w)
+	AM_RANGE(0x01, 0x01) AM_MIRROR(0xf8) AM_WRITE(ldfx_lb_w)
+	AM_RANGE(0x02, 0x02) AM_MIRROR(0xf8) AM_WRITE(ldfy_hb_w)
+	AM_RANGE(0x03, 0x03) AM_MIRROR(0xf8) AM_WRITE(ldfy_lb_w)
+	AM_RANGE(0x05, 0x05) AM_MIRROR(0xf8) AM_WRITE(wrml_w)
+	AM_RANGE(0x07, 0x07) AM_MIRROR(0xf8) AM_WRITE(wrdl_w)
+ADDRESS_MAP_END
+
+DEVICE_ADDRESS_MAP_START( iowr2_map, 8, abc1600_mover_device )
+	AM_RANGE(0x00, 0x00) AM_MIRROR(0xf8) AM_WRITE(wrmask_strobe_hb_w)
+	AM_RANGE(0x01, 0x01) AM_MIRROR(0xf8) AM_WRITE(wrmask_strobe_lb_w)
+	AM_RANGE(0x02, 0x02) AM_MIRROR(0xf8) AM_WRITE(enable_clocks_w)
+	AM_RANGE(0x03, 0x03) AM_MIRROR(0xf8) AM_WRITE(flag_strobe_w)
+	AM_RANGE(0x04, 0x04) AM_MIRROR(0xf8) AM_WRITE(endisp_w)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( mover_map, AS_0, 16, abc1600_mover_device )
-	AM_RANGE(0x00000, 0x7ffff) AM_RAM
+	AM_RANGE(0x00000, 0x3ffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -101,7 +107,7 @@ ROM_START( abc1600_mover )
 	ROM_LOAD16_BYTE( "drmskh 6490358-01.1l", 0x00, 0x20, CRC(a4a9a9dc) SHA1(d8575c0335d6021cbb5f7bcd298b41c35294a80a) )
 
 	ROM_REGION( 0x104, "plds", 0 )
-	ROM_LOAD( "drmsk 6490360-01.1m", 0x000, 0x104, CRC(5f7143c1) SHA1(1129917845f8e505998b15288f02bf907487e4ac) ) // mover word mixer @ 1m,1n,1t,2t
+	ROM_LOAD( "drmsk 6490360-01.1m", 0x000, 0x104, CRC(5f7143c1) SHA1(1129917845f8e505998b15288f02bf907487e4ac) ) // PAL16L8 mover word mixer @ 1m,1n,1t,2t
 ROM_END
 
 
@@ -109,7 +115,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *abc1600_mover_device::device_rom_region() const
+const tiny_rom_entry *abc1600_mover_device::device_rom_region() const
 {
 	return ROM_NAME( abc1600_mover );
 }
@@ -188,11 +194,8 @@ static MACHINE_CONFIG_FRAGMENT( abc1600_mover )
 	MCFG_DEFAULT_LAYOUT(layout_abc1600)
 
 	MCFG_SCREEN_ADD_MONOCHROME(SCREEN_TAG, RASTER, rgb_t::green)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) // not accurate
 	MCFG_SCREEN_UPDATE_DRIVER(abc1600_mover_device, screen_update)
-	MCFG_SCREEN_SIZE(958, 1067)
-	MCFG_SCREEN_VISIBLE_AREA(0, 958-1, 0, 1067-1)
+	MCFG_SCREEN_RAW_PARAMS(XTAL_64MHz, 0x3e0, 0, 0x300, 0x433, 0, 0x400)
 
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 

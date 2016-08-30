@@ -14,11 +14,20 @@ namespace stl = tinystl;
 
 #include <bgfx/bgfx.h>
 #include <bx/commandline.h>
+#include <bx/endian.h>
 #include <bx/fpumath.h>
 #include <bx/readerwriter.h>
 #include <bx/string.h>
 #include "entry/entry.h"
 #include <ib-compress/indexbufferdecompression.h>
+
+#define LODEPNG_NO_COMPILE_ENCODER
+#define LODEPNG_NO_COMPILE_DISK
+#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
+#define LODEPNG_NO_COMPILE_ERROR_TEXT
+#define LODEPNG_NO_COMPILE_ALLOCATORS
+#define LODEPNG_NO_COMPILE_CPP
+#include <lodepng/lodepng.h>
 
 #include "bgfx_utils.h"
 
@@ -154,30 +163,24 @@ bgfx::ProgramHandle loadProgram(const char* _vsName, const char* _fsName)
 }
 
 typedef unsigned char stbi_uc;
-extern "C" stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp);
+extern "C" stbi_uc* stbi_load_from_memory(stbi_uc const* _buffer, int _len, int* _x, int* _y, int* _comp, int _req_comp);
+extern "C" void stbi_image_free(void* _ptr);
+extern void lodepng_free(void* _ptr);
 
-bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
+bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _filePath, uint32_t _flags, uint8_t _skip, bgfx::TextureInfo* _info)
 {
-	char filePath[512] = { '\0' };
-	if (NULL == strchr(_name, '/') )
+	if (NULL != bx::stristr(_filePath, ".dds")
+	||  NULL != bx::stristr(_filePath, ".pvr")
+	||  NULL != bx::stristr(_filePath, ".ktx") )
 	{
-		strcpy(filePath, "textures/");
-	}
-
-	strcat(filePath, _name);
-
-	if (NULL != bx::stristr(_name, ".dds")
-	||  NULL != bx::stristr(_name, ".pvr")
-	||  NULL != bx::stristr(_name, ".ktx") )
-	{
-		const bgfx::Memory* mem = loadMem(_reader, filePath);
+		const bgfx::Memory* mem = loadMem(_reader, _filePath);
 		if (NULL != mem)
 		{
 			return bgfx::createTexture(mem, _flags, _skip, _info);
 		}
 
 		bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-		DBG("Failed to load %s.", filePath);
+		DBG("Failed to load %s.", _filePath);
 		return handle;
 	}
 
@@ -185,27 +188,128 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 	bx::AllocatorI* allocator = entry::getAllocator();
 
 	uint32_t size = 0;
-	void* data = loadMem(_reader, allocator, filePath, &size);
+	void* data = loadMem(_reader, allocator, _filePath, &size);
 	if (NULL != data)
 	{
-		int width  = 0;
-		int height = 0;
-		int comp   = 0;
+		bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8;
+		uint32_t bpp = 32;
 
-		uint8_t* img = NULL;
-		img = stbi_load_from_memory( (uint8_t*)data, size, &width, &height, &comp, 4);
+		uint32_t width  = 0;
+		uint32_t height = 0;
+
+		typedef void (*ReleaseFn)(void* _ptr);
+		ReleaseFn release = stbi_image_free;
+
+		uint8_t* out = NULL;
+		static uint8_t pngMagic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0d, 0x0a };
+		if (0 == memcmp(data, pngMagic, sizeof(pngMagic) ) )
+		{
+			release = lodepng_free;
+
+			unsigned error;
+			LodePNGState state;
+			lodepng_state_init(&state);
+			state.decoder.color_convert = 0;
+			error = lodepng_decode(&out, &width, &height, &state, (uint8_t*)data, size);
+
+			if (0 == error)
+			{
+				switch (state.info_raw.bitdepth)
+				{
+				case 8:
+					switch (state.info_raw.colortype)
+					{
+					case LCT_GREY:
+						format = bgfx::TextureFormat::R8;
+						bpp    = 8;
+						break;
+
+					case LCT_GREY_ALPHA:
+						format = bgfx::TextureFormat::RG8;
+						bpp    = 16;
+						break;
+
+					case LCT_RGB:
+						format = bgfx::TextureFormat::RGB8;
+						bpp    = 24;
+						break;
+
+					case LCT_RGBA:
+						format = bgfx::TextureFormat::RGBA8;
+						bpp    = 32;
+						break;
+
+					case LCT_PALETTE:
+						break;
+					}
+					break;
+
+				case 16:
+					switch (state.info_raw.colortype)
+					{
+					case LCT_GREY:
+						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
+						{
+							uint16_t* rgba = (uint16_t*)out + ii*4;
+							rgba[0] = bx::toHostEndian(rgba[0], false);
+						}
+						format = bgfx::TextureFormat::R16;
+						bpp    = 16;
+						break;
+
+					case LCT_GREY_ALPHA:
+						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
+						{
+							uint16_t* rgba = (uint16_t*)out + ii*4;
+							rgba[0] = bx::toHostEndian(rgba[0], false);
+							rgba[1] = bx::toHostEndian(rgba[1], false);
+						}
+						format = bgfx::TextureFormat::R16;
+						bpp    = 16;
+						break;
+
+					case LCT_RGBA:
+						for (uint32_t ii = 0, num = width*height; ii < num; ++ii)
+						{
+							uint16_t* rgba = (uint16_t*)out + ii*4;
+							rgba[0] = bx::toHostEndian(rgba[0], false);
+							rgba[1] = bx::toHostEndian(rgba[1], false);
+							rgba[2] = bx::toHostEndian(rgba[2], false);
+							rgba[3] = bx::toHostEndian(rgba[3], false);
+						}
+						format = bgfx::TextureFormat::RGBA16;
+						bpp    = 64;
+						break;
+
+					case LCT_RGB:
+					case LCT_PALETTE:
+						break;
+					}
+					break;
+
+				default:
+					break;
+				}
+			}
+
+			lodepng_state_cleanup(&state);
+		}
+		else
+		{
+			int comp = 0;
+			out = stbi_load_from_memory( (uint8_t*)data, size, (int*)&width, (int*)&height, &comp, 4);
+		}
 
 		BX_FREE(allocator, data);
 
-		if (NULL != img)
+		if (NULL != out)
 		{
 			handle = bgfx::createTexture2D(uint16_t(width), uint16_t(height), 1
-											, bgfx::TextureFormat::RGBA8
+											, format
 											, _flags
-											, bgfx::copy(img, width*height*4)
+											, bgfx::copy(out, width*height*bpp/8)
 											);
-
-			free(img);
+			release(out);
 
 			if (NULL != _info)
 			{
@@ -215,14 +319,14 @@ bgfx::TextureHandle loadTexture(bx::FileReaderI* _reader, const char* _name, uin
 					, 0
 					, false
 					, 1
-					, bgfx::TextureFormat::RGBA8
+					, format
 					);
 			}
 		}
 	}
 	else
 	{
-		DBG("Failed to load %s.", filePath);
+		DBG("Failed to load %s.", _filePath);
 	}
 
 	return handle;

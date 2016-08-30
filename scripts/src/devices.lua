@@ -19,9 +19,12 @@ function devicesProject(_target, _subtarget)
 	uuid (os.uuid("optional-" .. _target .."_" .. _subtarget))
 	kind (LIBTYPE)
 	targetsubdir(_target .."_" .. _subtarget)
-	options {
-		"ArchiveSplit",
-	}
+
+	if (_OPTIONS["targetos"] ~= "asmjs") then
+		options {
+			"ArchiveSplit",
+		}
+	end
 
 	addprojectflags()
 	precompiledheaders()
@@ -38,7 +41,6 @@ function devicesProject(_target, _subtarget)
 		GEN_DIR  .. "emu",
 		GEN_DIR  .. "emu/layout",
 		ext_includedir("expat"),
-		ext_includedir("lua"),
 		ext_includedir("flac"),
 	}
 
@@ -69,7 +71,6 @@ if #disasm_files > 0 then
 		MAME_DIR .. "3rdparty",
 		GEN_DIR  .. "emu",
 		ext_includedir("expat"),
-		ext_includedir("lua"),
 	}
 
 	files {

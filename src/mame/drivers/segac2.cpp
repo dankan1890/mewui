@@ -249,7 +249,7 @@ MACHINE_RESET_MEMBER(segac2_state,segac2)
 
 	/* determine how many sound banks */
 	m_sound_banks = 0;
-	if (m_upd_region != NULL)
+	if (m_upd_region != nullptr)
 	{
 		m_sound_banks = m_upd_region->bytes() / 0x20000;
 	}
@@ -2064,7 +2064,7 @@ void segac2_state::segac2_common_init(segac2_prot_delegate prot_func)
 	m_prot_func = prot_func;
 
 	if (m_upd7759 != nullptr)
-		m_maincpu->space(AS_PROGRAM).install_write_handler(0x880000, 0x880001, 0, 0x13fefe, write16_delegate(FUNC(segac2_state::segac2_upd7759_w),this));
+		m_maincpu->space(AS_PROGRAM).install_write_handler(0x880000, 0x880001, 0, 0x13fefe, 0, write16_delegate(FUNC(segac2_state::segac2_upd7759_w),this));
 }
 
 int segac2_state::prot_func_dummy(int in)

@@ -10,12 +10,14 @@
 #include "breakpointswindow.h"
 #include "deviceswindow.h"
 
+#include "debug/debugcpu.h"
+
 bool WindowQt::s_refreshAll = false;
 bool WindowQt::s_hideAll = false;
 
 
 // Since all debug windows are intended to be top-level, this inherited
-// constructor is always called with a NULL parent.  The passed-in parent widget,
+// constructor is always called with a nullptr parent.  The passed-in parent widget,
 // however, is often used to place each child window & the code to do this can
 // be found in most of the inherited classes.
 
@@ -176,49 +178,49 @@ void WindowQt::debugActOpenDevices()
 
 void WindowQt::debugActRun()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->go();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->go();
 }
 
 void WindowQt::debugActRunAndHide()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->go();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->go();
 	hideAll();
 }
 
 void WindowQt::debugActRunToNextCpu()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->go_next_device();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->go_next_device();
 }
 
 void WindowQt::debugActRunNextInt()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->go_interrupt();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->go_interrupt();
 }
 
 void WindowQt::debugActRunNextVBlank()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->go_vblank();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->go_vblank();
 }
 
 void WindowQt::debugActStepInto()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->single_step();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->single_step();
 }
 
 void WindowQt::debugActStepOver()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->single_step_over();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->single_step_over();
 }
 
 void WindowQt::debugActStepOut()
 {
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->single_step_out();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->single_step_out();
 }
 
 void WindowQt::debugActSoftReset()
 {
 	m_machine->schedule_soft_reset();
-	debug_cpu_get_visible_cpu(*m_machine)->debug()->single_step();
+	m_machine->debugger().cpu().get_visible_cpu()->debug()->single_step();
 }
 
 void WindowQt::debugActHardReset()

@@ -433,7 +433,7 @@ ioport_constructor isa8_ibm_mfc_device::device_input_ports() const
 //  internal ROM region
 //-------------------------------------------------
 
-const rom_entry *isa8_ibm_mfc_device::device_rom_region() const
+const tiny_rom_entry *isa8_ibm_mfc_device::device_rom_region() const
 {
 	return ROM_NAME( ibm_mfc );
 }
@@ -467,7 +467,7 @@ isa8_ibm_mfc_device::isa8_ibm_mfc_device(const machine_config &mconfig, const ch
 void isa8_ibm_mfc_device::device_start()
 {
 	set_isa_device();
-	m_isa->install_device(0x2a20, 0x2a20 + 15, 0, 0, read8_delegate(FUNC(isa8_ibm_mfc_device::ibm_mfc_r), this), write8_delegate(FUNC(isa8_ibm_mfc_device::ibm_mfc_w), this));
+	m_isa->install_device(0x2a20, 0x2a20 + 15, read8_delegate(FUNC(isa8_ibm_mfc_device::ibm_mfc_r), this), write8_delegate(FUNC(isa8_ibm_mfc_device::ibm_mfc_w), this));
 }
 
 

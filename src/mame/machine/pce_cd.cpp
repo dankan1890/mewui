@@ -439,7 +439,7 @@ void pce_cd_device::nec_set_audio_start_position()
 			break;
 		default:
 			popmessage("CD-DA set start mode 0xc0, contact MESSdev");
-			//assert(NULL == nec_set_audio_start_position);
+			//assert(nullptr == nec_set_audio_start_position);
 			break;
 	}
 
@@ -512,7 +512,7 @@ void pce_cd_device::nec_set_audio_stop_position()
 			break;
 		default:
 			popmessage("CD-DA set end mode 0xc0, contact MESSdev");
-			//assert(NULL == nec_set_audio_start_position);
+			//assert(nullptr == nec_set_audio_start_position);
 			break;
 	}
 
@@ -539,7 +539,7 @@ void pce_cd_device::nec_set_audio_stop_position()
 		m_cdda->stop_audio();
 		m_end_frame = m_last_frame;
 		m_end_mark = 0;
-//      assert(NULL == nec_set_audio_stop_position);
+//      assert(nullptr == nec_set_audio_stop_position);
 	}
 
 	reply_status_byte(SCSI_STATUS_OK);
@@ -660,7 +660,7 @@ void pce_cd_device::nec_get_dir_info()
 				m_data_buffer[3] = 0x04;   /* correct? */
 			} else
 			{
-				track = MAX(bcd_2_dec(m_command_buffer[2]), 1);
+				track = std::max(bcd_2_dec(m_command_buffer[2]), 1U);
 				frame = toc->tracks[track-1].logframeofs;
 				// PCE wants the start sector for data tracks to *not* include the pregap
 				if (toc->tracks[track-1].trktype != CD_TRACK_AUDIO)
@@ -677,7 +677,7 @@ void pce_cd_device::nec_get_dir_info()
 			m_data_buffer_size = 4;
 			break;
 		default:
-//          assert(pce_cd_nec_get_dir_info == NULL);  // Not implemented yet
+//          assert(pce_cd_nec_get_dir_info == nullptr);  // Not implemented yet
 			break;
 	}
 

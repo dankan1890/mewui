@@ -12,7 +12,7 @@
 #include "rendutil.h"
 #include "png.h"
 
-#include "libjpeg/jpeglib.h"
+#include "jpeglib.h"
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -429,10 +429,9 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_qu
     width to four points
 -------------------------------------------------*/
 
-void render_line_to_quad(const render_bounds *bounds, float width, render_bounds *bounds0, render_bounds *bounds1)
+void render_line_to_quad(const render_bounds *bounds, float width, float length_extension, render_bounds *bounds0, render_bounds *bounds1)
 {
 	render_bounds modbounds = *bounds;
-	float unitx, unity;
 
 	/*
 	    High-level logic -- due to math optimizations, this info is lost below.
@@ -480,27 +479,46 @@ void render_line_to_quad(const render_bounds *bounds, float width, render_bounds
 	*/
 
 	/* we only care about the half-width */
-	width *= 0.5f;
+	float half_width = width * 0.5f;
 
 	/* compute a vector from point 0 to point 1 */
-	unitx = modbounds.x1 - modbounds.x0;
-	unity = modbounds.y1 - modbounds.y0;
+	float unitx = modbounds.x1 - modbounds.x0;
+	float unity = modbounds.y1 - modbounds.y0;
 
 	/* points just use a +1/+1 unit vector; this gives a nice diamond pattern */
 	if (unitx == 0 && unity == 0)
 	{
-		unitx = unity = 0.70710678f * width;
-		modbounds.x0 -= 0.5f * unitx;
-		modbounds.y0 -= 0.5f * unity;
-		modbounds.x1 += 0.5f * unitx;
-		modbounds.y1 += 0.5f * unity;
+		/* length of a unit vector (1,1) */
+		float unit_length = 0.70710678f;
+
+		unitx = unity = unit_length * half_width;
+		modbounds.x0 -= unitx;
+		modbounds.y0 -= unity;
+		modbounds.x1 += unitx;
+		modbounds.y1 += unity;
 	}
 
 	/* lines need to be divided by their length */
 	else
 	{
+		float length = sqrtf(unitx * unitx + unity * unity);
+
+		/* extend line length */
+		if (length_extension > 0.0f)
+		{
+			float half_length_extension = length_extension *0.5f;
+
+			float directionx = unitx / length;
+			float directiony = unity / length;
+
+			modbounds.x0 -= directionx * half_length_extension;
+			modbounds.y0 -= directiony * half_length_extension;
+			modbounds.x1 += directionx * half_length_extension;
+			modbounds.y1 += directiony * half_length_extension;
+		}
+
 		/* prescale unitx and unity by the half-width */
-		float invlength = width / sqrtf(unitx * unitx + unity * unity);
+		float invlength = half_width / length;
 		unitx *= invlength;
 		unity *= invlength;
 	}
@@ -517,7 +535,7 @@ void render_line_to_quad(const render_bounds *bounds, float width, render_bounds
 	bounds1->x0 = modbounds.x1 - unity;
 	bounds1->y0 = modbounds.y1 + unitx;
 
-	/* rotate the unit vector by -09 degrees and add to point 1 */
+	/* rotate the unit vector by -90 degrees and add to point 1 */
 	bounds1->x1 = modbounds.x1 + unity;
 	bounds1->y1 = modbounds.y1 - unitx;
 }
@@ -552,11 +570,11 @@ void render_load_jpeg(bitmap_argb32 &bitmap, emu_file &file, const char *dirname
 
 	// allocates a buffer for the image
 	UINT32 jpg_size = file.size();
-	unsigned char *jpg_buffer = global_alloc_array(unsigned char, jpg_size);
+	std::unique_ptr<unsigned char[]> jpg_buffer = std::make_unique<unsigned char[]>(jpg_size);
 
 	// read data from the file and set them in the buffer
-	file.read(jpg_buffer, jpg_size);
-	jpeg_mem_src(&cinfo, jpg_buffer, jpg_size);
+	file.read(jpg_buffer.get(), jpg_size);
+	jpeg_mem_src(&cinfo, jpg_buffer.get(), jpg_size);
 
 	// read JPEG header and start decompression
 	jpeg_read_header(&cinfo, TRUE);
@@ -599,7 +617,6 @@ void render_load_jpeg(bitmap_argb32 &bitmap, emu_file &file, const char *dirname
 	file.close();
 	free(buffer[0]);
 	free(buffer);
-	global_free_array(jpg_buffer);
 }
 
 

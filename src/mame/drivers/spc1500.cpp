@@ -245,7 +245,7 @@ public:
 		, m_ram(*this, RAM_TAG)
 		, m_p_videoram(*this, "videoram")
 		, m_pcgram(*this, "pcgram")
-		, m_io_kb(*this, "LINE")
+		, m_io_kb(*this, "LINE.%u", 0)
 		, m_io_joy(*this, "JOY")
 		, m_dipsw(*this, "DIP_SWITCH")
 		, m_centronics(*this, "centronics")
@@ -854,7 +854,7 @@ void spc1500_state::machine_start()
 	membank("bank1")->configure_entry(2, m_p_ram);
 	membank("bank1")->set_entry(0);
 	m_romsel = 1;
-	static_set_addrmap(m_maincpu, AS_IO, ADDRESS_MAP_NAME(spc1500_double_io));
+	static_set_addrmap(*m_maincpu, AS_IO, ADDRESS_MAP_NAME(spc1500_double_io));
 	set_address_space(AS_IO, m_maincpu->space(AS_IO));
 	// intialize banks 2, 3, 4 (write banks)
 	membank("bank2")->set_base(m_p_ram);
@@ -944,6 +944,7 @@ static MACHINE_CONFIG_START( spc1500, spc1500_state )
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_FORMATS(spc1000_cassette_formats)
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_SPEAKER_MUTED | CASSETTE_MOTOR_DISABLED)
+	MCFG_CASSETTE_INTERFACE("spc1500_cass")
 
 	MCFG_SOFTWARE_LIST_ADD("cass_list", "spc1500_cass")
 

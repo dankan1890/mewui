@@ -68,6 +68,7 @@ Dumped by Uki
 #include "sound/ymz280b.h"
 #include "video/sknsspr.h"
 #include "machine/eepromser.h"
+#include "machine/watchdog.h"
 #include "machine/kaneko_toybox.h"
 #include "video/kaneko_grap2.h"
 
@@ -493,7 +494,7 @@ static ADDRESS_MAP_START( galpani3_map, AS_PROGRAM, 16, galpani3_state )
 	AM_RANGE(0xf00014, 0xf00015) AM_READ_PORT("COIN")
 	AM_RANGE(0xf00016, 0xf00017) AM_NOP // ? read, but overwritten
 	AM_RANGE(0xf00020, 0xf00023) AM_DEVWRITE8("ymz", ymz280b_device, write, 0x00ff)     // sound
-	AM_RANGE(0xf00040, 0xf00041) AM_READWRITE(watchdog_reset16_r, watchdog_reset16_w)   // watchdog
+	AM_RANGE(0xf00040, 0xf00041) AM_DEVREADWRITE("watchdog", watchdog_timer_device, reset16_r, reset16_w)
 	AM_RANGE(0xf00050, 0xf00051) AM_NOP // ? written once (3rd opcode, $30.b)
 ADDRESS_MAP_END
 
@@ -512,6 +513,8 @@ static MACHINE_CONFIG_START( galpani3, galpani3_state )
 	MCFG_SCREEN_UPDATE_DRIVER(galpani3_state, screen_update_galpani3)
 
 	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+
+	MCFG_WATCHDOG_ADD("watchdog")
 
 	MCFG_DEVICE_ADD("toybox", KANEKO_TOYBOX, 0)
 
@@ -579,9 +582,8 @@ ROM_START( galpani3hk )
 	ROM_LOAD( "gp340100.122", 0x200000, 0x200000, CRC(746fe4a8) SHA1(a5126ae9e83d556277d31b166296a708c311a902) )        // 19950414GROMBCap
 	ROM_LOAD( "gp340200.121", 0x400000, 0x200000, CRC(e9bc15c8) SHA1(2c6a10e768709d1937d9206970553f4101ce9016) )        // 19950414GROMCCap
 	ROM_LOAD( "gp340300.120", 0x600000, 0x200000, CRC(59062eef) SHA1(936977c20d83540c1e0f65d429c7ebea201ef991) )        // 19950414GROMDCap
-	// I'm guessing these are the same as the Korea set, because the regular ones don't give correct gfx, but it should be checked
-	ROM_LOAD16_BYTE( "g3g0k0.101", 0xe00000, 0x080000, CRC(23d895b0) SHA1(621cc1500e26c3fe4410eefadd325891e7806f85) )   // 19950523GROMECap
-	ROM_LOAD16_BYTE( "g3g1k0.100", 0xe00001, 0x080000, CRC(9b1eac6d) SHA1(1393d42a7ad70af90fa0f48fb8da7e2f9085f98f) )   //
+	ROM_LOAD16_BYTE( "g3g0h0.101", 0xe00000, 0x040000, CRC(dca3109a) SHA1(d7741e992ffc9f8f57ce6770bf4bcb8d0858d72b) )   // 19950523GROMECap
+	ROM_LOAD16_BYTE( "g3g1h0.100", 0xe00001, 0x040000, CRC(2ebe6ed0) SHA1(72d487c7f6339d7a39b04e95e76d0c4f3e432240) )   //
 
 	ROM_REGION( 0x300000, "ymz", 0 ) /* Samples */
 	ROM_LOAD( "gp310100.40", 0x000000, 0x200000, CRC(6a0b1d12) SHA1(11fed80b96d07fddb27599743991c58c12c048e0) )

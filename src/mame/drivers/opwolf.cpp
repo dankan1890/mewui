@@ -234,7 +234,7 @@ Stephh's notes (based on the game M68000 code and some tests) :
   - Sets :
       * 'opwolfa' : region = 0x0003
   - There is only ONE byte of difference at 0x03fff5.b with 'opwolf'
-    but its effect is unknown as this address doesn't seem to be read !
+    it changes behaviour in the 'continue game' screen
 
 3) 'opwolfb'
 
@@ -255,10 +255,6 @@ Stephh's notes (based on the game M68000 code and some tests) :
 
 TODO
 ====
-
-Need to verify Opwolf against original board: various reports
-claim there are discrepancies (perhaps limitations of the fake
-Z80 c-chip substitute to blame?).
 
 There are a few unmapped writes for the sound Z80 in the log.
 
@@ -282,7 +278,7 @@ register. So what is controlling priority.
 #include "cpu/m68000/m68000.h"
 #include "includes/taitoipt.h"
 #include "audio/taitosnd.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "sound/msm5205.h"
 #include "includes/opwolf.h"
 
@@ -393,7 +389,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( opwolfp_map, AS_PROGRAM, 16, opwolf_state )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x100000, 0x107fff) AM_RAM
-	
+
 	AM_RANGE(0x200000, 0x200fff) AM_RAM_DEVWRITE("palette", palette_device, write) AM_SHARE("palette")
 	AM_RANGE(0x380000, 0x380003) AM_READ(opwolf_dsw_r)          /* dip switches */
 	AM_RANGE(0x380000, 0x380003) AM_WRITE(opwolf_spritectrl_w)  // usually 0x4, changes when you fire
@@ -470,7 +466,10 @@ void opwolf_state::opwolf_msm5205_vck(msm5205_device *device,int chip)
 		device->data_w(m_adpcm_data[chip] & 0x0f);
 		m_adpcm_data[chip] = -1;
 		if (m_adpcm_pos[chip] == m_adpcm_end[chip])
+		{
 			device->reset_w(1);
+			//logerror("reset device %d\n", chip);
+		}
 	}
 	else
 	{
@@ -504,6 +503,7 @@ WRITE8_MEMBER(opwolf_state::opwolf_adpcm_b_w)
 		m_adpcm_pos[0] = start;
 		m_adpcm_end[0] = end;
 		m_msm1->reset_w(0);
+		//logerror("TRIGGER MSM1\n");
 	}
 
 //  logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,space.device().safe_pc() );
@@ -526,6 +526,8 @@ WRITE8_MEMBER(opwolf_state::opwolf_adpcm_c_w)
 		m_adpcm_pos[1] = start;
 		m_adpcm_end[1] = end;
 		m_msm2->reset_w(0);
+
+		//logerror("TRIGGER MSM2\n");
 	}
 
 //  logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,space.device().safe_pc() );
@@ -563,7 +565,7 @@ ADDRESS_MAP_END
 
 CUSTOM_INPUT_MEMBER(opwolf_state::opwolf_gun_x_r )
 {
-  /* P1X - Have to remap 8 bit input value, into 0-319 visible range */
+	/* P1X - Have to remap 8 bit input value, into 0-319 visible range */
 	int scaled = (ioport(P1X_PORT_TAG)->read() * 320 ) / 256;
 	return (scaled + 0x15 + m_opwolf_gun_xoffs);
 }
@@ -625,13 +627,13 @@ static INPUT_PORTS_START( opwolf )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	
+
 	PORT_START("IN2")
-	PORT_BIT( 0x01ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, opwolf_state, opwolf_gun_x_r, NULL)
+	PORT_BIT( 0x01ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, opwolf_state, opwolf_gun_x_r, nullptr)
 	PORT_BIT( 0xfe00, IP_ACTIVE_LOW,  IPT_UNUSED )
-	
+
 	PORT_START("IN3")
-	PORT_BIT( 0x01ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, opwolf_state, opwolf_gun_y_r, NULL)
+	PORT_BIT( 0x01ff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, opwolf_state, opwolf_gun_y_r, nullptr)
 	PORT_BIT( 0xfe00, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START(P1X_PORT_TAG)  /* P1X (span allows you to shoot enemies behind status bar) */
@@ -1104,7 +1106,10 @@ DRIVER_INIT_MEMBER(opwolf_state,opwolfp)
 	membank("z80bank")->configure_entries(0, 4, memregion("audiocpu")->base(), 0x4000);
 }
 
+// Prototype rom set includes the string - 'T KATO 10/6/87'
+// Regular rom set includes the string '11 Sep 1987'
 
+// MACHINE_IMPERFECT_SOUND is present because the credit sound appears to double trigger.  All other sounds seem correct.
 
 /*    year  rom       parent    machine   inp       init */
 GAME( 1987, opwolf,   0,        opwolf,   opwolf,  opwolf_state,  opwolf,   ROT0, "Taito Corporation Japan", "Operation Wolf (World, set 1)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )

@@ -183,7 +183,7 @@ TODO:
 #include "cpu/m6809/m6809.h"
 #include "sound/ay8910.h"
 #include "sound/okim6376.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "sound/upd7759.h"
 #include "machine/steppers.h"
 #include "machine/roc10937.h"
@@ -441,7 +441,7 @@ VIDEO_START_MEMBER(mpu4vid_state,mpu4_vid)
 	assert(m_gfx_index != MAX_GFX_ELEMENTS);
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(m_gfx_index+0, std::make_unique<gfx_element>(m_palette, mpu4_vid_char_8x8_layout, reinterpret_cast<UINT8 *>(m_vid_vidram.target()), NATIVE_ENDIAN_VALUE_LE_BE(8,0), m_palette->entries() / 16, 0));
+	m_gfxdecode->set_gfx(m_gfx_index+0, std::make_unique<gfx_element>(*m_palette, mpu4_vid_char_8x8_layout, reinterpret_cast<UINT8 *>(m_vid_vidram.target()), NATIVE_ENDIAN_VALUE_LE_BE(8,0), m_palette->entries() / 16, 0));
 }
 
 
@@ -1407,8 +1407,8 @@ MACHINE_CONFIG_END
 static MACHINE_CONFIG_DERIVED( crmaze, mpu4_vid )
 	MCFG_DEVICE_MODIFY("pia_ic5")
 	MCFG_PIA_READPA_HANDLER(READ8(mpu4vid_state, pia_ic5_porta_track_r))
-	MCFG_PIA_WRITEPA_HANDLER(NULL)
-	MCFG_PIA_WRITEPB_HANDLER(NULL)
+	MCFG_PIA_WRITEPA_HANDLER(NOOP)
+	MCFG_PIA_WRITEPB_HANDLER(NOOP)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( mating, crmaze )

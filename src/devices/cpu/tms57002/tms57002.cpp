@@ -17,7 +17,7 @@ const device_type TMS57002 = &device_creator<tms57002_device>;
 
 // Can't use a DEVICE_ADDRESS_MAP, not yet anyway
 static ADDRESS_MAP_START(internal_pgm, AS_PROGRAM, 32, tms57002_device)
-	AM_RANGE(0x000, 0x3ff) AM_RAM
+	AM_RANGE(0x00, 0xff) AM_RAM
 ADDRESS_MAP_END
 
 tms57002_device::tms57002_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
@@ -756,7 +756,7 @@ void tms57002_device::execute_run()
 				goto inst;
 
 #define CINTRP
-#include "cpu/tms57002/tms57002.inc"
+#include "cpu/tms57002/tms57002.hxx"
 #undef CINTRP
 
 			default:

@@ -22,6 +22,7 @@
 
 
 
+namespace drc {
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
@@ -180,6 +181,7 @@ private:
 	void op_or(x86code *&dst, const uml::instruction &inst);
 	void op_xor(x86code *&dst, const uml::instruction &inst);
 	void op_lzcnt(x86code *&dst, const uml::instruction &inst);
+	void op_tzcnt(x86code *&dst, const uml::instruction &inst);
 	void op_bswap(x86code *&dst, const uml::instruction &inst);
 	void op_shl(x86code *&dst, const uml::instruction &inst);
 	void op_shr(x86code *&dst, const uml::instruction &inst);
@@ -335,5 +337,8 @@ private:
 	static opcode_generate_func s_opcode_table[uml::OP_MAX];
 };
 
+} // namespace drc
 
-#endif /* __DRCBEC_H__ */
+using drc::drcbe_x86;
+
+#endif /* __DRCBEX86_H__ */

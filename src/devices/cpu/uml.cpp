@@ -55,6 +55,7 @@ using namespace uml;
 // opcode validation condition/flag valid bitmasks
 #define OPFLAGS_NONE    0x00
 #define OPFLAGS_C       FLAG_C
+#define OPFLAGS_Z       FLAG_Z
 #define OPFLAGS_SZ      (FLAG_S | FLAG_Z)
 #define OPFLAGS_SZC     (FLAG_S | FLAG_Z | FLAG_C)
 #define OPFLAGS_SZV     (FLAG_S | FLAG_Z | FLAG_V)
@@ -182,6 +183,7 @@ const opcode_info instruction::s_opcode_info_table[OP_MAX] =
 	OPINFO3(OR,      "!or",      4|8, false, NONE, SZ,   ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY), PINFO(IN, OP, IANY))
 	OPINFO3(XOR,     "!xor",     4|8, false, NONE, SZ,   ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY), PINFO(IN, OP, IANY))
 	OPINFO2(LZCNT,   "!lzcnt",   4|8, false, NONE, SZ,   ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY))
+	OPINFO2(TZCNT,   "!tzcnt",   4|8, false, NONE, SZ,   ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY))
 	OPINFO2(BSWAP,   "!bswap",   4|8, false, NONE, SZ,   ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY))
 	OPINFO3(SHL,     "!shl",     4|8, false, NONE, SZC,  ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY), PINFO(IN, OP, IANY))
 	OPINFO3(SHR,     "!shr",     4|8, false, NONE, SZC,  ALL,  PINFO(OUT, OP, IRM), PINFO(IN, OP, IANY), PINFO(IN, OP, IANY))
@@ -659,9 +661,9 @@ void uml::instruction::simplify()
 				if (m_param[1].is_immediate())
 				{
 					if (m_size == 4)
-						convert_to_mov_immediate(FLIPENDIAN_INT32(m_param[1].immediate()));
+						convert_to_mov_immediate(flipendian_int32(m_param[1].immediate()));
 					else if (m_size == 8)
-						convert_to_mov_immediate(FLIPENDIAN_INT64(m_param[1].immediate()));
+						convert_to_mov_immediate(flipendian_int64(m_param[1].immediate()));
 				}
 				break;
 

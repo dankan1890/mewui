@@ -57,6 +57,8 @@
 
 ***************************************************************************/
 
+#include <functional>
+
 #include <math.h>
 #include "emu.h"
 #include "debug/debugcon.h"
@@ -66,7 +68,7 @@
 #include "machine/mos6551.h"
 #include "imagedev/flopdrv.h"
 
-#include "debug/debugcpu.h"
+#include "debugger.h"
 #include "debug/debugcon.h"
 #include "machine/ram.h"
 
@@ -83,11 +85,6 @@
 #define LOG_DISK(x) do { if (VERBOSE) logerror x; } while (0)
 #define LOG_INTS(x) do { if (VERBOSE) logerror x; } while (0)
 
-
-/* Debugging commands and handlers. */
-static offs_t dgnbeta_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options);
-static void execute_beta_dat_log(running_machine &machine, int ref, int params, const char *param[]);
-static void execute_beta_key_dump(running_machine &machine, int ref, int params, const char *param[]);
 
 //static int DMA_NMI;               /* DMA cpu has received an NMI */
 
@@ -174,7 +171,7 @@ void dgn_beta_state::UpdateBanks(int first, int last)
 			{
 				readbank = &m_ram->pointer()[MapPage*RamPageSize];
 				if(m_LogDatWrites)
-					debug_console_printf(machine(), "Mapping page %X, pageno=%X, mess_ram)[%X]\n",Page,MapPage,(MapPage*RamPageSize));
+					machine().debugger().console().printf("Mapping page %X, pageno=%X, mess_ram)[%X]\n",Page,MapPage,(MapPage*RamPageSize));
 			}
 			else
 			{
@@ -531,7 +528,7 @@ WRITE_LINE_MEMBER(dgn_beta_state::d_pia0_cb2_w)
 		m_RowShifter = (m_RowShifter<<1) | ((m_d_pia0_pb_last & KOutDat)>>4);
 		m_RowShifter &= 0x3FF;
 		LOG_KEYBOARD(("Rowshifter=$%02X Keyrow=$%02X\n",m_RowShifter,m_Keyrow));
-		if (VERBOSE) debug_console_printf(machine(), "rowshifter clocked, value=%3X, RowNo=%d, Keyrow=%2X\n",m_RowShifter,RowNo,m_Keyrow);
+		if (VERBOSE) machine().debugger().console().printf("rowshifter clocked, value=%3X, RowNo=%d, Keyrow=%2X\n",m_RowShifter,RowNo,m_Keyrow);
 	}
 
 	m_d_pia0_cb2_last=state;
@@ -938,17 +935,14 @@ void dgn_beta_state::machine_start()
 {
 	logerror("MACHINE_START( dgnbeta )\n");
 
-	if (machine().device<cpu_device>(MAINCPU_TAG)->debug()) {
-		machine().device<cpu_device>(MAINCPU_TAG)->debug()->set_dasm_override(dgnbeta_dasm_override);
-	}
-
 	/* setup debug commands */
 	if (machine().debug_flags & DEBUG_FLAG_ENABLED)
 	{
-		debug_console_register_command(machine(), "beta_dat_log", CMDFLAG_NONE, 0, 0, 0, execute_beta_dat_log);
-		debug_console_register_command(machine(), "beta_key_dump", CMDFLAG_NONE, 0, 0, 0, execute_beta_key_dump);
+		using namespace std::placeholders;
+		machine().debugger().console().register_command("beta_dat_log", CMDFLAG_NONE, 0, 0, 0, std::bind(&dgn_beta_state::execute_beta_dat_log, this, _1, _2, _3));
+		machine().debugger().console().register_command("beta_key_dump", CMDFLAG_NONE, 0, 0, 0, std::bind(&dgn_beta_state::execute_beta_key_dump, this, _1, _2, _3));
 	}
-	m_LogDatWrites=0;
+	m_LogDatWrites = false;
 }
 
 
@@ -1107,7 +1101,7 @@ static const char *const os9syscalls[] =
 };
 
 
-static offs_t dgnbeta_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options)
+offs_t dgn_beta_state::dgnbeta_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options)
 {
 	unsigned call;
 	unsigned result = 0;
@@ -1124,21 +1118,17 @@ static offs_t dgnbeta_dasm_override(device_t &device, char *buffer, offs_t pc, c
 	return result;
 }
 
-static void execute_beta_dat_log(running_machine &machine, int ref, int params, const char *param[])
+void dgn_beta_state::execute_beta_dat_log(int ref, int params, const char *param[])
 {
-	dgn_beta_state *state = machine.driver_data<dgn_beta_state>();
-	state->m_LogDatWrites=!state->m_LogDatWrites;
+	m_LogDatWrites = !m_LogDatWrites;
 
-	debug_console_printf(machine, "DAT register write info set : %d\n",state->m_LogDatWrites);
+	machine().debugger().console().printf("DAT register write info set : %d\n", m_LogDatWrites);
 }
 
-static void execute_beta_key_dump(running_machine &machine, int ref, int params, const char *param[])
+void dgn_beta_state::execute_beta_key_dump(int ref, int params, const char *param[])
 {
-	dgn_beta_state *state = machine.driver_data<dgn_beta_state>();
-	int Idx;
-
-	for(Idx=0;Idx<NoKeyrows;Idx++)
+	for (int idx = 0; idx < NoKeyrows; idx++)
 	{
-		debug_console_printf(machine, "KeyRow[%d]=%2X\n",Idx,state->m_Keyboard[Idx]);
+		machine().debugger().console().printf("KeyRow[%d]=%2X\n", idx, m_Keyboard[idx]);
 	}
 }

@@ -95,8 +95,7 @@
 #include "config.h"
 #include "xmlfile.h"
 #include "profiler.h"
-#include "ui/ui.h"
-#include "uiinput.h"
+#include "ui/uimain.h"
 
 #include "osdepend.h"
 
@@ -440,6 +439,11 @@ const char_info charinfo[] =
 	{ UCHAR_MAMEKEY(F13),       "F13",          nullptr },     // F13 function key
 	{ UCHAR_MAMEKEY(F14),       "F14",          nullptr },     // F14 function key
 	{ UCHAR_MAMEKEY(F15),       "F15",          nullptr },     // F15 function key
+	{ UCHAR_MAMEKEY(F16),       "F16",          nullptr },     // F16 function key
+	{ UCHAR_MAMEKEY(F17),       "F17",          nullptr },     // F17 function key
+	{ UCHAR_MAMEKEY(F18),       "F18",          nullptr },     // F18 function key
+	{ UCHAR_MAMEKEY(F19),       "F19",          nullptr },     // F19 function key
+	{ UCHAR_MAMEKEY(F20),       "F20",          nullptr },     // F20 function key
 	{ UCHAR_MAMEKEY(ESC),       "Esc",          "\033" },   // Esc key
 	{ UCHAR_MAMEKEY(INSERT),    "Insert",       nullptr },     // Insert key
 	{ UCHAR_MAMEKEY(DEL),       "Delete",       "\010" },   // Delete key
@@ -617,7 +621,7 @@ const struct
 	{ INPUT_STRING_None, "None" },
 };
 
-} // anonymous namespace
+} // TODO: anonymous namespace
 
 
 std::uint8_t const inp_header::MAGIC[inp_header::OFFS_BASETIME - inp_header::OFFS_MAGIC] = { 'M', 'A', 'M', 'E', 'I', 'N', 'P', 0 };
@@ -659,8 +663,8 @@ void ioport_list::append(device_t &device, std::string &errorbuf)
 	(*constructor)(device, *this, errorbuf);
 
 	// collapse fields and sort the list
-	for (ioport_port &port : *this)
-		port.collapse_fields(errorbuf);
+	for (auto &port : *this)
+		port.second->collapse_fields(errorbuf);
 }
 
 
@@ -1074,8 +1078,8 @@ void natural_keyboard::build_codes(ioport_manager &manager)
 		if (curshift == 0 || shift[curshift - 1] != nullptr)
 
 			// iterate over ports and fields
-			for (ioport_port &port : manager.ports())
-				for (ioport_field &field : port.fields())
+			for (auto &port : manager.ports())
+				for (ioport_field &field : port.second->fields())
 					if (field.type() == IPT_KEYBOARD)
 					{
 						// fetch the code, ignoring 0
@@ -1516,7 +1520,7 @@ ioport_field::~ioport_field()
 
 //-------------------------------------------------
 //  name - return the field name for a given input
-//  field
+//  field (this must never return nullptr)
 //-------------------------------------------------
 
 const char *ioport_field::name() const
@@ -1543,10 +1547,6 @@ const input_seq &ioport_field::seq(input_seq_type seqtype) const
 	if (m_live == nullptr)
 		return defseq(seqtype);
 
-	// if the field is disabled, return no key
-	if (unused())
-		return input_seq::empty_seq;
-
 	// if the sequence is the special default code, return the expanded default value
 	if (m_live->seq[seqtype].is_default())
 		return manager().type_seq(m_type, m_player, seqtype);
@@ -1563,10 +1563,6 @@ const input_seq &ioport_field::seq(input_seq_type seqtype) const
 
 const input_seq &ioport_field::defseq(input_seq_type seqtype) const
 {
-	// if the field is disabled, return no key
-	if (unused())
-		return input_seq::empty_seq;
-
 	// if the sequence is the special default code, return the expanded default value
 	if (m_seq[seqtype].is_default())
 		return manager().type_seq(m_type, m_player, seqtype);
@@ -1583,22 +1579,28 @@ const input_seq &ioport_field::defseq(input_seq_type seqtype) const
 
 ioport_type_class ioport_field::type_class() const
 {
+	// inputs associated with specific players
 	ioport_group group = manager().type_group(m_type, m_player);
-	if (group >= IPG_PLAYER1 && group <= IPG_PLAYER8)
+	if (group >= IPG_PLAYER1 && group <= IPG_PLAYER10)
 		return INPUT_CLASS_CONTROLLER;
 
+	// keys (names derived from character codes)
 	if (m_type == IPT_KEYPAD || m_type == IPT_KEYBOARD)
 		return INPUT_CLASS_KEYBOARD;
 
+	// configuration settings (specific names required)
 	if (m_type == IPT_CONFIG)
 		return INPUT_CLASS_CONFIG;
 
+	// DIP switches (specific names required)
 	if (m_type == IPT_DIPSWITCH)
 		return INPUT_CLASS_DIPSWITCH;
 
+	// miscellaneous non-player inputs (named and user-mappable)
 	if (group == IPG_OTHER || (group == IPG_INVALID && m_name != nullptr))
 		return INPUT_CLASS_MISC;
 
+	// internal inputs (these may be anonymous)
 	return INPUT_CLASS_INTERNAL;
 }
 
@@ -1843,7 +1845,7 @@ void ioport_field::select_next_setting()
 //  digital field
 //-------------------------------------------------
 
-void ioport_field::frame_update(ioport_value &result, bool mouse_down)
+void ioport_field::frame_update(ioport_value &result)
 {
 	// skip if not enabled
 	if (!enabled())
@@ -1861,7 +1863,7 @@ void ioport_field::frame_update(ioport_value &result, bool mouse_down)
 		return;
 
 	// if the state changed, look for switch down/switch up
-	bool curstate = mouse_down || machine().input().seq_pressed(seq()) || m_digital_value;
+	bool curstate = m_digital_value || machine().input().seq_pressed(seq());
 	if (m_live->autofire && !machine().ioport().get_autofire_toggle())
 	{
 		if (curstate)
@@ -1928,7 +1930,7 @@ void ioport_field::frame_update(ioport_value &result, bool mouse_down)
 		curstate = false;
 
 	// additional logic to restrict digital joysticks
-	if (curstate && !m_digital_value && !mouse_down && m_live->joystick != nullptr && m_way != 16 && !machine().options().joystick_contradictory())
+	if (curstate && !m_digital_value && m_live->joystick != nullptr && m_way != 16 && !machine().options().joystick_contradictory())
 	{
 		UINT8 mask = (m_way == 4) ? m_live->joystick->current4way() : m_live->joystick->current();
 		if (!(mask & (1 << m_live->joydir)))
@@ -2151,7 +2153,7 @@ ioport_field_live::ioport_field_live(ioport_field &field, analog_field *analog)
 			unicode_char ch = field.keyboard_code(which);
 			if (ch == 0)
 				break;
-			name.append(string_format("%-*s ", MAX(SPACE_COUNT - 1, 0), field.manager().natkeyboard().key_name(ch)));
+			name.append(string_format("%-*s ", std::max(SPACE_COUNT - 1, 0), field.manager().natkeyboard().key_name(ch)));
 		}
 
 		// trim extra spaces
@@ -2273,14 +2275,14 @@ void ioport_port::write(ioport_value data, ioport_value mem_mask)
 //  frame_update - once/frame update
 //-------------------------------------------------
 
-void ioport_port::frame_update(ioport_field *mouse_field)
+void ioport_port::frame_update()
 {
 	// start with 0 values for the digital bits
 	m_live->digital = 0;
 
 	// now loop back and modify based on the inputs
 	for (ioport_field &field : fields())
-		field.frame_update(m_live->digital, &field == mouse_field);
+		field.frame_update(m_live->digital);
 
 	// hook for MESS's natural keyboard support
 	manager().natkeyboard().frame_update(*this, m_live->digital);
@@ -2372,6 +2374,24 @@ void ioport_port::init_live_state()
 }
 
 
+//-------------------------------------------------
+//  update_defvalue - force an update to the input
+//  port values based on current conditions
+//-------------------------------------------------
+
+void ioport_port::update_defvalue(bool flush_defaults)
+{
+	// only clear on the first pass
+	if (flush_defaults)
+		m_live->defvalue = 0;
+
+	// recompute the default value for the entire port
+	for (ioport_field &field : m_fieldlist)
+		if (field.enabled())
+			m_live->defvalue = (m_live->defvalue & ~field.mask()) | (field.live().value & field.mask());
+}
+
+
 
 //**************************************************************************
 //  I/O PORT LIVE STATE
@@ -2430,10 +2450,6 @@ ioport_manager::ioport_manager(running_machine &machine)
 		m_timecode_file(machine.options().input_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS),
 		m_timecode_count(0),
 		m_timecode_last_time(attotime::zero),
-		m_has_configs(false),
-		m_has_analog(false),
-		m_has_dips(false),
-		m_has_bioses(false),
 		m_autofire_toggle(false),
 		m_autofire_delay(3)                 // 1 seems too fast for a bunch of games
 {
@@ -2457,24 +2473,24 @@ time_t ioport_manager::initialize()
 
 	// if we have a token list, proceed
 	device_iterator iter(machine().root_device());
-	for (device_t *device = iter.first(); device != nullptr; device = iter.next())
+	for (device_t &device : iter)
 	{
 		std::string errors;
-		m_portlist.append(*device, errors);
+		m_portlist.append(device, errors);
 		if (!errors.empty())
 			osd_printf_error("Input port errors:\n%s", errors.c_str());
 	}
 
 	// renumber player numbers for controller ports
 	int player_offset = 0;
-	for (device_t *device = iter.first(); device != nullptr; device = iter.next())
+	for (device_t &device : iter)
 	{
 		int players = 0;
-		for (ioport_port &port : m_portlist)
+		for (auto &port : m_portlist)
 		{
-			if (&port.device() == device)
+			if (&port.second->device() == &device)
 			{
-				for (ioport_field &field : port.fields())
+				for (ioport_field &field : port.second->fields())
 					if (field.type_class()==INPUT_CLASS_CONTROLLER)
 					{
 						if (players < field.player() + 1) players = field.player() + 1;
@@ -2486,8 +2502,8 @@ time_t ioport_manager::initialize()
 	}
 
 	// allocate live structures to mirror the configuration
-	for (ioport_port &port : m_portlist)
-		port.init_live_state();
+	for (auto &port : m_portlist)
+		port.second->init_live_state();
 
 	// handle autoselection of devices
 	init_autoselect_devices(IPT_AD_STICK_X,  IPT_AD_STICK_Y,   IPT_AD_STICK_Z, OPTION_ADSTICK_DEVICE,    "analog joystick");
@@ -2502,8 +2518,8 @@ time_t ioport_manager::initialize()
 	// look for 4-way diagonal joysticks and change the default map if we find any
 	const char *joystick_map_default = machine().options().joystick_map();
 	if (joystick_map_default[0] == 0 || strcmp(joystick_map_default, "auto") == 0)
-		for (ioport_port &port : m_portlist)
-			for (ioport_field &field : port.fields())
+		for (auto &port : m_portlist)
+			for (ioport_field &field : port.second->fields())
 				if (field.live().joystick != nullptr && field.rotated())
 				{
 					machine().input().set_global_joystick_map(joystick_map_4way_diagonal);
@@ -2513,31 +2529,6 @@ time_t ioport_manager::initialize()
 	m_natkeyboard.initialize();
 	// register callbacks for when we load configurations
 	machine().configuration().config_register("input", config_saveload_delegate(FUNC(ioport_manager::load_config), this), config_saveload_delegate(FUNC(ioport_manager::save_config), this));
-
-	// calculate "has..." values
-	{
-		m_has_configs = false;
-		m_has_analog = false;
-		m_has_dips = false;
-		m_has_bioses = false;
-
-		// scan the input port array to see what options we need to enable
-		for (ioport_port &port : m_portlist)
-			for (ioport_field &field : port.fields())
-			{
-				if (field.type() == IPT_DIPSWITCH)
-					m_has_dips = true;
-				if (field.type() == IPT_CONFIG)
-					m_has_configs = true;
-				if (field.is_analog())
-					m_has_analog = true;
-			}
-		device_iterator deviter(machine().root_device());
-		for (device_t *device = deviter.first(); device != nullptr; device = deviter.next())
-			if (device->rom_region())
-				for (const rom_entry *rom = device->rom_region(); !ROMENTRY_ISEND(rom); rom++)
-					if (ROMENTRY_ISSYSTEM_BIOS(rom)) { m_has_bioses= true; break; }
-	}
 
 	// open playback and record files if specified
 	time_t basetime = playback_init();
@@ -2613,8 +2604,8 @@ void ioport_manager::init_autoselect_devices(int type1, int type2, int type3, co
 
 	// only scan the list if we haven't already enabled this class of control
 	if (!m_portlist.empty() && !machine().input().device_class(autoenable).enabled())
-		for (ioport_port &port : m_portlist)
-			for (ioport_field &field : port.fields())
+		for (auto &port : m_portlist)
+			for (ioport_field &field : port.second->fields())
 
 				// if this port type is in use, apply the autoselect criteria
 				if ((type1 != 0 && field.type() == type1) || (type2 != 0 && field.type() == type2) || (type3 != 0 && field.type() == type3))
@@ -2649,10 +2640,10 @@ const char *ioport_manager::type_name(ioport_type type, UINT8 player)
 {
 	// if we have a machine, use the live state and quick lookup
 	input_type_entry *entry = m_type_to_entry[type][player];
-	if (entry != nullptr)
+	if (entry != nullptr && entry->name() != nullptr)
 		return entry->name();
 
-	// if we find nothing, return an invalid group
+	// if we find nothing, return a default string (not a null pointer)
 	return "???";
 }
 
@@ -2724,8 +2715,8 @@ bool ioport_manager::type_pressed(ioport_type type, int player)
 
 bool ioport_manager::type_class_present(ioport_type_class inputclass)
 {
-	for (ioport_port &port : m_portlist)
-		for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		for (ioport_field &field : port.second->fields())
 			if (field.type_class() == inputclass)
 				return true;
 	return false;
@@ -2740,8 +2731,8 @@ bool ioport_manager::type_class_present(ioport_type_class inputclass)
 bool ioport_manager::has_keyboard() const
 {
 	// iterate over ports and fields
-	for (ioport_port &port : m_portlist)
-		for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		for (ioport_field &field : port.second->fields())
 		{
 			// if we are at init, check IPT_KEYBOARD
 			if (!m_safe_to_read && field.type() == IPT_KEYBOARD)
@@ -2763,8 +2754,8 @@ bool ioport_manager::has_keyboard() const
 int ioport_manager::count_players() const
 {
 	int max_player = 0;
-	for (ioport_port &port : m_portlist)
-		for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		for (ioport_field &field : port.second->fields())
 			if (field.type_class() == INPUT_CLASS_CONTROLLER && max_player <= field.player() + 1)
 				max_player = field.player() + 1;
 
@@ -2781,8 +2772,8 @@ bool ioport_manager::crosshair_position(int player, float &x, float &y)
 {
 	// read all the lightgun values
 	bool gotx = false, goty = false;
-	for (ioport_port &port : m_portlist)
-		for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		for (ioport_field &field : port.second->fields())
 			if (field.player() == player && field.crosshair_axis() != CROSSHAIR_AXIS_NONE && field.enabled())
 			{
 				field.crosshair_position(x, y, gotx, goty);
@@ -2793,32 +2784,6 @@ bool ioport_manager::crosshair_position(int player, float &x, float &y)
 			}
 
 	return (gotx && goty);
-}
-
-
-//-------------------------------------------------
-//  update_defaults - force an update to the input
-//  port values based on current conditions
-//-------------------------------------------------
-
-void ioport_manager::update_defaults()
-{
-	// two passes to catch conditionals properly
-	for (int loopnum = 0; loopnum < 2; loopnum++)
-	{
-		// loop over all input ports
-		for (ioport_port &port : m_portlist)
-		{
-			// only clear on the first pass
-			if (loopnum == 0)
-				port.live().defvalue = 0;
-
-			// first compute the default value for the entire port
-			for (ioport_field &field : port.fields())
-				if (field.enabled())
-					port.live().defvalue = (port.live().defvalue & ~field.mask()) | (field.live().value & field.mask());
-		}
-	}
 }
 
 
@@ -2874,39 +2839,24 @@ g_profiler.start(PROFILER_INPUT);
 		joystick.frame_update();
 
 	// compute default values for all the ports
-	update_defaults();
-
-	// perform mouse hit testing
-	INT32 mouse_target_x, mouse_target_y;
-	bool mouse_button;
-	render_target *mouse_target = machine().ui_input().find_mouse(&mouse_target_x, &mouse_target_y, &mouse_button);
-
-	// if the button is pressed, map the point and determine what was hit
-	ioport_field *mouse_field = nullptr;
-	if (mouse_button && mouse_target != nullptr)
-	{
-		ioport_port *port = nullptr;
-		ioport_value mask;
-		float x, y;
-		if (mouse_target->map_point_input(mouse_target_x, mouse_target_y, port, mask, x, y))
-		{
-			if (port != nullptr)
-				mouse_field = port->field(mask);
-		}
-	}
+	// two passes to catch conditionals properly
+	for (auto &port : m_portlist)
+		port.second->update_defvalue(true);
+	for (auto &port : m_portlist)
+		port.second->update_defvalue(false);
 
 	// loop over all input ports
-	for (ioport_port &port : m_portlist)
+	for (auto &port : m_portlist)
 	{
-		port.frame_update(mouse_field);
+		port.second->frame_update();
 
 		// handle playback/record
-		playback_port(port);
-		record_port(port);
+		playback_port(*port.second.get());
+		record_port(*port.second.get());
 
 		// call device line write handlers
-		ioport_value newvalue = port.read();
-		for (dynamic_field &dynfield : port.live().writelist)
+		ioport_value newvalue = port.second->read();
+		for (dynamic_field &dynfield : port.second->live().writelist)
 			if (dynfield.field().type() != IPT_OUTPUT)
 				dynfield.write(newvalue);
 	}
@@ -3072,9 +3022,9 @@ bool ioport_manager::load_game_config(xml_data_node *portnode, int type, int pla
 	ioport_value defvalue = xml_get_attribute_int(portnode, "defvalue", 0);
 
 	// find the port we want; if no tag, search them all
-	for (ioport_port &port : m_portlist)
-		if (tag == nullptr || strcmp(port.tag(), tag) == 0)
-			for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		if (tag == nullptr || strcmp(port.second->tag(), tag) == 0)
+			for (ioport_field &field : port.second->fields())
 
 				// find the matching mask and defvalue
 				if (field.type() == type && field.player() == player &&
@@ -3233,8 +3183,8 @@ void ioport_manager::save_default_inputs(xml_data_node *parentnode)
 void ioport_manager::save_game_inputs(xml_data_node *parentnode)
 {
 	// iterate over ports
-	for (ioport_port &port : m_portlist)
-		for (ioport_field &field : port.fields())
+	for (auto &port : m_portlist)
+		for (ioport_field &field : port.second->fields())
 			if (save_this_input_field_type(field.type()))
 			{
 				// determine if we changed
@@ -3266,7 +3216,7 @@ void ioport_manager::save_game_inputs(xml_data_node *parentnode)
 					if (portnode != nullptr)
 					{
 						// add the identifying information and attributes
-						xml_set_attribute(portnode, "tag", port.tag());
+						xml_set_attribute(portnode, "tag", port.second->tag());
 						xml_set_attribute(portnode, "type", input_type_to_token(field.type(), field.player()).c_str());
 						xml_set_attribute_int(portnode, "mask", field.mask());
 						xml_set_attribute_int(portnode, "defvalue", field.defvalue() & field.mask());
@@ -3316,7 +3266,7 @@ void ioport_manager::save_game_inputs(xml_data_node *parentnode)
 template<typename _Type>
 _Type ioport_manager::playback_read(_Type &result)
 {
-	// protect against NULL handles if previous reads fail
+	// protect against nullptr handles if previous reads fail
 	if (!m_playback_file.is_open())
 		result = 0;
 
@@ -3329,11 +3279,11 @@ _Type ioport_manager::playback_read(_Type &result)
 
 	// return the appropriate value
 	else if (sizeof(result) == 8)
-		result = LITTLE_ENDIANIZE_INT64(result);
+		result = little_endianize_int64(result);
 	else if (sizeof(result) == 4)
-		result = LITTLE_ENDIANIZE_INT32(result);
+		result = little_endianize_int32(result);
 	else if (sizeof(result) == 2)
-		result = LITTLE_ENDIANIZE_INT16(result);
+		result = little_endianize_int16(result);
 	return result;
 }
 
@@ -3481,7 +3431,7 @@ void ioport_manager::playback_port(ioport_port &port)
 template<typename _Type>
 void ioport_manager::record_write(_Type value)
 {
-	// protect against NULL handles if previous reads fail
+	// protect against nullptr handles if previous reads fail
 	if (!m_record_file.is_open())
 		return;
 
@@ -3500,7 +3450,7 @@ void ioport_manager::record_write<bool>(bool value)
 template<typename _Type>
 void ioport_manager::timecode_write(_Type value)
 {
-	// protect against NULL handles if previous reads fail
+	// protect against nullptr handles if previous reads fail
 	if (!m_timecode_file.is_open())
 		return;
 
@@ -3546,7 +3496,7 @@ void ioport_manager::record_init()
 	header.set_basetime(systime.time);
 	header.set_version();
 	header.set_sysname(machine().system().name);
-	header.set_appdesc(util::string_format("%s %s", emulator_info::get_appname(), build_version));
+	header.set_appdesc(util::string_format("%s %s", emulator_info::get_appname(), emulator_info::get_build_version()));
 
 	// write it
 	header.write(m_record_file);
@@ -3829,7 +3779,9 @@ void ioport_configurer::port_alloc(const char *tag)
 	std::string fulltag = m_owner.subtag(tag);
 
 	// add it to the list, and reset current field/setting
-	m_curport = &m_portlist.append(fulltag.c_str(), *global_alloc(ioport_port(m_owner, fulltag.c_str())));
+	if (m_portlist.count(fulltag) != 0) throw tag_add_exception(fulltag.c_str());
+	m_portlist.emplace(std::make_pair(fulltag, std::make_unique<ioport_port>(m_owner, fulltag.c_str())));
+	m_curport = m_portlist.find(fulltag)->second.get();
 	m_curfield = nullptr;
 	m_cursetting = nullptr;
 }
@@ -3846,7 +3798,7 @@ void ioport_configurer::port_modify(const char *tag)
 	std::string fulltag = m_owner.subtag(tag);
 
 	// find the existing port
-	m_curport = m_portlist.find(fulltag.c_str());
+	m_curport = m_portlist.find(fulltag.c_str())->second.get();
 	if (m_curport == nullptr)
 		throw emu_fatalerror("Requested to modify nonexistent port '%s'", fulltag.c_str());
 
@@ -4355,7 +4307,7 @@ void analog_field::frame_update(running_machine &machine)
 				rawvalue = apply_scale(rawvalue - INPUT_ABSOLUTE_MIN, m_positionalscale) * INPUT_RELATIVE_PER_PIXEL + m_minimum;
 
 				// clamp the high value so it does not roll over
-				rawvalue = MIN(rawvalue, m_maximum);
+				rawvalue = std::min(rawvalue, m_maximum);
 				m_accum = apply_inverse_sensitivity(rawvalue);
 			}
 			else

@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#define LOG_THREADS         0
 #define LOG_TEMP_PAUSE      0
 
 // Needed for RAW Input
@@ -16,10 +15,14 @@
 #include <process.h>
 
 #include <atomic>
+#include <chrono>
+#include <list>
+#include <memory>
 
 // MAME headers
 #include "emu.h"
 #include "uiinput.h"
+#include "ui/uimain.h"
 
 // MAMEOS headers
 #include "winmain.h"
@@ -28,6 +31,11 @@
 #include "winutf8.h"
 
 #include "winutil.h"
+
+#if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#include <agile.h>
+using namespace Windows::UI::Core;
+#endif
 
 #include "modules/render/drawbgfx.h"
 #include "modules/render/drawnone.h"
@@ -42,6 +50,9 @@
 #define IS_EXTENDED(x) (0x01000000 & x)
 #define MAKE_DI_SCAN(scan, isextended) (scan & 0x7f) | (isextended ? 0x80 : 0x00)
 #define WINOSD(machine) downcast<windows_osd_interface*>(&machine.osd())
+
+#undef min
+#undef max
 
 //============================================================
 //  PARAMETERS
@@ -63,14 +74,10 @@
 #define MIN_WINDOW_DIM                  200
 
 // custom window messages
-#define WM_USER_FINISH_CREATE_WINDOW    (WM_USER + 0)
-#define WM_USER_SELF_TERMINATE          (WM_USER + 1)
 #define WM_USER_REDRAW                  (WM_USER + 2)
 #define WM_USER_SET_FULLSCREEN          (WM_USER + 3)
 #define WM_USER_SET_MAXSIZE             (WM_USER + 4)
 #define WM_USER_SET_MINSIZE             (WM_USER + 5)
-#define WM_USER_UI_TEMP_PAUSE           (WM_USER + 6)
-#define WM_USER_EXEC_FUNC               (WM_USER + 7)
 
 
 
@@ -78,8 +85,6 @@
 //  GLOBAL VARIABLES
 //============================================================
 
-win_window_info *win_window_list;
-static win_window_info **last_window_ptr;
 static DWORD main_threadid;
 
 // actual physical resolution
@@ -93,7 +98,7 @@ static int win_physical_height;
 //============================================================
 
 // event handling
-static DWORD last_event_check;
+static std::chrono::system_clock::time_point last_event_check;
 
 // debugger
 static int in_background;
@@ -107,7 +112,6 @@ static DWORD window_threadid;
 static DWORD last_update_time;
 
 static HANDLE ui_pause_event;
-static HANDLE window_thread_ready_event;
 
 
 
@@ -117,48 +121,6 @@ static HANDLE window_thread_ready_event;
 
 
 static void create_window_class(void);
-
-// temporary hacks
-#if LOG_THREADS
-struct mtlog
-{
-	osd_ticks_t timestamp;
-	const char *event;
-};
-
-static mtlog mtlog[100000];
-static std::atomic<INT32> mtlogindex;
-
-void mtlog_add(const char *event)
-{
-	int index = mtlogindex++;
-	if (index < ARRAY_LENGTH(mtlog))
-	{
-		mtlog[index].timestamp = osd_ticks();
-		mtlog[index].event = event;
-	}
-}
-
-static void mtlog_dump(void)
-{
-	osd_ticks_t cps = osd_ticks_per_second();
-	osd_ticks_t last = mtlog[0].timestamp * 1000000 / cps;
-	int i;
-
-	FILE *f = fopen("mt.log", "w");
-	for (i = 0; i < mtlogindex; i++)
-	{
-		osd_ticks_t curr = mtlog[i].timestamp * 1000000 / cps;
-		fprintf(f, "%s",string_format("%20I64d %10I64d %s\n", (UINT64)curr, (UINT64)(curr - last), mtlog[i].event).c_str());
-		last = curr;
-	}
-	fclose(f);
-}
-#else
-void mtlog_add(const char *event) { }
-#endif
-
-
 
 //============================================================
 //  window_init
@@ -214,7 +176,7 @@ bool windows_osd_interface::window_init()
 				break;
 #if (USE_OPENGL)
 			case VIDEO_MODE_OPENGL:
-				error = renderer_ogl::init(machine());
+				renderer_ogl::init(machine());
 				break;
 #endif
 			case VIDEO_MODE_SDL2ACCEL:
@@ -241,18 +203,15 @@ bool windows_osd_interface::window_init()
 	}
 	video_config.mode = current_mode;
 
-	// set up the window list
-	last_window_ptr = &win_window_list;
-
 	return true;
 }
 
 void windows_osd_interface::update_slider_list()
 {
-	for (win_window_info *window = win_window_list; window != nullptr; window = window->m_next)
+	for (auto window : osd_common_t::s_window_list)
 	{
 		// check if any window has dirty sliders
-		if (window->m_renderer && window->m_renderer->sliders_dirty())
+		if (window->renderer().sliders_dirty())
 		{
 			build_slider_list();
 			return;
@@ -262,43 +221,28 @@ void windows_osd_interface::update_slider_list()
 
 int windows_osd_interface::window_count()
 {
-	int count = 0;
-	for (win_window_info *info = win_window_list; info != nullptr; info = info->m_next)
-	{
-		count++;
-	}
-	return count;
+	return osd_common_t::s_window_list.size();
 }
 
 void windows_osd_interface::build_slider_list()
 {
-	m_sliders = nullptr;
-	slider_state* full_list = nullptr;
-	slider_state* curr = nullptr;
-	for (win_window_info *window = win_window_list; window != nullptr; window = window->m_next)
+	m_sliders.clear();
+
+	for (auto window : osd_common_t::s_window_list)
 	{
 		// take the sliders of the first window
-		slider_state* window_sliders = window->m_renderer->get_slider_list();
-		if (window_sliders == nullptr)
-		{
-			continue;
-		}
-
-		if (full_list == nullptr)
-		{
-			full_list = curr = window_sliders;
-		}
-		else
-		{
-			curr->next = window_sliders;
-		}
-
-		while (curr->next != nullptr) {
-			curr = curr->next;
-		}
+		std::vector<ui::menu_item> window_sliders = window->renderer().get_slider_list();
+		m_sliders.insert(m_sliders.end(), window_sliders.begin(), window_sliders.end());
 	}
+}
 
-	m_sliders = full_list;
+void windows_osd_interface::add_audio_to_recording(const INT16 *buffer, int samples_this_frame)
+{
+	auto window = osd_common_t::s_window_list.front(); // We only record on the first window
+	if (window != nullptr)
+	{
+		window->renderer().add_audio_to_recording(buffer, samples_this_frame);
+	}
 }
 
 //============================================================
@@ -310,13 +254,17 @@ void windows_osd_interface::window_exit()
 {
 	assert(GetCurrentThreadId() == main_threadid);
 
+	// if we hid the cursor during the emulation, show it
+	if (!osd_common_t::s_window_list.empty())
+		osd_common_t::s_window_list.front()->show_pointer();
+
 	// free all the windows
-	while (win_window_list != nullptr)
+	while (!osd_common_t::s_window_list.empty())
 	{
-		win_window_info *temp = win_window_list;
-		win_window_list = temp->m_next;
-		temp->destroy();
-		global_free(temp);
+		auto window = osd_common_t::s_window_list.front();
+
+		// Destroy removes it from the list also
+		window->destroy();
 	}
 
 	switch(video_config.mode)
@@ -345,32 +293,28 @@ void windows_osd_interface::window_exit()
 	// kill the UI pause event
 	if (ui_pause_event)
 		CloseHandle(ui_pause_event);
-
-	// kill the window thread ready event
-	if (window_thread_ready_event)
-		CloseHandle(window_thread_ready_event);
-
-	// if we hid the cursor during the emulation, show it
-	while (ShowCursor(TRUE) < 0) ;
 }
 
-win_window_info::win_window_info(running_machine &machine)
-		: osd_window(), m_next(nullptr),
+win_window_info::win_window_info(
+	running_machine &machine,
+	int index,
+	std::shared_ptr<osd_monitor_info> monitor,
+	const osd_window_config *config) : osd_window(*config),
+		m_next(nullptr),
 		m_init_state(0),
 		m_startmaximized(0),
 		m_isminimized(0),
 		m_ismaximized(0),
-		m_monitor(nullptr),
-		m_fullscreen(0),
+		m_monitor(monitor),
+		m_fullscreen(!video_config.windowed),
 		m_fullscreen_safe(0),
 		m_aspect(0),
 		m_target(nullptr),
 		m_targetview(0),
 		m_targetorient(0),
-		m_lastclicktime(0),
+		m_lastclicktime(std::chrono::system_clock::time_point::min()),
 		m_lastclickx(0),
 		m_lastclicky(0),
-		m_renderer(nullptr),
 		m_machine(machine)
 {
 	memset(m_title,0,sizeof(m_title));
@@ -381,14 +325,72 @@ win_window_info::win_window_info(running_machine &machine)
 	m_prescale = video_config.prescale;
 }
 
-win_window_info::~win_window_info()
+POINT win_window_info::s_saved_cursor_pos = { -1, -1 };
+
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+void win_window_info::capture_pointer()
 {
-	if (m_renderer != nullptr)
-	{
-		delete m_renderer;
-}
+	RECT bounds;
+	GetClientRect(platform_window<HWND>(), &bounds);
+	ClientToScreen(platform_window<HWND>(), &reinterpret_cast<POINT *>(&bounds)[0]);
+	ClientToScreen(platform_window<HWND>(), &reinterpret_cast<POINT *>(&bounds)[1]);
+	ClipCursor(&bounds);
 }
 
+void win_window_info::release_pointer()
+{
+	ClipCursor(nullptr);
+}
+
+void win_window_info::hide_pointer()
+{
+	GetCursorPos(&s_saved_cursor_pos);
+
+	while (ShowCursor(FALSE) >= -1) {};
+	ShowCursor(TRUE);
+}
+
+void win_window_info::show_pointer()
+{
+	if (s_saved_cursor_pos.x != -1 || s_saved_cursor_pos.y != -1)
+	{
+		SetCursorPos(s_saved_cursor_pos.x, s_saved_cursor_pos.y);
+		s_saved_cursor_pos.x = s_saved_cursor_pos.y = -1;
+	}
+
+	while (ShowCursor(TRUE) < 1) {};
+	ShowCursor(FALSE);
+}
+
+#else
+
+CoreCursor^ win_window_info::s_cursor = nullptr;
+
+void win_window_info::capture_pointer()
+{
+	platform_window<Platform::Agile<CoreWindow^>>()->SetPointerCapture();
+}
+
+void win_window_info::release_pointer()
+{
+	platform_window<Platform::Agile<CoreWindow^>>()->ReleasePointerCapture();
+}
+
+void win_window_info::hide_pointer()
+{
+	auto window = platform_window<Platform::Agile<CoreWindow^>>();
+	win_window_info::s_cursor = window->PointerCursor;
+	window->PointerCursor = nullptr;
+}
+
+void win_window_info::show_pointer()
+{
+	auto window = platform_window<Platform::Agile<CoreWindow^>>();
+	window->PointerCursor = win_window_info::s_cursor;
+}
+
+#endif
 
 //============================================================
 //  winwindow_process_events_periodic
@@ -397,14 +399,14 @@ win_window_info::~win_window_info()
 
 void winwindow_process_events_periodic(running_machine &machine)
 {
-	DWORD currticks = GetTickCount();
+	auto currticks = std::chrono::system_clock::now();
 
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// update once every 1/8th of a second
-	if (currticks - last_event_check < 1000 / 8)
+	if (currticks - last_event_check < std::chrono::milliseconds(1000 / 8))
 		return;
-	winwindow_process_events(machine, TRUE, FALSE);
+	winwindow_process_events(machine, TRUE, false);
 }
 
 
@@ -413,13 +415,13 @@ void winwindow_process_events_periodic(running_machine &machine)
 //  is_mame_window
 //============================================================
 
-static BOOL is_mame_window(HWND hwnd)
+static bool is_mame_window(HWND hwnd)
 {
-	for (win_window_info *window = win_window_list; window != nullptr; window = window->m_next)
-		if (window->m_hwnd == hwnd)
-			return TRUE;
+	for (auto window : osd_common_t::s_window_list)
+		if (window->platform_window<HWND>() == hwnd)
+			return true;
 
-	return FALSE;
+	return false;
 }
 
 inline static BOOL handle_mouse_button(windows_osd_interface *osd, int button, int down, int x, int y)
@@ -460,7 +462,7 @@ void winwindow_process_events(running_machine &machine, int ingame, bool nodispa
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// remember the last time we did this
-	last_event_check = GetTickCount();
+	last_event_check = std::chrono::system_clock::now();
 
 	do
 	{
@@ -559,20 +561,6 @@ void winwindow_dispatch_message(running_machine &machine, MSG *message)
 			machine.schedule_exit();
 			break;
 
-		// temporary pause from the window thread
-		case WM_USER_UI_TEMP_PAUSE:
-			winwindow_ui_pause_from_main_thread(machine, message->wParam);
-			break;
-
-		// execute arbitrary function
-		case WM_USER_EXEC_FUNC:
-			{
-				void (*func)(void *) = (void (*)(void *)) message->wParam;
-				void *param = (void *) message->lParam;
-				func(param);
-			}
-			break;
-
 		// everything else dispatches normally
 		default:
 			TranslateMessage(message);
@@ -590,14 +578,12 @@ void winwindow_dispatch_message(running_machine &machine, MSG *message)
 
 void winwindow_take_snap(void)
 {
-	win_window_info *window;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// iterate over windows and request a snap
-	for (window = win_window_list; window != nullptr; window = window->m_next)
+	for (auto window : osd_common_t::s_window_list)
 	{
-		window->m_renderer->save();
+		window->renderer().save();
 	}
 }
 
@@ -610,14 +596,12 @@ void winwindow_take_snap(void)
 
 void winwindow_toggle_fsfx(void)
 {
-	win_window_info *window;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// iterate over windows and request a snap
-	for (window = win_window_list; window != nullptr; window = window->m_next)
+	for (auto window : osd_common_t::s_window_list)
 	{
-		window->m_renderer->toggle_fsfx();
+		window->renderer().toggle_fsfx();
 	}
 }
 
@@ -630,14 +614,12 @@ void winwindow_toggle_fsfx(void)
 
 void winwindow_take_video(void)
 {
-	win_window_info *window;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// iterate over windows and request a snap
-	for (window = win_window_list; window != nullptr; window = window->m_next)
+	for (auto window : osd_common_t::s_window_list)
 	{
-		window->m_renderer->record();
+		window->renderer().record();
 	}
 }
 
@@ -650,12 +632,10 @@ void winwindow_take_video(void)
 
 void winwindow_toggle_full_screen(void)
 {
-	win_window_info *window;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// if we are in debug mode, never go full screen
-	for (window = win_window_list; window != nullptr; window = window->m_next)
+	for (auto window : osd_common_t::s_window_list)
 		if (window->machine().debug_flags & DEBUG_FLAG_OSD_ENABLED)
 			return;
 
@@ -663,9 +643,11 @@ void winwindow_toggle_full_screen(void)
 	video_config.windowed = !video_config.windowed;
 
 	// iterate over windows and toggle their fullscreen state
-	for (window = win_window_list; window != nullptr; window = window->m_next)
-		SendMessage(window->m_hwnd, WM_USER_SET_FULLSCREEN, !video_config.windowed, 0);
-	SetForegroundWindow(win_window_list->m_hwnd);
+	for (auto window : osd_common_t::s_window_list)
+		SendMessage(window->platform_window<HWND>(), WM_USER_SET_FULLSCREEN, !video_config.windowed, 0);
+
+	// Set the first window as foreground
+	SetForegroundWindow(osd_common_t::s_window_list.front()->platform_window<HWND>());
 }
 
 
@@ -678,11 +660,10 @@ void winwindow_toggle_full_screen(void)
 BOOL winwindow_has_focus(void)
 {
 	HWND focuswnd = GetFocus();
-	win_window_info *window;
 
 	// see if one of the video windows has focus
-	for (window = win_window_list; window != nullptr; window = window->m_next)
-		if (focuswnd == window->m_hwnd)
+	for (auto window : osd_common_t::s_window_list)
+		if (focuswnd == window->platform_window<HWND>())
 			return TRUE;
 
 	return FALSE;
@@ -696,47 +677,37 @@ BOOL winwindow_has_focus(void)
 
 void winwindow_update_cursor_state(running_machine &machine)
 {
-	static POINT saved_cursor_pos = { -1, -1 };
-
 	assert(GetCurrentThreadId() == main_threadid);
+
+	// If no windows, just return
+	if (osd_common_t::s_window_list.empty())
+		return;
+
+	auto window = osd_common_t::s_window_list.front();
 
 	// if we should hide the mouse cursor, then do it
 	// rules are:
 	//   1. we must have focus before hiding the cursor
-	//   2. we also hide the cursor in full screen mode and when the window doesn't have a menu
+	//   2. we also hide the cursor in full screen mode and when tshe window doesn't have a menu
 	//   3. we also hide the cursor in windowed mode if we're not paused and
 	//      the input system requests it
-	if (winwindow_has_focus() && ((!video_config.windowed && !win_window_list->win_has_menu()) || (!machine.paused() && downcast<windows_osd_interface&>(machine.osd()).should_hide_mouse())))
+	if (winwindow_has_focus() && (
+		(window->fullscreen() && !window->win_has_menu())
+		|| (!machine.paused() && WINOSD(machine)->should_hide_mouse())))
 	{
-		win_window_info *window = win_window_list;
-		RECT bounds;
-
 		// hide cursor
-		while (ShowCursor(FALSE) >= -1) { };
-		ShowCursor(TRUE);
+		window->hide_pointer();
 
-		// store the cursor position
-		GetCursorPos(&saved_cursor_pos);
-
-		// clip cursor to game video window
-		GetClientRect(window->m_hwnd, &bounds);
-		ClientToScreen(window->m_hwnd, &((POINT *)&bounds)[0]);
-		ClientToScreen(window->m_hwnd, &((POINT *)&bounds)[1]);
-		ClipCursor(&bounds);
+		// clip pointer to game video window
+		window->capture_pointer();
 	}
 	else
 	{
 		// show cursor
-		while (ShowCursor(TRUE) < 1) { };
-		ShowCursor(FALSE);
+		window->show_pointer();
 
 		// allow cursor to move freely
-		ClipCursor(nullptr);
-		if (saved_cursor_pos.x != -1 || saved_cursor_pos.y != -1)
-		{
-			SetCursorPos(saved_cursor_pos.x, saved_cursor_pos.y);
-			saved_cursor_pos.x = saved_cursor_pos.y = -1;
-		}
+		window->release_pointer();
 	}
 }
 
@@ -747,40 +718,39 @@ void winwindow_update_cursor_state(running_machine &machine)
 //  (main thread)
 //============================================================
 
-void win_window_info::create(running_machine &machine, int index, osd_monitor_info *monitor, const osd_window_config *config)
+void win_window_info::create(running_machine &machine, int index, std::shared_ptr<osd_monitor_info> monitor, const osd_window_config *config)
 {
-	win_window_info *win;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// allocate a new window object
-	win_window_info *window = global_alloc(win_window_info(machine));
-	window->m_win_config = *config;
-	window->m_monitor = monitor;
-	window->m_fullscreen = !video_config.windowed;
-	window->m_index = index;
+	auto window = std::make_shared<win_window_info>(machine, index, monitor, config);
 
 	// set main window
-	if (index > 0)
+	if (window->m_index > 0)
 	{
-		for (auto w = win_window_list; w != nullptr; w = w->m_next)
+		for (auto w : osd_common_t::s_window_list)
 		{
 			if (w->m_index == 0)
 			{
-				window->m_main = w;
+				window->set_main_window(std::static_pointer_cast<osd_window>(w));
 				break;
 			}
 		}
 	}
+	else
+	{
+		// We must be the main window
+		window->set_main_window(window);
+	}
+
 	// see if we are safe for fullscreen
 	window->m_fullscreen_safe = TRUE;
-	for (win = win_window_list; win != nullptr; win = win->m_next)
-		if (win->m_monitor == monitor)
+	for (auto win : osd_common_t::s_window_list)
+		if (win->monitor() == monitor.get())
 			window->m_fullscreen_safe = FALSE;
 
 	// add us to the list
-	*last_window_ptr = window;
-	last_window_ptr = &window->m_next;
+	osd_common_t::s_window_list.push_back(window);
 
 	// load the layout
 	window->m_target = machine.render().target_alloc();
@@ -821,21 +791,14 @@ void win_window_info::create(running_machine &machine, int index, osd_monitor_in
 
 void win_window_info::destroy()
 {
-	win_window_info **prevptr;
-
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// remove us from the list
-	for (prevptr = &win_window_list; *prevptr != nullptr; prevptr = &(*prevptr)->m_next)
-		if (*prevptr == this)
-		{
-			*prevptr = this->m_next;
-			break;
-		}
+	osd_common_t::s_window_list.remove(shared_from_this());
 
 	// destroy the window
-	if (m_hwnd != nullptr)
-		SendMessage(m_hwnd, WM_USER_SELF_TERMINATE, 0, 0);
+	if (platform_window<HWND>() != nullptr)
+		DestroyWindow(platform_window<HWND>());
 
 	// free the render target
 	machine().render().target_free(m_target);
@@ -855,8 +818,6 @@ void win_window_info::update()
 
 	assert(GetCurrentThreadId() == main_threadid);
 
-	mtlog_add("winwindow_video_window_update: begin");
-
 	// see if the target has changed significantly in window mode
 	targetview = m_target->view();
 	targetorient = m_target->orientation();
@@ -868,21 +829,19 @@ void win_window_info::update()
 		m_targetlayerconfig = targetlayerconfig;
 
 		// in window mode, reminimize/maximize
-		if (!m_fullscreen)
+		if (!fullscreen())
 		{
 			if (m_isminimized)
-				SendMessage(m_hwnd, WM_USER_SET_MINSIZE, 0, 0);
+				SendMessage(platform_window<HWND>(), WM_USER_SET_MINSIZE, 0, 0);
 			if (m_ismaximized)
-				SendMessage(m_hwnd, WM_USER_SET_MAXSIZE, 0, 0);
+				SendMessage(platform_window<HWND>(), WM_USER_SET_MAXSIZE, 0, 0);
 		}
 	}
 
 	// if we're visible and running and not in the middle of a resize, draw
-	if (m_hwnd != nullptr && m_target != nullptr && m_renderer != nullptr)
+	if (platform_window<HWND>() != nullptr && m_target != nullptr)
 	{
 		bool got_lock = true;
-
-		mtlog_add("winwindow_video_window_update: try lock");
 
 		// only block if we're throttled
 		if (machine().video().throttled() || timeGetTime() - last_update_time > 250)
@@ -895,23 +854,18 @@ void win_window_info::update()
 		{
 			render_primitive_list *primlist;
 
-			mtlog_add("winwindow_video_window_update: got lock");
-
 			// don't hold the lock; we just used it to see if rendering was still happening
 			m_render_lock.unlock();
 
 			// ensure the target bounds are up-to-date, and then get the primitives
-			primlist = m_renderer->get_primitives();
+			primlist = renderer().get_primitives();
 
 			// post a redraw request with the primitive list as a parameter
 			last_update_time = timeGetTime();
-			mtlog_add("winwindow_video_window_update: PostMessage start");
-			SendMessage(m_hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
-			mtlog_add("winwindow_video_window_update: PostMessage end");
+
+			SendMessage(platform_window<HWND>(), WM_USER_REDRAW, 0, (LPARAM)primlist);
 		}
 	}
-
-	mtlog_add("winwindow_video_window_update: end");
 }
 
 
@@ -921,12 +875,12 @@ void win_window_info::update()
 //  (window thread)
 //============================================================
 
-osd_monitor_info *win_window_info::winwindow_video_window_monitor(const osd_rect *proposed)
+std::shared_ptr<osd_monitor_info> win_window_info::winwindow_video_window_monitor(const osd_rect *proposed)
 {
-	osd_monitor_info *monitor;
+	std::shared_ptr<osd_monitor_info> monitor;
 
 	// in window mode, find the nearest
-	if (!m_fullscreen)
+	if (!fullscreen())
 	{
 		if (proposed != nullptr)
 		{
@@ -938,7 +892,7 @@ osd_monitor_info *win_window_info::winwindow_video_window_monitor(const osd_rect
 			monitor = win_monitor_info::monitor_from_handle(MonitorFromRect(&p, MONITOR_DEFAULTTONEAREST));
 		}
 		else
-			monitor = win_monitor_info::monitor_from_handle(MonitorFromWindow(m_hwnd, MONITOR_DEFAULTTONEAREST));
+			monitor = win_monitor_info::monitor_from_handle(MonitorFromWindow(platform_window<HWND>(), MONITOR_DEFAULTTONEAREST));
 	}
 
 	// in full screen, just use the configured monitor
@@ -1009,11 +963,11 @@ void win_window_info::set_starting_view(int index, const char *defview, const ch
 
 
 //============================================================
-//  winwindow_ui_pause_from_main_thread
+//  winwindow_ui_pause
 //  (main thread)
 //============================================================
 
-void winwindow_ui_pause_from_main_thread(running_machine &machine, int pause)
+void winwindow_ui_pause(running_machine &machine, int pause)
 {
 	int old_temp_pause = ui_temp_pause;
 
@@ -1049,34 +1003,7 @@ void winwindow_ui_pause_from_main_thread(running_machine &machine, int pause)
 	}
 
 	if (LOG_TEMP_PAUSE)
-		osd_printf_verbose("winwindow_ui_pause_from_main_thread(): %d --> %d\n", old_temp_pause, ui_temp_pause);
-}
-
-
-
-//============================================================
-//  winwindow_ui_pause_from_window_thread
-//  (window thread)
-//============================================================
-
-void winwindow_ui_pause_from_window_thread(running_machine &machine, int pause)
-{
-	assert(GetCurrentThreadId() == window_threadid);
-	winwindow_ui_pause_from_main_thread(machine, pause);
-}
-
-
-
-//============================================================
-//  winwindow_ui_exec_on_main_thread
-//  (window thread)
-//============================================================
-
-void winwindow_ui_exec_on_main_thread(void (*func)(void *), void *param)
-{
-	assert(GetCurrentThreadId() == window_threadid);
-
-	(*func)(param);
+		osd_printf_verbose("winwindow_ui_pause(): %d --> %d\n", old_temp_pause, ui_temp_pause);
 }
 
 
@@ -1100,7 +1027,7 @@ int winwindow_ui_is_paused(running_machine &machine)
 int win_window_info::wnd_extra_width()
 {
 	RECT temprect = { 100, 100, 200, 200 };
-	if (m_fullscreen)
+	if (fullscreen())
 		return 0;
 	AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
 	return rect_width(&temprect) - 100;
@@ -1116,107 +1043,11 @@ int win_window_info::wnd_extra_width()
 int win_window_info::wnd_extra_height()
 {
 	RECT temprect = { 100, 100, 200, 200 };
-	if (m_fullscreen)
+	if (fullscreen())
 		return 0;
 	AdjustWindowRectEx(&temprect, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
 	return rect_height(&temprect) - 100;
 }
-
-//============================================================
-//  thread_entry
-//  (window thread)
-//============================================================
-
-unsigned __stdcall win_window_info::thread_entry(void *param)
-{
-	MSG message;
-	windows_osd_interface *osd = static_cast<windows_osd_interface*>(param);
-
-	// make a bogus user call to make us a message thread
-	PeekMessage(&message, nullptr, 0, 0, PM_NOREMOVE);
-
-	// attach our input to the main thread
-	AttachThreadInput(main_threadid, window_threadid, TRUE);
-
-	// signal to the main thread that we are ready to receive events
-	SetEvent(window_thread_ready_event);
-
-	// run the message pump
-	while (GetMessage(&message, nullptr, 0, 0))
-	{
-		int dispatch = TRUE;
-
-		if ((message.hwnd == nullptr) || is_mame_window(message.hwnd))
-		{
-			switch (message.message)
-			{
-				// ignore input messages here
-				case WM_SYSKEYUP:
-				case WM_SYSKEYDOWN:
-					dispatch = FALSE;
-					break;
-
-				// forward mouse button downs to the input system
-				case WM_LBUTTONDOWN:
-					dispatch = !handle_mouse_button(osd, 0, TRUE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_RBUTTONDOWN:
-					dispatch = !handle_mouse_button(osd, 1, TRUE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_MBUTTONDOWN:
-					dispatch = !handle_mouse_button(osd, 2, TRUE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_XBUTTONDOWN:
-					dispatch = !handle_mouse_button(osd, 3, TRUE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				// forward mouse button ups to the input system
-				case WM_LBUTTONUP:
-					dispatch = !handle_mouse_button(osd, 0, FALSE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_RBUTTONUP:
-					dispatch = !handle_mouse_button(osd, 1, FALSE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_MBUTTONUP:
-					dispatch = !handle_mouse_button(osd, 2, FALSE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				case WM_XBUTTONUP:
-					dispatch = !handle_mouse_button(osd, 3, FALSE, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-					break;
-
-				// a terminate message to the thread posts a quit
-				case WM_USER_SELF_TERMINATE:
-					PostQuitMessage(0);
-					dispatch = FALSE;
-					break;
-
-				// handle the "complete create" message
-				case WM_USER_FINISH_CREATE_WINDOW:
-				{
-					win_window_info *window = (win_window_info *)message.lParam;
-					window->m_init_state = window->complete_create() ? -1 : 1;
-					dispatch = FALSE;
-					break;
-				}
-			}
-		}
-
-		// dispatch if necessary
-		if (dispatch)
-		{
-			TranslateMessage(&message);
-			DispatchMessage(&message);
-		}
-	}
-	return 0;
-}
-
 
 
 //============================================================
@@ -1244,34 +1075,38 @@ int win_window_info::complete_create()
 	}
 
 	// create the window, but don't show it yet
-	m_hwnd = win_create_window_ex_utf8(
-						m_fullscreen ? FULLSCREEN_STYLE_EX : WINDOW_STYLE_EX,
+	HWND hwnd = win_create_window_ex_utf8(
+						fullscreen() ? FULLSCREEN_STYLE_EX : WINDOW_STYLE_EX,
 						"MAME",
 						m_title,
-						m_fullscreen ? FULLSCREEN_STYLE : WINDOW_STYLE,
+						fullscreen() ? FULLSCREEN_STYLE : WINDOW_STYLE,
 						monitorbounds.left() + 20, monitorbounds.top() + 20,
 						monitorbounds.left() + 100, monitorbounds.top() + 100,
-						nullptr,//(win_window_list != nullptr) ? win_window_list->m_hwnd : nullptr,
+						nullptr,//(osd_common_t::s_window_list != nullptr) ? osd_common_t::s_window_list->m_hwnd : nullptr,
 						menu,
 						GetModuleHandleUni(),
 						nullptr);
-	if (m_hwnd == nullptr)
+
+	if (hwnd == nullptr)
 		return 1;
 
-	// set window #0 as the focus window for all windows, required for D3D & multimonitor
-	m_focus_hwnd = win_window_list->m_hwnd;
+	set_platform_window(hwnd);
 
 	// set a pointer back to us
-	SetWindowLongPtr(m_hwnd, GWLP_USERDATA, (LONG_PTR)this);
+	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
 
 	// skip the positioning stuff for -video none */
 	if (video_config.mode == VIDEO_MODE_NONE)
+	{
+		set_renderer(osd_renderer::make_for_type(video_config.mode, shared_from_this()));
+		renderer().create();
 		return 0;
+	}
 
 	// adjust the window position to the initial width/height
 	tempwidth = (m_win_config.width != 0) ? m_win_config.width : 640;
 	tempheight = (m_win_config.height != 0) ? m_win_config.height : 480;
-	SetWindowPos(m_hwnd, nullptr, monitorbounds.left() + 20, monitorbounds.top() + 20,
+	SetWindowPos(platform_window<HWND>(), nullptr, monitorbounds.left() + 20, monitorbounds.top() + 20,
 			monitorbounds.left() + tempwidth + wnd_extra_width(),
 			monitorbounds.top() + tempheight + wnd_extra_height(),
 			SWP_NOZORDER);
@@ -1284,25 +1119,20 @@ int win_window_info::complete_create()
 	adjust_window_position_after_major_change();
 
 	// show the window
-	if (!m_fullscreen || m_fullscreen_safe)
+	if (!fullscreen() || m_fullscreen_safe)
 	{
-		// finish off by trying to initialize DirectX; if we fail, ignore it
-		if (m_renderer != nullptr)
-		{
-			delete m_renderer;
-		}
-		m_renderer = osd_renderer::make_for_type(video_config.mode, reinterpret_cast<osd_window *>(this));
-		if (m_renderer->create())
+		set_renderer(osd_renderer::make_for_type(video_config.mode, shared_from_this()));
+		if (renderer().create())
 			return 1;
 
-		ShowWindow(m_hwnd, SW_SHOW);
+		ShowWindow(platform_window<HWND>(), SW_SHOW);
 	}
 
 	// clear the window
-	dc = GetDC(m_hwnd);
-	GetClientRect(m_hwnd, &client);
+	dc = GetDC(platform_window<HWND>());
+	GetClientRect(platform_window<HWND>(), &client);
 	FillRect(dc, &client, (HBRUSH)GetStockObject(BLACK_BRUSH));
-	ReleaseDC(m_hwnd, dc);
+	ReleaseDC(platform_window<HWND>(), dc);
 	return 0;
 }
 
@@ -1335,14 +1165,14 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 			HDC hdc = BeginPaint(wnd, &pstruct);
 			window->draw_video_contents(hdc, TRUE);
 			if (window->win_has_menu())
-				DrawMenuBar(window->m_hwnd);
+				DrawMenuBar(window->platform_window<HWND>());
 			EndPaint(wnd, &pstruct);
 			break;
 		}
 
 		// non-client paint: punt if full screen
 		case WM_NCPAINT:
-			if (!window->m_fullscreen || window->win_has_menu())
+			if (!window->fullscreen() || window->win_has_menu())
 				return DefWindowProc(wnd, message, wparam, lparam);
 			break;
 
@@ -1367,15 +1197,15 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 
 		case WM_LBUTTONDOWN:
 		{
-			DWORD ticks = GetTickCount();
+			auto ticks = std::chrono::system_clock::now();
 			window->machine().ui_input().push_mouse_down_event(window->m_target, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 
 			// check for a double-click
-			if (ticks - window->m_lastclicktime < GetDoubleClickTime() &&
+			if (ticks - window->m_lastclicktime < std::chrono::milliseconds(GetDoubleClickTime()) &&
 				GET_X_LPARAM(lparam) >= window->m_lastclickx - 4 && GET_X_LPARAM(lparam) <= window->m_lastclickx + 4 &&
 				GET_Y_LPARAM(lparam) >= window->m_lastclicky - 4 && GET_Y_LPARAM(lparam) <= window->m_lastclicky + 4)
 			{
-				window->m_lastclicktime = 0;
+				window->m_lastclicktime = std::chrono::system_clock::time_point::min();
 				window->machine().ui_input().push_mouse_double_click_event(window->m_target, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 			}
 			else
@@ -1389,6 +1219,14 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 
 		case WM_LBUTTONUP:
 			window->machine().ui_input().push_mouse_up_event(window->m_target, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			break;
+
+		case WM_RBUTTONDOWN:
+			window->machine().ui_input().push_mouse_rdown_event(window->m_target, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			break;
+
+		case WM_RBUTTONUP:
+			window->machine().ui_input().push_mouse_rup_event(window->m_target, GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 			break;
 
 		case WM_CHAR:
@@ -1407,14 +1245,14 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 		case WM_ENTERSIZEMOVE:
 			window->m_resize_state = RESIZE_STATE_RESIZING;
 		case WM_ENTERMENULOOP:
-			winwindow_ui_pause_from_window_thread(window->machine(), TRUE);
+			winwindow_ui_pause(window->machine(), TRUE);
 			break;
 
 		// unpause the system when we stop a menu or resize and force a redraw
 		case WM_EXITSIZEMOVE:
 			window->m_resize_state = RESIZE_STATE_PENDING;
 		case WM_EXITMENULOOP:
-			winwindow_ui_pause_from_window_thread(window->machine(), FALSE);
+			winwindow_ui_pause(window->machine(), FALSE);
 			InvalidateRect(wnd, nullptr, FALSE);
 			break;
 
@@ -1480,9 +1318,8 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 
 		// destroy: clean up all attached rendering bits and nullptr out our hwnd
 		case WM_DESTROY:
-			global_free(window->m_renderer);
-			window->m_renderer = nullptr;
-			window->m_hwnd = nullptr;
+			window->renderer_reset();
+			window->set_platform_window(nullptr);
 			return DefWindowProc(wnd, message, wparam, lparam);
 
 		// self redraw: draw ourself in a non-painty way
@@ -1490,19 +1327,12 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 		{
 			HDC hdc = GetDC(wnd);
 
-			mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
 			window->m_primlist = (render_primitive_list *)lparam;
 			window->draw_video_contents(hdc, FALSE);
-			mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW end");
 
 			ReleaseDC(wnd, hdc);
 			break;
 		}
-
-		// self destruct
-		case WM_USER_SELF_TERMINATE:
-			DestroyWindow(window->m_hwnd);
-			break;
 
 		// fullscreen set
 		case WM_USER_SET_FULLSCREEN:
@@ -1534,8 +1364,8 @@ LRESULT CALLBACK win_window_info::video_window_proc(HWND wnd, UINT message, WPAR
 		// set focus: if we're not the primary window, switch back
 		// commented out ATM because this prevents us from resizing secondary windows
 //      case WM_SETFOCUS:
-//          if (window != win_window_list && win_window_list != nullptr)
-//              SetFocus(win_window_list->m_hwnd);
+//          if (window != osd_common_t::s_window_list && osd_common_t::s_window_list != nullptr)
+//              SetFocus(osd_common_t::s_window_list->m_hwnd);
 //          break;
 
 		// everything else: defaults
@@ -1557,20 +1387,16 @@ void win_window_info::draw_video_contents(HDC dc, int update)
 {
 	assert(GetCurrentThreadId() == window_threadid);
 
-	mtlog_add("draw_video_contents: begin");
-
-	mtlog_add("draw_video_contents: render lock acquire");
 	std::lock_guard<std::mutex> lock(m_render_lock);
-	mtlog_add("draw_video_contents: render lock acquired");
 
 	// if we're iconic, don't bother
-	if (m_hwnd != nullptr && !IsIconic(m_hwnd))
+	if (platform_window<HWND>() != nullptr && !IsIconic(platform_window<HWND>()))
 	{
 		// if no bitmap, just fill
 		if (m_primlist == nullptr)
 		{
 			RECT fill;
-			GetClientRect(m_hwnd, &fill);
+			GetClientRect(platform_window<HWND>(), &fill);
 			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
 		}
 
@@ -1579,14 +1405,9 @@ void win_window_info::draw_video_contents(HDC dc, int update)
 		{
 			// update DC
 			m_dc = dc;
-			m_renderer->draw(update);
-			mtlog_add("draw_video_contents: drawing finished");
+			renderer().draw(update);
 		}
 	}
-
-	mtlog_add("draw_video_contents: render lock released");
-
-	mtlog_add("draw_video_contents: end");
 }
 
 
@@ -1605,7 +1426,7 @@ osd_rect win_window_info::constrain_to_aspect_ratio(const osd_rect &rect, int ad
 	INT32 viswidth, visheight;
 	INT32 adjwidth, adjheight;
 	float pixel_aspect;
-	osd_monitor_info *monitor = winwindow_video_window_monitor(&rect);
+	std::shared_ptr<osd_monitor_info> monitor = winwindow_video_window_monitor(&rect);
 
 	assert(GetCurrentThreadId() == window_threadid);
 
@@ -1643,15 +1464,15 @@ osd_rect win_window_info::constrain_to_aspect_ratio(const osd_rect &rect, int ad
 	m_target->compute_minimum_size(minwidth, minheight);
 
 	// clamp against the absolute minimum
-	propwidth = MAX(propwidth, MIN_WINDOW_DIM);
-	propheight = MAX(propheight, MIN_WINDOW_DIM);
+	propwidth = std::max(propwidth, MIN_WINDOW_DIM);
+	propheight = std::max(propheight, MIN_WINDOW_DIM);
 
 	// clamp against the minimum width and height
-	propwidth = MAX(propwidth, minwidth);
-	propheight = MAX(propheight, minheight);
+	propwidth = std::max(propwidth, minwidth);
+	propheight = std::max(propheight, minheight);
 
 	// clamp against the maximum (fit on one screen for full screen mode)
-	if (m_fullscreen)
+	if (fullscreen())
 	{
 		maxwidth = monitor->position_size().width() - extrawidth;
 		maxheight = monitor->position_size().height() - extraheight;
@@ -1663,14 +1484,14 @@ osd_rect win_window_info::constrain_to_aspect_ratio(const osd_rect &rect, int ad
 
 		// further clamp to the maximum width/height in the window
 		if (m_win_config.width != 0)
-			maxwidth = MIN(maxwidth, m_win_config.width + extrawidth);
+			maxwidth = std::min(maxwidth, m_win_config.width + extrawidth);
 		if (m_win_config.height != 0)
-			maxheight = MIN(maxheight, m_win_config.height + extraheight);
+			maxheight = std::min(maxheight, m_win_config.height + extraheight);
 	}
 
 	// clamp to the maximum
-	propwidth = MIN(propwidth, maxwidth);
-	propheight = MIN(propheight, maxheight);
+	propwidth = std::min(propwidth, maxwidth);
+	propheight = std::min(propheight, maxheight);
 
 	// compute the visible area based on the proposed rectangle
 	m_target->compute_visible_area(propwidth, propheight, pixel_aspect, m_target->orientation(), viswidth, visheight);
@@ -1811,14 +1632,14 @@ void win_window_info::update_minmax_state()
 {
 	assert(GetCurrentThreadId() == window_threadid);
 
-	if (!m_fullscreen)
+	if (!fullscreen())
 	{
 		RECT bounds;
 
 		// compare the maximum bounds versus the current bounds
 		osd_dim minbounds = get_min_bounds(video_config.keepaspect);
 		osd_dim maxbounds = get_max_bounds(video_config.keepaspect);
-		GetWindowRect(m_hwnd, &bounds);
+		GetWindowRect(platform_window<HWND>(), &bounds);
 
 		// if either the width or height matches, we were maximized
 		m_isminimized = (rect_width(&bounds) == minbounds.width()) ||
@@ -1848,12 +1669,12 @@ void win_window_info::minimize_window()
 
 	// get the window rect
 	RECT bounds;
-	GetWindowRect(m_hwnd, &bounds);
+	GetWindowRect(platform_window<HWND>(), &bounds);
 
 	osd_rect newrect(bounds.left, bounds.top, newsize );
 
 
-	SetWindowPos(m_hwnd, nullptr, newrect.left(), newrect.top(), newrect.width(), newrect.height(), SWP_NOZORDER);
+	SetWindowPos(platform_window<HWND>(), nullptr, newrect.left(), newrect.top(), newrect.width(), newrect.height(), SWP_NOZORDER);
 }
 
 
@@ -1875,7 +1696,7 @@ void win_window_info::maximize_window()
 			work.top() + (work.height() - newsize.height()) / 2,
 			newsize);
 
-	SetWindowPos(m_hwnd, nullptr, newrect.left(), newrect.top(), newrect.width(), newrect.height(), SWP_NOZORDER);
+	SetWindowPos(platform_window<HWND>(), nullptr, newrect.left(), newrect.top(), newrect.width(), newrect.height(), SWP_NOZORDER);
 }
 
 
@@ -1892,11 +1713,11 @@ void win_window_info::adjust_window_position_after_major_change()
 	assert(GetCurrentThreadId() == window_threadid);
 
 	// get the current size
-	GetWindowRect(m_hwnd, &oldrect);
+	GetWindowRect(platform_window<HWND>(), &oldrect);
 	osd_rect newrect = RECT_to_osd_rect(oldrect);
 
 	// adjust the window size so the client area is what we want
-	if (!m_fullscreen)
+	if (!fullscreen())
 	{
 		// constrain the existing size to the aspect ratio
 		if (video_config.keepaspect)
@@ -1906,19 +1727,19 @@ void win_window_info::adjust_window_position_after_major_change()
 	// in full screen, make sure it covers the primary display
 	else
 	{
-		osd_monitor_info *monitor = winwindow_video_window_monitor(nullptr);
+		std::shared_ptr<osd_monitor_info> monitor = winwindow_video_window_monitor(nullptr);
 		newrect = monitor->position_size();
 	}
 
 	// adjust the position if different
 	if (oldrect.left != newrect.left() || oldrect.top != newrect.top() ||
 		oldrect.right != newrect.right() || oldrect.bottom != newrect.bottom())
-		SetWindowPos(m_hwnd, m_fullscreen ? HWND_TOPMOST : HWND_TOP,
+		SetWindowPos(platform_window<HWND>(), fullscreen() ? HWND_TOPMOST : HWND_TOP,
 				newrect.left(), newrect.top(),
 				newrect.width(), newrect.height(), 0);
 
 	// take note of physical window size (used for lightgun coordinate calculation)
-	if (this == win_window_list)
+	if (m_index == 0)
 	{
 		win_physical_width = newrect.width();
 		win_physical_height = newrect.height();
@@ -1937,33 +1758,35 @@ void win_window_info::set_fullscreen(int fullscreen)
 	assert(GetCurrentThreadId() == window_threadid);
 
 	// if we're in the right state, punt
-	if (m_fullscreen == fullscreen)
+	if (this->fullscreen() == fullscreen)
 		return;
 	m_fullscreen = fullscreen;
 
+	// reset UI to main menu
+	machine().ui().menu_reset();
+
 	// kill off the drawers
-	delete m_renderer;
-	m_renderer = nullptr;
+	renderer_reset();
 
 	// hide ourself
-	ShowWindow(m_hwnd, SW_HIDE);
+	ShowWindow(platform_window<HWND>(), SW_HIDE);
 
 	// configure the window if non-fullscreen
 	if (!fullscreen)
 	{
 		// adjust the style
-		SetWindowLong(m_hwnd, GWL_STYLE, WINDOW_STYLE);
-		SetWindowLong(m_hwnd, GWL_EXSTYLE, WINDOW_STYLE_EX);
-		SetWindowPos(m_hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		SetWindowLong(platform_window<HWND>(), GWL_STYLE, WINDOW_STYLE);
+		SetWindowLong(platform_window<HWND>(), GWL_EXSTYLE, WINDOW_STYLE_EX);
+		SetWindowPos(platform_window<HWND>(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// force to the bottom, then back on top
-		SetWindowPos(m_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		SetWindowPos(m_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(platform_window<HWND>(), HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(platform_window<HWND>(), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
 		// if we have previous non-fullscreen bounds, use those
 		if (m_non_fullscreen_bounds.right != m_non_fullscreen_bounds.left)
 		{
-			SetWindowPos(m_hwnd, HWND_TOP, m_non_fullscreen_bounds.left, m_non_fullscreen_bounds.top,
+			SetWindowPos(platform_window<HWND>(), HWND_TOP, m_non_fullscreen_bounds.left, m_non_fullscreen_bounds.top,
 						rect_width(&m_non_fullscreen_bounds), rect_height(&m_non_fullscreen_bounds),
 						SWP_NOZORDER);
 		}
@@ -1971,7 +1794,7 @@ void win_window_info::set_fullscreen(int fullscreen)
 		// otherwise, set a small size and maximize from there
 		else
 		{
-			SetWindowPos(m_hwnd, HWND_TOP, 0, 0, MIN_WINDOW_DIM, MIN_WINDOW_DIM, SWP_NOZORDER);
+			SetWindowPos(platform_window<HWND>(), HWND_TOP, 0, 0, MIN_WINDOW_DIM, MIN_WINDOW_DIM, SWP_NOZORDER);
 			maximize_window();
 		}
 	}
@@ -1980,28 +1803,28 @@ void win_window_info::set_fullscreen(int fullscreen)
 	else
 	{
 		// save the bounds
-		GetWindowRect(m_hwnd, &m_non_fullscreen_bounds);
+		GetWindowRect(platform_window<HWND>(), &m_non_fullscreen_bounds);
 
 		// adjust the style
-		SetWindowLong(m_hwnd, GWL_STYLE, FULLSCREEN_STYLE);
-		SetWindowLong(m_hwnd, GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
-		SetWindowPos(m_hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		SetWindowLong(platform_window<HWND>(), GWL_STYLE, FULLSCREEN_STYLE);
+		SetWindowLong(platform_window<HWND>(), GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
+		SetWindowPos(platform_window<HWND>(), nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// set topmost
-		SetWindowPos(m_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(platform_window<HWND>(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	}
 
 	// adjust the window to compensate for the change
 	adjust_window_position_after_major_change();
 
 	// show ourself
-	if (!m_fullscreen || m_fullscreen_safe)
+	if (!this->fullscreen() || m_fullscreen_safe)
 	{
 		if (video_config.mode != VIDEO_MODE_NONE)
-			ShowWindow(m_hwnd, SW_SHOW);
+			ShowWindow(platform_window<HWND>(), SW_SHOW);
 
-		m_renderer = reinterpret_cast<osd_renderer *>(osd_renderer::make_for_type(video_config.mode, reinterpret_cast<osd_window *>(this)));
-		if (m_renderer->create())
+		set_renderer(osd_renderer::make_for_type(video_config.mode, shared_from_this()));
+		if (renderer().create())
 			exit(1);
 	}
 
@@ -2020,7 +1843,7 @@ bool winwindow_qt_filter(void *message)
 		if(msg->hwnd) // get the machine associated with this window
 			ptr = GetWindowLongPtr(msg->hwnd, GWLP_USERDATA);
 		else // any one will have to do
-			ptr = (LONG_PTR)win_window_list;
+			ptr = (LONG_PTR)osd_common_t::s_window_list;
 
 		winwindow_dispatch_message(((win_window_info *)ptr)->machine(), msg);
 		return true;

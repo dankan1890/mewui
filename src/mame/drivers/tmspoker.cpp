@@ -269,7 +269,7 @@ TILE_GET_INFO_MEMBER(tmspoker_state::get_bg_tile_info)
 
 void tmspoker_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(tmspoker_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(tmspoker_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 }
 
 UINT32 tmspoker_state::screen_update_tmspoker(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
@@ -342,7 +342,7 @@ READ8_MEMBER(tmspoker_state::unk_r)
 }
 
 static ADDRESS_MAP_START( tmspoker_cru_map, AS_IO, 8, tmspoker_state )
-	AM_RANGE(0x0000, 0xffff) AM_READ(unk_r)
+	AM_RANGE(0x0000, 0x07ff) AM_READ(unk_r)
 ADDRESS_MAP_END
 
 /* I/O byte R/W

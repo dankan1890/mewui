@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "string.h"
-#include "ui/ui.h"
 #include "debug/debugcpu.h"
 
 
@@ -40,7 +39,6 @@ device_t::device_t(const machine_config &mconfig, device_type type, const char *
 		m_attoseconds_per_clock((clock == 0) ? 0 : HZ_TO_ATTOSECONDS(clock)),
 
 		m_machine_config(mconfig),
-		m_static_config(nullptr),
 		m_input_defaults(nullptr),
 		m_default_bios_tag(""),
 
@@ -76,7 +74,16 @@ device_t::~device_t()
 memory_region *device_t::memregion(const char *_tag) const
 {
 	// build a fully-qualified name and look it up
-	return machine().memory().regions().find(subtag(_tag).c_str());
+	if (_tag)
+	{
+		auto search = machine().memory().regions().find(subtag(_tag).c_str());
+		if (search != machine().memory().regions().end())
+			return search->second.get();
+		else
+			return nullptr;
+	}
+	else
+		return nullptr;
 }
 
 
@@ -88,7 +95,16 @@ memory_region *device_t::memregion(const char *_tag) const
 memory_share *device_t::memshare(const char *_tag) const
 {
 	// build a fully-qualified name and look it up
-	return machine().memory().shares().find(subtag(_tag).c_str());
+	if (_tag)
+	{
+		auto search = machine().memory().shares().find(subtag(_tag).c_str());
+		if (search != machine().memory().shares().end())
+			return search->second.get();
+		else
+			return nullptr;
+	}
+	else
+		return nullptr;
 }
 
 
@@ -99,8 +115,16 @@ memory_share *device_t::memshare(const char *_tag) const
 
 memory_bank *device_t::membank(const char *_tag) const
 {
-	// build a fully-qualified name and look it up
-	return machine().memory().banks().find(subtag(_tag).c_str());
+	if (_tag)
+	{
+		auto search = machine().memory().banks().find(subtag(_tag).c_str());
+		if (search != machine().memory().banks().end())
+			return search->second.get();
+		else
+			return nullptr;
+	}
+	else
+		return nullptr;
 }
 
 
@@ -306,7 +330,7 @@ void device_t::set_machine(running_machine &machine)
 bool device_t::findit(bool isvalidation) const
 {
 	bool allfound = true;
-	for (finder_base *autodev = m_auto_finder_list; autodev != nullptr; autodev = autodev->m_next)
+	for (finder_base *autodev = m_auto_finder_list; autodev != nullptr; autodev = autodev->next())
 	{
 		if (isvalidation)
 		{
@@ -336,6 +360,10 @@ bool device_t::findit(bool isvalidation) const
 
 void device_t::start()
 {
+	// prepare the logerror buffer
+	if (m_machine->allow_logging())
+		m_string_buffer.reserve(1024);
+
 	// find all the registered devices
 	if (!findit(false))
 		throw emu_fatalerror("Missing some required objects, unable to proceed");
@@ -356,7 +384,7 @@ void device_t::start()
 	device_sound_interface *sound;
 	if (state_registrations == 0 && (interface(exec) || interface(sound)) && type() != SPEAKER)
 	{
-		logerror("Device '%s' did not register any state to save!\n", tag());
+		logerror("Device did not register any state to save!\n");
 		if ((machine().system().flags & MACHINE_SUPPORTS_SAVE) != 0)
 			fatalerror("Device '%s' did not register any state to save!\n", tag());
 	}
@@ -502,7 +530,7 @@ void device_t::device_validity_check(validity_checker &valid) const
 //  rom region description for this device
 //-------------------------------------------------
 
-const rom_entry *device_t::device_rom_region() const
+const tiny_rom_entry *device_t::device_rom_region() const
 {
 	// none by default
 	return nullptr;
@@ -892,4 +920,18 @@ void device_interface::interface_clock_changed()
 void device_interface::interface_debug_setup()
 {
 	// do nothing by default
+}
+
+
+//-------------------------------------------------
+// rom_region_vector
+//-------------------------------------------------
+
+const std::vector<rom_entry> &device_t::rom_region_vector() const
+{
+	if (m_rom_entries.empty())
+	{
+		m_rom_entries = rom_build_entries(device_rom_region());
+	}
+	return m_rom_entries;
 }

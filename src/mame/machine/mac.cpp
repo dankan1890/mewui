@@ -94,8 +94,6 @@
 #include "includes/mac.h"
 #include "machine/applefdc.h"
 #include "machine/sonydriv.h"
-#include "debug/debugcpu.h"
-#include "debugger.h"
 
 #define AUDIO_IS_CLASSIC (m_model <= MODEL_MAC_CLASSIC)
 #define MAC_HAS_VIA2    ((m_model >= MODEL_MAC_II) && (m_model != MODEL_MAC_IIFX))
@@ -117,8 +115,6 @@
 #define LOG_KEYBOARD    0
 #define LOG_MEMORY      0
 #endif
-
-static offs_t mac_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options);
 
 // returns non-zero if this Mac has ADB
 int mac_state::has_adb()
@@ -152,27 +148,27 @@ void mac_state::mac_install_memory(offs_t memory_begin, offs_t memory_end,
 	offs_t memory_size, void *memory_data, int is_rom, const char *bank)
 {
 	address_space& space = m_maincpu->space(AS_PROGRAM);
-	offs_t memory_mask;
+	offs_t memory_mirror;
 
-	memory_size = MIN(memory_size, (memory_end + 1 - memory_begin));
-	memory_mask = memory_size - 1;
+	memory_size = std::min(memory_size, (memory_end + 1 - memory_begin));
+	memory_mirror = (memory_end - memory_begin) & ~(memory_size - 1);
 
 	if (!is_rom)
 	{
-		space.install_readwrite_bank(memory_begin, memory_end, memory_mask, 0, bank);
+		space.install_readwrite_bank(memory_begin, memory_end & ~memory_mirror, memory_mirror, bank);
 	}
 	else
 	{
-		space.unmap_write(memory_begin, memory_end, memory_mask, 0);
-		space.install_read_bank(memory_begin, memory_end, memory_mask, 0, bank);
+		space.unmap_write(memory_begin, memory_end);
+		space.install_read_bank(memory_begin, memory_end & ~memory_mirror, memory_mirror, bank);
 	}
 
 	membank(bank)->set_base(memory_data);
 
 	if (LOG_MEMORY)
 	{
-		printf("mac_install_memory(): bank=%s range=[0x%06x...0x%06x] mask=0x%06x ptr=0x%p\n",
-			bank, memory_begin, memory_end, memory_mask, memory_data);
+		printf("mac_install_memory(): bank=%s range=[0x%06x...0x%06x] mirror=0x%06x ptr=0x%p\n",
+			bank, memory_begin, memory_end, memory_mirror, memory_data);
 	}
 }
 
@@ -355,12 +351,12 @@ void mac_state::v8_resize()
 		static const UINT32 simm_sizes[4] = { 0, 2*1024*1024, 4*1024*1024, 8*1024*1024 };
 
 		// re-install ROM in its normal place
-		size_t rom_mask = memregion("bootrom")->bytes() - 1;
-		m_maincpu->space(AS_PROGRAM).install_read_bank(0xa00000, 0xafffff, rom_mask, 0, "bankR");
+		size_t rom_mirror = 0xfffff ^ (memregion("bootrom")->bytes() - 1);
+		m_maincpu->space(AS_PROGRAM).install_read_bank(0xa00000, 0xafffff, rom_mirror, "bankR");
 		membank("bankR")->set_base((void *)memregion("bootrom")->base());
 
 		// force unmap of entire RAM region
-		space.unmap_write(0, 0x9fffff, 0x9fffff, 0);
+		space.unmap_write(0, 0x9fffff);
 
 		// LC and Classic II have 2 MB built-in, all other V8-style machines have 4 MB
 		// we reserve the first 2 or 4 MB of mess_ram for the onboard,
@@ -447,13 +443,13 @@ void mac_state::set_memory_overlay(int overlay)
 		else if ((m_model == MODEL_MAC_PORTABLE) || (m_model == MODEL_MAC_PB100) || (m_model == MODEL_MAC_IIVX) || (m_model == MODEL_MAC_IIFX))
 		{
 			address_space& space = m_maincpu->space(AS_PROGRAM);
-			space.unmap_write(0x000000, 0x9fffff, 0x9fffff, 0);
+			space.unmap_write(0x000000, 0x9fffff);
 			mac_install_memory(0x000000, memory_size-1, memory_size, memory_data, is_rom, "bank1");
 		}
 		else if ((m_model == MODEL_MAC_PB140) || (m_model == MODEL_MAC_PB160) || ((m_model >= MODEL_MAC_PBDUO_210) && (m_model <= MODEL_MAC_PBDUO_270c)))
 		{
 			address_space& space = m_maincpu->space(AS_PROGRAM);
-			space.unmap_write(0x000000, 0xffffff, 0xffffff, 0);
+			space.unmap_write(0x000000, 0xffffff);
 			mac_install_memory(0x000000, memory_size-1, memory_size, memory_data, is_rom, "bank1");
 		}
 		else if ((m_model >= MODEL_MAC_II) && (m_model <= MODEL_MAC_SE30))
@@ -470,8 +466,8 @@ void mac_state::set_memory_overlay(int overlay)
 			}
 			else
 			{
-				size_t rom_mask = memregion("bootrom")->bytes() - 1;
-				m_maincpu->space(AS_PROGRAM).install_read_bank(0x40000000, 0x4fffffff, rom_mask, 0, "bankR");
+				size_t rom_mirror = 0xfffffff ^ (memregion("bootrom")->bytes() - 1);
+				m_maincpu->space(AS_PROGRAM).install_read_bank(0x40000000, 0x4fffffff & ~rom_mirror, rom_mirror, "bankR");
 				membank("bankR")->set_base((void *)memregion("bootrom")->base());
 			}
 		}
@@ -534,7 +530,7 @@ READ32_MEMBER(mac_state::rom_switch_r)
 /*
     scan_keyboard()
 
-    scan the keyboard, and returns key transition code (or NULL ($7B) if none)
+    scan the keyboard, and returns key transition code (or nullptr ($7B) if none)
 */
 #ifndef MAC_USE_EMULATED_KBD
 int mac_state::scan_keyboard()
@@ -542,7 +538,6 @@ int mac_state::scan_keyboard()
 	int i, j;
 	int keybuf = 0;
 	int keycode;
-	ioport_port *ports[7] = { m_key0, m_key1, m_key2, m_key3, m_key4, m_key5, m_key6 };
 
 	if (m_keycode_buf_index)
 	{
@@ -551,7 +546,7 @@ int mac_state::scan_keyboard()
 
 	for (i=0; i<7; i++)
 	{
-		keybuf = ports[i]->read();
+		keybuf = m_keys[i]->read();
 
 		if (keybuf != m_key_matrix[i])
 		{
@@ -637,7 +632,7 @@ int mac_state::scan_keyboard()
 		}
 	}
 
-	return 0x7B;    /* return NULL */
+	return 0x7B;    /* return nullptr */
 }
 
 /*
@@ -743,7 +738,7 @@ TIMER_CALLBACK_MEMBER(mac_state::inquiry_timeout_func)
 {
 	if (LOG_KEYBOARD)
 		logerror("keyboard enquiry timeout\n");
-	kbd_shift_out(0x7B); /* always send NULL */
+	kbd_shift_out(0x7B); /* always send nullptr */
 }
 
 /*
@@ -754,7 +749,7 @@ void mac_state::keyboard_receive(int val)
 	switch (val)
 	{
 	case 0x10:
-		/* inquiry - returns key transition code, or NULL ($7B) if time out (1/4s) */
+		/* inquiry - returns key transition code, or nullptr ($7B) if time out (1/4s) */
 		if (LOG_KEYBOARD)
 			logerror("keyboard command : inquiry\n");
 
@@ -763,7 +758,7 @@ void mac_state::keyboard_receive(int val)
 		break;
 
 	case 0x14:
-		/* instant - returns key transition code, or NULL ($7B) */
+		/* instant - returns key transition code, or nullptr ($7B) */
 		if (LOG_KEYBOARD)
 			logerror("keyboard command : instant\n");
 
@@ -1986,10 +1981,6 @@ void mac_state::machine_reset()
 	}
 
 	m_scsi_interrupt = 0;
-	if ((m_maincpu->debug()) && (m_model < MODEL_MAC_POWERMAC_6100))
-	{
-		m_maincpu->debug()->set_dasm_override(mac_dasm_override);
-	}
 
 	m_drive_select = 0;
 	m_scsiirq_enable = 0;
@@ -3185,7 +3176,7 @@ const char *lookup_trap(UINT16 opcode)
 
 
 
-static offs_t mac_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options)
+offs_t mac_state::mac_dasm_override(device_t &device, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, int options)
 {
 	UINT16 opcode;
 	unsigned result = 0;
@@ -3235,7 +3226,7 @@ void mac_state::mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 		"SCSIComplete", /* $04 */
 		"SCSIRead",     /* $05 */
 		"SCSIWrite",    /* $06 */
-		NULL,           /* $07 */
+		nullptr,           /* $07 */
 		"SCSIRBlind",   /* $08 */
 		"SCSIWBlind",   /* $09 */
 		"SCSIStat",     /* $0A */

@@ -117,6 +117,7 @@ DIP locations verified for:
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6502/n2a03.h"
+#include "machine/gen_latch.h"
 #include "machine/nvram.h"
 #include "rendlay.h"
 #include "includes/punchout.h"
@@ -189,8 +190,8 @@ static ADDRESS_MAP_START( punchout_io_map, AS_IO, 8, punchout_state )
 	AM_RANGE(0x00, 0x00) AM_READ_PORT("IN0")
 	AM_RANGE(0x01, 0x01) AM_READ_PORT("IN1")
 	AM_RANGE(0x00, 0x01) AM_WRITENOP // the 2A03 #1 is not present
-	AM_RANGE(0x02, 0x02) AM_READ_PORT("DSW2") AM_WRITE(soundlatch_byte_w)
-	AM_RANGE(0x03, 0x03) AM_READ_PORT("DSW1") AM_WRITE(soundlatch2_byte_w)
+	AM_RANGE(0x02, 0x02) AM_READ_PORT("DSW2") AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
+	AM_RANGE(0x03, 0x03) AM_READ_PORT("DSW1") AM_DEVWRITE("soundlatch2", generic_latch_8_device, write)
 	AM_RANGE(0x04, 0x04) AM_DEVWRITE("vlm", vlm5030_device, data_w)
 	AM_RANGE(0x05, 0x07) AM_WRITENOP // spunchout protection
 	AM_RANGE(0x08, 0x08) AM_WRITE(nmi_mask_w)
@@ -201,6 +202,12 @@ static ADDRESS_MAP_START( punchout_io_map, AS_IO, 8, punchout_state )
 	AM_RANGE(0x0d, 0x0d) AM_WRITE(punchout_speech_st_w)
 	AM_RANGE(0x0e, 0x0e) AM_WRITE(punchout_speech_vcu_w)
 	AM_RANGE(0x0f, 0x0f) AM_WRITENOP // enable NVRAM?
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( punchout_vlm_map, AS_0, 8, punchout_state )
+	ADDRESS_MAP_GLOBAL_MASK(0x3fff)
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -254,7 +261,7 @@ WRITE8_MEMBER(punchout_state::spunchout_rp5h01_clock_w)
 static ADDRESS_MAP_START( spnchout_io_map, AS_IO, 8, punchout_state )
 	AM_RANGE(0x05, 0x05) AM_MIRROR(0xf0) AM_WRITE(spunchout_rp5h01_reset_w)
 	AM_RANGE(0x06, 0x06) AM_MIRROR(0xf0) AM_WRITE(spunchout_rp5h01_clock_w)
-	AM_RANGE(0x07, 0x07) AM_MIRROR(0xf0) AM_MASK(0xf0) AM_READWRITE(spunchout_exp_r, spunchout_exp_w) // protection ports
+	AM_RANGE(0x07, 0x07) AM_SELECT(0xf0) AM_READWRITE(spunchout_exp_r, spunchout_exp_w) // protection ports
 	AM_IMPORT_FROM( punchout_io_map )
 ADDRESS_MAP_END
 
@@ -262,8 +269,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( punchout_sound_map, AS_PROGRAM, 8, punchout_state )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM
-	AM_RANGE(0x4016, 0x4016) AM_READ(soundlatch_byte_r)
-	AM_RANGE(0x4017, 0x4017) AM_READ(soundlatch2_byte_r)
+	AM_RANGE(0x4016, 0x4016) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
+	AM_RANGE(0x4017, 0x4017) AM_DEVREAD("soundlatch2", generic_latch_8_device, read)
 	AM_RANGE(0xe000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
@@ -668,7 +675,11 @@ static MACHINE_CONFIG_START( punchout, punchout_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch2")
+
 	MCFG_SOUND_ADD("vlm", VLM5030, XTAL_21_4772MHz/6)
+	MCFG_DEVICE_ADDRESS_MAP(AS_0, punchout_vlm_map)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 0.50)
 MACHINE_CONFIG_END
 
@@ -1120,7 +1131,7 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-b-8f_white.8f", 0x1a00, 0x0200, CRC(1663eed7) SHA1(90ff876a6b885f8a80c17531cde8b91864f1a6a5) )  /* B */
 	ROM_LOAD( "chs1-v.2d",          0x2000, 0x0100, CRC(71dc0d48) SHA1(dd6609f547d74887f520d7e71a1a00317ff181d0) )  /* timing - not used */
 
-	ROM_REGION( 0x10000, "vlm", 0 ) /* 64k for the VLM5030 data */
+	ROM_REGION( 0x4000, "vlm", 0 )  /* 16k for the VLM5030 data */
 	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, CRC(ad8b64b8) SHA1(0f1232a10faf71b782f9f6653cca8570243c17e0) )
 ROM_END
 
@@ -1266,7 +1277,7 @@ ROM_START( spnchoutj )
 	ROM_LOAD( "chs1-b-8f_white.8f", 0x1a00, 0x0200, CRC(1663eed7) SHA1(90ff876a6b885f8a80c17531cde8b91864f1a6a5) )  /* B */
 	ROM_LOAD( "chs1-v.2d",          0x2000, 0x0100, CRC(71dc0d48) SHA1(dd6609f547d74887f520d7e71a1a00317ff181d0) )  /* timing - not used */
 
-	ROM_REGION( 0x10000, "vlm", 0 ) /* 64k for the VLM5030 data */
+	ROM_REGION( 0x4000, "vlm", 0 )  /* 16k for the VLM5030 data */
 	ROM_LOAD( "chs1c6pa.bin", 0x0000, 0x4000, CRC(d05fb730) SHA1(9f4c4c7e5113739312558eff4d3d3e42d513aa31) )
 ROM_END
 
@@ -1322,7 +1333,7 @@ ROM_START( armwrest )
 	ROM_LOAD( "chv1-b.3c",    0x0c00, 0x0100, CRC(c3f92ea2) SHA1(1a82cca1b9a8d9bd4a1d121d8c131a7d0be554bc) )    /* priority encoder - not used */
 	ROM_LOAD( "chpv-v.2d",    0x0d00, 0x0100, CRC(71dc0d48) SHA1(dd6609f547d74887f520d7e71a1a00317ff181d0) )    /* timing - not used */
 
-	ROM_REGION( 0x10000, "vlm", 0 ) /* 64k for the VLM5030 data */
+	ROM_REGION( 0x4000, "vlm", 0 )  /* 16k for the VLM5030 data */
 	ROM_LOAD( "chv1-c.6p",    0x0000, 0x4000, CRC(31b52896) SHA1(395f59ac38b46042f79e9224ac6bc7d3dc299906) )
 ROM_END
 

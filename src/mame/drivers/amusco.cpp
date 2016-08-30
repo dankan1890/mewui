@@ -142,7 +142,7 @@ TILE_GET_INFO_MEMBER(amusco_state::get_bg_tile_info)
 
 void amusco_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(amusco_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 10, 74, 24);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(amusco_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 10, 74, 24);
 }
 
 UINT32 amusco_state::screen_update_amusco(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
@@ -497,7 +497,7 @@ static MACHINE_CONFIG_START( amusco, amusco_state )
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", amusco_state, amusco_vblank_irq)
 	MCFG_CPU_PERIODIC_INT_DRIVER(amusco_state, amusco_timer_irq,  60*32)
 
-	MCFG_PIC8259_ADD( "pic8259", INPUTLINE("maincpu", 0), VCC, NULL )
+	MCFG_PIC8259_ADD( "pic8259", INPUTLINE("maincpu", 0), VCC, NOOP)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

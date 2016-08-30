@@ -326,7 +326,7 @@ ioport_constructor threecom3c505_device::device_input_ports() const
 	return INPUT_PORTS_NAME( tc3c505_port );
 }
 
-const rom_entry *threecom3c505_device::device_rom_region() const
+const tiny_rom_entry *threecom3c505_device::device_rom_region() const
 {
 	return ROM_NAME( threecom3c505 );
 }
@@ -400,14 +400,14 @@ void threecom3c505_device::device_reset()
 		m_irq = m_irqdrq->read() & 0xf;
 		m_drq = (m_irqdrq->read() >> 4) & 0x7;
 
-		m_isa->install16_device(base, base + ELP_IO_EXTENT - 1, 0, 0, read16_delegate(FUNC(threecom3c505_device::read), this), write16_delegate(FUNC(threecom3c505_device::write), this));
+		m_isa->install16_device(base, base + ELP_IO_EXTENT - 1, read16_delegate(FUNC(threecom3c505_device::read), this), write16_delegate(FUNC(threecom3c505_device::write), this));
 
 		if (m_romopts->read() & 1)
 		{
 			// host ROM is enabled, get base address
 			static const int rom_bases[4] = { 0x0000, 0x2000, 0x4000, 0x6000 };
 			int rom_base = rom_bases[(m_romopts->read() >> 1) & 3];
-			m_isa->install_rom(this, rom_base, rom_base + 0x01fff, 0, 0, "threecom3c505", "threecom3c505");
+			m_isa->install_rom(this, rom_base, rom_base + 0x01fff, "threecom3c505", "threecom3c505");
 		}
 
 		m_installed = true;
@@ -424,8 +424,8 @@ const char *threecom3c505_device::cpu_context()
 
 	device_t *cpu = machine().firstcpu;
 	osd_ticks_t t = osd_ticks();
-	int s = t / osd_ticks_per_second();
-	int ms = (t % osd_ticks_per_second()) / 1000;
+	int s = (t / osd_ticks_per_second()) % 3600;
+	int ms = (t / (osd_ticks_per_second() / 1000)) % 1000;
 
 	/* if we have an executing CPU, output data */
 	if (cpu != nullptr)
@@ -1287,6 +1287,31 @@ UINT8 threecom3c505_device::read_command_port()
 			case CMD_TRANSMIT_PACKET_COMPLETE:
 			case CMD_TRANSMIT_PACKET_18_COMPLETE:
 				m_netstat.tot_xmit++;
+
+				// append the Ethernet Frame Check Sequence
+				// see also http://www.edaboard.com/thread120700.html
+				{
+					// compute the Ethernet Frame Check Sequence
+					static const UINT32 crc_table[] =
+					{ 0x4DBDF21C, 0x500AE278, 0x76D3D2D4, 0x6B64C2B0,
+							0x3B61B38C, 0x26D6A3E8, 0x000F9344, 0x1DB88320,
+							0xA005713C, 0xBDB26158, 0x9B6B51F4, 0x86DC4190,
+							0xD6D930AC, 0xCB6E20C8, 0xEDB71064, 0xF0000000 };
+					UINT32 n, crc = 0;
+					for (n = 0; n < m_tx_data_buffer.get_length(); n++)
+					{
+						UINT8 data = m_tx_data_buffer.get(n);
+						crc = (crc >> 4) ^ crc_table[(crc ^ (data >> 0)) & 0x0f]; /* lower nibble */
+						crc = (crc >> 4) ^ crc_table[(crc ^ (data >> 4)) & 0x0f]; /* upper nibble */
+					}
+
+					// append the Ethernet Frame Check Sequence
+					for (n = 0; n < 4; n++)
+					{
+						m_tx_data_buffer.append(crc & 0xff);
+						crc >>= 8;
+					}
+				}
 
 				if (!send(m_tx_data_buffer.get_data(),  m_tx_data_buffer.get_length()))
 				{

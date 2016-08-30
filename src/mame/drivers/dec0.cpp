@@ -189,7 +189,7 @@ WRITE16_MEMBER(dec0_state::dec0_control_w)
 		case 4: /* 6502 sound cpu */
 			if (ACCESSING_BITS_0_7)
 			{
-				soundlatch_byte_w(space, 0, data & 0xff);
+				m_soundlatch->write(space, 0, data & 0xff);
 				m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 			}
 			break;
@@ -228,7 +228,7 @@ WRITE16_MEMBER(dec0_automat_state::automat_control_w)
 		case 0xe: /* z80 sound cpu */
 			if (ACCESSING_BITS_0_7)
 			{
-				soundlatch_byte_w(space, 0, data & 0xff);
+				m_soundlatch->write(space, 0, data & 0xff);
 				m_audiocpu->set_input_line(0, HOLD_LINE);
 			}
 			break;
@@ -261,7 +261,7 @@ WRITE16_MEMBER(dec0_state::slyspy_control_w)
 		case 0:
 			if (ACCESSING_BITS_0_7)
 			{
-				soundlatch_byte_w(space, 0, data & 0xff);
+				m_soundlatch->write(space, 0, data & 0xff);
 				m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 			}
 			break;
@@ -275,7 +275,7 @@ WRITE16_MEMBER(dec0_state::midres_sound_w)
 {
 	if (ACCESSING_BITS_0_7)
 	{
-		soundlatch_byte_w(space, 0, data & 0xff);
+		m_soundlatch->write(space, 0, data & 0xff);
 		m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
@@ -500,7 +500,7 @@ static ADDRESS_MAP_START( dec0_s_map, AS_PROGRAM, 8, dec0_state )
 	AM_RANGE(0x0000, 0x05ff) AM_RAM
 	AM_RANGE(0x0800, 0x0801) AM_DEVWRITE("ym1", ym2203_device, write)
 	AM_RANGE(0x1000, 0x1001) AM_DEVWRITE("ym2", ym3812_device, write)
-	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x3000, 0x3000) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x3800, 0x3800) AM_DEVREADWRITE("oki", okim6295_device, read, write)
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -512,7 +512,7 @@ static ADDRESS_MAP_START( slyspy_s_map, AS_PROGRAM, 8, dec0_state )
 	AM_RANGE(0x0a0000, 0x0a0001) AM_READNOP /* Protection counter */
 	AM_RANGE(0x0b0000, 0x0b0001) AM_DEVWRITE("ym1", ym2203_device, write)
 	AM_RANGE(0x0e0000, 0x0e0001) AM_DEVREADWRITE("oki", okim6295_device, read, write)
-	AM_RANGE(0x0f0000, 0x0f0001) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x0f0000, 0x0f0001) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x1f0000, 0x1f1fff) AM_RAMBANK("bank8")
 	AM_RANGE(0x1ff400, 0x1ff403) AM_DEVWRITE("audiocpu", h6280_device, irq_status_w)
 ADDRESS_MAP_END
@@ -522,7 +522,7 @@ static ADDRESS_MAP_START( midres_s_map, AS_PROGRAM, 8, dec0_state )
 	AM_RANGE(0x108000, 0x108001) AM_DEVWRITE("ym2", ym3812_device, write)
 	AM_RANGE(0x118000, 0x118001) AM_DEVWRITE("ym1", ym2203_device, write)
 	AM_RANGE(0x130000, 0x130001) AM_DEVREADWRITE("oki", okim6295_device, read, write)
-	AM_RANGE(0x138000, 0x138001) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x138000, 0x138001) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x1f0000, 0x1f1fff) AM_RAMBANK("bank8")
 	AM_RANGE(0x1ff400, 0x1ff403) AM_DEVWRITE("audiocpu", h6280_device, irq_status_w)
 ADDRESS_MAP_END
@@ -625,7 +625,7 @@ static ADDRESS_MAP_START( automat_s_map, AS_PROGRAM, 8, dec0_automat_state )
 	AM_RANGE(0x0103, 0x0103) AM_WRITENOP
 	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 	AM_RANGE(0xc800, 0xc801) AM_DEVWRITE("2203a", ym2203_device, write)
-	AM_RANGE(0xd800, 0xd800) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0xd800, 0xd800) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0xd000, 0xd001) AM_DEVWRITE("2203b", ym2203_device, write)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(automat_adpcm_w)
 	AM_RANGE(0x0000, 0xffff) AM_ROM
@@ -1251,17 +1251,6 @@ GFXDECODE_END
 
 /******************************************************************************/
 
-WRITE_LINE_MEMBER(dec0_state::sound_irq)
-{
-	m_audiocpu->set_input_line(0, state); /* IRQ */
-}
-
-WRITE_LINE_MEMBER(dec0_state::sound_irq2)
-{
-	m_audiocpu->set_input_line(1, state); /* IRQ2 */
-}
-
-/******************************************************************************/
 
 
 /* This is guesswork, in order to get ~57,41 Hz.
@@ -1303,6 +1292,8 @@ static MACHINE_CONFIG_START( dec0_base, dec0_state )
 	MCFG_DEVICE_ADD("spritegen", DECO_MXC06, 0)
 	MCFG_DECO_MXC06_GFX_REGION(3)
 	MCFG_DECO_MXC06_GFXDECODE("gfxdecode")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( dec0, dec0_base )
@@ -1331,7 +1322,7 @@ static MACHINE_CONFIG_DERIVED( dec0, dec0_base )
 	MCFG_SOUND_ROUTE(3, "mono", 0.35)
 
 	MCFG_SOUND_ADD("ym2", YM3812, XTAL_12MHz / 4)
-	MCFG_YM3812_IRQ_HANDLER(WRITELINE(dec0_state, sound_irq))
+	MCFG_YM3812_IRQ_HANDLER(INPUTLINE("audiocpu", 0))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
 	MCFG_OKIM6295_ADD("oki", XTAL_20MHz / 2 / 10, OKIM6295_PIN7_HIGH)
@@ -1359,7 +1350,7 @@ static MACHINE_CONFIG_DERIVED( dec1, dec0_base )
 	MCFG_SOUND_ROUTE(3, "mono", 0.35)
 
 	MCFG_SOUND_ADD("ym2", YM3812, XTAL_12MHz/4) /* verified on pcb */
-	MCFG_YM3812_IRQ_HANDLER(WRITELINE(dec0_state, sound_irq2))
+	MCFG_YM3812_IRQ_HANDLER(INPUTLINE("audiocpu", 1))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
 	MCFG_OKIM6295_ADD("oki", XTAL_12MHz/12, OKIM6295_PIN7_HIGH) /* verified on pcb */
@@ -1425,6 +1416,8 @@ static MACHINE_CONFIG_START( automat, dec0_automat_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_SOUND_ADD("2203a", YM2203, 1500000)
 	MCFG_SOUND_ROUTE(0, "mono", 0.90)
 	MCFG_SOUND_ROUTE(1, "mono", 0.90)
@@ -1485,6 +1478,8 @@ static MACHINE_CONFIG_START( secretab, dec0_automat_state )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
 	MCFG_SOUND_ADD("2203a", YM2203, 1500000)
 	MCFG_SOUND_ROUTE(0, "mono", 0.90)
@@ -1627,7 +1622,7 @@ static MACHINE_CONFIG_DERIVED( midresb, midres )
 	MCFG_CPU_PROGRAM_MAP(dec0_s_map)
 
 	MCFG_SOUND_MODIFY("ym2")
-	MCFG_YM3812_IRQ_HANDLER(WRITELINE(dec0_state, sound_irq))
+	MCFG_YM3812_IRQ_HANDLER(INPUTLINE("audiocpu", 0))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
 	// bootleg doesn't seem to support row/col scroll (or enable is different)
@@ -2456,7 +2451,7 @@ ROM_START( hippodrm )
 	ROM_LOAD( "ew03",         0x0000, 0x10000, CRC(b606924d) SHA1(b759fcec10b333465cf5cd1b30987bf2d62186b2) )
 ROM_END
 
-ROM_START( ffantasy )
+ROM_START( ffantasyj )
 	ROM_REGION( 0x60000, "maincpu", 0 ) /* 4*64k for 68000 code */
 	ROM_LOAD16_BYTE( "ff-02-2.bin",  0x00000, 0x10000, CRC(29fc22a7) SHA1(73cbd47c34bee22c16a69cfc6037a60dc30effe8) )
 	ROM_LOAD16_BYTE( "ff-01-2.bin",  0x00001, 0x10000, CRC(9f617cb4) SHA1(447ea4e57dd6b23aaf48e5e14c7893277730c7d9) )
@@ -2465,6 +2460,52 @@ ROM_START( ffantasy )
 
 	ROM_REGION( 0x10000, "audiocpu", 0 )    /* 6502 sound */
 	ROM_LOAD( "ew04",         0x8000, 0x8000, CRC(9871b98d) SHA1(2b6c46bc2b10a28946d6ad8251e1a156a0b99947) )
+
+	ROM_REGION( 0x10000, "sub", 0 ) /* HuC6280 CPU */
+	ROM_LOAD( "ew08",         0x00000, 0x10000, CRC(53010534) SHA1(8b996e48414bacd009e05ff49848884ecf15d967) )
+
+	ROM_REGION( 0x20000, "gfx1", 0 ) /* chars */
+	ROM_LOAD( "ev14",         0x00000, 0x10000, CRC(686f72c1) SHA1(41d4fc1208d779f3428990a96586f6a555c28562) )
+	ROM_LOAD( "ev13",         0x10000, 0x10000, CRC(b787dcc9) SHA1(7fce9d2040bcb2483419ea1cafed538bb8aba4f9) )
+
+	ROM_REGION( 0x20000, "gfx2", 0 ) /* tiles */
+	ROM_LOAD( "ew19",         0x00000, 0x08000, CRC(6b80d7a3) SHA1(323162e7e0ce16f6244d8d98fdb2396ffef87e82) )
+	ROM_LOAD( "ew18",         0x08000, 0x08000, CRC(78d3d764) SHA1(e8f77a23bd4f4d268bec7c0153fb957acd07cdee) )
+	ROM_LOAD( "ew20",         0x10000, 0x08000, CRC(ce9f5de3) SHA1(b8af33f52ca3579a45b41395751697a58931f9d6) )
+	ROM_LOAD( "ew21",         0x18000, 0x08000, CRC(487a7ba2) SHA1(7d52cc1517def8426355e8281440ec5e617d1121) )
+
+	ROM_REGION( 0x20000, "gfx3", 0 ) /* tiles */
+	ROM_LOAD( "ew24",         0x00000, 0x08000, CRC(4e1bc2a4) SHA1(d7d4c42fd932722436f1847929088e46d03184bd) )
+	ROM_LOAD( "ew25",         0x08000, 0x08000, CRC(9eb47dfb) SHA1(bb1e8a3a47f447f3a983ea51943d3081d56ad9a4) )
+	ROM_LOAD( "ew23",         0x10000, 0x08000, CRC(9ecf479e) SHA1(a8d4c1490f12e1b15d53a2a97147920dcb638378) )
+	ROM_LOAD( "ew22",         0x18000, 0x08000, CRC(e55669aa) SHA1(2a9b0e85bb81ff87a108e08b28e19b7b469463e4) )
+
+	ROM_REGION( 0x80000, "gfx4", 0 ) /* sprites */
+	ROM_LOAD( "ev15",         0x00000, 0x10000, CRC(1d80f797) SHA1(1b6878155367350ff826593ea73bda5b893c1823) )
+	ROM_LOAD( "ew16",         0x10000, 0x10000, CRC(96233177) SHA1(929a1b7fb65ab33277719b84517ff57da563f875) )
+	ROM_LOAD( "ev10",         0x20000, 0x10000, CRC(c4e7116b) SHA1(1e665ba150e08ceb1c0d5f7b7e777f3d60997811) )
+	ROM_LOAD( "ew11",         0x30000, 0x10000, CRC(f2e007fc) SHA1(da30ad3725b9bc4a07dbb1afa05f145c3574c84c) )
+	ROM_LOAD( "ev06",         0x40000, 0x10000, CRC(6c794f1a) SHA1(ab7996917bea99850aef5a0890485dd27778cd99) )
+	ROM_LOAD( "ew07",         0x50000, 0x10000, CRC(470b6989) SHA1(16b292d8a3a54048bf29f0b4f41bb6ca049b347c) )
+	ROM_LOAD( "ev17",         0x60000, 0x10000, CRC(045509d4) SHA1(ebbd71de8e8492ff6321e3ede0d98d9ed462de01) )
+	ROM_LOAD( "ew12",         0x70000, 0x10000, CRC(a2d244bc) SHA1(ff2391efc480f36a302650691f8a7a620b86d99a) )
+
+	ROM_REGION( 0x40000, "oki", 0 ) /* ADPCM samples */
+	ROM_LOAD( "ew03",         0x0000, 0x10000, CRC(b606924d) SHA1(b759fcec10b333465cf5cd1b30987bf2d62186b2) )
+ROM_END
+
+// I believe 'EX' is the world (export) release, but it still shows a 'ONLY FOR USE IN JAPAN' screen
+// 'EV' is original Japanese release.
+// 'EW' is US release.
+ROM_START( ffantasy )
+	ROM_REGION( 0x60000, "maincpu", 0 ) /* 4*64k for 68000 code */
+	ROM_LOAD16_BYTE( "ex02-3.4b",  0x00000, 0x10000, CRC(df0d7dc6) SHA1(a60197ad6f19f730e05cf6a3be9181f28d425344) )
+	ROM_LOAD16_BYTE( "ex01-3.3b",  0x00001, 0x10000, CRC(c0fb4fe5) SHA1(f6ed0904ec19491c4ed5f5e5da16df02476ab1f3) )
+	ROM_LOAD16_BYTE( "ex05-.4c",   0x20000, 0x10000, CRC(c76d65ec) SHA1(620990acaf2fd7f3fbfe7135a17ac0195feb8330) )
+	ROM_LOAD16_BYTE( "ex00-.1b",   0x20001, 0x10000, CRC(e9b427a6) SHA1(b334992846771739d31756724138b82f897dfad5) )
+
+	ROM_REGION( 0x10000, "audiocpu", 0 )    /* 6502 sound */
+	ROM_LOAD( "ex04-.1c",         0x8000, 0x8000, CRC(9871b98d) SHA1(2b6c46bc2b10a28946d6ad8251e1a156a0b99947) )
 
 	ROM_REGION( 0x10000, "sub", 0 ) /* HuC6280 CPU */
 	ROM_LOAD( "ew08",         0x00000, 0x10000, CRC(53010534) SHA1(8b996e48414bacd009e05ff49848884ecf15d967) )
@@ -3260,7 +3301,8 @@ GAME( 1988, robocopj,   robocop,  robocop,  robocop,  dec0_state,  robocop, ROT0
 GAME( 1988, robocopu,   robocop,  robocop,  robocop,  dec0_state,  robocop, ROT0,   "Data East USA",         "Robocop (US revision 1)", MACHINE_SUPPORTS_SAVE )
 GAME( 1988, robocopu0,  robocop,  robocop,  robocop,  dec0_state,  robocop, ROT0,   "Data East USA",         "Robocop (US revision 0)", MACHINE_SUPPORTS_SAVE )
 GAME( 1989, hippodrm,   0,        hippodrm, hippodrm, dec0_state, hippodrm, ROT0,   "Data East USA",         "Hippodrome (US)", MACHINE_SUPPORTS_SAVE )
-GAME( 1989, ffantasy,   hippodrm, hippodrm, ffantasy, dec0_state, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan revision 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1989, ffantasy,   hippodrm, hippodrm, ffantasy, dec0_state, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (World revision 3)", MACHINE_SUPPORTS_SAVE )
+GAME( 1989, ffantasyj,  hippodrm, hippodrm, ffantasy, dec0_state, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan revision 2)", MACHINE_SUPPORTS_SAVE )
 GAME( 1989, ffantasya,  hippodrm, hippodrm, ffantasy, dec0_state, hippodrm, ROT0,   "Data East Corporation", "Fighting Fantasy (Japan)", MACHINE_SUPPORTS_SAVE )
 GAME( 1989, secretag,   0,        slyspy,   slyspy,   dec0_state,   slyspy, ROT0,   "Data East Corporation", "Secret Agent (World revision 3)", MACHINE_SUPPORTS_SAVE )
 GAME( 1989, secretagj,  secretag, slyspy,   slyspy,   dec0_state,   slyspy, ROT0,   "Data East Corporation", "Secret Agent (Japan revision 2)", MACHINE_SUPPORTS_SAVE )

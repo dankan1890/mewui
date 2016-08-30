@@ -23,7 +23,7 @@ lamps?
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m68000/m68000.h"
-#include "includes/decocrpt.h"
+#include "machine/decocrpt.h"
 #include "sound/okim6295.h"
 #include "video/deco16ic.h"
 #include "video/decospr.h"
@@ -64,7 +64,7 @@ public:
 			logerror("dreambal_eeprom_w unhandled data %04x %04x\n",data&0x0fff8, mem_mask);
 		}
 
-		if (mem_mask&0x00ff)
+		if (ACCESSING_BITS_0_7)
 		{
 			m_eeprom->clk_write(data &0x2 ? ASSERT_LINE : CLEAR_LINE);
 			m_eeprom->di_write(data &0x1);

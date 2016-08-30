@@ -96,8 +96,8 @@ static ADDRESS_MAP_START(eacc_mem, AS_PROGRAM, 8, eacc_state)
 	ADDRESS_MAP_GLOBAL_MASK(0xc7ff) // A11,A12,A13 not connected
 	AM_RANGE(0x0000, 0x001f) AM_RAM AM_SHARE("nvram") // inside cpu, battery-backed
 	AM_RANGE(0x0020, 0x007f) AM_RAM // inside cpu
-	AM_RANGE(0x6000, 0x67ff) AM_ROM AM_MIRROR(0x8000)
-	AM_RANGE(0x8004, 0x8007) AM_MIRROR(0x7fc) AM_DEVREADWRITE("pia", pia6821_device, read, write)
+	AM_RANGE(0x4000, 0x47ff) AM_ROM AM_MIRROR(0x8000)
+	AM_RANGE(0x8000, 0x8003) AM_MIRROR(0x7fc) AM_DEVREADWRITE("pia", pia6821_device, read, write)
 ADDRESS_MAP_END
 
 
@@ -140,7 +140,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(eacc_state::eacc_cb1)
 {
 	m_cb1 ^= 1; // 15hz
 	if (m_cb2)
-		m_maincpu->set_input_line(M6800_IRQ_LINE, ASSERT_LINE);
+		m_maincpu->set_input_line(M6802_IRQ_LINE, ASSERT_LINE);
 }
 
 TIMER_DEVICE_CALLBACK_MEMBER(eacc_state::eacc_nmi)
@@ -252,8 +252,8 @@ static MACHINE_CONFIG_START( eacc, eacc_state )
 	MCFG_PIA_WRITEPA_HANDLER(WRITE8(eacc_state, eacc_segment_w))
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(eacc_state, eacc_digit_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(eacc_state, eacc_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("eacc_nmi", eacc_state, eacc_nmi, attotime::from_hz(600))

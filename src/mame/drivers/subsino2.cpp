@@ -603,7 +603,7 @@ VIDEO_START_MEMBER(subsino2_state,subsino2)
 	// SS9601 Regs:
 
 	m_ss9601_tilesize       =   TILE_8x8;
-	m_ss9601_scrollctrl		=   0xfd;   // not written by mtrain, default to reels on
+	m_ss9601_scrollctrl     =   0xfd;   // not written by mtrain, default to reels on
 	m_ss9601_disable        =   0x00;
 
 	// SS9601 Layers:
@@ -612,7 +612,7 @@ VIDEO_START_MEMBER(subsino2_state,subsino2)
 	{
 		layer_t *l = &m_layers[i];
 
-		l->tmap = &machine().tilemap().create(m_gfxdecode, i ?
+		l->tmap = &machine().tilemap().create(*m_gfxdecode, i ?
 												tilemap_get_info_delegate(FUNC(subsino2_state::ss9601_get_tile_info_1),this) :
 												tilemap_get_info_delegate(FUNC(subsino2_state::ss9601_get_tile_info_0),this),
 												TILEMAP_SCAN_ROWS, 8,8, 0x80,0x40);
@@ -2515,7 +2515,7 @@ Others:
   trimmer (volume)(VR1)
   8x2 switches DIP(DS1)
   3x 3 legs jumper (JP1,JP2,JP4)
-  battery 3V 
+  battery 3V
 
 ***************************************************************************/
 

@@ -653,7 +653,7 @@ WRITE16_MEMBER( qx10_state::vram_w )
 }
 
 static ADDRESS_MAP_START( upd7220_map, AS_0, 16, qx10_state )
-	AM_RANGE(0x00000, 0x5ffff) AM_READWRITE(vram_r,vram_w)
+	AM_RANGE(0x00000, 0x3ffff) AM_READWRITE(vram_r,vram_w)
 ADDRESS_MAP_END
 
 static SLOT_INTERFACE_START(keyboard)
@@ -708,7 +708,7 @@ static MACHINE_CONFIG_START( qx10, qx10_state )
 	MCFG_PIT8253_OUT2_HANDLER(DEVWRITELINE("upd7201", z80dart_device, rxtxcb_w))
 
 	MCFG_PIC8259_ADD("pic8259_master", INPUTLINE("maincpu", 0), VCC, READ8(qx10_state, get_slave_ack))
-	MCFG_PIC8259_ADD("pic8259_slave", DEVWRITELINE("pic8259_master", pic8259_device, ir7_w), GND, NULL)
+	MCFG_PIC8259_ADD("pic8259_slave", DEVWRITELINE("pic8259_master", pic8259_device, ir7_w), GND, NOOP)
 
 	MCFG_UPD7201_ADD("upd7201", MAIN_CLK/4, 0, 0, 0, 0) // channel b clock set by pit2 channel 2
 	// Channel A: Keyboard

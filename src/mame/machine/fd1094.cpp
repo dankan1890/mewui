@@ -553,13 +553,14 @@ UINT16 *fd1094_decryption_cache::decrypted_opcodes(UINT8 state)
 
 
 fd1094_device::fd1094_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-	: m68000_device(mconfig, tag, owner, clock, "fd1094", __FILE__),
-		m_decrypted_opcodes_bank(*this, "^fd1094_decrypted_opcodes"),
-		m_state(0x00),
-		m_irqmode(false),
-		m_cache(*this),
-		m_srcbase(*this, DEVICE_SELF),
-		m_key(*this, "key")
+	: m68000_device(mconfig, tag, owner, clock, "fd1094", __FILE__)
+	, m_decrypted_opcodes_bank(*this, "^fd1094_decrypted_opcodes")
+	, m_state(0x00)
+	, m_irqmode(false)
+	, m_cache(*this)
+	, m_srcbase(nullptr)
+	, m_rom(*this, DEVICE_SELF)
+	, m_key(*this, "key")
 {
 	// override the name after the m68000 initializes
 	m_name.assign("FD1094");
@@ -633,18 +634,22 @@ void fd1094_device::change_state(int newstate)
 
 void fd1094_device::device_start()
 {
+	m_srcbase = m_rom;
+	UINT32 size = m_rom.bytes();
+
 	// if no ROM region, see if there's a memory share with our name
-	if (!m_srcbase.found())
+	if (!m_rom.found())
 	{
-		memory_share *share = memshare(DEVICE_SELF);
-		if (share != nullptr)
-			m_srcbase.set_target(reinterpret_cast<UINT16 *>(share->ptr()), share->bytes() / 2);
-		else
+		memory_share *const share = memshare(DEVICE_SELF);
+		if (!share)
 			throw emu_fatalerror("FD1094 found no data to decrypt!");
+
+		m_srcbase = reinterpret_cast<UINT16 *>(share->ptr());
+		size = share->bytes();
 	}
 
 	// determine length and configure our cache
-	m_cache.configure(0x000000, m_srcbase.bytes(), 0x000000);
+	m_cache.configure(0x000000, size, 0x000000);
 	change_state(STATE_RESET);
 
 	// start the base device
@@ -670,7 +675,7 @@ void fd1094_device::device_reset()
 	// flush the cache and switch to the reset state
 	m_cache.reset();
 	change_state(STATE_RESET);
-	fprintf(stderr, "reset done\n");
+
 	// reset the parent
 	m68000_device::device_reset();
 }
@@ -816,7 +821,7 @@ UINT16 fd1094_device::decrypt_one(offs_t address, UINT16 val, const UINT8 *main_
 		val = BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
 
 		if (!global_xor1)   if (~val & 0x0800)  val ^= 0x3002;                                      // 1,12,13
-							if (~val & 0x0020)  val ^= 0x0044;                                      // 2,6
+		if (true)           if (~val & 0x0020)  val ^= 0x0044;                                      // 2,6
 		if (!key_1b)        if (~val & 0x0400)  val ^= 0x0890;                                      // 4,7,11
 		if (!global_swap2)  if (!key_0c)        val ^= 0x0308;                                      // 3,8,9
 												val ^= 0x6561;

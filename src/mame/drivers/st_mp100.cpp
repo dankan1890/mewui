@@ -595,22 +595,17 @@ WRITE8_MEMBER( st_mp100_state::u11_a_w )
 
 	if (!m_u10_ca2)
 	{
-		if BIT(data, 2)
+		if (BIT(data, 2))
 			m_digit = 5;
-		else
-		if BIT(data, 3)
+		else if (BIT(data, 3))
 			m_digit = 4;
-		else
-		if BIT(data, 4)
+		else if (BIT(data, 4))
 			m_digit = 3;
-		else
-		if BIT(data, 5)
+		else if (BIT(data, 5))
 			m_digit = 2;
-		else
-		if BIT(data, 6)
+		else if (BIT(data, 6))
 			m_digit = 1;
-		else
-		if BIT(data, 7)
+		else if (BIT(data, 7))
 			m_digit = 0;
 
 		if (BIT(data, 0) && (m_counter > 8))
@@ -724,8 +719,8 @@ static MACHINE_CONFIG_START( st_mp100, st_mp100_state )
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(st_mp100_state, u10_b_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(st_mp100_state, u10_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(st_mp100_state, u10_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_x", st_mp100_state, timer_x, attotime::from_hz(120)) // mains freq*2
 
 	MCFG_DEVICE_ADD("pia_u11", PIA6821, 0)
@@ -734,8 +729,8 @@ static MACHINE_CONFIG_START( st_mp100, st_mp100_state )
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(st_mp100_state, u11_b_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(st_mp100_state, u11_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(st_mp100_state, u11_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6800_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_d", st_mp100_state, u11_timer, attotime::from_hz(634)) // 555 timer*2
 MACHINE_CONFIG_END
 

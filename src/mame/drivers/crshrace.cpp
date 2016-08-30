@@ -15,7 +15,7 @@ Stephh's notes (based on the games M68000 code and some tests) :
 
 0) all games
 
-  - There seems to be preliminary support for 3 simulataneous players, but the
+  - There seems to be preliminary support for 3 simultaneous players, but the
     game resets before the race starts if the 3 players don't play against each
     other ! I can't tell however if it's an ingame or an emulation bug.
     To test this, change CRSHRACE_3P_HACK to 1, set the "Reset on P.O.S.T. Error"
@@ -148,7 +148,7 @@ WRITE16_MEMBER(crshrace_state::sound_command_w)
 	if (ACCESSING_BITS_0_7)
 	{
 		m_pending_command = 1;
-		soundlatch_byte_w(space, offset, data & 0xff);
+		m_soundlatch->write(space, offset, data & 0xff);
 		m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
@@ -196,7 +196,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sound_io_map, AS_IO, 8, crshrace_state )
 	ADDRESS_MAP_GLOBAL_MASK(0xff)
 	AM_RANGE(0x00, 0x00) AM_WRITE(crshrace_sh_bankswitch_w)
-	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_byte_r) AM_WRITE(pending_command_clear_w)
+	AM_RANGE(0x04, 0x04) AM_DEVREAD("soundlatch", generic_latch_8_device, read) AM_WRITE(pending_command_clear_w)
 	AM_RANGE(0x08, 0x0b) AM_DEVREADWRITE("ymsnd", ym2610_device, read, write)
 ADDRESS_MAP_END
 
@@ -345,7 +345,7 @@ static INPUT_PORTS_START( crshrace )
     PORT_DIPSETTING(      0x0e00, "5" )
     PORT_DIPSETTING(      0x0f00, "5" )
 */
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, crshrace_state,country_sndpending_r, NULL)  /* pending sound command */
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, crshrace_state,country_sndpending_r, nullptr)  /* pending sound command */
 INPUT_PORTS_END
 
 /* Same as 'crshrace', but additional "unknown" Dip Switch (see notes) */
@@ -401,12 +401,6 @@ static GFXDECODE_START( crshrace )
 	GFXDECODE_ENTRY( "gfx3", 0, spritelayout, 512, 32 )
 GFXDECODE_END
 
-
-
-WRITE_LINE_MEMBER(crshrace_state::irqhandler)
-{
-	m_audiocpu->set_input_line(0, state ? ASSERT_LINE : CLEAR_LINE);
-}
 
 void crshrace_state::machine_start()
 {
@@ -466,8 +460,10 @@ static MACHINE_CONFIG_START( crshrace, crshrace_state )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_SOUND_ADD("ymsnd", YM2610, 8000000)
-	MCFG_YM2610_IRQ_HANDLER(WRITELINE(crshrace_state, irqhandler))
+	MCFG_YM2610_IRQ_HANDLER(INPUTLINE("audiocpu", 0))
 	MCFG_SOUND_ROUTE(0, "lspeaker",  0.25)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 0.25)
 	MCFG_SOUND_ROUTE(1, "lspeaker",  1.0)

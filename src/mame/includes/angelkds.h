@@ -55,7 +55,6 @@ public:
 	DECLARE_WRITE8_MEMBER(angelkds_bgbotscroll_write);
 	DECLARE_WRITE8_MEMBER(angelkds_layer_ctrl_write);
 	DECLARE_DRIVER_INIT(angelkds);
-	DECLARE_DRIVER_INIT(spcpostn);
 	TILE_GET_INFO_MEMBER(get_tx_tile_info);
 	TILE_GET_INFO_MEMBER(get_bgtop_tile_info);
 	TILE_GET_INFO_MEMBER(get_bgbot_tile_info);
@@ -64,7 +63,6 @@ public:
 	virtual void video_start() override;
 	UINT32 screen_update_angelkds(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	void draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect, int enable_n);
-	DECLARE_WRITE_LINE_MEMBER(irqhandler);
 	required_device<cpu_device> m_maincpu;
 	required_device<gfxdecode_device> m_gfxdecode;
 	optional_shared_ptr<UINT8> m_decrypted_opcodes;

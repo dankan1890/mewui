@@ -18,7 +18,7 @@
 #include "sound/okim6258.h"
 #include "machine/ram.h"
 #include "machine/8530scc.h"
-#include "sound/2151intf.h"
+#include "sound/ym2151.h"
 #include "machine/i8255.h"
 
 #define MC68901_TAG     "mc68901"
@@ -118,7 +118,7 @@ public:
 	bitmap_ind16 m_special;
 
 	void floppy_load_unload(bool load, floppy_image_device *dev);
-	int floppy_load(floppy_image_device *dev);
+	image_init_result floppy_load(floppy_image_device *dev);
 	void floppy_unload(floppy_image_device *dev);
 	DECLARE_FLOPPY_FORMATS( floppy_formats );
 

@@ -366,7 +366,7 @@ void vga_device::vga_vh_text(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 			back_col = (attr & 0x70) >> 4;
 			back_col |= (vga.attribute.data[0x10]&8) ? 0 : ((attr & 0x80) >> 4);
 
-			for (h = MAX(-line, 0); (h < height) && (line+h < MIN(TEXT_LINES, bitmap.height())); h++)
+			for (h = std::max(-line, 0); (h < height) && (line+h < std::min(TEXT_LINES, bitmap.height())); h++)
 			{
 				bitmapline = &bitmap.pix32(line+h);
 				bits = vga.memory[font_base+(h>>(vga.crtc.scan_doubling))];
@@ -2664,7 +2664,7 @@ UINT8 s3_vga_device::s3_crtc_reg_read(UINT8 index)
 				break;
 			default:
 				res = vga.crtc.data[index];
-				//debugger_break(machine);
+				//machine().debug_break();
 				//printf("%02x\n",index);
 				break;
 		}

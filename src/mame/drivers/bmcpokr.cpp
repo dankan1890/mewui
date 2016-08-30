@@ -18,7 +18,7 @@ Other:  BMC B816140 (CPLD)
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "video/ramdac.h"
-#include "sound/2413intf.h"
+#include "sound/ym2413.h"
 #include "sound/okim6295.h"
 #include "machine/nvram.h"
 #include "machine/ticket.h"
@@ -136,8 +136,8 @@ TILE_GET_INFO_MEMBER(bmcpokr_state::get_t2_tile_info)
 
 void bmcpokr_state::video_start()
 {
-	m_tilemap_1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(bmcpokr_state::get_t1_tile_info),this),TILEMAP_SCAN_ROWS,8,8,128,128);
-	m_tilemap_2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(bmcpokr_state::get_t2_tile_info),this),TILEMAP_SCAN_ROWS,8,8,128,128);
+	m_tilemap_1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(bmcpokr_state::get_t1_tile_info),this),TILEMAP_SCAN_ROWS,8,8,128,128);
+	m_tilemap_2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(bmcpokr_state::get_t2_tile_info),this),TILEMAP_SCAN_ROWS,8,8,128,128);
 
 	m_tilemap_1->set_transparent_pen(0);
 	m_tilemap_2->set_transparent_pen(0);
@@ -501,7 +501,7 @@ static INPUT_PORTS_START( bmcpokr )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_GAMBLE_DEAL   ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // n.a.            [START, ESC in service mode]
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_GAMBLE_TAKE   ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // SCORE
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_POKER_BET     ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // BET             [BET, credit -1]
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL       ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, NULL)  // HP [HOPPER, credit -100]
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL       ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, nullptr)  // HP [HOPPER, credit -100]
 	PORT_SERVICE_NO_TOGGLE( 0x0400, IP_ACTIVE_LOW      ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // ACCOUNT         [SERVICE MODE]
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_GAMBLE_KEYOUT ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // KEY-OUT         [KEY-OUT, no hopper]
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_GAMBLE_D_UP   ) PORT_CONDITION("DSW4",0x80,EQUALS,0x80) // DOUBLE-UP
@@ -519,7 +519,7 @@ static INPUT_PORTS_START( bmcpokr )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_GAMBLE_DEAL   )                PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // n.a.            [START, ESC in service mode]
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // <Left>2 (3rd)
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_POKER_BET     )                PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // <Down>1 (2nd)   [BET, credit -1]
-//  PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL       ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, NULL)  // HP [HOPPER, credit -100]
+//  PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL       ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, nullptr)  // HP [HOPPER, credit -100]
 	PORT_SERVICE_NO_TOGGLE( 0x0400, IP_ACTIVE_LOW      )                PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // A2              [SERVICE MODE]
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_GAMBLE_KEYOUT )                PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // C2              [KEY-OUT, no hopper]
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_GAMBLE_D_UP   )                PORT_CONDITION("DSW4",0x80,EQUALS,0x00) // S1              [START, ESC in service mode]
@@ -621,7 +621,7 @@ static INPUT_PORTS_START( mjmaglmp )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2          ) // NOTE
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_GAMBLE_KEYOUT  ) // KEY DOWN
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Pay Out") PORT_CODE(KEYCODE_O) // PAY
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL        ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, NULL)  // HOPPER
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH,IPT_SPECIAL        ) PORT_CUSTOM_MEMBER(DEVICE_SELF, bmcpokr_state,hopper_r, nullptr)  // HOPPER
 	PORT_SERVICE_NO_TOGGLE( 0x0400, IP_ACTIVE_LOW       ) // ACCOUNT
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE1       ) PORT_NAME("Reset") // RESET
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN        ) // (unused)

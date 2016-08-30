@@ -50,8 +50,14 @@ void device_gba_cart_interface::rom_alloc(UINT32 size, const char *tag)
 {
 	if (m_rom == nullptr)
 	{
+		if (size < 0x4000000)
 		// we always alloc 32MB of rom region!
-		m_rom = (UINT32 *)device().machine().memory().region_alloc(std::string(tag).append(GBASLOT_ROM_REGION_TAG).c_str(), 0x2000000, 4, ENDIANNESS_LITTLE)->base();
+			m_rom = (UINT32 *)device().machine().memory().region_alloc(std::string(tag).append(GBASLOT_ROM_REGION_TAG).c_str(), 0x2000000, 4, ENDIANNESS_LITTLE)->base();
+		else
+		{
+			m_rom = (UINT32 *)device().machine().memory().region_alloc(std::string(tag).append(GBASLOT_ROM_REGION_TAG).c_str(), 0x4000000, 4, ENDIANNESS_LITTLE)->base();
+			m_romhlp = (UINT32 *)device().machine().memory().region_alloc(std::string(tag).append(GBAHELP_ROM_REGION_TAG).c_str(), 0x2000000, 4, ENDIANNESS_LITTLE)->base();
+		}
 		m_rom_size = size;
 	}
 }
@@ -128,12 +134,19 @@ static const gba_slot slot_list[] =
 {
 	{ GBA_STD, "gba_rom" },
 	{ GBA_SRAM, "gba_sram" },
+	{ GBA_DRILLDOZ, "gba_drilldoz" },
+	{ GBA_WARIOTWS, "gba_wariotws" },
 	{ GBA_EEPROM, "gba_eeprom" },
 	{ GBA_EEPROM4, "gba_eeprom_4k" },
+	{ GBA_YOSHIUG, "gba_yoshiug" },
 	{ GBA_EEPROM64, "gba_eeprom_64k" },
+	{ GBA_BOKTAI, "gba_boktai" },
 	{ GBA_FLASH, "gba_flash" },
+	{ GBA_FLASH_RTC, "gba_flash_rtc" },
 	{ GBA_FLASH512, "gba_flash_512" },
 	{ GBA_FLASH1M, "gba_flash_1m" },
+	{ GBA_FLASH1M_RTC, "gba_flash_1m_rtc" },
+	{ GBA_3DMATRIX, "gba_3dmatrix" },
 };
 
 static int gba_get_pcb_id(const char *slot)
@@ -163,16 +176,16 @@ static const char *gba_get_slot(int type)
  call load
  -------------------------------------------------*/
 
-bool gba_cart_slot_device::call_load()
+image_init_result gba_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
 		UINT8 *ROM;
 		UINT32 size = (software_entry() != nullptr) ? get_software_region_length("rom") : length();
-		if (size > 0x2000000)
+		if (size > 0x4000000)
 		{
-			seterror(IMAGE_ERROR_UNSPECIFIED, "Attempted loading a cart larger than 32MB");
-			return IMAGE_INIT_FAIL;
+			seterror(IMAGE_ERROR_UNSPECIFIED, "Attempted loading a cart larger than 64MB");
+			return image_init_result::FAIL;
 		}
 
 		m_cart->rom_alloc(size, tag());
@@ -197,7 +210,7 @@ bool gba_cart_slot_device::call_load()
 			osd_printf_info("GBA: Detected (XML) %s\n", pcb_name ? pcb_name : "NONE");
 		}
 
-		if (m_type == GBA_SRAM)
+		if (m_type == GBA_SRAM || m_type == GBA_DRILLDOZ || m_type == GBA_WARIOTWS)
 			m_cart->nvram_alloc(0x10000);
 
 		// mirror the ROM
@@ -216,14 +229,16 @@ bool gba_cart_slot_device::call_load()
 				memcpy(ROM + 0x1000000, ROM, 0x1000000);
 				break;
 		}
+		if (size == 0x4000000)
+			memcpy((UINT8 *)m_cart->get_romhlp_base(), ROM, 0x2000000);
 
 		if (m_cart->get_nvram_size())
 			battery_load(m_cart->get_nvram_base(), m_cart->get_nvram_size(), 0x00);
 
-		return IMAGE_INIT_PASS;
+		return image_init_result::PASS;
 	}
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -235,18 +250,6 @@ void gba_cart_slot_device::call_unload()
 {
 	if (m_cart && m_cart->get_nvram_size())
 		battery_save(m_cart->get_nvram_base(), m_cart->get_nvram_size());
-}
-
-
-
-/*-------------------------------------------------
- call softlist load
- -------------------------------------------------*/
-
-bool gba_cart_slot_device::call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry)
-{
-	machine().rom_load().load_software_part_region(*this, swlist, swname, start_entry);
-	return TRUE;
 }
 
 
@@ -291,6 +294,8 @@ int gba_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 {
 	UINT32 chip = 0;
 	int type = GBA_STD;
+	bool has_rtc = false;
+	bool has_rumble = false;
 
 	// first detect nvram type based on strings inside the file
 	for (int i = 0; i < len; i++)
@@ -350,10 +355,20 @@ int gba_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 
 		for (auto & elem : gba_chip_fix_eeprom_list)
 		{
-			const gba_chip_fix_eeprom_item *item = &elem;
+			const gba_chip_fix_item *item = &elem;
 			if (!strcmp(game_code, item->game_code))
 			{
 				chip = (chip & ~GBA_CHIP_EEPROM) | GBA_CHIP_EEPROM_64K;
+				break;
+			}
+		}
+
+		for (auto & elem : gba_chip_fix_rumble_list)
+		{
+			const gba_chip_fix_item *item = &elem;
+			if (!strcmp(game_code, item->game_code))
+			{
+				has_rumble = true;
 				break;
 			}
 		}
@@ -361,8 +376,9 @@ int gba_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 
 	if (chip & GBA_CHIP_RTC)
 	{
-		osd_printf_info("game has RTC - not emulated at the moment\n");
+		//osd_printf_info("game has RTC - not emulated at the moment\n");
 		chip &= ~GBA_CHIP_RTC;
+		has_rtc = true;
 	}
 
 	osd_printf_info("GBA: Emulate %s\n", gba_chip_string(chip).c_str());
@@ -374,25 +390,36 @@ int gba_cart_slot_device::get_cart_type(UINT8 *ROM, UINT32 len)
 			break;
 		case GBA_CHIP_EEPROM:
 			type = GBA_EEPROM;
+			if (has_rumble)
+				type = GBA_YOSHIUG;
 			break;
 		case GBA_CHIP_EEPROM_4K:
 			type = GBA_EEPROM4;
 			break;
 		case GBA_CHIP_EEPROM_64K:
 			type = GBA_EEPROM64;
+			if (has_rtc)
+				type = GBA_BOKTAI;
 			break;
 		case GBA_CHIP_FLASH:
 			type = GBA_FLASH;
+			if (has_rtc)
+				type = GBA_FLASH_RTC;
 			break;
 		case GBA_CHIP_FLASH_512:
 			type = GBA_FLASH512;
 			break;
 		case GBA_CHIP_FLASH_1M:
 			type = GBA_FLASH1M;
+			if (has_rtc)
+				type = GBA_FLASH1M_RTC;
 			break;
 		default:
 			break;
 	}
+
+	if (len == 0x4000000)
+		type = GBA_3DMATRIX;
 
 	return type;
 }
@@ -443,6 +470,14 @@ READ32_MEMBER(gba_cart_slot_device::read_ram)
 		return 0xffffffff;
 }
 
+READ32_MEMBER(gba_cart_slot_device::read_gpio)
+{
+	if (m_cart)
+		return m_cart->read_gpio(space, offset, mem_mask);
+	else
+		return 0xffffffff;
+}
+
 
 /*-------------------------------------------------
  write
@@ -452,6 +487,12 @@ WRITE32_MEMBER(gba_cart_slot_device::write_ram)
 {
 	if (m_cart)
 		m_cart->write_ram(space, offset, data, mem_mask);
+}
+
+WRITE32_MEMBER(gba_cart_slot_device::write_gpio)
+{
+	if (m_cart)
+		m_cart->write_gpio(space, offset, data, mem_mask);
 }
 
 

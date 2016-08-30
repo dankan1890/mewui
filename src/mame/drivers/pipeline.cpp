@@ -152,8 +152,8 @@ TILE_GET_INFO_MEMBER(pipeline_state::get_tile_info2)
 void pipeline_state::video_start()
 {
 	m_palram=std::make_unique<UINT8[]>(0x1000);
-	m_tilemap1 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pipeline_state::get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32 );
-	m_tilemap2 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(pipeline_state::get_tile_info2),this),TILEMAP_SCAN_ROWS,8,8,64,32 );
+	m_tilemap1 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pipeline_state::get_tile_info),this),TILEMAP_SCAN_ROWS,8,8,64,32 );
+	m_tilemap2 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(pipeline_state::get_tile_info2),this),TILEMAP_SCAN_ROWS,8,8,64,32 );
 	m_tilemap2->set_transparent_pen(0);
 
 	save_item(NAME(m_vidctrl));
@@ -369,7 +369,7 @@ static MACHINE_CONFIG_START( pipeline, pipeline_state )
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", pipeline_state,  nmi_line_pulse)
 
 	MCFG_CPU_ADD("audiocpu", Z80, 7372800/2)
-	MCFG_CPU_CONFIG(daisy_chain_sound)
+	MCFG_Z80_DAISY_CHAIN(daisy_chain_sound)
 	MCFG_CPU_PROGRAM_MAP(cpu1_mem)
 	MCFG_CPU_IO_MAP(sound_port)
 

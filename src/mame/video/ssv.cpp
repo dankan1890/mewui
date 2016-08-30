@@ -138,9 +138,6 @@ Note: press Z to show some info on each sprite (debug builds only)
 
 #include "emu.h"
 #include "includes/ssv.h"
-#ifdef MAME_DEBUG
-#include "ui/ui.h"
-#endif
 #include "render.h"
 
 
@@ -233,7 +230,7 @@ VIDEO_START_MEMBER(ssv_state,gdfs)
 	ssv_state::video_start();
 
 
-	m_gdfs_tmap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(ssv_state::get_tile_info_0),this), TILEMAP_SCAN_ROWS, 16,16, 0x100,0x100);
+	m_gdfs_tmap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(ssv_state::get_tile_info_0),this), TILEMAP_SCAN_ROWS, 16,16, 0x100,0x100);
 
 	m_gdfs_tmap->set_transparent_pen(0);
 }
@@ -931,13 +928,13 @@ void ssv_state::draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect)
 					}
 				}
 
-				#ifdef MAME_DEBUG
-				if (machine().input().code_pressed(KEYCODE_Z))    /* Display some info on each sprite */
-				{   char buf[30];
-					sprintf(buf, "%02X",/*(s2[2] & ~0x3ff)>>8*/mode>>8);
-					machine().ui().draw_text(&machine().render().ui_container(), buf, sx, sy);
-				}
-				#endif
+//              #ifdef MAME_DEBUG
+//              if (machine().input().code_pressed(KEYCODE_Z))    /* Display some info on each sprite */
+//              {   char buf[30];
+//                  sprintf(buf, "%02X",/*(s2[2] & ~0x3ff)>>8*/mode>>8);
+//                  machine().ui().draw_text(&machine().render().ui_container(), buf, sx, sy);
+//              }
+//              #endif
 
 			}       /* sprite type */
 

@@ -27,6 +27,7 @@
 
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/watchdog.h"
 #include "includes/eprom.h"
 
 
@@ -47,11 +48,17 @@ void eprom_state::update_interrupts()
 	m_maincpu->set_input_line(6, m_sound_int_state ? ASSERT_LINE : CLEAR_LINE);
 }
 
+MACHINE_START_MEMBER(eprom_state,eprom)
+{
+	atarigen_state::machine_start();
+	save_item(NAME(m_sync_data));
+}
 
 MACHINE_RESET_MEMBER(eprom_state,eprom)
 {
 	atarigen_state::machine_reset();
 	scanline_timer_reset(*m_screen, 8);
+	m_sync_data = 0;
 }
 
 
@@ -115,18 +122,16 @@ WRITE16_MEMBER(eprom_state::eprom_latch_w)
 
 READ16_MEMBER(eprom_state::sync_r)
 {
-	return m_sync_data[offset];
+	return m_sync_data;
 }
 
 
 WRITE16_MEMBER(eprom_state::sync_w)
 {
-	int oldword = m_sync_data[offset];
-	int newword = oldword;
-	COMBINE_DATA(&newword);
+	int oldword = m_sync_data;
+	COMBINE_DATA(&m_sync_data);
 
-	m_sync_data[offset] = newword;
-	if ((oldword & 0xff00) != (newword & 0xff00))
+	if ((oldword & 0xff00) != (m_sync_data & 0xff00))
 		space.device().execute().yield();
 }
 
@@ -141,14 +146,14 @@ WRITE16_MEMBER(eprom_state::sync_w)
 static ADDRESS_MAP_START( main_map, AS_PROGRAM, 16, eprom_state )
 	AM_RANGE(0x000000, 0x09ffff) AM_ROM
 	AM_RANGE(0x0e0000, 0x0e0fff) AM_DEVREADWRITE8("eeprom", atari_eeprom_device, read, write, 0x00ff)
-	AM_RANGE(0x16cc00, 0x16cc01) AM_RAM AM_SHARE("sync_data")
+	AM_RANGE(0x16cc00, 0x16cc01) AM_READWRITE(sync_r, sync_w)
 	AM_RANGE(0x160000, 0x16ffff) AM_RAM AM_SHARE("share1")
 	AM_RANGE(0x1f0000, 0x1fffff) AM_DEVWRITE("eeprom", atari_eeprom_device, unlock_write)
 	AM_RANGE(0x260000, 0x26000f) AM_READ_PORT("260000")
 	AM_RANGE(0x260010, 0x26001f) AM_READ(special_port1_r)
 	AM_RANGE(0x260020, 0x26002f) AM_READ(adc_r)
 	AM_RANGE(0x260030, 0x260031) AM_DEVREAD8("jsa", atari_jsa_base_device, main_response_r, 0x00ff)
-	AM_RANGE(0x2e0000, 0x2e0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x2e0000, 0x2e0001) AM_DEVWRITE("watchdog", watchdog_timer_device, reset16_w)
 	AM_RANGE(0x360000, 0x360001) AM_WRITE(video_int_ack_w)
 	AM_RANGE(0x360010, 0x360011) AM_WRITE(eprom_latch_w)
 	AM_RANGE(0x360020, 0x360021) AM_DEVWRITE("jsa", atari_jsa_base_device, sound_reset_w)
@@ -166,14 +171,14 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( guts_map, AS_PROGRAM, 16, eprom_state )
 	AM_RANGE(0x000000, 0x09ffff) AM_ROM
 	AM_RANGE(0x0e0000, 0x0e0fff) AM_DEVREADWRITE8("eeprom", atari_eeprom_device, read, write, 0x00ff)
-	AM_RANGE(0x16cc00, 0x16cc01) AM_RAM AM_SHARE("sync_data")
+	AM_RANGE(0x16cc00, 0x16cc01) AM_READWRITE(sync_r, sync_w)
 	AM_RANGE(0x160000, 0x16ffff) AM_RAM AM_SHARE("share1")
 	AM_RANGE(0x1f0000, 0x1fffff) AM_DEVWRITE("eeprom", atari_eeprom_device, unlock_write)
 	AM_RANGE(0x260000, 0x26000f) AM_READ_PORT("260000")
 	AM_RANGE(0x260010, 0x26001f) AM_READ(special_port1_r)
 	AM_RANGE(0x260020, 0x26002f) AM_READ(adc_r)
 	AM_RANGE(0x260030, 0x260031) AM_DEVREAD8("jsa", atari_jsa_ii_device, main_response_r, 0x00ff)
-	AM_RANGE(0x2e0000, 0x2e0001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x2e0000, 0x2e0001) AM_DEVWRITE("watchdog", watchdog_timer_device, reset16_w)
 	AM_RANGE(0x360000, 0x360001) AM_WRITE(video_int_ack_w)
 //  AM_RANGE(0x360010, 0x360011) AM_WRITE(eprom_latch_w)
 	AM_RANGE(0x360020, 0x360021) AM_DEVWRITE("jsa", atari_jsa_ii_device, sound_reset_w)
@@ -391,9 +396,12 @@ static MACHINE_CONFIG_START( eprom, eprom_state )
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(6000))
 
+	MCFG_MACHINE_START_OVERRIDE(eprom_state,eprom)
 	MCFG_MACHINE_RESET_OVERRIDE(eprom_state,eprom)
 
 	MCFG_ATARI_EEPROM_2804_ADD("eeprom")
+
+	MCFG_WATCHDOG_ADD("watchdog")
 
 	/* video hardware */
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", eprom)
@@ -433,9 +441,12 @@ static MACHINE_CONFIG_START( klaxp, eprom_state )
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
+	MCFG_MACHINE_START_OVERRIDE(eprom_state,eprom)
 	MCFG_MACHINE_RESET_OVERRIDE(eprom_state,eprom)
 
 	MCFG_ATARI_EEPROM_2804_ADD("eeprom")
+
+	MCFG_WATCHDOG_ADD("watchdog")
 
 	/* video hardware */
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", eprom)
@@ -474,9 +485,12 @@ static MACHINE_CONFIG_START( guts, eprom_state )
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
+	MCFG_MACHINE_START_OVERRIDE(eprom_state,eprom)
 	MCFG_MACHINE_RESET_OVERRIDE(eprom_state,eprom)
 
 	MCFG_ATARI_EEPROM_2804_ADD("eeprom")
+
+	MCFG_WATCHDOG_ADD("watchdog")
 
 	/* video hardware */
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", guts)
@@ -721,9 +735,6 @@ ROM_END
 
 DRIVER_INIT_MEMBER(eprom_state,eprom)
 {
-	/* install CPU synchronization handlers */
-	m_sync_data = m_maincpu->space(AS_PROGRAM).install_readwrite_handler(0x16cc00, 0x16cc01, read16_delegate(FUNC(eprom_state::sync_r),this), write16_delegate(FUNC(eprom_state::sync_w),this));
-	m_sync_data = m_extra->space(AS_PROGRAM).install_readwrite_handler(0x16cc00, 0x16cc01, read16_delegate(FUNC(eprom_state::sync_r),this), write16_delegate(FUNC(eprom_state::sync_w),this));
 }
 
 

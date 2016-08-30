@@ -35,39 +35,34 @@ const device_type CRT5037 = &device_creator<crt5037_device>;
 const device_type CRT5057 = &device_creator<crt5057_device>;
 
 tms9927_device::tms9927_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-				: device_t(mconfig, TMS9927, "TMS9927 VTC", tag, owner, clock, "tms9927", __FILE__),
-					device_video_interface(mconfig, *this),
-					m_write_vsyn(*this),
-					m_hpixels_per_column(0),
-					m_selfload(*this),
-					m_reset(0)
+	: tms9927_device(mconfig, TMS9927, "TMS9927 VTC", tag, owner, clock, "tms9927", __FILE__)
 {
 	memset(m_reg, 0x00, sizeof(m_reg));
 }
 
 tms9927_device::tms9927_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, UINT32 clock, const char *shortname, const char *source)
-				: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
-					device_video_interface(mconfig, *this),
-					m_write_vsyn(*this),
-					m_hpixels_per_column(0),
-					m_selfload(*this),
-					m_reset(0)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source)
+	, device_video_interface(mconfig, *this)
+	, m_write_vsyn(*this)
+	, m_hpixels_per_column(0)
+	, m_selfload(*this, finder_base::DUMMY_TAG)
+	, m_reset(0)
 {
 	memset(m_reg, 0x00, sizeof(m_reg));
 }
 
 crt5027_device::crt5027_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-				: tms9927_device(mconfig, CRT5027, "CRT5027", tag, owner, clock, "crt5027", __FILE__)
+	: tms9927_device(mconfig, CRT5027, "CRT5027", tag, owner, clock, "crt5027", __FILE__)
 {
 }
 
 crt5037_device::crt5037_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-				: tms9927_device(mconfig, CRT5037, "CRT5037", tag, owner, clock, "crt5037", __FILE__)
+	: tms9927_device(mconfig, CRT5037, "CRT5037", tag, owner, clock, "crt5037", __FILE__)
 {
 }
 
 crt5057_device::crt5057_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock)
-				: tms9927_device(mconfig, CRT5057, "CRT5057", tag, owner, clock, "crt5057", __FILE__)
+	: tms9927_device(mconfig, CRT5057, "CRT5057", tag, owner, clock, "crt5057", __FILE__)
 {
 }
 
@@ -104,6 +99,7 @@ void tms9927_device::device_start()
 
 void tms9927_device::device_reset()
 {
+	m_start_datarow = 0;
 }
 
 //-------------------------------------------------
@@ -286,13 +282,14 @@ void tms9927_device::recompute_parameters(int postload)
 
 	/* determine the visible area, avoid division by 0 */
 	m_visible_hpix = CHARS_PER_DATA_ROW * m_hpixels_per_column;
-	m_visible_vpix = (LAST_DISP_DATA_ROW + 1) * SCANS_PER_DATA_ROW;
+	m_visible_vpix = DATA_ROWS_PER_FRAME * SCANS_PER_DATA_ROW;
 
+	m_start_datarow = (LAST_DISP_DATA_ROW + 1) % DATA_ROWS_PER_FRAME;
 	/* determine the horizontal/vertical offsets */
 	offset_hpix = HSYNC_DELAY * m_hpixels_per_column;
 	offset_vpix = VERTICAL_DATA_START;
 
-	osd_printf_debug("TMS9937: Total = %dx%d, Visible = %dx%d, Offset=%dx%d, Skew=%d\n", m_total_hpix, m_total_vpix, m_visible_hpix, m_visible_vpix, offset_hpix, offset_vpix, SKEW_BITS);
+	osd_printf_debug("TMS9937: Total = %dx%d, Visible = %dx%d, Offset=%dx%d, Skew=%d, Upscroll=%d\n", m_total_hpix, m_total_vpix, m_visible_hpix, m_visible_vpix, offset_hpix, offset_vpix, SKEW_BITS, m_start_datarow);
 
 	/* see if it all makes sense */
 	m_valid_config = TRUE;

@@ -84,7 +84,7 @@ public:
 		, m_fdc(*this, "wd1770")
 		, m_floppy0(*this, "wd1770:0")
 		, m_floppy1(*this, "wd1770:1")
-		, m_floppy(NULL)
+		, m_floppy(nullptr)
 		, m_cart(*this, "cartslot")
 	{ }
 
@@ -595,13 +595,13 @@ DEVICE_IMAGE_LOAD_MEMBER( squale_state, squale_cart )
 	if ( ! size || size > 0x10000)
 	{
 		image.seterror(IMAGE_ERROR_UNSPECIFIED, "Unsupported cartridge size");
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	m_cart->rom_alloc(size, GENERIC_ROM8_WIDTH, ENDIANNESS_LITTLE);
 	m_cart->common_load_rom(m_cart->get_rom_base(), size, "rom");
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 TIMER_DEVICE_CALLBACK_MEMBER( squale_state::squale_scanline )
@@ -747,7 +747,7 @@ void squale_state::machine_start()
 
 	fdc_sel0 = 0x00;
 	fdc_sel1 = 0x00;
-	m_floppy = NULL;
+	m_floppy = nullptr;
 
 	cart_addr_counter_reset = 0;
 	cart_addr_counter = 0x0000;
@@ -844,9 +844,6 @@ ROM_START( squale )
 	ROMX_LOAD( "sqmon_2r1.bin", 0x0000, 0x2000, CRC(ed57c707) SHA1(c8bd33a6fb07fe7f881f2605ad867b7e82366bfc), ROM_BIOS(1) )
 
 	// place ROM v1.2 signature here.
-
-	ROM_REGION( 0x1E0, "ef9365", 0 )
-	ROM_LOAD( "charset_ef9365.rom", 0x0000, 0x01E0, CRC(8d3053be) SHA1(0f9a64d217a0f7f04ee0720d49c5b680ad0ae359) )
 ROM_END
 
 /* Driver */

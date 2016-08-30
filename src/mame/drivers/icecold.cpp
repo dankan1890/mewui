@@ -128,7 +128,7 @@ static INPUT_PORTS_START( icecold )
 	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP)
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP)
-	PORT_BIT(0x55, IP_ACTIVE_LOW, IPT_SPECIAL)          PORT_CUSTOM_MEMBER(DEVICE_SELF, icecold_state, motors_limit_r, NULL)
+	PORT_BIT(0x55, IP_ACTIVE_LOW, IPT_SPECIAL)          PORT_CUSTOM_MEMBER(DEVICE_SELF, icecold_state, motors_limit_r, nullptr)
 
 	PORT_START("X0")
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_START1)
@@ -310,10 +310,10 @@ TIMER_DEVICE_CALLBACK_MEMBER(icecold_state::icecold_motors_timer)
 			m_ball_gate_sw = 0;
 
 		// motors are keep in range 0-100
-		m_lmotor = MIN(m_lmotor, 100);
-		m_lmotor = MAX(m_lmotor, 0);
-		m_rmotor = MIN(m_rmotor, 100);
-		m_rmotor = MAX(m_rmotor, 0);
+		m_lmotor = std::min(m_lmotor, 100);
+		m_lmotor = std::max(m_lmotor, 0);
+		m_rmotor = std::min(m_rmotor, 100);
+		m_rmotor = std::max(m_rmotor, 0);
 
 		if (lmotor_dir != 0 || rmotor_dir != 0)
 		{
@@ -336,19 +336,19 @@ static MACHINE_CONFIG_START( icecold, icecold_state )
 	MCFG_DEVICE_ADD( "pia0", PIA6821, 0)
 	MCFG_PIA_READPA_HANDLER(IOPORT("JOY"))
 	MCFG_PIA_READPB_HANDLER(IOPORT("DSW3"))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6809_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6809_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6809_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6809_IRQ_LINE))
 
 	MCFG_DEVICE_ADD( "pia1", PIA6821, 0)
 	MCFG_PIA_READPA_HANDLER(READ8(icecold_state, ay_r))
 	MCFG_PIA_WRITEPA_HANDLER(WRITE8(icecold_state, ay_w))
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(icecold_state, snd_ctrl_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6809_device, firq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6809_device, firq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6809_FIRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6809_FIRQ_LINE))
 
 	MCFG_DEVICE_ADD( "pia2", PIA6821, 0)
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6809_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6809_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6809_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6809_IRQ_LINE))
 
 	MCFG_DEVICE_ADD("i8279", I8279, XTAL_6MHz/4)
 	MCFG_I8279_OUT_IRQ_CB(DEVWRITELINE("pia0", pia6821_device, cb1_w)) // irq

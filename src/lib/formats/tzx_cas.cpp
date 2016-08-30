@@ -532,7 +532,7 @@ static const char *const hw_info[] =
 };
 
 /*  Will go through blocks and calculate number of samples needed.
-If buffer is not NULL the sample data will also be written. */
+If buffer is not nullptr the sample data will also be written. */
 static int tzx_cas_do_work( INT16 **buffer )
 {
 	int current_block = 0;
@@ -901,32 +901,32 @@ static const struct CassetteLegacyWaveFiller cdt_legacy_fill_wave =
 	0                   /* trailer_samples */
 };
 
-static casserr_t tzx_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
+static cassette_image::error tzx_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
 {
 	return cassette_legacy_identify(cassette, opts, &tzx_legacy_fill_wave);
 }
 
-static casserr_t tap_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
+static cassette_image::error tap_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
 {
 	return cassette_legacy_identify(cassette, opts, &tap_legacy_fill_wave);
 }
 
-static casserr_t cdt_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
+static cassette_image::error cdt_cassette_identify( cassette_image *cassette, struct CassetteOptions *opts )
 {
 	return cassette_legacy_identify(cassette, opts, &cdt_legacy_fill_wave);
 }
 
-static casserr_t tzx_cassette_load( cassette_image *cassette )
+static cassette_image::error tzx_cassette_load( cassette_image *cassette )
 {
 	return cassette_legacy_construct(cassette, &tzx_legacy_fill_wave);
 }
 
-static casserr_t tap_cassette_load( cassette_image *cassette )
+static cassette_image::error tap_cassette_load( cassette_image *cassette )
 {
 	return cassette_legacy_construct(cassette, &tap_legacy_fill_wave);
 }
 
-static casserr_t cdt_cassette_load( cassette_image *cassette )
+static cassette_image::error cdt_cassette_load( cassette_image *cassette )
 {
 	return cassette_legacy_construct(cassette, &cdt_legacy_fill_wave);
 }

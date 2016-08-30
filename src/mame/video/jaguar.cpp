@@ -543,7 +543,7 @@ READ32_MEMBER( jaguar_state::blitter_r )
 WRITE32_MEMBER( jaguar_state::blitter_w )
 {
 	COMBINE_DATA(&m_blitter_regs[offset]);
-	if ((offset == B_CMD) && (mem_mask & 0x0000ffff))
+	if ((offset == B_CMD) && ACCESSING_BITS_0_15)
 	{
 		m_blitter_status = 0;
 		int inner_count = m_blitter_regs[B_COUNT] & 0xffff;
@@ -647,10 +647,10 @@ WRITE16_MEMBER( jaguar_state::tom_regs_w )
 				if (reg_store != m_gpu_regs[offset])
 				{
 					int hperiod = 2 * ((m_gpu_regs[HP] & 0x3ff) + 1);
-					int hbend = effective_hvalue(ENABLE_BORDERS ? m_gpu_regs[HBE] : MIN(m_gpu_regs[HDB1], m_gpu_regs[HDB2]));
+					int hbend = effective_hvalue(ENABLE_BORDERS ? m_gpu_regs[HBE] : std::min(m_gpu_regs[HDB1], m_gpu_regs[HDB2]));
 					int hbstart = effective_hvalue(m_gpu_regs[ENABLE_BORDERS ? HBB : HDE]);
 					int vperiod = (m_gpu_regs[VP] & 0x7ff) + 1;
-					int vbend = MAX(m_gpu_regs[VBE],m_gpu_regs[VDB]) & 0x7ff;
+					int vbend = std::max(m_gpu_regs[VBE],m_gpu_regs[VDB]) & 0x7ff;
 					int vbstart = m_gpu_regs[VBB] & 0x7ff;
 
 					/* adjust for the half-lines */
@@ -861,7 +861,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
  *************************************/
 
 #define INCLUDE_OBJECT_PROCESSOR
-#include "jagobj.inc"
+#include "jagobj.hxx"
 
 
 
@@ -876,7 +876,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     command
 #define A1FIXED     a1flags
 #define A2FIXED     a2flags
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -887,7 +887,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x09800001
 #define A1FIXED     0x010020
 #define A2FIXED     0x010020
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -897,7 +897,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x09800009
 #define A1FIXED     0x000020
 #define A2FIXED     0x000020
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -907,7 +907,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x01800009
 #define A1FIXED     0x000028
 #define A2FIXED     0x000028
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -917,7 +917,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x01800001
 #define A1FIXED     0x000018
 #define A2FIXED     0x000018
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -927,7 +927,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x01c00001
 #define A1FIXED     0x000018
 #define A2FIXED     0x000018
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -938,7 +938,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x00010000
 #define A1FIXED     a1flags
 #define A2FIXED     a2flags
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -948,7 +948,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     0x01800001
 #define A1FIXED     a1flags
 #define A2FIXED     a2flags
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND
@@ -958,7 +958,7 @@ UINT32 jaguar_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, 
 #define COMMAND     ((command & 0xf0000f00) | 0x01800001)
 #define A1FIXED     a1flags
 #define A2FIXED     a2flags
-#include "jagblit.inc"
+#include "jagblit.hxx"
 #undef A2FIXED
 #undef A1FIXED
 #undef COMMAND

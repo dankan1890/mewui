@@ -61,7 +61,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const rom_entry *softbox_device::device_rom_region() const
+const tiny_rom_entry *softbox_device::device_rom_region() const
 {
 	return ROM_NAME( softbox );
 }
@@ -272,7 +272,7 @@ static MACHINE_CONFIG_FRAGMENT( softbox )
 	MCFG_HARDDISK_INTERFACE("corvus_hdd")
 	MCFG_HARDDISK_ADD("harddisk4")
 	MCFG_HARDDISK_INTERFACE("corvus_hdd")
-	//MCFG_IMI7000_BUS_ADD("imi5000h", NULL, NULL, NULL)
+	//MCFG_IMI7000_BUS_ADD("imi5000h", nullptr, nullptr, nullptr)
 MACHINE_CONFIG_END
 
 

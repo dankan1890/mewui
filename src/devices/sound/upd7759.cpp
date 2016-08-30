@@ -244,7 +244,7 @@ void upd7759_device::device_start()
 			m_rommask = romsize - 1;
 		}
 
-		m_drqcallback.set_callback(DEVCB_NULL);
+		m_drqcallback.set_callback(DEVCB_NOOP);
 	}
 	else
 	{
@@ -325,7 +325,7 @@ void upd7756_device::device_start()
 			m_rommask = romsize - 1;
 		}
 
-		m_drqcallback.set_callback(DEVCB_NULL);
+		m_drqcallback.set_callback(DEVCB_NOOP);
 	}
 	else
 	{
@@ -716,7 +716,7 @@ void upd7759_device::device_timer(emu_timer &timer, device_timer_id id, int para
 		/* set a timer to go off when that is done */
 		if (m_state != STATE_IDLE)
 			m_timer->adjust(m_clock_period * m_clocks_left);
-			break;
+		break;
 
 		default:
 			assert_always(FALSE, "Unknown id in upd7759_device::device_timer");

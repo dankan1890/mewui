@@ -8,6 +8,7 @@
 
 #import "debugview.h"
 
+#include "debugger.h"
 #include "debug/debugcpu.h"
 
 #include "modules/lib/osdobj_common.h"
@@ -171,7 +172,7 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 	// this gets all the lines that are at least partially visible
 	debug_view_xy origin(0, 0), size(totalWidth, totalHeight);
 	[self convertBounds:[self visibleRect] toFirstAffectedLine:&origin.y count:&size.y];
-	size.y = MIN(size.y, totalHeight - origin.y);
+	size.y = std::min(size.y, totalHeight - origin.y);
 
 	// tell the underlying view how much real estate is available
 	view->set_visible_size(size);
@@ -204,8 +205,8 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 								fontHeight * totalHeight);
 	if (wholeLineScroll)
 		content.height += (fontHeight * 2) - 1;
-	[self setFrameSize:NSMakeSize(ceil(MAX(clip.width, content.width)),
-								  ceil(MAX(clip.height, content.height)))];
+	[self setFrameSize:NSMakeSize(ceil(std::max(clip.width, content.width)),
+								  ceil(std::max(clip.height, content.height)))];
 	[self recomputeVisible];
 }
 
@@ -260,7 +261,7 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	if (view != NULL) machine->debug_view().free_view(*view);
+	if (view != nullptr) machine->debug_view().free_view(*view);
 	if (font != nil) [font release];
 	if (text != nil) [text release];
 	[super dealloc];
@@ -281,8 +282,8 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 										fontHeight * newSize.y);
 			if (wholeLineScroll)
 				content.height += (fontHeight * 2) - 1;
-			[self setFrameSize:NSMakeSize(ceil(MAX(clip.width, content.width)),
-										  ceil(MAX(clip.height, content.height)))];
+			[self setFrameSize:NSMakeSize(ceil(std::max(clip.width, content.width)),
+										  ceil(std::max(clip.height, content.height)))];
 		}
 		totalWidth = newSize.x;
 		totalHeight = newSize.y;
@@ -582,7 +583,7 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 	if (wholeLineScroll)
 	{
 		CGFloat const clamp = [self bounds].size.height - fontHeight - proposedVisibleRect.size.height;
-		proposedVisibleRect.origin.y = MIN(proposedVisibleRect.origin.y, MAX(clamp, 0));
+		proposedVisibleRect.origin.y = std::min(proposedVisibleRect.origin.y, std::max(clamp, CGFloat(0)));
 		proposedVisibleRect.origin.y -= fmod(proposedVisibleRect.origin.y, fontHeight);
 	}
 	return proposedVisibleRect;
@@ -599,8 +600,8 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 	INT32 row, clip;
 	[self convertBounds:dirtyRect toFirstAffectedLine:&row count:&clip];
 	clip += row;
-	row = MAX(row, origin.y);
-	clip = MIN(clip, origin.y + size.y);
+	row = std::max(row, origin.y);
+	clip = std::min(clip, origin.y + size.y);
 
 	// this gets the text for the whole visible area
 	debug_view_char const *data = view->viewdata();
@@ -667,7 +668,7 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 											  inTextContainer:textContainer];
 		if (start == 0)
 			box.origin.x = 0;
-		box.size.width = MAX([self bounds].size.width - box.origin.x, 0);
+		box.size.width = std::max([self bounds].size.width - box.origin.x, CGFloat(0));
 		[[self backgroundForAttribute:attr] set];
 		[NSBezierPath fillRect:NSMakeRect(box.origin.x,
 										  row * fontHeight,
@@ -810,7 +811,7 @@ static void debugwin_view_update(debug_view &view, void *osdprivate)
 
 
 - (void)insertNewline:(id)sender {
-	debug_cpu_get_visible_cpu(*machine)->debug()->single_step();
+	machine->debugger().cpu().get_visible_cpu()->debug()->single_step();
 }
 
 

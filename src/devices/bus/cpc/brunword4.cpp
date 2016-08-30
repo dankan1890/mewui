@@ -57,7 +57,7 @@ ROM_START( cpc_brunword4 )
 	ROM_LOAD( "brunw-fb.rom",  0x7c000, 0x4000, CRC(88383953) SHA1(50c6417b26134b68a80912bdb91c8578eb00c8a2) )
 ROM_END
 
-const rom_entry *cpc_brunword4_device::device_rom_region() const
+const tiny_rom_entry *cpc_brunword4_device::device_rom_region() const
 {
 	return ROM_NAME( cpc_brunword4 );
 }
@@ -74,7 +74,7 @@ void cpc_brunword4_device::device_start()
 	address_space& space = cpu->memory().space(AS_IO);
 	m_slot = dynamic_cast<cpc_expansion_slot_device *>(owner());
 
-	space.install_write_handler(0xdf00,0xdfff,0,0,write8_delegate(FUNC(cpc_brunword4_device::rombank_w),this));
+	space.install_write_handler(0xdf00,0xdfff,write8_delegate(FUNC(cpc_brunword4_device::rombank_w),this));
 }
 
 void cpc_brunword4_device::device_reset()

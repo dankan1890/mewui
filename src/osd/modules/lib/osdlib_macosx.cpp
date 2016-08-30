@@ -13,6 +13,12 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <dlfcn.h>
+
+#include <cstdio>
+#include <iomanip>
+#include <memory>
+
 
 #include <mach/mach.h>
 #include <mach/mach_time.h>
@@ -21,10 +27,6 @@
 // MAME headers
 #include "osdcore.h"
 #include "osdlib.h"
-
-// FIXME: We shouldn't use SDL functions in here
-
-#include "sdlinc.h"
 
 //============================================================
 //  osd_getenv
@@ -48,8 +50,10 @@ int osd_setenv(const char *name, const char *value, int overwrite)
 //  osd_process_kill
 //============================================================
 
-void osd_process_kill(void)
+void osd_process_kill()
 {
+	std::fflush(stdout);
+	std::fflush(stderr);
 	kill(getpid(), SIGKILL);
 }
 
@@ -153,14 +157,14 @@ char *osd_get_clipboard_text(void)
 	PasteboardRef pasteboard_ref;
 	err = PasteboardCreate(kPasteboardClipboard, &pasteboard_ref);
 	if (err)
-		return NULL;
+		return nullptr;
 
 	PasteboardSynchronize(pasteboard_ref);
 
 	ItemCount item_count;
 	err = PasteboardGetItemCount(pasteboard_ref, &item_count);
 
-	char *result = NULL; // core expects a malloced C string of uft8 data
+	char *result = nullptr; // core expects a malloced C string of uft8 data
 	for (UInt32 item_index = 1; (item_index <= item_count) && !result; item_index++)
 	{
 		PasteboardItemID item_id;
@@ -219,3 +223,70 @@ char *osd_get_clipboard_text(void)
 
 	return result;
 }
+
+//============================================================
+//  dynamic_module_posix_impl
+//============================================================
+
+namespace osd {
+class dynamic_module_posix_impl : public dynamic_module
+{
+public:
+	dynamic_module_posix_impl(std::vector<std::string> &libraries)
+		: m_module(nullptr)
+	{
+		m_libraries = libraries;
+	}
+
+	virtual ~dynamic_module_posix_impl() override
+	{
+		if (m_module != nullptr)
+			dlclose(m_module);
+	};
+
+protected:
+	virtual generic_fptr_t get_symbol_address(char const *symbol) override
+	{
+		/*
+		 * given a list of libraries, if a first symbol is successfully loaded from
+		 * one of them, all additional symbols will be loaded from the same library
+		 */
+		if (m_module)
+		{
+			return reinterpret_cast<generic_fptr_t>(dlsym(m_module, symbol));
+		}
+
+		for (auto const &library : m_libraries)
+		{
+			void *module = dlopen(library.c_str(), RTLD_LAZY);
+
+			if (module != nullptr)
+			{
+				generic_fptr_t function = reinterpret_cast<generic_fptr_t>(dlsym(module, symbol));
+
+				if (function != nullptr)
+				{
+					m_module = module;
+					return function;
+				}
+				else
+				{
+					dlclose(module);
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+private:
+	std::vector<std::string> m_libraries;
+	void *                   m_module;
+};
+
+dynamic_module::ptr dynamic_module::open(std::vector<std::string> &&names)
+{
+	return std::make_unique<dynamic_module_posix_impl>(names);
+}
+
+} // namespace osd

@@ -617,7 +617,7 @@ static INPUT_PORTS_START( ngp )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START("Power")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_POWER_ON ) PORT_CHANGED_MEMBER(DEVICE_SELF, ngp_state, power_callback, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_POWER_ON ) PORT_CHANGED_MEMBER(DEVICE_SELF, ngp_state, power_callback, nullptr)
 INPUT_PORTS_END
 
 
@@ -746,7 +746,7 @@ DEVICE_IMAGE_LOAD_MEMBER( ngp_state, ngp_cart )
 	if (size != 0x8000 && size != 0x80000 && size != 0x100000 && size != 0x200000 && size != 0x400000)
 	{
 		image.seterror(IMAGE_ERROR_UNSPECIFIED, "Unsupported cartridge size");
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	// alloc 0x400000 ROM to simplify mapping in the address map
@@ -782,7 +782,7 @@ DEVICE_IMAGE_LOAD_MEMBER( ngp_state, ngp_cart )
 		m_flash_chip[1].state = F_READ;
 	}
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 

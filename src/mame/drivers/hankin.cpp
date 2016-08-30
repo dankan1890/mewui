@@ -255,22 +255,17 @@ WRITE8_MEMBER( hankin_state::ic10_a_w )
 
 	if (!m_ic11_ca2)
 	{
-		if BIT(data, 2)
+		if (BIT(data, 2))
 			m_digit = 5;
-		else
-		if BIT(data, 3)
+		else if (BIT(data, 3))
 			m_digit = 4;
-		else
-		if BIT(data, 4)
+		else if (BIT(data, 4))
 			m_digit = 3;
-		else
-		if BIT(data, 5)
+		else if (BIT(data, 5))
 			m_digit = 2;
-		else
-		if BIT(data, 6)
+		else if (BIT(data, 6))
 			m_digit = 1;
-		else
-		if BIT(data, 7)
+		else if (BIT(data, 7))
 			m_digit = 0;
 
 		// This machine has a 10-segment display, however the only
@@ -517,8 +512,8 @@ static MACHINE_CONFIG_START( hankin, hankin_state )
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(hankin_state, ic10_b_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(hankin_state, ic10_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(hankin_state, ic10_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
 
 	MCFG_DEVICE_ADD("ic11", PIA6821, 0)
 	//MCFG_PIA_READPA_HANDLER(READ8(hankin_state, ic11_a_r))
@@ -527,8 +522,8 @@ static MACHINE_CONFIG_START( hankin, hankin_state )
 	//MCFG_PIA_WRITEPB_HANDLER(WRITE8(hankin_state, ic11_b_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(hankin_state, ic11_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(hankin_state, ic11_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("maincpu", m6802_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6802_IRQ_LINE))
 
 	MCFG_DEVICE_ADD("ic2", PIA6821, 0)
 	MCFG_PIA_READPA_HANDLER(READ8(hankin_state, ic2_a_r))
@@ -537,8 +532,8 @@ static MACHINE_CONFIG_START( hankin, hankin_state )
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(hankin_state, ic2_b_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(hankin_state, ic2_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(hankin_state, ic2_cb2_w))
-	MCFG_PIA_IRQA_HANDLER(DEVWRITELINE("audiocpu", m6802_cpu_device, irq_line))
-	MCFG_PIA_IRQB_HANDLER(DEVWRITELINE("audiocpu", m6802_cpu_device, irq_line))
+	MCFG_PIA_IRQA_HANDLER(INPUTLINE("audiocpu", M6802_IRQ_LINE))
+	MCFG_PIA_IRQB_HANDLER(INPUTLINE("audiocpu", M6802_IRQ_LINE))
 
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_x", hankin_state, timer_x, attotime::from_hz(120)) // mains freq*2
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("timer_s", hankin_state, timer_s, attotime::from_hz(94000)) // 555 on sound board*2

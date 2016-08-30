@@ -470,7 +470,7 @@ static void chcolor(palette_device &palette, pen_t color, UINT16 data)
 WRITE16_MEMBER(model2_state::model2_palette_w)
 {
 	COMBINE_DATA(&m_palram[offset]);
-	chcolor(m_palette, offset, m_palram[offset]);
+	chcolor(*m_palette, offset, m_palram[offset]);
 }
 
 READ16_MEMBER(model2_state::model2_palette_r)
@@ -520,7 +520,7 @@ WRITE32_MEMBER(model2_state::videoctl_w)
 
 CUSTOM_INPUT_MEMBER(model2_state::_1c00000_r)
 {
-	UINT32 ret = ioport("IN0")->read();
+	UINT32 ret = m_in0->read();
 
 	if(m_ctrlmode == 0)
 	{
@@ -538,8 +538,7 @@ CUSTOM_INPUT_MEMBER(model2_state::_1c0001c_r)
 	UINT32 iptval = 0x00ff;
 	if(m_analog_channel < 4)
 	{
-		static const char *const ports[] = { "ANA0", "ANA1", "ANA2", "ANA3" };
-		iptval = read_safe(ioport(ports[m_analog_channel]), 0);
+		iptval = m_analog_ports[m_analog_channel].read_safe(0);
 		++m_analog_channel;
 	}
 	return iptval;
@@ -557,7 +556,7 @@ CUSTOM_INPUT_MEMBER(model2_state::_1c0001c_r)
 /* Used specifically by Sega Rally, others might be different */
 CUSTOM_INPUT_MEMBER(model2_state::srallyc_gearbox_r)
 {
-	UINT8 res = read_safe(ioport("GEARS"), 0);
+	UINT8 res = m_gears.read_safe(0);
 	int i;
 	const UINT8 gearvalue[5] = { 0, 2, 1, 6, 5 };
 
@@ -690,7 +689,16 @@ WRITE32_MEMBER(model2_state::copro_prg_w)
 	if (m_coproctl & 0x80000000)
 	{
 		logerror("copro_prg_w: %08X:   %08X\n", m_coprocnt, data);
-		m_tgpx4_program[m_coprocnt] = data;
+		if (m_coprocnt & 1)
+		{
+			m_tgpx4_program[m_coprocnt / 2] &= U64(0xffffffff);
+			m_tgpx4_program[m_coprocnt / 2] |= (UINT64)(data) << 32;
+		}
+		else
+		{
+			m_tgpx4_program[m_coprocnt / 2] &= U64(0xffffffff00000000);
+			m_tgpx4_program[m_coprocnt / 2] |= data;
+		}
 		m_coprocnt++;
 	}
 	else
@@ -1045,21 +1053,20 @@ WRITE32_MEMBER(model2_state::geo_w)
 
 READ32_MEMBER(model2_state::hotd_lightgun_r)
 {
-	static const char *const ports[] = { "P1_Y", "P1_X", "P2_Y", "P2_X" };
 	UINT16 res = 0xffff;
 
 	if(m_lightgun_mux < 8)
-		res = (read_safe(ioport(ports[m_lightgun_mux >> 1]), 0) >> ((m_lightgun_mux & 1)*8)) & 0xff;
+		res = (m_lightgun_ports[m_lightgun_mux >> 1].read_safe(0) >> ((m_lightgun_mux & 1)*8)) & 0xff;
 	else
 	{
 		UINT16 p1x,p1y,p2x,p2y;
 
 		res = 0xfffc;
 
-		p1x = read_safe(ioport("P1_X"), 0);
-		p1y = read_safe(ioport("P1_Y"), 0);
-		p2x = read_safe(ioport("P2_X"), 0);
-		p2y = read_safe(ioport("P2_Y"), 0);
+		p1x = m_lightgun_ports[1].read_safe(0);
+		p1y = m_lightgun_ports[0].read_safe(0);
+		p2x = m_lightgun_ports[3].read_safe(0);
+		p2y = m_lightgun_ports[2].read_safe(0);
 
 		/* TODO: might be better, supposedly user has to calibrate guns in order to make these settings to work ... */
 		if(p1x <= 0x28 || p1x >= 0x3e0 || p1y <= 0x40 || p1y >= 0x3c0)
@@ -1332,61 +1339,6 @@ READ32_MEMBER(model2_state::maxx_r)
 	return ROM[offset + (0x040000/4)];
 }
 
-/* Network board emulation */
-
-
-
-READ32_MEMBER(model2_state::network_r)
-{
-	if ((mem_mask == 0xffffffff) || (mem_mask == 0x0000ffff) || (mem_mask == 0xffff0000))
-	{
-		return 0xffffffff;
-	}
-
-	if (offset < 0x4000/4)
-	{
-		return m_netram[offset];
-	}
-
-	if (mem_mask == 0x00ff0000)
-	{
-		return m_sysres<<16;
-	}
-	else if (mem_mask == 0x000000ff)
-	{
-		return m_zflagi;
-	}
-
-	return 0xffffffff;
-}
-
-WRITE32_MEMBER(model2_state::network_w)
-{
-	if ((mem_mask == 0xffffffff) || (mem_mask == 0x0000ffff) || (mem_mask == 0xffff0000))
-	{
-		COMBINE_DATA(&m_netram[offset+0x4000/4]);
-		return;
-	}
-
-	if (offset < 0x4000/4)
-	{
-		COMBINE_DATA(&m_netram[offset]);
-		return;
-	}
-
-	if (mem_mask == 0x00ff0000)
-	{
-		m_sysres = data>>16;
-	}
-	else if (mem_mask == 0x000000ff)
-	{
-		m_zflagi = data;
-		m_zflag = 0;
-		if (data & 0x01) m_zflag |= 0x80;
-		if (data & 0x80) m_zflag |= 0x01;
-	}
-}
-
 #ifdef UNUSED_FUNCTION
 WRITE32_MEMBER(model2_state::copro_w)
 {
@@ -1507,7 +1459,9 @@ static ADDRESS_MAP_START( model2_base_mem, AS_PROGRAM, 32, model2_state )
 	AM_RANGE(0x01800000, 0x01803fff) AM_READWRITE16(model2_palette_r,model2_palette_w,0xffffffff)
 	AM_RANGE(0x01810000, 0x0181bfff) AM_RAM AM_SHARE("colorxlat")
 	AM_RANGE(0x0181c000, 0x0181c003) AM_WRITE(model2_3d_zclip_w)
-	AM_RANGE(0x01a10000, 0x01a1ffff) AM_READWRITE(network_r, network_w)
+	AM_RANGE(0x01a10000, 0x01a13fff) AM_DEVREADWRITE8("m2comm", m2comm_device, share_r, share_w, 0xffffffff)
+	AM_RANGE(0x01a14000, 0x01a14003) AM_DEVREADWRITE8("m2comm", m2comm_device, cn_r, cn_w, 0x000000ff)
+	AM_RANGE(0x01a14000, 0x01a14003) AM_DEVREADWRITE8("m2comm", m2comm_device, fg_r, fg_w, 0x00ff0000)
 	AM_RANGE(0x01d00000, 0x01d03fff) AM_RAM AM_SHARE("backup1") // Backup sram
 	AM_RANGE(0x02000000, 0x03ffffff) AM_ROM AM_REGION("user1", 0)
 
@@ -1523,10 +1477,9 @@ ADDRESS_MAP_END
 
 READ8_MEMBER(model2_state::virtuacop_lightgun_r)
 {
-	static const char *const ports[] = { "P1_Y", "P1_X", "P2_Y", "P2_X" };
 	UINT8 res;
 
-	res = (read_safe(ioport(ports[offset >> 1]), 0) >> ((offset & 1)*8)) & 0xff;
+	res = (m_lightgun_ports[offset >> 1].read_safe(0) >> ((offset & 1)*8)) & 0xff;
 
 	return res;
 }
@@ -1537,10 +1490,10 @@ READ8_MEMBER(model2_state::virtuacop_lightgun_offscreen_r)
 	UINT16 special_res = 0xfffc;
 	UINT16 p1x,p1y,p2x,p2y;
 
-	p1x = read_safe(ioport("P1_X"), 0);
-	p1y = read_safe(ioport("P1_Y"), 0);
-	p2x = read_safe(ioport("P2_X"), 0);
-	p2y = read_safe(ioport("P2_Y"), 0);
+	p1x = m_lightgun_ports[1].read_safe(0);
+	p1y = m_lightgun_ports[0].read_safe(0);
+	p2x = m_lightgun_ports[3].read_safe(0);
+	p2y = m_lightgun_ports[2].read_safe(0);
 
 	/* TODO: might be better, supposedly user has to calibrate guns in order to make these settings to work ... */
 	if(p1x <= 0x28 || p1x >= 0x3e0 || p1y <= 0x40 || p1y >= 0x3c0)
@@ -1713,7 +1666,7 @@ ADDRESS_MAP_END
 static INPUT_PORTS_START( model2 )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN1")
@@ -1734,7 +1687,7 @@ static INPUT_PORTS_START( model2 )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1914,7 +1867,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( manxtt )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN2")
@@ -1934,7 +1887,7 @@ static INPUT_PORTS_START( manxtt )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1974,7 +1927,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( srallyc )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN2")
@@ -1994,7 +1947,7 @@ static INPUT_PORTS_START( srallyc )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2010,7 +1963,7 @@ static INPUT_PORTS_START( srallyc )
 	PORT_BIT(0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START("IN2")
-	PORT_BIT(0x0070, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,srallyc_gearbox_r, NULL)
+	PORT_BIT(0x0070, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,srallyc_gearbox_r, nullptr)
 	PORT_BIT(0x008f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -2042,7 +1995,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( vcop2 )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN1")
@@ -2062,7 +2015,7 @@ static INPUT_PORTS_START( vcop2 )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2105,7 +2058,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( bel )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN1")
@@ -2122,7 +2075,7 @@ static INPUT_PORTS_START( bel )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2153,7 +2106,7 @@ static INPUT_PORTS_START( rchase2 )
 	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_MODIFY("IN2")
-	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,rchase2_devices_r, NULL)
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,rchase2_devices_r, nullptr)
 
 	/* FIXME: don't know yet if min max values are really correct, we'll see ... */
 	PORT_START("ANA0")
@@ -2172,7 +2125,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( skytargt )
 	PORT_START("1c00000")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c00000_r, nullptr)
 
 	PORT_START("1c00004")
 	PORT_BIT( 0x0000ffff, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, driver_device,custom_port_read, "IN1")
@@ -2193,7 +2146,7 @@ static INPUT_PORTS_START( skytargt )
 	PORT_START("1c0001c")
 	PORT_BIT( 0x0000001a, IP_ACTIVE_HIGH, IPT_SPECIAL ) // these must be high
 	PORT_BIT( 0x0000ffe5, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, NULL)
+	PORT_BIT( 0xffff0000, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, model2_state,_1c0001c_r, nullptr)
 
 	PORT_START("IN0")
 	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2229,6 +2182,8 @@ TIMER_DEVICE_CALLBACK_MEMBER(model2_state::model2_interrupt)
 		if(m_intena & 1<<0)
 			m_maincpu->set_input_line(I960_IRQ0, ASSERT_LINE);
 		model2_check_irq_state();
+		if (m_m2comm != nullptr)
+			m_m2comm->check_vint_irq();
 	}
 	else if(scanline == 0)
 	{
@@ -2250,6 +2205,8 @@ TIMER_DEVICE_CALLBACK_MEMBER(model2_state::model2c_interrupt)
 		if(m_intena & 1<<0)
 			m_maincpu->set_input_line(I960_IRQ0, ASSERT_LINE);
 		model2_check_irq_state();
+		if (m_m2comm != nullptr)
+			m_m2comm->check_vint_irq();
 	}
 	else if(scanline == 0) // 384
 	{
@@ -2418,6 +2375,8 @@ static MACHINE_CONFIG_START( model2o, model2_state )
 	MCFG_VIDEO_START_OVERRIDE(model2_state,model2)
 
 	MCFG_SEGAM1AUDIO_ADD("m1audio")
+
+	MCFG_M2COMM_ADD("m2comm")
 MACHINE_CONFIG_END
 
 /* 2A-CRX */
@@ -2469,6 +2428,8 @@ static MACHINE_CONFIG_START( model2a, model2_state )
 	MCFG_SCSP_IRQ_CB(WRITE8(model2_state,scsp_irq))
 	MCFG_SOUND_ROUTE(0, "lspeaker", 2.0)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 2.0)
+
+	MCFG_M2COMM_ADD("m2comm")
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( manxttdx, model2a ) /* Includes a Model 1 Sound board for additional sounds - Deluxe version only */
@@ -2584,6 +2545,8 @@ static MACHINE_CONFIG_START( model2b, model2_state )
 	MCFG_SCSP_IRQ_CB(WRITE8(model2_state,scsp_irq))
 	MCFG_SOUND_ROUTE(0, "lspeaker", 2.0)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 2.0)
+
+	MCFG_M2COMM_ADD("m2comm")
 MACHINE_CONFIG_END
 
 
@@ -2598,7 +2561,7 @@ static MACHINE_CONFIG_DERIVED( model2b_0229, model2b )
 MACHINE_CONFIG_END
 
 
-static ADDRESS_MAP_START( copro_tgpx4_map, AS_PROGRAM, 32, model2_state )
+static ADDRESS_MAP_START( copro_tgpx4_map, AS_PROGRAM, 64, model2_state )
 	AM_RANGE(0x00000000, 0x00007fff) AM_RAM AM_SHARE("tgpx4_program")
 ADDRESS_MAP_END
 
@@ -2647,6 +2610,8 @@ static MACHINE_CONFIG_START( model2c, model2_state )
 	MCFG_SCSP_IRQ_CB(WRITE8(model2_state, scsp_irq))
 	MCFG_SOUND_ROUTE(0, "lspeaker", 2.0)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 2.0)
+
+	MCFG_M2COMM_ADD("m2comm")
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( stcc, model2c )
@@ -5187,7 +5152,7 @@ ROM_START( dynabb ) /* Dynamite Baseball, Model 2B. Sega game ID# 833-12803 DYNA
 	ROM_LOAD32_WORD("epr-19169.14", 0x100002, 0x080000, CRC(91a5acef) SHA1(2520a3e4ff15e4d583861ba656570abca5f7c611) )
 
 	ROM_REGION32_LE( 0x2000000, "user1", 0 ) // Data
-	// 0x0000000 - 0x07fffff unpopulated? (not checked by ROM checks)
+	// IC11, IC12 not populated
 	ROM_LOAD32_WORD("mpr-19176.9",  0x0800000, 0x400000, CRC(2c4e90f5) SHA1(8d5ed0b26e79dd6476282bc69cb27b42381635f2) )
 	ROM_LOAD32_WORD("mpr-19177.10", 0x0800002, 0x400000, CRC(b0f1e512) SHA1(81e4124ac7766c7ea6bac7e7f4db110783394ae3) )
 	ROM_LOAD32_WORD("mpr-19174.7",  0x1000000, 0x400000, CRC(057e5200) SHA1(dd07eb438d91a8132789154a633fb6ec4e2ef0d1) )
@@ -5196,11 +5161,10 @@ ROM_START( dynabb ) /* Dynamite Baseball, Model 2B. Sega game ID# 833-12803 DYNA
 	ROM_LOAD32_WORD("mpr-19173.6",  0x1800002, 0x400000, CRC(31adbeed) SHA1(3984be892f0dce21c8d423dda055ef7e57df4d4e) )
 
 	ROM_REGION( 0x1000000, "user2", 0 ) // Models
-	// these IC positions are weird compared to the other games, but these are the correct pairings.
-	ROM_LOAD32_WORD("mpr-19178.11", 0x0000000, 0x400000, CRC(0d621e21) SHA1(31adc229258a5d468ff80d789c59bd8a6777f900) )
-	ROM_LOAD32_WORD("mpr-19180.17", 0x0000002, 0x400000, CRC(d2e311a5) SHA1(83fb31c6ad7c32f1a7bcf870edb2719653c3db97) )
-	ROM_LOAD32_WORD("mpr-19179.12", 0x0800000, 0x400000, CRC(337a4ec2) SHA1(77d7d186344715237895ac1ed0ab219fcc340a7e) )
-	ROM_LOAD32_WORD("mpr-19181.21", 0x0800002, 0x400000, CRC(09a86c33) SHA1(30601c5b00fa3c9db815f60a0de16576e34b8c42) )
+	ROM_LOAD32_WORD("mpr-19178.17", 0x0000000, 0x400000, CRC(0d621e21) SHA1(31adc229258a5d468ff80d789c59bd8a6777f900) )
+	ROM_LOAD32_WORD("mpr-19180.21", 0x0000002, 0x400000, CRC(d2e311a5) SHA1(83fb31c6ad7c32f1a7bcf870edb2719653c3db97) )
+	ROM_LOAD32_WORD("mpr-19179.18", 0x0800000, 0x400000, CRC(337a4ec2) SHA1(77d7d186344715237895ac1ed0ab219fcc340a7e) )
+	ROM_LOAD32_WORD("mpr-19181.22", 0x0800002, 0x400000, CRC(09a86c33) SHA1(30601c5b00fa3c9db815f60a0de16576e34b8c42) )
 
 
 	ROM_REGION( 0x800000, "user3", 0 ) // Textures
@@ -5915,48 +5879,14 @@ DRIVER_INIT_MEMBER(model2_state,daytonam)
 	m_maincpu->space(AS_PROGRAM).install_read_handler(0x240000, 0x24ffff, read32_delegate(FUNC(model2_state::maxx_r),this));
 }
 
-/* very crude support for let the game set itself into stand-alone mode */
-
-READ32_MEMBER(model2_state::jaleco_network_r)
-{
-	if(offset == 0x4000/4)
-	{
-		if(m_netram[offset] == 0x00000000)
-			m_jnet_time_out = 0;
-
-		if((m_netram[offset] & 0xffff) == 0x0001)
-			m_jnet_time_out++;
-
-		if(m_jnet_time_out > 0x80)
-			m_netram[offset]|= 0x00800000;
-
-		return m_netram[offset];
-	}
-
-	return m_netram[offset];
-}
-
-WRITE32_MEMBER(model2_state::jaleco_network_w)
-{
-	COMBINE_DATA(&m_netram[offset]);
-}
-
 DRIVER_INIT_MEMBER(model2_state,sgt24h)
 {
 //  DRIVER_INIT_CALL(genprot);
-
-	m_maincpu->space(AS_PROGRAM).install_readwrite_handler(0x01a10000, 0x01a1ffff, read32_delegate(FUNC(model2_state::jaleco_network_r),this), write32_delegate(FUNC(model2_state::jaleco_network_w),this));
 
 	UINT32 *ROM = (UINT32 *)memregion("maincpu")->base();
 	ROM[0x56578/4] = 0x08000004;
 	//ROM[0x5b3e8/4] = 0x08000004;
 }
-
-DRIVER_INIT_MEMBER(model2_state,overrev)
-{
-	m_maincpu->space(AS_PROGRAM).install_readwrite_handler(0x01a10000, 0x01a1ffff, read32_delegate(FUNC(model2_state::jaleco_network_r),this), write32_delegate(FUNC(model2_state::jaleco_network_w),this));
-}
-
 
 DRIVER_INIT_MEMBER(model2_state,doa)
 {
@@ -6029,7 +5959,7 @@ GAME( 1996, von,             0, model2b,      model2,  driver_device, 0,       R
 GAME( 1996, vonj,          von, model2b,      model2,  driver_device, 0,       ROT0, "Sega",   "Cyber Troopers Virtual-On (Japan, Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1996, dynabb,          0, model2b,      model2,  driver_device, 0,       ROT0, "Sega",   "Dynamite Baseball", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, dynabb97,        0, model2b,      model2,  driver_device, 0,       ROT0, "Sega",   "Dynamite Baseball 97 (Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1997, overrevb,  overrev, model2b,      srallyc, model2_state,  overrev, ROT0, "Jaleco", "Over Rev (Model 2B, Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1997, overrevb,  overrev, model2b,      srallyc, driver_device, 0,       ROT0, "Jaleco", "Over Rev (Model 2B, Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, zerogun,         0, model2b_5881, model2,  model2_state,  zerogun, ROT0, "Psikyo", "Zero Gunner (Export, Model 2B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, zerogunj,  zerogun, model2b_5881, model2,  model2_state,  zerogun, ROT0, "Psikyo", "Zero Gunner (Japan, Model 2B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1998, dynamcopb,dynamcop, model2b_5881, model2,  model2_state,  genprot, ROT0, "Sega",   "Dynamite Cop (Export, Model 2B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
@@ -6044,7 +5974,7 @@ GAME( 1996, stccb,        stcc,    stcc,      model2,  driver_device, 0,       R
 GAME( 1996, stcca,        stcc,    stcc,      model2,  driver_device, 0,       ROT0, "Sega",   "Sega Touring Car Championship (Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1996, waverunr,        0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Wave Runner (Japan, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, hotd,            0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "House of the Dead", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1997, overrev,         0, model2c,      srallyc, model2_state,  overrev, ROT0, "Jaleco", "Over Rev (Model 2C, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1997, overrev,         0, model2c,      srallyc, driver_device, 0,       ROT0, "Jaleco", "Over Rev (Model 2C, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, segawski,        0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Sega Water Ski (Japan, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatr,        0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (Export, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatru,topskatr, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (USA, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )

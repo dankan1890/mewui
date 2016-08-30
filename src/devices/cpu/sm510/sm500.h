@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:hap, Igor
+// copyright-holders:hap
 /*
 
   Sharp SM500 MCU family cores
@@ -39,7 +39,7 @@ O46 47 |                                                | 14 K3
 O36 48 | *                                              | 13 K2
        |________________________________________________/
 
-          1   2   3   4   5   6   7   8   9  10  11  12      
+          1   2   3   4   5   6   7   8   9  10  11  12
          O26 O16 R4  R3  R2  R1  GND _T  bt  al  ACL K1   note: bt = beta symbol, al = alpha symbol
 */
 
@@ -47,11 +47,33 @@ class sm500_device : public sm510_base_device
 {
 public:
 	sm500_device(const machine_config &mconfig, const char *tag, device_t *owner, UINT32 clock);
+	sm500_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, UINT32 clock, int stack_levels, int prgwidth, address_map_constructor program, int datawidth, address_map_constructor data, const char *shortname, const char *source);
 
 protected:
 	virtual offs_t disasm_disassemble(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram, UINT32 options) override;
-};
+	virtual void execute_one() override;
+	virtual void get_opcode_param() override;
 
+	// opcode handlers
+	virtual void op_lb() override;
+	virtual void op_incb() override;
+
+	virtual void op_comcb();
+	virtual void op_ssr();
+	virtual void op_trs();
+
+	virtual void op_pdtw();
+	virtual void op_tw();
+	virtual void op_dtw();
+
+	virtual void op_ats();
+	virtual void op_exksa();
+	virtual void op_exkfa();
+
+	virtual void op_rmf();
+	virtual void op_smf();
+	virtual void op_comcn();
+};
 
 
 extern const device_type SM500;

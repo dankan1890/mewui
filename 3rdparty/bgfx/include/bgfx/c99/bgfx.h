@@ -235,14 +235,33 @@ typedef enum bgfx_topology_convert
 
 } bgfx_topology_convert_t;
 
+typedef enum bgfx_topology_sort
+{
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_MIN,
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_AVG,
+    BGFX_TOPOLOGY_SORT_DIRECTION_FRONT_TO_BACK_MAX,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_MIN,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_AVG,
+    BGFX_TOPOLOGY_SORT_DIRECTION_BACK_TO_FRONT_MAX,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_MIN,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_AVG,
+    BGFX_TOPOLOGY_SORT_DISTANCE_FRONT_TO_BACK_MAX,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_MIN,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_AVG,
+    BGFX_TOPOLOGY_SORT_DISTANCE_BACK_TO_FRONT_MAX,
+
+    BGFX_TOPOLOGY_SORT_COUNT
+
+} bgfx_topology_sort_t;
+
 #define BGFX_HANDLE_T(_name) \
     typedef struct _name { uint16_t idx; } _name##_t
 
-BGFX_HANDLE_T(bgfx_indirect_buffer_handle);
 BGFX_HANDLE_T(bgfx_dynamic_index_buffer_handle);
 BGFX_HANDLE_T(bgfx_dynamic_vertex_buffer_handle);
 BGFX_HANDLE_T(bgfx_frame_buffer_handle);
 BGFX_HANDLE_T(bgfx_index_buffer_handle);
+BGFX_HANDLE_T(bgfx_indirect_buffer_handle);
 BGFX_HANDLE_T(bgfx_occlusion_query_handle);
 BGFX_HANDLE_T(bgfx_program_handle);
 BGFX_HANDLE_T(bgfx_shader_handle);
@@ -278,7 +297,8 @@ typedef struct bgfx_hmd_eye
     float rotation[4];
     float translation[3];
     float fov[4];
-    float adjust[3];
+    float viewOffset[3];
+    float projection[16];
     float pixelsPerTanAngle[2];
 
 } bgfx_hmd_eye_t;
@@ -298,12 +318,16 @@ typedef struct bgfx_hmd
 /**/
 typedef struct bgfx_stats
 {
-    uint64_t cpuTime;
+    uint64_t cpuTimeBegin;
+    uint64_t cpuTimeEnd;
     uint64_t cpuTimerFreq;
 
-    uint64_t gpuTime;
+    uint64_t gpuTimeBegin;
+    uint64_t gpuTimeEnd;
     uint64_t gpuTimerFreq;
 
+    int64_t waitRender;
+    int64_t waitSubmit;
 } bgfx_stats_t;
 
 /**/
@@ -479,6 +503,12 @@ BGFX_C_API void bgfx_vertex_convert(const bgfx_vertex_decl_t* _destDecl, void* _
 BGFX_C_API uint16_t bgfx_weld_vertices(uint16_t* _output, const bgfx_vertex_decl_t* _decl, const void* _data, uint16_t _num, float _epsilon);
 
 /**/
+BGFX_C_API uint32_t bgfx_topology_convert(bgfx_topology_convert_t _conversion, void* _dst, uint32_t _dstSize, const void* _indices, uint32_t _numIndices, bool _index32);
+
+/**/
+BGFX_C_API void bgfx_topology_sort_tri_list(bgfx_topology_sort_t _sort, void* _dst, uint32_t _dstSize, const float _dir[3], const float _pos[3], const void* _vertices, uint32_t _stride, const void* _indices, uint32_t _numIndices, bool _index32);
+
+/**/
 BGFX_C_API void bgfx_image_swizzle_bgra8(uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src, void* _dst);
 
 /**/
@@ -500,7 +530,7 @@ BGFX_C_API void bgfx_shutdown();
 BGFX_C_API void bgfx_reset(uint32_t _width, uint32_t _height, uint32_t _flags);
 
 /**/
-BGFX_C_API uint32_t bgfx_frame();
+BGFX_C_API uint32_t bgfx_frame(bool _capture);
 
 /**/
 BGFX_C_API bgfx_renderer_type_t bgfx_get_renderer_type();
@@ -650,10 +680,10 @@ BGFX_C_API void bgfx_update_texture_3d(bgfx_texture_handle_t _handle, uint8_t _m
 BGFX_C_API void bgfx_update_texture_cube(bgfx_texture_handle_t _handle, uint8_t _side, uint8_t _mip, uint16_t _x, uint16_t _y, uint16_t _width, uint16_t _height, const bgfx_memory_t* _mem, uint16_t _pitch);
 
 /**/
-BGFX_C_API void bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data);
+BGFX_C_API uint32_t bgfx_read_texture(bgfx_texture_handle_t _handle, void* _data);
 
 /**/
-BGFX_C_API void bgfx_read_frame_buffer(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, void* _data);
+BGFX_C_API uint32_t bgfx_read_frame_buffer(bgfx_frame_buffer_handle_t _handle, uint8_t _attachment, void* _data);
 
 /**/
 BGFX_C_API void bgfx_destroy_texture(bgfx_texture_handle_t _handle);

@@ -15,30 +15,7 @@
 
 #include "options.h"
 
-//**************************************************************************
-//  CONSTANTS
-//**************************************************************************
-
-// option priorities
-enum
-{
-	// command-line options are HIGH priority
-	OPTION_PRIORITY_SUBCMD = OPTION_PRIORITY_HIGH,
-	OPTION_PRIORITY_CMDLINE,
-
-	// INI-based options are NORMAL priority, in increasing order:
-	OPTION_PRIORITY_MAME_INI = OPTION_PRIORITY_NORMAL + 1,
-	OPTION_PRIORITY_DEBUG_INI,
-	OPTION_PRIORITY_ORIENTATION_INI,
-	OPTION_PRIORITY_SYSTYPE_INI,
-	OPTION_PRIORITY_SCREEN_INI,
-	OPTION_PRIORITY_SOURCE_INI,
-	OPTION_PRIORITY_GPARENT_INI,
-	OPTION_PRIORITY_PARENT_INI,
-	OPTION_PRIORITY_DRIVER_INI,
-	OPTION_PRIORITY_INI,
-};
-
+#define OPTION_PRIORITY_CMDLINE     OPTION_PRIORITY_HIGH + 1
 // core options
 #define OPTION_SYSTEMNAME           core_options::unadorned(0)
 #define OPTION_SOFTWARENAME         core_options::unadorned(1)
@@ -102,6 +79,8 @@ enum
 #define OPTION_KEEPASPECT           "keepaspect"
 #define OPTION_UNEVENSTRETCH        "unevenstretch"
 #define OPTION_UNEVENSTRETCHX       "unevenstretchx"
+#define OPTION_UNEVENSTRETCHY       "unevenstretchy"
+#define OPTION_AUTOSTRETCHXY        "autostretchxy"
 #define OPTION_INTOVERSCAN          "intoverscan"
 #define OPTION_INTSCALEX            "intscalex"
 #define OPTION_INTSCALEY            "intscaley"
@@ -131,7 +110,6 @@ enum
 #define OPTION_EFFECT               "effect"
 
 // core vector options
-#define OPTION_ANTIALIAS            "antialias"
 #define OPTION_BEAM_WIDTH_MIN       "beam_width_min"
 #define OPTION_BEAM_WIDTH_MAX       "beam_width_max"
 #define OPTION_BEAM_INTENSITY_WEIGHT   "beam_intensity_weight"
@@ -214,29 +192,21 @@ enum
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// forward references
-struct game_driver;
-class software_part;
-
-
 class emu_options : public core_options
 {
-	static const UINT32 OPTION_FLAG_DEVICE = 0x80000000;
-
 public:
+	enum ui_option
+	{
+		UI_CABINET,
+		UI_SIMPLE
+	};
+
 	// construction/destruction
 	emu_options();
-
-	// parsing wrappers
-	bool parse_command_line(int argc, char *argv[], std::string &error_string);
-	void parse_standard_inis(std::string &error_string);
-	bool parse_slot_devices(int argc, char *argv[], std::string &error_string, const char *name = nullptr, const char *value = nullptr, const software_part *swpart = nullptr);
 
 	// core options
 	const char *system_name() const { return value(OPTION_SYSTEMNAME); }
 	const char *software_name() const { return value(OPTION_SOFTWARENAME); }
-	const game_driver *system() const;
-	void set_system_name(const char *name);
 
 	// core configuration options
 	bool read_config() const { return bool_value(OPTION_READCONFIG); }
@@ -297,6 +267,8 @@ public:
 	bool keep_aspect() const { return bool_value(OPTION_KEEPASPECT); }
 	bool uneven_stretch() const { return bool_value(OPTION_UNEVENSTRETCH); }
 	bool uneven_stretch_x() const { return bool_value(OPTION_UNEVENSTRETCHX); }
+	bool uneven_stretch_y() const { return bool_value(OPTION_UNEVENSTRETCHY); }
+	bool auto_stretch_xy() const { return bool_value(OPTION_AUTOSTRETCHXY); }
 	bool int_overscan() const { return bool_value(OPTION_INTOVERSCAN); }
 	int int_scale_x() const { return int_value(OPTION_INTSCALEX); }
 	int int_scale_y() const { return int_value(OPTION_INTSCALEY); }
@@ -326,7 +298,6 @@ public:
 	const char *effect() const { return value(OPTION_EFFECT); }
 
 	// core vector options
-	bool antialias() const { return bool_value(OPTION_ANTIALIAS); }
 	float beam_width_min() const { return float_value(OPTION_BEAM_WIDTH_MIN); }
 	float beam_width_max() const { return float_value(OPTION_BEAM_WIDTH_MAX); }
 	float beam_intensity_weight() const { return float_value(OPTION_BEAM_INTENSITY_WEIGHT); }
@@ -380,7 +351,7 @@ public:
 	bool cheat() const { return bool_value(OPTION_CHEAT); }
 	bool skip_gameinfo() const { return bool_value(OPTION_SKIP_GAMEINFO); }
 	const char *ui_font() const { return value(OPTION_UI_FONT); }
-	const char *ui() const { return value(OPTION_UI); }
+	ui_option ui() const { return m_ui; }
 	const char *ram_size() const { return value(OPTION_RAMSIZE); }
 
 	// core comm options
@@ -406,25 +377,12 @@ public:
 
 	const char *language() const { return value(OPTION_LANGUAGE); }
 
-	// FIXME: Couriersud: This should be in image_device_exit
-	void remove_device_options();
-
-	std::string main_value(const char *option) const;
-	std::string sub_value(const char *name, const char *subname) const;
-	bool add_slot_options(const software_part *swpart = nullptr);
-
-
-private:
-	// device-specific option handling
-	void add_device_options();
-	void update_slot_options(const software_part *swpart = nullptr);
-
-	// INI parsing helper
-	bool parse_one_ini(const char *basename, int priority, std::string *error_string = nullptr);
-
 	// cache frequently used options in members
 	void update_cached_options();
 
+	std::string main_value(const char *option) const;
+	std::string sub_value(const char *name, const char *subname) const;
+private:
 	static const options_entry s_option_entries[];
 
 	// cached options
@@ -432,8 +390,7 @@ private:
 	bool m_joystick_contradictory;
 	bool m_sleep;
 	bool m_refresh_speed;
-	int m_slot_options;
-	int m_device_options;
+	ui_option m_ui;
 };
 
 

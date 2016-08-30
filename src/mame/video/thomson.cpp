@@ -997,7 +997,7 @@ UINT32 thomson_state::screen_update_thom(screen_device &screen, bitmap_ind16 &bi
 		draw_scanline16( bitmap, xbleft, ypos, xwidth, v, nullptr );
 #if 0
 		if ( thom_hires )
-			draw_scanline16( bitmap, xbleft, ypos+1, xwidth, v, NULL );
+			draw_scanline16( bitmap, xbleft, ypos+1, xwidth, v, nullptr );
 #endif
 	}
 
@@ -1161,7 +1161,7 @@ VIDEO_START_MEMBER( thomson_state, thom )
 	save_item(NAME(m_thom_floppy_rcount));
 	output().set_value( "floppy", 0 );
 
-	m_thom_video_timer = machine().scheduler().timer_alloc(FUNC_NULL);
+	m_thom_video_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
 
 	m_thom_scanline_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(thomson_state::thom_scanline_start),this));
 

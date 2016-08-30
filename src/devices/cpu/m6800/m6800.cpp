@@ -838,10 +838,10 @@ void m6800_cpu_device::write_port2()
 }
 
 /* include the opcode prototypes and function pointer tables */
-#include "6800tbl.inc"
+#include "6800tbl.hxx"
 
 /* include the opcode functions */
-#include "6800ops.inc"
+#include "6800ops.hxx"
 
 int m6800_cpu_device::m6800_rx()
 {
@@ -1804,14 +1804,4 @@ offs_t nsc8105_cpu_device::disasm_disassemble(char *buffer, offs_t pc, const UIN
 {
 	extern CPU_DISASSEMBLE( nsc8105 );
 	return CPU_DISASSEMBLE_NAME(nsc8105)(this, buffer, pc, oprom, opram, options);
-}
-
-WRITE_LINE_MEMBER( m6800_cpu_device::irq_line )
-{
-	set_input_line( M6800_IRQ_LINE, state );
-}
-
-WRITE_LINE_MEMBER( m6800_cpu_device::nmi_line )
-{
-	set_input_line( INPUT_LINE_NMI, state );
 }

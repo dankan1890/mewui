@@ -89,7 +89,7 @@ bitmap_rgb32* ::x68k_get_gfx_page(int pri,int type)
     if(type == GFX65536)
         return x68k_gfx_0_bitmap_65536;
 
-    return NULL;  // should never reach here either.
+    return nullptr;  // should never reach here either.
 }
 */
 void x68k_state::x68k_crtc_text_copy(int src, int dest, UINT8 planes)
@@ -1094,18 +1094,18 @@ VIDEO_START_MEMBER(x68k_state,x68000)
 			break;
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	m_gfxdecode->set_gfx(gfx_index, std::make_unique<gfx_element>(m_pcgpalette, x68k_pcg_8, memregion("user1")->base(), 0, 32, 0));
+	m_gfxdecode->set_gfx(gfx_index, std::make_unique<gfx_element>(*m_pcgpalette, x68k_pcg_8, memregion("user1")->base(), 0, 32, 0));
 
 	gfx_index++;
 
-	m_gfxdecode->set_gfx(gfx_index, std::make_unique<gfx_element>(m_pcgpalette, x68k_pcg_16, memregion("user1")->base(), 0, 32, 0));
+	m_gfxdecode->set_gfx(gfx_index, std::make_unique<gfx_element>(*m_pcgpalette, x68k_pcg_16, memregion("user1")->base(), 0, 32, 0));
 	m_gfxdecode->gfx(gfx_index)->set_colors(32);
 
 	/* Tilemaps */
-	m_bg0_8 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg0_tile),this),TILEMAP_SCAN_ROWS,8,8,64,64);
-	m_bg1_8 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg1_tile),this),TILEMAP_SCAN_ROWS,8,8,64,64);
-	m_bg0_16 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg0_tile_16),this),TILEMAP_SCAN_ROWS,16,16,64,64);
-	m_bg1_16 = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg1_tile_16),this),TILEMAP_SCAN_ROWS,16,16,64,64);
+	m_bg0_8 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg0_tile),this),TILEMAP_SCAN_ROWS,8,8,64,64);
+	m_bg1_8 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg1_tile),this),TILEMAP_SCAN_ROWS,8,8,64,64);
+	m_bg0_16 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg0_tile_16),this),TILEMAP_SCAN_ROWS,16,16,64,64);
+	m_bg1_16 = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(x68k_state::x68k_get_bg1_tile_16),this),TILEMAP_SCAN_ROWS,16,16,64,64);
 
 	m_bg0_8->set_transparent_pen(0);
 	m_bg1_8->set_transparent_pen(0);

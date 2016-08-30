@@ -505,7 +505,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( einstein2_io, AS_IO, 8, einstein_state )
 	AM_IMPORT_FROM(einstein_io)
-	AM_RANGE(0x40, 0x47) AM_MIRROR(0xff00) AM_MASK(0xffff) AM_READWRITE(einstein_80col_ram_r, einstein_80col_ram_w)
+	AM_RANGE(0x40, 0x47) AM_SELECT(0xff00) AM_READWRITE(einstein_80col_ram_r, einstein_80col_ram_w)
 	AM_RANGE(0x48, 0x48) AM_MIRROR(0xff00) AM_DEVWRITE("crtc", mc6845_device, address_w)
 	AM_RANGE(0x49, 0x49) AM_MIRROR(0xff00) AM_DEVWRITE("crtc", mc6845_device, register_w)
 	AM_RANGE(0x4c, 0x4c) AM_MIRROR(0xff00) AM_READ(einstein_80col_state_r)
@@ -686,7 +686,7 @@ static MACHINE_CONFIG_START( einstein, einstein_state )
 	MCFG_CPU_ADD(IC_I001, Z80, XTAL_X002 / 2)
 	MCFG_CPU_PROGRAM_MAP(einstein_mem)
 	MCFG_CPU_IO_MAP(einstein_io)
-	MCFG_CPU_CONFIG(einstein_daisy_chain)
+	MCFG_Z80_DAISY_CHAIN(einstein_daisy_chain)
 
 	/* this is actually clocked at the system clock 4 MHz, but this would be too fast for our
 	driver. So we update at 50Hz and hope this is good enough. */

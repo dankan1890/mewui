@@ -118,10 +118,16 @@ public:
 	multigam_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
-		m_ppu(*this, "ppu") { }
+		m_ppu(*this, "ppu"),
+		m_p1(*this, "P1"),
+		m_p2(*this, "P2"),
+		m_dsw(*this, "DSW") { }
 
 	required_device<cpu_device> m_maincpu;
 	required_device<ppu2c0x_device> m_ppu;
+	required_ioport m_p1;
+	required_ioport m_p2;
+	optional_ioport m_dsw;
 
 	std::unique_ptr<UINT8[]> m_nt_ram;
 	std::unique_ptr<UINT8[]> m_vram;
@@ -313,11 +319,11 @@ WRITE8_MEMBER(multigam_state::multigam_IN0_w)
 	m_in_0_shift = 0;
 	m_in_1_shift = 0;
 
-	m_in_0 = ioport("P1")->read();
-	m_in_1 = ioport("P2")->read();
+	m_in_0 = m_p1->read();
+	m_in_1 = m_p2->read();
 
 	m_in_dsw_shift = 0;
-	m_in_dsw = read_safe(ioport("DSW"), 0);
+	m_in_dsw = m_dsw.read_safe(0);
 }
 
 READ8_MEMBER(multigam_state::multigam_IN1_r)
@@ -1011,7 +1017,7 @@ static INPUT_PORTS_START( multigam_common )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 
 	PORT_START("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, multigam_state,multigam_inputs_r, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, multigam_state,multigam_inputs_r, nullptr)
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 INPUT_PORTS_END
 

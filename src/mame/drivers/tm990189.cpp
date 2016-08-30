@@ -176,17 +176,17 @@ MACHINE_RESET_MEMBER(tm990189_state,tm990_189)
 
 MACHINE_START_MEMBER(tm990189_state,tm990_189)
 {
-	m_displayena_timer = machine().scheduler().timer_alloc(FUNC_NULL);
+	m_displayena_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
 }
 
 MACHINE_START_MEMBER(tm990189_state,tm990_189_v)
 {
-	m_displayena_timer = machine().scheduler().timer_alloc(FUNC_NULL);
+	m_displayena_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
 
-	m_joy1x_timer = machine().scheduler().timer_alloc(FUNC_NULL);
-	m_joy1y_timer = machine().scheduler().timer_alloc(FUNC_NULL);
-	m_joy2x_timer = machine().scheduler().timer_alloc(FUNC_NULL);
-	m_joy2y_timer = machine().scheduler().timer_alloc(FUNC_NULL);
+	m_joy1x_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
+	m_joy1y_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
+	m_joy2x_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
+	m_joy2y_timer = machine().scheduler().timer_alloc(timer_expired_delegate());
 }
 
 MACHINE_RESET_MEMBER(tm990189_state,tm990_189_v)
@@ -439,13 +439,11 @@ public:
 	virtual bool is_creatable() const override { return 1; }
 	virtual bool must_be_loaded() const override { return 0; }
 	virtual bool is_reset_on_load() const override { return 0; }
-	virtual const char *image_interface() const override { return nullptr; }
 	virtual const char *file_extensions() const override { return ""; }
-	virtual const option_guide *create_option_guide() const override { return nullptr; }
 
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 
-	virtual bool call_load() override;
+	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
 protected:
 	// device-level overrides
@@ -482,14 +480,14 @@ void tm990_189_rs232_image_device::device_timer(emu_timer &timer, device_timer_i
 	}
 }
 
-bool tm990_189_rs232_image_device::call_load()
+image_init_result tm990_189_rs232_image_device::call_load()
 {
 	tm990189_state *state = machine().driver_data<tm990189_state>();
 	tms9902_device* tms9902 = static_cast<tms9902_device*>(machine().device("tms9902"));
 	tms9902->rcv_dsr(ASSERT_LINE);
 	state->m_rs232_input_timer = timer_alloc();
 	state->m_rs232_input_timer->adjust(attotime::zero, 0, attotime::from_msec(10));
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -631,7 +629,7 @@ static const tms9901_interface usr9901reset_param =
     TMS9901_INT1 | TMS9901_INT2 | TMS9901_INT3 | TMS9901_INT4 | TMS9901_INT5 | TMS9901_INT6,    // only input pins whose state is always known
 
     // Read handler. Covers all input lines (see tms9901.h)
-    DEVCB_NULL,
+    DEVCB_NOOP,
 
     // write handlers
     {
@@ -639,18 +637,18 @@ static const tms9901_interface usr9901reset_param =
         DEVCB_DRIVER_LINE_MEMBER(tm990189_state, usr9901_led1_w),
         DEVCB_DRIVER_LINE_MEMBER(tm990189_state, usr9901_led2_w),
         DEVCB_DRIVER_LINE_MEMBER(tm990189_state, usr9901_led3_w),
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL,
-        DEVCB_NULL
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP,
+        DEVCB_NOOP
     },
 
     // interrupt handler

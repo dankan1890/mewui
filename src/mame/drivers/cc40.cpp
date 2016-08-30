@@ -92,7 +92,7 @@ public:
 		m_maincpu(*this, "maincpu"),
 		m_dac(*this, "dac"),
 		m_cart(*this, "cartslot"),
-		m_key_matrix(*this, "IN"),
+		m_key_matrix(*this, "IN.%u", 0),
 		m_battery_inp(*this, "BATTERY")
 	{
 		m_sysram[0] = nullptr;
@@ -145,6 +145,7 @@ public:
 	DECLARE_PALETTE_INIT(cc40);
 	DECLARE_INPUT_CHANGED_MEMBER(sysram_size_changed);
 	DECLARE_DEVICE_IMAGE_LOAD_MEMBER(cc40_cartridge);
+	HD44780_PIXEL_UPDATE(cc40_pixel_update);
 };
 
 
@@ -163,13 +164,13 @@ DEVICE_IMAGE_LOAD_MEMBER(cc40_state, cc40_cartridge)
 	if (size > 0x20000)
 	{
 		image.seterror(IMAGE_ERROR_UNSPECIFIED, "Invalid file size");
-		return IMAGE_INIT_FAIL;
+		return image_init_result::FAIL;
 	}
 
 	m_cart->rom_alloc(0x20000, GENERIC_ROM8_WIDTH, ENDIANNESS_LITTLE);  // allocate a larger ROM region to have 4x32K banks
 	m_cart->common_load_rom(m_cart->get_rom_base(), size, "rom");
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -198,7 +199,7 @@ void cc40_state::update_lcd_indicator(UINT8 y, UINT8 x, int state)
 	output().set_lamp_value(y * 10 + x, state);
 }
 
-static HD44780_PIXEL_UPDATE(cc40_pixel_update)
+HD44780_PIXEL_UPDATE(cc40_state::cc40_pixel_update)
 {
 	// char size is 5x7 + cursor
 	if (x > 4 || y > 7)
@@ -207,8 +208,7 @@ static HD44780_PIXEL_UPDATE(cc40_pixel_update)
 	if (line == 1 && pos == 15)
 	{
 		// the last char is used to control the 18 lcd indicators
-		cc40_state *driver_state = device.machine().driver_data<cc40_state>();
-		driver_state->update_lcd_indicator(y, x, state);
+		update_lcd_indicator(y, x, state);
 	}
 	else if (line < 2 && pos < 16)
 	{
@@ -606,7 +606,7 @@ static MACHINE_CONFIG_START( cc40, cc40_state )
 
 	MCFG_HD44780_ADD("hd44780")
 	MCFG_HD44780_LCD_SIZE(2, 16) // 2*16 internal
-	MCFG_HD44780_PIXEL_UPDATE_CB(cc40_pixel_update)
+	MCFG_HD44780_PIXEL_UPDATE_CB(cc40_state, cc40_pixel_update)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")

@@ -169,7 +169,6 @@ public:
 	bool is_changed(const char *name) const;
 
 	// setting
-	void set_command(const char *command);
 	bool set_value(const char *name, const char *value, int priority, std::string &error_string);
 	bool set_value(const char *name, int value, int priority, std::string &error_string);
 	bool set_value(const char *name, float value, int priority, std::string &error_string);
@@ -177,7 +176,7 @@ public:
 	void mark_changed(const char *name);
 
 	// misc
-	static const char *unadorned(int x = 0) { return s_option_unadorned[MIN(x, MAX_UNADORNED_OPTIONS)]; }
+	static const char *unadorned(int x = 0) { return s_option_unadorned[std::min(x, MAX_UNADORNED_OPTIONS)]; }
 	int options_count() const { return m_entrylist.count(); }
 
 private:

@@ -167,7 +167,7 @@ WRITE8_MEMBER(ecoinfr_state::ec_port00_out_w)
 
 	m_reel0->update(data&0x0f);
 
-	awp_draw_reel(machine(),"reel1", m_reel0);
+	awp_draw_reel(machine(),"reel1", *m_reel0);
 }
 
 WRITE8_MEMBER(ecoinfr_state::ec_port01_out_w)
@@ -179,7 +179,7 @@ WRITE8_MEMBER(ecoinfr_state::ec_port01_out_w)
 
 	m_reel1->update(data&0x0f);
 
-	awp_draw_reel(machine(),"reel2", m_reel1);
+	awp_draw_reel(machine(),"reel2", *m_reel1);
 }
 
 WRITE8_MEMBER(ecoinfr_state::ec_port02_out_w)
@@ -191,7 +191,7 @@ WRITE8_MEMBER(ecoinfr_state::ec_port02_out_w)
 
 	m_reel2->update(data&0x0f);
 
-	awp_draw_reel(machine(),"reel3", m_reel2);
+	awp_draw_reel(machine(),"reel3", *m_reel2);
 }
 
 
@@ -558,12 +558,12 @@ static INPUT_PORTS_START( ecoinfr_barx )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel1_opto_r, NULL)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel1_opto_r, nullptr)
 	PORT_DIPNAME( 0x02, 0x02, "IN1:02" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel3_opto_r, NULL)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel2_opto_r, NULL)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel3_opto_r, nullptr)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM_MEMBER(DEVICE_SELF, ecoinfr_state,ecoinfr_reel2_opto_r, nullptr)
 	PORT_DIPNAME( 0x10, 0x10, "IN1:10" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )

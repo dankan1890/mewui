@@ -16,10 +16,6 @@
   * Super 8 Ways FC (DB98103-011, Fruit combination),                   1989, Sigma.
 
 
-  The HD63484 ACRTC support is a bit hacky and incomplete,
-  due to its preliminary emulation state.
-
-
 *******************************************************************************
 
   Hardware Notes:
@@ -131,9 +127,10 @@
 #include "cpu/m6809/m6809.h"
 #include "machine/6840ptm.h"
 #include "machine/6850acia.h"
+#include "machine/gen_latch.h"
 #include "machine/nvram.h"
 #include "sound/3812intf.h"
-#include "video/h63484.h"
+#include "video/hd63484.h"
 
 #include "sigmab52.lh"
 
@@ -320,8 +317,8 @@ static ADDRESS_MAP_START( jwildb52_map, AS_PROGRAM, 8, sigmab52_state )
 
 	AM_RANGE(0xf720, 0xf727) AM_DEVREADWRITE("6840ptm_1", ptm6840_device, read, write)
 
-	AM_RANGE(0xf730, 0xf730) AM_DEVREADWRITE("hd63484", h63484_device, status_r, address_w)
-	AM_RANGE(0xf731, 0xf731) AM_DEVREADWRITE("hd63484", h63484_device, data_r, data_w)
+	AM_RANGE(0xf730, 0xf730) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w)
+	AM_RANGE(0xf731, 0xf731) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w)
 
 	AM_RANGE(0xf740, 0xf740) AM_READ(in0_r)
 	AM_RANGE(0xf741, 0xf741) AM_READ_PORT("IN1")
@@ -338,7 +335,7 @@ static ADDRESS_MAP_START( jwildb52_map, AS_PROGRAM, 8, sigmab52_state )
 //  AM_RANGE(0xf770, 0xf77f)  Bill validator
 
 	AM_RANGE(0xf780, 0xf780) AM_WRITE(audiocpu_cmd_irq_w)
-	AM_RANGE(0xf790, 0xf790) AM_WRITE(soundlatch_byte_w)
+	AM_RANGE(0xf790, 0xf790) AM_DEVWRITE("soundlatch", generic_latch_8_device, write)
 
 	AM_RANGE(0xf7b0, 0xf7b0) AM_WRITE(coin_enable_w)
 	AM_RANGE(0xf7d5, 0xf7d5) AM_WRITE(hopper_w)
@@ -364,7 +361,7 @@ static ADDRESS_MAP_START( sound_prog_map, AS_PROGRAM, 8, sigmab52_state )
 	AM_RANGE(0x0000, 0x1fff) AM_RAM
 	AM_RANGE(0x6020, 0x6027) AM_DEVREADWRITE("6840ptm_2", ptm6840_device, read, write)
 	AM_RANGE(0x6030, 0x6030) AM_WRITE(audiocpu_irq_ack_w)
-	AM_RANGE(0x6050, 0x6050) AM_READ(soundlatch_byte_r)
+	AM_RANGE(0x6050, 0x6050) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
 	AM_RANGE(0x6060, 0x6061) AM_DEVREADWRITE("ymsnd", ym3812_device, read, write)
 	AM_RANGE(0x8000, 0xffff) AM_ROM AM_REGION("audiocpu", 0)
 ADDRESS_MAP_END
@@ -451,7 +448,7 @@ static INPUT_PORTS_START( jwildb52 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_CODE(KEYCODE_7_PAD)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("V Door")
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_CODE(KEYCODE_8_PAD)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_CHANGED_MEMBER(DEVICE_SELF, sigmab52_state, coin_drop_start, NULL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_CHANGED_MEMBER(DEVICE_SELF, sigmab52_state, coin_drop_start, nullptr)
 
 	PORT_START("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, "DSW1-1" )        PORT_DIPLOCATION("SW1:1")
@@ -600,15 +597,18 @@ static MACHINE_CONFIG_START( jwildb52, sigmab52_state )
 	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
 	MCFG_SCREEN_SIZE(1024, 1024)
 	MCFG_SCREEN_VISIBLE_AREA(0, 544-1, 0, 436-1)
-	MCFG_SCREEN_UPDATE_DEVICE("hd63484", h63484_device, update_screen)
+	MCFG_SCREEN_UPDATE_DEVICE("hd63484", hd63484_device, update_screen)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_H63484_ADD("hd63484", SEC_CLOCK, jwildb52_hd63484_map)
+	MCFG_HD63484_ADD("hd63484", SEC_CLOCK, jwildb52_hd63484_map)
 
 	MCFG_PALETTE_ADD("palette", 16)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
+
+	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+
 	MCFG_SOUND_ADD("ymsnd", YM3812, AUX_CLOCK)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 

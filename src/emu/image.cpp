@@ -2,12 +2,13 @@
 // copyright-holders:Nathan Woods, Miodrag Milanovic
 /***************************************************************************
 
-    image.c
+    image.cpp
 
     Core image functions and definitions.
 
 
 ***************************************************************************/
+
 #include <ctype.h>
 
 #include "emu.h"
@@ -15,6 +16,8 @@
 #include "image.h"
 #include "config.h"
 #include "xmlfile.h"
+#include "softlist.h"
+
 
 //**************************************************************************
 //  IMAGE MANAGER
@@ -27,36 +30,43 @@
 image_manager::image_manager(running_machine &machine)
 	: m_machine(machine)
 {
-	const char *image_name;
-
-	/* make sure that any required devices have been allocated */
-	image_interface_iterator iter(machine.root_device());
-	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+	// make sure that any required devices have been allocated
+	for (device_image_interface &image : image_interface_iterator(machine.root_device()))
 	{
-		/* is an image specified for this image */
-		image_name = machine.options().value(image->instance_name());
+		// ignore things not user loadable
+		if (!image.user_loadable())
+			continue;
 
-		if ((image_name != nullptr) && (image_name[0] != '\0'))
+		// is an image specified for this image
+		const char *image_name_ptr = machine.options().value(image.instance_name());
+		if ((image_name_ptr != nullptr) && (image_name_ptr[0] != '\0'))
 		{
-			/* mark init state */
-			image->set_init_phase();
+			image_init_result result = image_init_result::FAIL;
+			std::string image_name(image_name_ptr);
 
-			/* try to load this image */
-			bool result = image->load(image_name);
+			// mark init state
+			image.set_init_phase();
 
-			/* did the image load fail? */
-			if (result)
+			// try as a softlist
+			if (software_name_parse(image_name))
+				result = image.load_software(image_name);
+
+			// failing that, try as an image
+			if (result != image_init_result::PASS)
+				result = image.load(image_name);
+
+			// did the image load fail?
+			if (result != image_init_result::PASS)
 			{
-				/* retrieve image error message */
-				std::string image_err = std::string(image->error());
-				std::string image_basename(image_name);
+				// retrieve image error message
+				std::string image_err = std::string(image.error());
 
-				/* unload all images */
+				// unload all images
 				unload_all();
 
-				fatalerror_exitcode(machine, MAMERR_DEVICE, "Device %s load (%s) failed: %s",
-					image->device().name(),
-					image_basename.c_str(),
+				fatalerror_exitcode(machine, EMU_ERR_DEVICE, "Device %s load (%s) failed: %s",
+					image.device().name(),
+					image_name.c_str(),
 					image_err.c_str());
 			}
 		}
@@ -74,11 +84,10 @@ void image_manager::unload_all()
 	// extract the options
 	options_extract();
 
-	image_interface_iterator iter(machine().root_device());
-	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+	for (device_image_interface &image : image_interface_iterator(machine().root_device()))
 	{
 		// unload this image
-		image->unload();
+		image.unload();
 	}
 }
 
@@ -96,13 +105,12 @@ void image_manager::config_load(config_type cfg_type, xml_data_node *parentnode)
 
 			if ((dev_instance != nullptr) && (dev_instance[0] != '\0'))
 			{
-				image_interface_iterator iter(machine().root_device());
-				for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+				for (device_image_interface &image : image_interface_iterator(machine().root_device()))
 				{
-					if (!strcmp(dev_instance, image->instance_name())) {
+					if (!strcmp(dev_instance, image.instance_name())) {
 						working_directory = xml_get_attribute_string(node, "directory", nullptr);
 						if (working_directory != nullptr)
-							image->set_working_directory(working_directory);
+							image.set_working_directory(working_directory);
 					}
 				}
 			}
@@ -123,16 +131,15 @@ void image_manager::config_save(config_type cfg_type, xml_data_node *parentnode)
 	/* only care about game-specific data */
 	if (cfg_type == config_type::CONFIG_TYPE_GAME)
 	{
-		image_interface_iterator iter(machine().root_device());
-		for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+		for (device_image_interface &image : image_interface_iterator(machine().root_device()))
 		{
-			dev_instance = image->instance_name();
+			dev_instance = image.instance_name();
 
 			node = xml_add_child(parentnode, "device", nullptr);
 			if (node != nullptr)
 			{
 				xml_set_attribute(node, "instance", dev_instance);
-				xml_set_attribute(node, "directory", image->working_directory());
+				xml_set_attribute(node, "directory", image.working_directory().c_str());
 			}
 		}
 	}
@@ -177,14 +184,13 @@ void image_manager::options_extract()
 	{
 		int index = 0;
 
-		image_interface_iterator iter(machine().root_device());
-		for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+		for (device_image_interface &image : image_interface_iterator(machine().root_device()))
 		{
-			const char *filename = image->filename();
+			const char *filename = image.filename();
 
 			/* and set the option */
 			std::string error;
-			machine().options().set_value(image->instance_name(), filename ? filename : "", OPTION_PRIORITY_CMDLINE, error);
+			machine().options().set_value(image.instance_name(), filename ? filename : "", OPTION_PRIORITY_CMDLINE, error);
 
 			index++;
 		}
@@ -197,24 +203,6 @@ void image_manager::options_extract()
 
 
 /*-------------------------------------------------
- image_mandatory_scan - search for devices which
- need an image to be loaded
- -------------------------------------------------*/
-
-std::string &image_manager::mandatory_scan(std::string &mandatory)
-{
-	mandatory.clear();
-	// make sure that any required image has a mounted file
-	image_interface_iterator iter(machine().root_device());
-	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
-	{
-		if (image->filename() == nullptr && image->must_be_loaded())
-			mandatory.append("\"").append(image->instance_name()).append("\", ");
-	}
-	return mandatory;
-}
-
-/*-------------------------------------------------
     postdevice_init - initialize devices for a specific
     running_machine
 -------------------------------------------------*/
@@ -222,23 +210,23 @@ std::string &image_manager::mandatory_scan(std::string &mandatory)
 void image_manager::postdevice_init()
 {
 	/* make sure that any required devices have been allocated */
-	image_interface_iterator iter(machine().root_device());
-	for (device_image_interface *image = iter.first(); image != nullptr; image = iter.next())
+	for (device_image_interface &image : image_interface_iterator(machine().root_device()))
 	{
-			int result = image->finish_load();
-			/* did the image load fail? */
-			if (result)
-			{
-				/* retrieve image error message */
-				std::string image_err = std::string(image->error());
+		image_init_result result = image.finish_load();
 
-				/* unload all images */
-				unload_all();
+		/* did the image load fail? */
+		if (result != image_init_result::PASS)
+		{
+			/* retrieve image error message */
+			std::string image_err = std::string(image.error());
 
-				fatalerror_exitcode(machine(), MAMERR_DEVICE, "Device %s load failed: %s",
-					image->device().name(),
-					image_err.c_str());
-			}
+			/* unload all images */
+			unload_all();
+
+			fatalerror_exitcode(machine(), EMU_ERR_DEVICE, "Device %s load failed: %s",
+				image.device().name(),
+				image_err.c_str());
+		}
 	}
 	/* add a callback for when we shut down */
 	machine().add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(image_manager::unload_all), this));

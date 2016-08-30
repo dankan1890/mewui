@@ -98,7 +98,7 @@ void cheekyms_state::video_start()
 	height = m_screen->height();
 	m_bitmap_buffer = std::make_unique<bitmap_ind16>(width, height);
 
-	m_cm_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(cheekyms_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
+	m_cm_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(cheekyms_state::get_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 	m_cm_tilemap->set_transparent_pen(0);
 }
 
@@ -123,19 +123,19 @@ void cheekyms_state::draw_sprites( bitmap_ind16 &bitmap, const rectangle &clipre
 			if (!flip)
 				code++;
 
-				gfx->transpen(bitmap,cliprect, code, color, 0, 0, x, y, 0);
+			gfx->transpen(bitmap,cliprect, code, color, 0, 0, x, y, 0);
 		}
 		else
 		{
 			if (m_spriteram[offs + 0] & 0x02)
 			{
-					gfx->transpen(bitmap,cliprect, code | 0x20, color, 0, 0,        x, y, 0);
-					gfx->transpen(bitmap,cliprect, code | 0x21, color, 0, 0, 0x10 + x, y, 0);
+				gfx->transpen(bitmap,cliprect, code | 0x20, color, 0, 0,        x, y, 0);
+				gfx->transpen(bitmap,cliprect, code | 0x21, color, 0, 0, 0x10 + x, y, 0);
 			}
 			else
 			{
-					gfx->transpen(bitmap,cliprect, code | 0x20, color, 0, 0, x,        y, 0);
-					gfx->transpen(bitmap,cliprect, code | 0x21, color, 0, 0, x, 0x10 + y, 0);
+				gfx->transpen(bitmap,cliprect, code | 0x20, color, 0, 0, x,        y, 0);
+				gfx->transpen(bitmap,cliprect, code | 0x21, color, 0, 0, x, 0x10 + y, 0);
 			}
 		}
 	}

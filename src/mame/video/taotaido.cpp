@@ -49,7 +49,7 @@ WRITE16_MEMBER(taotaido_state::tileregs_w)
 				m_video_bank_select[(offset-4)*2] = data >> 8;
 			if(ACCESSING_BITS_0_7)
 				m_video_bank_select[(offset-4)*2+1] = data &0xff;
-				m_bg_tilemap->mark_all_dirty();
+			m_bg_tilemap->mark_all_dirty();
 			break;
 	}
 }
@@ -98,7 +98,7 @@ UINT32 taotaido_state::tile_callback( UINT32 code )
 
 void taotaido_state::video_start()
 {
-	m_bg_tilemap = &machine().tilemap().create(m_gfxdecode, tilemap_get_info_delegate(FUNC(taotaido_state::bg_tile_info),this),tilemap_mapper_delegate(FUNC(taotaido_state::tilemap_scan_rows),this),16,16,128,64);
+	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(taotaido_state::bg_tile_info),this),tilemap_mapper_delegate(FUNC(taotaido_state::tilemap_scan_rows),this),16,16,128,64);
 
 	m_spriteram_old = std::make_unique<UINT16[]>(0x2000/2);
 	m_spriteram_older = std::make_unique<UINT16[]>(0x2000/2);

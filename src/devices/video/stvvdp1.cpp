@@ -16,7 +16,7 @@ Framebuffer todo:
 
 
 #include "emu.h"
-#include "includes/stv.h"
+#include "includes/saturn.h"
 
 #define VDP1_LOG 0
 
@@ -1669,8 +1669,6 @@ void saturn_state::stv_vdp1_draw_scaled_sprite(const rectangle &cliprect)
 
 void saturn_state::stv_vdp1_draw_normal_sprite(const rectangle &cliprect, int sprite_type)
 {
-	//UINT16 *destline;
-	//saturn_state *state = machine.driver_data<saturn_state>();
 	int y, ysize, drawypos;
 	int x, xsize, drawxpos;
 	int direction;
@@ -1734,8 +1732,8 @@ void saturn_state::stv_vdp1_draw_normal_sprite(const rectangle &cliprect, int sp
 		xsize -= (cliprect.min_x - x);
 		x = cliprect.min_x;
 	}
-	maxdrawypos = MIN(y+ysize-1,cliprect.max_y);
-	maxdrawxpos = MIN(x+xsize-1,cliprect.max_x);
+	maxdrawypos = std::min(y+ysize-1,cliprect.max_y);
+	maxdrawxpos = std::min(x+xsize-1,cliprect.max_x);
 	for (drawypos = y; drawypos <= maxdrawypos; drawypos++ )
 	{
 		//destline = m_vdp1.framebuffer_draw_lines[drawypos];

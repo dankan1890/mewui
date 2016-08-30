@@ -806,7 +806,7 @@ void nes_cart_slot_device::pcb_reset()
  -------------------------------------------------*/
 
 /* Include emulation of NES PCBs for softlist */
-#include "nes_pcb.inc"
+#include "nes_pcb.hxx"
 
 
 /*-------------------------------------------------
@@ -816,7 +816,7 @@ void nes_cart_slot_device::pcb_reset()
  -------------------------------------------------*/
 
 /* Include emulation of UNIF Boards for .unf files */
-#include "nes_unif.inc"
+#include "nes_unif.hxx"
 
 
 /*-------------------------------------------------
@@ -826,10 +826,10 @@ void nes_cart_slot_device::pcb_reset()
  -------------------------------------------------*/
 
 /* Include emulation of iNES Mappers for .nes files */
-#include "nes_ines.inc"
+#include "nes_ines.hxx"
 
 
-bool nes_cart_slot_device::call_load()
+image_init_result nes_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
@@ -846,7 +846,7 @@ bool nes_cart_slot_device::call_load()
 				if (length() <= 0x10)
 				{
 					logerror("%s only contains the iNES header and no data.\n", filename());
-					return IMAGE_INIT_FAIL;
+					return image_init_result::FAIL;
 				}
 
 				call_load_ines();
@@ -856,7 +856,7 @@ bool nes_cart_slot_device::call_load()
 				if (length() <= 0x20)
 				{
 					logerror("%s only contains the UNIF header and no data.\n", filename());
-					return IMAGE_INIT_FAIL;
+					return image_init_result::FAIL;
 				}
 
 				call_load_unif();
@@ -864,14 +864,14 @@ bool nes_cart_slot_device::call_load()
 			else
 			{
 				logerror("%s is NOT a file in either iNES or UNIF format.\n", filename());
-				return IMAGE_INIT_FAIL;
+				return image_init_result::FAIL;
 			}
 		}
 		else
 			call_load_pcb();
 	}
 
-	return IMAGE_INIT_PASS;
+	return image_init_result::PASS;
 }
 
 
@@ -897,16 +897,6 @@ void nes_cart_slot_device::call_unload()
 	}
 }
 
-
-/*-------------------------------------------------
- call softlist load
- -------------------------------------------------*/
-
-bool nes_cart_slot_device::call_softlist_load(software_list_device &swlist, const char *swname, const rom_entry *start_entry)
-{
-	machine().rom_load().load_software_part_region(*this, swlist, swname, start_entry);
-	return TRUE;
-}
 
 /*-------------------------------------------------
  get default card software
@@ -1044,7 +1034,7 @@ WRITE8_MEMBER(nes_cart_slot_device::write_ex)
 //  device_image_partialhash_func
 //-------------------------------------------------
 
-void nes_partialhash(hash_collection &dest, const unsigned char *data,
+void nes_partialhash(util::hash_collection &dest, const unsigned char *data,
 						unsigned long length, const char *functions)
 {
 	if (length <= 16)

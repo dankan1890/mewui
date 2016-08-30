@@ -517,12 +517,12 @@ WRITE16_MEMBER(wgp_state::rotate_port_w)
 READ16_MEMBER(wgp_state::wgp_adinput_r)
 {
 	int steer = 0x40;
-	int fake = m_fake ? m_fake->read() : 0;
+	int fake = m_fake.read_safe(0);
 
 	if (!(fake & 0x10)) /* Analogue steer (the real control method) */
 	{
 		/* Reduce span to 0x80 */
-		steer = ((m_steer ? m_steer->read() : 0) * 0x80) / 0x100;
+		steer = (m_steer.read_safe(0) * 0x80) / 0x100;
 	}
 	else    /* Digital steer */
 	{
@@ -567,7 +567,7 @@ READ16_MEMBER(wgp_state::wgp_adinput_r)
 		}
 
 		case 0x05:
-			return m_unknown ? m_unknown->read() : 0;   /* unknown */
+			return m_unknown.read_safe(0);   /* unknown */
 	}
 
 logerror("CPU #0 PC %06x: warning - read unmapped a/d input offset %06x\n",space.device().safe_pc(),offset);
@@ -866,17 +866,6 @@ static GFXDECODE_START( wgp )
 GFXDECODE_END
 
 
-/**************************************************************
-                           YM2610 (SOUND)
-**************************************************************/
-
-/* handler called by the YM2610 emulator when the internal timers cause an IRQ */
-WRITE_LINE_MEMBER(wgp_state::irqhandler) // assumes Z80 sandwiched between 68Ks
-{
-	m_audiocpu->set_input_line(0, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-
 /***********************************************************
                       MACHINE DRIVERS
 
@@ -964,7 +953,7 @@ static MACHINE_CONFIG_START( wgp, wgp_state )
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 
 	MCFG_SOUND_ADD("ymsnd", YM2610, 16000000/2)
-	MCFG_YM2610_IRQ_HANDLER(WRITELINE(wgp_state, irqhandler))
+	MCFG_YM2610_IRQ_HANDLER(INPUTLINE("audiocpu", 0)) // assumes Z80 sandwiched between 68Ks
 	MCFG_SOUND_ROUTE(0, "lspeaker",  0.25)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 0.25)
 	MCFG_SOUND_ROUTE(1, "lspeaker",  1.0)

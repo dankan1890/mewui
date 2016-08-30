@@ -7,6 +7,7 @@
 *************************************************************************/
 #include "sound/okim6295.h"
 #include "machine/eepromser.h"
+#include "machine/gen_latch.h"
 
 struct lordgun_gun_data
 {
@@ -26,13 +27,15 @@ public:
 		m_gfxdecode(*this, "gfxdecode"),
 		m_screen(*this, "screen"),
 		m_palette(*this, "palette"),
+		m_soundlatch(*this, "soundlatch"),
+		m_soundlatch2(*this, "soundlatch2"),
 		m_generic_paletteram_16(*this, "paletteram"),
 		m_priority_ram(*this, "priority_ram"),
 		m_scrollram(*this, "scrollram"),
 		m_spriteram(*this, "spriteram"),
-		m_vram(*this, "vram"),
-		m_scroll_x(*this, "scroll_x"),
-		m_scroll_y(*this, "scroll_y") { }
+		m_vram(*this, "vram.%u", 0),
+		m_scroll_x(*this, "scroll_x.%u", 0),
+		m_scroll_y(*this, "scroll_y.%u", 0) { }
 
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_soundcpu;
@@ -41,6 +44,8 @@ public:
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<screen_device> m_screen;
 	required_device<palette_device> m_palette;
+	required_device<generic_latch_8_device> m_soundlatch;
+	required_device<generic_latch_8_device> m_soundlatch2;
 
 	required_shared_ptr<UINT16> m_generic_paletteram_16;
 	required_shared_ptr<UINT16> m_priority_ram;

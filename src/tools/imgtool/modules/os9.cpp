@@ -275,7 +275,7 @@ static imgtoolerr_t os9_decode_file_header(imgtool_image *image,
 
 	/* read all sector map entries */
 	max_entries = (disk_info->sector_size - 16) / 5;
-	max_entries = MIN(max_entries, ARRAY_LENGTH(info->sector_map) - 1);
+	max_entries = (std::min<std::size_t>)(max_entries, ARRAY_LENGTH(info->sector_map) - 1);
 	for (i = 0; i < max_entries; i++)
 	{
 		lsn = pick_integer_be(header, 16 + (i * 5) + 0, 3);
@@ -461,7 +461,7 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 	/* do we have to write the sector map? */
 	if (sector_map_length >= 0)
 	{
-		for (i = 0; i < MIN(sector_map_length + 1, ARRAY_LENGTH(file_info->sector_map)); i++)
+		for (i = 0; i < (std::min<std::size_t>)(sector_map_length + 1, ARRAY_LENGTH(file_info->sector_map)); i++)
 		{
 			place_integer_be(header, 16 + (i * 5) + 0, 3, file_info->sector_map[i].lsn);
 			place_integer_be(header, 16 + (i * 5) + 3, 2, file_info->sector_map[i].count);
@@ -691,7 +691,7 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image, imgtool_stream *str
 	for (i = 0; i < allocation_bitmap_lsns; i++)
 	{
 		err = os9_read_lsn(image, 1 + i, 0, &info->allocation_bitmap[i * info->sector_size],
-			MIN(info->allocation_bitmap_bytes - (i * info->sector_size), info->sector_size));
+			std::min(info->allocation_bitmap_bytes - (i * info->sector_size), info->sector_size));
 		if (err)
 			return err;
 	}
@@ -710,7 +710,7 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image, imgtool_stream *str
 
 
 
-static imgtoolerr_t os9_diskimage_create(imgtool_image *img, imgtool_stream *stream, option_resolution *opts)
+static imgtoolerr_t os9_diskimage_create(imgtool_image *img, imgtool_stream *stream, util::option_resolution *opts)
 {
 	imgtoolerr_t err;
 	dynamic_buffer header;
@@ -727,11 +727,11 @@ static imgtoolerr_t os9_diskimage_create(imgtool_image *img, imgtool_stream *str
 	time(&t);
 	ltime = localtime(&t);
 
-	heads = option_resolution_lookup_int(opts, 'H');
-	tracks = option_resolution_lookup_int(opts, 'T');
-	sectors = option_resolution_lookup_int(opts, 'S');
-	sector_bytes = option_resolution_lookup_int(opts, 'L');
-	first_sector_id = option_resolution_lookup_int(opts, 'F');
+	heads = opts->lookup_int('H');
+	tracks = opts->lookup_int('T');
+	sectors = opts->lookup_int('S');
+	sector_bytes = opts->lookup_int('L');
+	first_sector_id = opts->lookup_int('F');
 	title = "";
 
 	header.resize(sector_bytes);
@@ -1012,7 +1012,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_partition *partition, const c
 	{
 		for (j = 0; j < file_info.sector_map[i].count; j++)
 		{
-			used_size = MIN(file_size, disk_info->sector_size);
+			used_size = std::min(file_size, disk_info->sector_size);
 			err = os9_read_lsn(img, file_info.sector_map[i].lsn + j, 0,
 				buffer, used_size);
 			if (err)
@@ -1026,7 +1026,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_partition *partition, const c
 
 
 
-static imgtoolerr_t os9_diskimage_writefile(imgtool_partition *partition, const char *path, const char *fork, imgtool_stream *sourcef, option_resolution *opts)
+static imgtoolerr_t os9_diskimage_writefile(imgtool_partition *partition, const char *path, const char *fork, imgtool_stream *sourcef, util::option_resolution *opts)
 {
 	imgtoolerr_t err;
 	imgtool_image *image = imgtool_partition_image(partition);
@@ -1055,7 +1055,7 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_partition *partition, const 
 
 	while(sz > 0)
 	{
-		write_size = (size_t) MIN(sz, (UINT64) disk_info->sector_size);
+		write_size = (std::min<UINT64>)(sz, disk_info->sector_size);
 
 		stream_read(sourcef, &buf[0], write_size);
 

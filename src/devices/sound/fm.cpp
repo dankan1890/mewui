@@ -2288,6 +2288,14 @@ void * ym2203_init(void *param, device_t *device, int clock, int rate,
 	return F2203;
 }
 
+void ym2203_clock_changed(void *chip, int clock, int rate)
+{
+	YM2203 *FM2203 = (YM2203 *)chip;
+
+	FM2203->OPN.ST.clock = clock;
+	FM2203->OPN.ST.rate = rate;
+}
+
 /* shut down emulator */
 void ym2203_shutdown(void *chip)
 {
@@ -3208,8 +3216,8 @@ UINT8 ym2608_read(void *chip,int a)
 		{
 			if(addr == 0x0f)
 			{
-				F2608->device->logerror("YM2608 A/D convertion is accessed but not implemented !\n");
-				ret = 0x80; /* 2's complement PCM data - result from A/D convertion */
+				F2608->device->logerror("YM2608 A/D conversion is accessed but not implemented !\n");
+				ret = 0x80; /* 2's complement PCM data - result from A/D conversion */
 			}
 		}
 		break;

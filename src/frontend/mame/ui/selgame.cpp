@@ -23,8 +23,6 @@
 #include "ui/custmenu.h"
 #include "ui/auditmenu.h"
 
-#include "../info.h"
-
 #include "audit.h"
 #include "drivenum.h"
 #include "emuopts.h"
@@ -519,7 +517,7 @@ void menu_select_game::populate()
 	if (!isfavorite())
 	{
 		// if search is not empty, find approximate matches
-		if (m_search[0] != 0 && !isfavorite())
+		if (m_search[0] != 0)
 			populate_search();
 		else
 		{
@@ -1011,8 +1009,6 @@ void menu_select_game::inkey_special(const event *menu_event)
 
 void menu_select_game::build_list(const char *filter_text, int filter, bool bioscheck, std::vector<const game_driver *> s_drivers)
 {
-	int cx = 0;
-	bool cloneof = false;
 
 	if (s_drivers.empty())
 	{
@@ -1055,10 +1051,11 @@ void menu_select_game::build_list(const char *filter_text, int filter, bool bios
 
 		case FILTER_PARENT:
 		case FILTER_CLONES:
-			cloneof = strcmp(s_driver->parent, "0");
+		{
+			auto cloneof = bool(strcmp(s_driver->parent, "0"));
 			if (cloneof)
 			{
-				cx = driver_list::find(s_driver->parent);
+				auto cx = driver_list::find(s_driver->parent);
 				if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 					cloneof = false;
 			}
@@ -1068,7 +1065,7 @@ void menu_select_game::build_list(const char *filter_text, int filter, bool bios
 			else if (filter == FILTER_PARENT && !cloneof)
 				m_displaylist.push_back(s_driver);
 			break;
-
+		}
 		case FILTER_NOT_WORKING:
 			if (s_driver->flags & MACHINE_NOT_WORKING)
 				m_displaylist.push_back(s_driver);
@@ -1136,6 +1133,7 @@ void menu_select_game::build_list(const char *filter_text, int filter, bool bios
 					m_displaylist.push_back(s_driver);
 			}
 			break;
+		default: break;
 		}
 	}
 }
@@ -1417,11 +1415,10 @@ bool menu_select_game::load_available_machines()
 
 	file.gets(rbuf, MAX_CHAR_INFO);
 	file.gets(rbuf, MAX_CHAR_INFO);
-	int avsize = 0, unavsize = 0;
 	file.gets(rbuf, MAX_CHAR_INFO);
-	avsize = atoi(rbuf);
+	auto avsize = atoi(rbuf);
 	file.gets(rbuf, MAX_CHAR_INFO);
-	unavsize = atoi(rbuf);
+	auto unavsize = atoi(rbuf);
 
 	// load available list
 	for (int x = 0; x < avsize; ++x)
@@ -1551,7 +1548,6 @@ float menu_select_game::draw_left_panel(float x1, float y1, float x2, float y2)
 		x1 += UI_BOX_LR_BORDER;
 		x2 -= UI_BOX_LR_BORDER;
 		y1 += UI_BOX_TB_BORDER;
-		y2 -= UI_BOX_TB_BORDER;
 
 		for (int filter = 0; filter < text_lenght; ++filter)
 		{

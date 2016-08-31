@@ -168,7 +168,7 @@ void menu_custom_filter::populate()
 		item_append(_("Other filter"), main_filters::text[custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
 
 		if (m_added)
-			selected = item.size() - 2;
+			selected = static_cast<int>(item.size()) - 2;
 
 		// add manufacturer subitem
 		if (custfltr::other[x] == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
@@ -204,7 +204,7 @@ void menu_custom_filter::populate()
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
-void menu_custom_filter::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
+void menu_custom_filter::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
 {
 	float width;
 
@@ -455,7 +455,7 @@ void menu_swcustom_filter::populate()
 		item_append(_("Other filter"), sw_filters::text[sw_custfltr::other[x]], arrow_flags, (void *)(FPTR)(OTHER_FILTER + x));
 
 		if (m_added)
-			selected = item.size() - 2;
+			selected = static_cast<int>(item.size()) - 2;
 
 		// add publisher subitem
 		if (sw_custfltr::other[x] == UI_SW_PUBLISHERS && m_filter.publisher.ui.size() > 0)
@@ -519,7 +519,7 @@ void menu_swcustom_filter::populate()
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
-void menu_swcustom_filter::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
+void menu_swcustom_filter::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
 {
 	float width;
 

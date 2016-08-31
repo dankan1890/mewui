@@ -26,6 +26,13 @@ static int CHANGE = 2;
 
 struct folders_entry
 {
+	folders_entry(const char* name, const char* option, int action)
+		: name(name),
+		  option(option),
+		  action(action)
+	{
+	}
+
 	const char *name;
 	const char *option;
 	const int   action;
@@ -175,6 +182,8 @@ void menu_display_actual::handle()
 		case ADD_CHANGE:
 			menu::stack_push<menu_add_change_folder>(ui(), container(), m_ref);
 			break;
+		
+		default: break;
 		}
 }
 
@@ -463,7 +472,7 @@ void menu_add_change_folder::handle()
 void menu_add_change_folder::populate()
 {
 	// open a path
-	const char *volume_name = nullptr;
+	const char *volume_name;
 	file_enumerator path(m_current_path.c_str());
 	const osd::directory::entry *dirent;
 	int folders_count = 0;

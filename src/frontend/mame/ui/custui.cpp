@@ -126,6 +126,7 @@ void menu_custom_ui::handle()
 				}
 				break;
 			}
+			default: break;
 		}
 	}
 
@@ -160,7 +161,7 @@ void menu_custom_ui::populate()
 //  perform our special rendering
 //-------------------------------------------------
 
-void menu_custom_ui::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
+void menu_custom_ui::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
 {
 	float width;
 
@@ -328,6 +329,7 @@ void menu_font_ui::handle()
 				}
 				break;
 #endif
+			default: break;
 		}
 
 	if (changed)
@@ -485,7 +487,7 @@ void menu_colors_ui::handle()
 	if (menu_event != nullptr && menu_event->itemref != nullptr && menu_event->iptkey == IPT_UI_SELECT)
 	{
 		if ((FPTR)menu_event->itemref != MUI_RESTORE)
-			menu::stack_push<menu_rgb_ui>(ui(), container(), &m_color_table[(FPTR)menu_event->itemref].color, item[selected].text);
+			menu::stack_push<menu_rgb_ui>(ui(), container(), &m_color_table[reinterpret_cast<FPTR>(menu_event->itemref)].color, item[selected].text);
 		else
 		{
 			changed = true;
@@ -813,6 +815,8 @@ void menu_rgb_ui::handle()
 				if (menu_event->iptkey == IPT_UI_SELECT)
 					menu::stack_push<menu_palette_sel>(ui(), container(), *m_color);
 				break;
+
+			default: break;
 		}
 	}
 
@@ -969,6 +973,8 @@ void menu_rgb_ui::inkey_special(const event *menu_event)
 			case RGB_BLUE:
 				m_color->set_b(val);
 				break;
+			
+			default: break;
 			}
 
 			m_search[0] = 0;

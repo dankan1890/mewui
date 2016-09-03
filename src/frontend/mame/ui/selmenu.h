@@ -140,10 +140,10 @@ private:
 	}
 
 	void draw_toolbar(float x1, float y1, float x2, float y2);
-	void draw_star(float x0, float y0);
+	void draw_star(float x0, float y0) const;
 	float draw_icon(int linenum, void *selectedref, float x1, float y1);
 
-	void get_title_search(std::string &title, std::string &search);
+	void get_title_search(std::string &title, std::string &search) const;
 
 	// handle keys
 	virtual void handle_keys(UINT32 flags, int &iptkey) override;
@@ -161,8 +161,8 @@ private:
 	// images render
 	void arts_render(float origx1, float origy1, float origx2, float origy2);
 	std::string arts_render_common(float origx1, float origy1, float origx2, float origy2);
-	void arts_render_images(bitmap_argb32 *bitmap, float origx1, float origy1, float origx2, float origy2);
-	void draw_snapx(float origx1, float origy1, float origx2, float origy2);
+	void arts_render_images(bitmap_argb32 *bitmap, float origx1, float origy1, float origx2, float origy2) const;
+	void draw_snapx(float origx1, float origy1, float origx2, float origy2) const;
 
 	// text for main top/bottom panels
 	virtual void make_topbox_text(std::string &line0, std::string &line1, std::string &line2) const = 0;

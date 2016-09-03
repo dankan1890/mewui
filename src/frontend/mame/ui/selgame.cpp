@@ -418,12 +418,12 @@ void menu_select_game::handle()
 		else if (menu_event->iptkey == IPT_UI_AUDIT_FAST && !m_unavailsortedlist.empty())
 		{
 			// handle UI_AUDIT_FAST
-			menu::stack_push<menu_audit>(ui(), container(), m_availsortedlist, m_unavailsortedlist, 1);
+			menu::stack_push<menu_audit>(ui(), container(), m_availsortedlist, m_unavailsortedlist, menu_audit::mode::FAST);
 		}
 		else if (menu_event->iptkey == IPT_UI_AUDIT_ALL)
 		{
 			// handle UI_AUDIT_ALL
-			menu::stack_push<menu_audit>(ui(), container(), m_availsortedlist, m_unavailsortedlist, 2);
+			menu::stack_push<menu_audit>(ui(), container(), m_availsortedlist, m_unavailsortedlist, menu_audit::mode::FULL);
 		}
 		else if (menu_event->iptkey == IPT_SPECIAL)
 		{
@@ -1258,7 +1258,7 @@ void menu_select_game::populate_search()
 //  generate general info
 //-------------------------------------------------
 
-void menu_select_game::general_info(const game_driver *driver, std::string &buffer)
+void menu_select_game::general_info(const game_driver *driver, std::string &buffer) const
 {
 	std::ostringstream str;
 
@@ -1360,7 +1360,7 @@ void menu_select_game::inkey_export()
 //  save drivers infos to file
 //-------------------------------------------------
 
-void menu_select_game::init_sorted_list()
+void menu_select_game::init_sorted_list() const
 {
 	if (!m_sortedlist.empty())
 		return;
@@ -1404,7 +1404,7 @@ bool menu_select_game::load_available_machines()
 	file.gets(rbuf, MAX_CHAR_INFO);
 	file.gets(rbuf, MAX_CHAR_INFO);
 	readbuf = chartrimcarriage(rbuf);
-	std::string a_rev = std::string(UI_VERSION_TAG).append(bare_build_version);
+	auto a_rev = std::string(UI_VERSION_TAG).append(bare_build_version);
 
 	// version not matching ? exit
 	if (a_rev != readbuf)
@@ -1424,16 +1424,14 @@ bool menu_select_game::load_available_machines()
 	for (int x = 0; x < avsize; ++x)
 	{
 		file.gets(rbuf, MAX_CHAR_INFO);
-		int find = atoi(rbuf);
-		m_availsortedlist.push_back(&driver_list::driver(find));
+		m_availsortedlist.push_back(&driver_list::driver(atoi(rbuf)));
 	}
 
 	// load unavailable list
 	for (int x = 0; x < unavsize; ++x)
 	{
 		file.gets(rbuf, MAX_CHAR_INFO);
-		int find = atoi(rbuf);
-		m_unavailsortedlist.push_back(&driver_list::driver(find));
+		m_unavailsortedlist.push_back(&driver_list::driver(atoi(rbuf)));
 	}
 	file.close();
 	return true;
@@ -1443,7 +1441,7 @@ bool menu_select_game::load_available_machines()
 //  load custom filters info from file
 //-------------------------------------------------
 
-void menu_select_game::load_custom_filters()
+void menu_select_game::load_custom_filters() const
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_READ);
@@ -1631,29 +1629,27 @@ float menu_select_game::draw_left_panel(float x1, float y1, float x2, float y2)
 		draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90 ^ ORIENTATION_FLIP_X);
 		return x2 + UI_BOX_LR_BORDER;
 	}
-	else
+
+	float space = x2 - x1;
+	float lr_arrow_width = 0.4f * space * machine().render().ui_aspect();
+	rgb_t fgcolor = UI_TEXT_COLOR;
+
+	// set left-right arrows dimension
+	float ar_x0 = 0.5f * (x2 + x1) - 0.5f * lr_arrow_width;
+	float ar_y0 = 0.5f * (y2 + y1) + 0.1f * space;
+	float ar_x1 = ar_x0 + lr_arrow_width;
+	float ar_y1 = 0.5f * (y2 + y1) + 0.9f * space;
+
+	ui().draw_outlined_box(container(), x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
+
+	if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
 	{
-		float space = x2 - x1;
-		float lr_arrow_width = 0.4f * space * machine().render().ui_aspect();
-		rgb_t fgcolor = UI_TEXT_COLOR;
-
-		// set left-right arrows dimension
-		float ar_x0 = 0.5f * (x2 + x1) - 0.5f * lr_arrow_width;
-		float ar_y0 = 0.5f * (y2 + y1) + 0.1f * space;
-		float ar_x1 = ar_x0 + lr_arrow_width;
-		float ar_y1 = 0.5f * (y2 + y1) + 0.9f * space;
-
-		ui().draw_outlined_box(container(), x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
-
-		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
-		{
-			fgcolor = UI_MOUSEOVER_COLOR;
-			hover = HOVER_LPANEL_ARROW;
-		}
-
-		draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
-		return x2 + UI_BOX_LR_BORDER;
+		fgcolor = UI_MOUSEOVER_COLOR;
+		hover = HOVER_LPANEL_ARROW;
 	}
+
+	draw_arrow(ar_x0, ar_y0, ar_x1, ar_y1, fgcolor, ROT90);
+	return x2 + UI_BOX_LR_BORDER;
 }
 
 //-------------------------------------------------
@@ -1849,11 +1845,11 @@ void menu_select_game::infos_render(float origx1, float origy1, float origx2, fl
 
 			if (!m_item.empty() && ui_globals::curdats_view == UI_COMMAND_LOAD)
 			{
-				for (size_t x = 0; x < m_item.size(); ++x)
+				for (auto & e: m_item)
 				{
 					std::string t_buffer;
-					m_info_buffer.append(m_item[x]).append("\n");
-					mame_machine_manager::instance()->datfile().load_command_info(t_buffer, m_item[x]);
+					m_info_buffer.append(e).append("\n");
+					mame_machine_manager::instance()->datfile().load_command_info(t_buffer, e);
 					if (!t_buffer.empty())
 						m_info_buffer.append(t_buffer).append("\n");
 				}
@@ -1867,7 +1863,8 @@ void menu_select_game::infos_render(float origx1, float origy1, float origx2, fl
 					ui::text_layout::WORD, mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
 			return;
 		}
-		else if (ui_globals::curdats_view != UI_STORY_LOAD && ui_globals::curdats_view != UI_COMMAND_LOAD)
+		
+		if (ui_globals::curdats_view != UI_STORY_LOAD && ui_globals::curdats_view != UI_COMMAND_LOAD)
 			m_total_lines = ui().wrap_text(container(), m_info_buffer.c_str(), origx1, origy1, origx2 - origx1 - (2.0f * gutter_width), xstart, xend, text_size);
 		else
 			m_total_lines = ui().wrap_text(container(), m_info_buffer.c_str(), 0.0f, 0.0f, 1.0f - (2.0f * gutter_width), xstart, xend, text_size);

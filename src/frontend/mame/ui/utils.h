@@ -168,7 +168,7 @@ struct ui_software_info
 	std::string devicetype;
 	bool available = false;
 
-	bool operator==(const ui_software_info& r)
+	bool operator==(const ui_software_info& r) const
 	{
 		if (shortname == r.shortname && longname == r.longname && parentname == r.parentname
 			&& year == r.year && publisher == r.publisher && supported == r.supported

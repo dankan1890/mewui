@@ -58,41 +58,41 @@ bool sorted_game_list(const game_driver *x, const game_driver *y)
 
 	if (!clonex && !cloney)
 		return (cs_stricmp(x->description, y->description) < 0);
-	else if (clonex && cloney)
+	
+	if (clonex && cloney)
 	{
 		if (!cs_stricmp(x->parent, y->parent))
 			return (cs_stricmp(x->description, y->description) < 0);
-		else
-			return (cs_stricmp(driver_list::driver(cx).description, driver_list::driver(cy).description) < 0);
+
+		return (cs_stricmp(driver_list::driver(cx).description, driver_list::driver(cy).description) < 0);
 	}
-	else if (!clonex && cloney)
+	
+	if (!clonex && cloney)
 	{
 		if (!cs_stricmp(x->name, y->parent))
 			return true;
-		else
-			return (cs_stricmp(x->description, driver_list::driver(cy).description) < 0);
+
+		return (cs_stricmp(x->description, driver_list::driver(cy).description) < 0);
 	}
-	else
-	{
-		if (!cs_stricmp(x->parent, y->name))
-			return false;
-		else
-			return (cs_stricmp(driver_list::driver(cx).description, y->description) < 0);
-	}
+
+	if (!cs_stricmp(x->parent, y->name))
+		return false;
+
+	return (cs_stricmp(driver_list::driver(cx).description, y->description) < 0);
 }
 
 //-------------------------------------------------
 //  ctor / dtor
 //-------------------------------------------------
 
-menu_audit::menu_audit(mame_ui_manager &mui, render_container &container, vptr_game &availablesorted, vptr_game &unavailablesorted,  int _audit_mode)
+menu_audit::menu_audit(mame_ui_manager &mui, render_container &container, vptr_game &availablesorted, vptr_game &unavailablesorted,  mode _audit_mode)
 	: menu(mui, container)
 	, m_availablesorted(availablesorted)
 	, m_unavailablesorted(unavailablesorted)
 	, m_audit_mode(_audit_mode)
 	, m_first(true)
 {
-	if (m_audit_mode == 2)
+	if (m_audit_mode == mode::FULL)
 	{
 		m_availablesorted.clear();
 		m_unavailablesorted.clear();
@@ -118,15 +118,15 @@ void menu_audit::handle()
 		return;
 	}
 
-	if (m_audit_mode == 1)
+	if (m_audit_mode == mode::FAST)
 	{
-		vptr_game::iterator iter = m_unavailablesorted.begin();
+		auto iter = m_unavailablesorted.begin();
 		while (iter != m_unavailablesorted.end())
 		{
 			driver_enumerator enumerator(machine().options(), (*iter)->name);
 			enumerator.next();
 			media_auditor auditor(enumerator);
-			media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
+			auto summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
 
 			// if everything looks good, include the driver
 			if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
@@ -144,7 +144,7 @@ void menu_audit::handle()
 		media_auditor auditor(enumerator);
 		while (enumerator.next())
 		{
-			media_auditor::summary summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
+			auto summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
 
 			// if everything looks good, include the driver
 			if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
@@ -168,14 +168,14 @@ void menu_audit::handle()
 
 void menu_audit::populate()
 {
-	item_append("Dummy", "", 0, (void *)(FPTR)1);
+	item_append("Dummy", "", 0, reinterpret_cast<void *>(static_cast<FPTR>(1)));
 }
 
 //-------------------------------------------------
 //  save drivers infos to file
 //-------------------------------------------------
 
-void menu_audit::save_available_machines()
+void menu_audit::save_available_machines() const
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
@@ -188,18 +188,13 @@ void menu_audit::save_available_machines()
 		util::stream_format(buffer, "%d\n", m_unavailablesorted.size());
 
 		// generate available list
-		for (size_t x = 0; x < m_availablesorted.size(); ++x)
-		{
-			int find = driver_list::find(m_availablesorted[x]->name);
-			util::stream_format(buffer, "%d\n", find);
-		}
+		for (auto & e : m_availablesorted)
+			util::stream_format(buffer, "%d\n", driver_list::find(e->name));
 
 		// generate unavailable list
-		for (size_t x = 0; x < m_unavailablesorted.size(); ++x)
-		{
-			int find = driver_list::find(m_unavailablesorted[x]->name);
-			util::stream_format(buffer, "%d\n", find);
-		}
+		for (auto & e : m_unavailablesorted)
+			util::stream_format(buffer, "%d\n", driver_list::find(e->name));
+
 		file.puts(buffer.str().c_str());
 		file.close();
 	}

@@ -98,7 +98,7 @@ private:
 	virtual void populate() override;
 	virtual void handle() override;
 
-	void save_sw_custom_filters();
+	void save_sw_custom_filters() const;
 
 	bool               m_added;
 	s_filter           &m_filter;
@@ -131,7 +131,7 @@ private:
 	virtual void populate() override;
 	virtual void handle() override;
 
-	void save_custom_filters();
+	void save_custom_filters() const;
 
 	bool m_single_menu, m_added;
 };

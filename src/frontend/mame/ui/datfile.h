@@ -13,9 +13,7 @@
 
 #pragma once
 
-#include <cstdio>
 #include <memory>
-#include <string>
 #include <unordered_map>
 
 
@@ -83,15 +81,15 @@ private:
 	void init_story(fileptr &&fp);
 	void init_gameinit(fileptr &&fp);
 
-	fileptr parseopen(char const *filename);
+	fileptr parseopen(char const *filename) const;
 
-	int index_mame_mess_info(fileptr &&fp, dataindex &index, drvindex &index_drv, int &drvcount);
-	int index_datafile(fileptr &&fp, dataindex &index, int &swcount, std::string &rev, std::string const &tag, char sep);
-	void index_menuidx(fileptr &&fp, game_driver const *drv, dataindex const &idx, drvindex &index);
+	int index_mame_mess_info(fileptr &&fp, dataindex &index, drvindex &index_drv, int &drvcount) const;
+	int index_datafile(fileptr &&fp, dataindex &index, int &swcount, std::string &rev, std::string const &tag, char sep) const;
+	void index_menuidx(fileptr &&fp, game_driver const *drv, dataindex const &idx, drvindex &index) const;
 
 	long const *find_software(std::string const &softlist, std::string const &softname, std::string const &parentname) const;
 
-	void load_data_text(FILE *fp, game_driver const *drv, std::string &buffer, dataindex const &idx, std::string const &tag);
+	void load_data_text(FILE *fp, game_driver const *drv, std::string &buffer, dataindex const &idx, std::string const &tag) const;
 	void load_driver_text(FILE *fp, game_driver const *drv, std::string &buffer, drvindex const &idx, std::string const &tag);
 
 	// internal state

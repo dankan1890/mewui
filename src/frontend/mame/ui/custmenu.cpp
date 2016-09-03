@@ -77,6 +77,8 @@ void menu_custom_filter::handle()
 					changed = true;
 				}
 				break;
+			
+			default: break;
 		}
 
 		if ((FPTR)menu_event->itemref >= OTHER_FILTER && (FPTR)menu_event->itemref < OTHER_FILTER + MAX_CUST_FILTER)
@@ -237,7 +239,7 @@ void menu_custom_filter::custom_render(void *, float top, float, float origx1, f
 //  save custom filters info to file
 //-------------------------------------------------
 
-void menu_custom_filter::save_custom_filters()
+void menu_custom_filter::save_custom_filters() const
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
@@ -320,6 +322,8 @@ void menu_swcustom_filter::handle()
 					changed = true;
 				}
 				break;
+			
+			default: break;
 		}
 
 		if ((FPTR)menu_event->itemref >= OTHER_FILTER && (FPTR)menu_event->itemref < OTHER_FILTER + MAX_CUST_FILTER)
@@ -552,7 +556,7 @@ void menu_swcustom_filter::custom_render(void *, float top, float, float origx1,
 //  save custom filters info to file
 //-------------------------------------------------
 
-void menu_swcustom_filter::save_sw_custom_filters()
+void menu_swcustom_filter::save_sw_custom_filters() const
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);

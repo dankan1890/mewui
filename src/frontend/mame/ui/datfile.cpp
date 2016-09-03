@@ -285,7 +285,7 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 //-------------------------------------------------
 //  load a game text into the buffer
 //-------------------------------------------------
-void datfile_manager::load_data_text(FILE *fp, game_driver const *drv, std::string &buffer, dataindex const &idx, std::string const &tag)
+void datfile_manager::load_data_text(FILE *fp, game_driver const *drv, std::string &buffer, dataindex const &idx, std::string const &tag) const
 {
 	auto itemsiter = idx.find(drv);
 	if (itemsiter == idx.end())
@@ -362,7 +362,7 @@ void datfile_manager::load_driver_text(FILE *fp, game_driver const *drv, std::st
 //  load a game name and offset into an
 //  indexed array (mameinfo)
 //-------------------------------------------------
-int datfile_manager::index_mame_mess_info(fileptr &&fp, dataindex &index, drvindex &index_drv, int &drvcount)
+int datfile_manager::index_mame_mess_info(fileptr &&fp, dataindex &index, drvindex &index_drv, int &drvcount) const
 {
 	size_t foundtag;
 	auto t_mame = TAG_MAMEINFO_R.size();
@@ -417,7 +417,7 @@ int datfile_manager::index_mame_mess_info(fileptr &&fp, dataindex &index, drvind
 //  load a game name and offset into an
 //  indexed array
 //-------------------------------------------------
-int datfile_manager::index_datafile(fileptr &&fp, dataindex &index, int &swcount, std::string &rev, std::string const &tag, char sep)
+int datfile_manager::index_datafile(fileptr &&fp, dataindex &index, int &swcount, std::string &rev, std::string const &tag, char sep) const
 {
 	std::string readbuf;
 	auto const tag_size = tag.size();
@@ -476,7 +476,7 @@ int datfile_manager::index_datafile(fileptr &&fp, dataindex &index, int &swcount
 //---------------------------------------------------------
 //  parseopen - Open up file for reading
 //---------------------------------------------------------
-datfile_manager::fileptr datfile_manager::parseopen(const char *filename)
+datfile_manager::fileptr datfile_manager::parseopen(const char *filename) const
 {
 	emu_file file(m_options.history_path(), OPEN_FLAG_READ);
 	if (file.open(filename) != osd_file::error::NONE)
@@ -494,7 +494,7 @@ datfile_manager::fileptr datfile_manager::parseopen(const char *filename)
 //-------------------------------------------------
 //  create the menu index
 //-------------------------------------------------
-void datfile_manager::index_menuidx(fileptr &&fp, const game_driver *drv, dataindex const &idx, drvindex &index)
+void datfile_manager::index_menuidx(fileptr &&fp, const game_driver *drv, dataindex const &idx, drvindex &index) const
 {
 	auto itemsiter = idx.find(drv);
 	if (itemsiter == idx.end())

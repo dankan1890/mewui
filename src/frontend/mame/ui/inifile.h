@@ -33,7 +33,7 @@ public:
 	std::string get_file(int file) { return ini_index[file].first; }
 	std::string get_category(int cat) { return ini_index[c_file].second[cat].first; }
 	std::string get_category() { return ini_index[c_file].second[c_cat].first; }
-	size_t total() { return ini_index.size(); }
+	size_t total() const { return ini_index.size(); }
 	size_t cat_total() { return ini_index[c_file].second.size(); }
 	UINT16 &cur_file() { return c_file; }
 	UINT16 &cur_cat() { return c_cat; }
@@ -64,7 +64,7 @@ private:
 
 	// file open/close/seek
 	bool parseopen(const char *filename);
-	void parseclose() { if (fp != nullptr) fclose(fp); }
+	void parseclose() const { if (fp != nullptr) fclose(fp); }
 
 	// internal state
 	running_machine &m_machine;  // reference to our machine

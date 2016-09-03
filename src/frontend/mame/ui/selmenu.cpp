@@ -32,7 +32,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <utility>
 
 
@@ -448,6 +447,8 @@ void menu_select_launch::inkey_navigation()
 		set_focus(focused_menu::main);
 		select_prev();
 		break;
+	
+	default: break;
 	}
 }
 
@@ -577,7 +578,7 @@ void menu_select_launch::draw_toolbar(float x1, float y1, float x2, float y2)
 //  draw favorites star
 //-------------------------------------------------
 
-void menu_select_launch::draw_star(float x0, float y0)
+void menu_select_launch::draw_star(float x0, float y0) const
 {
 	float y1 = y0 + ui().get_line_height();
 	float x1 = x0 + ui().get_line_height() * container().manager().ui_aspect();
@@ -716,7 +717,7 @@ float menu_select_launch::draw_icon(int linenum, void *selectedref, float x0, fl
 //  get title and search path for right panel
 //-------------------------------------------------
 
-void menu_select_launch::get_title_search(std::string &snaptext, std::string &searchstr)
+void menu_select_launch::get_title_search(std::string &snaptext, std::string &searchstr) const
 {
 	// get arts title text
 	snaptext.assign(_(arts_info[ui_globals::curimage_view].first));
@@ -1753,7 +1754,7 @@ std::string menu_select_launch::arts_render_common(float origx1, float origy1, f
 //  perform rendering of image
 //-------------------------------------------------
 
-void menu_select_launch::arts_render_images(bitmap_argb32 *tmp_bitmap, float origx1, float origy1, float origx2, float origy2)
+void menu_select_launch::arts_render_images(bitmap_argb32 *tmp_bitmap, float origx1, float origy1, float origx2, float origy2) const
 {
 	bool no_available = false;
 	float line_height = ui().get_line_height();
@@ -1848,7 +1849,7 @@ void menu_select_launch::arts_render_images(bitmap_argb32 *tmp_bitmap, float ori
 //  draw snapshot
 //-------------------------------------------------
 
-void menu_select_launch::draw_snapx(float origx1, float origy1, float origx2, float origy2)
+void menu_select_launch::draw_snapx(float origx1, float origy1, float origx2, float origy2) const
 {
 	// if the image is available, loaded and valid, display it
 	if (snapx_valid())

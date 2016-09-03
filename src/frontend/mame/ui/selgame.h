@@ -77,9 +77,9 @@ private:
 
 	bool isfavorite() const;
 	void populate_search();
-	void init_sorted_list();
+	void init_sorted_list() const;
 	bool load_available_machines();
-	void load_custom_filters();
+	void load_custom_filters() const;
 
 	void *get_selection_ptr() const
 	{
@@ -88,7 +88,7 @@ private:
 	}
 
 	// General info
-	void general_info(const game_driver *driver, std::string &buffer);
+	void general_info(const game_driver *driver, std::string &buffer) const;
 
 	virtual void infos_render(float x1, float y1, float x2, float y2) override;
 

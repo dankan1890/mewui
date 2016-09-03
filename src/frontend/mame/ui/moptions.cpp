@@ -77,6 +77,13 @@ const options_entry ui_options::s_option_entries[] =
 	{ OPTION_UI_TEXT_BG_COLOR,              "ef000000",     OPTION_STRING,      "UI text bg color (ARGB)" },
 	{ OPTION_UI_TEXT_COLOR,                 "ffffffff",     OPTION_STRING,      "UI text color (ARGB)" },
 	{ OPTION_UI_UNAVAILABLE_COLOR,          "ff404040",     OPTION_STRING,      "UI unavailable color (ARGB)" },
+
+	{ NANA_FORM_HEIGHT,						"768",          OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
+	{ NANA_FORM_WIDTH,						"1024",         OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
+	{ NANA_FORM_X,							"0",            OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
+	{ NANA_FORM_Y,							"0",            OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
+	{ NANA_FORM_MAX,		                "0",            OPTION_BOOLEAN,     "skip parts submenu, start with first part" },
+
 	{ nullptr }
 };
 

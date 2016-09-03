@@ -1674,3 +1674,145 @@ end
 		}
 
 end
+
+--------------------------------------------------
+-- Nana library objects
+--------------------------------------------------
+
+project "nana"
+	uuid "bf7aa281-4f4b-4bdf-803e-985b3c27280a"
+	kind "StaticLib"
+
+
+	defines {
+		"NANA_ENABLE_PNG",
+		"USE_LIBPNG_FROM_OS",
+		"NANA_ENABLE_JPEG",
+		"USE_LIBJPEG_FROM_OS",
+	}
+
+	includedirs {
+		MAME_DIR .. "3rdparty/nana/include",
+		MAME_DIR .. "3rdparty/libpng",
+		"/usr/include/freetype2",
+		ext_includedir("jpeg"),
+	}
+	
+	configuration { "gmake or ninja" }
+		buildoptions_cpp {
+			"-Wno-overloaded-virtual",
+		}
+	configuration { }
+
+	files {
+		MAME_DIR .. "3rdparty/nana/source/any.cpp",
+		MAME_DIR .. "3rdparty/nana/source/basic_types.cpp",
+		MAME_DIR .. "3rdparty/nana/source/charset.cpp",
+		MAME_DIR .. "3rdparty/nana/source/datetime.cpp",
+		MAME_DIR .. "3rdparty/nana/source/deploy.cpp",
+		MAME_DIR .. "3rdparty/nana/source/internationalization.cpp",
+		MAME_DIR .. "3rdparty/nana/source/unicode_bidi.cpp",
+		MAME_DIR .. "3rdparty/nana/source/audio/player.cpp",
+		MAME_DIR .. "3rdparty/nana/source/audio/detail/audio_device.cpp",
+		MAME_DIR .. "3rdparty/nana/source/audio/detail/audio_stream.cpp",
+		MAME_DIR .. "3rdparty/nana/source/audio/detail/buffer_preparation.cpp",
+		MAME_DIR .. "3rdparty/nana/source/detail/platform_spec_posix.cpp",
+		MAME_DIR .. "3rdparty/nana/source/detail/platform_spec_windows.cpp",
+		MAME_DIR .. "3rdparty/nana/source/filesystem/filesystem.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/animation.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/basis.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/dragger.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/drawing.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/effects.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/element.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/filebox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/layout_utility.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/msgbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/notifier.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/place.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/programming_interface.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/screen.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/state_cursor.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/timer.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/tooltip.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/wvl.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/basic_window.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/bedrock_pi.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/bedrock_posix.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/bedrock_windows.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/color_schemes.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/drawer.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/element_store.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/events_operation.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/native_window_interface.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/window_layout.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/detail/window_manager.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/button.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/categorize.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/checkbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/combox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/date_chooser.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/float_listbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/form.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/frame.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/group.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/label.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/listbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/menu.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/menubar.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/panel.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/picture.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/progress.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/scroll.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/slider.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/spinbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/tabbar.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/textbox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/toolbar.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/treebox.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/widget.cpp",
+		MAME_DIR .. "3rdparty/nana/source/gui/widgets/skeletons/text_editor.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/graphics.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/image.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/image_process_selector.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/pixel_buffer.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/text_renderer.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/detail/image_process_provider.cpp",
+		MAME_DIR .. "3rdparty/nana/source/paint/detail/native_paint_interface.cpp",
+		MAME_DIR .. "3rdparty/nana/source/system/dataexch.cpp",
+		MAME_DIR .. "3rdparty/nana/source/system/platform.cpp",
+		MAME_DIR .. "3rdparty/nana/source/system/shared_wrapper.cpp",
+		MAME_DIR .. "3rdparty/nana/source/system/timepiece.cpp",
+		MAME_DIR .. "3rdparty/nana/source/threads/pool.cpp",
+		MAME_DIR .. "3rdparty/nana/source/**.hpp",
+		MAME_DIR .. "3rdparty/nana/include/**.hpp",
+	}
+
+--------------------------------------------------
+-- png library objects
+--------------------------------------------------
+project "png"
+	uuid "c6531515-5482-4256-9953-515645faedfb"
+	kind "StaticLib"
+
+	includedirs {
+		ext_includedir("zlib"),
+	}
+
+	files {
+		MAME_DIR .. "3rdparty/libpng/png.c",
+		MAME_DIR .. "3rdparty/libpng/pngerror.c",
+		MAME_DIR .. "3rdparty/libpng/pngget.c",
+		MAME_DIR .. "3rdparty/libpng/pngmem.c",
+		MAME_DIR .. "3rdparty/libpng/pngpread.c",
+		MAME_DIR .. "3rdparty/libpng/pngread.c",
+		MAME_DIR .. "3rdparty/libpng/pngrio.c",
+		MAME_DIR .. "3rdparty/libpng/pngrtran.c",
+		MAME_DIR .. "3rdparty/libpng/pngrutil.c",
+		MAME_DIR .. "3rdparty/libpng/pngset.c",
+		MAME_DIR .. "3rdparty/libpng/pngtrans.c",
+		MAME_DIR .. "3rdparty/libpng/pngwio.c",
+		MAME_DIR .. "3rdparty/libpng/pngwrite.c",
+		MAME_DIR .. "3rdparty/libpng/pngwtran.c",
+		MAME_DIR .. "3rdparty/libpng/pngwutil.c",
+	}

@@ -49,6 +49,14 @@ char const *const dats_info[] = {
 
 } // anonymous namespace
 
+struct ci_less
+{
+	bool operator() (const std::string &s1, const std::string &s2) const
+	{
+		return (core_stricmp(s1.c_str(), s2.c_str()) < 0);
+	}
+};
+
 bool menu_select_game::first_start = true;
 std::vector<const game_driver *> menu_select_game::m_sortedlist;
 int menu_select_game::m_isabios = 0;
@@ -645,6 +653,7 @@ void menu_select_game::build_available_list()
 {
 	int m_total = driver_list::total();
 	std::vector<bool> m_included(m_total, false);
+	std::map<std::string, std::vector<const game_driver *>, ci_less> uimap;
 
 	// open a path to the ROMs and find them in the array
 	file_enumerator path(machine().options().media_path());
@@ -665,8 +674,12 @@ void menu_select_game::build_available_list()
 		int drivnum = driver_list::find(drivername);
 		if (drivnum != -1 && !m_included[drivnum])
 		{
-			m_availsortedlist.push_back(&driver_list::driver(drivnum));
 			m_included[drivnum] = true;
+			auto id = driver_list::non_bios_clone(drivnum);
+			if (id == -1)
+				uimap[driver_list::driver(drivnum).description].push_back(&driver_list::driver(drivnum));
+			else
+				uimap[driver_list::driver(id).description].push_back(&driver_list::driver(drivnum));
 		}
 	}
 
@@ -737,14 +750,20 @@ void menu_select_game::build_available_list()
 
 				if (noroms)
 				{
-					m_availsortedlist.push_back(&driver_list::driver(x));
+					auto id = driver_list::non_bios_clone(x);
+					if (id == -1)
+						uimap[driver_list::driver(x).description].push_back(&driver_list::driver(x));
+					else
+						uimap[driver_list::driver(id).description].push_back(&driver_list::driver(x));
 					m_included[x] = true;
 				}
 			}
 		}
 	}
-	// sort
-	std::stable_sort(m_availsortedlist.begin(), m_availsortedlist.end(), sorted_game_list);
+
+	for (auto & e : uimap)
+		for (auto & el : e.second)
+			m_availsortedlist.push_back(el);
 
 	// now build the unavailable list
 	for (int x = 0; x < m_total; ++x)
@@ -1366,18 +1385,32 @@ void menu_select_game::init_sorted_list() const
 		return;
 
 	// generate full list
-	for (int x = 0; x < driver_list::total(); ++x)
+	std::map<std::string, std::vector<const game_driver *>, ci_less> uimap;
+	for (auto x = 0; x < driver_list::total(); ++x)
 	{
-		const game_driver *driver = &driver_list::driver(x);
-		if (driver == &GAME_NAME(___empty))
-			continue;
-		if (driver->flags & MACHINE_IS_BIOS_ROOT)
-			m_isabios++;
+		auto drv = &driver_list::driver(x);
+		if (drv == &GAME_NAME(___empty)) continue;
+		if (drv->flags & MACHINE_IS_BIOS_ROOT) m_isabios++;
+		c_mnfct::set(drv->manufacturer);
+		c_year::set(drv->year);
 
-		m_sortedlist.push_back(driver);
-		c_mnfct::set(driver->manufacturer);
-		c_year::set(driver->year);
+		if (driver_list::non_bios_clone(x) == -1)
+			uimap[drv->description].push_back(drv);
 	}
+
+	for (auto x = 0; x < driver_list::total(); ++x)
+	{
+		auto drv = &driver_list::driver(x);
+		if (drv == &GAME_NAME(___empty)) continue;
+
+		auto id = driver_list::non_bios_clone(x);
+		if (id != -1)
+			uimap[driver_list::driver(id).description].push_back(drv);
+	}
+
+	for (auto & e : uimap)
+		for (auto & el : e.second)
+			m_sortedlist.push_back(el);
 
 	for (auto & e : c_mnfct::uimap)
 		c_mnfct::ui.emplace_back(e.first);
@@ -1385,7 +1418,6 @@ void menu_select_game::init_sorted_list() const
 	// sort manufacturers - years and driver
 	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());
-	std::stable_sort(m_sortedlist.begin(), m_sortedlist.end(), sorted_game_list);
 }
 
 //-------------------------------------------------

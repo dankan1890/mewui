@@ -73,6 +73,12 @@
 #define OPTION_UI_DIPSW_COLOR         "ui_dipsw_color"
 #define OPTION_UI_SLIDER_COLOR        "ui_slider_color"
 
+#define NANA_FORM_HEIGHT			"nana_form_heigth"
+#define NANA_FORM_WIDTH				"nana_form_width"
+#define NANA_FORM_X					"nana_form_x"
+#define NANA_FORM_Y					"nana_form_y"
+#define NANA_FORM_MAX				"nana_form_max"
+
 class ui_options : public core_options
 {
 public:
@@ -135,6 +141,14 @@ public:
 	const char *ui_mousedown_bg_color() const { return value(OPTION_UI_MOUSEDOWN_BG_COLOR); }
 	const char *ui_dipsw_color() const { return value(OPTION_UI_DIPSW_COLOR); }
 	const char *ui_slider_color() const { return value(OPTION_UI_SLIDER_COLOR); }
+
+
+	int form_heigth() const { return int_value(NANA_FORM_HEIGHT); }
+	int form_width() const { return int_value(NANA_FORM_WIDTH); }
+	int form_x() const { return int_value(NANA_FORM_X); }
+	int form_y() const { return int_value(NANA_FORM_Y); }
+	bool form_max() const { return bool_value(NANA_FORM_MAX); }
+
 private:
 	static const options_entry s_option_entries[];
 };

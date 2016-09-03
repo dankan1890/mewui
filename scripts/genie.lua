@@ -1067,6 +1067,8 @@ configuration { "linux-* or rpi or ci20"}
 		links {
 			"dl",
 			"rt",
+			"Xft",
+			"stdc++fs",
 		}
 		if _OPTIONS["distro"]=="debian-stable" then
 			defines

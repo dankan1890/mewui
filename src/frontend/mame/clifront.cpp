@@ -595,7 +595,8 @@ int cli_frontend::execute(int argc, char **argv)
 				throw emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "Unknown system '%s'", m_options.system_name());
 
 			// otherwise just run the game
-			m_result = manager->execute();
+			//m_result = manager->execute(core_filename_extract_base(argv[0], false));
+			m_result = manager->execute(argv[0]);
 		}
 	}
 

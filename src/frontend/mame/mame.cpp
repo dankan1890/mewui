@@ -26,6 +26,7 @@
 #include "ui/datfile.h"
 #include "ui/inifile.h"
 #include "xmlfile.h"
+#include "nana/nanagui.h"
 
 //**************************************************************************
 //  MACHINE MANAGER
@@ -171,7 +172,7 @@ void mame_machine_manager::start_luaengine()
     execute - run the core emulation
 -------------------------------------------------*/
 
-int mame_machine_manager::execute()
+int mame_machine_manager::execute(std::string exename)
 {
 	bool started_empty = false;
 
@@ -225,7 +226,16 @@ int mame_machine_manager::execute()
 		set_machine(&machine);
 
 		// run the machine
-		error = machine.run(is_empty);
+		if (is_empty && m_options.ui() == emu_options::UI_MODERN)
+		{
+			system = nanamame::start_gui(machine, m_options, exename);
+			if (system != &GAME_NAME(___empty))
+				m_new_driver_pending = system;
+			else
+				machine.schedule_exit();
+		}
+		else
+			error = machine.run(is_empty);
 		m_firstrun = false;
 
 		// check the state of the machine

@@ -30,6 +30,8 @@ includedirs {
 	MAME_DIR .. "src/lib",
 	MAME_DIR .. "src/lib/util",
 	MAME_DIR .. "3rdparty/rapidjson/include",
+	MAME_DIR .. "3rdparty/nana/include",
+	MAME_DIR .. "3rdparty/libpng",
 	MAME_DIR .. "3rdparty",
 	GEN_DIR  .. "emu",
 	GEN_DIR  .. "emu/layout",
@@ -54,6 +56,13 @@ if (_OPTIONS["osd"] == "sdl") then
 	}
 end
 
+configuration { "gmake or ninja" }
+	buildoptions_cpp {
+		"-Wno-overloaded-virtual",
+	}
+
+configuration { }
+	
 files {
 	MAME_DIR .. "src/frontend/mame/audit.cpp",
 	MAME_DIR .. "src/frontend/mame/audit.h",
@@ -162,4 +171,10 @@ files {
 	MAME_DIR .. "src/frontend/mame/ui/utils.h",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.h",
+	MAME_DIR .. "src/frontend/mame/nana/nanagui.cpp",
+	MAME_DIR .. "src/frontend/mame/nana/nanagui.h",
+	MAME_DIR .. "src/frontend/mame/nana/mainform.cpp",
+	MAME_DIR .. "src/frontend/mame/nana/mainform.h",
+	MAME_DIR .. "src/frontend/mame/nana/menu.cpp",
+	MAME_DIR .. "src/frontend/mame/nana/menu.h",
 }

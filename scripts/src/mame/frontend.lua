@@ -177,4 +177,10 @@ files {
 	MAME_DIR .. "src/frontend/mame/nana/mainform.h",
 	MAME_DIR .. "src/frontend/mame/nana/menu.cpp",
 	MAME_DIR .. "src/frontend/mame/nana/menu.h",
+	MAME_DIR .. "src/frontend/mame/mewui/combo.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/combo.h",
+	MAME_DIR .. "src/frontend/mame/mewui/listbox.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/listbox.h",
+	MAME_DIR .. "src/frontend/mame/mewui/treebox.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/treebox.h",
 }

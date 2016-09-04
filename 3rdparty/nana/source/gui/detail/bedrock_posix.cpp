@@ -237,7 +237,7 @@ namespace detail
 		if(wd_manager().available(wd) == false)
 			return false;
 
-		core_window_t * prev_wd = nullptr;
+		core_window_t * prev_wd;
 		if(thrd)
 		{
 			prev_wd = thrd->event_window;
@@ -626,38 +626,30 @@ namespace detail
 				if(pressed_wd_space)
 					break;
 
-				msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
-				if(nullptr == msgwnd)
-					break;
-
 				if(xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
 				{
 					//The hovered window receives the message, unlike in Windows, no redirection is required.
-					auto evt_wd = msgwnd;
-					while(evt_wd)
+					nana::point mspos{xevent.xbutton.x, xevent.xbutton.y};
+					while(msgwnd)
 					{
-						if(evt_wd->annex.events_ptr->mouse_wheel.length() != 0)
+						if(msgwnd->annex.events_ptr->mouse_wheel.length() != 0)
 						{
+							mspos -= msgwnd->pos_root;
 							arg_wheel arg;
 							arg.which = arg_wheel::wheel::vertical;
-							assign_arg(arg, evt_wd, xevent);
-							brock.emit(event_code::mouse_wheel, evt_wd, arg, true, &context);
+							assign_arg(arg, msgwnd, xevent);
+							brock.emit(event_code::mouse_wheel, msgwnd, arg, true, &context);
 							break;
 						}
-						evt_wd = evt_wd->parent;
+						msgwnd = msgwnd->parent;
 					}
-
-					if(msgwnd && (nullptr == evt_wd))
-					{
-						arg_wheel arg;
-						arg.which = arg_wheel::wheel::vertical;
-							assign_arg(arg, msgwnd, xevent);
-						draw_invoker(&drawer::mouse_wheel, msgwnd, arg, &context);
-						wd_manager.do_lazy_refresh(msgwnd, false); 
-						}
 				}
 				else
 				{
+					msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
+					if(nullptr == msgwnd)
+						break;
+
 					msgwnd->set_action(mouse_action::normal);
 					if(msgwnd->flags.enabled)
 					{

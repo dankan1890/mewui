@@ -246,6 +246,7 @@ namespace nana
 				mbstr.resize(bytes - 1);
 				::WideCharToMultiByte(CP_ACP, 0, s, -1, &(mbstr[0]), bytes - 1, 0, 0);
 			}
+			return true;
 #else
 			locale_initializer::init();
 			std::mbstate_t mbstate = std::mbstate_t();

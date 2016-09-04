@@ -623,35 +623,43 @@ namespace detail
 				break;
 			case ButtonRelease:
 				//Ignore mouse events when a window has been pressed by pressing spacebar
-				if(pressed_wd_space)
+				if (pressed_wd_space)
 					break;
 
-				if(xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
+				msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
+				if (nullptr == msgwnd)
+					break;
+
+				if (xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
 				{
 					//The hovered window receives the message, unlike in Windows, no redirection is required.
-					nana::point mspos{xevent.xbutton.x, xevent.xbutton.y};
-					while(msgwnd)
+					auto evt_wd = msgwnd;
+					while (evt_wd)
 					{
-						if(msgwnd->annex.events_ptr->mouse_wheel.length() != 0)
+						if (evt_wd->annex.events_ptr->mouse_wheel.length() != 0)
 						{
-							mspos -= msgwnd->pos_root;
 							arg_wheel arg;
 							arg.which = arg_wheel::wheel::vertical;
-							assign_arg(arg, msgwnd, xevent);
-							brock.emit(event_code::mouse_wheel, msgwnd, arg, true, &context);
+							assign_arg(arg, evt_wd, xevent);
+							brock.emit(event_code::mouse_wheel, evt_wd, arg, true, &context);
 							break;
 						}
-						msgwnd = msgwnd->parent;
+						evt_wd = evt_wd->parent;
+					}
+
+					if (msgwnd && (nullptr == evt_wd))
+					{
+						arg_wheel arg;
+						arg.which = arg_wheel::wheel::vertical;
+						assign_arg(arg, msgwnd, xevent);
+						draw_invoker(&drawer::mouse_wheel, msgwnd, arg, &context);
+						wd_manager.do_lazy_refresh(msgwnd, false);
 					}
 				}
 				else
 				{
-					msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
-					if(nullptr == msgwnd)
-						break;
-
 					msgwnd->set_action(mouse_action::normal);
-					if(msgwnd->flags.enabled)
+					if (msgwnd->flags.enabled)
 					{
 						auto retain = msgwnd->annex.events_ptr;
 
@@ -665,9 +673,9 @@ namespace detail
 						click_arg.mouse_args = &arg;
 
 						const bool hit = msgwnd->dimension.is_hit(arg.pos);
-						if(msgwnd == pressed_wd)
+						if (msgwnd == pressed_wd)
 						{
-							if((arg.button == ::nana::mouse::left_button) && hit)
+							if ((arg.button == ::nana::mouse::left_button) && hit)
 							{
 								msgwnd->set_action(mouse_action::hovered);
 
@@ -675,20 +683,20 @@ namespace detail
 								draw_invoker(&drawer::click, msgwnd, click_arg, &context);
 							}
 						}
-					
+
 						//Do mouse_up, this handle may be closed by click handler.
-						if(wd_manager.available(msgwnd) && msgwnd->flags.enabled)
+						if (wd_manager.available(msgwnd) && msgwnd->flags.enabled)
 						{
-							if(hit)
+							if (hit)
 								msgwnd->set_action(mouse_action::hovered);
-							
+
 							auto retain = msgwnd->annex.events_ptr;
 							auto evt_ptr = retain.get();
 
 							arg.evt_code = event_code::mouse_up;
 							draw_invoker(&drawer::mouse_up, msgwnd, arg, &context);
 
-							if(click_arg.window_handle)
+							if (click_arg.window_handle)
 								evt_ptr->click.emit(click_arg, reinterpret_cast<window>(msgwnd));
 
 							if (wd_manager.available(msgwnd))
@@ -697,7 +705,7 @@ namespace detail
 								evt_ptr->mouse_up.emit(arg, reinterpret_cast<window>(msgwnd));
 							}
 						}
-						else if(click_arg.window_handle)
+						else if (click_arg.window_handle)
 							msgwnd->annex.events_ptr->click.emit(click_arg, reinterpret_cast<window>(msgwnd));
 
 						wd_manager.do_lazy_refresh(msgwnd, false);

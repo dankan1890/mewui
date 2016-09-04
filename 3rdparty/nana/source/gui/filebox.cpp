@@ -145,7 +145,7 @@ namespace nana
 				auto path = path_.caption();
 				auto root = path.substr(0, path.find('/'));
 				if(root == "HOME")
-					path.replace(0, 4, fs_ext::path_user().string());
+					path.replace(0, 4, fs_ext::path_user().native());
 				else if(root == "FILESYSTEM")
 					path.erase(0, 10);
 				else
@@ -347,7 +347,7 @@ namespace nana
 			else
 				dir = saved_selected_path;
 
-			_m_load_cat_path(dir.size() ? dir : fs_ext::path_user().string());
+			_m_load_cat_path(dir.size() ? dir : fs_ext::path_user().native());
 
 			tb_file_.caption(file_with_path_removed);
 		}
@@ -439,7 +439,7 @@ namespace nana
 			{
 				for (fs::directory_iterator i(p); i != end; ++i)
 				{
-					auto name = i->path().filename().string();
+					auto name = i->path().filename().native();
 					if (!is_directory(i->status()) || (name.size() && name[0] == '.'))
 						continue;
 
@@ -475,7 +475,7 @@ namespace nana
 			{
 				auto begstr = path.substr(0, pos);
 				if(begstr == "FS.HOME")
-					path.replace(0, 7, fs_ext::path_user().string());
+					path.replace(0, 7, fs_ext::path_user().native());
 				else
 					path.erase(0, pos);
 				return begstr;
@@ -494,28 +494,30 @@ namespace nana
 			fs::directory_iterator end;
 			for(fs::directory_iterator i(path); i != end; ++i)
 			{
-				auto name = i->path().filename().string();
+				auto name = i->path().filename().native();
 				if(name.empty() || (name.front() == '.'))
 					continue;
 
+				auto fpath = i->path().native();
+				auto fattr = fs::status(fpath);
+
 				item_fs m;
 				m.name = name;
+				m.directory = fs::is_directory(fattr);
 
-				auto fattr = fs::status(path + m.name);
-
-				if(fattr.type() != fs::file_type::not_found && fattr.type() != fs::file_type::unknown)
+				switch(fattr.type())
 				{
-					m.bytes = fs::file_size(path + m.name);
-					m.directory = fs::is_directory(fattr);
-					fs_ext::modified_file_time(path + m.name, m.modified_time);
-				}
-				else
-				{
+				case fs::file_type::not_found:
+				case fs::file_type::unknown:
+				case fs::file_type::directory:
 					m.bytes = 0;
-					m.directory = fs::is_directory(*i);
-					fs_ext::modified_file_time(path + i->path().filename().string(), m.modified_time);				
+					break;
+				default:
+					m.bytes = fs::file_size(fpath);
 				}
 
+				fs_ext::modified_file_time(fpath, m.modified_time);
+				
 				file_container_.push_back(m);
 
 				if(m.directory)
@@ -533,7 +535,7 @@ namespace nana
 			while(!beg_node.empty() && (beg_node != nodes_.home) && (beg_node != nodes_.filesystem))
 				beg_node = beg_node.owner();
 			
-			auto head = fs_ext::path_user().string();
+			auto head = fs_ext::path_user().native();
 			if(path.size() >= head.size() && (path.substr(0, head.size()) == head))
 			{//This is HOME
 				path_.caption("HOME");
@@ -556,7 +558,7 @@ namespace nana
 			for(fs::directory_iterator i(head); i != end; ++i)
 			{
 				if(is_directory(*i))
-					path_.childset(i->path().filename().string(), 0);
+					path_.childset(i->path().filename().native(), 0);
 			}
 			auto cat_path = path_.caption();
 			if(cat_path.size() && cat_path[cat_path.size() - 1] != '/')
@@ -575,7 +577,7 @@ namespace nana
 				for(fs::directory_iterator i(head); i != end; ++i)
 				{
 					if (is_directory(*i))
-						path_.childset(i->path().filename().string(), 0);
+						path_.childset(i->path().filename().native(), 0);
 				}
 
 				if(pos == path.npos)
@@ -809,7 +811,7 @@ namespace nana
 				fs::directory_iterator end;
 				for (fs::directory_iterator i{path}; i != end; ++i)
 				{
-					auto name = i->path().filename().string();
+					auto name = i->path().filename().native();
 					if((!is_directory(*i)) || (name.size() && name[0] == '.'))
 						continue;
 
@@ -818,7 +820,7 @@ namespace nana
 					{
 						for(fs::directory_iterator u(i->path()); u != end; ++u)
 						{
-							auto uname = i->path().filename().string();
+							auto uname = i->path().filename().native();
 							if ((!is_directory(*i)) || (uname.size() && uname[0] == '.'))
 								continue;
 

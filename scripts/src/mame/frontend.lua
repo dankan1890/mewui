@@ -183,4 +183,6 @@ files {
 	MAME_DIR .. "src/frontend/mame/mewui/listbox.h",
 	MAME_DIR .. "src/frontend/mame/mewui/treebox.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/treebox.h",
+	MAME_DIR .. "src/frontend/mame/mewui/form.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/form.h",
 }

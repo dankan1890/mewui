@@ -799,7 +799,7 @@ static ADDRESS_MAP_START( arkanoid_map, AS_PROGRAM, 8, arkanoid_state )
 	AM_RANGE(0xc000, 0xc7ff) AM_RAM
 	AM_RANGE(0xd000, 0xd001) AM_DEVWRITE("aysnd", ay8910_device, address_data_w)
 	AM_RANGE(0xd001, 0xd001) AM_DEVREAD("aysnd", ay8910_device, data_r)
-	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)  /* gfx bank, flip screen etc. */
+	AM_RANGE(0xd008, 0xd008) AM_WRITE(arkanoid_d008_w)  /* gfx bank, flip screen, 68705 reset, etc. */
 	AM_RANGE(0xd00c, 0xd00c) AM_READ_PORT("SYSTEM")     /* 2 bits from the 68705 */
 	AM_RANGE(0xd010, 0xd010) AM_READ_PORT("BUTTONS") AM_DEVWRITE("watchdog", watchdog_timer_device, reset_w)
 	AM_RANGE(0xd018, 0xd018) AM_READWRITE(arkanoid_Z80_mcu_r, arkanoid_Z80_mcu_w)  /* input from the 68705 */
@@ -1287,12 +1287,12 @@ void arkanoid_state::machine_start()
 	save_item(NAME(m_MCUHasWritten));
 	save_item(NAME(m_fromMCU));
 
-	save_item(NAME(m_port_a_in));
-	save_item(NAME(m_port_a_out));
-	save_item(NAME(m_ddr_a));
-	save_item(NAME(m_port_c_internal));
-	save_item(NAME(m_port_c_out));
-	save_item(NAME(m_ddr_c));
+	save_item(NAME(m_portA_in));
+	save_item(NAME(m_portA_out));
+	save_item(NAME(m_ddrA));
+	save_item(NAME(m_portC_internal));
+	save_item(NAME(m_portC_out));
+	save_item(NAME(m_ddrC));
 	save_item(NAME(m_tdr));
 	save_item(NAME(m_tcr));
 }
@@ -1315,12 +1315,12 @@ void arkanoid_state::machine_reset()
 	if (m_mcu.found()) m_mcu->set_input_line(M68705_IRQ_LINE, CLEAR_LINE);
 	if (m_mcu.found()) m_68705_timer->adjust(attotime::from_hz(((XTAL_12MHz/4)/4)/(1<<7)));
 
-	m_port_a_in = 0;
-	m_port_a_out = 0;
-	m_ddr_a = 0;
-	m_port_c_internal = 0;
-	m_port_c_out = 0;
-	m_ddr_c = 0;
+	m_portA_in = 0;
+	m_portA_out = 0;
+	m_ddrA = 0;
+	m_portC_internal = 0;
+	m_portC_out = 0;
+	m_ddrC = 0;
 	m_tdr = 0xFF;
 	m_tcr = 0x7F;
 }

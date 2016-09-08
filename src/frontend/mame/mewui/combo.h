@@ -13,7 +13,7 @@
 #ifndef MEWUI_COMBO_H
 #define MEWUI_COMBO_H
 #include <string>
-#include <vector>
+#include <map>
 
 namespace mewui
 {
@@ -23,7 +23,7 @@ namespace mewui
 		combo();
 
 	private:
-		std::vector<std::string> m_items;
+		std::map<std::size_t, std::string> m_items;
 	};
 }
 #endif /* MEWUI_COMBO_H */

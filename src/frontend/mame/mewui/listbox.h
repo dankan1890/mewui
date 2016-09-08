@@ -15,6 +15,11 @@
 
 namespace mewui
 {
+	class listbox
+	{
+	public:
+		listbox::listbox() {}
+	};
 
 }
 #endif /* MEWUI_LISTBOX_H */

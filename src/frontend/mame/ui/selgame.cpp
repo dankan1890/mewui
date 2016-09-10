@@ -1259,7 +1259,7 @@ void menu_select_game::populate_search()
 //  generate general info
 //-------------------------------------------------
 
-void menu_select_game::general_info(const game_driver *driver, std::string &buffer) const
+void menu_select_game::general_info(const game_driver *driver, std::string &buffer)
 {
 	std::ostringstream str;
 

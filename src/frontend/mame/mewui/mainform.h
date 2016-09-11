@@ -2,15 +2,15 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	nana/mainform.h
+	mewui/mainform.h
 
-	NANAMAME Main Form.
+	MEWUI Main Form.
 
 ***************************************************************************/
 #pragma once
 
-#ifndef __MAME_NANA_MAIN_FORM_H__
-#define __MAME_NANA_MAIN_FORM_H__
+#ifndef MEWUI_MAIN_FORM_H
+#define MEWUI_MAIN_FORM_H
 
 #include <nana/gui/wvl.hpp>
 #include <nana/gui/widgets/listbox.hpp>
@@ -38,7 +38,7 @@ namespace ui
 	class datfile_manager;
 } // namespace ui
 
-namespace nanamame
+namespace mewui
 {
 	struct ci_less
 	{
@@ -173,7 +173,7 @@ namespace nanamame
 		const game_driver						**m_system;
 		emu_options								&m_options;
 		std::string								m_latest_machine;
-		std::unique_ptr<ui::datfile_manager>	m_datfile;
+		std::unique_ptr<datfile_manager>		m_datfile;
 		std::unique_ptr<mame_ui_manager>		&m_ui;
 		std::map<std::string, std::vector<const game_driver *>, ci_less> m_sortedlist;
 
@@ -207,6 +207,6 @@ namespace nanamame
 		void resize_machinebox();
 	};
 
-} // namespace nanamame
+} // namespace mewui
 
-#endif /* __MAME_NANA_MAIN_FORM_H__ */
+#endif /* MEWUI_MAIN_FORM_H */

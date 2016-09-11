@@ -24,7 +24,7 @@
 #include "cheat.h"
 #include "ui/inifile.h"
 #include "xmlfile.h"
-#include "nana/nanagui.h"
+#include "mewui/mewui.h"
 
 //**************************************************************************
 //  MACHINE MANAGER
@@ -226,7 +226,7 @@ int mame_machine_manager::execute(std::string exename)
 		// run the machine
 		if (is_empty && m_options.ui() == emu_options::UI_MODERN)
 		{
-			system = nanamame::start_gui(machine, m_options, exename);
+			system = mewui::start_gui(machine, m_options, exename);
 			if (system != &GAME_NAME(___empty))
 				m_new_driver_pending = system;
 			else

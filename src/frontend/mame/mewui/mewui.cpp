@@ -2,21 +2,21 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	nana/nanagui.cpp
+	mewui/mewui.cpp
 
-	NANAMAME Start Point.
+	MEWUI Start Point.
 
 ***************************************************************************/
 
 #include "emu.h"
 #include "ui/ui.h"
 #include "drivenum.h"
-#include "nana/datfile.h"
+#include "mewui/datfile.h"
 #include "emuopts.h"
-#include "nana/nanagui.h"
-#include "nana/mainform.h"
+#include "mewui/mewui.h"
+#include "mewui/mainform.h"
 
-namespace nanamame
+namespace mewui
 {
 	const game_driver *start_gui(running_machine &machine, emu_options &_options, std::string &exename)
 	{

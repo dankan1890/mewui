@@ -2,14 +2,15 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	nana/menu.cpp
+	mewui/menu.cpp
 
-	NANAMAME Menu.
+	MEWUI Menu.
 
 ***************************************************************************/
 
-#include "nana/menu.h"
-namespace nanamame
+#include "mewui/menu.h"
+
+namespace mewui
 {
 	custom_renderer::custom_renderer(const cloneable_renderer & rd)
 		: rdptr_(rd)
@@ -52,4 +53,4 @@ namespace nanamame
 			crook_.draw(graph, clr, colors::black, crook_r, element_state::normal);
 		}
 	}
-} // namespace nanamame
+} // namespace mewui

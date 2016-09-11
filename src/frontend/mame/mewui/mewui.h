@@ -2,24 +2,18 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	mewui/listbox.h
+	mewui/mewui.h
 
-	MEWUI user interface.
+	MEWUI Start Point.
 
 ***************************************************************************/
-
 #pragma once
 
-#ifndef MEWUI_LISTBOX_H
-#define MEWUI_LISTBOX_H
+#ifndef MEWUI_H
+#define MEWUI_H
 
 namespace mewui
 {
-	class listbox
-	{
-	public:
-		listbox::listbox() {}
-	};
-
+	const game_driver *start_gui(running_machine &, emu_options &, std::string &);
 }
-#endif /* MEWUI_LISTBOX_H */
+#endif /* MEWUI_H */

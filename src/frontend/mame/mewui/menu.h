@@ -2,21 +2,21 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	nana/menu.h
+	mewui/menu.h
 
-	NANAMANE Menu.
+	MEWUI Menu.
 
 ***************************************************************************/
 #pragma once
 
-#ifndef __MAME_NANA_MENU_H__
-#define __MAME_NANA_MENU_H__
+#ifndef MEWUI_MENU_H
+#define MEWUI_MENU_H
 
 #include <nana/gui/widgets/menu.hpp>
 #include <nana/gui/element.hpp>
 using namespace nana;
 
-namespace nanamame
+namespace mewui
 {
 	class custom_renderer : public menu::renderer_interface
 	{
@@ -48,6 +48,6 @@ namespace nanamame
 		facade<element::crook> crook_;
 	};
 
-} // namespace nanamame
+} // namespace mewui
 
-#endif /* __MAME_NANA_MENU_H__ */
+#endif /* MEWUI_MENU_H */

@@ -2,9 +2,9 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	nana/mainform.cpp
+	mewui/mainform.cpp
 
-	NANAMAME Main Form.
+	MEWUI Main Form.
 
 ***************************************************************************/
 
@@ -12,14 +12,14 @@
 #include "ui/ui.h"
 #include "drivenum.h"
 #include "emuopts.h"
-#include "nana/datfile.h"
+#include "mewui/datfile.h"
 #include "softlist.h"
 #include "softlist_dev.h"
 #include "audit.h"
-#include "nana/mainform.h"
-#include "nana/menu.h"
+#include "mewui/mainform.h"
+#include "mewui/menu.h"
 
-namespace nanamame
+namespace mewui
 {
 	static const std::pair<std::string, std::string> arts_info[] =
 	{
@@ -66,10 +66,10 @@ namespace nanamame
 		, m_ui(_mui)
 	{
 		// Load DATs data
-		m_datfile = std::make_unique<ui::datfile_manager>(machine, m_ui->options());
+		m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
 
 		// Main title
-		auto maintitle = string_format("NANAMAME %s", emulator_info::get_bare_build_version());
+		auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
 		this->caption(maintitle);
 		this->bgcolor(color(214, 219, 233));
 		if (m_ui->options().form_max()) this->zoom(true); // Maximize
@@ -85,7 +85,7 @@ namespace nanamame
 		});
 #endif
 		// Main layout
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><machinebox>|<vert weight=250 <weight=20 swtab><swtab_frame>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><vert <weight=80% machinebox><weight=5><weight=20 swtab><swtab_frame>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 
 		// Initialize GUI widgets
 		init_context_menu();
@@ -507,7 +507,7 @@ namespace nanamame
 				for (auto& swlistdev : software_list_device_iterator(drivlist.config().root_device()))
 					if (list_map.insert(swlistdev.list_name()).second && !swlistdev.get_info().empty())
 						for (const auto& swinfo : swlistdev.get_info())
-							cat.append({ swinfo.longname(), swinfo.shortname() });
+							cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year() });
 			}
 			m_swpage.m_softwarebox.auto_draw(true);
 
@@ -702,8 +702,8 @@ namespace nanamame
 	{
 		auto menu = &m_menubar.push_back("Help");
 		menu->append("About", [this](menu::item_proxy& ip) {
-			msgbox mb{ *this, "About NANAMAME" };
-			auto maintitle = string_format("NANAMAME %s\nby Dankan1890", emulator_info::get_bare_build_version());
+			msgbox mb{ *this, "About MEWUI" };
+			auto maintitle = string_format("MEWUI %s\nby Dankan1890", emulator_info::get_bare_build_version());
 			mb.icon(mb.icon_information) << maintitle;
 			mb.show();
 		});
@@ -773,6 +773,8 @@ namespace nanamame
 		this->bgcolor(color(240, 240, 240));
 		m_softwarebox.append_header("Name", 180);
 		m_softwarebox.append_header("Set", 70);
+		m_softwarebox.append_header("Publisher", 180);
+		m_softwarebox.append_header("Year", 70);
 
 		// Layout
 		m_place.div("<swbox>");
@@ -983,4 +985,4 @@ namespace nanamame
 		this->modality();
 	}
 
-} // namespace nanamame
+} // namespace mewui

@@ -9,7 +9,7 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "ui/datfile.h"
+#include "nana/datfile.h"
 
 #include "drivenum.h"
 #include "ui/moptions.h"
@@ -221,50 +221,51 @@ void datfile_manager::load_software_info(std::string const &softlist, std::strin
 //-------------------------------------------------
 //  load_data_info
 //-------------------------------------------------
-void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer, int type)
+void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer, std::string type)
 {
 	dataindex const *index_idx = nullptr;
 	drvindex const *driver_idx = nullptr;
-	std::string const *tag;
+	std::string const *tag = nullptr;
 	std::string filename;
 
-	switch (type)
+	if (type == "History")
 	{
-	case UI_HISTORY_LOAD:
 		filename = "history.dat";
 		tag = &TAG_BIO;
 		index_idx = &m_histidx;
-		break;
-	case UI_MAMEINFO_LOAD:
+	}
+	if (type == "MameInfo")
+	{
 		filename = "mameinfo.dat";
 		tag = &TAG_MAME;
 		index_idx = &m_mameidx;
 		driver_idx = &m_drvidx;
-		break;
-	case UI_SYSINFO_LOAD:
+	}
+
+	if (type == "SysInfo")
+	{
 		filename = "sysinfo.dat";
 		tag = &TAG_BIO;
 		index_idx = &m_sysidx;
-		break;
-	case UI_MESSINFO_LOAD:
+	}
+	if (type == "MessInfo")
+	{
 		filename = "messinfo.dat";
 		tag = &TAG_MAME;
 		index_idx = &m_messidx;
 		driver_idx = &m_messdrvidx;
-		break;
-	case UI_STORY_LOAD:
+	}
+	if (type == "MameScore")
+	{
 		filename = "story.dat";
 		tag = &TAG_STORY;
 		index_idx = &m_storyidx;
-		break;
-	case UI_GINIT_LOAD:
+	}
+	if (type == "Machine Init")
+	{
 		filename = "gameinit.dat";
 		tag = &TAG_MAME;
 		index_idx = &m_ginitidx;
-		break;
-	default:
-		assert(false);
-		return;
 	}
 
 	fileptr const datfile = parseopen(filename.c_str());
@@ -277,7 +278,7 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 			load_driver_text(datfile.get(), drv, buffer, *driver_idx, TAG_DRIVER);
 
 		// cleanup mameinfo and sysinfo double line spacing
-		if (((*tag == TAG_MAME) && (type != UI_GINIT_LOAD)) || (type == UI_SYSINFO_LOAD))
+		if (*tag == TAG_MAME && type != "Machine Init" || type == "SysInfo")
 			strreplace(buffer, "\n\n", "\n");
 	}
 }

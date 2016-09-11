@@ -33,7 +33,7 @@ public:
 	running_machine &machine() const { return m_machine; }
 
 	// actions
-	void load_data_info(const game_driver *drv, std::string &buffer, int type);
+	void load_data_info(const game_driver* drv, std::string& buffer, std::string type);
 	void load_command_info(std::string &buffer, std::string const &sel);
 	void load_software_info(std::string const &softlist, std::string &buffer, std::string const &softname, std::string const &parentname);
 	void command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems);

@@ -11,7 +11,7 @@
 #include "emu.h"
 #include "ui/ui.h"
 #include "drivenum.h"
-#include "ui/datfile.h"
+#include "nana/datfile.h"
 #include "emuopts.h"
 #include "nana/nanagui.h"
 #include "nana/mainform.h"

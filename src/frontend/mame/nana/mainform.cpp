@@ -12,7 +12,7 @@
 #include "ui/ui.h"
 #include "drivenum.h"
 #include "emuopts.h"
-#include "ui/datfile.h"
+#include "nana/datfile.h"
 #include "softlist.h"
 #include "softlist_dev.h"
 #include "audit.h"
@@ -595,7 +595,7 @@ namespace nanamame
 	{
 		std::string buffer;
 		if (m_textpage.m_combox.caption() != "Commands")
-			m_datfile->load_data_info(drv, buffer, m_textpage.m_combox.option() + 1);
+			m_datfile->load_data_info(drv, buffer, m_textpage.m_combox.caption());
 		else
 		{
 			std::vector<std::string> m_item;

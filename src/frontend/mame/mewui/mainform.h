@@ -33,11 +33,6 @@ class emu_options;
 class ui_options;
 class mame_ui_manager;
 
-namespace ui
-{
-	class datfile_manager;
-} // namespace ui
-
 namespace mewui
 {
 	struct ci_less
@@ -128,13 +123,12 @@ namespace mewui
 		panel_dir m_panel{ *this };
 		std::unique_ptr<mame_ui_manager> &m_ui;
 		emu_options &m_options;
-
 	};
 
 	class folderform : public form
 	{
 	public:
-		folderform(window);
+		explicit folderform(window);
 
 	private:
 		treebox m_tb{ *this };

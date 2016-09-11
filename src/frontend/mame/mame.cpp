@@ -224,7 +224,7 @@ int mame_machine_manager::execute(std::string exename)
 		set_machine(&machine);
 
 		// run the machine
-		if (is_empty && m_options.ui() == emu_options::UI_MODERN)
+		if (is_empty)
 		{
 			system = mewui::start_gui(machine, m_options, exename);
 			if (system != &GAME_NAME(___empty))

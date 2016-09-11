@@ -10,13 +10,10 @@
 
 #include "emu.h"
 #include "mewui/datfile.h"
-
 #include "drivenum.h"
 #include "ui/moptions.h"
 #include "ui/utils.h"
-
 #include <utility>
-
 
 namespace mewui
 {
@@ -57,12 +54,6 @@ namespace mewui
 	datfile_manager::drvindex datfile_manager::m_messdrvidx;
 	datfile_manager::drvindex datfile_manager::m_menuidx;
 	datfile_manager::swindex datfile_manager::m_swindex;
-	std::string datfile_manager::m_history_rev;
-	std::string datfile_manager::m_mame_rev;
-	std::string datfile_manager::m_mess_rev;
-	std::string datfile_manager::m_sysinfo_rev;
-	std::string datfile_manager::m_story_rev;
-	std::string datfile_manager::m_ginit_rev;
 	bool datfile_manager::first_run = true;
 
 #define opendatsfile(f) do { fileptr datfile = parseopen(#f".dat"); if (datfile) init_##f(std::move(datfile)); } while (false)
@@ -90,89 +81,83 @@ namespace mewui
 	//-------------------------------------------------
 	//  initialize sysinfo.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_sysinfo(fileptr &&fp)
+	void datfile_manager::init_sysinfo(fileptr &&fp) const
 	{
-		int swcount = 0;
-		auto count = index_datafile(std::move(fp), m_sysidx, swcount, m_sysinfo_rev, TAG_SYSINFO_R, '.');
+		auto swcount = 0;
+		auto count = index_datafile(std::move(fp), m_sysidx, swcount);
 		osd_printf_verbose("Sysinfo.dat games found = %i\n", count);
-		osd_printf_verbose("Rev = %s\n", m_sysinfo_rev.c_str());
 	}
 
 	//-------------------------------------------------
 	//  initialize story.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_story(fileptr &&fp)
+	void datfile_manager::init_story(fileptr &&fp) const
 	{
-		int swcount = 0;
-		auto count = index_datafile(std::move(fp), m_storyidx, swcount, m_story_rev, TAG_STORY_R, 's');
+		auto swcount = 0;
+		auto count = index_datafile(std::move(fp), m_storyidx, swcount);
 		osd_printf_verbose("Story.dat games found = %i\n", count);
 	}
 
 	//-------------------------------------------------
 	//  initialize history.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_history(fileptr &&fp)
+	void datfile_manager::init_history(fileptr &&fp) const
 	{
-		int swcount = 0;
-		auto count = index_datafile(std::move(fp), m_histidx, swcount, m_history_rev, TAG_HISTORY_R, ' ');
+		auto swcount = 0;
+		auto count = index_datafile(std::move(fp), m_histidx, swcount);
 		osd_printf_verbose("History.dat systems found = %i\n", count);
 		osd_printf_verbose("History.dat software packages found = %i\n", swcount);
-		osd_printf_verbose("Rev = %s\n", m_history_rev.c_str());
 	}
 
 	//-------------------------------------------------
 	//  initialize gameinit.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_gameinit(fileptr &&fp)
+	void datfile_manager::init_gameinit(fileptr &&fp) const
 	{
-		int swcount = 0;
+		auto swcount = 0;
 		drvindex tmp;
 		auto count = index_mame_mess_info(std::move(fp), m_ginitidx, tmp, swcount);
 		osd_printf_verbose("Gameinit.dat games found = %i\n", count);
-		osd_printf_verbose("Rev = %s\n", m_ginit_rev.c_str());
 	}
 
 	//-------------------------------------------------
 	//  initialize mameinfo.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_mameinfo(fileptr &&fp)
+	void datfile_manager::init_mameinfo(fileptr &&fp) const
 	{
-		int drvcount = 0;
+		auto drvcount = 0;
 		auto count = index_mame_mess_info(std::move(fp), m_mameidx, m_drvidx, drvcount);
 		osd_printf_verbose("Mameinfo.dat games found = %i\n", count);
 		osd_printf_verbose("Mameinfo.dat drivers found = %d\n", drvcount);
-		osd_printf_verbose("Rev = %s\n", m_mame_rev.c_str());
 	}
 
 	//-------------------------------------------------
 	//  initialize messinfo.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_messinfo(fileptr &&fp)
+	void datfile_manager::init_messinfo(fileptr &&fp) const
 	{
-		int drvcount = 0;
+		auto drvcount = 0;
 		auto count = index_mame_mess_info(std::move(fp), m_messidx, m_messdrvidx, drvcount);
 		osd_printf_verbose("Messinfo.dat games found = %i\n", count);
 		osd_printf_verbose("Messinfo.dat drivers found = %d\n", drvcount);
-		osd_printf_verbose("Rev = %s\n", m_mess_rev.c_str());
 	}
 
 	//-------------------------------------------------
 	//  initialize command.dat index
 	//-------------------------------------------------
-	void datfile_manager::init_command(fileptr &&fp)
+	void datfile_manager::init_command(fileptr &&fp) const
 	{
-		int swcount = 0;
-		std::string tmp;
-		auto count = index_datafile(std::move(fp), m_cmdidx, swcount, tmp, std::string(), 'c');
+		auto swcount = 0;
+		auto count = index_datafile(std::move(fp), m_cmdidx, swcount);
 		osd_printf_verbose("Command.dat games found = %i\n", count);
 	}
 
-	bool datfile_manager::has_software(std::string const &softlist, std::string const &softname, std::string const &parentname) const
+	bool datfile_manager::has_software(std::string const &softlist, std::string const &softname, std::string const &parentname)
 	{
 		return bool(find_software(softlist, softname, parentname));
 	}
 
-	long const *datfile_manager::find_software(std::string const &softlist, std::string const &softname, std::string const &parentname) const
+	long const *datfile_manager::find_software(std::string const &softlist, std::string const &softname, std::string const &parentname)
 	{
 		// Find software in software list index
 		auto const software(m_swindex.find(softlist));
@@ -189,17 +174,17 @@ namespace mewui
 	//-------------------------------------------------
 	//  load software info
 	//-------------------------------------------------
-	void datfile_manager::load_software_info(std::string const &softlist, std::string &buffer, std::string const &softname, std::string const &parentname)
+	void datfile_manager::load_software_info(std::string const &softlist, std::string &buffer, std::string const &softname, std::string const &parentname) const
 	{
 		if (m_swindex.empty())
 			return;
 
 		// Load history text
-		fileptr const datfile = parseopen("history.dat");
+		auto const datfile = parseopen("history.dat");
 		if (datfile)
 		{
 			// Find software in software list index
-			long const *const s_offset = find_software(softlist, softname, parentname);
+			auto const s_offset = find_software(softlist, softname, parentname);
 			if (!s_offset)
 				return;
 
@@ -223,7 +208,7 @@ namespace mewui
 	//-------------------------------------------------
 	//  load_data_info
 	//-------------------------------------------------
-	void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer, std::string type)
+	void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer, std::string type) const
 	{
 		dataindex const *index_idx = nullptr;
 		drvindex const *driver_idx = nullptr;
@@ -270,7 +255,7 @@ namespace mewui
 			index_idx = &m_ginitidx;
 		}
 
-		fileptr const datfile = parseopen(filename.c_str());
+		auto const datfile = parseopen(filename.c_str());
 		if (datfile)
 		{
 			load_data_text(datfile.get(), drv, buffer, *index_idx, *tag);
@@ -332,7 +317,7 @@ namespace mewui
 	//-------------------------------------------------
 	void datfile_manager::load_driver_text(FILE *fp, game_driver const *drv, std::string &buffer, drvindex const &idx, std::string const &tag)
 	{
-		std::string s(core_filename_extract_base(drv->source_file));
+		auto s(core_filename_extract_base(drv->source_file));
 		auto index = idx.find(s);
 
 		// if driver not found, return
@@ -367,33 +352,14 @@ namespace mewui
 	//-------------------------------------------------
 	int datfile_manager::index_mame_mess_info(fileptr &&fp, dataindex &index, drvindex &index_drv, int &drvcount) const
 	{
-		size_t foundtag;
-		auto t_mame = TAG_MAMEINFO_R.size();
-		auto t_mess = TAG_MESSINFO_R.size();
-		auto t_ginit = TAG_GAMEINIT_R.size();
 		auto t_info = TAG_INFO.size();
-
 		char rbuf[64 * 1024];
 		std::string readbuf, xid, name;
+
 		while (std::fgets(rbuf, 64 * 1024, fp.get()) != nullptr)
 		{
 			readbuf = chartrimcarriage(rbuf);
-			if (m_mame_rev.empty() && readbuf.compare(0, t_mame, TAG_MAMEINFO_R) == 0)
-			{
-				auto found = readbuf.find(" ", t_mame + 1);
-				m_mame_rev = readbuf.substr(t_mame + 1, found - t_mame);
-			}
-			else if (m_mess_rev.empty() && (foundtag = readbuf.find(TAG_MESSINFO_R)) != std::string::npos)
-			{
-				auto found = readbuf.find(" ", foundtag + t_mess + 1);
-				m_mess_rev = readbuf.substr(foundtag + t_mess + 1, found - t_mess - foundtag);
-			}
-			else if (m_ginit_rev.empty() && readbuf.compare(0, t_ginit, TAG_GAMEINIT_R) == 0)
-			{
-				auto found = readbuf.find(" ", t_ginit + 1);
-				m_ginit_rev = readbuf.substr(t_ginit + 1, found - t_ginit);
-			}
-			else if (readbuf.compare(0, t_info, TAG_INFO) == 0)
+			if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 			{
 				// TAG_INFO
 				std::fgets(rbuf, 64 * 1024, fp.get());
@@ -420,34 +386,22 @@ namespace mewui
 	//  load a game name and offset into an
 	//  indexed array
 	//-------------------------------------------------
-	int datfile_manager::index_datafile(fileptr &&fp, dataindex &index, int &swcount, std::string &rev, std::string const &tag, char sep) const
+	int datfile_manager::index_datafile(fileptr &&fp, dataindex &index, int &swcount) const
 	{
 		std::string readbuf;
-		auto const tag_size = tag.size();
 		auto const t_info = TAG_INFO.size();
 		auto const t_bio = TAG_BIO.size();
 		char rbuf[64 * 1024];
 		while (std::fgets(rbuf, 64 * 1024, fp.get()) != nullptr)
 		{
 			readbuf = chartrimcarriage(rbuf);
-
-			if (!tag.empty())
-			{
-				if (rev.empty() && readbuf.compare(0, tag_size, tag) == 0)
-				{
-					if (sep != 's')
-						rev = readbuf.substr(tag_size + 1, readbuf.find(sep, tag_size + 1) - tag_size);
-					else
-						rev = readbuf.substr(tag_size + 1);
-				}
-			}
-
 			if (readbuf.compare(0, t_info, TAG_INFO) == 0)
 			{
 				// search for game info
 				auto rd = readbuf.substr(t_info + 1);
-				std::vector<std::string> gamelist = tokenize(rd, ',');
-				for (auto & e : gamelist)
+				tokenizer gamelist{ rd, ',' };
+				std::string e;
+				while (gamelist.next(e))
 				{
 					auto game_index = driver_list::find(e.c_str());
 					if (game_index != -1)
@@ -462,13 +416,17 @@ namespace mewui
 				if (readbuf_2.compare(0, t_bio, TAG_BIO) == 0)
 				{
 					auto eq_sign = readbuf.find('=');
-					std::string s_list(readbuf.substr(1, eq_sign - 1));
-					std::string s_roms(readbuf.substr(eq_sign + 1));
-					std::vector<std::string> token_list = tokenize(s_list, ',');
-					std::vector<std::string> token_roms = tokenize(s_roms, ',');
-					for (auto & li : token_list)
-						for (auto & ro : token_roms)
+					auto s_list(readbuf.substr(1, eq_sign - 1));
+					auto s_roms(readbuf.substr(eq_sign + 1));
+					tokenizer t_lists{ s_list, ',' };
+					tokenizer t_roms{ s_roms, ',' };
+					std::string li;
+					while (t_lists.next(li))
+					{
+						std::string ro;
+						while (t_roms.next(ro))
 							m_swindex[li].emplace(ro, std::ftell(fp.get()));
+					}
 					swcount++;
 				}
 			}
@@ -537,9 +495,9 @@ namespace mewui
 	//-------------------------------------------------
 	//  load command text into the buffer
 	//-------------------------------------------------
-	void datfile_manager::load_command_info(std::string &buffer, std::string const &sel)
+	void datfile_manager::load_command_info(std::string &buffer, std::string const &sel) const
 	{
-		fileptr const datfile = parseopen("command.dat");
+		auto const datfile = parseopen("command.dat");
 		if (datfile)
 		{
 			// open and seek to correct point in datafile
@@ -568,9 +526,9 @@ namespace mewui
 	//-------------------------------------------------
 	//  load submenu item for command.dat
 	//-------------------------------------------------
-	void datfile_manager::command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems)
+	void datfile_manager::command_sub_menu(const game_driver *drv, std::vector<std::string> &menuitems) const
 	{
-		fileptr datfile = parseopen("command.dat");
+		auto datfile = parseopen("command.dat");
 		if (datfile)
 		{
 			m_menuidx.clear();
@@ -581,4 +539,36 @@ namespace mewui
 		}
 	}
 
+	// class tokenizer
+	tokenizer::tokenizer(std::string const &searchpath, char sep)
+		: m_searchpath(searchpath)
+		, m_current(m_searchpath.cbegin())
+		, m_is_first(true)
+		, m_sep(sep)
+	{
+	}
+
+	bool tokenizer::next(std::string &buffer)
+	{
+		// if none left, return FALSE to indicate we are done
+		if (!m_is_first && (m_searchpath.cend() == m_current))
+			return false;
+
+		// copy up to the next separator
+		auto const sep(std::find(m_current, m_searchpath.cend(), m_sep));
+		buffer.assign(m_current, sep);
+		m_current = sep;
+		if (m_searchpath.cend() != m_current)
+			++m_current;
+
+		// bump the index and return TRUE
+		m_is_first = false;
+		return true;
+	}
+
+	void tokenizer::reset()
+	{
+		m_current = m_searchpath.cbegin();
+		m_is_first = true;
+	}
 } // namespace mewui

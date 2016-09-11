@@ -79,7 +79,7 @@ namespace mewui
 		m_notif.icon(exename);
 		m_notif.text(maintitle);
 		m_notif.events().mouse_down([this] {
-			msgbox mb(*this, "Tray Test");
+			msgbox mb{ *this, "Tray Test" };
 			mb.icon(mb.icon_information) << "Some msg";
 			mb.show();
 		});
@@ -669,13 +669,25 @@ namespace mewui
 	void main_form::init_view_menu()
 	{
 		auto menu = &m_menubar.push_back("View");
-		auto item = menu->append("Show Status Bar", [this](menu::item_proxy& ip) {
+		auto item = menu->append("Software Packages", [this](menu::item_proxy& ip) {
 			auto &pl = this->get_place();
-			pl.field_display("statusbar", ip.checked());
+			pl.field_display("swtab", ip.checked());
+			pl.field_display("swtab_frame", ip.checked());
+			auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
+			pl.modify("machinebox", wd.c_str());
 			pl.collocate();
 		});
 		item.check_style(menu::checks::highlight);
 		item.checked(true);
+
+		auto item_bar = menu->append("Status Bar", [this](menu::item_proxy& ip) {
+			auto &pl = this->get_place();
+			pl.field_display("statusbar", ip.checked());
+			pl.collocate();
+		});
+		item_bar.check_style(menu::checks::highlight);
+		item_bar.checked(true);
+
 		menu->renderer(custom_renderer(menu->renderer()));
 	}
 

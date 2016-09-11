@@ -198,8 +198,7 @@ public:
 	enum ui_option
 	{
 		UI_CABINET,
-		UI_SIMPLE,
-		UI_MODERN
+		UI_SIMPLE
 	};
 	
 	// construction/destruction

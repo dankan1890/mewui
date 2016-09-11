@@ -278,7 +278,7 @@ void datfile_manager::load_data_info(const game_driver *drv, std::string &buffer
 			load_driver_text(datfile.get(), drv, buffer, *driver_idx, TAG_DRIVER);
 
 		// cleanup mameinfo and sysinfo double line spacing
-		if (*tag == TAG_MAME && type != "Machine Init" || type == "SysInfo")
+		if ((*tag == TAG_MAME && type != "Machine Init") || type == "SysInfo")
 			strreplace(buffer, "\n\n", "\n");
 	}
 }

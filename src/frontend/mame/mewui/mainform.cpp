@@ -59,11 +59,12 @@ namespace mewui
 
 	main_form::main_form(running_machine &machine, const game_driver **_system, emu_options &_options, std::unique_ptr<mame_ui_manager> &_mui, std::string &exename)
 		: form(nana::rectangle(_mui->options().form_x(), _mui->options().form_y(), _mui->options().form_width(), _mui->options().form_heigth())
-			   , appear::decorate<appear::minimize, appear::maximize, appear::sizable>())
+		       , appear::decorate<appear::minimize, appear::maximize, appear::sizable>())
 		, m_system(_system)
 		, m_options(_options)
 		, m_latest_machine(_mui->options().last_used_machine())
 		, m_ui(_mui)
+		, m_exename(exename)
 	{
 		// Load DATs data
 		m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
@@ -76,7 +77,7 @@ namespace mewui
 
 #if defined(NANA_WINDOWS)
 		// Tray
-		m_notif.icon(exename);
+		m_notif.icon(m_exename);
 		m_notif.text(maintitle);
 		m_notif.events().mouse_down([this] {
 			msgbox mb{ *this, "Tray Test" };
@@ -714,10 +715,21 @@ namespace mewui
 	{
 		auto menu = &m_menubar.push_back("Help");
 		menu->append("About", [this](menu::item_proxy& ip) {
-			msgbox mb{ *this, "About MEWUI" };
-			auto maintitle = string_format("MEWUI %s\nby Dankan1890", emulator_info::get_bare_build_version());
-			mb.icon(mb.icon_information) << maintitle;
-			mb.show();
+			form fm{ *this };
+			fm.caption("About MEWUI");
+			fm.bgcolor(colors::white);
+			auto maintitle = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
+			label lb{ fm, maintitle };
+			lb.transparent(true);
+			picture pc{ fm };
+			pc.load(paint::image{ m_exename });
+			pc.stretchable(true);
+			fm.div("vert<><<weight=5><icon><weight=5><msg><weight=5>><>");
+			fm["icon"] << pc;
+			fm["msg"] << lb;
+			fm.collocate();
+			fm.show();
+			fm.modality();
 		});
 		menu->renderer(custom_renderer(menu->renderer()));
 	}

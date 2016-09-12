@@ -28,7 +28,7 @@ namespace mewui
 		API::window_icon_default(paint::image{ exename });
 
 		// Execute GUI
-		main_form gui(machine, &system, _options, mui, exename);
+		main_form gui{ machine, &system, _options, mui, exename };
 		gui.show();
 		exec();
 

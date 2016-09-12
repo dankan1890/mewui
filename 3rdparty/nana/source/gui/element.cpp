@@ -366,8 +366,11 @@ namespace nana
 		class arrowhead
 			: public arrow_interface
 		{
-			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state, ::nana::direction dir) override
+			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state sta, ::nana::direction dir) override
 			{
+				if (sta == element_state::disabled)
+					graph.palette(false, colors::light_gray);
+
 				int x = r.x;
 				int y = r.y + 5;
 				switch (dir)

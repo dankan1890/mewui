@@ -170,6 +170,7 @@ namespace mewui
 		std::unique_ptr<datfile_manager>		m_datfile;
 		std::unique_ptr<mame_ui_manager>		&m_ui;
 		std::map<std::string, std::vector<const game_driver *>, ci_less> m_sortedlist;
+		std::string m_exename;
 
 		// Init widgets
 		void init_tabbar();

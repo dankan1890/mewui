@@ -69,6 +69,9 @@ namespace mewui
 		// Load DATs data
 		m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
 
+#ifdef MAME_DEBUG
+		m_exename = "C:\\Mame_Source\\My-GIT\\mewui\\testvsbuild\\vs2015\\bin\\x64\\Debug\\mametest64d.exe";
+#endif
 		// Main title
 		auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
 		this->caption(maintitle);
@@ -715,16 +718,19 @@ namespace mewui
 	{
 		auto menu = &m_menubar.push_back("Help");
 		menu->append("About", [this](menu::item_proxy& ip) {
-			form fm{ *this };
+			form fm{ *this, API::make_center(300, 200), appear::decorate<>() };
 			fm.caption("About MEWUI");
 			fm.bgcolor(colors::white);
 			auto maintitle = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
 			label lb{ fm, maintitle };
 			lb.transparent(true);
+			lb.format(true);
+			lb.text_align(align::left, align_v::center);
 			picture pc{ fm };
 			pc.load(paint::image{ m_exename });
-			pc.stretchable(true);
-			fm.div("vert<><<weight=5><icon><weight=5><msg><weight=5>><>");
+			pc.transparent(true);
+			pc.align(align::right, align_v::center);
+			fm.div("vert<><<><weight=32 icon><weight=5><msg><>><>");
 			fm["icon"] << pc;
 			fm["msg"] << lb;
 			fm.collocate();

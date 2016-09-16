@@ -135,14 +135,8 @@ private:
 		}
 		else
 		{
-			for (int x = 0; x < item.size(); ++x)
-			{
-				if (item[x].ref == m_prev_selected)
-				{
-					selected = x;
-					break;
-				}
-			}
+			auto pred = [&m_prev = m_prev_selected](const ui::menu_item & i) { return i.ref == m_prev; };
+			selected = std::find_if(item.begin(), item.end(), pred) - item.begin();
 		}
 	}
 

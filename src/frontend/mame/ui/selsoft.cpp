@@ -34,9 +34,9 @@ std::string reselect_last::software;
 std::string reselect_last::swlist;
 bool reselect_last::m_reselect = false;
 static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
-										"ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
-										"isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",
-										"pol", "rus", "slo", "spa", "sui", "swe", "tha", "tpe", "tw", "uk", "ukr", "usa" };
+									  "ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
+									  "isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",
+									  "pol", "rus", "slo", "spa", "sui", "swe", "tha", "tpe", "tw", "uk", "ukr", "usa" };
 
 std::pair<UINT16, UINT16> menu_select_software::m_sub_filter;
 std::pair<const game_driver *, std::pair<UINT16, UINT16>> menu_select_software::m_last_filter;

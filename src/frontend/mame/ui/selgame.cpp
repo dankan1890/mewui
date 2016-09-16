@@ -44,7 +44,7 @@ struct ci_less
 };
 
 bool menu_select_game::first_start = true;
-std::vector<const game_driver *> menu_select_game::m_sortedlist;
+vptr_game menu_select_game::m_sortedlist;
 int menu_select_game::m_isabios = 0;
 
 //-------------------------------------------------
@@ -53,8 +53,9 @@ int menu_select_game::m_isabios = 0;
 
 menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &container, const char *gamename)
 	: menu_select_launch(mui, container, false)
+	, highlight(0)
+	, m_searchlist{nullptr}
 {
-	highlight = 0;
 	std::string error_string, last_filter, sub_filter;
 	ui_options &moptions = mui.options();
 
@@ -86,7 +87,7 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 	{
 		reselect_last::driver = moptions.last_used_machine();
 		std::string tmp(moptions.last_used_filter());
-		std::size_t found = tmp.find_first_of(",");
+		auto found = tmp.find_first_of(",");
 		if (found == std::string::npos)
 			last_filter = tmp;
 		else
@@ -132,7 +133,6 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 	ui_globals::default_image = true;
 	ui_globals::panels_status = moptions.hide_panels();
 	ui_globals::curdats_total = 1;
-	m_searchlist[0] = nullptr;
 }
 
 //-------------------------------------------------
@@ -142,13 +142,13 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 menu_select_game::~menu_select_game()
 {
 	std::string error_string, last_driver;
-	game_driver const *const driver(isfavorite() ? nullptr : reinterpret_cast<game_driver const *>(get_selection_ref()));
-	ui_software_info *const swinfo(isfavorite() ? reinterpret_cast<ui_software_info *>(get_selection_ref()) : nullptr);
+	auto const driver(isfavorite() ? nullptr : reinterpret_cast<game_driver const *>(get_selection_ref()));
+	const auto swinfo(isfavorite() ? reinterpret_cast<ui_software_info *>(get_selection_ref()) : nullptr);
 
-	if ((FPTR)driver > skip_main_items)
+	if (reinterpret_cast<FPTR>(driver) > skip_main_items)
 		last_driver = driver->name;
 
-	if ((FPTR)swinfo > skip_main_items)
+	if (reinterpret_cast<FPTR>(swinfo) > skip_main_items)
 		last_driver = swinfo->shortname;
 
 	std::string filter(main_filters::text[main_filters::actual]);
@@ -157,7 +157,7 @@ menu_select_game::~menu_select_game()
 	else if (main_filters::actual == FILTER_YEAR)
 		filter.append(",").append(c_year::ui[c_year::actual]);
 
-	ui_options &mopt = ui().options();
+	auto& mopt = ui().options();
 	mopt.set_value(OPTION_LAST_USED_FILTER, filter.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	mopt.set_value(OPTION_LAST_USED_MACHINE, last_driver.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
 	mopt.set_value(OPTION_HIDE_PANELS, ui_globals::panels_status, OPTION_PRIORITY_CMDLINE, error_string);
@@ -188,7 +188,7 @@ void menu_select_game::handle()
 	// if i have to reselect a software, force software list submenu
 	if (reselect_last::get())
 	{
-		const game_driver *driver = (const game_driver *)item[selected].ref;
+		auto driver = static_cast<const game_driver *>(item[selected].ref);
 		menu::stack_push<menu_select_software>(ui(), container(), driver);
 		return;
 	}
@@ -197,7 +197,7 @@ void menu_select_game::handle()
 	machine().ui_input().pressed(IPT_UI_PAUSE);
 
 	// process the menu
-	const event *menu_event = process(PROCESS_LR_REPEAT);
+	auto menu_event = process(PROCESS_LR_REPEAT);
 	if (menu_event && menu_event->itemref)
 	{
 		if (m_ui_error)
@@ -235,10 +235,10 @@ void menu_select_game::handle()
 			}
 			else
 			{
-				ui_software_info *sw = reinterpret_cast<ui_software_info *>(m_prev_selected);
+				auto sw = reinterpret_cast<ui_software_info *>(m_prev_selected);
 				menu::stack_push<menu_machine_configure>(
 						ui(), container(),
-						(const game_driver *)sw->driver,
+						static_cast<const game_driver *>(sw->driver),
 						menu_event->mouse.x0, menu_event->mouse.y0);
 			}
 		}
@@ -258,8 +258,8 @@ void menu_select_game::handle()
 				// Infos
 				if (!isfavorite())
 				{
-					const game_driver *drv = (const game_driver *)menu_event->itemref;
-					if ((FPTR)drv > skip_main_items && ui_globals::curdats_view > 0)
+					auto drv = static_cast<const game_driver *>(menu_event->itemref);
+					if (reinterpret_cast<FPTR>(drv) > skip_main_items && ui_globals::curdats_view > 0)
 					{
 						ui_globals::curdats_view--;
 						m_topline_datsview = 0;
@@ -267,13 +267,13 @@ void menu_select_game::handle()
 				}
 				else
 				{
-					ui_software_info *drv = (ui_software_info *)menu_event->itemref;
+					auto drv = static_cast<ui_software_info *>(menu_event->itemref);
 					if (drv->startempty == 1 && ui_globals::curdats_view > 0)
 					{
 						ui_globals::curdats_view--;
 						m_topline_datsview = 0;
 					}
-					else if ((FPTR)drv > skip_main_items && ui_globals::cur_sw_dats_view > 0)
+					else if (reinterpret_cast<FPTR>(drv) > skip_main_items && ui_globals::cur_sw_dats_view > 0)
 					{
 						ui_globals::cur_sw_dats_view--;
 						m_topline_datsview = 0;
@@ -296,8 +296,8 @@ void menu_select_game::handle()
 				// Infos
 				if (!isfavorite())
 				{
-					const game_driver *drv = (const game_driver *)menu_event->itemref;
-					if ((FPTR)drv > skip_main_items && ui_globals::curdats_view < ui_globals::curdats_total)
+					auto drv = static_cast<const game_driver *>(menu_event->itemref);
+					if (reinterpret_cast<FPTR>(drv) > skip_main_items && ui_globals::curdats_view < ui_globals::curdats_total)
 					{
 						ui_globals::curdats_view++;
 						m_topline_datsview = 0;
@@ -305,13 +305,13 @@ void menu_select_game::handle()
 				}
 				else
 				{
-					ui_software_info *drv = (ui_software_info *)menu_event->itemref;
+					auto drv = static_cast<ui_software_info *>(menu_event->itemref);
 					if (drv->startempty == 1 && ui_globals::curdats_view < ui_globals::curdats_total)
 					{
 						ui_globals::curdats_view++;
 						m_topline_datsview = 0;
 					}
-					else if ((FPTR)drv > skip_main_items && ui_globals::cur_sw_dats_view < ui_globals::cur_sw_dats_total)
+					else if (reinterpret_cast<FPTR>(drv) > skip_main_items && ui_globals::cur_sw_dats_view < ui_globals::cur_sw_dats_total)
 					{
 						ui_globals::cur_sw_dats_view++;
 						m_topline_datsview = 0;
@@ -350,15 +350,15 @@ void menu_select_game::handle()
 			// handle UI_DATS
 			if (!isfavorite())
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
-				if ((FPTR)driver > skip_main_items && mame_machine_manager::instance()->lua()->call_plugin(driver->name, "data_list"))
+				auto driver = static_cast<const game_driver *>(menu_event->itemref);
+				if (reinterpret_cast<FPTR>(driver) > skip_main_items && mame_machine_manager::instance()->lua()->call_plugin(driver->name, "data_list"))
 					menu::stack_push<menu_dats_view>(ui(), container(), driver);
 			}
 			else
 			{
-				ui_software_info *ui_swinfo  = (ui_software_info *)menu_event->itemref;
+				auto ui_swinfo  = static_cast<ui_software_info *>(menu_event->itemref);
 
-				if ((FPTR)ui_swinfo > skip_main_items)
+				if (reinterpret_cast<FPTR>(ui_swinfo) > skip_main_items)
 				{
 					if (ui_swinfo->startempty == 1 && mame_machine_manager::instance()->lua()->call_plugin(ui_swinfo->driver->name, "data_list"))
 						menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo->driver);
@@ -372,10 +372,10 @@ void menu_select_game::handle()
 			// handle UI_FAVORITES
 			if (!isfavorite())
 			{
-				const game_driver *driver = (const game_driver *)menu_event->itemref;
-				if ((FPTR)driver > skip_main_items)
+				auto driver = static_cast<const game_driver *>(menu_event->itemref);
+				if (reinterpret_cast<FPTR>(driver) > skip_main_items)
 				{
-					favorite_manager &mfav = mame_machine_manager::instance()->favorite();
+					auto& mfav = mame_machine_manager::instance()->favorite();
 					if (!mfav.isgame_favorite(driver))
 					{
 						mfav.add_favorite_game(driver);
@@ -391,8 +391,8 @@ void menu_select_game::handle()
 			}
 			else
 			{
-				ui_software_info *swinfo = (ui_software_info *)menu_event->itemref;
-				if ((FPTR)swinfo > skip_main_items)
+				auto swinfo = static_cast<ui_software_info *>(menu_event->itemref);
+				if (reinterpret_cast<FPTR>(swinfo) > skip_main_items)
 				{
 					machine().popmessage(_("%s\n removed from favorites list."), swinfo->longname.c_str());
 					mame_machine_manager::instance()->favorite().remove_favorite_game(*swinfo);
@@ -578,14 +578,14 @@ void menu_select_game::populate()
 						cloneof = false;
 				}
 
-				item_append(favmap.second.longname, "", (cloneof) ? (flags | FLAG_INVERT) : flags, (void *)&favmap.second);
+				item_append(favmap.second.longname, "", (cloneof) ? (flags | FLAG_INVERT) : flags, static_cast<void *>(&favmap.second));
 			}
 			else
 			{
 				if (old_item_selected == -1 && favmap.second.shortname == reselect_last::driver)
 					old_item_selected = curitem;
 				item_append(favmap.second.longname, favmap.second.devicetype,
-							favmap.second.parentname.empty() ? flags : (FLAG_INVERT | flags), (void *)&favmap.second);
+							favmap.second.parentname.empty() ? flags : (FLAG_INVERT | flags), static_cast<void *>(&favmap.second));
 			}
 			curitem++;
 		}
@@ -636,7 +636,7 @@ void menu_select_game::build_available_list()
 {
 	int m_total = driver_list::total();
 	std::vector<bool> m_included(m_total, false);
-	std::map<std::string, std::vector<const game_driver *>, ci_less> uimap;
+	std::map<std::string, vptr_game, ci_less> uimap;
 
 	// open a path to the ROMs and find them in the array
 	file_enumerator path(machine().options().media_path());
@@ -651,7 +651,7 @@ void menu_select_game::build_available_list()
 
 		// build a name for it
 		for (src = dir->name; *src != 0 && *src != '.' && dst < &drivername[ARRAY_LENGTH(drivername) - 1]; ++src)
-			*dst++ = tolower((UINT8) * src);
+			*dst++ = tolower(static_cast<UINT8>(*src));
 
 		*dst = 0;
 		int drivnum = driver_list::find(drivername);
@@ -788,7 +788,7 @@ void menu_select_game::inkey_select(const event *menu_event)
 	const game_driver *driver = (const game_driver *)menu_event->itemref;
 
 	// special case for configure options
-	if ((FPTR)driver == CONF_OPTS)
+	if (reinterpret_cast<FPTR>(driver) == CONF_OPTS)
 		menu::stack_push<menu_game_options>(ui(), container());
 
 	// special case for configure machine

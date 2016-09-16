@@ -224,7 +224,7 @@ int mame_machine_manager::execute(std::string exename)
 		set_machine(&machine);
 
 		// run the machine
-		if (is_empty)
+/*		if (is_empty)
 		{
 			system = mewui::start_gui(machine, m_options, exename);
 			if (system != &GAME_NAME(___empty))
@@ -232,7 +232,7 @@ int mame_machine_manager::execute(std::string exename)
 			else
 				machine.schedule_exit();
 		}
-		else
+		else */
 			error = machine.run(is_empty);
 		m_firstrun = false;
 

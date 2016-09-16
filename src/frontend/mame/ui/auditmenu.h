@@ -19,8 +19,6 @@ namespace ui {
 //-------------------------------------------------
 //  class audit menu
 //-------------------------------------------------
-using vptr_game = std::vector<const game_driver *>;
-
 class menu_audit : public menu
 {
 public:

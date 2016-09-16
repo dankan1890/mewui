@@ -20,11 +20,11 @@ namespace ui {
 class menu_select_game : public menu_select_launch
 {
 public:
-	menu_select_game(mame_ui_manager &mui, render_container &container, const char *gamename);
+	menu_select_game(mame_ui_manager &, render_container &, const char *);
 	virtual ~menu_select_game();
 
 	// force game select menu
-	static void force_game_select(mame_ui_manager &mui, render_container &container);
+	static void force_game_select(mame_ui_manager &, render_container &);
 
 protected:
 	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
@@ -43,10 +43,10 @@ private:
 	static int m_isabios;
 	int highlight;
 
-	static std::vector<const game_driver *> m_sortedlist;
-	std::vector<const game_driver *> m_availsortedlist;
-	std::vector<const game_driver *> m_unavailsortedlist;
-	std::vector<const game_driver *> m_displaylist;
+	static vptr_game m_sortedlist;
+	vptr_game m_availsortedlist;
+	vptr_game m_unavailsortedlist;
+	vptr_game m_displaylist;
 
 	const game_driver *m_searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
 
@@ -54,21 +54,21 @@ private:
 	virtual void handle() override;
 
 	// draw left panel
-	virtual float draw_left_panel(float x1, float y1, float x2, float y2) override;
+	virtual float draw_left_panel(float, float, float, float) override;
 
 	// get selected software and/or driver
-	virtual void get_selection(ui_software_info const *&software, game_driver const *&driver) const override;
+	virtual void get_selection(ui_software_info const *&, game_driver const *&) const override;
 
 	// text for main top/bottom panels
-	virtual void make_topbox_text(std::string &line0, std::string &line1, std::string &line2) const override;
-	virtual std::string make_driver_description(game_driver const &driver) const override;
-	virtual std::string make_software_description(ui_software_info const &software) const override;
+	virtual void make_topbox_text(std::string &, std::string &, std::string &) const override;
+	virtual std::string make_driver_description(game_driver const &) const override;
+	virtual std::string make_software_description(ui_software_info const &) const override;
 
 	// internal methods
 	void build_custom();
 	void build_category();
 	void build_available_list();
-	void build_list(const char *filter_text = nullptr, int filter = 0, bool bioscheck = false, std::vector<const game_driver *> vec = {});
+	void build_list(const char * = nullptr, int = 0, bool = false, vptr_game = {});
 
 	bool isfavorite() const;
 	void populate_search();
@@ -78,17 +78,17 @@ private:
 
 	void *get_selection_ptr() const
 	{
-		void *const selected_ref(get_selection_ref());
+		const auto selected_ref(get_selection_ref());
 		return (FPTR(selected_ref) > skip_main_items) ? selected_ref : m_prev_selected;
 	}
 
 	// General info
-	virtual void general_info(const game_driver *driver, std::string &buffer) override;
+	virtual void general_info(const game_driver *, std::string &) override;
 
 	// handlers
-	void inkey_select(const event *menu_event);
-	void inkey_select_favorite(const event *menu_event);
-	void inkey_special(const event *menu_event);
+	void inkey_select(const event *);
+	void inkey_select_favorite(const event *);
+	void inkey_special(const event *);
 	void inkey_export();
 };
 

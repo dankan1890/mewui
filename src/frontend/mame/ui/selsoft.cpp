@@ -48,8 +48,8 @@ std::pair<const game_driver *, std::pair<UINT16, UINT16>> menu_select_software::
 
 bool compare_software(ui_software_info a, ui_software_info b)
 {
-	ui_software_info *x = &a;
-	ui_software_info *y = &b;
+	auto x = &a;
+	auto y = &b;
 
 	bool clonex = (x->parentname[0] != '\0');
 	bool cloney = (y->parentname[0] != '\0');

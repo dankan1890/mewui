@@ -85,6 +85,7 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 
 	if (first_start)
 	{
+//		moptions.add_entry("TEST", "SUB", OPTION_INTEGER);
 		reselect_last::driver = moptions.last_used_machine();
 		std::string tmp(moptions.last_used_filter());
 		auto found = tmp.find_first_of(",");
@@ -1009,7 +1010,7 @@ void menu_select_game::inkey_special(const event *menu_event)
 //  build list
 //-------------------------------------------------
 
-void menu_select_game::build_list(const char *filter_text, int filter, bool bioscheck, std::vector<const game_driver *> s_drivers)
+void menu_select_game::build_list(const char *filter_text, int filter, bool bioscheck, vptr_game s_drivers)
 {
 	if (s_drivers.empty())
 	{

@@ -1261,7 +1261,7 @@ void menu_select_launch::draw(UINT32 flags)
 	if ((m_focus == focused_menu::main) && (selected < visible_items))
 		m_prev_selected = nullptr;
 
-	int const n_loop = (std::min)(m_visible_lines, visible_items);
+	auto const n_loop = (std::min)(m_visible_lines, visible_items);
 	for (int linenum = 0; linenum < n_loop; linenum++)
 	{
 		float line_y = visible_top + (float)linenum * line_height;
@@ -1420,9 +1420,7 @@ void menu_select_launch::draw(UINT32 flags)
 	// noinput
 	if (noinput)
 	{
-		int alpha = (1.0f - machine().options().pause_brightness()) * 255.0f;
-		if (alpha > 255)
-			alpha = 255;
+		auto alpha = (std::min)(int((1.0f - machine().options().pause_brightness()) * 255.0f), 255);
 		if (alpha >= 0)
 			container().add_rect(0.0f, 0.0f, 1.0f, 1.0f, rgb_t(alpha, 0x00, 0x00, 0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 	}

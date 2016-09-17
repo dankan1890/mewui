@@ -161,7 +161,7 @@ void menu_custom_ui::populate()
 //  perform our special rendering
 //-------------------------------------------------
 
-void menu_custom_ui::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
+void menu_custom_ui::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
 
@@ -487,7 +487,7 @@ void menu_colors_ui::handle()
 	if (menu_event != nullptr && menu_event->itemref != nullptr && menu_event->iptkey == IPT_UI_SELECT)
 	{
 		if ((FPTR)menu_event->itemref != MUI_RESTORE)
-			menu::stack_push<menu_rgb_ui>(ui(), container(), &m_color_table[reinterpret_cast<FPTR>(menu_event->itemref)].color, item[selected].text);
+			menu::stack_push<menu_rgb_ui>(ui(), container(), &m_color_table[(FPTR)menu_event->itemref].color, item[selected].text);
 		else
 		{
 			changed = true;

@@ -98,7 +98,7 @@ protected:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	enum
+	enum muicolors
 	{
 		MUI_BACKGROUND_COLOR = 1,
 		MUI_BORDER_COLOR,
@@ -123,6 +123,14 @@ private:
 	{
 		rgb_t       color;
 		const char  *option;
+	};
+
+	struct sampletext
+	{
+		const char * text;
+		muicolors    fgcolor;
+		muicolors    bgcolor;
+		bool         highlight;
 	};
 
 	virtual void populate() override;

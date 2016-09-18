@@ -936,6 +936,9 @@ hr16b                           //
 mmt8                            //
 sr16                            //
 
+@source:alesis_qs.cpp
+alesqs7                         //
+
 @source:alg.cpp
 alg_bios                        //
 aplatoon                        // (c) 199? Nova?
@@ -14165,8 +14168,10 @@ fxmcr165                        // Gakken
 gjackpot                        // Gakken
 gpoker                          // Gakken
 h2hbaseb                        // Coleco
+h2hboxing                       // Coleco
 h2hfootb                        // Coleco
 lostreas                        // Parker Bros
+matchnum                        // A-One
 mathmagi                        // APF
 mdndclab                        // Mattel
 merlin                          // Parker Bros
@@ -14180,11 +14185,12 @@ ssimon                          // Milton Bradley
 ssports4                        // US Games
 starwbc                         // Kenner
 starwbcp                        // Kenner (patent)
-stopthie                        // Parker Bros
-stopthiep                       // Parker Bros (patent)
+stopthief                       // Parker Bros
+stopthiefp                      // Parker Bros (patent)
 tandy12                         // Tandy Radio Shack
 tbreakup                        // Tomy
 tc4                             // Coleco
+tcfball                         // Tandy Radio Shack
 zodiac                          // Coleco
 
 @source:hh_ucom4.cpp
@@ -20467,6 +20473,7 @@ swtrilgy                        // 1998.11 Star Wars Trilogy Arcade
 swtrilgya                       //
 vf3                             // 1996.09 Virtua Fighter 3
 vf3a                            //
+vf3c                            //
 vf3tb                           // 1997.10 Virtua Fighter 3tb
 von2                            // 1998.03 Dennou Senki Virtual-On Oratorio Tangram
 von254g                         // 1999.05 Dennou Senki Virtual-On Oratorio Tangram ver.5.4

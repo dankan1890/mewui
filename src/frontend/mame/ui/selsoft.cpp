@@ -139,8 +139,9 @@ menu_select_software::menu_select_software(mame_ui_manager &mui, render_containe
 	if (mui.options().exists("TEST"))
 	{
 		auto ent = mui.options().get_entry("TEST");
-		//mui.options().remove_entry(*ent);
+		mui.options().remove_entry(*ent);
 	}
+
 	if (m_last_filter.first == driver)
 	{
 		switch (sw_filters::actual)

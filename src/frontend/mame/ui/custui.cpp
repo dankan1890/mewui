@@ -725,7 +725,7 @@ void menu_rgb_ui::handle()
 
 	if (menu_event != nullptr && menu_event->itemref != nullptr)
 	{
-		switch ((FPTR)menu_event->itemref)
+		switch (reinterpret_cast<FPTR>(menu_event->itemref))
 		{
 			case RGB_ALPHA:
 				if (menu_event->iptkey == IPT_UI_LEFT && m_color->a() > 1)
@@ -833,6 +833,7 @@ void menu_rgb_ui::populate()
 	// set filter arrow
 	UINT32 arrow_flags = FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW;
 	std::string s_text = std::string(m_search).append("_");
+	item_append(_("ARGB Settings"), "", FLAG_DISABLE | FLAG_UI_HEADING, nullptr);
 
 	if (m_lock_ref != RGB_ALPHA)
 	{
@@ -879,14 +880,13 @@ void menu_rgb_ui::populate()
 
 void menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
-	float width, maxwidth = origx2 - origx1;
-
 	// top text
-	std::string topbuf = std::string(m_title).append(_(" - ARGB Settings"));
-	ui().draw_text_full(container(), topbuf.c_str(), 0.0f, 0.0f, 1.0f, ui::text_layout::CENTER, ui::text_layout::NEVER,
-									mame_ui_manager::NONE, rgb_t::white, rgb_t::black, &width, nullptr);
-	width += 2 * UI_BOX_LR_BORDER;
-	maxwidth = std::max(maxwidth, width);
+	float width;
+	ui().draw_text_full(container(), m_title.c_str(), 0.0f, 0.0f, 1.0f, ui::text_layout::CENTER, ui::text_layout::NEVER,
+						mame_ui_manager::NONE, rgb_t::white, rgb_t::black, &width);
+
+	width += 2.0f * UI_BOX_LR_BORDER;
+	float maxwidth = std::max(origx2 - origx1, width);
 
 	// compute our bounds
 	float x1 = 0.5f - 0.5f * maxwidth;
@@ -903,41 +903,37 @@ void menu_rgb_ui::custom_render(void *selectedref, float top, float bottom, floa
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the text within it
-	ui().draw_text_full(container(), topbuf.c_str(), x1, y1, x2 - x1, ui::text_layout::CENTER, ui::text_layout::NEVER,
-									mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr);
+	ui().draw_text_full(container(), m_title.c_str(), x1, y1, x2 - x1, ui::text_layout::CENTER, ui::text_layout::NEVER,
+						mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
 
 	std::string sampletxt(_("Color preview ="));
-	maxwidth = origx2 - origx1;
 	ui().draw_text_full(container(), sampletxt.c_str(), 0.0f, 0.0f, 1.0f, ui::text_layout::CENTER, ui::text_layout::NEVER,
-									mame_ui_manager::NONE, rgb_t::white, rgb_t::black, &width, nullptr);
+						mame_ui_manager::NONE, rgb_t::white, rgb_t::black, &width);
 	width += 2 * UI_BOX_LR_BORDER;
-	maxwidth = std::max(maxwidth, width);
+	maxwidth = std::max(origx2 - origx1, width);
 
 	// compute our bounds
-	x1 -= UI_BOX_LR_BORDER;
-	x2 = x1 + width;
+	x1 = 0.5f - 0.5f * maxwidth;
+	x2 = x1 + maxwidth;
 	y1 = origy2 + UI_BOX_TB_BORDER;
 	y2 = origy2 + bottom;
 
 	// draw a box
-	ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_RED_COLOR);
+	ui().draw_outlined_box(container(), x1, y1, x1 + width, y2, UI_RED_COLOR);
 
 	// take off the borders
 	x1 += UI_BOX_LR_BORDER;
-	x2 -= UI_BOX_LR_BORDER;
 	y1 += UI_BOX_TB_BORDER;
 
 	// draw the normal text
-	ui().draw_text_full(container(), sampletxt.c_str(), x1, y1, x2 - x1, ui::text_layout::CENTER, ui::text_layout::NEVER,
-									mame_ui_manager::NORMAL, rgb_t::white, rgb_t::black, nullptr, nullptr);
+	ui().draw_text_full(container(), sampletxt.c_str(), x1, y1, width - UI_BOX_LR_BORDER, ui::text_layout::CENTER, ui::text_layout::NEVER,
+						mame_ui_manager::NORMAL, rgb_t::white, rgb_t::black);
 
-	float t_x2 = x1 - UI_BOX_LR_BORDER + maxwidth;
-	x1 = x2 + 2.0f * UI_BOX_LR_BORDER;
-	x2 = t_x2;
+	x1 += width + UI_BOX_LR_BORDER;
 	y1 -= UI_BOX_TB_BORDER;
 
+	// draw color box
 	ui().draw_outlined_box(container(), x1, y1, x2, y2, *m_color);
-
 }
 
 //-------------------------------------------------
@@ -949,32 +945,20 @@ void menu_rgb_ui::inkey_special(const event *menu_event)
 	if (menu_event->iptkey == IPT_UI_SELECT)
 	{
 		m_key_active = !m_key_active;
-		m_lock_ref = (FPTR)menu_event->itemref;
+		m_lock_ref = reinterpret_cast<FPTR>(menu_event->itemref);
 
 		if (!m_key_active)
 		{
 			int val = atoi(m_search);
 			val = m_color->clamp(val);
 
-			switch ((FPTR)menu_event->itemref)
+			switch (m_lock_ref)
 			{
-			case RGB_ALPHA:
-				m_color->set_a(val);
-				break;
-
-			case RGB_RED:
-				m_color->set_r(val);
-				break;
-
-			case RGB_GREEN:
-				m_color->set_g(val);
-				break;
-
-			case RGB_BLUE:
-				m_color->set_b(val);
-				break;
-			
-			default: break;
+				case RGB_ALPHA:	m_color->set_a(val); break;
+				case RGB_RED:	m_color->set_r(val); break;
+				case RGB_GREEN:	m_color->set_g(val); break;
+				case RGB_BLUE:	m_color->set_b(val); break;
+				default: break;
 			}
 
 			m_search[0] = 0;
@@ -990,20 +974,17 @@ void menu_rgb_ui::inkey_special(const event *menu_event)
 	}
 
 	auto const buflen = std::strlen(m_search);
-	if ((menu_event->unichar == 8) || (menu_event->unichar == 0x7f))
+	if (menu_event->unichar == 8 || menu_event->unichar == 0x7f)
 	{
 		// if it's a backspace and we can handle it, do so
 		if (0 < buflen)
 			*const_cast<char *>(utf8_previous_char(&m_search[buflen])) = 0;
 	}
-	else if (buflen >= 3)
-	{
-		return;
-	}
-	else if ((menu_event->unichar >= '0' && menu_event->unichar <= '9'))
+	else if (menu_event->unichar >= '0' && menu_event->unichar <= '9')
 	{
 		// if it's any other key and we're not maxed out, update
-		menu_event->append_char(m_search, buflen);
+		if (buflen < 3)
+			menu_event->append_char(m_search, buflen);
 	}
 }
 
@@ -1042,7 +1023,7 @@ menu_palette_sel::~menu_palette_sel()
 void menu_palette_sel::handle()
 {
 	// process the menu
-	const event *menu_event = process(0);
+	auto menu_event = process(0);
 	if (menu_event != nullptr && menu_event->itemref != nullptr)
 	{
 		if (menu_event->iptkey == IPT_UI_SELECT)
@@ -1085,7 +1066,6 @@ void menu_palette_sel::draw(UINT32 flags)
 	auto lr_arrow_width = 0.4f * line_height * machine().render().ui_aspect();
 	auto ud_arrow_width = line_height * machine().render().ui_aspect();
 	auto gutter_width = lr_arrow_width * 1.3f;
-	int itemnum, linenum;
 
 	if (&machine().system() == &GAME_NAME(___empty))
 		draw_background();
@@ -1103,8 +1083,7 @@ void menu_palette_sel::draw(UINT32 flags)
 			total_width += 2.0f * gutter_width + ui().get_string_width(pitem.subtext.c_str());
 
 		// track the maximum
-		if (total_width > visible_width)
-			visible_width = total_width;
+		visible_width = std::max(visible_width, total_width);
 
 		// track the height as well
 		visible_main_menu_height += line_height;
@@ -1126,7 +1105,7 @@ void menu_palette_sel::draw(UINT32 flags)
 		visible_main_menu_height = 1.0f - 2.0f * UI_BOX_TB_BORDER - visible_extra_menu_height;
 
 	int visible_lines = floor(visible_main_menu_height / line_height);
-	visible_main_menu_height = (float)visible_lines * line_height;
+	visible_main_menu_height = static_cast<float>(visible_lines) * line_height;
 
 	// compute top/left of inner menu area by centering
 	float visible_left = (1.0f - visible_width) * 0.5f;
@@ -1143,9 +1122,7 @@ void menu_palette_sel::draw(UINT32 flags)
 	ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
 
 	// determine the first visible line based on the current selection
-	int top_line = selected - visible_lines / 2;
-	if (top_line < 0)
-		top_line = 0;
+	int top_line = std::max(selected - visible_lines / 2, 0);
 	if (top_line + visible_lines >= item.size())
 		top_line = item.size() - visible_lines;
 
@@ -1166,91 +1143,84 @@ void menu_palette_sel::draw(UINT32 flags)
 	float line_x0 = x1 + 0.5f * UI_LINE_WIDTH;
 	float line_x1 = x2 - 0.5f * UI_LINE_WIDTH;
 
-	for (linenum = 0; linenum < visible_lines; linenum++)
+	for (int linenum = 0; linenum < visible_lines; ++linenum)
 	{
-		float line_y = visible_top + (float)linenum * line_height;
-		itemnum = top_line + linenum;
+		float line_y = visible_top + static_cast<float>(linenum) * line_height;
+		int itemnum = top_line + linenum;
 		const menu_item &pitem = item[itemnum];
-		const char *itemtext = pitem.text.c_str();
 		rgb_t fgcolor = UI_TEXT_COLOR;
 		rgb_t bgcolor = UI_TEXT_BG_COLOR;
-		float line_y0 = line_y;
 		float line_y1 = line_y + line_height;
 
 		// set the hover if this is our item
-		if (mouse_hit && line_x0 <= mouse_x && line_x1 > mouse_x && line_y0 <= mouse_y && line_y1 > mouse_y && is_selectable(pitem))
+		if (mouse_hit && line_x0 <= mouse_x && line_x1 > mouse_x && line_y <= mouse_y && line_y1 > mouse_y && is_selectable(pitem))
 			hover = itemnum;
 
-		// if we're selected, draw with a different background
 		if (itemnum == selected)
 		{
+			// if we're selected, draw with a different background
 			fgcolor = UI_SELECTED_COLOR;
 			bgcolor = UI_SELECTED_BG_COLOR;
 		}
-
-		// else if the mouse is over this item, draw with a different background
 		else if (itemnum == hover)
 		{
+			// else if the mouse is over this item, draw with a different background
 			fgcolor = UI_MOUSEOVER_COLOR;
 			bgcolor = UI_MOUSEOVER_BG_COLOR;
 		}
 
 		// if we have some background hilighting to do, add a quad behind everything else
 		if (bgcolor != UI_TEXT_BG_COLOR)
-			highlight(line_x0, line_y0, line_x1, line_y1, bgcolor);
+			highlight(line_x0, line_y, line_x1, line_y1, bgcolor);
 
-		// if we're on the top line, display the up arrow
 		if (linenum == 0 && top_line != 0)
 		{
-			draw_arrow(
-				0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
+			// if we're on the top line, display the up arrow
+			draw_arrow(0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
 				line_y + 0.25f * line_height,
 				0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
 				line_y + 0.75f * line_height,
 				fgcolor,
 				ROT0);
-			if (hover == itemnum)
-				hover = HOVER_ARROW_UP;
+			
+			if (hover == itemnum) hover = HOVER_ARROW_UP;
 		}
-
-		// if we're on the bottom line, display the down arrow
 		else if (linenum == visible_lines - 1 && itemnum != item.size() - 1)
 		{
-			draw_arrow(
-				0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
+			// if we're on the bottom line, display the down arrow
+			draw_arrow(0.5f * (x1 + x2) - 0.5f * ud_arrow_width,
 				line_y + 0.25f * line_height,
 				0.5f * (x1 + x2) + 0.5f * ud_arrow_width,
 				line_y + 0.75f * line_height,
 				fgcolor,
 				ROT0 ^ ORIENTATION_FLIP_Y);
-			if (hover == itemnum)
-				hover = HOVER_ARROW_DOWN;
+			
+			if (hover == itemnum) hover = HOVER_ARROW_DOWN;
 		}
-
-		// if we're just a divider, draw a line
 		else if (pitem.type == menu_item_type::SEPARATOR)
-			container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width, line_y + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-
-		// if we don't have a subitem, just draw the string centered
+		{
+			// if we're just a divider, draw a line
+			container().add_line(visible_left, line_y + 0.5f * line_height, visible_left + visible_width,
+				line_y + 0.5f * line_height, UI_LINE_WIDTH, UI_BORDER_COLOR, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+		}
 		else if (pitem.subtext.empty())
-			ui().draw_text_full(container(), itemtext, effective_left, line_y, effective_width,
-				ui::text_layout::CENTER, ui::text_layout::TRUNCATE, mame_ui_manager::NORMAL, fgcolor, bgcolor, nullptr, nullptr);
-
-		// otherwise, draw the item on the left and the subitem text on the right
+		{
+			// if we don't have a subitem, just draw the string centered
+			ui().draw_text_full(container(), pitem.text.c_str(), effective_left, line_y, effective_width,
+				ui::text_layout::CENTER, ui::text_layout::TRUNCATE, mame_ui_manager::NORMAL, fgcolor, bgcolor);
+		}
 		else
 		{
-			const char *subitem_text = pitem.subtext.c_str();
-			rgb_t color = rgb_t((UINT32)strtoul(subitem_text, nullptr, 16));
+			// otherwise, draw the item on the left and the subitem text on the right
+			auto color = rgb_t(static_cast<UINT32>(strtoul(pitem.subtext.c_str(), nullptr, 16)));
 
 			// draw the left-side text
-			ui().draw_text_full(container(), itemtext, effective_left, line_y, effective_width,
-				ui::text_layout::LEFT, ui::text_layout::TRUNCATE, mame_ui_manager::NORMAL, fgcolor, bgcolor, nullptr, nullptr);
+			ui().draw_text_full(container(), pitem.text.c_str(), effective_left, line_y, effective_width,
+				ui::text_layout::LEFT, ui::text_layout::TRUNCATE, mame_ui_manager::NORMAL, fgcolor, bgcolor);
 
-			// give 2 spaces worth of padding
-			float subitem_width = ui().get_string_width("FF00FF00");
-
-			ui().draw_outlined_box(container(), effective_left + effective_width - subitem_width, line_y0,
-				effective_left + effective_width, line_y1, color);
+			// draw the right-side color
+			ui().draw_outlined_box(container(), effective_left + effective_width - ui().get_string_width("FF00FF00"),
+				line_y,	effective_left + effective_width, line_y1, color);
 		}
 	}
 

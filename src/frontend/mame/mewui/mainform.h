@@ -142,7 +142,7 @@ namespace mewui
 	{
 	public:
 		// ctor / dtor
-		main_form(running_machine &, const game_driver **, emu_options &, std::unique_ptr<mame_ui_manager> &, std::string &);
+		main_form(running_machine &, const game_driver **, emu_options &, std::unique_ptr<mame_ui_manager> &);
 
 	private:
 		// Layout management

@@ -65,7 +65,7 @@ namespace mewui
 		: m_machine(machine)
 		, m_options(moptions)
 	{
-		if (m_options.enabled_dats() && first_run)
+		if (first_run)
 		{
 			first_run = false;
 			opendatsfile(mameinfo);

@@ -136,12 +136,6 @@ menu_select_software::menu_select_software(mame_ui_manager &mui, render_containe
 	if (reselect_last::get())
 		reselect_last::set(false);
 
-	if (mui.options().exists("TEST"))
-	{
-		auto ent = mui.options().get_entry("TEST");
-		mui.options().remove_entry(*ent);
-	}
-
 	if (m_last_filter.first == driver)
 	{
 		switch (sw_filters::actual)
@@ -307,7 +301,7 @@ void menu_select_software::handle()
 			// handle UI_DOWN_FILTER
 			highlight++;
 		}
-		else if (menu_event->iptkey == IPT_UI_DATS && ui().options().enabled_dats())
+		else if (menu_event->iptkey == IPT_UI_DATS && mame_machine_manager::instance()->lua()->call_plugin("", "data_list"))
 		{
 			// handle UI_DATS
 			ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;

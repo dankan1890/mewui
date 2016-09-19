@@ -173,7 +173,6 @@ void mame_machine_manager::start_luaengine()
 int mame_machine_manager::execute(std::string exename)
 {
 	bool started_empty = false;
-
 	bool firstgame = true;
 
 	// loop across multiple hard resets
@@ -322,6 +321,8 @@ void emulator_info::display_ui_chooser(running_machine& machine)
 	render_container &container = machine.render().ui_container();
 	if (machine.options().ui() == emu_options::UI_SIMPLE)
 		ui::simple_menu_select_game::force_game_select(mui, container);
+	if (machine.options().ui() == emu_options::UI_MODERN)
+		mewui::start_gui(machine, machine.options());
 	else
 		ui::menu_select_game::force_game_select(mui, container);
 }

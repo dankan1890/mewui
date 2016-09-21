@@ -5,6 +5,7 @@
 
 #include "gui.h"
 #include "ui/miscmenu.h"
+#include "textbox.h"
 
 namespace ui {
 void main_form::force_game_select(mame_ui_manager &mui, render_container &container)
@@ -13,7 +14,7 @@ void main_form::force_game_select(mame_ui_manager &mui, render_container &contai
 	menu::stack_reset(mui.machine());
 
 	// add the quit entry followed by the game select entry
-	menu::stack_push_special_main<ui::menu_quit_game>(mui, container);
+	menu::stack_push_special_main<menu_quit_game>(mui, container);
 	menu::stack_push<main_form>(mui, container, nullptr);
 
 	// force the menus on
@@ -29,7 +30,7 @@ void main_form::force_game_select(mame_ui_manager &mui, render_container &contai
 
 main_form::main_form(mame_ui_manager &mui, render_container &container, const char *gamename)
 	: menu(mui, container)
-	, m_mui(mui)
+	, m_ui(mui)
 	, m_container(container)
 {}
 
@@ -42,12 +43,14 @@ main_form::~main_form()
 
 void main_form::populate()
 {
-	item_append(ui::menu_item_type::SEPARATOR);
+	item_append(ui::menu_item_type::SEPARATOR); // Dummy
+
+	textbox tbox{*this};
 }
 
 void main_form::handle()
 {
-	process(0);
+	process(PROCESS_CUSTOM_ONLY);
 }
 
 } // namespace ui

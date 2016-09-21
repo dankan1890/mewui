@@ -179,4 +179,7 @@ files {
 	MAME_DIR .. "src/frontend/mame/mewui/datfile.h",
 	MAME_DIR .. "src/frontend/mame/mewui/exp/gui.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/exp/gui.h",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/textbox.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/textbox.h",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/basic_types.h",
 }

@@ -1386,7 +1386,9 @@ void menu_select_game::inkey_export()
 			}
 		}
 		else
+		{
 			list = m_displaylist;
+		}
 	}
 
 	menu::stack_push<menu_export>(ui(), container(), std::move(list));

@@ -199,7 +199,8 @@ public:
 	{
 		UI_CABINET,
 		UI_SIMPLE,
-		UI_MODERN
+		UI_MODERN,
+		UI_EXPERIMENTAL
 	};
 	
 	// construction/destruction

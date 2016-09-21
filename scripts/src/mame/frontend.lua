@@ -177,4 +177,6 @@ files {
 	MAME_DIR .. "src/frontend/mame/mewui/menu.h",
 	MAME_DIR .. "src/frontend/mame/mewui/datfile.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/datfile.h",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/gui.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/gui.h",
 }

@@ -1,19 +1,40 @@
 #pragma once
+
+#ifndef EXP_TEXTBOX_H
+#define EXP_TEXTBOX_H
+
 #include "basic_types.h"
-#include "gui.h"
+#include <string>
+
+class mame_ui_manager;
+class render_container;
 
 namespace ui {
 
 class textbox
 {
 public:
-	textbox(main_form &);
-	textbox(main_form &, float minx, float miny, float maxx, float maxy);
+	explicit textbox(render_container &container, mame_ui_manager &mui);
+	textbox(render_container &container, mame_ui_manager &mui, float minx, float maxx, float miny, float maxy);
+	textbox(render_container &container, mame_ui_manager &mui, rectangle rect);
+
+	void draw() const;
+	void text(std::string text) { m_text = text; }
+	void focus(bool focus) { m_focused = focus; }
+	void transparent(bool tr) { m_transparent = tr; }
+	bool focus() const { return m_focused; }
+	bool transparent() const { return m_transparent; }
+	void rect(rectangle rc) { m_rectangle = rc; }
+	rectangle rect() const { return m_rectangle; }
 
 private:
-	void draw();
-	ui::rectangle m_rectangle;
-	render_container &m_container;
+	ui::rectangle		m_rectangle;
+	render_container	&m_container;
+	mame_ui_manager		&m_ui;
+	std::string			m_text;
+	bool				m_transparent;
+	bool				m_focused;
 };
 
 } // namespace ui
+#endif

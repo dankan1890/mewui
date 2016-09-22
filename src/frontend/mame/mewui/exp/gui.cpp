@@ -45,12 +45,25 @@ void main_form::populate()
 {
 	item_append(ui::menu_item_type::SEPARATOR); // Dummy
 
-	textbox tbox{*this};
+	auto box = add_widget<textbox>();
+	box->focus(true);
+	box->text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+	auto xbox = add_widget<textbox>();
+	xbox->rect(rectangle{ 0.6f, 0.8f, 0.6f, 0.8f });
+	xbox->transparent(true);
 }
 
 void main_form::handle()
 {
+	process_widgets();
+
 	process(PROCESS_CUSTOM_ONLY);
+}
+
+void main_form::process_widgets()
+{
+	for (auto & e : v_textbox)
+		e.draw();
 }
 
 } // namespace ui

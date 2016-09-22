@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef EXP_BASIC_TYPES_H
+#define EXP_BASIC_TYPES_H
+
 namespace ui {
 class rectangle
 {
@@ -49,17 +53,17 @@ public:
 	bool empty() const { return (min_x > max_x || min_y > max_y); }
 	bool contains(float x, float y) const { return (x >= min_x && x <= max_x && y >= min_y && y <= max_y); }
 	bool contains(const rectangle &rect) const { return (min_x <= rect.min_x && max_x >= rect.max_x && min_y <= rect.min_y && max_y >= rect.max_y); }
-	float width() const { return max_x + 1 - min_x; }
-	float height() const { return max_y + 1 - min_y; }
-	float xcenter() const { return (min_x + max_x + 1) / 2; }
-	float ycenter() const { return (min_y + max_y + 1) / 2; }
+	float width() const { return max_x - min_x; }
+	float height() const { return max_y - min_y; }
+	float xcenter() const { return (min_x + max_x) / 2; }
+	float ycenter() const { return (min_y + max_y) / 2; }
 
 	// setters
 	void set(float minx, float maxx, float miny, float maxy) { min_x = minx; max_x = maxx; min_y = miny; max_y = maxy; }
 	void setx(float minx, float maxx) { min_x = minx; max_x = maxx; }
 	void sety(float miny, float maxy) { min_y = miny; max_y = maxy; }
-	void set_width(float width) { max_x = min_x + width - 1; }
-	void set_height(float height) { max_y = min_y + height - 1; }
+	void set_width(float width) { max_x = min_x + width; }
+	void set_height(float height) { max_y = min_y + height; }
 	void set_origin(float x, float y) { max_x += x - min_x; max_y += y - min_y; min_x = x; min_y = y; }
 	void set_size(float width, float height) { set_width(width); set_height(height); }
 
@@ -68,6 +72,7 @@ public:
 	void offsetx(float delta) { min_x += delta; max_x += delta; }
 	void offsety(float delta) { min_y += delta; max_y += delta; }
 
+private:
 	// internal state
 	float           min_x;          // minimum X, or left coordinate
 	float           max_x;          // maximum X, or right coordinate (inclusive)
@@ -76,3 +81,5 @@ public:
 };
 
 } // namespace ui
+
+#endif

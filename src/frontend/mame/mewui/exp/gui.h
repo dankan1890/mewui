@@ -4,11 +4,11 @@
 #define EXP_GUI_H
 
 #include "ui/menu.h"
-#include "textbox.h"
+#include "basic_types.h"
 
 namespace ui {
 
-class main_form : public menu
+class main_form : public menu, exp_widget
 {
 public:
 	main_form(mame_ui_manager &mui, render_container &container);
@@ -23,7 +23,6 @@ protected:
 	virtual bool menu_has_search_active() override { return !m_search.empty(); }
 
 private:
-	using w_container = std::vector<std::shared_ptr<exp_widget>>;
 
 	// reference
 	std::string m_search;
@@ -34,18 +33,6 @@ private:
 	virtual void populate() override;
 	virtual void handle() override;
 
-	// widgets processing
-	void process_widgets();
-
-	template<typename T>
-	T *add_widget()
-	{
-		v_widgets.push_back(std::make_shared<T>(m_container, m_ui));
-		return static_cast<T*>(v_widgets.back().get());
-	}
-
-	// internal widgets vectors
-	w_container v_widgets;
 };
 
 } // namespace ui

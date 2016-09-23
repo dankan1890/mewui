@@ -8,7 +8,6 @@ label::label(render_container &rc, mame_ui_manager &mui)
 	, m_container(rc)
 	, m_ui(mui)
 	, m_transparent(false)
-	, m_focused(false)
 {}
 
 label::label(render_container &rc, mame_ui_manager &mui, float minx, float miny, float maxx, float maxy)
@@ -16,7 +15,6 @@ label::label(render_container &rc, mame_ui_manager &mui, float minx, float miny,
 	, m_container(rc)
 	, m_ui(mui)
 	, m_transparent(false)
-	, m_focused(false)
 {}
 
 label::label(render_container &rc, mame_ui_manager &mui, rectangle rect)
@@ -24,7 +22,6 @@ label::label(render_container &rc, mame_ui_manager &mui, rectangle rect)
 	, m_container(rc)
 	, m_ui(mui)
 	, m_transparent(false)
-	, m_focused(false)
 {}
 
 void label::draw_internal()

@@ -3,6 +3,9 @@
 #ifndef EXP_BASIC_TYPES_H
 #define EXP_BASIC_TYPES_H
 
+#include <vector>
+#include <memory>
+
 namespace ui {
 class rectangle
 {
@@ -85,8 +88,28 @@ private:
 class exp_widget
 {
 public:
+
 	virtual ~exp_widget() {}
-	virtual void draw_internal() = 0;
+	virtual void draw_internal() {}
+
+	using w_container = std::vector<std::shared_ptr<exp_widget>>;
+
+	// widgets processing
+	void process_widgets()
+	{
+		for (auto & e : v_widgets)
+			e->draw_internal();
+	};
+
+	template<typename T, typename R, typename M>
+	T *add_widget(R &rc, M &mui)
+	{
+		v_widgets.push_back(std::make_shared<T>(rc, mui));
+		return static_cast<T*>(v_widgets.back().get());
+	}
+
+	// internal widgets vectors
+	w_container v_widgets;
 };
 
 } // namespace ui

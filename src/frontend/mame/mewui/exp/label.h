@@ -22,9 +22,7 @@ public:
 
 	virtual void draw_internal() override;
 	void text(std::string text) { m_text = text; }
-	void focus(bool focus) { m_focused = focus; }
 	void transparent(bool tr) { m_transparent = tr; }
-	bool focus() const { return m_focused; }
 	bool transparent() const { return m_transparent; }
 	void rect(rectangle rc) { m_rectangle = rc; }
 	rectangle rect() const { return m_rectangle; }
@@ -35,7 +33,6 @@ private:
 	mame_ui_manager		&m_ui;
 	std::string			m_text;
 	bool				m_transparent;
-	bool				m_focused;
 };
 
 } // namespace ui

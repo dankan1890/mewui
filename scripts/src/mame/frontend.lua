@@ -182,4 +182,6 @@ files {
 	MAME_DIR .. "src/frontend/mame/mewui/exp/textbox.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/exp/textbox.h",
 	MAME_DIR .. "src/frontend/mame/mewui/exp/basic_types.h",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/label.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/exp/label.h",
 }

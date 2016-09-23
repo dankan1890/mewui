@@ -11,7 +11,7 @@ namespace ui {
 class main_form : public menu
 {
 public:
-	main_form(mame_ui_manager &mui, render_container &container, const char *gamename);
+	main_form(mame_ui_manager &mui, render_container &container);
 	virtual ~main_form();
 
 	// force game select menu
@@ -40,12 +40,12 @@ private:
 	template<typename T>
 	T *add_widget()
 	{
-		v_container.push_back(std::make_shared<T>(m_container, m_ui));
-		return static_cast<T*>(v_container.back().get());
+		v_widgets.push_back(std::make_shared<T>(m_container, m_ui));
+		return static_cast<T*>(v_widgets.back().get());
 	}
 
 	// internal widgets vectors
-	w_container v_container;
+	w_container v_widgets;
 };
 
 } // namespace ui

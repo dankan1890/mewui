@@ -6,6 +6,7 @@
 #include "gui.h"
 #include "ui/miscmenu.h"
 #include "textbox.h"
+#include "label.h"
 
 namespace ui {
 void main_form::force_game_select(mame_ui_manager &mui, render_container &container)
@@ -15,7 +16,7 @@ void main_form::force_game_select(mame_ui_manager &mui, render_container &contai
 
 	// add the quit entry followed by the game select entry
 	menu::stack_push_special_main<menu_quit_game>(mui, container);
-	menu::stack_push<main_form>(mui, container, nullptr);
+	menu::stack_push<main_form>(mui, container);
 
 	// force the menus on
 	mui.show_menu();
@@ -28,7 +29,7 @@ void main_form::force_game_select(mame_ui_manager &mui, render_container &contai
 //  ctor
 //-------------------------------------------------
 
-main_form::main_form(mame_ui_manager &mui, render_container &container, const char *gamename)
+main_form::main_form(mame_ui_manager &mui, render_container &container)
 	: menu(mui, container)
 	, m_ui(mui)
 	, m_container(container)
@@ -52,6 +53,10 @@ void main_form::populate()
 	xbox->rect(rectangle{ 0.6f, 0.8f, 0.6f, 0.8f });
 	xbox->transparent(true);
 	xbox->text("Test");
+
+	auto lbl = add_widget<label>();
+	lbl->rect(rectangle{ 0.0f, 0.5f, 0.6f, 1.0f });
+	lbl->text("LABEL");
 }
 
 void main_form::handle()
@@ -63,7 +68,7 @@ void main_form::handle()
 
 void main_form::process_widgets()
 {
-	for (auto & e : v_container)
+	for (auto & e : v_widgets)
 		e->draw_internal();
 }
 

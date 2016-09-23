@@ -50,9 +50,9 @@ public:
 	bool operator<=(const rectangle &rhs) const { return min_x > rhs.min_x || min_y > rhs.min_y || max_x < rhs.max_x || max_y < rhs.max_y; }
 
 	// other helpers
-	bool empty() const { return (min_x > max_x || min_y > max_y); }
-	bool contains(float x, float y) const { return (x >= min_x && x <= max_x && y >= min_y && y <= max_y); }
-	bool contains(const rectangle &rect) const { return (min_x <= rect.min_x && max_x >= rect.max_x && min_y <= rect.min_y && max_y >= rect.max_y); }
+	bool empty() const { return min_x > max_x || min_y > max_y; }
+	bool contains(float x, float y) const { return x >= min_x && x <= max_x && y >= min_y && y <= max_y; }
+	bool contains(const rectangle &rect) const { return min_x <= rect.min_x && max_x >= rect.max_x && min_y <= rect.min_y && max_y >= rect.max_y; }
 	float width() const { return max_x - min_x; }
 	float height() const { return max_y - min_y; }
 	float xcenter() const { return (min_x + max_x) / 2; }
@@ -71,6 +71,8 @@ public:
 	void offset(float xdelta, float ydelta) { min_x += xdelta; max_x += xdelta; min_y += ydelta; max_y += ydelta; }
 	void offsetx(float delta) { min_x += delta; max_x += delta; }
 	void offsety(float delta) { min_y += delta; max_y += delta; }
+	void pair_off(float delta) { min_x += delta; max_x -= delta; min_y += delta; max_y -= delta; }
+	void pairxy_off(float xdelta, float ydelta) { min_x += xdelta; max_x -= xdelta; min_y += ydelta; max_y -= ydelta; }
 
 private:
 	// internal state
@@ -80,10 +82,10 @@ private:
 	float           max_y;          // maximum Y, or bottom coordinate (inclusive)
 };
 
-struct exp_widget
+class exp_widget
 {
+public:
 	virtual ~exp_widget() {}
-
 	virtual void draw_internal() = 0;
 };
 

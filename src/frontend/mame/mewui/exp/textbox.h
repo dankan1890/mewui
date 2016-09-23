@@ -11,14 +11,16 @@ class render_container;
 
 namespace ui {
 
-class textbox
+class textbox : public exp_widget
 {
 public:
-	explicit textbox(render_container &container, mame_ui_manager &mui);
+	textbox(render_container &container, mame_ui_manager &mui);
 	textbox(render_container &container, mame_ui_manager &mui, float minx, float maxx, float miny, float maxy);
 	textbox(render_container &container, mame_ui_manager &mui, rectangle rect);
 
-	void draw() const;
+	virtual ~textbox() {}
+
+	virtual void draw_internal() override;
 	void text(std::string text) { m_text = text; }
 	void focus(bool focus) { m_focused = focus; }
 	void transparent(bool tr) { m_transparent = tr; }

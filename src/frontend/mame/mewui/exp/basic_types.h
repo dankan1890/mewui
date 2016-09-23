@@ -80,6 +80,13 @@ private:
 	float           max_y;          // maximum Y, or bottom coordinate (inclusive)
 };
 
+struct exp_widget
+{
+	virtual ~exp_widget() {}
+
+	virtual void draw_internal() = 0;
+};
+
 } // namespace ui
 
 #endif

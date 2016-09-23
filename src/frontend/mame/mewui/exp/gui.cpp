@@ -47,10 +47,11 @@ void main_form::populate()
 
 	auto box = add_widget<textbox>();
 	box->focus(true);
-	box->text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+	box->text("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
 	auto xbox = add_widget<textbox>();
 	xbox->rect(rectangle{ 0.6f, 0.8f, 0.6f, 0.8f });
 	xbox->transparent(true);
+	xbox->text("Test");
 }
 
 void main_form::handle()
@@ -62,8 +63,8 @@ void main_form::handle()
 
 void main_form::process_widgets()
 {
-	for (auto & e : v_textbox)
-		e.draw();
+	for (auto & e : v_container)
+		e->draw_internal();
 }
 
 } // namespace ui

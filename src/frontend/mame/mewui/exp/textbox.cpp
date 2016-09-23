@@ -30,7 +30,7 @@ textbox::textbox(render_container &rc, mame_ui_manager &mui, rectangle rect)
 {
 }
 
-void textbox::draw() const
+void textbox::draw_internal()
 {
 	auto x1 = m_rectangle.left();
 	auto x2 = m_rectangle.right();
@@ -40,11 +40,36 @@ void textbox::draw() const
 	auto focus = m_focused ? UI_SELECTED_COLOR : UI_BORDER_COLOR;
 
 	m_ui.draw_outlined_box(m_container, x1, y1, x2, y2, focus, transp);
-	m_container.add_line(x1, y2 - UI_BOX_TB_BORDER, x2, y2 - UI_BOX_TB_BORDER, UI_LINE_WIDTH, focus, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	m_container.add_line(x2 - UI_BOX_LR_BORDER, y1, x2 - UI_BOX_LR_BORDER, y2, UI_LINE_WIDTH, focus, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	if (!m_text.empty())
-		m_ui.draw_text_full(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER, m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::WORD, mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
 
+	if (!m_text.empty())
+	{
+		auto visible_height = m_rectangle.height() - 2.0f * UI_BOX_TB_BORDER;
+		float text_heigth;
+		m_ui.draw_text_full(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER,
+							m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::WORD,
+							mame_ui_manager::NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, &text_heigth);
+		if (visible_height >= text_heigth)
+		{
+			m_ui.draw_text_full(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER,
+								m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::WORD,
+								mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
+		}
+		else
+		{
+			m_container.add_line(x2 - UI_BOX_LR_BORDER, y1, x2 - UI_BOX_LR_BORDER, y2, UI_LINE_WIDTH, focus, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+			int lines = std::floor(visible_height / m_ui.get_line_height());
+			std::vector<int> start, finish;
+			m_ui.wrap_text(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER, m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, start, finish);
+			y1 += UI_BOX_TB_BORDER;
+			for (int x = 0; x < lines; ++x)
+			{
+				m_ui.draw_text_full(m_container, m_text.substr(start[x], finish[x] - start[x]).c_str(), x1 + UI_BOX_LR_BORDER, y1,
+									m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::NEVER,
+									mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
+				y1 += m_ui.get_line_height();
+			}
+		}
+	}
 }
 
 } // namespace ui

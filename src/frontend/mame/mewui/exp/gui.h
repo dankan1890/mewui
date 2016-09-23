@@ -11,18 +11,20 @@ namespace ui {
 class main_form : public menu
 {
 public:
-	main_form(mame_ui_manager &, render_container &, const char *);
+	main_form(mame_ui_manager &mui, render_container &container, const char *gamename);
 	virtual ~main_form();
 
 	// force game select menu
-	static void force_game_select(mame_ui_manager &, render_container &);
+	static void force_game_select(mame_ui_manager &mui, render_container &container);
 
 	render_container &rcontainer() const { return m_container; }
 	mame_ui_manager &mui() const { return m_ui; }
 protected:
-	virtual bool menu_has_search_active() override { return m_search.empty(); }
+	virtual bool menu_has_search_active() override { return !m_search.empty(); }
 
 private:
+	using w_container = std::vector<std::shared_ptr<exp_widget>>;
+
 	// reference
 	std::string m_search;
 	mame_ui_manager &m_ui;
@@ -34,19 +36,16 @@ private:
 
 	// widgets processing
 	void process_widgets();
+
 	template<typename T>
 	T *add_widget()
 	{
-		if (std::is_same<textbox, T>::value)
-		{
-			v_textbox.emplace_back(textbox{ m_container, m_ui });
-			return &v_textbox.back();
-		}
-		return nullptr; // TODO: return error
+		v_container.push_back(std::make_shared<T>(m_container, m_ui));
+		return static_cast<T*>(v_container.back().get());
 	}
 
 	// internal widgets vectors
-	std::vector<textbox> v_textbox;
+	w_container v_container;
 };
 
 } // namespace ui

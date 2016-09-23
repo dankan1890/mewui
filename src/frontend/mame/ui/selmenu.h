@@ -136,7 +136,7 @@ private:
 		else
 		{
 			auto pred = [&m_prev = m_prev_selected](const ui::menu_item & i) { return i.ref == m_prev; };
-			selected = std::find_if(item.begin(), item.end(), pred) - item.begin();
+			selected = std::distance(item.begin(), std::find_if(item.begin(), item.end(), pred));
 		}
 	}
 

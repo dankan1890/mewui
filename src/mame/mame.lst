@@ -2560,6 +2560,7 @@ bbcmc                           // 1986 BBC Master Compact
 bbcmc_ar                        // 1986 BBC Master Compact (Arabic)
 bbcmet                          // 1986 BBC Master ET
 bbcmt                           // 1986 BBC Master Turbo
+discmate                        // 1988 Arbiter Discmate
 ltmpbp                          // 1985 LTM Portable (B+)
 ltmpm                           // 1986 LTM Portable (Master)
 pro128s                         // 1987 Olivetti Prodest PC 128S
@@ -14191,6 +14192,7 @@ tandy12                         // Tandy Radio Shack
 tbreakup                        // Tomy
 tc4                             // Coleco
 tcfball                         // Tandy Radio Shack
+tcfballa                        // Tandy Radio Shack
 zodiac                          // Coleco
 
 @source:hh_ucom4.cpp
@@ -14976,7 +14978,7 @@ jedi                            // 136030           (c) 1984
 leking                          //
 olympic                         //
 
-@source:jeutel.cpp
+@source:joctronic.cpp
 punkywil                        //
 walkyria                        //
 
@@ -16966,9 +16968,6 @@ cupsoca                         // (c) 1992 Seibu
 cupsocb                         // (c) 1992 Seibu
 cupsocs                         // (c) 1992 Seibu
 cupsocs2                        // (c) 1992 Seibu
-cupsocsb                        // bootleg
-cupsocsb2                       // bootleg
-cupsocsb3                       // bootleg
 denjinmk                        // (c) 199? Banpresto
 godzilla                        // (c) 1993 Banpresto
 grainbow                        // (c) 1993 Banpresto
@@ -30339,7 +30338,8 @@ avefenix                        // bootleg (Video Game)
 avefenixl                       // bootleg (Laguna)
 avefenixrf                      // bootleg (Recreativos Franco)
 capitol                         // bootleg?
-condor                          // bootleg
+condor                          // bootleg (Sidam)
+condorn                         // bootleg (S C Novar)
 falcon                          // bootleg
 falconz                         // bootleg
 fenix                           // bootleg
@@ -32833,6 +32833,11 @@ radrad                          // (c) 1982 Nichibutsu USA
 sectrzon                        // (c) 1984 + Alice
 seicross                        // (c) 1984 + Alice
 
+@source:seicupbl.cpp
+cupsocsb                        // bootleg
+cupsocsb2                       // bootleg
+cupsocsb3                       // bootleg
+
 @source:selz80.cpp
 dagz80                          //
 selz80                          //
@@ -32951,6 +32956,7 @@ wschampb                        // (c) 2001 Sammy USA Corporation
 sf                              // 8/1987 (c) 1987 (US)
 sfan                            // 8/1987 (c) 1987 (World)
 sfj                             // 8/1987 (c) 1987 (Japan)
+sfjan
 sfp                             // 8/1987 (c) 1987
 sfua                            // 8/1987 (c) 1987 (US)
 
@@ -34935,7 +34941,8 @@ optiger                         // 1998.09 E63 (c) 1998 Taito
 alpine                          // RH  (c) 1982 Taito Corporation
 alpinea                         // RH  (c) 1982 Taito Corporation
 bioatack                        // AA8 (c) 1983 Taito Corporation + Fox Video Games license
-elevator                        // EA  (c) 1983 Taito Corporation
+elevator                        // EA  (c) 1983 Taito Corporation (5 board set, v1.1?)
+elevator4                       // BA3 (c) 1983 Taito Corporation (4 board set, v1.1?)
 elevatorb                       // bootleg
 frontlin                        // FL  (c) 1982 Taito Corporation
 hwrace                          // AC4 (c) 1983 Taito Corporation

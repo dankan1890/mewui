@@ -45,28 +45,30 @@ void textbox::draw_internal()
 	{
 		auto visible_height = m_rectangle.height() - 2.0f * UI_BOX_TB_BORDER;
 		float text_heigth;
+		auto ratio = 1.0f / m_container.manager().ui_target().height() * 18 / m_ui.get_line_height();
 		m_ui.draw_text_full(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER,
 							m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::WORD,
-							mame_ui_manager::NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, &text_heigth);
+							mame_ui_manager::NONE, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, &text_heigth, ratio);
 		if (visible_height >= text_heigth)
 		{
 			m_ui.draw_text_full(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER,
 								m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::WORD,
-								mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
+								mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, ratio);
 		}
 		else
 		{
 			m_container.add_line(x2 - UI_BOX_LR_BORDER, y1, x2 - UI_BOX_LR_BORDER, y2, UI_LINE_WIDTH, focus, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-			int lines = std::floor(visible_height / m_ui.get_line_height());
+			int lines = std::floor(visible_height / (m_ui.get_line_height() * ratio));
 			std::vector<int> start, finish;
-			m_ui.wrap_text(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER, m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, start, finish);
+			m_ui.wrap_text(m_container, m_text.c_str(), x1 + UI_BOX_LR_BORDER, y1 + UI_BOX_TB_BORDER,
+						   m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, start, finish, ratio);
 			y1 += UI_BOX_TB_BORDER;
 			for (int x = 0; x < lines; ++x)
 			{
 				m_ui.draw_text_full(m_container, m_text.substr(start[x], finish[x] - start[x]).c_str(), x1 + UI_BOX_LR_BORDER, y1,
 									m_rectangle.width() - 3.0f * UI_BOX_LR_BORDER, ui::text_layout::LEFT, ui::text_layout::NEVER,
-									mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR);
-				y1 += m_ui.get_line_height();
+									mame_ui_manager::NORMAL, UI_TEXT_COLOR, UI_TEXT_BG_COLOR, nullptr, nullptr, ratio);
+				y1 += m_ui.get_line_height() * ratio;
 			}
 		}
 	}

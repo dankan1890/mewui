@@ -57,20 +57,18 @@ namespace mewui
 		{ "Source",			 2 }
 	};
 
-	main_form::main_form(running_machine &machine, const game_driver **_system, emu_options &_options, std::unique_ptr<mame_ui_manager> &_mui)
+	main_form::main_form(running_machine &machine, const game_driver **_system, emu_options &_options, std::unique_ptr<mame_ui_manager> &_mui, std::string &exename)
 		: form(nana::rectangle(_mui->options().form_x(), _mui->options().form_y(), _mui->options().form_width(), _mui->options().form_heigth())
 		       , appear::decorate<appear::minimize, appear::maximize, appear::sizable>())
 		, m_system(_system)
 		, m_options(_options)
 		, m_latest_machine(_mui->options().last_used_machine())
 		, m_ui(_mui)
+		, m_exename(exename)
 	{
 		// Load DATs data
 		m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
 
-#ifdef MAME_DEBUG
-		m_exename = "C:\\Mame_Source\\My-GIT\\mewui\\testvsbuild\\vs2015\\bin\\x64\\Debug\\mametest64d.exe";
-#endif
 		// Main title
 		auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
 		this->caption(maintitle);
@@ -78,14 +76,14 @@ namespace mewui
 		if (m_ui->options().form_max()) this->zoom(true); // Maximize
 
 #if defined(NANA_WINDOWS)
-/*		// Tray
+		// Tray
 		m_notif.icon(m_exename);
 		m_notif.text(maintitle);
 		m_notif.events().mouse_down([this] {
 			msgbox mb{ *this, "Tray Test" };
 			mb.icon(mb.icon_information) << "Some msg";
 			mb.show();
-		}); */
+		});
 #endif
 		// Main layout
 		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><vert <weight=80% machinebox><weight=5><weight=20 swtab><swtab_frame>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
@@ -114,16 +112,6 @@ namespace mewui
 
 		this->collocate();
 		update_selection();
-		//resize_machinebox();
-	}
-
-	void main_form::resize_machinebox()
-	{
-		if (m_machinebox.at(0).size() > 0)
-		{
-			m_machinebox.column_at(0).fit_content();
-			m_machinebox.column_at(2).fit_content();
-		}
 	}
 
 	void main_form::handle_events()
@@ -203,7 +191,6 @@ namespace mewui
 				populate_listbox(filt, subfilt);
 			}
 			update_selection();
-			//resize_machinebox();
 		});
 
 
@@ -211,7 +198,6 @@ namespace mewui
 		m_filters.m_subfilters.events().selected([this](const arg_combox& ei) {
 			populate_listbox(m_filters.m_filters.caption(), ei.widget.caption());
 			update_selection();
-			//resize_machinebox();
 		});
 
 		// DATs events

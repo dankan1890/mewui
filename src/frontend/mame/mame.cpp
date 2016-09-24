@@ -224,7 +224,7 @@ int mame_machine_manager::execute(std::string exename)
 		set_machine(&machine);
 
 		// run the machine
-/*		if (is_empty)
+		if (is_empty)
 		{
 			system = mewui::start_gui(machine, m_options, exename);
 			if (system != &GAME_NAME(___empty))
@@ -232,7 +232,7 @@ int mame_machine_manager::execute(std::string exename)
 			else
 				machine.schedule_exit();
 		}
-		else */
+		else
 			error = machine.run(is_empty);
 		m_firstrun = false;
 
@@ -322,8 +322,6 @@ void emulator_info::display_ui_chooser(running_machine& machine)
 	render_container &container = machine.render().ui_container();
 	if (machine.options().ui() == emu_options::UI_SIMPLE)
 		ui::simple_menu_select_game::force_game_select(mui, container);
-	else if (machine.options().ui() == emu_options::UI_MODERN)
-		mewui::start_gui(machine, machine.options());
 	else if (machine.options().ui() == emu_options::UI_EXPERIMENTAL)
 		ui::main_form::force_game_select(mui, container);
 	else

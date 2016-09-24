@@ -142,7 +142,7 @@ namespace mewui
 	{
 	public:
 		// ctor / dtor
-		main_form(running_machine &, const game_driver **, emu_options &, std::unique_ptr<mame_ui_manager> &);
+		main_form(running_machine &, const game_driver **, emu_options &, std::unique_ptr<mame_ui_manager> &, std::string &);
 
 	private:
 		// Layout management
@@ -199,7 +199,6 @@ namespace mewui
 		void perform_search();
 
 		void handle_events();
-		void resize_machinebox();
 	};
 
 } // namespace mewui

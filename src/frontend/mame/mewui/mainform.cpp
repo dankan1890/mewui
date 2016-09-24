@@ -480,7 +480,7 @@ namespace mewui
 			// Update menu item
 			m_menubar.at(0).change_text(0, string_format("&Play %s", drv->description));
 			m_context_menu.change_text(0, string_format("Play %s", drv->description));
-			m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
+			//m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
 
 			// Update software
 			m_swpage.m_softwarebox.auto_draw(false);
@@ -626,8 +626,8 @@ namespace mewui
 
 	void main_form::init_file_menu()
 	{
-		auto menu = &m_menubar.push_back("&File");
-		menu->append("&Play XXX", [this](menu::item_proxy& ip) {
+		auto &menu = m_menubar.push_back("&File");
+		menu.append("&Play XXX", [this](menu::item_proxy& ip) {
 			auto sel = m_machinebox.selected();
 			if (!sel.empty())
 			{
@@ -636,93 +636,77 @@ namespace mewui
 			}
 		});
 
-		menu->append_splitter();
-		menu->append("Play and &Record Input", [this](menu::item_proxy& ip) {});
-		menu->append("P&layback Input", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Play and Record &Wave Output", [this](menu::item_proxy& ip) {});
-		menu->append("Play and Record &MNG Output", [this](menu::item_proxy& ip) {});
-		menu->append("Play and Record &uncompressed AVI Output", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Loa&d Savestate", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Pr&opertis", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Audi&t existing Sets", [this](menu::item_proxy& ip) {});
-		menu->append("&Audit All Sets", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("E&xit", [this](menu::item_proxy& ip) { this->close(); });
-		menu->renderer(custom_renderer(menu->renderer()));
+/*		menu.append_splitter();
+		menu.append("Play and &Record Input", [this](menu::item_proxy& ip) {});
+		menu.append("P&layback Input", [this](menu::item_proxy& ip) {});
+		menu.append_splitter();
+		menu.append("Play and Record &Wave Output", [this](menu::item_proxy& ip) {});
+		menu.append("Play and Record &MNG Output", [this](menu::item_proxy& ip) {});
+		menu.append("Play and Record &uncompressed AVI Output", [this](menu::item_proxy& ip) {});
+		menu.append_splitter();
+		menu.append("Loa&d Savestate", [this](menu::item_proxy& ip) {});
+		menu.append_splitter();
+		menu.append("Pr&opertis", [this](menu::item_proxy& ip) {});
+		menu.append_splitter();
+		menu.append("Audi&t existing Sets", [this](menu::item_proxy& ip) {});
+		menu.append("&Audit All Sets", [this](menu::item_proxy& ip) {}); */
+		menu.append_splitter();
+		menu.append("E&xit", [this](menu::item_proxy& ip) { this->close(); });
+		menu.renderer(custom_renderer(menu.renderer()));
 	}
 
 	void main_form::init_view_menu()
 	{
-		auto menu = &m_menubar.push_back("View");
-		auto item = menu->append("Software Packages", [this](menu::item_proxy& ip) {
-			auto &pl = this->get_place();
-			pl.field_display("swtab", ip.checked());
-			pl.field_display("swtab_frame", ip.checked());
+		auto &menu = m_menubar.push_back("View");
+		auto item = menu.append("Software Packages", [this](menu::item_proxy& ip) {
+			this->get_place().field_display("swtab", ip.checked());
+			this->get_place().field_display("swtab_frame", ip.checked());
 			auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
-			pl.modify("machinebox", wd.c_str());
-			pl.collocate();
+			this->get_place().modify("machinebox", wd.c_str());
+			this->collocate();
 		});
 		item.check_style(menu::checks::highlight);
 		item.checked(true);
 
-		auto item_bar = menu->append("Status Bar", [this](menu::item_proxy& ip) {
-			auto &pl = this->get_place();
-			pl.field_display("statusbar", ip.checked());
-			pl.collocate();
+		auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip) {
+			this->get_place().field_display("statusbar", ip.checked());
+			this->collocate();
 		});
-		item_bar.check_style(menu::checks::highlight);
-		item_bar.checked(true);
+		item2.check_style(menu::checks::highlight);
+		item2.checked(true);
 
-		menu->renderer(custom_renderer(menu->renderer()));
+		menu.renderer(custom_renderer(menu.renderer()));
 	}
 
 	void main_form::init_options_menu()
 	{
-		auto menu = &m_menubar.push_back("Options");
-		menu->append("Interface Options", [this](menu::item_proxy& ip) {});
-		menu->append("Global Machine Options", [this](menu::item_proxy& ip) {});
-		menu->append("Directories", [this](menu::item_proxy& ip) {
+		auto &menu = m_menubar.push_back("Options");
+//		menu.append("Interface Options", [this](menu::item_proxy& ip) {});
+//		menu.append("Global Machine Options", [this](menu::item_proxy& ip) {});
+		menu.append("Directories", [this](menu::item_proxy& ip) {
 			dir_form dform{ *this, m_options, m_ui };
 			dform.show();
 		});
-		menu->append_splitter();
-		menu->append("Machine List Font", [this](menu::item_proxy& ip) {});
-		menu->append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Background Image", [this](menu::item_proxy& ip) {});
-		menu->append_splitter();
-		menu->append("Reset to Default", [this](menu::item_proxy& ip) {});
-		menu->renderer(custom_renderer(menu->renderer()));
+//		menu.append_splitter();
+//		menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
+//		menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
+//		menu.append_splitter();
+//		menu.append("Background Image", [this](menu::item_proxy& ip) {});
+//		menu.append_splitter();
+//		menu.append("Reset to Default", [this](menu::item_proxy& ip) {});
+		menu.renderer(custom_renderer(menu.renderer()));
 	}
 
 	void main_form::init_help_menu()
 	{
-		auto menu = &m_menubar.push_back("Help");
-		menu->append("About", [this](menu::item_proxy& ip) {
-			form fm{ *this, API::make_center(300, 200), appear::decorate<>() };
-			fm.caption("About MEWUI");
-			fm.bgcolor(colors::white);
-			auto maintitle = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
-			label lb{ fm, maintitle };
-			lb.transparent(true);
-			lb.format(true);
-			lb.text_align(align::left, align_v::center);
-			picture pc{ fm };
-			pc.load(paint::image{ m_exename });
-			pc.transparent(true);
-			pc.align(align::right, align_v::center);
-			fm.div("vert<><<><weight=32 icon><weight=5><msg><>><>");
-			fm["icon"] << pc;
-			fm["msg"] << lb;
-			fm.collocate();
-			fm.show();
-			fm.modality();
+		auto &menu = m_menubar.push_back("Help");
+		menu.append("About", [this](menu::item_proxy& ip) {
+			auto message = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
+			msgbox mb(*this, "About MEWUI");
+			mb.icon(msgbox::icon_information) << message;
+			mb.show();
 		});
-		menu->renderer(custom_renderer(menu->renderer()));
+		menu.renderer(custom_renderer(menu.renderer()));
 	}
 
 	void main_form::init_context_menu()
@@ -735,12 +719,12 @@ namespace mewui
 				start_machine(game);
 			}
 		});
-		m_context_menu.append_splitter();
+/*		m_context_menu.append_splitter();
 		m_context_menu.append("Play and Record Input", [this](menu::item_proxy& ip) {});
 		m_context_menu.append_splitter();
 		m_context_menu.append("Add to Custom Folder", [this](menu::item_proxy& ip) {});
-		m_context_menu.append("Remove from this Folder", [this](menu::item_proxy& ip) {});
-		m_context_menu.enabled(5, false);
+		auto item = m_context_menu.append("Remove from this Folder", [this](menu::item_proxy& ip) {});
+		item.enabled(false);
 		m_context_menu.append("Custom Filter", [this](menu::item_proxy& ip) {});
 		m_context_menu.append_splitter();
 		m_context_menu.append("Select Random Machine", [this](menu::item_proxy& ip) {});
@@ -752,7 +736,7 @@ namespace mewui
 		m_context_menu.append_splitter();
 		m_context_menu.append("Properties", [this](menu::item_proxy& ip) {});
 		m_context_menu.append("Properties for XXX.cpp", [this](menu::item_proxy& ip) {});
-		m_context_menu.append("Vector Properties", [this](menu::item_proxy& ip) {});
+		m_context_menu.append("Vector Properties", [this](menu::item_proxy& ip) {}); */
 	}
 
 	tab_page_picturebox::tab_page_picturebox(window wd)

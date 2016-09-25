@@ -110,7 +110,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	                            });
 #endif
 	// Main layout
-	this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><vert <weight=80% machinebox><weight=5><weight=20 swtab><swtab_frame>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+	this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <weight=80% machinebox>|<vert <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 
 	// Initialize GUI widgets
 	init_context_menu();
@@ -133,6 +133,9 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_search_button.tooltip("Search");
 	this->get_place()["search"] << m_search;
 	this->get_place()["s_button"] << m_search_button;
+
+	m_treebox.insert("Root", "Root");
+	this->get_place()["treebox"] << m_treebox; // Test
 
 	this->collocate();
 	update_selection();

@@ -152,6 +152,7 @@ private:
 	button m_search_button{ *this, "S" };
 	menu m_context_menu;
 	notifier m_notif{ *this };
+	treebox m_treebox{ *this };
 	paint::font m_font;
 
 	tabbar<std::string> m_tabbar{ *this };

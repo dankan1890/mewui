@@ -287,7 +287,7 @@ void main_form::save_options()
 
 	mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_filters.caption().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
-	auto &pl = this->get_place();
+//	auto &pl = this->get_place();
 }
 
 void main_form::init_filters()
@@ -913,7 +913,7 @@ void panel_filters::populate_subfilter(int filter)
 }
 
 dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
-	: form(wd, { 400, 200 })
+	: form(wd, { 400, 200 }, appear::decorate<>())
 	, m_ui(_mui)
 	, m_options(_opt)
 {

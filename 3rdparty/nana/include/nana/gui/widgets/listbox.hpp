@@ -400,7 +400,7 @@ namespace nana
 					throw std::runtime_error("nana::listbox disallow to remove items because of immutable model");
 				}
 
-				void erase(std::size_t /*pos*/) override
+				void erase(std::size_t pos) override
 				{
 					throw std::runtime_error("nana::listbox disallow to remove items because of immutable model");
 				}
@@ -415,7 +415,7 @@ namespace nana
 					return true;
 				}
 
-				void emplace(std::size_t /*pos*/) override
+				void emplace(std::size_t pos) override
 				{
 					throw std::runtime_error("nana::listbox disallow to remove items because of immutable model");
 				}
@@ -676,8 +676,14 @@ namespace nana
 
 			using index_pairs = ::std::vector<index_pair>;
 
-			using inline_notifier_interface = detail::inline_widget_notifier_interface<index_pair, ::std::string>;
+			enum class inline_widget_status{
+				checked,
+				checking,
+				selected,
+				selecting
+			};
 
+			using inline_notifier_interface = detail::inline_widget_notifier_interface<index_pair, inline_widget_status, ::std::string>;
 
 			// struct essence
 			//@brief:	this struct gives many data for listbox,

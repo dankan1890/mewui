@@ -345,8 +345,8 @@ namespace drawerbase {
 		{
 			auto editor = get_drawer_trigger().editor();
 			internal_scope_guard lock;
-			if (editor)
-				editor->move_caret(pos);
+			if (editor && editor->move_caret(pos, true))
+				API::refresh_window(handle());
 			
 			return *this;
 		}
@@ -467,6 +467,18 @@ namespace drawerbase {
 			auto editor = get_drawer_trigger().editor();
 			if(editor && editor->select(yes))
 				API::update_window(*this);
+		}
+
+		std::pair<upoint, upoint> textbox::selection() const
+		{
+			std::pair<upoint, upoint> points;
+
+			internal_scope_guard lock;
+			auto editor = get_drawer_trigger().editor();
+			if (editor)
+				editor->get_select_points(points.first, points.second);
+
+			return points;
 		}
 
 		void textbox::copy() const
@@ -614,6 +626,14 @@ namespace drawerbase {
 			auto editor = get_drawer_trigger().editor();
 			if (editor)
 				editor->select_behavior(move_to_end);
+		}
+
+		void textbox::set_undo_queue_length(std::size_t len)
+		{
+			internal_scope_guard lock;
+			auto editor = get_drawer_trigger().editor();
+			if (editor)
+				editor->set_undo_queue_length(len);
 		}
 
 		//Override _m_caption for caption()

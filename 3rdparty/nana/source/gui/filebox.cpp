@@ -486,16 +486,16 @@ namespace nana
 		void _m_load_path(const std::string& path)
 		{
 			addr_.filesystem = path;
-			if (addr_.filesystem.size() && addr_.filesystem[addr_.filesystem.size() - 1] != '/')
+			if(addr_.filesystem.size() && addr_.filesystem[addr_.filesystem.size() - 1] != '/')
 				addr_.filesystem += '/';
 
 			file_container_.clear();
 
 			fs::directory_iterator end;
-			for (fs::directory_iterator i(path); i != end; ++i)
+			for(fs::directory_iterator i(path); i != end; ++i)
 			{
 				auto name = i->path().filename().native();
-				if (name.empty() || (name.front() == '.'))
+				if(name.empty() || (name.front() == '.'))
 					continue;
 
 				auto fpath = i->path().native();
@@ -505,22 +505,22 @@ namespace nana
 				m.name = name;
 				m.directory = fs::is_directory(fattr);
 
-				switch (fattr.type())
+				switch(fattr.type())
 				{
-					case fs::file_type::not_found:
-					case fs::file_type::unknown:
-					case fs::file_type::directory:
-						m.bytes = 0;
-						break;
-					default:
-						m.bytes = fs::file_size(fpath);
+				case fs::file_type::not_found:
+				case fs::file_type::unknown:
+				case fs::file_type::directory:
+					m.bytes = 0;
+					break;
+				default:
+					m.bytes = fs::file_size(fpath);
 				}
 
 				fs_ext::modified_file_time(fpath, m.modified_time);
-
+				
 				file_container_.push_back(m);
 
-				if (m.directory)
+				if(m.directory)
 					path_.childset(m.name, 0);
 			}
 			std::sort(file_container_.begin(), file_container_.end(), pred_sort_fs());

@@ -273,11 +273,11 @@ void main_form::save_options()
 {
 	std::string err_str;
 	auto& mui = m_ui->options();
-	mui.set_value(NANA_FORM_HEIGHT, static_cast<int>(this->size().height), OPTION_PRIORITY_CMDLINE, err_str);
-	mui.set_value(NANA_FORM_WIDTH, static_cast<int>(this->size().width), OPTION_PRIORITY_CMDLINE, err_str);
-	mui.set_value(NANA_FORM_X, this->pos().x, OPTION_PRIORITY_CMDLINE, err_str);
-	mui.set_value(NANA_FORM_Y, this->pos().y, OPTION_PRIORITY_CMDLINE, err_str);
-	mui.set_value(NANA_FORM_MAX, this->is_zoomed(true), OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(MEWUI_FORM_HEIGHT, static_cast<int>(this->size().height), OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(MEWUI_FORM_WIDTH, static_cast<int>(this->size().width), OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(MEWUI_FORM_X, this->pos().x, OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(MEWUI_FORM_Y, this->pos().y, OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(MEWUI_FORM_MAX, this->is_zoomed(true), OPTION_PRIORITY_CMDLINE, err_str);
 	auto sel = m_machinebox.selected();
 	if (!sel.empty())
 	{
@@ -287,6 +287,7 @@ void main_form::save_options()
 
 	mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_filters.caption().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
+	auto &pl = this->get_place();
 }
 
 void main_form::init_filters()

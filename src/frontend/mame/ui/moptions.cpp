@@ -77,11 +77,11 @@ const options_entry ui_options::s_option_entries[] =
 	{ OPTION_UI_TEXT_COLOR,                 "ffffffff",     OPTION_STRING,      "UI text color (ARGB)" },
 	{ OPTION_UI_UNAVAILABLE_COLOR,          "ff404040",     OPTION_STRING,      "UI unavailable color (ARGB)" },
 
-	{ NANA_FORM_HEIGHT,						"768",          OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
-	{ NANA_FORM_WIDTH,						"1024",         OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
-	{ NANA_FORM_X,							"0",            OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
-	{ NANA_FORM_Y,							"0",            OPTION_INTEGER,     "UI hide left/right panel in main view (0 = Show all, 1 = hide left, 2 = hide right, 3 = hide both" },
-	{ NANA_FORM_MAX,		                "0",            OPTION_BOOLEAN,     "skip parts submenu, start with first part" },
+	{ MEWUI_FORM_WIDTH,						"1024",         OPTION_INTEGER,     "MEWUI main form width" },
+	{ MEWUI_FORM_HEIGHT,						"768",          OPTION_INTEGER,     "MEWUI main form height" },
+	{ MEWUI_FORM_X,							"0",            OPTION_INTEGER,     "MEWUI main form right position" },
+	{ MEWUI_FORM_Y,							"0",            OPTION_INTEGER,     "MEWUI main form top position" },
+	{ MEWUI_FORM_MAX,		                "0",            OPTION_BOOLEAN,     "MEWUI main form maximize status" },
 
 	{ nullptr }
 };

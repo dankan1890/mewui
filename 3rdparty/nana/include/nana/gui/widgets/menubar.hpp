@@ -27,8 +27,6 @@ namespace nana
 			class item_renderer
 			{
 			public:
-				virtual ~item_renderer() = default;
-
 				enum class state
 				{
 					normal, highlighted, selected

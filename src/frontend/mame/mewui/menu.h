@@ -18,36 +18,36 @@ using namespace nana;
 
 namespace mewui
 {
-	class custom_renderer : public menu::renderer_interface
+class custom_renderer : public menu::renderer_interface
+{
+public:
+	using cloneable_renderer = pat::cloneable<renderer_interface>;
+
+	custom_renderer(const cloneable_renderer& rd);
+
+private:
+	void background(graph_reference graph, window wd) override;
+	void item(graph_reference graph, const nana::rectangle& r, const attr& at) override;
+
+	void item_image(graph_reference graph, const nana::point& pos, unsigned image_px, const paint::image& img) override
 	{
-	public:
-		using cloneable_renderer = pat::cloneable<renderer_interface>;
+		rdptr_->item_image(graph, pos, image_px, img);
+	}
 
-		custom_renderer(const cloneable_renderer & rd);
+	void item_text(graph_reference graph, const nana::point& pos, const std::string& text, unsigned pixels, const attr& atr) override
+	{
+		rdptr_->item_text(graph, pos, text, pixels, atr);
+	}
 
-	private:
-		void background(graph_reference graph, window wd) override;
-		void item(graph_reference graph, const nana::rectangle& r, const attr & at) override;
-		void item_image(graph_reference graph, const nana::point& pos, unsigned image_px, const paint::image& img) override
-		{
-			rdptr_->item_image(graph, pos, image_px, img);
-		}
+	void sub_arrow(graph_reference graph, const nana::point& pos, unsigned pixels, const attr& atr) override
+	{
+		rdptr_->sub_arrow(graph, pos, pixels, atr);
+	}
 
-		void item_text(graph_reference graph, const nana::point& pos, const std::string& text, unsigned pixels, const attr& atr) override
-		{
-			rdptr_->item_text(graph, pos, text, pixels, atr);
-		}
-
-		void sub_arrow(graph_reference graph, const nana::point& pos, unsigned pixels, const attr & atr) override
-		{
-			rdptr_->sub_arrow(graph, pos, pixels, atr);
-		}
-
-	private:
-		cloneable_renderer rdptr_;
-		facade<element::crook> crook_;
-	};
-
+private:
+	cloneable_renderer rdptr_;
+	facade<element::crook> crook_;
+};
 } // namespace mewui
 
 #endif /* MEWUI_MENU_H */

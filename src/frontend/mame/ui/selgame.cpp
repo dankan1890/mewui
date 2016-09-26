@@ -349,26 +349,24 @@ void menu_select_game::handle()
 			m_search[0] = '\0';
 			reset(reset_options::SELECT_FIRST);
 		}
-		else if (menu_event->iptkey == IPT_UI_DATS && mame_machine_manager::instance()->lua()->call_plugin("", "data_list"))
+		else if (menu_event->iptkey == IPT_UI_DATS)
 		{
 			// handle UI_DATS
+			ui_software_info const *swinfo;
+			game_driver const *driver;
+			get_selection(swinfo, driver);
+
 			if (!isfavorite())
 			{
-				auto driver = static_cast<const game_driver *>(menu_event->itemref);
-				if (reinterpret_cast<FPTR>(driver) > skip_main_items && mame_machine_manager::instance()->lua()->call_plugin(driver->name, "data_list"))
+				if (mame_machine_manager::instance()->lua()->call_plugin(driver->name, "data_list"))
 					menu::stack_push<menu_dats_view>(ui(), container(), driver);
 			}
 			else
 			{
-				auto ui_swinfo  = static_cast<ui_software_info *>(menu_event->itemref);
-
-				if (reinterpret_cast<FPTR>(ui_swinfo) > skip_main_items)
-				{
-					if (ui_swinfo->startempty == 1 && mame_machine_manager::instance()->lua()->call_plugin(ui_swinfo->driver->name, "data_list"))
-						menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo->driver);
-					else if (mame_machine_manager::instance()->lua()->call_plugin(std::string(ui_swinfo->shortname).append(1, ',').append(ui_swinfo->listname).c_str(), "data_list") || !ui_swinfo->usage.empty())
-						menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo);
-				}
+				if (swinfo->startempty == 1 && mame_machine_manager::instance()->lua()->call_plugin(swinfo->driver->name, "data_list"))
+					menu::stack_push<menu_dats_view>(ui(), container(), swinfo->driver);
+				else if (mame_machine_manager::instance()->lua()->call_plugin(std::string(swinfo->shortname).append(1, ',').append(swinfo->listname).c_str(), "data_list") || !swinfo->usage.empty())
+					menu::stack_push<menu_dats_view>(ui(), container(), const_cast<ui_software_info *>(swinfo));
 			}
 		}
 		else if (menu_event->iptkey == IPT_UI_FAVORITES)

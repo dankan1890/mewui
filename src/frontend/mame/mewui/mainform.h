@@ -199,6 +199,16 @@ private:
 	void perform_search();
 
 	void handle_events();
+
+	struct list_items
+	{
+		list_items(std::string l, int i, std::string rev) { label = l; option = i; revision = rev; }
+		std::string label;
+		int option;
+		std::string revision;
+	};
+	std::vector<list_items> m_items_list;
+
 };
 } // namespace mewui
 

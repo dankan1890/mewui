@@ -888,6 +888,7 @@ void menu_machine_configure::setup_bios()
 
 menu_plugins_configure::menu_plugins_configure(mame_ui_manager &mui, render_container &container)
 	: menu(mui, container)
+	, m_first_run(true)
 {
 }
 
@@ -901,7 +902,14 @@ menu_plugins_configure::~menu_plugins_configure()
 		// throw emu_fatalerror("Unable to create file plugin.ini\n");
 		return;
 	// generate the updated INI
-	file_plugin.puts(mame_machine_manager::instance()->plugins().output_ini().c_str());
+	plugin_options &plugins = mame_machine_manager::instance()->plugins();
+	for (auto &curentry : plugins)
+		if (!curentry.is_header() && curentry.value() != m_plugins_value[curentry.name()])
+		{
+			ui_globals::reset = true;
+			break;
+		}
+	file_plugin.puts(plugins.output_ini().c_str());
 }
 
 //-------------------------------------------------
@@ -944,10 +952,12 @@ void menu_plugins_configure::populate()
 			auto enabled = std::string(curentry.value()) == "1";
 			item_append(curentry.description(), enabled ? _("On") : _("Off"),
 				enabled ? FLAG_RIGHT_ARROW : FLAG_LEFT_ARROW, (void *)(FPTR)curentry.name());
+			if (m_first_run) m_plugins_value[curentry.name()] = curentry.value();
 		}
 	}
 	item_append(menu_item_type::SEPARATOR);
 	customtop = ui().get_line_height() + (3.0f * UI_BOX_TB_BORDER);
+	m_first_run = false;
 }
 
 //-------------------------------------------------

@@ -16,8 +16,11 @@
 #include "softlist.h"
 #include "softlist_dev.h"
 #include "audit.h"
+#include "luaengine.h"
 #include "mewui/mainform.h"
 #include "mewui/menu.h"
+#include "mame.h"
+#include "pluginopts.h"
 
 namespace mewui
 {
@@ -90,7 +93,16 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	, m_exename(exename)
 {
 	// Load DATs data
-	m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
+	m_datfile = nullptr;
+	auto& pl = mame_machine_manager::instance()->plugins();
+	for (auto &curentry : pl)
+	{
+		if (!curentry.is_header() && std::string(curentry.name()) == "data" && std::string(curentry.value()) == "1")
+		{
+			m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
+			break;
+		}
+	}
 
 	// Main title
 	auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
@@ -628,6 +640,8 @@ void main_form::load_image(const game_driver* drv)
 
 void main_form::load_data(const game_driver* drv)
 {
+	if (m_datfile == nullptr) return;
+
 	std::string buffer;
 	if (m_textpage.m_combox.caption() != "Commands")
 		m_datfile->load_data_info(drv, buffer, m_textpage.m_combox.caption());

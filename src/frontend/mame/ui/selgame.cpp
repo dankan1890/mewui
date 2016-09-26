@@ -34,7 +34,6 @@
 extern const char UI_VERSION_TAG[];
 
 namespace ui {
-
 struct ci_less
 {
 	bool operator() (const std::string &s1, const std::string &s2) const

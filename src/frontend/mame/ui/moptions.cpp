@@ -78,10 +78,11 @@ const options_entry ui_options::s_option_entries[] =
 	{ OPTION_UI_UNAVAILABLE_COLOR,          "ff404040",     OPTION_STRING,      "UI unavailable color (ARGB)" },
 
 	{ MEWUI_FORM_WIDTH,						"1024",         OPTION_INTEGER,     "MEWUI main form width" },
-	{ MEWUI_FORM_HEIGHT,						"768",          OPTION_INTEGER,     "MEWUI main form height" },
+	{ MEWUI_FORM_HEIGHT,					"768",          OPTION_INTEGER,     "MEWUI main form height" },
 	{ MEWUI_FORM_X,							"0",            OPTION_INTEGER,     "MEWUI main form right position" },
 	{ MEWUI_FORM_Y,							"0",            OPTION_INTEGER,     "MEWUI main form top position" },
 	{ MEWUI_FORM_MAX,		                "0",            OPTION_BOOLEAN,     "MEWUI main form maximize status" },
+	{ MEWUI_LAYOUT,				            "",             OPTION_STRING,      "MEWUI layout" },
 
 	{ nullptr }
 };

@@ -77,6 +77,7 @@
 #define MEWUI_FORM_X				  "mewui_form_x"
 #define MEWUI_FORM_Y				  "mewui_form_y"
 #define MEWUI_FORM_MAX				  "mewui_form_max"
+#define MEWUI_LAYOUT				  "mewui_layout"
 
 class ui_options : public core_options
 {
@@ -146,6 +147,7 @@ public:
 	int form_x() const { return int_value(MEWUI_FORM_X); }
 	int form_y() const { return int_value(MEWUI_FORM_Y); }
 	bool form_max() const { return bool_value(MEWUI_FORM_MAX); }
+	const char *form_layout() const { return value(MEWUI_LAYOUT); }
 
 private:
 	static const options_entry s_option_entries[];

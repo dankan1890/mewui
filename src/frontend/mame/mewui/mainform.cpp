@@ -99,7 +99,10 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	                            });
 #endif
 	// Main layout
-	this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <weight=80% machinebox>|<vert <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+	if (std::string(m_ui->options().form_layout()).empty())
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <weight=80% machinebox>|<vert <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+	else
+		this->div(m_ui->options().form_layout());
 
 	// Initialize GUI widgets
 	init_context_menu();
@@ -273,10 +276,10 @@ void main_form::save_options()
 		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 		mui.set_value(OPTION_LAST_USED_MACHINE, game.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	}
-
 	mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_filters.caption().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+	auto &pl = this->get_place().div();
+	mui.set_value(MEWUI_LAYOUT, pl.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
-//	auto &pl = this->get_place();
 }
 
 void main_form::init_filters()
@@ -705,7 +708,10 @@ void main_form::init_view_menu()
 		                        this->collocate();
 	                        });
 	item.check_style(menu::checks::highlight);
-	item.checked(true);
+	auto checked = this->get_place().field_display("swtab");
+//	auto wd = string_format("weight=%d%%", checked ? 80 : 100);
+//	this->get_place().modify("machinebox", wd.c_str());
+	item.checked(checked);
 
 	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip)
 	                         {
@@ -713,7 +719,7 @@ void main_form::init_view_menu()
 		                         this->collocate();
 	                         });
 	item2.check_style(menu::checks::highlight);
-	item2.checked(true);
+	item2.checked(this->get_place().field_display("statusbar"));
 
 	menu.renderer(custom_renderer(menu.renderer()));
 }

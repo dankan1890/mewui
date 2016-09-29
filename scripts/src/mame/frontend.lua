@@ -173,6 +173,8 @@ files {
 	MAME_DIR .. "src/frontend/mame/mewui/mewui.h",
 	MAME_DIR .. "src/frontend/mame/mewui/mainform.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/mainform.h",
+	MAME_DIR .. "src/frontend/mame/mewui/optionsform.cpp",
+	MAME_DIR .. "src/frontend/mame/mewui/optionsform.h",
 	MAME_DIR .. "src/frontend/mame/mewui/menu.cpp",
 	MAME_DIR .. "src/frontend/mame/mewui/menu.h",
 	MAME_DIR .. "src/frontend/mame/mewui/datfile.cpp",

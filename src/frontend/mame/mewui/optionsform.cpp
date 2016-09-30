@@ -73,7 +73,7 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	this->modality();
 }
 
-dir_form::panel_dir::panel_dir(window wd)
+okcancel_panel::okcancel_panel(window wd)
 	: panel<true>(wd)
 {
 	this->bgcolor(colors::azure);
@@ -99,8 +99,7 @@ folderform::folderform(window wd)
 	// add the drives
 	for (auto i = 0; (volume_name = osd_get_volume_name(i)) != nullptr; ++i)
 	{
-		std::string v_name;
-		v_name = (!strcmp(volume_name, "/")) ? "FS.ROOT" : volume_name;
+		std::string v_name(!strcmp(volume_name, "/") ? "FS.ROOT" : volume_name);
 		auto node = m_tb.insert(v_name, volume_name);
 		file_enumerator path(volume_name);
 		const osd::directory::entry* dirent;

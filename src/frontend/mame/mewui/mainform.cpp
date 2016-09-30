@@ -91,16 +91,15 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	// Tray
 	m_notif.icon(m_exename);
 	m_notif.text(maintitle);
-	m_notif.events().mouse_down([this]
-	                            {
-		                            msgbox mb{ *this, "Tray Test" };
-		                            mb.icon(mb.icon_information) << "Some msg";
-		                            mb.show();
-	                            });
+	m_notif.events().mouse_down([this] {
+		msgbox mb{ *this, "Tray Test" };
+		mb.icon(mb.icon_information) << "Some msg";
+		mb.show();
+	});
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <weight=80% machinebox>|<vert <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 	else
 		this->div(m_ui->options().form_layout());
 
@@ -138,91 +137,85 @@ void main_form::handle_events()
 	// Main listbox events
 	static auto prev_sel = 0;
 	auto& events = m_machinebox.events();
-	events.mouse_down([this](const arg_mouse& arg)
-	                  {
-		                  auto sel = m_machinebox.selected();
-		                  if (!sel.empty() && sel[0].item != prev_sel)
-		                  {
-			                  prev_sel = sel[0].item;
-			                  update_selection();
-		                  }
-		                  else
-		                  {
-			                  m_machinebox.at(0).at(prev_sel).select(true);
-			                  update_selection();
-		                  }
+	events.mouse_down([this](const arg_mouse& arg) {
+		auto sel = m_machinebox.selected();
+		if (!sel.empty() && sel[0].item != prev_sel)
+		{
+			prev_sel = sel[0].item;
+			update_selection();
+		}
+		else
+		{
+			m_machinebox.at(0).at(prev_sel).select(true);
+			update_selection();
+		}
 
-		                  // right click, show context menu
-		                  if (arg.right_button)
-			                  menu_popuper(m_context_menu)(arg);
-	                  });
+		// right click, show context menu
+		if (arg.right_button)
+			menu_popuper(m_context_menu)(arg);
+	});
 
-	events.key_release([this](const arg_keyboard& arg)
-	                   {
-		                   auto sel = m_machinebox.selected();
-		                   if (!sel.empty())
-		                   {
-			                   if (arg.key == keyboard::enter || arg.key == keyboard::enter_n)
-			                   {
-				                   auto game = m_machinebox.at(0).at(sel[0].item).text(1);
-				                   start_machine(game);
-			                   }
-			                   else if (sel[0].item != prev_sel)
-			                   {
-				                   prev_sel = sel[0].item;
-				                   update_selection();
-			                   }
-		                   }
-	                   });
+	events.key_release([this](const arg_keyboard& arg) {
+		auto sel = m_machinebox.selected();
+		if (!sel.empty())
+		{
+			if (arg.key == keyboard::enter || arg.key == keyboard::enter_n)
+			{
+				auto game = m_machinebox.at(0).at(sel[0].item).text(1);
+				start_machine(game);
+			}
+			else if (sel[0].item != prev_sel)
+			{
+				prev_sel = sel[0].item;
+				update_selection();
+			}
+		}
+	});
 
-	events.dbl_click([this]
-	                 {
-		                 auto sel = m_machinebox.selected();
-		                 if (!sel.empty())
-		                 {
-			                 auto game = m_machinebox.at(0).at(sel[0].item).text(1);
-			                 start_machine(game);
-		                 }
-	                 });
+	events.dbl_click([this] {
+		auto sel = m_machinebox.selected();
+		if (!sel.empty())
+		{
+			auto game = m_machinebox.at(0).at(sel[0].item).text(1);
+			start_machine(game);
+		}
+	});
 
 	// Search events
 	m_search_button.events().click([this] { perform_search(); });
-	m_search.events().key_char([this](const arg_keyboard& arg)
-	                           {
-		                           if (arg.key == keyboard::enter || arg.key == keyboard::enter_n)
-			                           perform_search();
-	                           });
+	m_search.events().key_char([this](const arg_keyboard& arg) {
+		if (arg.key == keyboard::enter || arg.key == keyboard::enter_n)
+			perform_search();
+	});
 
 	// Filters event
-	m_filters.m_filters.events().selected([this](const arg_combox& ei)
-	                                      {
-		                                      auto filt = ei.widget.caption();
-		                                      auto subf = filters_option.at(filt);
-		                                      if (subf == -1)
-		                                      {
-			                                      m_filters.m_subfilters.enabled(false);
-			                                      populate_listbox(filt);
-		                                      }
-		                                      else
-		                                      {
-			                                      if (subf != m_prev_subfilter)
-			                                      {
-				                                      m_prev_subfilter = subf;
-				                                      m_filters.populate_subfilter(subf);
-			                                      }
-			                                      m_filters.m_subfilters.enabled(true);
-			                                      auto subfilt = m_filters.m_subfilters.caption();
-			                                      populate_listbox(filt, subfilt);
-		                                      }
-		                                      update_selection();
-	                                      });
+	m_filters.m_filters.events().selected([this](const arg_combox& ei) {
+		auto filt = ei.widget.caption();
+		auto subf = filters_option.at(filt);
+		if (subf == -1)
+		{
+			m_filters.m_subfilters.enabled(false);
+			populate_listbox(filt);
+		}
+		else
+		{
+			if (subf != m_prev_subfilter)
+			{
+				m_prev_subfilter = subf;
+				m_filters.populate_subfilter(subf);
+			}
+			m_filters.m_subfilters.enabled(true);
+			auto subfilt = m_filters.m_subfilters.caption();
+			populate_listbox(filt, subfilt);
+		}
+		update_selection();
+	});
 
 	// Subfilters event
-	m_filters.m_subfilters.events().selected([this](const arg_combox& ei)
-	                                         {
-		                                         populate_listbox(m_filters.m_filters.caption(), ei.widget.caption());
-		                                         update_selection();
-	                                         });
+	m_filters.m_subfilters.events().selected([this](const arg_combox& ei) {
+		populate_listbox(m_filters.m_filters.caption(), ei.widget.caption());
+		update_selection();
+	});
 
 	// DATs events
 	m_textpage.m_combox.events().selected([this] { update_selection(); });
@@ -234,13 +227,12 @@ void main_form::handle_events()
 	m_imgpage.m_combox.events().selected([this] { update_selection(); });
 
 	// Main exit event
-	this->events().unload([this](const arg_unload& ei)
-	                      {
-		                      msgbox mb(*this, "Quit", msgbox::yes_no);
-		                      mb.icon(mb.icon_question) << "Are you sure you want to exit?";
-		                      ei.cancel = mb.show() == mb.pick_no;
-		                      if (!ei.cancel) save_options();
-	                      });
+	this->events().unload([this](const arg_unload& ei) {
+		msgbox mb(*this, "Quit", msgbox::yes_no);
+		mb.icon(mb.icon_question) << "Are you sure you want to exit?";
+		ei.cancel = mb.show() == mb.pick_no;
+		if (!ei.cancel) save_options();
+	});
 }
 
 void main_form::perform_search()
@@ -527,10 +519,9 @@ void main_form::update_selection()
 					for (const auto& swinfo : swlistdev.get_info())
 					{
 						auto& part = swinfo.parts().front();
-						auto pred = [&part](const std::pair<std::string, std::string>& i)
-							{
-								return part.name().find(i.second) != std::string::npos;
-							};
+						auto pred = [&part](const std::pair<std::string, std::string>& i) {
+							return part.name().find(i.second) != std::string::npos;
+						};
 						auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
 						std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
 						cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name });
@@ -667,30 +658,30 @@ void main_form::init_menubar()
 void main_form::init_file_menu()
 {
 	auto& menu = m_menubar.push_back("&File");
-	menu.append("&Play XXX", [this](menu::item_proxy& ip)
-	            {
-		            auto sel = m_machinebox.selected();
-		            if (!sel.empty())
-		            {
-			            auto game = m_machinebox.at(0).at(sel[0].item).text(1);
-			            start_machine(game);
-		            }
-	            });
+	menu.append("&Play XXX", [this](menu::item_proxy& ip) {
+		auto sel = m_machinebox.selected();
+		if (!sel.empty())
+		{
+			auto game = m_machinebox.at(0).at(sel[0].item).text(1);
+			start_machine(game);
+		}
+	});
 
-	/*		menu.append_splitter();
-			menu.append("Play and &Record Input", [this](menu::item_proxy& ip) {});
-			menu.append("P&layback Input", [this](menu::item_proxy& ip) {});
-			menu.append_splitter();
-			menu.append("Play and Record &Wave Output", [this](menu::item_proxy& ip) {});
-			menu.append("Play and Record &MNG Output", [this](menu::item_proxy& ip) {});
-			menu.append("Play and Record &uncompressed AVI Output", [this](menu::item_proxy& ip) {});
-			menu.append_splitter();
-			menu.append("Loa&d Savestate", [this](menu::item_proxy& ip) {});
-			menu.append_splitter();
-			menu.append("Pr&opertis", [this](menu::item_proxy& ip) {});
-			menu.append_splitter();
-			menu.append("Audi&t existing Sets", [this](menu::item_proxy& ip) {});
-			menu.append("&Audit All Sets", [this](menu::item_proxy& ip) {}); */
+/*	menu.append_splitter();
+	menu.append("Play and &Record Input", [this](menu::item_proxy& ip) {});
+	menu.append("P&layback Input", [this](menu::item_proxy& ip) {});
+	menu.append_splitter();
+	menu.append("Play and Record &Wave Output", [this](menu::item_proxy& ip) {});
+	menu.append("Play and Record &MNG Output", [this](menu::item_proxy& ip) {});
+	menu.append("Play and Record &uncompressed AVI Output", [this](menu::item_proxy& ip) {});
+	menu.append_splitter();
+	menu.append("Loa&d Savestate", [this](menu::item_proxy& ip) {});
+	menu.append_splitter();
+	menu.append("Pr&opertis", [this](menu::item_proxy& ip) {});
+	menu.append_splitter();
+	menu.append("Audi&t existing Sets", [this](menu::item_proxy& ip) {});
+	menu.append("&Audit All Sets", [this](menu::item_proxy& ip) {}); 
+*/
 	menu.append_splitter();
 	menu.append("E&xit", [this](menu::item_proxy& ip) { this->close(); });
 	menu.renderer(custom_renderer(menu.renderer()));
@@ -699,25 +690,20 @@ void main_form::init_file_menu()
 void main_form::init_view_menu()
 {
 	auto& menu = m_menubar.push_back("View");
-	auto item = menu.append("Software Packages", [this](menu::item_proxy& ip)
-	                        {
-		                        this->get_place().field_display("swtab", ip.checked());
-		                        this->get_place().field_display("swtab_frame", ip.checked());
-		                        auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
-		                        this->get_place().modify("machinebox", wd.c_str());
-		                        this->collocate();
-	                        });
+	auto item = menu.append("Software Packages", [this](menu::item_proxy& ip) {
+		this->get_place().field_display("swtab", ip.checked());
+		this->get_place().field_display("swtab_frame", ip.checked());
+		auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
+		this->get_place().modify("machinebox", wd.c_str());
+		this->collocate();
+	});
 	item.check_style(menu::checks::highlight);
-	auto checked = this->get_place().field_display("swtab");
-//	auto wd = string_format("weight=%d%%", checked ? 80 : 100);
-//	this->get_place().modify("machinebox", wd.c_str());
-	item.checked(checked);
+	item.checked(this->get_place().field_display("swtab"));
 
-	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip)
-	                         {
-		                         this->get_place().field_display("statusbar", ip.checked());
-		                         this->collocate();
-	                         });
+	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip) {
+		this->get_place().field_display("statusbar", ip.checked());
+		this->collocate();
+	});
 	item2.check_style(menu::checks::highlight);
 	item2.checked(this->get_place().field_display("statusbar"));
 
@@ -727,65 +713,63 @@ void main_form::init_view_menu()
 void main_form::init_options_menu()
 {
 	auto& menu = m_menubar.push_back("Options");
-	//		menu.append("Interface Options", [this](menu::item_proxy& ip) {});
-	//		menu.append("Global Machine Options", [this](menu::item_proxy& ip) {});
-	menu.append("Directories", [this](menu::item_proxy& ip)
-	            {
-		            dir_form dform{ *this, m_options, m_ui };
-		            dform.show();
-	            });
-	//		menu.append_splitter();
-	//		menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
-	//		menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
-	//		menu.append_splitter();
-	//		menu.append("Background Image", [this](menu::item_proxy& ip) {});
-	//		menu.append_splitter();
-	//		menu.append("Reset to Default", [this](menu::item_proxy& ip) {});
+//	menu.append("Interface Options", [this](menu::item_proxy& ip) {});
+//	menu.append("Global Machine Options", [this](menu::item_proxy& ip) {});
+	menu.append("Directories", [this](menu::item_proxy& ip) {
+		dir_form dform{ *this, m_options, m_ui };
+		dform.show();
+	});
+//	menu.append_splitter();
+//	menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
+//	menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
+//	menu.append_splitter();
+//	menu.append("Background Image", [this](menu::item_proxy& ip) {});
+//	menu.append_splitter();
+//	menu.append("Reset to Default", [this](menu::item_proxy& ip) {});
 	menu.renderer(custom_renderer(menu.renderer()));
 }
 
 void main_form::init_help_menu()
 {
 	auto& menu = m_menubar.push_back("Help");
-	menu.append("About", [this](menu::item_proxy& ip)
-	            {
-		            auto message = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
-		            msgbox mb(*this, "About MEWUI");
-		            mb.icon(msgbox::icon_information) << message;
-		            mb.show();
-	            });
+	menu.append("About", [this](menu::item_proxy& ip) {
+		auto message = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
+		msgbox mb(*this, "About MEWUI");
+		mb.icon(msgbox::icon_information) << message;
+		mb.show();
+	});
 	menu.renderer(custom_renderer(menu.renderer()));
 }
 
 void main_form::init_context_menu()
 {
-	m_context_menu.append("Play XXX", [this](menu::item_proxy& ip)
-	                      {
-		                      auto sel = m_machinebox.selected();
-		                      if (!sel.empty())
-		                      {
-			                      auto game = m_machinebox.at(0).at(sel[0].item).text(1);
-			                      start_machine(game);
-		                      }
-	                      });
-	/*		m_context_menu.append_splitter();
-			m_context_menu.append("Play and Record Input", [this](menu::item_proxy& ip) {});
-			m_context_menu.append_splitter();
-			m_context_menu.append("Add to Custom Folder", [this](menu::item_proxy& ip) {});
-			auto item = m_context_menu.append("Remove from this Folder", [this](menu::item_proxy& ip) {});
-			item.enabled(false);
-			m_context_menu.append("Custom Filter", [this](menu::item_proxy& ip) {});
-			m_context_menu.append_splitter();
-			m_context_menu.append("Select Random Machine", [this](menu::item_proxy& ip) {});
-			m_context_menu.append_splitter();
-			m_context_menu.append("Reset Play Count", [this](menu::item_proxy& ip) {});
-			m_context_menu.append("Reset Play Time", [this](menu::item_proxy& ip) {});
-			m_context_menu.append_splitter();
-			m_context_menu.append("Audit", [this](menu::item_proxy& ip) {});
-			m_context_menu.append_splitter();
-			m_context_menu.append("Properties", [this](menu::item_proxy& ip) {});
-			m_context_menu.append("Properties for XXX.cpp", [this](menu::item_proxy& ip) {});
-			m_context_menu.append("Vector Properties", [this](menu::item_proxy& ip) {}); */
+	m_context_menu.append("Play XXX", [this](menu::item_proxy& ip) {
+		auto sel = m_machinebox.selected();
+		if (!sel.empty())
+		{
+			auto game = m_machinebox.at(0).at(sel[0].item).text(1);
+			start_machine(game);
+		}
+	});
+/*	m_context_menu.append_splitter();
+	m_context_menu.append("Play and Record Input", [this](menu::item_proxy& ip) {});
+	m_context_menu.append_splitter();
+	m_context_menu.append("Add to Custom Folder", [this](menu::item_proxy& ip) {});
+	auto item = m_context_menu.append("Remove from this Folder", [this](menu::item_proxy& ip) {});
+	item.enabled(false);
+	m_context_menu.append("Custom Filter", [this](menu::item_proxy& ip) {});
+	m_context_menu.append_splitter();
+	m_context_menu.append("Select Random Machine", [this](menu::item_proxy& ip) {});
+	m_context_menu.append_splitter();
+	m_context_menu.append("Reset Play Count", [this](menu::item_proxy& ip) {});
+	m_context_menu.append("Reset Play Time", [this](menu::item_proxy& ip) {});
+	m_context_menu.append_splitter();
+	m_context_menu.append("Audit", [this](menu::item_proxy& ip) {});
+	m_context_menu.append_splitter();
+	m_context_menu.append("Properties", [this](menu::item_proxy& ip) {});
+	m_context_menu.append("Properties for XXX.cpp", [this](menu::item_proxy& ip) {});
+	m_context_menu.append("Vector Properties", [this](menu::item_proxy& ip) {}); 
+*/
 }
 
 tab_page_picturebox::tab_page_picturebox(window wd)
@@ -803,16 +787,15 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
 	m_place["combobox"] << m_combox;
 	m_place["pct"] << m_picture;
-	dw.draw([this](paint::graphics& graph)
-	        {
-		        nana::rectangle r(graph.size());
-		        auto right = r.right() - 1;
-		        auto bottom = r.bottom() - 1;
-		        graph.line_begin(right, r.y);
-		        graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		        graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		        graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	        });
+	dw.draw([this](paint::graphics& graph) {
+		nana::rectangle r(graph.size());
+		auto right = r.right() - 1;
+		auto bottom = r.bottom() - 1;
+		graph.line_begin(right, r.y);
+		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
+		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
+		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
+	});
 }
 
 tab_page_softwarebox::tab_page_softwarebox(window wd)
@@ -853,16 +836,15 @@ tab_page_textbox::tab_page_textbox(window wd)
 	m_place.div("vert margin=5 <weight=20 combobox><weight=5><txt>");
 	m_place["combobox"] << m_combox;
 	m_place["txt"] << m_textbox;
-	dw.draw([this](paint::graphics& graph)
-	        {
-		        nana::rectangle r(graph.size());
-		        auto right = r.right() - 1;
-		        auto bottom = r.bottom() - 1;
-		        graph.line_begin(right, r.y);
-		        graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		        graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		        graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	        });
+	dw.draw([this](paint::graphics& graph) {
+		nana::rectangle r(graph.size());
+		auto right = r.right() - 1;
+		auto bottom = r.bottom() - 1;
+		graph.line_begin(right, r.y);
+		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
+		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
+		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
+	});
 }
 
 panel_filters::panel_filters(window wd)

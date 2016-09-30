@@ -48,25 +48,26 @@ static const std::pair<std::string, std::string> arts_info[] =
 	{ "Covers", OPTION_COVER_PATH }
 };
 
+class okcancel_panel : public panel<true>
+{
+public:
+	explicit okcancel_panel(window);
+	button m_ok{ *this, "OK" }, m_cancel{ *this, "Cancel" };
+
+private:
+	place m_place{ *this };
+};
+
+
 class dir_form : public form
 {
 public:
 	explicit dir_form(window, emu_options&, std::unique_ptr<mame_ui_manager>&);
 
 private:
-	class panel_dir : public panel<true>
-	{
-	public:
-		explicit panel_dir(window);
-		button m_ok{ *this, "OK" }, m_cancel{ *this, "Cancel" };
-
-	private:
-		place m_place{ *this };
-	};
-
 	listbox m_listbox{ *this };
 	combox m_combox{ *this };
-	panel_dir m_panel{ *this };
+	okcancel_panel m_panel{ *this };
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
 };

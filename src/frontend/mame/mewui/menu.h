@@ -13,6 +13,7 @@
 #define MEWUI_MENU_H
 
 #include <nana/gui/widgets/menu.hpp>
+#include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/element.hpp>
 using namespace nana;
 
@@ -44,10 +45,48 @@ private:
 		rdptr_->sub_arrow(graph, pos, pixels, atr);
 	}
 
-private:
 	cloneable_renderer rdptr_;
 	facade<element::crook> crook_;
 };
+
+class custom_placer
+	: public treebox::compset_placer_interface
+{
+	using cloneable_placer = pat::cloneable<treebox::compset_placer_interface>;
+public:
+	explicit custom_placer(const cloneable_placer& r)
+		: placer_(r) 
+	{}
+
+private:
+	void enable(component_t comp, bool enabled) override
+	{
+		return placer_->enable(comp, enabled);
+	}
+
+	bool enabled(component_t comp) const override
+	{
+		return placer_->enabled(comp);
+	}
+
+	unsigned item_height(graph_reference graph) const override
+	{
+		return placer_->item_height(graph);
+	}
+
+	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
+	{
+		return graph.width();
+	}
+
+	bool locate(component_t comp, const item_attribute_t& attr, nana::rectangle * r) const override
+	{
+		return placer_->locate(comp, attr, r);
+	}
+
+	cloneable_placer placer_;
+};
+
 } // namespace mewui
 
 #endif /* MEWUI_MENU_H */

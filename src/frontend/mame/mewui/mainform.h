@@ -25,7 +25,6 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/notifier.hpp>
 #include <nana/gui/filebox.hpp>
-#include <set>
 
 using namespace nana;
 struct game_driver;
@@ -77,20 +76,6 @@ private:
 	place m_place{ *this };
 };
 
-class panel_filters : public panel<true>
-{
-public:
-	explicit panel_filters(window);
-
-	combox m_filters{ *this }, m_subfilters{ *this };
-	void populate_subfilter(int);
-
-private:
-	label m_filter_label{ *this }, m_subfilter_label{ *this };
-	place m_place{ *this };
-	std::set<std::string> m_array[3];
-};
-
 class statusbar : public panel<true>
 {
 public:
@@ -124,7 +109,6 @@ private:
 	tabbar<std::string> m_tabbar{ *this };
 	tabbar<std::string> m_tabsw{ *this };
 
-	panel_filters m_filters{ *this };
 	tab_page_textbox m_textpage{ *this };
 	tab_page_picturebox m_imgpage{ *this };
 	tab_page_softwarebox m_swpage{ *this };
@@ -165,15 +149,6 @@ private:
 	void perform_search();
 
 	void handle_events();
-
-	struct list_items
-	{
-		list_items(std::string l, int i, std::string rev) { label = l; option = i; revision = rev; }
-		std::string label;
-		int option;
-		std::string revision;
-	};
-	std::vector<list_items> m_items_list;
 
 };
 } // namespace mewui

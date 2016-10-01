@@ -99,7 +99,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=25 filters><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 	else
 		this->div(m_ui->options().form_layout());
 
@@ -124,9 +124,6 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_search_button.tooltip("Search");
 	this->get_place()["search"] << m_search;
 	this->get_place()["s_button"] << m_search_button;
-
-	m_treebox.insert("Root", "Root");
-	this->get_place()["treebox"] << m_treebox; // Test
 
 	this->collocate();
 	update_selection();
@@ -189,31 +186,9 @@ void main_form::handle_events()
 	});
 
 	// Filters event
-	m_filters.m_filters.events().selected([this](const arg_combox& ei) {
-		auto filt = ei.widget.caption();
-		auto subf = filters_option.at(filt);
-		if (subf == -1)
-		{
-			m_filters.m_subfilters.enabled(false);
-			populate_listbox(filt);
-		}
-		else
-		{
-			if (subf != m_prev_subfilter)
-			{
-				m_prev_subfilter = subf;
-				m_filters.populate_subfilter(subf);
-			}
-			m_filters.m_subfilters.enabled(true);
-			auto subfilt = m_filters.m_subfilters.caption();
-			populate_listbox(filt, subfilt);
-		}
-		update_selection();
-	});
-
-	// Subfilters event
-	m_filters.m_subfilters.events().selected([this](const arg_combox& ei) {
-		populate_listbox(m_filters.m_filters.caption(), ei.widget.caption());
+	m_treebox.events().selected([this](const arg_treebox& ei) {
+		auto filt = ei.item.text();
+		populate_listbox(filt);
 		update_selection();
 	});
 
@@ -268,7 +243,7 @@ void main_form::save_options()
 		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 		mui.set_value(OPTION_LAST_USED_MACHINE, game.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	}
-	mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_filters.caption().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+	mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	auto &pl = this->get_place().div();
 	mui.set_value(MEWUI_LAYOUT, pl.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
@@ -276,16 +251,15 @@ void main_form::save_options()
 
 void main_form::init_filters()
 {
-	m_filters.m_filters.option(0);
-	for (size_t x = 0; x < m_filters.m_filters.the_number_of_options(); ++x)
-		if (m_filters.m_filters.text(x) == m_ui->options().last_used_filter())
-		{
-			m_filters.m_filters.option(x);
-			break;
-		}
+	// TEST
+	for (auto & m : filters_option)
+		m_treebox.insert(m.first, m.first);
 
-	// Place into the layout
-	this->get_place()["filters"] << m_filters;
+	auto node = m_treebox.find(m_ui->options().last_used_filter());
+	node.select(true);
+
+	this->get_place()["treebox"] << m_treebox;
+	m_treebox.placer(custom_placer(m_treebox.placer()));
 }
 
 void main_form::init_tabbar()
@@ -336,7 +310,7 @@ void main_form::init_machinebox()
 			m_sortedlist[driver_list::driver(id).description].push_back(drv);
 	}
 
-	populate_listbox(m_filters.m_filters.caption());
+	populate_listbox(m_treebox.selected().text());
 
 	// Place into the layout
 	this->get_place()["machinebox"] << m_machinebox;
@@ -438,12 +412,12 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 				if (subfilter.empty())
 				{
 					if (filter == "Working" && (drv->flags & MACHINE_NOT_WORKING) != 0) continue;
-					else if (filter == "Not Working" && (drv->flags & MACHINE_NOT_WORKING) == 0) continue;
-					else if (filter == "Parents" && parent.first != drv->name) continue;
-					else if (filter == "Clones" && parent.first == drv->name) continue;
-					else if (filter == "Horizontal" && (drv->flags & ORIENTATION_SWAP_XY) != 0) continue;
-					else if (filter == "Vertical" && (drv->flags & ORIENTATION_SWAP_XY) == 0) continue;
-					else if (filter == "Save State" && (drv->flags & MACHINE_SUPPORTS_SAVE) == 0) continue;
+					if (filter == "Not Working" && (drv->flags & MACHINE_NOT_WORKING) == 0) continue;
+					if (filter == "Parents" && parent.first != drv->description) continue;
+					if (filter == "Clones" && parent.first == drv->description) continue;
+					if (filter == "Horizontal" && (drv->flags & ORIENTATION_SWAP_XY) != 0) continue;
+					if (filter == "Vertical" && (drv->flags & ORIENTATION_SWAP_XY) == 0) continue;
+					if (filter == "Save State" && (drv->flags & MACHINE_SUPPORTS_SAVE) == 0) continue;
 				}
 				else
 				{
@@ -525,6 +499,8 @@ void main_form::update_selection()
 						auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
 						std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
 						cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name });
+						if (!swinfo.parentname().empty())
+							cat.back().fgcolor(colors::gray);
 					}
 		}
 		m_swpage.m_softwarebox.auto_draw(true);
@@ -845,50 +821,6 @@ tab_page_textbox::tab_page_textbox(window wd)
 		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
 	});
-}
-
-panel_filters::panel_filters(window wd)
-	: panel<true>(wd)
-{
-	auto bc = color(207, 214, 229);
-	this->bgcolor(bc);
-	m_filter_label.bgcolor(bc);
-	m_filter_label.format(true);
-	m_filter_label.text_align(align::center, align_v::center);
-	m_filter_label.caption("Filters");
-	m_subfilter_label.bgcolor(bc);
-	m_subfilter_label.format(true);
-	m_subfilter_label.text_align(align::center, align_v::center);
-	m_subfilter_label.caption("Subfilter");
-
-	for (auto& e : filters_option)
-		m_filters.push_back(e.first);
-
-	m_filters.editable(false);
-
-	// Layout
-	m_place.div("<weight=50 flabel> <weight=3> <weight=120 margin=2 filters> <weight=10> <weight=50 sflabel> <weight=3> <weight=120 margin=2 subfilters>");
-	m_place["flabel"] << m_filter_label;
-	m_place["filters"] << m_filters;
-	m_place["sflabel"] << m_subfilter_label;
-	m_place["subfilters"] << m_subfilters;
-
-	// Populate sub-filter nodes
-	for (auto x = 0; x < driver_list::total(); ++x)
-		if (&driver_list::driver(x) != &GAME_NAME(___empty))
-		{
-			m_array[filters_option.at("Manufacturer")].emplace(driver_list::driver(x).manufacturer);
-			m_array[filters_option.at("Year")].emplace(driver_list::driver(x).year);
-			m_array[filters_option.at("Source")].emplace(core_filename_extract_base(driver_list::driver(x).source_file));
-		}
-}
-
-void panel_filters::populate_subfilter(int filter)
-{
-	m_subfilters.clear();
-	for (auto& e : m_array[filter])
-		m_subfilters.push_back(e);
-	m_subfilters.option(0);
 }
 
 statusbar::statusbar(window wd)

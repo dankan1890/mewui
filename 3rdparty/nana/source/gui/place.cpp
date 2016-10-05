@@ -411,7 +411,7 @@ namespace nana
 					sp = _m_eat_whitespace(sp);
 					if ('%' == *sp)
 					{
-						if (number_t::kind::integer == number_.kind_of())
+//						if (number_t::kind::integer == number_.kind_of())
 							number_.assign_percent(number_.integer());
 						return sp - allstart + 1;
 					}
@@ -430,6 +430,87 @@ namespace nana
 			std::vector<number_t> parameters_;
 		};	//end class tokenizer
 	}
+
+
+	inline bool is_idchar(int ch)
+	{
+		return ('_' == ch || isalnum(ch));
+	}
+
+	std::size_t find_idstr(const std::string& text, const char* idstr, std::size_t off = 0)
+	{
+		const auto len = std::strlen(idstr);
+
+		size_t pos;
+		while ((pos = text.find(idstr, off)) != text.npos)
+		{
+			if (!is_idchar(text[pos + len]))
+			{
+				if (pos == 0 || !is_idchar(text[pos - 1]))
+					return pos;
+			}
+
+			off = pos + len; // occurrence not found, advancing the offset and try again
+		}
+		return text.npos;
+	}
+
+	std::pair<std::size_t, std::size_t> get_field_bound(const std::string& div, const char* idstr, int depth)
+	{
+		auto start_pos = find_idstr(div, idstr);
+
+		if (depth < 0 || start_pos >= div.length())
+			return{};
+
+//		const char* p = div.c_str() + start_pos;
+
+		while (depth >= 0)
+		{
+			auto pos = div.find_last_of("<>", start_pos);
+			if (div.npos == pos)
+				return{};
+
+			if (div[pos] == '>')
+			{
+				++depth;
+				start_pos = pos - 1;
+				continue;
+			}
+
+			if (0 == depth)
+			{
+				start_pos = pos;
+				break;
+			}
+
+			--depth;
+			start_pos = pos - 1;
+		}
+
+		auto off = start_pos + 1;
+
+		while (true)
+		{
+			auto pos = div.find_first_of("<>", off);
+
+			if (div.npos == pos)
+				return{};
+
+			if ('<' == div[pos])
+			{
+				++depth;
+				off = pos + 1;
+				continue;
+			}
+
+			if (0 == depth)
+				return{ start_pos, pos + 1 };
+
+			--depth;
+			off = pos + 1;
+		}
+	}
+
 
 	//struct implement
 	struct place::implement
@@ -1299,10 +1380,6 @@ namespace nana
 		std::vector<rectangle> collapses_;
 	};//end class div_grid
 
-	enum class update_operation { erase = 0, insert, replace, erase_partial };
-
-	void update_div(std::string& div, const char* field, const char* attr, update_operation operation);
-
 	class place::implement::div_splitter
 		: public division
 	{
@@ -1319,10 +1396,10 @@ namespace nana
 
 		enum{splitter_px = 4};
 	public:
-		div_splitter(place_parts::number_t init_weight, nana::place::implement *imp)
-			: division(kind::splitter, std::string()),
-			init_weight_(init_weight),
-			impl_(imp)
+		div_splitter(place_parts::number_t init_weight, implement* impl):
+			division(kind::splitter, std::string()),
+			impl_(impl),
+			init_weight_(init_weight)
 		{
 			this->weight.assign(splitter_px);
 		}
@@ -1346,7 +1423,7 @@ namespace nana
 
 				auto grab_fn = [this](const arg_mouse& arg)
 				{
-					if (false == arg.left_button)
+					if ((false == arg.left_button) && (mouse::left_button != arg.button))
 						return;
 
 					if (event_code::mouse_down == arg.evt_code)
@@ -1379,6 +1456,7 @@ namespace nana
 					else if(event_code::mouse_up == arg.evt_code)
 					{
 						grabbed_ = false;
+						this->_m_update_div(impl_->div_text);
 					}
 					else if (event_code::mouse_move == arg.evt_code)
 					{
@@ -1399,10 +1477,6 @@ namespace nana
 
 						double imd_rate = 100.0 / area_px;
 						left_px = static_cast<int>(limit_px(_m_leaf_left(), left_px, area_px));
-						// Test
-//						if (_m_leaf_left()->weight.kind_of() != number_t::kind::none)
-//							update_div(impl_->div_text, _m_leaf_left()->name.c_str(), "weight", update_operation::erase_partial);
-
 						_m_leaf_left()->weight.assign_percent(imd_rate * left_px);
 
 						auto right_px = static_cast<int>(right_pixels_) - delta;
@@ -1412,8 +1486,6 @@ namespace nana
 							right_px = 0;
 
 						right_px = static_cast<int>(limit_px(_m_leaf_right(), right_px, area_px));
-//						if (_m_leaf_right()->weight.kind_of() != number_t::kind::none)
-//							update_div(impl_->div_text, _m_leaf_right()->name.c_str(), "weight", update_operation::erase_partial);
 						_m_leaf_right()->weight.assign_percent(imd_rate * right_px);
 
 						pause_move_collocate_ = true;
@@ -1483,6 +1555,231 @@ namespace nana
 				splitter_.move(this->field_area);
 		}
 	private:
+		static int _m_search_name(const division* div, std::string& name)
+		{
+			if (div->name.size())
+			{
+				name = div->name;
+				return 0;
+			}
+
+			for (auto & child : div->children)
+			{
+				if (child->name.size())
+				{
+					name = child->name;
+					return 1;
+				}
+			}
+
+			for (auto & child : div->children)
+			{
+				auto depth = _m_search_name(child.get(), name);
+				if (depth >= 0)
+					return depth + 1;
+			}
+
+			return -1;
+		}
+
+		static std::pair<std::size_t, std::size_t> _m_field_bound(const std::string& div, std::size_t start_pos)
+		{
+			int depth = 0;
+
+			if ('<' == div[start_pos])
+			{
+				auto off = start_pos + 1;
+				while (off < div.length())
+				{
+					auto pos = div.find_first_of("<>", off);
+					if (div.npos == pos)
+						break;
+
+					if ('<' == div[pos])
+					{
+						++depth;
+						off = pos + 1;
+						continue;
+					}
+					
+					if (0 == depth)
+						return{ start_pos, pos + 1};
+
+					--depth;
+					off = pos + 1;
+				}
+			}
+			else if (('>' == div[start_pos]) && (start_pos > 0))
+			{
+				auto off = start_pos - 1;
+				while (true)
+				{
+					auto pos = div.find_last_of("<>", off);
+					if (div.npos == pos)
+						break;
+
+					if ('>' == div[pos])
+					{
+						++depth;
+						if (0 == pos)
+							break;
+
+						off = pos - 1;
+					}
+
+					if (0 == depth)
+						return{ pos, start_pos + 1};
+
+					if (0 == pos)
+						break;
+
+					off = pos - 1;
+				}
+			}
+
+			return{};
+		}
+
+		static void _m_remove_attr(std::string& div, const char* attr)
+		{
+			auto attr_pos = div.find(attr);
+			if (div.npos == attr_pos)
+				return;
+
+			std::size_t off = 1;
+			while (true)
+			{
+				auto pos = div.find('<', off);
+				if (div.npos == pos)
+					break;
+
+				if (attr_pos < pos)
+					break;
+
+				int depth = 0;
+				off = pos + 1;
+				std::size_t endpos = 0;
+				while (true)
+				{
+					endpos = div.find_first_of("<>", off);
+					if (div.npos == endpos)
+						return;
+					
+					if ('<' == div[endpos])
+					{
+						++depth;
+						off = endpos + 1;
+						continue;
+					}
+
+					if (0 == depth)
+						break;
+
+					--depth;
+					off = endpos + 1;
+				}
+
+				if (attr_pos < endpos)
+				{
+					attr_pos = div.find(attr, endpos + 1);
+					if (div.npos == attr_pos)
+						return;
+				}
+
+				off = endpos + 1;
+			}
+
+			auto len = std::strlen(attr);
+
+			auto endpos = div.find_first_not_of(" ", attr_pos + len);
+			if (div.npos != endpos && div[endpos] == '=')
+			{
+				endpos = div.find_first_not_of(" 0123456789.%", endpos + 1);
+				if (div.npos == endpos)
+					throw std::runtime_error("please report an issue if throws");
+			}
+			else
+				endpos = attr_pos + len;
+
+			div.erase(attr_pos, endpos - attr_pos);
+		}
+
+		void _m_update_div(std::string& div)
+		{
+			std::string name;
+			bool left = true;
+
+			//Search a name recursively from a specified leaf field.
+			//It returns the depth from the leaf div to the div which has a name.
+			auto depth = _m_search_name(_m_leaf_left(), name);
+			if (-1 == depth)
+			{
+				left = false;
+				depth = _m_search_name(_m_leaf_right(), name);
+				if (-1 == depth)
+					return;
+			}
+
+			//Get the bound of field div-text through reverse recursion.
+			auto bound = get_field_bound(div, name.c_str(), depth);
+			if (bound.first == bound.second)
+				return;
+
+			auto fieldstr = div.substr(bound.first, bound.second - bound.first);
+			_m_remove_attr(fieldstr, "weight");
+
+			decltype(bound) other_bound;
+			if (left)
+			{
+				//Get the bound of leaf right
+				auto pos = div.find('<', bound.second + 1);
+				if (div.npos == pos)
+					throw std::runtime_error("please report an issue if it throws");
+
+				other_bound = _m_field_bound(div, pos);
+			}
+			else
+			{
+				//Get the bound of leaf left
+				auto pos = div.rfind('>', bound.first - 1);
+				if (div.npos == pos)
+					throw std::runtime_error("place report an issue if it throws");
+
+				other_bound = _m_field_bound(div, pos);
+			}
+
+			auto other_fieldstr = div.substr(other_bound.first, other_bound.second - other_bound.first);
+			_m_remove_attr(other_fieldstr, "weight");
+
+			const bool vert = (::nana::cursor::size_we != splitter_cursor_);
+
+			rectangle_rotator r_left(vert, _m_leaf_left()->field_area);
+			rectangle_rotator r_right(vert, _m_leaf_right()->field_area);
+			rectangle_rotator r_owner(vert, this->div_owner->field_area);
+
+			double percent = double((left ? r_left : r_right).w()) / double(r_owner.w());
+
+			std::string weight = "weight=" + std::to_string(percent * 100) + "% ";
+
+			fieldstr.insert(1, weight);
+
+			//Replaces the 'right' field before 'left' in order to make the bound consistent
+			if (left)
+			{
+				if (other_fieldstr.length() != (other_bound.second - other_bound.first))
+					div.replace(other_bound.first, other_bound.second - other_bound.first, other_fieldstr);
+
+				div.replace(bound.first, bound.second - bound.first, fieldstr);
+			}
+			else
+			{
+				div.replace(bound.first, bound.second - bound.first, fieldstr);
+
+				if (other_fieldstr.length() != (other_bound.second - other_bound.first))
+					div.replace(other_bound.first, other_bound.second - other_bound.first, other_fieldstr);
+			}
+		}
+
 		division * _m_leaf_left() const
 		{
 			return previous();
@@ -1543,6 +1840,7 @@ namespace nana
 			return area;
 		}
 	private:
+		implement* const impl_;
 		nana::cursor	splitter_cursor_{nana::cursor::arrow};
 		place_parts::splitter<true>	splitter_;
 		nana::point	begin_point_;
@@ -1552,7 +1850,6 @@ namespace nana
 		bool	grabbed_{ false };
 		bool	pause_move_collocate_{ false };	//A flag represents whether do move when collocating.
 		place_parts::number_t init_weight_;
-		place::implement *impl_;
 	};
 
 	class place::implement::div_dockpane
@@ -2636,9 +2933,9 @@ namespace nana
 	}
 
 	//Contributed by dankan1890(PR#156)
-	//enum class update_operation { erase = 0, insert, replace };
+	enum class update_operation { erase = 0, insert, replace };
 
-	//void update_div(std::string& div, const char* field, const char* attr, update_operation operation);
+	void update_div(std::string& div, const char* field, const char* attr, update_operation operation);
 
 	void place::modify(const char* name, const char* div_text)
 	{
@@ -2738,94 +3035,27 @@ namespace nana
 		return *p;
 	}
 
-	inline bool is_idchar(int ch)
-	{
-		return ('_' == ch || isalnum(ch));
-	}
-
-	std::size_t find_idstr(const std::string& text, const char* idstr, std::size_t off = 0)
-	{
-		const auto len = std::strlen(idstr);
-
-		size_t pos;
-		while ((pos = text.find(idstr, off)) != text.npos)
-		{
-			if (!is_idchar(text[pos + len]))
-			{
-				if (pos == 0 || !is_idchar(text[pos - 1]))
-					return pos;
-			}
-
-			off = pos + len; // occurrence not found, advancing the offset and try again
-		}
-		return text.npos;
-	}
-
-	void nana::update_div(std::string& div, const char* field, const char* attr, update_operation operation)
+	void update_div(std::string& div, const char* field, const char* attr, update_operation operation)
 	{
 		const auto fieldname_pos = find_idstr(div, field);
 		if (div.npos == fieldname_pos)
 			return;
 
-		//Get the bounds of this field
-		std::size_t begin = 0, end = 0;
+		auto bound = get_field_bound(div, field, 0);
 
-		//Find the begin
-		int level = 0;
-		auto pos = fieldname_pos;
-		while (true)
-		{
-			pos = div.find_last_of("<>", pos);
-			if (div.npos == pos)
-				return;
-
-			if ('<' == div[pos])
-			{
-				if (0 == level)
-				{
-					begin = pos;
-					break;
-				}
-				--level;
-			}
-			else
-				++level;
-		}
-
-		//Find the end
-		level = 0;
-		pos = fieldname_pos;
-		while (true)
-		{
-			pos = div.find_first_of("<>", pos);
-			if (div.npos == pos)
-				return;
-
-			if ('>' == div[pos])
-			{
-				if (0 == level)
-				{
-					end = pos + 1;
-					break;
-				}
-				--level;
-			}
-			else
-				++level;
-		}
-
-		auto fieldstr = div.substr(begin + 1, end - begin - 2);
-
+		auto fieldstr = div.substr(bound.first + 1, bound.second - bound.first - 2);
 		//Search the attribute
-		for (pos = 0; true; ++pos)
+		std::size_t pos = 0;
+		int depth = 0;
+		for (; true; ++pos)
 		{
 			pos = find_idstr(fieldstr, attr, pos);
 			if (fieldstr.npos == pos)
 				break;
 
 			//Check if the attr is belong to this field.
-			level = 0;
-			auto off = pos;
+			depth = 0;
+			std::size_t off = pos;
 			while (true)
 			{
 				off = fieldstr.find_last_of("<>", off);
@@ -2833,16 +3063,16 @@ namespace nana
 					break;
 
 				if ('>' == fieldstr[off])
-					++level;
+					++depth;
 				else
-					--level;
+					--depth;
 
 				if (0 == off)
 					break;
 				--off;
 			}
 
-			if (0 == level)
+			if (0 == depth)
 				break;
 		}
 
@@ -2853,8 +3083,8 @@ namespace nana
 				div.insert(fieldname_pos + std::strlen(field), " " + std::string(attr));
 			else if (operation == update_operation::replace)
 			{
-				div.erase(begin + 1, fieldstr.length());
-				div.insert(begin + 1, std::string(attr) + " " + std::string(field));
+				div.erase(bound.first + 1, fieldstr.length());
+				div.insert(bound.first + 1, std::string(attr) + " " + std::string(field));
 			}
 		}
 		else
@@ -2862,10 +3092,10 @@ namespace nana
 			//There is an attribute
 			if (operation == update_operation::erase)
 			{
-				div.erase(begin + pos + 1, std::strlen(attr));
+				div.erase(bound.first + pos + 1, std::strlen(attr));
 
-				if ((div[begin + pos] == div[begin + pos + 1]) && (' ' == div[begin + pos]))
-					div.erase(begin + pos, 1);
+				if ((div[bound.first + pos] == div[bound.first + pos + 1]) && (' ' == div[bound.first + pos]))
+					div.erase(bound.first + pos, 1);
 			}
 		}
 	}

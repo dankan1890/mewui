@@ -3011,7 +3011,7 @@ namespace nana
 					: ess_{ ess }, column_pos_{column_pos}
 				{
 				}
-				
+
 				void attach(index_type pos, inline_pane* pane)
 				{
 					for (auto & pn : panes_)
@@ -3880,7 +3880,7 @@ namespace nana
 									inline_wdg->item_pos = item_pos;
 									inline_wdg->column_pos = column_pos;
 									inline_wdg->inline_ptr->activate(*inline_wdg->indicator, item_pos);
-									
+
 									::nana::size sz{ wdg_w, essence_->scheme_ptr->item_height };
 									inline_wdg->pane_widget.size(sz);
 									inline_wdg->inline_ptr->resize(sz);
@@ -3956,7 +3956,7 @@ namespace nana
 						if (factory)
 						{
 							return essence_->open_inline(factory.get(), cat.indicators[column_pos].get());
-					}
+						}
 					}
 					return nullptr;
 				}
@@ -4227,18 +4227,18 @@ namespace nana
 								{
 									if (item_ptr->flags.selected != sel)
 									{
-									item_ptr->flags.selected = sel;
+										item_ptr->flags.selected = sel;
 
 										lister.emit_selected(abs_item_pos);
 
-									if (item_ptr->flags.selected)
-									{
-										lister.cancel_others_if_single_enabled(true, abs_item_pos);
-										essence_->lister.last_selected_abs = abs_item_pos;
+										if (item_ptr->flags.selected)
+										{
+											lister.cancel_others_if_single_enabled(true, abs_item_pos);
+											essence_->lister.last_selected_abs = abs_item_pos;
+										}
+										else if (essence_->lister.last_selected_abs == abs_item_pos)
+											essence_->lister.last_selected_abs.set_both(npos);
 									}
-									else if (essence_->lister.last_selected_abs == abs_item_pos)
-										essence_->lister.last_selected_abs.set_both(npos);
-								}
 								}
 								else if(!lister.single_selection())
 									lister.categ_selected(item_pos.cat, true);
@@ -4507,12 +4507,28 @@ namespace nana
 					return ess_->lister.relative_pair(pos_);
 				}
 
+				bool item_proxy::displayed() const
+				{
+					if (!ess_->lister.get(pos_.cat)->expand)
+						return false;
+
+					auto pos = to_display();
+					if (ess_->scroll.offset_y_dpl > pos)
+						return false;
+
+					auto size = ess_->number_of_lister_items(false);
+
+					auto last = ess_->lister.advance(ess_->scroll.offset_y_dpl, size);
+
+					return (last > pos || last == pos);
+				}
+
 				bool item_proxy::empty() const
 				{
 					return !ess_;
 				}
 
-				item_proxy & item_proxy::check(bool ck)
+				item_proxy & item_proxy::check(bool ck, bool scroll_view)
 				{
 					internal_scope_guard lock;
 					auto & m = cat_->items.at(pos_.item);
@@ -4520,6 +4536,15 @@ namespace nana
 					{
 						m.flags.checked = ck;
 						ess_->lister.emit_checked(pos_);
+
+						if (scroll_view)
+						{
+							if (ess_->lister.get(pos_.cat)->expand)
+								ess_->lister.get(pos_.cat)->expand = false;
+
+							if (!this->displayed())
+								ess_->lister.scroll(pos_, !(ess_->scroll.offset_y_dpl > this->to_display()));
+						}
 
 						ess_->update();
 					}
@@ -4532,29 +4557,37 @@ namespace nana
 				}
 
 				/// is ignored if no change (maybe set last_selected anyway??), but if change emit event, deselect others if need ans set/unset last_selected
-				item_proxy & item_proxy::select(bool s, bool sc)
+				item_proxy & item_proxy::select(bool sel, bool scroll_view)
 				{
 					internal_scope_guard lock;
 
 					//pos_ never represents a category if this item_proxy is available.
 					auto & m = cat_->items.at(pos_.item);       // a ref to the real item
-					if(m.flags.selected == s) return *this;     // ignore if no change
-					m.flags.selected = s;                       // actually change selection
-
-					ess_->lister.emit_selected(this->pos_);
-
-					if (m.flags.selected)
+					if (m.flags.selected != sel)
 					{
-						ess_->lister.cancel_others_if_single_enabled(true, pos_);	//Cancel all selections except pos_ if single_selection is enabled.
-						ess_->lister.last_selected_abs = pos_;
-					}
-					else if (ess_->lister.last_selected_abs == pos_)
+						m.flags.selected = sel;                       // actually change selection
+
+						ess_->lister.emit_selected(this->pos_);
+
+						if (m.flags.selected)
+						{
+							ess_->lister.cancel_others_if_single_enabled(true, pos_);	//Cancel all selections except pos_ if single_selection is enabled.
+							ess_->lister.last_selected_abs = pos_;
+						}
+						else if (ess_->lister.last_selected_abs == pos_)
 							ess_->lister.last_selected_abs.set_both(npos);
 
-					if (sc)
-						ess_->scroll_y_abs(pos_);
+						if (scroll_view)
+						{
+							if (ess_->lister.get(pos_.cat)->expand)
+								ess_->lister.get(pos_.cat)->expand = false;
 
-					ess_->update();
+							if (!this->displayed())
+								ess_->lister.scroll(pos_, !(ess_->scroll.offset_y_dpl > this->to_display()));
+						}
+
+						ess_->update();
+					}
 					return *this;
 				}
 
@@ -5084,9 +5117,9 @@ namespace nana
 					}
 					else
 					{
-					cat_->sorted.push_back(cat_->items.size());
-					cells.resize(columns());
-					cat_->items.emplace_back(std::move(cells));
+						cat_->sorted.push_back(cat_->items.size());
+						cells.resize(columns());
+						cat_->items.emplace_back(std::move(cells));
 					}
 
 					assign_colors_for_last(ess_, cat_);

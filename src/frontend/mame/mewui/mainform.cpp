@@ -100,7 +100,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% abc<weight=20 swtabf><swtab>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% abc <weight=20 swtabf><swtab>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 	else
 		this->div(m_ui->options().form_layout());
 
@@ -720,15 +720,10 @@ void main_form::init_view_menu()
 	auto& menu = m_menubar.push_back("View");
 	auto item = menu.append("Software Packages", [this](menu::item_proxy& ip) {
 		this->get_place().field_display("abc", ip.checked());
-//		this->get_place().field_display("swtabf", ip.checked());
-//		this->get_place().field_display("swtab", ip.checked());
-//		auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
-//		this->get_place().modify("machinebox", wd.c_str());
 		this->collocate();
 	});
 	item.check_style(menu::checks::highlight);
 	item.checked(this->get_place().field_display("abc"));
-//	item.checked(this->get_place().field_display("swtabf"));
 
 	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip) {
 		this->get_place().field_display("statusbar", ip.checked());

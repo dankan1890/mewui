@@ -15,6 +15,7 @@
 #include <nana/gui/widgets/menu.hpp>
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/element.hpp>
+#include <algorithm>
 using namespace nana;
 
 namespace mewui
@@ -49,44 +50,70 @@ private:
 	facade<element::crook> crook_;
 };
 
-class custom_placer
-	: public treebox::compset_placer_interface
+class treebox_custom_renderer
+	: public treebox::renderer_interface
 {
-	using cloneable_placer = pat::cloneable<treebox::compset_placer_interface>;
+	using cloneable_renderer = pat::cloneable<treebox::renderer_interface>;
 public:
-	explicit custom_placer(const cloneable_placer& r)
-		: placer_(r) 
+	explicit treebox_custom_renderer(const cloneable_renderer & rd)
+		: renderer_(rd)
 	{}
-
 private:
-	void enable(component_t comp, bool enabled) override
+	void set_color(const nana::color& bgcolor, const nana::color& fgcolor) override
 	{
-		return placer_->enable(comp, enabled);
+		renderer_->set_color(bgcolor, fgcolor);
 	}
 
-	bool enabled(component_t comp) const override
+	void bground(graph_reference graph, const compset_interface * compset) const override
 	{
-		return placer_->enabled(comp);
+		comp_attribute_t attr;
+
+		if (compset->comp_attribute(component::bground, attr))
+		{
+			const color color_table[][2] = { 
+				{ { 0xFF, 0xFF, 0xFF },{ 0xFF, 0xFF, 0xFF } }, //highlighted
+				{ { 0xD5, 0xEF, 0xFC },{ 0x99, 0xDE, 0xFD } }  //Selected
+			};
+
+			const color *clrptr;
+			if (compset->item_attribute().selected)
+				clrptr = color_table[1];
+			else
+				clrptr = color_table[0];
+
+			if (clrptr)
+			{
+				auto rc = attr.area;
+				rc.width = std::max(attr.area.width, graph.width());
+				rc.x = 0;
+				graph.rectangle(rc, false, clrptr[1]);
+				graph.rectangle(rc.pare_off(1), true, *clrptr);
+			}
+		}
 	}
 
-	unsigned item_height(graph_reference graph) const override
+	void expander(graph_reference graph, const compset_interface * compset) const override
 	{
-		return placer_->item_height(graph);
+		renderer_->expander(graph, compset);
 	}
 
-	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
+	void crook(graph_reference graph, const compset_interface * compset) const override
 	{
-		return graph.width();
+		renderer_->crook(graph, compset);
 	}
 
-	bool locate(component_t comp, const item_attribute_t& attr, nana::rectangle * r) const override
+	void icon(graph_reference graph, const compset_interface * compset) const override
 	{
-		return placer_->locate(comp, attr, r);
+		renderer_->icon(graph, compset);
 	}
 
-	cloneable_placer placer_;
+	void text(graph_reference graph, const compset_interface * compset) const override
+	{
+		renderer_->text(graph, compset);
+	}
+
+	cloneable_renderer renderer_;
 };
-
 } // namespace mewui
 
 #endif /* MEWUI_MENU_H */

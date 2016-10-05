@@ -22,6 +22,7 @@
 #include "mame.h"
 #include "pluginopts.h"
 #include "mewui/optionsform.h"
+#include <set>
 
 namespace mewui
 {
@@ -99,7 +100,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% <weight=20 swtab><swtab_frame>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% abc<weight=20 swtabf><swtab>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
 	else
 		this->div(m_ui->options().form_layout());
 
@@ -188,7 +189,15 @@ void main_form::handle_events()
 	// Filters event
 	m_treebox.events().selected([this](const arg_treebox& ei) {
 		auto filt = ei.item.text();
-		populate_listbox(filt);
+		if (ei.item.level() == 1)
+		{
+			populate_listbox(filt);
+		}
+		else
+		{
+			auto ow = ei.item.owner().text();
+			populate_listbox(ow, filt);
+		}
 		update_selection();
 	});
 
@@ -243,7 +252,11 @@ void main_form::save_options()
 		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 		mui.set_value(OPTION_LAST_USED_MACHINE, game.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	}
-	mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+	auto tsel = m_treebox.selected();
+	if (tsel.level() == 0)
+		mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+	else
+		mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().owner().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	auto &pl = this->get_place().div();
 	mui.set_value(MEWUI_LAYOUT, pl.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
@@ -251,15 +264,53 @@ void main_form::save_options()
 
 void main_form::init_filters()
 {
+	std::set<std::string> manuf, year, src;
+	for (auto x = 0; x < driver_list::total(); x++)
+	{
+		auto drv = &driver_list::driver(x);
+		if (drv == &GAME_NAME(___empty)) continue;
+
+		manuf.insert(drv->manufacturer);
+		year.insert(drv->year);
+		src.insert(core_filename_extract_base(drv->source_file));
+	}
+
 	// TEST
 	for (auto & m : filters_option)
-		m_treebox.insert(m.first, m.first);
+	{
+		auto node = m_treebox.insert(m.first, m.first);
+		switch (m.second)
+		{
+			case 0: // Manufacturers
+				for (auto & e : manuf)
+					node.append(e, e);
+				break;
+			
+			case 1: // Years
+				for (auto & e : year)
+					node.append(e, e);
+				break;
+			
+			case 2: // Sources
+				for (auto & e : src)
+					node.append(e, e);
+				break;
+			
+			default:
+				break;
+		}
+	}
 
 	auto node = m_treebox.find(m_ui->options().last_used_filter());
+
+	if (node.level() == 0)
+		node = m_treebox.find("All");
+
 	node.select(true);
 
 	this->get_place()["treebox"] << m_treebox;
-	m_treebox.placer(custom_placer(m_treebox.placer()));
+//	m_treebox.placer(custom_placer(m_treebox.placer()));
+	m_treebox.renderer(treebox_custom_renderer(m_treebox.renderer()));
 }
 
 void main_form::init_tabbar()
@@ -273,8 +324,8 @@ void main_form::init_tabbar()
 	m_tabbar.tab_bgcolor(1, color(240, 240, 240));
 	m_tabbar.activated(0);
 
-	this->get_place()["swtab"] << m_tabsw;
-	this->get_place()["swtab_frame"].fasten(m_swpage); //Fasten the tab pages
+	this->get_place()["swtabf"] << m_tabsw;
+	this->get_place()["swtab"].fasten(m_swpage); //Fasten the tab pages
 
 	m_tabsw.append("Software Packages", m_swpage);
 	m_tabsw.bgcolor(color(214, 219, 233));
@@ -318,6 +369,7 @@ void main_form::init_machinebox()
 	m_machinebox.enable_single(true, true);
 	m_machinebox.scheme().header_bgcolor = static_cast<color_rgb>(0x324565);
 	m_machinebox.scheme().header_fgcolor = colors::white;
+	m_machinebox.scheme().item_highlighted = colors::white;
 }
 
 void main_form::start_software()
@@ -667,14 +719,16 @@ void main_form::init_view_menu()
 {
 	auto& menu = m_menubar.push_back("View");
 	auto item = menu.append("Software Packages", [this](menu::item_proxy& ip) {
-		this->get_place().field_display("swtab", ip.checked());
-		this->get_place().field_display("swtab_frame", ip.checked());
-		auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
-		this->get_place().modify("machinebox", wd.c_str());
+		this->get_place().field_display("abc", ip.checked());
+//		this->get_place().field_display("swtabf", ip.checked());
+//		this->get_place().field_display("swtab", ip.checked());
+//		auto wd = string_format("weight=%d%%", ip.checked() ? 80 : 100);
+//		this->get_place().modify("machinebox", wd.c_str());
 		this->collocate();
 	});
 	item.check_style(menu::checks::highlight);
-	item.checked(this->get_place().field_display("swtab"));
+	item.checked(this->get_place().field_display("abc"));
+//	item.checked(this->get_place().field_display("swtabf"));
 
 	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip) {
 		this->get_place().field_display("statusbar", ip.checked());

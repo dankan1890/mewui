@@ -8,7 +8,8 @@
  *	http://www.boost.org/LICENSE_1_0.txt)
  *
  *	@file: nana/gui/place.cpp
- *	@contributors: Ariel Vina-Rodriguez
+ *	@contributors:	Ariel Vina-Rodriguez
+ *					dankan1890(PR#156)
  */
 
 #include <cfloat>
@@ -1298,6 +1299,10 @@ namespace nana
 		std::vector<rectangle> collapses_;
 	};//end class div_grid
 
+	enum class update_operation { erase = 0, insert, replace, erase_partial };
+
+	void update_div(std::string& div, const char* field, const char* attr, update_operation operation);
+
 	class place::implement::div_splitter
 		: public division
 	{
@@ -1314,9 +1319,10 @@ namespace nana
 
 		enum{splitter_px = 4};
 	public:
-		div_splitter(place_parts::number_t init_weight)
+		div_splitter(place_parts::number_t init_weight, nana::place::implement *imp)
 			: division(kind::splitter, std::string()),
-			init_weight_(init_weight)
+			init_weight_(init_weight),
+			impl_(imp)
 		{
 			this->weight.assign(splitter_px);
 		}
@@ -1393,6 +1399,10 @@ namespace nana
 
 						double imd_rate = 100.0 / area_px;
 						left_px = static_cast<int>(limit_px(_m_leaf_left(), left_px, area_px));
+						// Test
+//						if (_m_leaf_left()->weight.kind_of() != number_t::kind::none)
+//							update_div(impl_->div_text, _m_leaf_left()->name.c_str(), "weight", update_operation::erase_partial);
+
 						_m_leaf_left()->weight.assign_percent(imd_rate * left_px);
 
 						auto right_px = static_cast<int>(right_pixels_) - delta;
@@ -1402,6 +1412,8 @@ namespace nana
 							right_px = 0;
 
 						right_px = static_cast<int>(limit_px(_m_leaf_right(), right_px, area_px));
+//						if (_m_leaf_right()->weight.kind_of() != number_t::kind::none)
+//							update_div(impl_->div_text, _m_leaf_right()->name.c_str(), "weight", update_operation::erase_partial);
 						_m_leaf_right()->weight.assign_percent(imd_rate * right_px);
 
 						pause_move_collocate_ = true;
@@ -1540,6 +1552,7 @@ namespace nana
 		bool	grabbed_{ false };
 		bool	pause_move_collocate_{ false };	//A flag represents whether do move when collocating.
 		place_parts::number_t init_weight_;
+		place::implement *impl_;
 	};
 
 	class place::implement::div_dockpane
@@ -2170,7 +2183,7 @@ namespace nana
 				//Ignore the splitter when there is not a division.
 				if (!children.empty() && (division::kind::splitter != children.back()->kind_of_division))
 				{
-					auto splitter = new div_splitter(tknizer.number());
+					auto splitter = new div_splitter(tknizer.number(), this);
 					children.back()->div_next = splitter;
 					children.emplace_back(std::unique_ptr<division>{ splitter });
 				}
@@ -2622,9 +2635,10 @@ namespace nana
 		return impl_->div_text;
 	}
 
-	enum div_type {	erase = 0, insert, replace };
+	//Contributed by dankan1890(PR#156)
+	//enum class update_operation { erase = 0, insert, replace };
 
-	void update_div(std::string& div, const char* field, const char* attr, div_type insertion);
+	//void update_div(std::string& div, const char* field, const char* attr, update_operation operation);
 
 	void place::modify(const char* name, const char* div_text)
 	{
@@ -2680,7 +2694,7 @@ namespace nana
 			impl_->check_unique(impl_->root_division.get());
 			impl_->connect(impl_->root_division.get());
 			impl_->tmp_replaced.reset();
-			update_div(impl_->div_text, name, div_text, div_type::replace);
+			update_div(impl_->div_text, name, div_text, update_operation::replace);
 
 			modified_ptr->div_owner = div_owner;
 			modified_ptr->div_next = div_next;
@@ -2724,28 +2738,30 @@ namespace nana
 		return *p;
 	}
 
-	bool is_idchar(int ch)
+	inline bool is_idchar(int ch)
 	{
-		return ('_' == ch || isalpha(ch) || isalnum(ch));
+		return ('_' == ch || isalnum(ch));
 	}
 
 	std::size_t find_idstr(const std::string& text, const char* idstr, std::size_t off = 0)
 	{
 		const auto len = std::strlen(idstr);
-		auto pos = text.find(idstr, off);
-		if (text.npos == pos)
-			return text.npos;
 
-		if (pos && is_idchar(text[pos - 1]))
-			return text.npos;
+		size_t pos;
+		while ((pos = text.find(idstr, off)) != text.npos)
+		{
+			if (!is_idchar(text[pos + len]))
+			{
+				if (pos == 0 || !is_idchar(text[pos - 1]))
+					return pos;
+			}
 
-		if ((pos + len < text.length()) && is_idchar(text[pos + len]))
-			return text.npos;
-
-		return pos;
+			off = pos + len; // occurrence not found, advancing the offset and try again
+		}
+		return text.npos;
 	}
 
-	void update_div(std::string& div, const char* field, const char* attr, div_type insertion)
+	void nana::update_div(std::string& div, const char* field, const char* attr, update_operation operation)
 	{
 		const auto fieldname_pos = find_idstr(div, field);
 		if (div.npos == fieldname_pos)
@@ -2756,7 +2772,7 @@ namespace nana
 
 		//Find the begin
 		int level = 0;
-		std::size_t pos = fieldname_pos;
+		auto pos = fieldname_pos;
 		while (true)
 		{
 			pos = div.find_last_of("<>", pos);
@@ -2770,8 +2786,7 @@ namespace nana
 					begin = pos;
 					break;
 				}
-				else
-					--level;
+				--level;
 			}
 			else
 				++level;
@@ -2793,8 +2808,7 @@ namespace nana
 					end = pos + 1;
 					break;
 				}
-				else
-					--level;
+				--level;
 			}
 			else
 				++level;
@@ -2811,7 +2825,7 @@ namespace nana
 
 			//Check if the attr is belong to this field.
 			level = 0;
-			std::size_t off = pos;
+			auto off = pos;
 			while (true)
 			{
 				off = fieldstr.find_last_of("<>", off);
@@ -2835,9 +2849,9 @@ namespace nana
 		if (fieldstr.npos == pos)
 		{
 			//There is not an attribute
-			if (insertion == div_type::insert)
+			if (operation == update_operation::insert)
 				div.insert(fieldname_pos + std::strlen(field), " " + std::string(attr));
-			else if (insertion == div_type::replace)
+			else if (operation == update_operation::replace)
 			{
 				div.erase(begin + 1, fieldstr.length());
 				div.insert(begin + 1, std::string(attr) + " " + std::string(field));
@@ -2846,7 +2860,7 @@ namespace nana
 		else
 		{
 			//There is an attribute
-			if (insertion == div_type::erase)
+			if (operation == update_operation::erase)
 			{
 				div.erase(begin + pos + 1, std::strlen(attr));
 
@@ -2856,7 +2870,7 @@ namespace nana
 		}
 	}
 
-	void place::field_visible(const char* name, bool vsb) const
+	void place::field_visible(const char* name, bool vsb)
 	{
 		if (!name)	name = "";
 
@@ -2867,7 +2881,7 @@ namespace nana
 		if (div)
 		{
 			div->set_visible(vsb);
-			update_div(impl_->div_text, name, "invisible", !vsb ? div_type::insert : div_type::erase);
+			update_div(impl_->div_text, name, "invisible", !vsb ? update_operation::insert : update_operation::erase);
 		}
 	}
 
@@ -2882,7 +2896,7 @@ namespace nana
 		return (div && div->visible);
 	}
 
-	void place::field_display(const char* name, bool dsp) const
+	void place::field_display(const char* name, bool dsp)
 	{
 		if (!name)	name = "";
 
@@ -2892,8 +2906,8 @@ namespace nana
 		auto div = impl_->search_div_name(impl_->root_division.get(), name);
 		if (div)
 		{
-			update_div(impl_->div_text, name, "invisible", div_type::erase);
-			update_div(impl_->div_text, name, "undisplayed", !dsp ? div_type::insert : div_type::erase);
+			update_div(impl_->div_text, name, "invisible", update_operation::erase);
+			update_div(impl_->div_text, name, "undisplayed", !dsp ? update_operation::insert : update_operation::erase);
 			div->set_display(dsp);
 		}
 	}

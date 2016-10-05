@@ -3785,7 +3785,7 @@ namespace nana
 						if (item.flags.selected)
 							bgcolor = bgcolor.blend(colors::black, 0.98);           // or "selected"
 						else
-							bgcolor = bgcolor.blend(essence_->scheme_ptr->item_selected, 0.7);   /// \todo create a parametre for amount of blend
+							bgcolor = bgcolor.blend(essence_->scheme_ptr->item_highlighted, 0.7);   /// \todo create a parametre for amount of blend
 					}
 
 					unsigned show_w = (std::min)(content_r.width, width - essence_->scroll.x_offset());

@@ -62,16 +62,16 @@ private:
 	void set_color(const nana::color& bgcolor, const nana::color& fgcolor) override
 	{
 		renderer_->set_color(bgcolor, fgcolor);
+		bgcolor_ = bgcolor;
 	}
 
 	void bground(graph_reference graph, const compset_interface * compset) const override
 	{
 		comp_attribute_t attr;
-
 		if (compset->comp_attribute(component::bground, attr))
 		{
 			const color color_table[][2] = { 
-				{ { 0xFF, 0xFF, 0xFF },{ 0xFF, 0xFF, 0xFF } }, //highlighted
+				{ bgcolor_, bgcolor_ }, //highlighted
 				{ { 0xD5, 0xEF, 0xFC },{ 0x99, 0xDE, 0xFD } }  //Selected
 			};
 
@@ -112,6 +112,7 @@ private:
 		renderer_->text(graph, compset);
 	}
 
+	mutable color bgcolor_;
 	cloneable_renderer renderer_;
 };
 } // namespace mewui

@@ -37,6 +37,8 @@ static const std::map<std::string, int> filters_option =
 	{ "Horizontal", -1 },
 	{ "Vertical", -1 },
 	{ "Save State", -1 },
+	{ "Mechanical", -1 },
+	{ "Not Mechanical", -1 },
 	{ "Manufacturer", 0 },
 	{ "Year", 1 },
 	{ "Source", 2 }
@@ -316,7 +318,6 @@ void main_form::init_filters()
 	node.select(true);
 
 	this->get_place()["treebox"] << m_treebox;
-//	m_treebox.placer(custom_placer(m_treebox.placer()));
 	m_treebox.renderer(treebox_custom_renderer(m_treebox.renderer()));
 }
 
@@ -477,17 +478,16 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 					if (filter == "Horizontal" && (drv->flags & ORIENTATION_SWAP_XY) != 0) continue;
 					if (filter == "Vertical" && (drv->flags & ORIENTATION_SWAP_XY) == 0) continue;
 					if (filter == "Save State" && (drv->flags & MACHINE_SUPPORTS_SAVE) == 0) continue;
+					if (filter == "Mechanical" && (drv->flags & MACHINE_MECHANICAL) == 0) continue;
+					if (filter == "Not Mechanical" && (drv->flags & MACHINE_MECHANICAL) != 0) continue;
 				}
 				else
 				{
 					switch (filters_option.at(filter))
 					{
-						case 0: if (subfilter != drv->manufacturer) continue;
-							break;
-						case 1: if (subfilter != drv->year) continue;
-							break;
-						case 2: if (subfilter != core_filename_extract_base(drv->source_file)) continue;
-							break;
+						case 0: if (subfilter != drv->manufacturer) continue; break;
+						case 1: if (subfilter != drv->year) continue; break;
+						case 2: if (subfilter != core_filename_extract_base(drv->source_file)) continue; break;
 						default: break;
 					}
 				}

@@ -42,27 +42,34 @@ static const std::map<std::string, int> filters_option =
 	{ "Source", 2 }
 };
 
+const std::pair<std::string, std::string> submenu[] = {
+	{ "Software Packages", "soft" },
+	{ "Status Bar", "statusbar" },
+	{ "Filters", "treebox" },
+	{ "Right Panel", "rpanel" }
+};
+
 static const std::unordered_map<std::string, std::string> soft_type =
 {
 	{ "unknown", "unkn" },
-	{ "cartridge", "cart" }, /*  0 */
-	{ "floppydisk", "flop" }, /*  1 */
-	{ "harddisk", "hard" }, /*  2 */
-	{ "cylinder", "cyln" }, /*  3 */
-	{ "cassette", "cass" }, /*  4 */
-	{ "punchcard", "pcrd" }, /*  5 */
-	{ "punchtape", "ptap" }, /*  6 */
-	{ "printer", "prin" }, /*  7 */
-	{ "serial", "serl" }, /*  8 */
-	{ "parallel", "parl" }, /*  9 */
-	{ "snapshot", "dump" }, /* 10 */
-	{ "quickload", "quik" }, /* 11 */
-	{ "memcard", "memc" }, /* 12 */
-	{ "cdrom", "cdrm" }, /* 13 */
-	{ "magtape", "magt" }, /* 14 */
-	{ "romimage", "rom" }, /* 15 */
-	{ "midiin", "min" }, /* 16 */
-	{ "midiout", "mout" } /* 17 */
+	{ "cartridge", "cart" },
+	{ "floppydisk", "flop" },
+	{ "harddisk", "hard" },
+	{ "cylinder", "cyln" },
+	{ "cassette", "cass" },
+	{ "punchcard", "pcrd" },
+	{ "punchtape", "ptap" },
+	{ "printer", "prin" },
+	{ "serial", "serl" },
+	{ "parallel", "parl" },
+	{ "snapshot", "dump" },
+	{ "quickload", "quik" },
+	{ "memcard", "memc" },
+	{ "cdrom", "cdrm" },
+	{ "magtape", "magt" },
+	{ "romimage", "rom" },
+	{ "midiin", "min" },
+	{ "midiout", "mout" }
 };
 
 main_form::main_form(running_machine& machine, const game_driver** _system, emu_options& _options, std::unique_ptr<mame_ui_manager>& _mui, std::string& exename)
@@ -100,7 +107,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% abc <weight=20 swtabf><swtab>>>|<vert weight=400 <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>");
+		this->div("<vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% soft <weight=20 swtabf><swtab>>>|<vert weight=400 rpanel <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>>");
 	else
 		this->div(m_ui->options().form_layout());
 
@@ -718,19 +725,16 @@ void main_form::init_file_menu()
 void main_form::init_view_menu()
 {
 	auto& menu = m_menubar.push_back("View");
-	auto item = menu.append("Software Packages", [this](menu::item_proxy& ip) {
-		this->get_place().field_display("abc", ip.checked());
-		this->collocate();
-	});
-	item.check_style(menu::checks::highlight);
-	item.checked(this->get_place().field_display("abc"));
 
-	auto item2 = menu.append("Status Bar", [this](menu::item_proxy& ip) {
-		this->get_place().field_display("statusbar", ip.checked());
-		this->collocate();
-	});
-	item2.check_style(menu::checks::highlight);
-	item2.checked(this->get_place().field_display("statusbar"));
+	for (auto & e: submenu)
+	{
+		auto item = menu.append(e.first, [this, &e](menu::item_proxy& ip) {
+			this->get_place().field_display(e.second.c_str(), ip.checked());
+			this->collocate();
+		});
+		item.check_style(menu::checks::highlight);
+		item.checked(this->get_place().field_display(e.second.c_str()));
+	}
 
 	menu.renderer(custom_renderer(menu.renderer()));
 }

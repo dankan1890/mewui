@@ -331,6 +331,7 @@ void main_form::init_tabbar()
 	m_tabbar.tab_bgcolor(0, color(240, 240, 240));
 	m_tabbar.tab_bgcolor(1, color(240, 240, 240));
 	m_tabbar.activated(0);
+	m_tabbar.renderer(tabbar_custom_renderer(m_tabbar.renderer()));
 
 	this->get_place()["swtabf"] << m_tabsw;
 	this->get_place()["swtab"].fasten(m_swpage); //Fasten the tab pages

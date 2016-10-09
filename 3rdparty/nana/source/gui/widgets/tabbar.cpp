@@ -79,8 +79,7 @@ namespace nana
 
 					auto round_r = r;
 					round_r.height += 2;
-					//graph.round_rectangle(round_r, 3, 3, blcolor, true, colors::white);
-					graph.rectangle(round_r, true , blcolor);
+					graph.round_rectangle(round_r, 3, 3, blcolor, true, colors::white);
 
 					auto beg = bgcolor;
 					auto end = dark_bgcolor;
@@ -97,8 +96,7 @@ namespace nana
 					if (sta == item_renderer::highlight)
 						beg = beg.blend(colors::white, 0.5);
 
-					//graph.gradual_rectangle(round_r.pare_off(2), beg, end, true);
-					graph.gradual_rectangle(round_r.pare_off(1), beg, end, true);
+					graph.gradual_rectangle(round_r.pare_off(2), beg, end, true);
 				}
 
 				virtual void add(graph_reference graph, const nana::rectangle& r, state_t sta)

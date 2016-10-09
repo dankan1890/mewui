@@ -14,7 +14,7 @@
 
 namespace mewui
 {
-const game_driver* start_gui(running_machine&, emu_options&, std::string&);
+const game_driver* start_gui(running_machine& machine, emu_options& options, std::string& exename);
 } // namespace mewui
 
 #endif /* MEWUI_H */

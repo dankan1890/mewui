@@ -136,6 +136,14 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	this->get_place()["s_button"] << m_search_button;
 
 	this->collocate();
+	m_machinebox.avoid_drawing([&] {
+		if (m_machinebox.at(0).size() > 0)
+		{
+			m_machinebox.at(0).at(m_resel).select(true, true);
+			m_machinebox.focus();
+		}
+	});
+
 	update_selection();
 }
 
@@ -340,6 +348,7 @@ void main_form::init_tabbar()
 	m_tabsw.bgcolor(color(214, 219, 233));
 	m_tabsw.tab_bgcolor(0, color(240, 240, 240));
 	m_tabsw.activated(0);
+	m_tabsw.renderer(tabbar_custom_renderer(m_tabsw.renderer()));
 }
 
 void main_form::init_machinebox()
@@ -463,7 +472,7 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 		m_machinebox.clear(0);
 
 	auto cat = m_machinebox.at(0);
-	auto index = 0, resel = 0;
+	auto index = 0;
 	for (auto parent : m_sortedlist)
 	{
 		for (auto drv : parent.second)
@@ -495,7 +504,7 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			cat.append({ std::string(drv->description), std::string(drv->name), std::string(drv->manufacturer), std::string(drv->year), core_filename_extract_base(drv->source_file) });
-			if (m_latest_machine == drv->name) resel = index;
+			if (m_latest_machine == drv->name) m_resel = index;
 
 			bool cloneof = strcmp(drv->parent, "0");
 			if (cloneof)
@@ -509,12 +518,6 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 	}
 	m_machinebox.auto_draw(true);
 	m_latest_machine.clear();
-
-	if (cat.size() > 0)
-	{
-		cat.at(resel).select(true, true);
-		m_machinebox.focus();
-	}
 }
 
 void main_form::update_selection()

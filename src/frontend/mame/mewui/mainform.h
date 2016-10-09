@@ -113,7 +113,6 @@ private:
 	tab_page_picturebox m_imgpage{ *this };
 	tab_page_softwarebox m_swpage{ *this };
 
-	int m_prev_subfilter = -1;
 	const game_driver** m_system;
 	emu_options& m_options;
 	std::string m_latest_machine;
@@ -121,6 +120,7 @@ private:
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	std::map<std::string, std::vector<const game_driver *>, ci_less> m_sortedlist;
 	std::string m_exename;
+	int m_resel = 0;
 
 	// Init widgets
 	void init_tabbar();

@@ -12,6 +12,8 @@
 #include "ui/ui.h"
 #include "emuopts.h"
 #include "mewui/optionsform.h"
+#include "mame.h"
+#include "pluginopts.h"
 
 namespace mewui {
 
@@ -113,4 +115,59 @@ folderform::folderform(window wd)
 	this->collocate();
 	this->modality();
 }
+
+
+plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
+	: form(wd, { 400, 200 }, appear::decorate<>())
+	, m_ui(_mui)
+	, m_options(_opt)
+{
+	this->caption("Setup Plugins");
+	this->bgcolor(color(214, 219, 233));
+	auto& pl = this->get_place();
+	this->div("vert <<weight=2><vert <weight=5><gbox><weight=5>><weight=2>><weight=45 panel>");
+
+	m_group.radio_mode(false);
+	m_group.bgcolor(color(214, 219, 233));
+
+	auto& plugins = mame_machine_manager::instance()->plugins();
+	for (auto &curentry : plugins)
+		if (!curentry.is_header())
+		{
+			auto enabled = std::string(curentry.value()) == "1";
+			auto &cb = m_group.add_option(curentry.description());
+			cb.check(enabled);
+		}
+
+	pl["panel"] << m_panel;
+	pl["gbox"] << m_group;
+
+	m_panel.m_cancel.events().click([this] {
+		this->close();
+	});
+
+	m_panel.m_ok.events().click([this] {
+		auto& plugin = mame_machine_manager::instance()->plugins();
+		std::string error_string;
+		auto index = 0;
+		for (auto &curentry : plugin)
+			if (!curentry.is_header())
+			{
+				auto checked = m_group.option_checked(index++);
+				plugin.set_value(curentry.name(), checked ? 1 : 0, OPTION_PRIORITY_CMDLINE, error_string);
+			}
+
+		emu_file file_plugin(m_options.ini_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+		if (file_plugin.open("plugin.ini") != osd_file::error::NONE)
+			return;
+
+		// generate the updated INI
+		file_plugin.puts(plugin.output_ini().c_str());
+		this->close();
+	});
+
+	this->collocate();
+	this->modality();
+}
+
 } // namespace mewui

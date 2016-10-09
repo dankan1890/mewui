@@ -271,8 +271,6 @@ void emu_options::update_cached_options()
 		m_ui = UI_SIMPLE;
 	else if (!strcmp(ui_option_string, "modern"))
 		m_ui = UI_MODERN;
-	else if (!strcmp(ui_option_string, "experimental"))
-		m_ui = UI_EXPERIMENTAL;
 	else
 		m_ui = UI_CABINET;
 }

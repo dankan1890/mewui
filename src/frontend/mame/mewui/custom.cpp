@@ -8,7 +8,7 @@
 
 ***************************************************************************/
 
-#include "mewui/menu.h"
+#include "mewui/custom.h"
 
 namespace mewui
 {

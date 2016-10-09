@@ -19,6 +19,7 @@
 #include <nana/gui/widgets/combox.hpp>
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/label.hpp>
+#include <nana/gui/widgets/group.hpp>
 
 using namespace nana;
 class emu_options;
@@ -81,6 +82,19 @@ private:
 	treebox m_tb{ *this };
 	label m_lbl{ *this, "Select Directory" };
 	button m_ok{ *this, "OK" }, m_cancel{ *this, "Cancel" };
+};
+
+class plugin_form : public form
+{
+public:
+	explicit plugin_form(window, emu_options&, std::unique_ptr<mame_ui_manager>&);
+
+private:
+	
+	group m_group{ *this, "Enable / Disable" };
+	okcancel_panel m_panel{ *this };
+	std::unique_ptr<mame_ui_manager>& m_ui;
+	emu_options& m_options;
 };
 
 } // namespace mewui

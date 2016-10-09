@@ -25,7 +25,6 @@
 #include "ui/inifile.h"
 #include "xmlfile.h"
 #include "mewui/mewui.h"
-#include "mewui/exp/gui.h"
 
 //**************************************************************************
 //  MACHINE MANAGER
@@ -319,8 +318,6 @@ void emulator_info::display_ui_chooser(running_machine& machine)
 	render_container &container = machine.render().ui_container();
 	if (machine.options().ui() == emu_options::UI_SIMPLE)
 		ui::simple_menu_select_game::force_game_select(mui, container);
-	else if (machine.options().ui() == emu_options::UI_EXPERIMENTAL)
-		ui::main_form::force_game_select(mui, container);
 	else
 		ui::menu_select_game::force_game_select(mui, container);
 }

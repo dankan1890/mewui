@@ -18,7 +18,7 @@
 #include "audit.h"
 #include "luaengine.h"
 #include "mewui/mainform.h"
-#include "mewui/menu.h"
+#include "mewui/custom.h"
 #include "mame.h"
 #include "pluginopts.h"
 #include "mewui/optionsform.h"
@@ -85,10 +85,10 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 {
 	// Load DATs data
 	m_datfile = nullptr;
-	auto& pl = mame_machine_manager::instance()->plugins();
-	auto pred = [](core_options::entry &i) { return std::string(i.value()) == "data"; };
-	auto it = std::find_if(pl.begin(), pl.end(), pred);
-	if (it != pl.end() && std::string(it->value()) == "1")
+	auto& plugins = mame_machine_manager::instance()->plugins();
+	auto pred = [](core_options::entry &i) { return !i.is_header() && std::string(i.name()) == "data"; };
+	auto it = std::find_if(plugins.begin(), plugins.end(), pred);
+	if (it != plugins.end() && std::string(it->value()) == "1")
 		m_datfile = std::make_unique<datfile_manager>(machine, m_ui->options());
 
 	// Main title
@@ -752,7 +752,11 @@ void main_form::init_options_menu()
 		dir_form dform{ *this, m_options, m_ui };
 		dform.show();
 	});
-//	menu.append_splitter();
+	menu.append("Plugins", [this](menu::item_proxy& ip) {
+		plugin_form dform{ *this, m_options, m_ui };
+		dform.show();
+	});
+	//	menu.append_splitter();
 //	menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
 //	menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
 //	menu.append_splitter();

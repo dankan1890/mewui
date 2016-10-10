@@ -128,7 +128,7 @@ plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_m
 	this->div("vert <<weight=2><vert <weight=5><gbox><weight=5>><weight=2>><weight=45 panel>");
 
 	m_group.radio_mode(false);
-	m_group.bgcolor(color(214, 219, 233));
+	m_group.scheme().background = color(214, 219, 233);
 
 	auto& plugins = mame_machine_manager::instance()->plugins();
 	for (auto &curentry : plugins)

@@ -81,7 +81,7 @@ public:
 private:
 	treebox m_tb{ *this };
 	label m_lbl{ *this, "Select Directory" };
-	button m_ok{ *this, "OK" }, m_cancel{ *this, "Cancel" };
+	okcancel_panel m_panel{ *this };
 };
 
 class plugin_form : public form
@@ -91,7 +91,7 @@ public:
 
 private:
 	
-	group m_group{ *this, "Enable / Disable" };
+	group m_group{ *this };
 	okcancel_panel m_panel{ *this };
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;

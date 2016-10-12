@@ -14,6 +14,7 @@
 #include "mewui/optionsform.h"
 #include "mame.h"
 #include "pluginopts.h"
+#include "custom.h"
 
 namespace mewui {
 
@@ -78,21 +79,23 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 okcancel_panel::okcancel_panel(window wd)
 	: panel<true>(wd)
 {
-	this->bgcolor(colors::azure);
-	m_place.div("<><weight=210 vert <><weight=25 gap=10 abc><>> <weight=10>");
+	this->bgcolor(color(240, 240, 240));
+	m_place.div("<><weight=177 <vert <><weight=24 gap=5 abc><> > ><weight=5>");
 	m_place["abc"] << m_ok << m_cancel;
-	m_ok.bgcolor(colors::azure);
-	m_cancel.bgcolor(colors::azure);
+	m_cancel.set_bground(buttom_custom());
+	m_ok.set_bground(buttom_custom());
 }
 
 folderform::folderform(window wd)
-	: form{ wd }
+	: form(wd, { 300, 200 }, appear::decorate<>())
 {
-	this->div("<weight=5><vert <weight=5><weight=20 label><weight=5><folders><weight=5><weight=25 gap=10 buttons><weight=5>><weight=5>");
+	this->div("<weight=5><vert <weight=5><weight=20 label><weight=5><folders><weight=5><weight=45 panel>><weight=5>");
 	this->get_place()["folders"] << m_tb;
-	this->get_place()["buttons"] << m_ok << m_cancel;
+	this->get_place()["panel"] << m_panel;
 	this->get_place()["label"] << m_lbl;
 	this->caption("Browse For Folder");
+	this->bgcolor(color(214, 219, 233));
+	m_lbl.transparent(true);
 
 	// configure the starting path
 	std::string exepath;
@@ -105,13 +108,48 @@ folderform::folderform(window wd)
 		auto node = m_tb.insert(v_name, volume_name);
 		file_enumerator path(volume_name);
 		const osd::directory::entry* dirent;
-		// add the directories
+		// add one directory
 		while ((dirent = path.next()) != nullptr)
 		{
 			if (dirent->type == osd::directory::entry::entry_type::DIR && strcmp(dirent->name, ".") != 0 && strcmp(dirent->name, "..") != 0)
+			{
 				m_tb.insert(node, dirent->name, dirent->name);
+				break;
+			}
 		}
 	}
+
+	m_tb.events().expanded([&](const arg_treebox& arg) {
+		if (!arg.operated) return;
+
+		m_tb.auto_draw(false);
+		auto &node = arg.item;
+		auto p = m_tb.make_key_path(arg.item, PATH_SEPARATOR);
+		file_enumerator path(p);
+		const osd::directory::entry* dirent;
+		while ((dirent = path.next()) != nullptr)
+		{
+			if (dirent->type == osd::directory::entry::entry_type::DIR && strcmp(dirent->name, ".") != 0 && strcmp(dirent->name, "..") != 0)
+			{
+				auto child = m_tb.insert(node, dirent->name, dirent->name);
+				if (child.empty()) continue;
+
+				auto txt = p + PATH_SEPARATOR + dirent->name;
+				file_enumerator childpath(txt);
+				const osd::directory::entry* childdirent;
+				while ((childdirent = childpath.next()) != nullptr)
+				{
+					if (childdirent->type == osd::directory::entry::entry_type::DIR && strcmp(childdirent->name, ".") != 0 && strcmp(childdirent->name, "..") != 0)
+					{
+						m_tb.insert(child, childdirent->name, childdirent->name);
+						break;
+					}
+				}
+			}
+		}
+
+		m_tb.auto_draw(true);
+	});
 	this->collocate();
 	this->modality();
 }
@@ -123,12 +161,12 @@ plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_m
 	, m_options(_opt)
 {
 	this->caption("Setup Plugins");
-	this->bgcolor(color(214, 219, 233));
+	this->bgcolor(colors::white);
 	auto& pl = this->get_place();
-	this->div("vert <<weight=2><vert <weight=5><gbox><weight=5>><weight=2>><weight=45 panel>");
+	this->div("<vert <<weight=2><vert <weight=2><gbox><weight=5>><weight=2>><weight=45 panel>>");
 
 	m_group.radio_mode(false);
-	m_group.scheme().background = color(214, 219, 233);
+	m_group.bgcolor(colors::white);
 
 	auto& plugins = mame_machine_manager::instance()->plugins();
 	for (auto &curentry : plugins)

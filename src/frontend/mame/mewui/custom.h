@@ -21,6 +21,31 @@ using namespace nana;
 
 namespace mewui
 {
+class buttom_custom : public element::element_interface
+{
+public:
+	using cloneable_renderer = pat::cloneable<element::element_interface>;
+
+	buttom_custom()	{}
+
+private:
+	bool draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state) override
+	{
+		auto rc = r;
+		if (state == element_state::hovered)
+		{
+			graph.rectangle(rc, false, colors::blue);
+			graph.rectangle(rc.pare_off(1), true, color(229, 241, 251));
+		}
+		else
+		{
+			graph.rectangle(rc, false, colors::gray_border);
+			graph.rectangle(rc.pare_off(1), true, color(225, 225, 225));
+		}
+		return true;
+	}
+};
+
 class custom_renderer : public menu::renderer_interface
 {
 public:

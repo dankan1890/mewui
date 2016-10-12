@@ -40,6 +40,7 @@ struct folders_entry
 static const folders_entry s_folders[] =
 {
 	{ __("ROMs"),                OPTION_MEDIAPATH,          ADDING },
+	{ __("Software Media"),      OPTION_SWPATH,             CHANGE },
 	{ __("UI"),                  OPTION_UI_PATH,            CHANGE },
 	{ __("Language"),            OPTION_LANGUAGEPATH,       CHANGE },
 	{ __("Samples"),             OPTION_SAMPLEPATH,         ADDING },

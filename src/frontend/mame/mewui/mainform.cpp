@@ -109,7 +109,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 #endif
 	// Main layout
 	if (std::string(m_ui->options().form_layout()).empty())
-		this->div("<vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=120 treebox>|<vert <machinebox>|<vert weight=20% soft <weight=20 swtabf><swtab>>>|<vert weight=400 rpanel <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>>");
+		this->div("<vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=200 treebox>|<vert <machinebox>|<vert weight=20% soft <weight=20 swtabf><swtab>>>|<vert weight=400 rpanel <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>>");
 	else
 		this->div(m_ui->options().form_layout());
 

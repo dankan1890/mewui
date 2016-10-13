@@ -84,6 +84,8 @@ okcancel_panel::okcancel_panel(window wd)
 	m_place["abc"] << m_ok << m_cancel;
 	m_cancel.set_bground(buttom_custom());
 	m_ok.set_bground(buttom_custom());
+	m_ok.edge_effects(false);
+	m_cancel.edge_effects(false);
 }
 
 folderform::folderform(window wd)

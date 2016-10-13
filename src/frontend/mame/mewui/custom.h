@@ -24,26 +24,10 @@ namespace mewui
 class buttom_custom : public element::element_interface
 {
 public:
-	using cloneable_renderer = pat::cloneable<element::element_interface>;
-
 	buttom_custom()	{}
 
 private:
-	bool draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state) override
-	{
-		auto rc = r;
-		if (state == element_state::hovered)
-		{
-			graph.rectangle(rc, false, colors::blue);
-			graph.rectangle(rc.pare_off(1), true, color(229, 241, 251));
-		}
-		else
-		{
-			graph.rectangle(rc, false, colors::gray_border);
-			graph.rectangle(rc.pare_off(1), true, color(225, 225, 225));
-		}
-		return true;
-	}
+	bool draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state) override;
 };
 
 class custom_renderer : public menu::renderer_interface
@@ -85,61 +69,16 @@ public:
 		: renderer_(rd)
 	{}
 private:
-	void set_color(const nana::color& bgcolor, const nana::color& fgcolor) override
-	{
-		renderer_->set_color(bgcolor, fgcolor);
-		bgcolor_ = bgcolor;
-	}
+	void set_color(const nana::color& bgcolor, const nana::color& fgcolor) override;
+	void bground(graph_reference graph, const compset_interface * compset) const override;
+	void expander(graph_reference graph, const compset_interface * compset) const override;
+	void crook(graph_reference graph, const compset_interface * compset) const override;
+	void icon(graph_reference graph, const compset_interface * compset) const override { renderer_->icon(graph, compset); }
+	void text(graph_reference graph, const compset_interface * compset) const override;
 
-	void bground(graph_reference graph, const compset_interface * compset) const override
-	{
-		comp_attribute_t attr;
-		if (compset->comp_attribute(component::bground, attr))
-		{
-			const color color_table[][2] = { 
-				{ bgcolor_, bgcolor_ }, //highlighted
-				{ { 0xD5, 0xEF, 0xFC },{ 0x99, 0xDE, 0xFD } }  //Selected
-			};
-
-			const color *clrptr;
-			if (compset->item_attribute().selected)
-				clrptr = color_table[1];
-			else
-				clrptr = color_table[0];
-
-			if (clrptr)
-			{
-				auto rc = attr.area;
-				rc.width = std::max(attr.area.width, graph.width());
-				rc.x = 0;
-				graph.rectangle(rc, false, clrptr[1]);
-				graph.rectangle(rc.pare_off(1), true, *clrptr);
-			}
-		}
-	}
-
-	void expander(graph_reference graph, const compset_interface * compset) const override
-	{
-		renderer_->expander(graph, compset);
-	}
-
-	void crook(graph_reference graph, const compset_interface * compset) const override
-	{
-		renderer_->crook(graph, compset);
-	}
-
-	void icon(graph_reference graph, const compset_interface * compset) const override
-	{
-		renderer_->icon(graph, compset);
-	}
-
-	void text(graph_reference graph, const compset_interface * compset) const override
-	{
-		renderer_->text(graph, compset);
-	}
-
-	mutable color bgcolor_;
+	mutable color bgcolor_, fgcolor_;
 	cloneable_renderer renderer_;
+	mutable facade<element::crook> crook_;
 };
 
 class tabbar_custom_renderer : public tabbar<std::string>::item_renderer

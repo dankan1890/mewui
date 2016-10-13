@@ -9,6 +9,7 @@
 ***************************************************************************/
 
 #include "mewui/custom.h"
+#include <algorithm>
 
 namespace mewui
 {
@@ -169,5 +170,63 @@ void treebox_custom_renderer::text(graph_reference graph, const compset_interfac
 
 	//		renderer_->text(graph, compset);
 }
+
+
+void tabbar_custom_renderer::background(graph_reference graph, const nana::rectangle& r, const ::nana::color& bgcolor)
+{
+	if (bgcolor_ != bgcolor)
+	{
+		bgcolor_ = bgcolor;
+
+		dark_bgcolor_ = bgcolor.blend(colors::black, 0.9);
+		blcolor_ = bgcolor.blend(colors::black, 0.5);
+		ilcolor_ = bgcolor.blend(colors::white, 0.9);
+	}
+
+	graph.rectangle(true, bgcolor);
+}
+
+void tabbar_custom_renderer::item(graph_reference graph, const item_t& m, bool active, state_t sta)
+{
+	const auto& r = m.r;
+	color bgcolor;
+	color blcolor;
+	color dark_bgcolor;
+
+	if (m.bgcolor.invisible())
+	{
+		bgcolor = bgcolor_;
+		blcolor = blcolor_;
+		dark_bgcolor = dark_bgcolor_;
+	}
+	else
+	{
+		bgcolor = m.bgcolor;
+		blcolor = m.bgcolor.blend(colors::black, 0.5);
+		dark_bgcolor = m.bgcolor.blend(colors::black, 0.9);
+	}
+
+	auto round_r = r;
+	round_r.height += 2;
+	graph.rectangle(round_r, true, blcolor);
+
+	auto beg = bgcolor;
+	auto end = dark_bgcolor;
+
+	if (active)
+	{
+		if (m.bgcolor.invisible())
+			beg = ilcolor_;
+		else
+			beg = m.bgcolor.blend(colors::white, 0.5);
+		end = bgcolor;
+	}
+
+	if (sta == item_renderer::highlight)
+		beg = beg.blend(colors::white, 0.5);
+
+	graph.gradual_rectangle(round_r.pare_off(1), beg, end, true);
+}
+
 
 } // namespace mewui

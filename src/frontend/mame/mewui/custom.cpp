@@ -132,6 +132,11 @@ void treebox_custom_renderer::expander(graph_reference graph, const compset_inte
 					arrow.switch_to("hollow_triangle");
 			}
 		}
+		else
+		{
+			if (attr.mouse_pointed)
+				ccolor = colors::deep_sky_blue;
+		}
 
 		arrow.draw(graph, bgcolor_, ccolor, r, element_state::normal);
 	}

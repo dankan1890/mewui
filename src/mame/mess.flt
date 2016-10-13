@@ -13,6 +13,7 @@ abc1600.cpp
 abc80.cpp
 abc80x.cpp
 ac1.cpp
+aceex.cpp
 acrnsys1.cpp
 adam.cpp
 advision.cpp
@@ -615,6 +616,7 @@ tmc1800.cpp
 tmc2000e.cpp
 tmc600.cpp
 tr606.cpp
+tranz330.cpp
 tricep.cpp
 trs80.cpp
 trs80m2.cpp

@@ -40,18 +40,21 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	m_b_down.set_bground(button_custom()).edge_effects(false);
 	m_b_up.set_bground(button_custom()).edge_effects(false);
 
-
-	for (auto& opt : arts_info)
+	for (auto &opt : arts_info)
+		m_list[opt.first] = opt.second;
+	for (auto &opt : extra_path)
+		m_list[opt.first] = opt.second;
+	for (auto& opt : m_list)
 		m_combox.push_back(opt.first);
 
 	m_combox.events().selected([this](const arg_combox& ei) {
-		auto opt = ei.widget.option();
+		auto opt = ei.widget.caption();
 		m_listbox.clear(0);
 		path_iterator pt{ "" };
-		if (m_ui->options().exists(arts_info[opt].second.c_str()))
-			pt = path_iterator(m_ui->options().value(arts_info[opt].second.c_str()));
+		if (m_ui->options().exists(m_list[opt].c_str()))
+			pt = path_iterator(m_ui->options().value(m_list[opt].c_str()));
 		else
-			pt = path_iterator(m_options.value(arts_info[opt].second.c_str()));
+			pt = path_iterator(m_options.value(m_list[opt].c_str()));
 
 		std::string tmp;
 		while (pt.next(tmp))

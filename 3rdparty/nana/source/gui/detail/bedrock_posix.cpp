@@ -237,7 +237,7 @@ namespace detail
 		if(wd_manager().available(wd) == false)
 			return false;
 
-		core_window_t * prev_wd = nullptr;
+		core_window_t * prev_wd;
 		if(thrd)
 		{
 			prev_wd = thrd->event_window;
@@ -567,9 +567,12 @@ namespace detail
 
 				if(xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
 					break;
-					
+
 				msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
-				if(nullptr == msgwnd) break;
+
+				pressed_wd = nullptr;
+				if(nullptr == msgwnd)
+					break;
 					
 				if ((msgwnd == msgwnd->root_widget->other.attribute.root->menubar) && brock.get_menu(msgwnd->root, true))
 					brock.erase_menu(true);
@@ -578,7 +581,9 @@ namespace detail
 
 				if(msgwnd->flags.enabled)
 				{
-					bool dbl_click = (last_mouse_down_window == msgwnd) && (xevent.xbutton.time - last_mouse_down_time <= 400);
+					pressed_wd = msgwnd;
+
+					const bool dbl_click = (last_mouse_down_window == msgwnd) && (xevent.xbutton.time - last_mouse_down_time <= 400);
 					last_mouse_down_time = xevent.xbutton.time;
 					last_mouse_down_window = msgwnd;
 
@@ -597,46 +602,42 @@ namespace detail
 					auto retain = msgwnd->annex.events_ptr;
 					context.event_window = msgwnd;
 
-					pressed_wd = nullptr;
-
 					msgwnd->set_action(mouse_action::pressed);
 					arg_mouse arg;
 					assign_arg(arg, msgwnd, ButtonPress, xevent);
 					arg.evt_code = dbl_click ? event_code::dbl_click : event_code::mouse_down;
-					if(brock.emit(arg.evt_code, msgwnd, arg, true, &context))
+					if (brock.emit(arg.evt_code, msgwnd, arg, true, &context))
 					{
-						if (wd_manager.available(msgwnd))
+						//If a root window is created during the mouse_down event, Nana.GUI will ignore the mouse_up event.
+						if (msgwnd->root != native_interface::get_focus_window())
 						{
-							pressed_wd = msgwnd;
-							//If a root window is created during the mouse_down event, Nana.GUI will ignore the mouse_up event.
-							if (msgwnd->root != native_interface::get_focus_window())
-							{
-								//call the drawer mouse up event for restoring the surface graphics
-								msgwnd->set_action(mouse_action::normal);
+							//call the drawer mouse up event for restoring the surface graphics
+							msgwnd->set_action(mouse_action::normal);
 
-								draw_invoker(&drawer::mouse_up, msgwnd, arg, &context);
-								wd_manager.do_lazy_refresh(msgwnd, false);
-							}
+							draw_invoker(&drawer::mouse_up, msgwnd, arg, &context);
+							wd_manager.do_lazy_refresh(msgwnd, false);
 						}
 					}
+					else
+						pressed_wd = nullptr;
 				}
 				break;
 			case ButtonRelease:
 				//Ignore mouse events when a window has been pressed by pressing spacebar
-				if (pressed_wd_space)
+				if(pressed_wd_space)
 					break;
 
 				msgwnd = wd_manager.find_window(native_window, xevent.xbutton.x, xevent.xbutton.y);
-				if (nullptr == msgwnd)
+				if(nullptr == msgwnd)
 					break;
 
-				if (xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
+				if(xevent.xbutton.button == Button4 || xevent.xbutton.button == Button5)
 				{
 					//The hovered window receives the message, unlike in Windows, no redirection is required.
 					auto evt_wd = msgwnd;
-					while (evt_wd)
+					while(evt_wd)
 					{
-						if (evt_wd->annex.events_ptr->mouse_wheel.length() != 0)
+						if(evt_wd->annex.events_ptr->mouse_wheel.length() != 0)
 						{
 							arg_wheel arg;
 							arg.which = arg_wheel::wheel::vertical;
@@ -647,19 +648,19 @@ namespace detail
 						evt_wd = evt_wd->parent;
 					}
 
-					if (msgwnd && (nullptr == evt_wd))
+					if(msgwnd && (nullptr == evt_wd))
 					{
 						arg_wheel arg;
 						arg.which = arg_wheel::wheel::vertical;
 						assign_arg(arg, msgwnd, xevent);
 						draw_invoker(&drawer::mouse_wheel, msgwnd, arg, &context);
-						wd_manager.do_lazy_refresh(msgwnd, false);
+						wd_manager.do_lazy_refresh(msgwnd, false); 
 					}
 				}
 				else
 				{
 					msgwnd->set_action(mouse_action::normal);
-					if (msgwnd->flags.enabled)
+					if(msgwnd->flags.enabled)
 					{
 						auto retain = msgwnd->annex.events_ptr;
 
@@ -673,9 +674,9 @@ namespace detail
 						click_arg.mouse_args = &arg;
 
 						const bool hit = msgwnd->dimension.is_hit(arg.pos);
-						if (msgwnd == pressed_wd)
+						if(msgwnd == pressed_wd)
 						{
-							if ((arg.button == ::nana::mouse::left_button) && hit)
+							if((arg.button == ::nana::mouse::left_button) && hit)
 							{
 								msgwnd->set_action(mouse_action::hovered);
 
@@ -683,20 +684,20 @@ namespace detail
 								draw_invoker(&drawer::click, msgwnd, click_arg, &context);
 							}
 						}
-
+					
 						//Do mouse_up, this handle may be closed by click handler.
-						if (wd_manager.available(msgwnd) && msgwnd->flags.enabled)
+						if(wd_manager.available(msgwnd) && msgwnd->flags.enabled)
 						{
-							if (hit)
+							if(hit)
 								msgwnd->set_action(mouse_action::hovered);
-
+							
 							auto retain = msgwnd->annex.events_ptr;
 							auto evt_ptr = retain.get();
 
 							arg.evt_code = event_code::mouse_up;
 							draw_invoker(&drawer::mouse_up, msgwnd, arg, &context);
 
-							if (click_arg.window_handle)
+							if(click_arg.window_handle)
 								evt_ptr->click.emit(click_arg, reinterpret_cast<window>(msgwnd));
 
 							if (wd_manager.available(msgwnd))
@@ -705,7 +706,7 @@ namespace detail
 								evt_ptr->mouse_up.emit(arg, reinterpret_cast<window>(msgwnd));
 							}
 						}
-						else if (click_arg.window_handle)
+						else if(click_arg.window_handle)
 							msgwnd->annex.events_ptr->click.emit(click_arg, reinterpret_cast<window>(msgwnd));
 
 						wd_manager.do_lazy_refresh(msgwnd, false);
@@ -1203,17 +1204,7 @@ namespace detail
 	{
 		thread_context* thrd = get_thread_context(0);
 		if(thrd && thrd->event_window)
-		{
-			//the state none should be tested, becuase in an event, there would be draw after an update,
-			//if the none is not tested, the draw after update will not be refreshed.
-			switch(thrd->event_window->other.upd_state)
-			{
-			case core_window_t::update_state::none:
-			case core_window_t::update_state::lazy:
-				thrd->event_window->other.upd_state = core_window_t::update_state::refresh;
-			default:	break;
-			}
-		}
+			thrd->event_window->other.upd_state = core_window_t::update_state::refreshed;
 	}
 
 	//Dynamically set a cursor for a window

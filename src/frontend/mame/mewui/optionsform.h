@@ -49,6 +49,21 @@ static const std::pair<std::string, std::string> arts_info[] =
 	{ "Covers", OPTION_COVER_PATH }
 };
 
+static const std::pair<std::string, std::string> extra_path[] =
+{
+	{ "Roms", OPTION_MEDIAPATH },
+	{ "Software", OPTION_SWPATH },
+	{ "INIs", OPTION_INIPATH },
+	{ "Languages", OPTION_LANGUAGEPATH },
+	{ "Plugins", OPTION_PLUGINSPATH },
+	{ "Fonts", OPTION_FONTPATH },
+	{ "Cheats", OPTION_CHEATPATH },
+	{ "Controls", OPTION_CTRLRPATH },
+	{ "Arts", OPTION_ARTPATH },
+	{ "Samples", OPTION_SAMPLEPATH },
+	{ "Hashs", OPTION_HASHPATH },
+};
+
 class okcancel_panel : public panel<true>
 {
 public:
@@ -72,6 +87,7 @@ private:
 	button m_b_add{ *this, "Add" }, m_b_change{ *this, "Edit" }, m_b_del{ *this, "Delete" }, m_b_up{ *this, "Move Up" }, m_b_down{ *this, "Move Down" };
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
+	std::map<std::string, std::string> m_list;
 };
 
 class folderbox

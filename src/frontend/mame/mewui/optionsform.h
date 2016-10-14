@@ -69,19 +69,37 @@ private:
 	listbox m_listbox{ *this };
 	combox m_combox{ *this };
 	okcancel_panel m_panel{ *this };
+	button m_b_add{ *this, "Add" }, m_b_change{ *this, "Edit" }, m_b_del{ *this, "Delete" }, m_b_up{ *this, "Move Up" }, m_b_down{ *this, "Move Down" };
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
 };
 
-class folderform : public form
+class folderbox
 {
 public:
-	explicit folderform(window);
+	explicit folderbox(window wd) : wd_(wd) {}
+
+	class folderform : public form
+	{
+	public:
+		explicit folderform(window);
+		std::string pick() const { return pick_; };
+
+	private:
+
+		treebox m_tb{ *this };
+		label m_lbl{ *this, "Select a Folder" };
+		okcancel_panel m_panel{ *this };
+		std::string pick_;
+		void _m_click(const arg_click& arg);
+	};
+
+	std::string show() const;
+	std::string operator()() const { return show(); }
 
 private:
-	treebox m_tb{ *this };
-	label m_lbl{ *this, "Select Directory" };
-	okcancel_panel m_panel{ *this };
+	window wd_;
+
 };
 
 class plugin_form : public form

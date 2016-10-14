@@ -21,10 +21,10 @@ using namespace nana;
 namespace mewui
 {
 
-class buttom_custom : public element::element_interface
+class button_custom : public element::element_interface
 {
 public:
-	buttom_custom()	{}
+	button_custom()	{}
 
 private:
 	bool draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state) override;

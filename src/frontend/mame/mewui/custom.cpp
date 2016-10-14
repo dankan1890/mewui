@@ -56,7 +56,7 @@ void custom_renderer::item(graph_reference graph, const nana::rectangle& r, cons
 	}
 }
 
-bool buttom_custom::draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state)
+bool button_custom::draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state)
 {
 	auto rc = r;
 	if (state == element_state::hovered)
@@ -74,9 +74,9 @@ bool buttom_custom::draw(graph_reference graph, const nana::color& bgcolor, cons
 
 void treebox_custom_renderer::set_color(const nana::color& bgcolor, const nana::color& fgcolor)
 {
+	renderer_->set_color(bgcolor, fgcolor);
 	bgcolor_ = bgcolor;
 	fgcolor_ = fgcolor;
-	renderer_->set_color(bgcolor, fgcolor);
 }
 
 void treebox_custom_renderer::bground(graph_reference graph, const compset_interface * compset) const
@@ -141,7 +141,6 @@ void treebox_custom_renderer::expander(graph_reference graph, const compset_inte
 
 		arrow.draw(graph, bgcolor_, ccolor, r, element_state::normal);
 	}
-	//renderer_->expander(graph, compset);
 }
 
 void treebox_custom_renderer::crook(graph_reference graph, const compset_interface * compset) const
@@ -153,8 +152,6 @@ void treebox_custom_renderer::crook(graph_reference graph, const compset_interfa
 		crook_.check(compset->item_attribute().checked);
 		crook_.draw(graph, bgcolor_, fgcolor_, attr.area, attr.mouse_pointed ? element_state::hovered : element_state::normal);
 	}
-
-	//		renderer_->crook(graph, compset);
 }
 
 void treebox_custom_renderer::text(graph_reference graph, const compset_interface * compset) const
@@ -167,8 +164,6 @@ void treebox_custom_renderer::text(graph_reference graph, const compset_interfac
 
 		graph.string(point{ attr.area.x, attr.area.y + 3 }, compset->item_attribute().text, fgcolor_);
 	}
-
-	//		renderer_->text(graph, compset);
 }
 
 

@@ -19,7 +19,7 @@
 namespace mewui {
 
 dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
-	: form(wd, { 400, 200 }, appear::decorate<>())
+	: form(wd, { 400, 300 }, appear::decorate<>())
 	, m_ui(_mui)
 	, m_options(_opt)
 {
@@ -27,12 +27,19 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	this->bgcolor(color(214, 219, 233));
 	auto& pl = this->get_place();
 
-	this->div("vert <<weight=2><vert <weight=5><weight=25 comb><weight=5><lbox><weight=5>><weight=2>><weight=45 panel>");
+	this->div("<vert<<vert margin=[2,5] <weight=25 comb><lbox>><weight=100 <vert margin=[10,5] gap=5 abc>>><weight=45 panel>>");
 	pl["panel"] << m_panel;
 	pl["comb"] << m_combox;
 	pl["lbox"] << m_listbox;
+	pl["abc"] << m_b_add << m_b_change << m_b_del << m_b_up << m_b_down;
 	m_listbox.append_header("");
 	m_listbox.show_header(false);
+	m_b_add.set_bground(button_custom()).edge_effects(false);
+	m_b_change.set_bground(button_custom()).edge_effects(false);
+	m_b_del.set_bground(button_custom()).edge_effects(false);
+	m_b_down.set_bground(button_custom()).edge_effects(false);
+	m_b_up.set_bground(button_custom()).edge_effects(false);
+
 
 	for (auto& opt : arts_info)
 		m_combox.push_back(opt.first);
@@ -50,18 +57,29 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 		while (pt.next(tmp))
 			m_listbox.at(0).append(tmp);
 
-		m_listbox.at(0).append("<Add>");
 		m_listbox.at(0).at(0).select(true);
 		m_listbox.focus();
 	});
 
-	m_listbox.events().dbl_click([this] {
+	m_b_add.events().click([this] {
 		auto sel = m_listbox.selected();
-		if (!sel.empty() && m_listbox.at(0).at(sel[0].item).text(0) == "<Add>")
+		if (!sel.empty())
 		{
-			folderform fb{ *this };
-			fb.show();
+			folderbox fb{ *this };
+			auto path = fb.show();
 		}
+	});
+
+	m_listbox.events().selected([this](const arg_listbox& ei) {
+		if (ei.item.pos().item == 0)
+			m_b_up.enabled(false);
+		else
+			m_b_up.enabled(true);
+		
+		if (ei.item.pos().item == m_listbox.at(0).size() - 1)
+			m_b_down.enabled(false);
+		else
+			m_b_down.enabled(true);
 	});
 
 	m_panel.m_cancel.events().click([this] {
@@ -82,16 +100,16 @@ okcancel_panel::okcancel_panel(window wd)
 	this->bgcolor(color(240, 240, 240));
 	m_place.div("<><weight=177 <vert <><weight=24 gap=5 abc><> > ><weight=5>");
 	m_place["abc"] << m_ok << m_cancel;
-	m_cancel.set_bground(buttom_custom());
-	m_ok.set_bground(buttom_custom());
+	m_cancel.set_bground(button_custom());
+	m_ok.set_bground(button_custom());
 	m_ok.edge_effects(false);
 	m_cancel.edge_effects(false);
 }
 
-folderform::folderform(window wd)
-	: form(wd, { 300, 200 }, appear::decorate<>())
+folderbox::folderform::folderform(window wd)
+	: form(wd, { 334, 325 }, appear::decorate<>())
 {
-	this->div("<weight=5><vert <weight=5><weight=20 label><weight=5><folders><weight=5><weight=45 panel>><weight=5>");
+	this->div("<vert <weight=30 margin=5 label><margin=5 folders><weight=45 panel>>");
 	this->get_place()["folders"] << m_tb;
 	this->get_place()["panel"] << m_panel;
 	this->get_place()["label"] << m_lbl;
@@ -99,10 +117,19 @@ folderform::folderform(window wd)
 	this->bgcolor(color(214, 219, 233));
 	m_lbl.transparent(true);
 
+	m_panel.m_ok.events().click.connect_unignorable([this](const arg_click& arg) {
+		_m_click(arg);
+	});
+
+	m_panel.m_cancel.events().click.connect_unignorable([this](const arg_click& arg) {
+		_m_click(arg);
+	});
+
 	// configure the starting path
 	std::string exepath;
 	osd_get_full_path(exepath, ".");
 	const char* volume_name = nullptr;
+
 	// add the drives
 	for (auto i = 0; (volume_name = osd_get_volume_name(i)) != nullptr; ++i)
 	{
@@ -112,13 +139,11 @@ folderform::folderform(window wd)
 		const osd::directory::entry* dirent;
 		// add one directory
 		while ((dirent = path.next()) != nullptr)
-		{
 			if (dirent->type == osd::directory::entry::entry_type::DIR && strcmp(dirent->name, ".") != 0 && strcmp(dirent->name, "..") != 0)
 			{
 				m_tb.insert(node, dirent->name, dirent->name);
 				break;
 			}
-		}
 	}
 
 	m_tb.events().expanded([&](const arg_treebox& arg) {
@@ -130,7 +155,6 @@ folderform::folderform(window wd)
 		file_enumerator path(p);
 		const osd::directory::entry* dirent;
 		while ((dirent = path.next()) != nullptr)
-		{
 			if (dirent->type == osd::directory::entry::entry_type::DIR && strcmp(dirent->name, ".") != 0 && strcmp(dirent->name, "..") != 0)
 			{
 				auto child = m_tb.insert(node, dirent->name, dirent->name);
@@ -140,22 +164,42 @@ folderform::folderform(window wd)
 				file_enumerator childpath(txt);
 				const osd::directory::entry* childdirent;
 				while ((childdirent = childpath.next()) != nullptr)
-				{
 					if (childdirent->type == osd::directory::entry::entry_type::DIR && strcmp(childdirent->name, ".") != 0 && strcmp(childdirent->name, "..") != 0)
 					{
 						m_tb.insert(child, childdirent->name, childdirent->name);
 						break;
 					}
-				}
 			}
-		}
 
 		m_tb.auto_draw(true);
 	});
+
+	m_tb.renderer(treebox_custom_renderer(m_tb.renderer()));
 	this->collocate();
 	this->modality();
 }
 
+void folderbox::folderform::_m_click(const arg_click& arg)
+{
+	if (arg.window_handle == m_panel.m_ok)
+	{
+		auto sel = m_tb.selected();
+		if (!sel.empty())
+			pick_ = m_tb.make_key_path(sel, PATH_SEPARATOR);
+	}
+	else
+		pick_ = "";
+
+	this->close();
+}
+
+
+std::string folderbox::show() const
+{
+	folderform fm{ wd_ };
+	fm.show();
+	return fm.pick();
+}
 
 plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
 	: form(wd, { 400, 200 }, appear::decorate<>())

@@ -2,7 +2,7 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	mewui/options.h
+	mewui/optionsform.h
 
 	MEWUI options forms.
 

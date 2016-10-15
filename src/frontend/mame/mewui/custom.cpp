@@ -2,9 +2,9 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	mewui/menu.cpp
+	mewui/custom.cpp
 
-	MEWUI Menu.
+	MEWUI customization.
 
 ***************************************************************************/
 

@@ -100,7 +100,7 @@ private:
 	statusbar m_statusbar{ *this };
 	menubar m_menubar{ *this };
 	textbox m_search{ *this };
-	button m_search_button{ *this, "S" };
+	button m_search_button{ *this };
 	menu m_context_menu;
 	notifier m_notif{ *this };
 	treebox m_treebox{ *this };

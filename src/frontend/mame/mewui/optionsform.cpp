@@ -2,7 +2,7 @@
 // copyright-holders:Maurizio Petrarota
 /***************************************************************************
 
-	mewui/options.cpp
+	mewui/optionsform.cpp
 
 	MEWUI options forms.
 
@@ -34,11 +34,11 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	pl["abc"] << m_b_add << m_b_change << m_b_del << m_b_up << m_b_down;
 	m_listbox.append_header("");
 	m_listbox.show_header(false);
-	m_b_add.set_bground(button_custom()).edge_effects(false);
-	m_b_change.set_bground(button_custom()).edge_effects(false);
-	m_b_del.set_bground(button_custom()).edge_effects(false);
-	m_b_down.set_bground(button_custom()).edge_effects(false);
-	m_b_up.set_bground(button_custom()).edge_effects(false);
+	m_b_add.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
+	m_b_change.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
+	m_b_del.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
+	m_b_down.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
+	m_b_up.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
 
 	for (auto &opt : arts_info)
 		m_list[opt.first] = opt.second;
@@ -60,7 +60,8 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 		while (pt.next(tmp))
 			m_listbox.at(0).append(tmp);
 
-		m_listbox.at(0).at(0).select(true);
+		if (!m_listbox.empty())
+			m_listbox.at(0).at(0).select(true);
 		m_listbox.focus();
 	});
 
@@ -70,6 +71,33 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 		{
 			folderbox fb{ *this };
 			auto path = fb.show();
+			if (!path.empty())
+				m_listbox.at(0).append(path);
+
+			m_listbox.focus();
+		}
+	});
+
+	m_b_del.events().click([this] {
+		auto sel = m_listbox.selected();
+		if (!sel.empty())
+		{
+			auto e = m_listbox.at(0).at(sel[0].item);
+			m_listbox.erase(e);
+			m_listbox.focus();
+		}
+	});
+
+	m_b_change.events().click([this] {
+		auto sel = m_listbox.selected();
+		if (!sel.empty())
+		{
+			folderbox fb{ *this };
+			auto path = fb.show();
+			if (!path.empty())
+				m_listbox.at(0).at(sel[0].item).text(0, path);
+
+			m_listbox.focus();
 		}
 	});
 

@@ -23,6 +23,7 @@
 #include "pluginopts.h"
 #include "mewui/optionsform.h"
 #include <set>
+#include "nana/paint/pixel_buffer.hpp"
 
 namespace mewui
 {
@@ -131,6 +132,12 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_search.tip_string("Search:").multi_lines(false);
 	m_search.tooltip("Enter a term to search...");
 	m_search_button.bgcolor(colors::white);
+
+	paint::image img;
+	if (img.open(pic_search, ARRAY_LENGTH(pic_search)))
+	{
+		m_search_button.icon(img);
+	}
 	m_search_button.tooltip("Search");
 	this->get_place()["search"] << m_search;
 	this->get_place()["s_button"] << m_search_button;
@@ -756,7 +763,7 @@ void main_form::init_options_menu()
 		plugin_form dform{ *this, m_options, m_ui };
 		dform.show();
 	});
-	//	menu.append_splitter();
+//	menu.append_splitter();
 //	menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
 //	menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});
 //	menu.append_splitter();
@@ -771,9 +778,24 @@ void main_form::init_help_menu()
 	auto& menu = m_menubar.push_back("Help");
 	menu.append("About", [this](menu::item_proxy& ip) {
 		auto message = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
-		msgbox mb(*this, "About MEWUI");
-		mb.icon(msgbox::icon_information) << message;
-		mb.show();
+		form fm{ *this, API::make_center(300, 200), appear::decorate<>() };
+		fm.caption("About MEWUI");
+		fm.bgcolor(colors::white);
+		fm.div("<vert <><weight=128 <weight=128 logo><label>><>>");
+		label lbl{ fm };
+		lbl.transparent(true);
+		//lbl.format(true);
+		lbl.caption(message);
+		picture pct{ fm };
+		paint::image img;
+		img.open(logo_mewui, ARRAY_LENGTH(logo_mewui));
+		pct.load(img);
+		pct.transparent(true);
+		fm["logo"] << pct;
+		fm["label"] << lbl;
+		fm.collocate();
+		fm.show();
+		fm.modality();
 	});
 	menu.renderer(custom_renderer(menu.renderer()));
 }

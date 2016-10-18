@@ -62,6 +62,8 @@ static const std::pair<std::string, std::string> extra_path[] =
 	{ "Arts", OPTION_ARTPATH },
 	{ "Samples", OPTION_SAMPLEPATH },
 	{ "Hashs", OPTION_HASHPATH },
+	{ "Icons", OPTION_ICONS_PATH },
+	{ "UI", OPTION_UI_PATH }
 };
 
 class okcancel_panel : public panel<true>

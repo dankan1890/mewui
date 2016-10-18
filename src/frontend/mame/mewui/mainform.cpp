@@ -203,6 +203,11 @@ void main_form::handle_events()
 		}
 	});
 
+	m_swpage.m_softwarebox.events().selected([this](const arg_listbox& arg) {
+		load_sw_data(arg.item.text(5), arg.item.text(0), std::string());
+	
+	});
+		
 	// Search events
 	m_search_button.events().click([this] { perform_search(); });
 	m_search.events().key_char([this](const arg_keyboard& arg) {
@@ -511,6 +516,10 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			cat.append({ std::string(drv->description), std::string(drv->name), std::string(drv->manufacturer), std::string(drv->year), core_filename_extract_base(drv->source_file) });
+			auto img = load_icon(drv);
+			if (!img.empty())
+				cat.back().icon(img);
+
 			if (m_latest_machine == drv->name) m_resel = index;
 
 			bool cloneof = strcmp(drv->parent, "0");
@@ -527,6 +536,41 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 	m_latest_machine.clear();
 }
 
+paint::image main_form::load_icon(const game_driver* drv) const
+{
+	paint::image img;
+	// get search path
+	path_iterator path(m_ui->options().icons_directory());
+	std::string curpath;
+	std::string searchstr(m_ui->options().icons_directory());
+
+	// iterate over path and add path for zipped formats
+	while (path.next(curpath))
+		searchstr.append(";").append(curpath.c_str()).append(PATH_SEPARATOR).append("icons");
+
+	emu_file snapfile(std::move(searchstr), OPEN_FLAG_READ);
+	std::string fname;
+	using osd_err = osd_file::error;
+	fname.assign(drv->name).append(".ico");
+
+	auto filerr = snapfile.open(fname);
+	if (filerr != osd_err::NONE) return img;
+
+	auto length = static_cast<UINT32>(snapfile.size());
+	auto data = global_alloc_array(UINT32, length);
+	if (snapfile.read(data, length) > 0)
+	{
+		if (img.open(data, length))
+		{
+			global_free_array(data);
+			return img;
+		}
+	}
+	global_free_array(data);
+
+	return img;
+}
+
 void main_form::update_selection()
 {
 	std::string work;
@@ -536,11 +580,8 @@ void main_form::update_selection()
 		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 		auto drv = &driver_list::driver(driver_list::find(game.c_str()));
 
-		// Load image
-		load_image(drv);
-
-		// Load data from DATs
-		load_data(drv);
+		load_image(drv); // Load image
+		load_data(drv); // Load data from DATs
 
 		// Update menu item
 		m_menubar.at(0).change_text(0, string_format("&Play %s", drv->description));
@@ -568,7 +609,7 @@ void main_form::update_selection()
 						};
 						auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
 						std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
-						cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name });
+						cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name, swlistdev.list_name() });
 						if (!swinfo.parentname().empty())
 							cat.back().fgcolor(colors::gray);
 					}
@@ -578,8 +619,7 @@ void main_form::update_selection()
 		work = (drv->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
 	}
 
-	// Update status bar
-	m_statusbar.update(m_machinebox.at(0).size(), work);
+	m_statusbar.update(m_machinebox.at(0).size(), work); // Update status bar
 }
 
 void main_form::load_image(const game_driver* drv)
@@ -690,6 +730,30 @@ void main_form::load_data(const game_driver* drv)
 	}
 }
 
+void main_form::load_sw_data(std::string list, std::string name, std::string parent)
+{
+	if (m_datfile == nullptr) return;
+
+	std::string buffer;
+	if (m_datfile->has_software(list, name, parent))
+	{
+		m_datfile->load_software_info(list, buffer, name, parent);
+
+	}
+
+	if (!buffer.empty())
+	{
+		m_textpage.m_textbox.typeface(m_font);
+		m_textpage.m_textbox.reset(buffer, false);
+		m_textpage.m_textbox.line_wrapped(true);
+	}
+	else
+	{
+		auto tmp = paint::font(m_font.name(), m_font.size(), true, true);
+		m_textpage.m_textbox.typeface(tmp);
+		m_textpage.m_textbox.reset("No info available", false);
+	}
+}
 void main_form::init_menubar()
 {
 	m_menubar.bgcolor(color(214, 219, 233));
@@ -866,6 +930,7 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 	m_softwarebox.append_header("Publisher", 180);
 	m_softwarebox.append_header("Year", 70);
 	m_softwarebox.append_header("Type", 70);
+	m_softwarebox.append_header("List", 180);
 
 	// Layout
 	m_place.div("<swbox>");

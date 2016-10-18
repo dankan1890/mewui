@@ -117,6 +117,21 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 		this->close();
 	});
 
+/*
+	m_panel.m_ok.events().click([this] {
+		for (auto & e : m_list)
+		{
+			if (m_ui->options().exists(e.second.c_str()))
+			{
+				m_ui->options().set_value(e.second, tmppath.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+			}
+			else
+			{
+				
+			}
+		}
+	});
+*/
 	m_combox.option(0);
 
 	this->collocate();

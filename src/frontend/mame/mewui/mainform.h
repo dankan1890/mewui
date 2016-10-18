@@ -139,8 +139,9 @@ private:
 
 	void update_selection();
 
-	void load_image(const game_driver*);
-	void load_data(const game_driver*);
+	void load_image(const game_driver* driver);
+	void load_data(const game_driver* driver);
+	void load_sw_data(std::string list, std::string name, std::string parent);
 
 	void start_machine(std::string&);
 	void start_software();
@@ -149,6 +150,7 @@ private:
 	void perform_search();
 
 	void handle_events();
+	paint::image load_icon(const game_driver *drv) const;
 
 };
 } // namespace mewui

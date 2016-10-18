@@ -16,6 +16,7 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/tabbar.hpp>
 #include <nana/gui/element.hpp>
+#include <nana/gui/widgets/listbox.hpp>
 using namespace nana;
 
 namespace mewui
@@ -1218,6 +1219,7 @@ private:
 	color ilcolor_;
 	cloneable_renderer renderer_;
 };
+
 
 } // namespace mewui
 

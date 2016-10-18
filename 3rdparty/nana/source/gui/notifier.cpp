@@ -321,6 +321,7 @@ namespace nana
 
 	void notifier::icon(const std::string& icon_file)
 	{
+#if defined(NANA_WINDOWS)
 		paint::image image_ico{ icon_file };
 		auto icon_handle = paint::image_accessor::icon(image_ico);
 		if (icon_handle)
@@ -330,14 +331,17 @@ namespace nana
 			impl_->set_icon(image_ico);
 			impl_->icon = image_ico;
 		}
+#endif
 	}
 
 	void notifier::insert_icon(const std::string& icon_file)
 	{
+#if defined(NANA_WINDOWS)
 		paint::image image_ico{ icon_file };
 		auto icon_handle = paint::image_accessor::icon(image_ico);
 		if (icon_handle)
 			impl_->icons.emplace_back(static_cast<paint::image&&>(image_ico));
+#endif
 	}
 
 	void notifier::period(unsigned ms)

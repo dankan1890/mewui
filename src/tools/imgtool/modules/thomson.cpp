@@ -167,6 +167,11 @@ static UINT8* thom_get_sector(thom_floppy* f, unsigned head,
 					unsigned track, unsigned sector);
 
 
+static thom_floppy *get_thom_floppy(imgtool::image &image)
+{
+	return (thom_floppy*)image.extra_bytes();
+}
+
 /*********************** .fd / .qd format ************************/
 
 /* .fd and .qd formats are very simple: the sectors are simply put one after
@@ -177,77 +182,78 @@ static UINT8* thom_get_sector(thom_floppy* f, unsigned head,
    (.fd have 40 or 80 tracks, .qd have 25 tracks) and the file size.
 */
 
-static imgtoolerr_t thom_open_fd_qd(imgtool::image *img, imgtool::stream &stream)
+static imgtoolerr_t thom_open_fd_qd(imgtool::image &img, imgtool::stream::ptr &&stream)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
-	int size = stream.size();
+	thom_floppy* f = get_thom_floppy(img);
+	int size = stream->size();
 
-	f->stream = &stream;
+	f->stream = stream.get();
 	f->modified = 0;
 
 	/* guess format */
 	switch ( size ) {
 	case 81920:
-	f->tracks = 40;
-	f->sector_size = 128;
-	f->sectuse_size = 128;
-	f->heads = 1;
-	break;
+		f->tracks = 40;
+		f->sector_size = 128;
+		f->sectuse_size = 128;
+		f->heads = 1;
+		break;
 
 	case 163840:
-	f->tracks = 40;
-	f->sector_size = 256;
-	f->sectuse_size = 255;
-	f->heads = 1;
-	/* could also be: sector_size=128, heads=2 */
-	/* maight even be: tracks=80, sector_size=128 */
-	break;
+		f->tracks = 40;
+		f->sector_size = 256;
+		f->sectuse_size = 255;
+		f->heads = 1;
+		/* could also be: sector_size=128, heads=2 */
+		/* maight even be: tracks=80, sector_size=128 */
+		break;
 
 	case 327680:
-	f->tracks = 80;
-	f->sector_size = 256;
-	f->sectuse_size = 255;
-	f->heads = 1;
-	/* could also be: tracks=40, heads=2 */
-	break;
+		f->tracks = 80;
+		f->sector_size = 256;
+		f->sectuse_size = 255;
+		f->heads = 1;
+		/* could also be: tracks=40, heads=2 */
+		break;
 
 	case 655360:
-	f->tracks = 80;
-	f->sector_size = 256;
-	f->sectuse_size = 255;
-	f->heads = 2;
-	break;
+		f->tracks = 80;
+		f->sector_size = 256;
+		f->sectuse_size = 255;
+		f->heads = 2;
+		break;
 
 	case 51200:
-	f->tracks = 25;
-	f->sector_size = 128;
-	f->sectuse_size = 128;
-	f->heads = 1;
-	break;
+		f->tracks = 25;
+		f->sector_size = 128;
+		f->sectuse_size = 128;
+		f->heads = 1;
+		break;
 
 	case 62400:
-	f->tracks = 25;
-	f->sector_size = 128;
-	f->sectuse_size = 128;
-	f->heads = 2;
-	break;
+		f->tracks = 25;
+		f->sector_size = 128;
+		f->sectuse_size = 128;
+		f->heads = 2;
+		break;
 
 	default:
-	return IMGTOOLERR_CORRUPTIMAGE;
+		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 	assert( size == f->heads * f->tracks * 16 * f->sector_size );
 
-	stream.seek(0, SEEK_SET);
-	if ( stream.read(f->data, size ) < size )
-	return IMGTOOLERR_READERROR;
+	f->stream->seek(0, SEEK_SET);
+	if (f->stream->read(f->data, size ) < size)
+		return IMGTOOLERR_READERROR;
 
+	f->stream = stream.release();
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void thom_close_fd_qd(imgtool::image *img)
+static void thom_close_fd_qd(imgtool::image &img)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 
 	/* save image */
 	if ( f->modified ) {
@@ -308,47 +314,49 @@ static UINT16 thom_sap_crc( UINT8* data, int size )
 	return crc;
 }
 
-static imgtoolerr_t thom_open_sap(imgtool::image *img, imgtool::stream &stream)
+static imgtoolerr_t thom_open_sap(imgtool::image &img, imgtool::stream::ptr &&stream)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	UINT8 buf[262];
 
-	f->stream = &stream;
+	f->stream = stream.get();
 	f->modified = 0;
 
-	/* check image header */
-	stream.seek(0, SEEK_SET);
-	stream.read(buf, 66 );
+	// check image header
+	f->stream->seek(0, SEEK_SET);
+	f->stream->read(buf, 66 );
 	if ( memcmp( buf+1, sap_header+1, 65 ) ) return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* guess format */
-	stream.read(buf, 1 );
-	switch ( buf[0] ) {
+	f->stream->read(buf, 1 );
+	switch ( buf[0] )
+	{
 	case 1:
 	case 3:
-	f->heads = 1;
-	f->tracks = 40;
-	f->sector_size = 128;
-	f->sectuse_size = 128;
-	break;
+		f->heads = 1;
+		f->tracks = 40;
+		f->sector_size = 128;
+		f->sectuse_size = 128;
+		break;
 	case 0:
 	case 2:
 	case 4:
-	f->heads = 1;
-	f->tracks = 80;
-	f->sector_size = 256;
-	f->sectuse_size = 255;
-	break;
-	default: return IMGTOOLERR_CORRUPTIMAGE;
+		f->heads = 1;
+		f->tracks = 80;
+		f->sector_size = 256;
+		f->sectuse_size = 255;
+		break;
+	default:
+		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
-	stream.seek(66, SEEK_SET);
+	f->stream->seek(66, SEEK_SET);
 	while ( 1) {
 	int i, sector, track;
 	UINT16 crc;
 
 	/* load sector */
-	if ( stream.read(buf, 6 + f->sector_size ) < 6 + f->sector_size )
+	if (f->stream->read(buf, 6 + f->sector_size ) < 6 + f->sector_size )
 		break;
 
 	/* parse sector header */
@@ -368,12 +376,13 @@ static imgtoolerr_t thom_open_sap(imgtool::image *img, imgtool::stream &stream)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
+	f->stream = stream.release();
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void thom_close_sap(imgtool::image *img)
+static void thom_close_sap(imgtool::image &img)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 
 	if ( f->modified ) {
 	int i, sector, track;
@@ -799,20 +808,20 @@ static void thom_put_file(thom_floppy* f, unsigned head,
 
 /********************** module functions ***********************/
 
-static imgtoolerr_t thom_get_geometry(imgtool::image* img, UINT32* tracks,
+static imgtoolerr_t thom_get_geometry(imgtool::image &img, UINT32* tracks,
 						UINT32* heads, UINT32* sectors)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	if ( tracks ) *tracks = f->tracks;
 	if ( heads ) *heads = f->heads;
 	if ( sectors ) *sectors = 16;
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_read_sector(imgtool::image* img, UINT32 track,
+static imgtoolerr_t thom_read_sector(imgtool::image &img, UINT32 track,
 						UINT32 head, UINT32 sector, std::vector<UINT8> &buffer)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	if ( head >= f->heads || sector < 1 || sector > 16 || track >= f->tracks )
 		return IMGTOOLERR_SEEKERROR;
 
@@ -824,11 +833,11 @@ static imgtoolerr_t thom_read_sector(imgtool::image* img, UINT32 track,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_write_sector(imgtool::image *img, UINT32 track,
+static imgtoolerr_t thom_write_sector(imgtool::image &img, UINT32 track,
 						UINT32 head, UINT32 sector,
 						const void *buf, size_t len, int ddam)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	if ( f->stream->is_read_only() ) return IMGTOOLERR_WRITEERROR;
 	if ( head >= f->heads || sector < 1 || sector > 16 || track >= f->tracks )
 	return IMGTOOLERR_SEEKERROR;
@@ -841,9 +850,9 @@ static imgtoolerr_t thom_write_sector(imgtool::image *img, UINT32 track,
 /* returns floopy name */
 /* actually, each side has its own name, but we only return the one on side 0.
  */
-static void thom_info(imgtool::image *img, char *string, size_t len)
+static void thom_info(imgtool::image &img, char *string, size_t len)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	UINT8* base = thom_get_sector( f, 0, 20, 1 );
 	char buf[9];
 	memcpy( buf, base, 8 );
@@ -854,52 +863,44 @@ static void thom_info(imgtool::image *img, char *string, size_t len)
 
 /* each side of a floppy has its own filesystem, we treat them as'partitions'
  */
-static imgtoolerr_t thom_list_partitions(imgtool::image *img,
-						imgtool_partition_info *partitions,
-						size_t len)
+static imgtoolerr_t thom_list_partitions(imgtool::image &img, std::vector<imgtool::partition_info> &partitions)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
-	if ( len >= 1 ) {
-	partitions[0].get_info = thom_basic_get_info;
-	partitions[0].base_block = 0;
-	partitions[0].block_count = 1;
-	}
-	if ( len >= 2 && f->heads >= 2 ) {
-	partitions[1].get_info = thom_basic_get_info;
-	partitions[1].base_block = 1;
-	partitions[1].block_count = 1;
-	}
+	thom_floppy* f = get_thom_floppy(img);
+
+	partitions.emplace_back(thom_basic_get_info, 0, 1);
+	if (f->heads >= 2)
+		partitions.emplace_back(thom_basic_get_info, 1, 1);
+
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_open_partition(imgtool::partition *part,
+static imgtoolerr_t thom_open_partition(imgtool::partition &part,
 					UINT64 first_block, UINT64 block_count)
 {
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	if ( first_block >= f->heads )
 	return IMGTOOLERR_INVALIDPARTITION;
-	* ( (int*) part->extra_bytes() ) = first_block;
+	* ( (int*) part.extra_bytes() ) = first_block;
 	return IMGTOOLERR_SUCCESS;
 }
 
 
-static imgtoolerr_t thom_begin_enum(imgtool::directory *enumeration,
+static imgtoolerr_t thom_begin_enum(imgtool::directory &enumeration,
 					const char *path)
 {
-	int* n = (int*) enumeration->extra_bytes();
+	int* n = (int*) enumeration.extra_bytes();
 	*n = 0;
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_next_enum(imgtool::directory *enumeration,
-					imgtool_dirent *ent)
+static imgtoolerr_t thom_next_enum(imgtool::directory &enumeration, imgtool_dirent &ent)
 {
-	imgtool::partition *part = &enumeration->partition();
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
-	int* n = (int*) enumeration->extra_bytes();
+	imgtool::partition &part(enumeration.partition());
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
+	int* n = (int*) enumeration.extra_bytes();
 	thom_dirent d;
 
 	do {
@@ -907,47 +908,47 @@ static imgtoolerr_t thom_next_enum(imgtool::directory *enumeration,
 	(*n) ++;
 	}
 	while ( d.type == THOM_DIRENT_FREE );
-	if ( d.type == THOM_DIRENT_END ) ent->eof = 1;
+	if ( d.type == THOM_DIRENT_END ) ent.eof = 1;
 	else if ( d.type == THOM_DIRENT_INVALID ) {
-	ent->corrupt = 1;
+	ent.corrupt = 1;
 	}
 	else {
 	int size;
-	snprintf( ent->filename, sizeof(ent->filename), "%s.%s", d.name, d.ext );
-	snprintf( ent->attr, sizeof(ent->attr), "%c %c %s",
+	snprintf( ent.filename, sizeof(ent.filename), "%s.%s", d.name, d.ext );
+	snprintf( ent.attr, sizeof(ent.attr), "%c %c %s",
 			(d.ftype == 0) ? 'B' :  (d.ftype == 1) ? 'D' :
 			(d.ftype == 2) ? 'M' :  (d.ftype == 3) ? 'A' : '?',
 			(d.format == 0) ? 'B' : (d.format == 0xff) ? 'A' : '?',
 			d.comment );
-	ent->creation_time = thom_crack_time( &d );
+	ent.creation_time = thom_crack_time( &d );
 	size  = thom_get_file_size( f, head, &d );
-	if ( size >= 0 ) ent->filesize = size;
+	if ( size >= 0 ) ent.filesize = size;
 	else {
-		ent->filesize = 0;
-		ent->corrupt = 1;
+		ent.filesize = 0;
+		ent.corrupt = 1;
 	}
 	}
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_free_space(imgtool::partition *part, UINT64 *size)
+static imgtoolerr_t thom_free_space(imgtool::partition &part, UINT64 *size)
 {
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	int nb = thom_get_free_blocks( f, head );
 	(*size) = nb * f->sectuse_size * 8;
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_read_file(imgtool::partition *part,
+static imgtoolerr_t thom_read_file(imgtool::partition &part,
 					const char *filename,
 					const char *fork,
 					imgtool::stream &destf)
 {
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	thom_dirent d;
 	char name[9], ext[4], fname[14];
 	int size;
@@ -964,12 +965,12 @@ static imgtoolerr_t thom_read_file(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_delete_file(imgtool::partition *part,
+static imgtoolerr_t thom_delete_file(imgtool::partition &part,
 						const char *filename)
 {
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	thom_dirent d;
 	char name[9], ext[4], fname[14];
 
@@ -985,15 +986,15 @@ static imgtoolerr_t thom_delete_file(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_write_file(imgtool::partition *part,
+static imgtoolerr_t thom_write_file(imgtool::partition &part,
 					const char *filename,
 					const char *fork,
 					imgtool::stream &sourcef,
 					util::option_resolution *opts)
 {
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	thom_dirent d;
 	int size = sourcef.size();
 	int blocks = thom_get_free_blocks( f, head );
@@ -1069,14 +1070,14 @@ static imgtoolerr_t thom_write_file(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_suggest_transfer(imgtool::partition *part,
+static imgtoolerr_t thom_suggest_transfer(imgtool::partition &part,
 						const char *fname,
 						imgtool_transfer_suggestion *suggestions,
 						size_t suggestions_length)
 {
-	int head = *( (int*) part->extra_bytes() );
-	imgtool::image* img = &part->image();
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	int head = *( (int*) part.extra_bytes() );
+	imgtool::image &img(part.image());
+	thom_floppy* f = get_thom_floppy(img);
 	thom_dirent d;
 	int is_basic = 0;
 
@@ -1112,16 +1113,16 @@ static imgtoolerr_t thom_suggest_transfer(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_create(imgtool::image* img,
-				imgtool::stream &stream,
+static imgtoolerr_t thom_create(imgtool::image &img,
+				imgtool::stream::ptr &&stream,
 				util::option_resolution *opts)
 {
-	thom_floppy* f = (thom_floppy*) img->extra_bytes();
+	thom_floppy* f = get_thom_floppy(img);
 	int i;
 	UINT8* buf;
 	const char* name;
 
-	f->stream = &stream;
+	f->stream = stream.get();
 	f->modified = 0;
 
 	/* get parameters */
@@ -1167,6 +1168,7 @@ static imgtoolerr_t thom_create(imgtool::image* img,
 
 	f->modified = 1;
 
+	f->stream = stream.release();
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1311,7 +1313,7 @@ static void thom_encrypt(imgtool::stream &out, imgtool::stream &in)
 	}
 }
 
-static imgtoolerr_t thomcrypt_read_file(imgtool::partition *part,
+static imgtoolerr_t thomcrypt_read_file(imgtool::partition &part,
 					const char *name,
 					const char *fork, imgtool::stream &dst)
 {
@@ -1346,7 +1348,7 @@ static imgtoolerr_t thomcrypt_read_file(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thomcrypt_write_file(imgtool::partition *part,
+static imgtoolerr_t thomcrypt_write_file(imgtool::partition &part,
 						const char *name,
 						const char *fork, imgtool::stream &src,
 						util::option_resolution *opts)
@@ -1394,7 +1396,7 @@ void filter_thomcrypt_getinfo(UINT32 state, union filterinfo *info)
 }
 
 /* untokenization automatically decrypt protected files */
-static imgtoolerr_t thom_basic_read_file(imgtool::partition *part,
+static imgtoolerr_t thom_basic_read_file(imgtool::partition &part,
 						const char *name,
 						const char *fork,
 						imgtool::stream &dst,
@@ -1471,7 +1473,7 @@ static imgtoolerr_t thom_basic_read_file(imgtool::partition *part,
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t thom_basic_write_file(imgtool::partition *part,
+static imgtoolerr_t thom_basic_write_file(imgtool::partition &part,
 						const char *name,
 						const char *fork,
 						imgtool::stream &src,
@@ -1483,14 +1485,14 @@ static imgtoolerr_t thom_basic_write_file(imgtool::partition *part,
 
 
 #define FILTER(short,long)                      \
-	static imgtoolerr_t short##_read_file(imgtool::partition *part,  \
+	static imgtoolerr_t short##_read_file(imgtool::partition &part,  \
 					const char *name,       \
 					const char *fork,       \
 					imgtool::stream &dst)        \
 	{                                   \
 	return thom_basic_read_file( part, name, fork, dst, short );    \
 	}                                   \
-	static imgtoolerr_t short##_write_file(imgtool::partition *part, \
+	static imgtoolerr_t short##_write_file(imgtool::partition &part, \
 						const char *name,       \
 						const char *fork,       \
 						imgtool::stream &src,        \

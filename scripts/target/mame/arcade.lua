@@ -261,6 +261,8 @@ SOUNDS["ES1373"] = true
 SOUNDS["L7A1045"] = true
 SOUNDS["AD1848"] = true
 --SOUNDS["UPD1771"] = true
+SOUNDS["VOLT_REG"] = true
+--SOUNDS["MEA8000"] = true
 
 --------------------------------------------------
 -- specify available video cores
@@ -388,6 +390,7 @@ MACHINES["CR589"] = true
 MACHINES["DS1204"] = true
 MACHINES["DS1302"] = true
 --MACHINES["DS1315"] = true
+--MACHINES["DS1386"] = true
 MACHINES["DS2401"] = true
 MACHINES["DS2404"] = true
 MACHINES["DS75160A"] = true

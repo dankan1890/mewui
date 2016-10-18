@@ -2,7 +2,7 @@
 // copyright-holders:Dirk Best
 /****************************************************************************
 
-    vzdos.c
+    vzdos.cpp
 
     Laser/VZ disk images
 
@@ -93,7 +93,7 @@ static UINT16 chksum16(UINT8 *buffer, int len)
 }
 
 /* returns the offset where the actual sector data starts */
-static imgtoolerr_t vzdos_get_data_start(imgtool::image *img, int track, int sector, int *start)
+static imgtoolerr_t vzdos_get_data_start(imgtool::image &img, int track, int sector, int *start)
 {
 	imgtoolerr_t ret;
 	UINT8 buffer[25]; /* enough to read the sector header */
@@ -115,7 +115,7 @@ static imgtoolerr_t vzdos_get_data_start(imgtool::image *img, int track, int sec
 }
 
 /* return the actual data of a sector */
-static imgtoolerr_t vzdos_read_sector_data(imgtool::image *img, int track, int sector, UINT8 *data)
+static imgtoolerr_t vzdos_read_sector_data(imgtool::image &img, int track, int sector, UINT8 *data)
 {
 	int ret, data_start;
 	UINT8 buffer[DATA_SIZE + 4]; /* data + checksum */
@@ -136,7 +136,7 @@ static imgtoolerr_t vzdos_read_sector_data(imgtool::image *img, int track, int s
 }
 
 /* write data to sector */
-static imgtoolerr_t vzdos_write_sector_data(imgtool::image *img, int track, int sector, UINT8 *data)
+static imgtoolerr_t vzdos_write_sector_data(imgtool::image &img, int track, int sector, UINT8 *data)
 {
 	int ret, data_start;
 	UINT8 buffer[DATA_SIZE + 4]; /* data + checksum */
@@ -154,7 +154,7 @@ static imgtoolerr_t vzdos_write_sector_data(imgtool::image *img, int track, int 
 }
 
 /* write formatted empty sector */
-static imgtoolerr_t vzdos_clear_sector(imgtool::image *img, int track, int sector)
+static imgtoolerr_t vzdos_clear_sector(imgtool::image &img, int track, int sector)
 {
 	UINT8 data[DATA_SIZE + 2];
 
@@ -164,7 +164,7 @@ static imgtoolerr_t vzdos_clear_sector(imgtool::image *img, int track, int secto
 }
 
 /* return a directory entry for an index */
-static imgtoolerr_t vzdos_get_dirent(imgtool::image *img, int index, vzdos_dirent *ent)
+static imgtoolerr_t vzdos_get_dirent(imgtool::image &img, int index, vzdos_dirent *ent)
 {
 	int ret, entry;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -194,7 +194,7 @@ static imgtoolerr_t vzdos_get_dirent(imgtool::image *img, int index, vzdos_diren
 }
 
 /* save a directory entry to disk */
-static imgtoolerr_t vzdos_set_dirent(imgtool::image *img, int index, vzdos_dirent ent)
+static imgtoolerr_t vzdos_set_dirent(imgtool::image &img, int index, vzdos_dirent ent)
 {
 	int ret, entry;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -219,7 +219,7 @@ static imgtoolerr_t vzdos_set_dirent(imgtool::image *img, int index, vzdos_diren
 }
 
 /* clear a directory entry */
-static imgtoolerr_t vzdos_clear_dirent(imgtool::image *img, int index)
+static imgtoolerr_t vzdos_clear_dirent(imgtool::image &img, int index)
 {
 	int ret;
 	vzdos_dirent entry;
@@ -233,7 +233,7 @@ static imgtoolerr_t vzdos_clear_dirent(imgtool::image *img, int index)
 }
 
 /* search the index for a directory entry */
-static imgtoolerr_t vzdos_searchentry(imgtool::image *image, const char *fname, int *entry) {
+static imgtoolerr_t vzdos_searchentry(imgtool::image &image, const char *fname, int *entry) {
 	int i, len, ret;
 	vzdos_dirent ent;
 	char filename[9];
@@ -272,7 +272,7 @@ static imgtoolerr_t vzdos_searchentry(imgtool::image *image, const char *fname, 
 }
 
 /* return a directory entry for a filename */
-static imgtoolerr_t vzdos_get_dirent_fname(imgtool::image *img, const char *fname, vzdos_dirent *ent)
+static imgtoolerr_t vzdos_get_dirent_fname(imgtool::image &img, const char *fname, vzdos_dirent *ent)
 {
 	int ret, index;
 
@@ -285,7 +285,7 @@ static imgtoolerr_t vzdos_get_dirent_fname(imgtool::image *img, const char *fnam
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_toggle_trackmap(imgtool::image *img, int track, int sector, int clear)
+static imgtoolerr_t vzdos_toggle_trackmap(imgtool::image &img, int track, int sector, int clear)
 {
 	int ret, value, bit;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -309,19 +309,19 @@ static imgtoolerr_t vzdos_toggle_trackmap(imgtool::image *img, int track, int se
 }
 
 /* clear a trackmap entry */
-static imgtoolerr_t vzdos_clear_trackmap(imgtool::image *img, int track, int sector)
+static imgtoolerr_t vzdos_clear_trackmap(imgtool::image &img, int track, int sector)
 {
 	return vzdos_toggle_trackmap(img, track, sector, 1);
 }
 
 /* enable a trackmap entry */
-static imgtoolerr_t vzdos_set_trackmap(imgtool::image *img, int track, int sector)
+static imgtoolerr_t vzdos_set_trackmap(imgtool::image &img, int track, int sector)
 {
 	return vzdos_toggle_trackmap(img, track, sector, 0);
 }
 
 /* return the status of a trackmap entry */
-static imgtoolerr_t vzdos_get_trackmap(imgtool::image *img, int track, int sector, int *used)
+static imgtoolerr_t vzdos_get_trackmap(imgtool::image &img, int track, int sector, int *used)
 {
 	int ret, value, bit;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -342,7 +342,7 @@ static imgtoolerr_t vzdos_get_trackmap(imgtool::image *img, int track, int secto
 }
 
 /* return the next free sector */
-static imgtoolerr_t vzdos_free_trackmap(imgtool::image *img, int *track, int *sector)
+static imgtoolerr_t vzdos_free_trackmap(imgtool::image &img, int *track, int *sector)
 {
 	int ret, used = 0;
 
@@ -357,7 +357,7 @@ static imgtoolerr_t vzdos_free_trackmap(imgtool::image *img, int *track, int *se
 	return IMGTOOLERR_NOSPACE;
 }
 
-static imgtoolerr_t vzdos_write_formatted_sector(imgtool::image *img, int track, int sector)
+static imgtoolerr_t vzdos_write_formatted_sector(imgtool::image &img, int track, int sector)
 {
 	int ret;
 	UINT8 sector_data[DATA_SIZE + 4 + 24];
@@ -385,11 +385,11 @@ static imgtoolerr_t vzdos_write_formatted_sector(imgtool::image *img, int track,
     Imgtool module code
 *********************************************************************/
 
-static imgtoolerr_t vzdos_diskimage_beginenum(imgtool::directory *enumeration, const char *path)
+static imgtoolerr_t vzdos_diskimage_beginenum(imgtool::directory &enumeration, const char *path)
 {
 	vz_iterator *iter;
 
-	iter = (vz_iterator *) enumeration->extra_bytes();
+	iter = (vz_iterator *) enumeration.extra_bytes();
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
 	iter->index = 1;
@@ -398,29 +398,29 @@ static imgtoolerr_t vzdos_diskimage_beginenum(imgtool::directory *enumeration, c
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_nextenum(imgtool::directory *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t vzdos_diskimage_nextenum(imgtool::directory &enumeration, imgtool_dirent &ent)
 {
-	vz_iterator *iter = (vz_iterator *) enumeration->extra_bytes();
+	vz_iterator *iter = (vz_iterator *) enumeration.extra_bytes();
 
 	if (iter->eof == 1 || iter->index > MAX_DIRENTS) {
-		ent->eof = 1;
+		ent.eof = 1;
 
 	} else {
 		const char *type;
 		int ret, len;
 		vzdos_dirent dirent;
 
-		ret = vzdos_get_dirent(&enumeration->image(), iter->index - 1, &dirent);
+		ret = vzdos_get_dirent(enumeration.image(), iter->index - 1, &dirent);
 
 		if (ret == IMGTOOLERR_FILENOTFOUND)
 		{
 			iter->eof = 1;
-			ent->eof = 1;
+			ent.eof = 1;
 			return IMGTOOLERR_SUCCESS;
 		}
 
 		if (ret == IMGTOOLERR_CORRUPTFILE)
-			ent->corrupt = 1;
+			ent.corrupt = 1;
 
 		/* kill trailing spaces */
 		for (len = 7; len > 0; len--) {
@@ -429,8 +429,8 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool::directory *enumeration, im
 			}
 		}
 
-		memcpy(ent->filename, &dirent.fname, len + 1);
-		ent->filesize = dirent.end_address - dirent.start_address;
+		memcpy(ent.filename, &dirent.fname, len + 1);
+		ent.filesize = dirent.end_address - dirent.start_address;
 
 		switch (dirent.ftype)
 		{
@@ -445,7 +445,7 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool::directory *enumeration, im
 		default:   type = "Unknown";
 		}
 
-		snprintf(ent->attr, ARRAY_LENGTH(ent->attr), "%s", type);
+		snprintf(ent.attr, ARRAY_LENGTH(ent.attr), "%s", type);
 
 		iter->index++;
 	}
@@ -455,11 +455,11 @@ static imgtoolerr_t vzdos_diskimage_nextenum(imgtool::directory *enumeration, im
 
 /* TRK 0 sector 15 is used to hold the track map of the disk with one bit
    corresponding to a sector used. */
-static imgtoolerr_t vzdos_diskimage_freespace(imgtool::partition *partition, UINT64 *size)
+static imgtoolerr_t vzdos_diskimage_freespace(imgtool::partition &partition, UINT64 *size)
 {
 	imgtoolerr_t ret;
 	int i;
-	imgtool::image *image = &partition->image();
+	imgtool::image &image(partition.image());
 	UINT8 c, v, buffer[DATA_SIZE + 2];
 	*size = 0;
 
@@ -478,10 +478,10 @@ static imgtoolerr_t vzdos_diskimage_freespace(imgtool::partition *partition, UIN
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_readfile(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &destf)
+static imgtoolerr_t vzdos_diskimage_readfile(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &destf)
 {
 	imgtoolerr_t ret;
-	imgtool::image *image = &partition->image();
+	imgtool::image &image(partition.image());
 	int filesize, track, sector;
 	vzdos_dirent ent;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -524,10 +524,10 @@ static imgtoolerr_t vzdos_diskimage_readfile(imgtool::partition *partition, cons
 }
 
 /* deletes directory entry, clears trackmap entries and sectors */
-static imgtoolerr_t vzdos_diskimage_deletefile(imgtool::partition *partition, const char *fname)
+static imgtoolerr_t vzdos_diskimage_deletefile(imgtool::partition &partition, const char *fname)
 {
 	imgtoolerr_t ret;
-	imgtool::image *img = &partition->image();
+	imgtool::image &img(partition.image());
 	int index, filesize, track, sector, next_track, next_sector;
 	vzdos_dirent entry, next_entry;
 	UINT8 buffer[DATA_SIZE + 2];
@@ -602,10 +602,10 @@ static imgtoolerr_t vzdos_diskimage_deletefile(imgtool::partition *partition, co
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_writefile(imgtool::partition *partition, int offset, imgtool::stream &sourcef, vzdos_dirent *entry)
+static imgtoolerr_t vzdos_writefile(imgtool::partition &partition, int offset, imgtool::stream &sourcef, vzdos_dirent *entry)
 {
 	imgtoolerr_t ret;
-	imgtool::image *img = &partition->image();
+	imgtool::image &img(partition.image());
 	int index, track, sector, toread, next_track, next_sector;
 	vzdos_dirent temp_entry;
 	UINT64 filesize = 0, freespace = 0;
@@ -700,7 +700,7 @@ static imgtoolerr_t vzdos_writefile(imgtool::partition *partition, int offset, i
 }
 
 /* create a new file or overwrite a file */
-static imgtoolerr_t vzdos_diskimage_writefile(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
+static imgtoolerr_t vzdos_diskimage_writefile(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
 {
 	imgtoolerr_t ret;
 	int ftype;
@@ -741,10 +741,10 @@ static imgtoolerr_t vzdos_diskimage_writefile(imgtool::partition *partition, con
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_suggesttransfer(imgtool::partition *partition, const char *fname, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
+static imgtoolerr_t vzdos_diskimage_suggesttransfer(imgtool::partition &partition, const char *fname, imgtool_transfer_suggestion *suggestions, size_t suggestions_length)
 {
 	imgtoolerr_t ret;
-	imgtool::image *image = &partition->image();
+	imgtool::image &image(partition.image());
 	vzdos_dirent entry;
 
 	if (fname) {
@@ -789,7 +789,7 @@ static imgtoolerr_t vzdos_diskimage_suggesttransfer(imgtool::partition *partitio
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzdos_diskimage_create(imgtool::image *img, imgtool::stream &stream, util::option_resolution *opts)
+static imgtoolerr_t vzdos_diskimage_create(imgtool::image &img, imgtool::stream::ptr &&dummy, util::option_resolution *opts)
 {
 	imgtoolerr_t ret;
 	int track, sector;
@@ -808,10 +808,10 @@ static imgtoolerr_t vzdos_diskimage_create(imgtool::image *img, imgtool::stream 
     Imgtool vz filter code
 *********************************************************************/
 
-static imgtoolerr_t vzsnapshot_readfile(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &destf)
+static imgtoolerr_t vzsnapshot_readfile(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &destf)
 {
 	imgtoolerr_t ret;
-	imgtool::image *image = &partition->image();
+	imgtool::image &image(partition.image());
 	vzdos_dirent entry;
 	UINT8 header[24];
 
@@ -852,7 +852,7 @@ static imgtoolerr_t vzsnapshot_readfile(imgtool::partition *partition, const cha
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t vzsnapshot_writefile(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
+static imgtoolerr_t vzsnapshot_writefile(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
 {
 	imgtoolerr_t ret;
 	int fnameopt;

@@ -58,6 +58,11 @@ enum
 
 #define FILE_HEADER_SIZE  0x48
 
+static cybiko_file_system *get_cfs(imgtool::image &image)
+{
+	return (cybiko_file_system*)image.extra_bytes();
+}
+
 // 2208988800 is the number of seconds between 1900/01/01 and 1970/01/01
 
 static time_t time_crack( UINT32 cfs_time)
@@ -265,9 +270,9 @@ static int cfs_verify(cybiko_file_system &cfs)
 	return TRUE;
 }
 
-static int cfs_init(cybiko_file_system &cfs, imgtool::stream &stream, int flash_type)
+static int cfs_init(cybiko_file_system &cfs, imgtool::stream::ptr &&stream, int flash_type)
 {
-	cfs.stream = &stream;
+	cfs.stream = stream.release();
 	switch (flash_type)
 	{
 		case FLASH_TYPE_AT45DB041 : cfs.page_count = 2048; cfs.page_size = 264; break;
@@ -345,57 +350,57 @@ static int flash_option_to_flash_type( int option)
 	}
 }
 
-static imgtoolerr_t cybiko_image_open(imgtool::image *image, imgtool::stream &stream)
+static imgtoolerr_t cybiko_image_open(imgtool::image &image, imgtool::stream::ptr &&stream)
 {
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	cybiko_file_system *cfs = get_cfs(image);
 	int flash_type;
 	// init
-	flash_type = flash_size_to_flash_type(stream.size());
-	if (!cfs_init(*cfs, stream, flash_type)) return IMGTOOLERR_CORRUPTIMAGE;
+	flash_type = flash_size_to_flash_type(stream->size());
+	if (!cfs_init(*cfs, std::move(stream), flash_type)) return IMGTOOLERR_CORRUPTIMAGE;
 	// verify
 	if (!cfs_verify(*cfs)) return IMGTOOLERR_CORRUPTIMAGE;
 	// ok
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void cybiko_image_close( imgtool::image *image)
+static void cybiko_image_close(imgtool::image &image)
 {
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	cybiko_file_system *cfs = get_cfs(image);
 	delete cfs->stream;
 }
 
-static imgtoolerr_t cybiko_image_create( imgtool::image *image, imgtool::stream &stream, util::option_resolution *opts)
+static imgtoolerr_t cybiko_image_create(imgtool::image &image, imgtool::stream::ptr &&stream, util::option_resolution *opts)
 {
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	cybiko_file_system *cfs = get_cfs(image);
 	int flash_type;
 	// init
 	flash_type = flash_option_to_flash_type(opts->lookup_int('F'));
-	if (!cfs_init(*cfs, stream, flash_type)) return IMGTOOLERR_CORRUPTIMAGE;
+	if (!cfs_init(*cfs, std::move(stream), flash_type)) return IMGTOOLERR_CORRUPTIMAGE;
 	// format
 	if (!cfs_format(cfs)) return IMGTOOLERR_CORRUPTIMAGE;
 	// ok
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t cybiko_image_begin_enum( imgtool::directory *enumeration, const char *path)
+static imgtoolerr_t cybiko_image_begin_enum(imgtool::directory &enumeration, const char *path)
 {
-	cybiko_iter *iter = (cybiko_iter*)enumeration->extra_bytes();
+	cybiko_iter *iter = (cybiko_iter*)enumeration.extra_bytes();
 	iter->block = 0;
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t cybiko_image_next_enum( imgtool::directory *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t cybiko_image_next_enum(imgtool::directory &enumeration, imgtool_dirent &ent)
 {
-	imgtool::image *image = &enumeration->image();
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
-	cybiko_iter *iter = (cybiko_iter*)enumeration->extra_bytes();
+	imgtool::image &image(enumeration.image());
+	cybiko_file_system *cfs = get_cfs(image);
+	cybiko_iter *iter = (cybiko_iter*)enumeration.extra_bytes();
 	UINT8 buffer[MAX_PAGE_SIZE];
 	UINT16 file_id = INVALID_FILE_ID;
 	cfs_file file;
 	// find next file
 	while (iter->block < cfs->block_count_file)
 	{
-		if (!cfs_block_read( cfs, buffer, BLOCK_TYPE_FILE, iter->block++)) return IMGTOOLERR_READERROR;
+		if (!cfs_block_read(cfs, buffer, BLOCK_TYPE_FILE, iter->block++)) return IMGTOOLERR_READERROR;
 		if (BLOCK_USED(buffer) && (BLOCK_PART_ID(buffer) == 0))
 		{
 			file_id = BLOCK_FILE_ID(buffer);
@@ -403,38 +408,33 @@ static imgtoolerr_t cybiko_image_next_enum( imgtool::directory *enumeration, img
 		}
 	}
 	// get file information
-	if ((file_id != INVALID_FILE_ID) && cfs_file_info( cfs, file_id, &file))
+	if ((file_id != INVALID_FILE_ID) && cfs_file_info(cfs, file_id, &file))
 	{
-		strcpy( ent->filename, file.name);
-		ent->filesize = file.size;
-		ent->lastmodified_time = time_crack( file.date);
-		ent->filesize = file.size;
+		strcpy(ent.filename, file.name);
+		ent.filesize = file.size;
+		ent.lastmodified_time = time_crack(file.date);
+		ent.filesize = file.size;
 	}
 	else
 	{
-		ent->eof = 1;
+		ent.eof = 1;
 	}
 	// ok
 	return IMGTOOLERR_SUCCESS;
 }
 
-static void cybiko_image_close_enum( imgtool::directory *enumeration)
+static imgtoolerr_t cybiko_image_free_space(imgtool::partition &partition, UINT64 *size)
 {
-	// nothing
-}
-
-static imgtoolerr_t cybiko_image_free_space(imgtool::partition *partition, UINT64 *size)
-{
-	imgtool::image *image = &partition->image();
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	imgtool::image &image(partition.image());
+	cybiko_file_system *cfs = get_cfs(image);
 	if (size) *size = cfs_calc_free_space( cfs, cfs_calc_free_blocks( cfs));
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t cybiko_image_read_file(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &destf)
+static imgtoolerr_t cybiko_image_read_file(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &destf)
 {
-	imgtool::image *image = &partition->image();
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	imgtool::image &image(partition.image());
+	cybiko_file_system *cfs = get_cfs(image);
 	UINT8 buffer[MAX_PAGE_SIZE];
 	UINT16 file_id, part_id = 0, old_part_id;
 	int i;
@@ -458,10 +458,10 @@ static imgtoolerr_t cybiko_image_read_file(imgtool::partition *partition, const 
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t cybiko_image_write_file(imgtool::partition *partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
+static imgtoolerr_t cybiko_image_write_file(imgtool::partition &partition, const char *filename, const char *fork, imgtool::stream &sourcef, util::option_resolution *opts)
 {
-	imgtool::image *image = &partition->image();
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	imgtool::image &image(partition.image());
+	cybiko_file_system *cfs = get_cfs(image);
 	UINT8 buffer[MAX_PAGE_SIZE];
 	UINT16 file_id, part_id = 0, free_blocks;
 	UINT64 bytes_left;
@@ -518,10 +518,10 @@ static imgtoolerr_t cybiko_image_write_file(imgtool::partition *partition, const
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t cybiko_image_delete_file( imgtool::partition *partition, const char *filename)
+static imgtoolerr_t cybiko_image_delete_file(imgtool::partition &partition, const char *filename)
 {
-	imgtool::image *image = &partition->image();
-	cybiko_file_system *cfs = (cybiko_file_system*)image->extra_bytes();
+	imgtool::image &image(partition.image());
+	cybiko_file_system *cfs = get_cfs(image);
 	UINT16 file_id;
 	// find file
 	if (!cfs_file_find( cfs, filename, &file_id)) return IMGTOOLERR_FILENOTFOUND;
@@ -559,7 +559,6 @@ void cybiko_get_info( const imgtool_class *imgclass, UINT32 state, union imgtool
 		case IMGTOOLINFO_PTR_CLOSE       : info->close       = cybiko_image_close; break;
 		case IMGTOOLINFO_PTR_BEGIN_ENUM  : info->begin_enum  = cybiko_image_begin_enum; break;
 		case IMGTOOLINFO_PTR_NEXT_ENUM   : info->next_enum   = cybiko_image_next_enum; break;
-		case IMGTOOLINFO_PTR_CLOSE_ENUM  : info->close_enum  = cybiko_image_close_enum; break;
 		case IMGTOOLINFO_PTR_FREE_SPACE  : info->free_space  = cybiko_image_free_space; break;
 		case IMGTOOLINFO_PTR_READ_FILE   : info->read_file   = cybiko_image_read_file; break;
 		case IMGTOOLINFO_PTR_WRITE_FILE  : info->write_file  = cybiko_image_write_file; break;

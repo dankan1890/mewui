@@ -1728,6 +1728,11 @@ namespace nana
 					return single_check_;
 				}
 
+				bool always_selected() const
+				{
+					return always_selected_;
+				}
+
 				void enable_single(bool for_selection, bool category_limited)
 				{
 					bool & single = (for_selection ? single_selection_ : single_check_);
@@ -1818,6 +1823,11 @@ namespace nana
 				void disable_single(bool for_selection)
 				{
 					(for_selection ? single_selection_ : single_check_) = false;
+				}
+
+				void always_selected(bool selection)
+				{
+					always_selected_ = selection;
 				}
 
 				size_type size_categ() const
@@ -2122,6 +2132,7 @@ namespace nana
 				bool single_selection_category_limited_{ false };
 				bool single_check_{ false };
 				bool single_check_category_limited_{ false };
+				bool always_selected_{ false };
 
 				std::vector<inline_pane*> active_panes_;
 			};//end class es_lister
@@ -4227,9 +4238,22 @@ namespace nana
 								{
 									if (item_ptr->flags.selected != sel)
 									{
-										item_ptr->flags.selected = sel;
-
-										lister.emit_selected(abs_item_pos);
+										if (!sel && lister.always_selected())
+										{
+											auto cat = cat_proxy(essence_, abs_item_pos.cat);
+											for (auto & i : cat)
+												if (i.selected() && i.pos() != abs_item_pos)
+												{
+													item_ptr->flags.selected = sel;
+													lister.emit_selected(abs_item_pos);
+													break;
+												}
+										}
+										else
+										{
+											item_ptr->flags.selected = sel;
+											lister.emit_selected(abs_item_pos);
+										}
 
 										if (item_ptr->flags.selected)
 										{
@@ -4259,7 +4283,7 @@ namespace nana
 							}
 							update = true;
 						}
-						else
+						else if (!lister.always_selected())
 							update = lister.select_for_all(false); //unselect all items due to the blank area being clicked
 
 						if(update)
@@ -5617,7 +5641,13 @@ namespace nana
 			_m_ess().lister.disable_single(for_selection);
 		}
 
-        listbox::export_options& listbox::def_export_options()
+		void listbox::always_selected(bool for_selection)
+		{
+			internal_scope_guard lock;
+			_m_ess().lister.always_selected(for_selection);
+		}
+		
+		listbox::export_options& listbox::def_export_options()
         {
 			return _m_ess().def_exp_options;
         }

@@ -47,6 +47,18 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	for (auto& opt : m_list)
 		m_combox.push_back(opt.first);
 
+	handle();
+
+	m_listbox.enable_single(true, true);
+	m_combox.option(0);
+	this->collocate();
+	auto sz = m_listbox.size().width - m_listbox.scheme().text_margin;
+	m_listbox.column_at(0).width(sz);
+	this->modality();
+}
+
+void dir_form::handle()
+{
 	m_combox.events().selected([this](const arg_combox& ei) {
 		auto opt = ei.widget.caption();
 		m_listbox.clear(0);
@@ -101,44 +113,70 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 		}
 	});
 
-	m_listbox.events().selected([this](const arg_listbox& ei) {
-		if (ei.item.pos().item == 0)
-			m_b_up.enabled(false);
-		else
-			m_b_up.enabled(true);
-		
-		if (ei.item.pos().item == m_listbox.at(0).size() - 1)
-			m_b_down.enabled(false);
-		else
-			m_b_down.enabled(true);
+	m_listbox.events().selected([this](const arg_listbox& sel) {
+		if (sel.item.selected())
+		{
+			if (sel.item.pos().item == 0)
+				m_b_up.enabled(false);
+			else
+				m_b_up.enabled(true);
+
+			if (sel.item.pos().item == m_listbox.at(0).size() - 1)
+				m_b_down.enabled(false);
+			else
+				m_b_down.enabled(true);
+		}
+	});
+
+	m_b_up.events().click([this] {
+		auto sel = m_listbox.selected();
+		if (!sel.empty())
+		{
+			auto txt = m_listbox.at(0).at(sel[0].item).text(0);
+			auto e = m_listbox.at(0).at(sel[0].item);
+			auto a = e.pos();
+			a.item -= 1;
+			m_listbox.insert_item(a, txt);
+			m_listbox.erase(e);
+			m_listbox.focus();
+		}
+	});
+
+	m_b_down.events().click([this] {
+		auto sel = m_listbox.selected();
+		if (!sel.empty())
+		{
+			auto txt = m_listbox.at(0).at(sel[0].item).text(0);
+			auto e = m_listbox.at(0).at(sel[0].item);
+			auto a = e.pos();
+			a.item += 1;
+			m_listbox.insert_item(a, txt);
+			m_listbox.erase(e);
+			m_listbox.focus();
+		}
 	});
 
 	m_panel.m_cancel.events().click([this] {
 		this->close();
 	});
 
-/*
+	/*
 	m_panel.m_ok.events().click([this] {
-		for (auto & e : m_list)
-		{
-			if (m_ui->options().exists(e.second.c_str()))
-			{
-				m_ui->options().set_value(e.second, tmppath.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
-			}
-			else
-			{
-				
-			}
-		}
-	});
-*/
-	m_combox.option(0);
+	for (auto & e : m_list)
+	{
+	if (m_ui->options().exists(e.second.c_str()))
+	{
+	m_ui->options().set_value(e.second, tmppath.c_str(), OPTION_PRIORITY_CMDLINE, error_string);
+	}
+	else
+	{
 
-	this->collocate();
-	auto sz = m_listbox.size().width - m_listbox.scheme().text_margin;
-	m_listbox.column_at(0).width(sz);
-	this->modality();
+	}
+	}
+	});
+	*/
 }
+
 
 okcancel_panel::okcancel_panel(window wd)
 	: panel<true>(wd)

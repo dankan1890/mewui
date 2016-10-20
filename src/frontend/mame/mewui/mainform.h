@@ -137,6 +137,7 @@ private:
 
 	void populate_listbox(const std::string& filter = std::string("All"), const std::string& sub = std::string());
 
+	void update_selection(listbox::item_proxy &item);
 	void update_selection();
 
 	void load_image(const game_driver* driver);

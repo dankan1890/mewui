@@ -1453,6 +1453,7 @@ the nana::detail::basic_window member pointer scheme
 
 		void enable_single(bool for_selection, bool category_limited);
 		void disable_single(bool for_selection);
+		void always_selected(bool for_selection);
 		export_options& def_export_options();
 	private:
 		drawerbase::listbox::essence & _m_ess() const;

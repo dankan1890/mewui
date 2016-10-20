@@ -51,6 +51,7 @@ SOUNDS["SP0256"] = true
 SOUNDS["YM2203"] = true
 SOUNDS["MSM5205"] = true
 SOUNDS["BEEP"] = true
+SOUNDS["VOLT_REG"] = true
 
 --------------------------------------------------
 -- specify available video cores

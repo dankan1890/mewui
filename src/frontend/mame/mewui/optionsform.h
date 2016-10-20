@@ -90,6 +90,8 @@ private:
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
 	std::map<std::string, std::string> m_list;
+
+	void handle();
 };
 
 class folderbox

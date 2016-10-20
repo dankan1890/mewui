@@ -157,27 +157,20 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 void main_form::handle_events()
 {
 	// Main listbox events
-	static auto prev_sel = 0;
 	auto& events = m_machinebox.events();
-	events.mouse_down([this](const arg_mouse& arg) {
-		auto sel = m_machinebox.selected();
-		if (!sel.empty() && sel[0].item != prev_sel)
-		{
-			prev_sel = sel[0].item;
-			update_selection();
-		}
-		else
-		{
-			m_machinebox.at(0).at(prev_sel).select(true);
-			update_selection();
-		}
+	events.selected([this](const arg_listbox& arg) {
+		if (arg.item.selected())
+			update_selection(arg.item);
+	});
 
+	events.mouse_down([this](const arg_mouse& arg) {
 		// right click, show context menu
 		if (arg.right_button)
 			menu_popuper(m_context_menu)(arg);
 	});
 
 	events.key_release([this](const arg_keyboard& arg) {
+		static auto prev_sel = listbox::index_pair();
 		auto sel = m_machinebox.selected();
 		if (!sel.empty())
 		{
@@ -186,10 +179,11 @@ void main_form::handle_events()
 				auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 				start_machine(game);
 			}
-			else if (sel[0].item != prev_sel)
+			else if (sel[0] != prev_sel)
 			{
-				prev_sel = sel[0].item;
-				update_selection();
+				prev_sel = sel[0];
+				auto mm = m_machinebox.at(prev_sel);
+				update_selection(mm);
 			}
 		}
 	});
@@ -205,7 +199,6 @@ void main_form::handle_events()
 
 	m_swpage.m_softwarebox.events().selected([this](const arg_listbox& arg) {
 		load_sw_data(arg.item.text(5), arg.item.text(0), std::string());
-	
 	});
 		
 	// Search events
@@ -260,7 +253,7 @@ void main_form::perform_search()
 		if (comp.find(text) != std::string::npos)
 		{
 			elem.select(true, true);
-			update_selection();
+			update_selection(elem);
 			break;
 		}
 	}
@@ -400,6 +393,7 @@ void main_form::init_machinebox()
 	m_machinebox.scheme().header_bgcolor = static_cast<color_rgb>(0x324565);
 	m_machinebox.scheme().header_fgcolor = colors::white;
 	m_machinebox.scheme().item_highlighted = colors::white;
+	m_machinebox.always_selected(true);
 }
 
 void main_form::start_software()
@@ -573,51 +567,56 @@ paint::image main_form::load_icon(const game_driver* drv) const
 
 void main_form::update_selection()
 {
-	std::string work;
 	auto sel = m_machinebox.selected();
-	if (!sel.empty())
+	auto mm = m_machinebox.at(sel[0]);
+	update_selection(mm);
+}
+
+
+void main_form::update_selection(listbox::item_proxy &sel)
+{
+	std::string work;
+	auto game = sel.text(1);
+	auto drv = &driver_list::driver(driver_list::find(game.c_str()));
+
+	load_image(drv); // Load image
+	load_data(drv); // Load data from DATs
+
+	// Update menu item
+	m_menubar.at(0).change_text(0, string_format("&Play %s", drv->description));
+	m_context_menu.change_text(0, string_format("Play %s", drv->description));
+	//m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
+
+	// Update software
+	m_swpage.m_softwarebox.auto_draw(false);
+	auto cat = m_swpage.m_softwarebox.at(0);
+
+	if (!m_swpage.m_softwarebox.empty())
+		m_swpage.m_softwarebox.clear(0);
+
+	std::unordered_set<std::string> list_map;
+	driver_enumerator drivlist(m_options, game.c_str());
+	while (drivlist.next())
 	{
-		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
-		auto drv = &driver_list::driver(driver_list::find(game.c_str()));
-
-		load_image(drv); // Load image
-		load_data(drv); // Load data from DATs
-
-		// Update menu item
-		m_menubar.at(0).change_text(0, string_format("&Play %s", drv->description));
-		m_context_menu.change_text(0, string_format("Play %s", drv->description));
-		//m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
-
-		// Update software
-		m_swpage.m_softwarebox.auto_draw(false);
-		auto cat = m_swpage.m_softwarebox.at(0);
-
-		if (!m_swpage.m_softwarebox.empty())
-			m_swpage.m_softwarebox.clear(0);
-
-		std::unordered_set<std::string> list_map;
-		driver_enumerator drivlist(m_options, game.c_str());
-		while (drivlist.next())
-		{
-			for (auto& swlistdev : software_list_device_iterator(drivlist.config().root_device()))
-				if (list_map.insert(swlistdev.list_name()).second && !swlistdev.get_info().empty())
-					for (const auto& swinfo : swlistdev.get_info())
-					{
-						auto& part = swinfo.parts().front();
-						auto pred = [&part](const std::pair<std::string, std::string>& i) {
-							return part.name().find(i.second) != std::string::npos;
-						};
-						auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
-						std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
-						cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name, swlistdev.list_name() });
-						if (!swinfo.parentname().empty())
-							cat.back().fgcolor(colors::gray);
-					}
-		}
-		m_swpage.m_softwarebox.auto_draw(true);
-
-		work = (drv->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
+		for (auto& swlistdev : software_list_device_iterator(drivlist.config().root_device()))
+			if (list_map.insert(swlistdev.list_name()).second && !swlistdev.get_info().empty())
+				for (const auto& swinfo : swlistdev.get_info())
+				{
+					auto& part = swinfo.parts().front();
+					auto pred = [&part](const std::pair<std::string, std::string>& i) {
+						return part.name().find(i.second) != std::string::npos;
+					};
+					auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
+					std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
+					cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name, swlistdev.list_name() });
+					if (!swinfo.parentname().empty())
+						cat.back().fgcolor(colors::gray);
+				}
 	}
+	m_swpage.m_softwarebox.auto_draw(true);
+
+	work = (drv->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
+
 
 	m_statusbar.update(m_machinebox.at(0).size(), work); // Update status bar
 }

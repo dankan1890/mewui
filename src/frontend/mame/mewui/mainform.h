@@ -25,6 +25,7 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/notifier.hpp>
 #include <nana/gui/filebox.hpp>
+#include "nana/threads/pool.hpp"
 
 using namespace nana;
 struct game_driver;

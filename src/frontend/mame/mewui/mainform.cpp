@@ -77,7 +77,7 @@ static const std::unordered_map<std::string, std::string> soft_type =
 
 main_form::main_form(running_machine& machine, const game_driver** _system, emu_options& _options, std::unique_ptr<mame_ui_manager>& _mui, std::string& exename)
 	: form(nana::rectangle(_mui->options().form_x(), _mui->options().form_y(), _mui->options().form_width(), _mui->options().form_heigth())
-	       , appear::decorate<appear::minimize, appear::maximize, appear::sizable>())
+		   , appear::decorate<appear::minimize, appear::maximize, appear::sizable>())
 	, m_system(_system)
 	, m_options(_options)
 	, m_latest_machine(_mui->options().last_used_machine())
@@ -143,13 +143,38 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	this->get_place()["s_button"] << m_search_button;
 
 	this->collocate();
-	m_machinebox.avoid_drawing([&] {
-		if (m_machinebox.at(0).size() > 0)
+	auto cat = m_machinebox.at(0);
+	if (cat.size() > 0)
+	{
+		cat.at(m_resel).select(true, true);
+		m_machinebox.focus();
+		for (auto x = m_machinebox.selected().at(0).item; x != std::numeric_limits<size_t>::max(); x--)
 		{
-			m_machinebox.at(0).at(m_resel).select(true, true);
-			m_machinebox.focus();
+			auto ind = listbox::index_pair{ 0, x };
+			auto ip = m_machinebox.at(ind);
+			if (ip.displayed())
+			{
+				auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
+				auto icon = load_icon(drv);
+				if (!icon.empty())
+					cat.at(x).icon(icon);
+			}
+			else break;
 		}
-	});
+		for (auto x = m_machinebox.selected().at(0).item; x < cat.size(); x++)
+		{
+			auto ind = listbox::index_pair{ 0, x };
+			auto ip = m_machinebox.at(ind);
+			if (ip.displayed())
+			{
+				auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
+				auto icon = load_icon(drv);
+				if (!icon.empty())
+					cat.at(x).icon(icon);
+			}
+			else break;
+		}
+	}
 
 	update_selection();
 }
@@ -510,9 +535,9 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			cat.append({ std::string(drv->description), std::string(drv->name), std::string(drv->manufacturer), std::string(drv->year), core_filename_extract_base(drv->source_file) });
-			auto img = load_icon(drv);
-			if (!img.empty())
-				cat.back().icon(img);
+//			auto img = load_icon(drv);
+//			if (!img.empty())
+//				cat.back().icon(img);
 
 			if (m_latest_machine == drv->name) m_resel = index;
 

@@ -38,8 +38,8 @@ static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel"
 									  "isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",
 									  "pol", "rus", "slo", "spa", "sui", "swe", "tha", "tpe", "tw", "uk", "ukr", "usa" };
 
-std::pair<UINT16, UINT16> menu_select_software::m_sub_filter;
-std::pair<const game_driver *, std::pair<UINT16, UINT16>> menu_select_software::m_last_filter;
+std::pair<uint16_t, uint16_t> menu_select_software::m_sub_filter;
+std::pair<const game_driver *, std::pair<uint16_t, uint16_t>> menu_select_software::m_last_filter;
 
 //-------------------------------------------------
 //  compares two items in the software list and

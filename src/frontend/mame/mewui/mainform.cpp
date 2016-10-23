@@ -575,8 +575,8 @@ paint::image main_form::load_icon(const game_driver* drv) const
 	auto filerr = snapfile.open(fname);
 	if (filerr != osd_err::NONE) return img;
 
-	auto length = static_cast<UINT32>(snapfile.size());
-	auto data = global_alloc_array(UINT32, length);
+	auto length = static_cast<std::uint32_t>(snapfile.size());
+	auto data = global_alloc_array(std::uint32_t, length);
 	if (snapfile.read(data, length) > 0)
 	{
 		if (img.open(data, length))
@@ -700,8 +700,8 @@ void main_form::load_image(const game_driver* drv)
 
 	if (filerr == osd_err::NONE)
 	{
-		auto length = static_cast<UINT32>(snapfile.size());
-		auto data = global_alloc_array(UINT32, length);
+		auto length = static_cast<std::uint32_t>(snapfile.size());
+		auto data = global_alloc_array(std::uint32_t, length);
 		if (snapfile.read(data, length) > 0)
 		{
 			m_imgpage.m_picture.show();

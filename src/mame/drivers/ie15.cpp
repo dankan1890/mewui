@@ -68,7 +68,6 @@ public:
 	uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 
 	DECLARE_WRITE16_MEMBER( kbd_put );
-	//DECLARE_PALETTE_INIT( ie15 );
 
 	DECLARE_WRITE_LINE_MEMBER( serial_rx_callback );
 	virtual void rcv_complete() override;
@@ -99,17 +98,16 @@ public:
 	DECLARE_READ8_MEMBER( serial_r );
 	DECLARE_WRITE8_MEMBER( serial_speed_w );
 
+	DECLARE_PALETTE_INIT( ie15 );
+
 	static const device_timer_id TIMER_HBLANK = 0;
 
-	//TIMER_DEVICE_CALLBACK_MEMBER(scanline_callback);
 	void scanline_callback();
 private:
 	TIMER_CALLBACK_MEMBER(ie15_beepoff);
 	void update_leds();
 	uint32_t draw_scanline(uint32_t *p, uint16_t offset, uint8_t scanline);
-	rectangle m_tmpclip;
-	bitmap_rgb32 m_tmpbmp;
-	bitmap_rgb32 m_offbmp;
+	std::unique_ptr<uint32_t[]> m_tmpbmp;
 
 	emu_timer *m_hblank_timer;
 
@@ -135,6 +133,7 @@ private:
 	uint8_t m_serial_tx_ready;
 	int m_hblank;
 	int m_vpos;
+	int m_marker_scanline;
 
 protected:
 	required_device<cpu_device> m_maincpu;
@@ -300,7 +299,7 @@ void ie15_state::device_timer(emu_timer &timer, device_timer_id id, int param, v
 				m_hblank_timer->adjust(m_screen->time_until_pos((m_vpos+1) % IE15_TOTAL_VERT, 0));
 				scanline_callback();
 			}
-			else
+			else // Transitioning from out of blanking to in blanking
 			{
 				m_hblank = 1;
 				m_hblank_timer->adjust(m_screen->time_until_pos(m_vpos, IE15_HORZ_START));
@@ -363,30 +362,24 @@ WRITE8_MEMBER( ie15_state::serial_speed_w ) {
 }
 
 READ8_MEMBER( ie15_state::flag_r ) {
-	uint8_t ret = 0;
-
 	switch (offset)
 	{
 		case 0: // hsync pulse (not hblank)
-			ret = m_hblank;
-			break;
+			return m_hblank;
 		case 1: // marker scanline
-			ret = (m_vpos % 11) > 7;
-			break;
+			return m_marker_scanline;
 		case 2: // vblank
-			ret = !m_screen->vblank();
-			break;
+			return !m_screen->vblank();
 		case 4:
-			ret = m_kb_ruslat;
-			break;
+			return m_kb_ruslat;
 		default:
 			break;
 	}
-	if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0 && ret)
+	if (machine().debug_flags & DEBUG_FLAG_ENABLED)
 	{
-		DBG_LOG(2,"flag",("read %d: %d\n", offset, ret));
+		DBG_LOG(2,"flag",("read %d: ?\n", offset));
 	}
-	return ret;
+	return 0;
 }
 
 WRITE8_MEMBER( ie15_state::flag_w ) {
@@ -484,6 +477,7 @@ void ie15_state::machine_reset()
 	m_hblank = 1;
 	m_hblank_timer->adjust(m_screen->time_until_pos(0, IE15_HORZ_START));
 	m_vpos = m_screen->vpos();
+	m_marker_scanline = (m_vpos % 11) > 7;
 
 	m_beeper->set_state(0);
 
@@ -499,12 +493,7 @@ void ie15_state::video_start()
 	m_p_videoram = memregion("video")->base();
 	m_video.ptr1 = m_video.ptr2 = m_latch = 0;
 
-	m_tmpclip = rectangle(0, IE15_DISP_HORZ-1, 0, IE15_DISP_VERT-1);
-	m_tmpbmp.allocate(IE15_DISP_HORZ, IE15_DISP_VERT);
-	m_offbmp.allocate(IE15_DISP_HORZ, 1);
-	if ((machine().debug_flags & DEBUG_FLAG_ENABLED) != 0) {
-		m_offbmp.fill(0);
-	}
+	m_tmpbmp = std::make_unique<uint32_t[]>(IE15_TOTAL_HORZ * IE15_TOTAL_VERT);
 }
 
 /*
@@ -541,8 +530,6 @@ uint32_t ie15_state::draw_scanline(uint32_t *p, uint16_t offset, uint8_t scanlin
 {
 	static const uint32_t palette[2] = { 0xff000000, 0xff00c000 };
 
-	//uint8_t fg = 1;
-	//uint8_t bg = 0;
 	uint8_t ra = scanline % 8;
 	uint32_t ra_high = 0x200 | ra;
 	bool blink((m_screen->frame_number() % 10) > 4);
@@ -605,12 +592,12 @@ void ie15_state::update_leds()
     allowing status line to be switched on and off.
 */
 void ie15_state::scanline_callback()
-//TIMER_DEVICE_CALLBACK_MEMBER( ie15_state::scanline_callback )
 {
 	int y = m_vpos;
 
 	m_vpos++;
 	m_vpos %= IE15_TOTAL_VERT;
+	m_marker_scanline = (m_vpos % 11) > 7;
 
 	DBG_LOG(3,"scanline_cb",
 		("addr %03x frame %d x %.4d y %.3d row %.2d e:c:s %d:%d:%d\n",
@@ -622,16 +609,16 @@ void ie15_state::scanline_callback()
 	if (y >= IE15_DISP_VERT) return;
 
 	if (!m_video.enable || (y < IE15_STATUSLINE && m_video.line25)) {
-		copybitmap(m_tmpbmp, m_offbmp, 0, 0, 0, y, m_tmpclip);
+		memset(&m_tmpbmp[(y + IE15_VERT_START) * IE15_TOTAL_HORZ], 0, sizeof(uint32_t) * IE15_TOTAL_HORZ);
 	} else {
-		draw_scanline(&m_tmpbmp.pix32(y), m_video.ptr2, y % 11);
+		draw_scanline(&m_tmpbmp[(y + IE15_VERT_START) * IE15_TOTAL_HORZ + IE15_HORZ_START], m_video.ptr2, y % 11);
 	}
 }
 
 uint32_t ie15_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 {
 	update_leds();
-	copybitmap(bitmap, m_tmpbmp, 0, 0, IE15_HORZ_START, IE15_VERT_START, cliprect);
+	memcpy(&bitmap.pix32(0), &m_tmpbmp[0], sizeof(uint32_t) * IE15_TOTAL_HORZ * IE15_TOTAL_VERT);
 	return 0;
 }
 
@@ -654,20 +641,17 @@ static GFXDECODE_START( ie15 )
 	GFXDECODE_ENTRY("chargen", 0x0000, ie15_charlayout, 0, 1)
 GFXDECODE_END
 
-//PALETTE_INIT_MEMBER( ie15_state, ie15 )
-//{
-//	palette.set_pen_color(0, rgb_t::black()); // black
-//	palette.set_pen_color(1, 0x00, 0xc0, 0x00); // green
-//}
+PALETTE_INIT_MEMBER( ie15_state, ie15 )
+{
+	palette.set_pen_color(0, rgb_t::black()); // black
+	palette.set_pen_color(1, 0x00, 0xc0, 0x00); // green
+}
 
 static MACHINE_CONFIG_START( ie15, ie15_state )
 	/* Basic machine hardware */
 	MCFG_CPU_ADD("maincpu", IE15, XTAL_30_8MHz/10)
 	MCFG_CPU_PROGRAM_MAP(ie15_mem)
 	MCFG_CPU_IO_MAP(ie15_io)
-
-	//MCFG_TIMER_DRIVER_ADD_PERIODIC("scantimer", ie15_state, scanline_callback, attotime::from_hz(50*28*11))
-	//MCFG_TIMER_START_DELAY(attotime::from_hz(XTAL_30_8MHz/(2*IE15_HORZ_START)))
 
 	/* Video hardware */
 	MCFG_SCREEN_ADD_MONOCHROME("screen", RASTER, rgb_t::green())
@@ -676,12 +660,10 @@ static MACHINE_CONFIG_START( ie15, ie15_state )
 		IE15_HORZ_START+IE15_DISP_HORZ, IE15_TOTAL_VERT, IE15_VERT_START,
 		IE15_VERT_START+IE15_DISP_VERT);
 
-	//MCFG_SCREEN_PALETTE("palette")
-
-	//MCFG_GFXDECODE_ADD("gfxdecode", "palette", ie15)
-	//MCFG_PALETTE_ADD_MONOCHROME("palette")
-
 	MCFG_DEFAULT_LAYOUT(layout_ie15)
+
+	MCFG_GFXDECODE_ADD("gfxdecode", "palette", ie15)
+	MCFG_PALETTE_ADD_MONOCHROME("palette")
 
 	/* Devices */
 	MCFG_DEVICE_ADD("keyboard", IE15_KEYBOARD, 0)

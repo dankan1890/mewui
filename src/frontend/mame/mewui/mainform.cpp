@@ -148,6 +148,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	{
 		cat.at(m_resel).select(true, true);
 		m_machinebox.focus();
+		m_machinebox.auto_draw(false);
 		for (auto x = m_machinebox.selected().at(0).item; x != std::numeric_limits<size_t>::max(); x--)
 		{
 			auto ind = listbox::index_pair{ 0, x };
@@ -174,7 +175,21 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 			}
 			else break;
 		}
+		m_machinebox.auto_draw(true);
 	}
+	threads::pool_push(pool_, [this] {
+		m_machinebox.auto_draw(false);
+		auto cat = m_machinebox.at(0);
+		for (auto x = 0; x < cat.size(); x++)
+		{
+			if (cat.at(x).icon()) continue;
+			auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
+			auto icon = load_icon(drv);
+			if (!icon.empty())
+				cat.at(x).icon(icon);
+		}
+		m_machinebox.auto_draw(true);
+	})();
 
 	update_selection();
 }
@@ -844,13 +859,15 @@ void main_form::init_options_menu()
 //	menu.append("Interface Options", [this](menu::item_proxy& ip) {});
 //	menu.append("Global Machine Options", [this](menu::item_proxy& ip) {});
 	menu.append("Directories", [this](menu::item_proxy& ip) {
-		dir_form dform{ *this, m_options, m_ui };
-		dform.show();
+		dir_form form{ *this, m_options, m_ui };
+		form.show();
 	});
+
 	menu.append("Plugins", [this](menu::item_proxy& ip) {
-		plugin_form dform{ *this, m_options, m_ui };
-		dform.show();
+		plugin_form form{ *this, m_options, m_ui };
+		form.show();
 	});
+
 //	menu.append_splitter();
 //	menu.append("Machine List Font", [this](menu::item_proxy& ip) {});
 //	menu.append("Machine List Clone Color", [this](menu::item_proxy& ip) {});

@@ -4580,6 +4580,11 @@ namespace nana
 					return cat_->items.at(pos_.item).flags.checked;
 				}
 
+				bool item_proxy::icon() const
+				{
+					return !cat_->items.at(pos_.item).img.empty();
+				}
+
 				/// is ignored if no change (maybe set last_selected anyway??), but if change emit event, deselect others if need ans set/unset last_selected
 				item_proxy & item_proxy::select(bool sel, bool scroll_view)
 				{

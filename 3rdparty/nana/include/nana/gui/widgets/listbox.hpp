@@ -843,6 +843,7 @@ namespace nana
 				std::string	text(size_type col) const;
 
 				void icon(const nana::paint::image&);
+				bool icon() const;
 
 				template<typename T>
 				item_proxy & resolve_from(const T& t)

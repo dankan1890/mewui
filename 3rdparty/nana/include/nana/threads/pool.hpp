@@ -46,7 +46,7 @@ namespace threads
 				: task(task::general), taskobj(f)
 			{}
 
-			void run()
+			void run() override
 			{
 				taskobj();
 			}

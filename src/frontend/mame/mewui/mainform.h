@@ -122,6 +122,7 @@ private:
 	std::map<std::string, std::vector<const game_driver *>, ci_less> m_sortedlist;
 	std::string m_exename;
 	int m_resel = 0;
+	threads::pool pool_;
 
 	// Init widgets
 	void init_tabbar();

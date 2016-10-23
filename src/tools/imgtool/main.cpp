@@ -172,7 +172,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	int total_count, total_size, freespace_err;
-	UINT64 freespace;
+	uint64_t freespace;
 	imgtool::image::ptr image;
 	imgtool::partition::ptr partition;
 	imgtool::directory::ptr imgenum;
@@ -589,8 +589,8 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	std::unique_ptr<imgtool::image> img;
 	imgtool::stream *stream = nullptr;
-	std::vector<UINT8> buffer;
-	UINT32 track, head, sector;
+	std::vector<uint8_t> buffer;
+	uint32_t track, head, sector;
 
 	/* attempt to open image */
 	err = imgtool::image::open(argv[0], argv[1], OSD_FOPEN_READ, img);
@@ -629,8 +629,8 @@ static int cmd_writesector(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	std::unique_ptr<imgtool::image> img;
 	imgtool::stream *stream = nullptr;
-	dynamic_buffer buffer;
-	UINT32 size, track, head, sector;
+	std::vector<uint8_t> buffer;
+	uint32_t size, track, head, sector;
 
 	// attempt to open image
 	err = imgtool::image::open(argv[0], argv[1], OSD_FOPEN_RW, img);
@@ -648,7 +648,7 @@ static int cmd_writesector(const struct command *c, int argc, char *argv[])
 		goto done;
 	}
 
-	size = (UINT32) stream->size();
+	size = (uint32_t) stream->size();
 
 	buffer.resize(size);
 
@@ -855,7 +855,7 @@ int CLIB_DECL main(int argc, char *argv[])
 					goto cmderror;
 
 				/* initialize the imgtool core */
-				imgtool_init(TRUE, nullptr);
+				imgtool_init(true, nullptr);
 
 				if (c->lastargrepeats && (argc > c->maxargs))
 				{

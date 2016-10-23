@@ -525,7 +525,7 @@ WRITE8_MEMBER(fidel6502_state::csc_pia0_pb_w)
 READ8_MEMBER(fidel6502_state::csc_pia0_pb_r)
 {
 	// d2: printer?
-	UINT8 data = 0x04;
+	uint8_t data = 0x04;
 
 	// d3: TSI BUSY line
 	if (m_speech->busy_r())
@@ -669,7 +669,7 @@ WRITE8_MEMBER(fidel6502_state::eas_ppi_portc_w)
 READ8_MEMBER(fidel6502_state::eas_ppi_portb_r)
 {
 	// d0: printer? white wire from LED pcb
-	UINT8 data = 1;
+	uint8_t data = 1;
 
 	// d1: TSI BUSY line
 	data |= (m_speech->busy_r()) ? 2 : 0;
@@ -702,7 +702,7 @@ WRITE8_MEMBER(fidel6502_state::sc9_control_w)
 {
 	// d0-d3: 74245 P0-P3
 	// 74245 Q0-Q8: input mux, led select
-	UINT16 sel = 1 << (data & 0xf) & 0x3ff;
+	uint16_t sel = 1 << (data & 0xf) & 0x3ff;
 	m_inp_mux = sel & 0x1ff;
 	sc9_prepare_display();
 
@@ -738,7 +738,7 @@ WRITE8_MEMBER(fidel6502_state::sc12_control_w)
 {
 	// d0-d3: 7442 a0-a3
 	// 7442 0-8: led data, input mux
-	UINT16 sel = 1 << (data & 0xf) & 0x3ff;
+	uint16_t sel = 1 << (data & 0xf) & 0x3ff;
 	m_inp_mux = sel & 0x1ff;
 
 	// 7442 9: speaker out
@@ -793,24 +793,24 @@ READ8_MEMBER(fidel6502_state::fexcelv_speech_r)
 WRITE8_MEMBER(fidel6502_state::fexcel_ttl_w)
 {
 	// a0-a2,d0: 74259(1)
-	UINT8 mask = 1 << offset;
+	uint8_t mask = 1 << offset;
 	m_led_select = (m_led_select & ~mask) | ((data & 1) ? mask : 0);
 
 	// 74259 Q0-Q3: 7442 a0-a3
 	// 7442 0-8: led data, input mux
-	UINT16 sel = 1 << (m_led_select & 0xf) & 0x3ff;
-	UINT8 led_data = sel & 0xff;
+	uint16_t sel = 1 << (m_led_select & 0xf) & 0x3ff;
+	uint8_t led_data = sel & 0xff;
 	m_inp_mux = sel & 0x1ff;
 
 	// 7442 9: speaker out (optional?)
 	m_dac->write(BIT(sel, 9));
 
 	// 74259 Q4-Q7,Q2,Q1: digit/led select (active low)
-	UINT8 led_sel = ~BITSWAP8(m_led_select,0,3,1,2,7,6,5,4) & 0x3f;
+	uint8_t led_sel = ~BITSWAP8(m_led_select,0,3,1,2,7,6,5,4) & 0x3f;
 
 	// a0-a2,d1: digit segment data (model 6093)
 	m_7seg_data = (m_7seg_data & ~mask) | ((data & 2) ? mask : 0);
-	UINT8 seg_data = BITSWAP8(m_7seg_data,0,1,3,2,7,5,6,4);
+	uint8_t seg_data = BITSWAP8(m_7seg_data,0,1,3,2,7,5,6,4);
 
 	// update display: 4 7seg leds, 2*8 chessboard leds
 	for (int i = 0; i < 6; i++)
@@ -840,7 +840,7 @@ WRITE8_MEMBER(fidel6502_state::fexcel_ttl_w)
 READ8_MEMBER(fidel6502_state::fexcelb_ttl_r)
 {
 	// a0-a2,d6: from speech board: language switches and TSI BUSY line, otherwise tied to VCC
-	UINT8 d6 = (m_inp_matrix[9].read_safe(0xff) >> offset & 1) ? 0x40 : 0;
+	uint8_t d6 = (m_inp_matrix[9].read_safe(0xff) >> offset & 1) ? 0x40 : 0;
 
 	// a0-a2,d7: multiplexed inputs (active low)
 	return d6 | ((read_inputs(9) >> offset & 1) ? 0 : 0x80);
@@ -848,7 +848,7 @@ READ8_MEMBER(fidel6502_state::fexcelb_ttl_r)
 
 READ8_MEMBER(fidel6502_state::fexcel_ttl_r)
 {
-	UINT8 d7 = 0x80;
+	uint8_t d7 = 0x80;
 
 	// 74259(1) Q7 + 74251 I0: battery status
 	if (m_inp_mux == 1 && ~m_led_select & 0x80)
@@ -869,12 +869,12 @@ READ8_MEMBER(fidel6502_state::fexcel_ttl_r)
 WRITE8_MEMBER(fidel6502_state::chesster_control_w)
 {
 	// a0-a2,d7: 74259(1)
-	UINT8 mask = 1 << offset;
+	uint8_t mask = 1 << offset;
 	m_led_select = (m_led_select & ~mask) | ((data & 0x80) ? mask : 0);
 
 	// 74259 Q4-Q7: 7442 a0-a3
 	// 7442 0-8: led data, input mux
-	UINT16 sel = 1 << (m_led_select >> 4 & 0xf) & 0x3ff;
+	uint16_t sel = 1 << (m_led_select >> 4 & 0xf) & 0x3ff;
 	m_inp_mux = sel & 0x1ff;
 
 	// 74259 Q0,Q1: led select (active low)
@@ -1420,6 +1420,13 @@ static INPUT_PORTS_START( fexcel )
 	PORT_CONFNAME( 0x80, 0x00, "Battery Status" )
 	PORT_CONFSETTING(    0x80, "Low" )
 	PORT_CONFSETTING(    0x00, DEF_STR( Normal ) )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( fdes2000 )
+	PORT_INCLUDE( fexcel )
+
+	PORT_MODIFY("IN.9")
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNUSED) // no low-voltage detection circuit (still works in software though)
 INPUT_PORTS_END
 
 
@@ -2101,12 +2108,12 @@ CONS( 1983, fscc9ps,    fscc9,    0,      playmatic, playmatic, driver_device, 0
 CONS( 1984, fscc12,     0,        0,      sc12,      sc12,      driver_device, 0, "Fidelity Electronics", "Sensory Chess Challenger 12-B", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 
 CONS( 1985, fexcel,     0,        0,      fexcel,    fexcel,    driver_device, 0, "Fidelity Electronics", "The Excellence (model 6080)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
-CONS( 1985, fexcela,    fexcel,   0,      fexcel,    fexcel,    driver_device, 0, "Fidelity Electronics", "The Excellence (model EP12)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // 1st version
+CONS( 1985, fexcela,    fexcel,   0,      fexcel,    fexcel,    driver_device, 0, "Fidelity Electronics", "The Excellence (model EP12)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // 1st version of The Excellence
 CONS( 1987, fexcelb,    fexcel,   0,      fexcelb,   fexcelb,   driver_device, 0, "Fidelity Electronics", "The Excellence (model 6080B)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 CONS( 1986, fexcelp,    fexcel,   0,      fexcelp,   fexcel,    driver_device, 0, "Fidelity Electronics", "The Par Excellence", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 CONS( 1987, fexcelv,    fexcel,   0,      fexcelv,   fexcelv,   driver_device, 0, "Fidelity Electronics", "Voice Excellence", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 CONS( 1987, fexceld,    fexcel,   0,      fexceld,   fexcelb,   driver_device, 0, "Fidelity Electronics", "Excel Display", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 
-CONS( 1989, fdes2000,   0,        0,      fdes2000,  fexcel,    driver_device, 0, "Fidelity Electronics", "Designer 2000", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // Excellence series hardware
+CONS( 1989, fdes2000,   0,        0,      fdes2000,  fdes2000,  driver_device, 0, "Fidelity Electronics", "Designer 2000", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // Excellence series hardware
 
 CONS( 1990, chesster,   0,        0,      chesster,  chesster,  fidel6502_state, chesster, "Fidelity Electronics", "Chesster Challenger", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )

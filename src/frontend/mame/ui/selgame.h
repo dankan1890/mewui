@@ -20,11 +20,11 @@ namespace ui {
 class menu_select_game : public menu_select_launch
 {
 public:
-	menu_select_game(mame_ui_manager &, render_container &, const char *);
+	menu_select_game(mame_ui_manager &mui, render_container &container, const char *gamename);
 	virtual ~menu_select_game();
 
 	// force game select menu
-	static void force_game_select(mame_ui_manager &, render_container &);
+	static void force_game_select(mame_ui_manager &mui, render_container &container);
 
 protected:
 	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
@@ -54,15 +54,15 @@ private:
 	virtual void handle() override;
 
 	// draw left panel
-	virtual float draw_left_panel(float, float, float, float) override;
+	virtual float draw_left_panel(float x1, float y1, float x2, float y2) override;
 
 	// get selected software and/or driver
-	virtual void get_selection(ui_software_info const *&, game_driver const *&) const override;
+	virtual void get_selection(ui_software_info const *&software, game_driver const *&driver) const override;
 
 	// text for main top/bottom panels
-	virtual void make_topbox_text(std::string &, std::string &, std::string &) const override;
-	virtual std::string make_driver_description(game_driver const &) const override;
-	virtual std::string make_software_description(ui_software_info const &) const override;
+	virtual void make_topbox_text(std::string &line0, std::string &line1, std::string &line2) const override;
+	virtual std::string make_driver_description(game_driver const &driver) const override;
+	virtual std::string make_software_description(ui_software_info const &software) const override;
 
 	// internal methods
 	void build_custom();
@@ -79,7 +79,7 @@ private:
 	void *get_selection_ptr() const
 	{
 		const auto selected_ref(get_selection_ref());
-		return (FPTR(selected_ref) > skip_main_items) ? selected_ref : m_prev_selected;
+		return (uintptr_t(selected_ref) > skip_main_items) ? selected_ref : m_prev_selected;
 	}
 
 	// General info

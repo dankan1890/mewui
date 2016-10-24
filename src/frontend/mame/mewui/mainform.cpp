@@ -623,8 +623,8 @@ void main_form::update_selection(listbox::item_proxy &sel)
 	load_data(drv); // Load data from DATs
 
 	// Update menu item
-	m_menubar.at(0).change_text(0, string_format("&Play %s", drv->description));
-	m_context_menu.change_text(0, string_format("Play %s", drv->description));
+	m_menubar.at(0).text(0, string_format("&Play %s", drv->description));
+	m_context_menu.text(0, string_format("Play %s", drv->description));
 	//m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
 
 	// Update software

@@ -1,7 +1,7 @@
 /*
 *	A Menu implementation
 *	Nana C++ Library(http://www.nanapro.org)
-*	Copyright(C) 2009-2015 Jinhao(cnjinhao@hotmail.com)
+*	Copyright(C) 2009-2016 Jinhao(cnjinhao@hotmail.com)
 *
 *	Distributed under the Boost Software License, Version 1.0.
 *	(See accompanying file LICENSE_1_0.txt or copy at
@@ -10,6 +10,7 @@
 *	@file: nana/gui/widgets/menu.cpp
 *	@contributors:
 *		kmribti(pr#102)
+*		dankan1890(pr#158)
 */
 
 #include <nana/gui/widgets/menu.hpp>
@@ -33,62 +34,62 @@ namespace nana
 			}
 
 			//struct menu_item_type
-			//class item_proxy
-			//@brief: this class is used as parameter of menu event function.
-			menu_item_type::item_proxy::item_proxy(std::size_t index, menu_item_type &item)
-				:index_(index), item_(item)
-			{}
+				//class item_proxy
+				//@brief: this class is used as parameter of menu event function.
+					menu_item_type::item_proxy::item_proxy(std::size_t index, menu_item_type &item)
+						:index_(index), item_(item)
+					{}
 
-			menu_item_type::item_proxy& menu_item_type::item_proxy::enabled(bool v)
-			{
-				item_.flags.enabled = v;
-				return *this;
-			}
+					menu_item_type::item_proxy& menu_item_type::item_proxy::enabled(bool v)
+					{
+						item_.flags.enabled = v;
+						return *this;
+					}
 
-			bool menu_item_type::item_proxy::enabled() const
-			{
-				return item_.flags.enabled;
-			}
+					bool menu_item_type::item_proxy::enabled() const
+					{
+						return item_.flags.enabled;
+					}
 
-			menu_item_type::item_proxy&	menu_item_type::item_proxy::check_style(checks style)
-			{
-				if (good_checks(style))
-					item_.style = style;
-				return *this;
-			}
+					menu_item_type::item_proxy&	menu_item_type::item_proxy::check_style(checks style)
+					{
+						if (good_checks(style))
+							item_.style = style;
+						return *this;
+					}
 
-			menu_item_type::item_proxy&	menu_item_type::item_proxy::checked(bool ck)
-			{
-				item_.flags.checked = ck;
-				return *this;
-			}
+					menu_item_type::item_proxy&	menu_item_type::item_proxy::checked(bool ck)
+					{
+						item_.flags.checked = ck;
+						return *this;
+					}
 
-			bool menu_item_type::item_proxy::checked() const
-			{
-				return item_.flags.checked;
-			}
+					bool menu_item_type::item_proxy::checked() const
+					{
+						return item_.flags.checked;
+					}
 
-			std::size_t menu_item_type::item_proxy::index() const
-			{
-				return index_;
-			}
-			//end class item_proxy
+					std::size_t menu_item_type::item_proxy::index() const
+					{
+						return index_;
+					}
+				//end class item_proxy
 
-			//Default constructor initializes the item as a splitter
-			menu_item_type::menu_item_type()
-			{
-				flags.enabled = true;
-				flags.splitter = true;
-				flags.checked = false;
-			}
+				//Default constructor initializes the item as a splitter
+				menu_item_type::menu_item_type()
+				{
+					flags.enabled = true;
+					flags.splitter = true;
+					flags.checked = false;
+				}
 
-			menu_item_type::menu_item_type(std::string text, const event_fn_t& f)
-				: text(std::move(text)), functor(f)
-			{
-				flags.enabled = true;
-				flags.splitter = false;
-				flags.checked = false;
-			}
+				menu_item_type::menu_item_type(std::string text, const event_fn_t& f)
+					: text(std::move(text)), functor(f)
+				{
+					flags.enabled = true;
+					flags.splitter = false;
+					flags.checked = false;
+				}
 			//end class menu_item_type
 
 			class internal_renderer
@@ -149,7 +150,7 @@ namespace nana
 						img.stretch(rectangle{ img.size() }, graph, rectangle{ pos, ::nana::size(image_px, image_px) });
 						return;
 					}
-
+					
 					//Stretchs menu icon only when it doesn't fit, center it otherwise.
 					//Contributed by kmribti(pr#102)
 					nana::point ipos = pos;
@@ -468,7 +469,7 @@ namespace nana
 							{
 								if (end)
 									break;
-
+								
 								end = true;
 								pos = lastpos;
 							}
@@ -488,7 +489,7 @@ namespace nana
 						refresh(*graph_);
 						return true;
 					}
-
+					
 					return false;
 				}
 
@@ -714,20 +715,20 @@ namespace nana
 			};//end class menu_drawer
 
 			class menu_window
-				: public widget_object<category::root_tag, menu_drawer>
+				:	public widget_object<category::root_tag, menu_drawer>
 			{
 				using drawer_type = menu_drawer;
 				using base_type = widget_object<category::root_tag, menu_drawer>;
 			public:
 				using item_type = menu_builder::item_type;
 
-
+				
 				menu_window(window wd, bool is_wd_parent_menu, const point& pos, renderer_interface * rdptr)
 					//add a is_wd_parent_menu to determine whether the menu wants the focus.
 					//if a submenu gets the focus, the program may cause a crash error when the submenu is being destroyed
-					: base_type(wd, false, rectangle(pos, nana::size(2, 2)), appear::bald<appear::floating>()),
-					want_focus_{ (!wd) || ((!is_wd_parent_menu) && (API::focus_window() != wd)) },
-					event_focus_{ nullptr }
+					:	base_type(wd, false, rectangle(pos, nana::size(2, 2)), appear::bald<appear::floating>()),
+						want_focus_{ (!wd) || ((!is_wd_parent_menu) && (API::focus_window() != wd)) },
+						event_focus_{ nullptr }
 				{
 					caption("nana menu window");
 					get_drawer_trigger().close_menu_tree([this]{ this->_m_close_all(); });
@@ -796,7 +797,7 @@ namespace nana
 					timer_.start();
 
 					show();
-
+					
 					if (want_focus_)
 					{
 						event_focus_ = events.focus.connect_unignorable([this](const arg_focus& arg)
@@ -879,7 +880,7 @@ namespace nana
 					auto * menu = object->get_drawer_trigger().data();
 					if ((npos == active) || !menu)
 						return;
-
+					
 					menu_item_type & item = menu->items.at(active);
 
 					if ((!item.flags.enabled) || item.flags.splitter || item.sub_menu)
@@ -912,9 +913,9 @@ namespace nana
 					}
 
 					this->_m_close_all();	//means deleting this;
-											//The deleting operation has moved here, because item.functor.operator()(ip)
-											//may create a window, which make a killing focus for menu window, if so the close_all
-											//operation preformences after item.functor.operator()(ip), that would be deleting this object twice!
+					//The deleting operation has moved here, because item.functor.operator()(ip)
+					//may create a window, which make a killing focus for menu window, if so the close_all
+					//operation preformences after item.functor.operator()(ip), that would be deleting this object twice!
 
 					if (item.functor)
 					{
@@ -978,25 +979,25 @@ namespace nana
 				{
 					switch(arg.key)
 					{
-						case keyboard::os_arrow_up:
-						case keyboard::os_arrow_down:
-							this->goto_next(keyboard::os_arrow_down == arg.key);
-							break;
-						case keyboard::os_arrow_left:
-						case keyboard::os_arrow_right:
-							this->submenu(keyboard::os_arrow_right == arg.key);
-							break;
-						case keyboard::enter:
-							this->pick();
-							break;
-						default:
-							if (2 != send_shortkey(arg.key))
-							{
-								if (API::empty_window(*this) == false)
-									close();
-							}
-							else
-								this->submenu(true);
+					case keyboard::os_arrow_up:
+					case keyboard::os_arrow_down:
+						this->goto_next(keyboard::os_arrow_down == arg.key);
+						break;
+					case keyboard::os_arrow_left:
+					case keyboard::os_arrow_right:
+						this->submenu(keyboard::os_arrow_right == arg.key);
+						break;
+					case keyboard::enter:
+						this->pick();
+						break;
+					default:
+						if (2 != send_shortkey(arg.key))
+						{
+							if (API::empty_window(*this) == false)
+								close();
+						}
+						else
+							this->submenu(true);
 					}
 				}
 
@@ -1089,91 +1090,91 @@ namespace nana
 		}//end namespace menu
 	}//end namespace drawerbase
 
-	 //class menu
-	struct menu::implement
-	{
-		struct info
+	//class menu
+		struct menu::implement
 		{
-			menu * handle;
-			bool kill;
+			struct info
+			{
+				menu * handle;
+				bool kill;
+			};
+
+			drawerbase::menu::menu_builder	mbuilder;
+			drawerbase::menu::menu_window *	uiobj;
+			std::function<void()> destroy_answer;
+			std::map<std::size_t, info> sub_container;
 		};
 
-		drawerbase::menu::menu_builder	mbuilder;
-		drawerbase::menu::menu_window *	uiobj;
-		std::function<void()> destroy_answer;
-		std::map<std::size_t, info> sub_container;
-	};
+		menu::menu()
+			:impl_(new implement)
+		{
+			impl_->uiobj = nullptr;
+		}
 
-	menu::menu()
-		:impl_(new implement)
-	{
-		impl_->uiobj = nullptr;
-	}
-
-	menu::~menu()
-	{
+		menu::~menu()
+		{
 			for(auto i = impl_->sub_container.rbegin(); i != impl_->sub_container.rend(); ++i)
-		{
+			{
 				if(i->second.kill)
-				delete i->second.handle;
+					delete i->second.handle;
+			}
+			delete impl_;
 		}
-		delete impl_;
-	}
 
-	auto menu::append(const std::string& text, const menu::event_fn_t& f) -> item_proxy
-	{
-		impl_->mbuilder.data().items.emplace_back(text, f);
-		return item_proxy(size() - 1, impl_->mbuilder.data().items.back());
-	}
-
-	void menu::append_splitter()
-	{
-		impl_->mbuilder.data().items.emplace_back();
-	}
-
-	void menu::clear()
-	{
-		impl_->mbuilder.data().items.clear();
-	}
-
-	void menu::enabled(std::size_t index, bool enable)
-	{
-		impl_->mbuilder.data().items.at(index).flags.enabled = enable;
-	}
-
-	bool menu::enabled(std::size_t index) const
-	{
-		return impl_->mbuilder.data().items.at(index).flags.enabled;
-	}
-
-	void menu::erase(std::size_t index)
-	{
-		auto & items = impl_->mbuilder.data().items;
-			if(index < items.size())
-			items.erase(items.begin() + index);
-	}
-
-	void menu::image(std::size_t index, const paint::image& img)
-	{
-		impl_->mbuilder.data().items.at(index).image = img;
-	}
-
-	void menu::change_text(std::size_t index, const std::string& text)
-	{
-		impl_->mbuilder.data().items.at(index).text = text;
-	}
-
-	bool menu::link(std::size_t index, menu& menu_obj)
-	{
-			if(impl_->mbuilder.set_sub_menu(index, menu_obj.impl_->mbuilder.data()))
+		auto menu::append(std::string text_utf8, const menu::event_fn_t& f) -> item_proxy
 		{
-			auto& minfo = impl_->sub_container[index];
-			minfo.handle = &menu_obj;
-			minfo.kill = false;
-			return true;
+			impl_->mbuilder.data().items.emplace_back(std::move(text_utf8), f);
+			return item_proxy(size() - 1, impl_->mbuilder.data().items.back());
 		}
-		return false;
-	}
+
+		void menu::append_splitter()
+		{
+			impl_->mbuilder.data().items.emplace_back();
+		}
+
+		void menu::clear()
+		{
+			impl_->mbuilder.data().items.clear();
+		}
+
+		void menu::enabled(std::size_t index, bool enable)
+		{
+			impl_->mbuilder.data().items.at(index).flags.enabled = enable;
+		}
+
+		bool menu::enabled(std::size_t index) const
+		{
+			return impl_->mbuilder.data().items.at(index).flags.enabled;
+		}
+
+		void menu::erase(std::size_t index)
+		{
+			auto & items = impl_->mbuilder.data().items;
+			if(index < items.size())
+				items.erase(items.begin() + index);
+		}
+
+		void menu::image(std::size_t index, const paint::image& img)
+		{
+			impl_->mbuilder.data().items.at(index).image = img;
+		}
+
+		void menu::text(std::size_t index, std::string text_utf8)
+		{
+			impl_->mbuilder.data().items.at(index).text.swap(text_utf8);
+		}
+
+		bool menu::link(std::size_t index, menu& menu_obj)
+		{
+			if(impl_->mbuilder.set_sub_menu(index, menu_obj.impl_->mbuilder.data()))
+			{
+				auto& minfo = impl_->sub_container[index];
+				minfo.handle = &menu_obj;
+				minfo.kill = false;
+				return true;
+			}
+			return false;
+		}
 
 		menu* menu::link(std::size_t index)
 		{
@@ -1329,49 +1330,49 @@ namespace nana
 				impl_->uiobj->popup(impl_->mbuilder.data(), called_by_menubar);
 			}
 		}
-		//end class menu
+	//end class menu
 
-		detail::popuper menu_popuper(menu& mobj, mouse ms)
+	detail::popuper menu_popuper(menu& mobj, mouse ms)
+	{
+		return detail::popuper(mobj, ms);
+	}
+
+	detail::popuper menu_popuper(menu& mobj, window owner, const point& pos, mouse ms)
+	{
+		return detail::popuper(mobj, owner, pos, ms);
+	}
+
+	namespace detail
+	{
+	//class popuper
+		popuper::popuper(menu& mobj, mouse ms)
+			: mobj_(mobj), owner_(nullptr), take_mouse_pos_(true), mouse_(ms)
+		{}
+
+		popuper::popuper(menu& mobj, window owner, const point& pos, mouse ms)
+			: mobj_(mobj), owner_(owner), take_mouse_pos_(false), pos_(pos), mouse_(ms)
+		{}
+
+		void popuper::operator()(const arg_mouse& arg)
 		{
-			return detail::popuper(mobj, ms);
-		}
-
-		detail::popuper menu_popuper(menu& mobj, window owner, const point& pos, mouse ms)
-		{
-			return detail::popuper(mobj, owner, pos, ms);
-		}
-
-		namespace detail
-		{
-			//class popuper
-			popuper::popuper(menu& mobj, mouse ms)
-				: mobj_(mobj), owner_(nullptr), take_mouse_pos_(true), mouse_(ms)
-			{}
-
-			popuper::popuper(menu& mobj, window owner, const point& pos, mouse ms)
-				: mobj_(mobj), owner_(owner), take_mouse_pos_(false), pos_(pos), mouse_(ms)
-			{}
-
-			void popuper::operator()(const arg_mouse& arg)
-			{
 			if(take_mouse_pos_)
-				{
+			{
 				switch(arg.evt_code)
-					{
-						case event_code::click:
-						case event_code::mouse_down:
-						case event_code::mouse_up:
-							owner_ = arg.window_handle;
-							pos_ = arg.pos;
-							break;
-						default:
-							return;
-					}
+				{
+				case event_code::click:
+				case event_code::mouse_down:
+				case event_code::mouse_up:
+					owner_ = arg.window_handle;
+					pos_ = arg.pos;
+					break;
+				default:
+					return;
 				}
+			}
 
 			if((mouse::any_button == mouse_) || (mouse_ == arg.button))
-					mobj_.popup(owner_, pos_.x, pos_.y);
-			}
-			//end class
-		}//end namespace detail
+				mobj_.popup(owner_, pos_.x, pos_.y);
+		}
+	//end class
+	}//end namespace detail
 }//end namespace nana

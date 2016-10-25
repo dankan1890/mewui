@@ -2652,6 +2652,7 @@ namespace nana
 						return false;
 
 					set_scroll_y_dpl ( target );
+					lister.emit_scrolled(scroll.offset_y_dpl);
 					return true;
 				}
 
@@ -4331,6 +4332,7 @@ namespace nana
 							if(essence_->lister.sort_index(essence_->pointer_where.second))
 							{
 								essence_->trace_item_dpl(index_pair{0,0});
+								essence_->lister.emit_scrolled(index_pair{ 0,0 });
 								refresh(graph);
 								API::dev::lazy_refresh();
 							}

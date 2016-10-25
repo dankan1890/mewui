@@ -221,17 +221,19 @@ void main_form::handle_events()
 	// Main listbox events
 	auto& events = m_machinebox.events();
 	events.scrolled([this](const arg_listbox_scroll& arg) {
-		auto ip = arg.item.from_display(arg.item.pos()); // convert from display to abs
-		auto cat = m_machinebox.at(ip.pos().cat); // retrieve category
-		for (auto x = ip.pos().item; x < cat.size(); ++x)
+		auto index{ arg.item.pos() };
+		auto cat = m_machinebox.at(index.cat); // retrieve category
+		for (auto x = arg.item.pos().item; x < cat.size(); ++x)
 		{
-			if (cat.at(x).icon()) continue; // icon already loaded
-			if (!cat.at(x).displayed()) break; // out of displayed items
+			index.item = x;
+			auto ip = arg.item.from_display(index); // convert from display to abs
+			if (ip.icon()) continue; // icon already loaded
+			if (!ip.displayed()) break; // out of displayed items
 
-			auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
+			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
 			auto icon = load_icon(drv);
 			if (!icon.empty())
-				cat.at(x).icon(icon);
+				ip.icon(icon);
 			else
 			{
 				auto clone = driver_list::non_bios_clone(*drv);
@@ -240,13 +242,11 @@ void main_form::handle_events()
 					drv = &driver_list::driver(clone);
 					icon = load_icon(drv);
 					if (!icon.empty())
-						cat.at(x).icon(icon);
+						ip.icon(icon);
 				}
 			}
 		}
 	});
-
-
 
 	events.selected([this](const arg_listbox& arg) {
 		if (arg.item.selected())

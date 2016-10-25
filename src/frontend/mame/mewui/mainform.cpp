@@ -159,6 +159,17 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 				auto icon = load_icon(drv);
 				if (!icon.empty())
 					cat.at(x).icon(icon);
+				else
+				{
+					auto clone = driver_list::non_bios_clone(*drv);
+					if (clone != -1)
+					{
+						drv = &driver_list::driver(clone);
+						icon = load_icon(drv);
+						if (!icon.empty())
+							cat.at(x).icon(icon);
+					}
+				}
 			}
 			else break;
 		}
@@ -172,12 +183,23 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 				auto icon = load_icon(drv);
 				if (!icon.empty())
 					cat.at(x).icon(icon);
+				else
+				{
+					auto clone = driver_list::non_bios_clone(*drv);
+					if (clone != -1)
+					{
+						drv = &driver_list::driver(clone);
+						icon = load_icon(drv);
+						if (!icon.empty())
+							cat.at(x).icon(icon);
+					}
+				}
 			}
 			else break;
 		}
 		m_machinebox.auto_draw(true);
 	}
-	threads::pool_push(pool_, [this] {
+/*	threads::pool_push(pool_, [this] {
 		m_machinebox.auto_draw(false);
 		auto cat = m_machinebox.at(0);
 		for (auto x = 0; x < cat.size(); x++)
@@ -190,7 +212,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 		}
 		m_machinebox.auto_draw(true);
 	})();
-
+*/
 	update_selection();
 }
 
@@ -198,6 +220,34 @@ void main_form::handle_events()
 {
 	// Main listbox events
 	auto& events = m_machinebox.events();
+	events.scrolled([this](const arg_listbox_scroll& arg) {
+		auto ip = arg.item.from_display(arg.item.pos()); // convert from display to abs
+		auto cat = m_machinebox.at(ip.pos().cat); // retrieve category
+		for (auto x = ip.pos().item; x < cat.size(); ++x)
+		{
+			if (cat.at(x).icon()) continue; // icon already loaded
+			if (!cat.at(x).displayed()) break; // out of displayed items
+
+			auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
+			auto icon = load_icon(drv);
+			if (!icon.empty())
+				cat.at(x).icon(icon);
+			else
+			{
+				auto clone = driver_list::non_bios_clone(*drv);
+				if (clone != -1)
+				{
+					drv = &driver_list::driver(clone);
+					icon = load_icon(drv);
+					if (!icon.empty())
+						cat.at(x).icon(icon);
+				}
+			}
+		}
+	});
+
+
+
 	events.selected([this](const arg_listbox& arg) {
 		if (arg.item.selected())
 			update_selection(arg.item);
@@ -625,7 +675,7 @@ void main_form::update_selection(listbox::item_proxy &sel)
 	// Update menu item
 	m_menubar.at(0).text(0, string_format("&Play %s", drv->description));
 	m_context_menu.text(0, string_format("Play %s", drv->description));
-	//m_context_menu.change_text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
+	//m_context_menu.text(16, string_format("Properties for %s", core_filename_extract_base(drv->source_file)));
 
 	// Update software
 	m_swpage.m_softwarebox.auto_draw(false);

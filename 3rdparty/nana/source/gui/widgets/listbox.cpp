@@ -773,11 +773,25 @@ namespace nana
 						p->inline_ptr->notify_status(inline_widget_status::selecting, i.selected());
 				}
 
-				void emit_scrolled(index_pair pos)
+				void emit_scrolled(index_pair pos, size_type item_count)
 				{
-					item_proxy i(ess_, pos);
-					arg_listbox_scroll arg{ i };
-					wd_ptr()->events().scrolled.emit(arg, wd_ptr()->handle());
+					index_pairs result;
+					index_pair item_index{ pos.cat, 0 };
+					auto i_categ = get(pos.cat);
+					std::size_t size = i_categ->items.size();
+					for (std::size_t offs = pos.item; offs < size; ++offs)
+					{
+						if (0 == item_count--) break;
+						item_index.item = offs;
+						item_index = absolute_pair(item_index);
+						result.push_back(item_index);
+					}
+					wd_ptr()->events().scrolled.emit(result, wd_ptr()->handle());
+
+					
+//					item_proxy i(ess_, pos);
+//					arg_listbox_scroll arg{ i };
+//					wd_ptr()->events().scrolled.emit(arg, wd_ptr()->handle());
 
 //					auto panes = get_inline_pane(pos);
 //					for (auto p : panes)
@@ -2434,7 +2448,7 @@ namespace nana
 								return;
 
 							set_scroll_y_dpl(item);
-							lister.emit_scrolled(scroll.offset_y_dpl);
+							lister.emit_scrolled(scroll.offset_y_dpl, number_of_lister_items(true));
 						}
 
 						API::refresh_window(this->lister.wd_ptr()->handle());
@@ -2652,7 +2666,7 @@ namespace nana
 						return false;
 
 					set_scroll_y_dpl ( target );
-					lister.emit_scrolled(scroll.offset_y_dpl);
+					lister.emit_scrolled(scroll.offset_y_dpl, number_of_lister_items(true));
 					return true;
 				}
 
@@ -4332,7 +4346,7 @@ namespace nana
 							if(essence_->lister.sort_index(essence_->pointer_where.second))
 							{
 								essence_->trace_item_dpl(index_pair{0,0});
-								essence_->lister.emit_scrolled(index_pair{ 0,0 });
+								essence_->lister.emit_scrolled(index_pair{ 0,0 }, essence_->number_of_lister_items(true));
 								refresh(graph);
 								API::dev::lazy_refresh();
 							}
@@ -5242,8 +5256,8 @@ namespace nana
 	{
 	}
 
-	arg_listbox_scroll::arg_listbox_scroll(const drawerbase::listbox::item_proxy& m) noexcept
-		: item(m)
+	arg_listbox_scroll::arg_listbox_scroll(const drawerbase::listbox::index_pairs& m) noexcept
+		: item_pairs(m)
 	{}
 
 

@@ -1115,9 +1115,9 @@ namespace nana
 	struct arg_listbox_scroll
 		: public event_arg
 	{
-		mutable drawerbase::listbox::item_proxy item;
+		mutable drawerbase::listbox::index_pairs item_pairs;
 
-		arg_listbox_scroll(const drawerbase::listbox::item_proxy&) noexcept;
+		arg_listbox_scroll(const drawerbase::listbox::index_pairs&) noexcept;
 	};
 
 	/// The event parameter type for listbox's category_dbl_click

@@ -221,15 +221,11 @@ void main_form::handle_events()
 	// Main listbox events
 	auto& events = m_machinebox.events();
 	events.scrolled([this](const arg_listbox_scroll& arg) {
-		auto index{ arg.item.pos() };
-		auto cat = m_machinebox.at(index.cat); // retrieve category
-		for (auto x = arg.item.pos().item; x < cat.size(); ++x)
+		for (auto &e : arg.item_pairs)
 		{
-			index.item = x;
-			auto ip = arg.item.from_display(index); // convert from display to abs
+			m_machinebox.auto_draw(false);
+			auto ip = m_machinebox.at(e);
 			if (ip.icon()) continue; // icon already loaded
-			if (!ip.displayed()) break; // out of displayed items
-
 			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
 			auto icon = load_icon(drv);
 			if (!icon.empty())
@@ -245,6 +241,7 @@ void main_form::handle_events()
 						ip.icon(icon);
 				}
 			}
+			m_machinebox.auto_draw(true);
 		}
 	});
 

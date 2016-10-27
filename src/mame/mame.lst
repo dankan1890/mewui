@@ -28111,6 +28111,7 @@ timecrs2                        // April 1998
 timecrs2v1b                     // April 1998
 timecrs2v2b                     // April 1998
 timecrs2v4a                     // April 1998
+timecrs2v5a                     // April 1998
 
 @source:namcos86.cpp
 genpeitd                        // (c) 1986
@@ -34681,6 +34682,7 @@ crimec                          // B99 (c) 1989 Taito Corporation Japan (World)
 crimecj                         // B99 (c) 1989 Taito Corporation (Japan)
 crimecu                         // B99 (c) 1989 Taito America Corporation (US)
 hitice                          // C59 (c) 1990 Williams (US)
+hiticerb                        // C59 (c) 1990 Williams (US)
 hiticej                         // C59 (c) 1990 Midway/Taito Corporation (Japan)
 masterw                         // B72 (c) 1989 Taito Corporation Japan (World)
 masterwj                        // B72 (c) 1989 Taito Corporation (Japan)

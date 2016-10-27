@@ -597,10 +597,6 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			cat.append({ std::string(drv->description), std::string(drv->name), std::string(drv->manufacturer), std::string(drv->year), core_filename_extract_base(drv->source_file) });
-//			auto img = load_icon(drv);
-//			if (!img.empty())
-//				cat.back().icon(img);
-
 			if (m_latest_machine == drv->name) m_resel = index;
 
 			bool cloneof = strcmp(drv->parent, "0");

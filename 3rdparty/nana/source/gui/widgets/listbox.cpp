@@ -4446,7 +4446,12 @@ namespace nana
 					case keyboard::os_arrow_up:
 						up = true;
 					case keyboard::os_arrow_down:
+						{
+						index_pair tmp{ essence_->lister.absolute_pair(essence_->scroll_y_dpl()) };
 						essence_->lister.move_select(up, !arg.shift, true);
+						if (tmp != essence_->lister.absolute_pair(essence_->scroll_y_dpl()))
+							essence_->lister.emit_scrolled(essence_->scroll_y_dpl(), essence_->number_of_lister_items(true));
+						}
 						break;
 					case L' ':
 						{
@@ -4476,7 +4481,6 @@ namespace nana
 								essence_->lister.categ_selected(idx.cat, true);
 
 							essence_->trace_last_selected_item ();
-
 							break;
 						}
 					case keyboard::os_home:
@@ -4490,12 +4494,14 @@ namespace nana
 								essence_->lister.categ_selected(frst.cat, true);
 
 							essence_->trace_last_selected_item ();
+							essence_->lister.emit_scrolled(essence_->scroll_y_dpl(), essence_->number_of_lister_items(true));
 							break;
 						}
 					case keyboard::os_end:
 						essence_->lister.select_for_all(false);
 						item_proxy::from_display(essence_, essence_->lister.last()).select(true);
 						essence_->trace_last_selected_item ();
+						essence_->lister.emit_scrolled(essence_->scroll_y_dpl(), essence_->number_of_lister_items(true));
 						break;
 					default:
 						return;

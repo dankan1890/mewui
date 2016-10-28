@@ -119,7 +119,7 @@ private:
 	std::string m_latest_machine;
 	std::unique_ptr<datfile_manager> m_datfile;
 	std::unique_ptr<mame_ui_manager>& m_ui;
-	std::map<std::string, std::vector<const game_driver *>, ci_less> m_sortedlist;
+	std::map<std::string, std::vector<std::pair<const game_driver *, paint::image>>, ci_less> m_sortedlist;
 	std::string m_exename;
 	int m_resel = 0;
 	threads::pool pool_;

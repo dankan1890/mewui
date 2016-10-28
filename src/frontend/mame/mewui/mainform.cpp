@@ -28,21 +28,21 @@
 namespace mewui
 {
 
-static const std::map<std::string, int> filters_option =
+static const std::map<std::string, std::pair<std::function<bool(std::uint32_t&)>, int>> filters_option_ex =
 {
-	{ "All", -1 },
-	{ "Working", -1 },
-	{ "Not Working", -1 },
-	{ "Parents", -1 },
-	{ "Clones", -1 },
-	{ "Horizontal", -1 },
-	{ "Vertical", -1 },
-	{ "Save State", -1 },
-	{ "Mechanical", -1 },
-	{ "Not Mechanical", -1 },
-	{ "Manufacturer", 0 },
-	{ "Year", 1 },
-	{ "Source", 2 }
+	{ "All", { [](std::uint32_t &a) { return false; }, -1 } },
+	{ "Working", { [](std::uint32_t &a) { return (a & MACHINE_NOT_WORKING) != 0; }, -1 } },
+	{ "Not Working", { [](std::uint32_t &a) { return (a & MACHINE_NOT_WORKING) == 0; }, -1 } },
+	{ "Parents", { [](std::uint32_t &a) { return false; }, -1 } },
+	{ "Clones", { [](std::uint32_t &a) { return false; }, -1 } },
+	{ "Horizontal", { [](std::uint32_t &a) { return (a & ORIENTATION_SWAP_XY) != 0; }, -1 } },
+	{ "Vertical", { [](std::uint32_t &a) { return (a & ORIENTATION_SWAP_XY) == 0; }, -1 } },
+	{ "Save State", { [](std::uint32_t &a) { return (a & MACHINE_SUPPORTS_SAVE) != 0; }, -1 } },
+	{ "Mechanical", { [](std::uint32_t &a) { return (a & MACHINE_MECHANICAL) == 0; }, -1 } },
+	{ "Not Mechanical", { [](std::uint32_t &a) { return (a & MACHINE_MECHANICAL) != 0; }, -1 } },
+	{ "Manufacturer", { [](std::uint32_t &a) { return false; }, 0 } },
+	{ "Year", { [](std::uint32_t &a) { return false; } , 1 } },
+	{ "Source", { [](std::uint32_t &a) { return false; }, 2 } },
 };
 
 const std::pair<std::string, std::string> submenu[] = {
@@ -149,70 +149,55 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 		cat.at(m_resel).select(true, true);
 		m_machinebox.focus();
 		m_machinebox.auto_draw(false);
-		for (auto x = m_machinebox.selected().at(0).item; x != std::numeric_limits<size_t>::max(); x--)
+		auto sel = m_machinebox.selected().at(0).item;
+		auto ind = listbox::index_pair{ 0, sel };
+		for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
 		{
-			auto ind = listbox::index_pair{ 0, x };
+			ind.item = x;
 			auto ip = m_machinebox.at(ind);
-			if (ip.displayed())
+			if (!ip.displayed()) break;
+
+			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
+			auto icon = load_icon(drv);
+			if (!icon.empty())
+				ip.icon(icon);
+			else
 			{
-				auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
-				auto icon = load_icon(drv);
-				if (!icon.empty())
-					cat.at(x).icon(icon);
-				else
+				auto clone = driver_list::non_bios_clone(*drv);
+				if (clone != -1)
 				{
-					auto clone = driver_list::non_bios_clone(*drv);
-					if (clone != -1)
-					{
-						drv = &driver_list::driver(clone);
-						icon = load_icon(drv);
-						if (!icon.empty())
-							cat.at(x).icon(icon);
-					}
+					drv = &driver_list::driver(clone);
+					icon = load_icon(drv);
+					if (!icon.empty())
+						ip.icon(icon);
 				}
 			}
-			else break;
 		}
-		for (auto x = m_machinebox.selected().at(0).item; x < cat.size(); x++)
+
+		for (auto x = sel; x < cat.size(); ++x)
 		{
-			auto ind = listbox::index_pair{ 0, x };
+			ind.item = x;
 			auto ip = m_machinebox.at(ind);
-			if (ip.displayed())
+			if (!ip.displayed()) break;
+
+			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
+			auto icon = load_icon(drv);
+			if (!icon.empty())
+				ip.icon(icon);
+			else
 			{
-				auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
-				auto icon = load_icon(drv);
-				if (!icon.empty())
-					cat.at(x).icon(icon);
-				else
+				auto clone = driver_list::non_bios_clone(*drv);
+				if (clone != -1)
 				{
-					auto clone = driver_list::non_bios_clone(*drv);
-					if (clone != -1)
-					{
-						drv = &driver_list::driver(clone);
-						icon = load_icon(drv);
-						if (!icon.empty())
-							cat.at(x).icon(icon);
-					}
+					drv = &driver_list::driver(clone);
+					icon = load_icon(drv);
+					if (!icon.empty())
+						ip.icon(icon);
 				}
 			}
-			else break;
 		}
 		m_machinebox.auto_draw(true);
 	}
-/*	threads::pool_push(pool_, [this] {
-		m_machinebox.auto_draw(false);
-		auto cat = m_machinebox.at(0);
-		for (auto x = 0; x < cat.size(); x++)
-		{
-			if (cat.at(x).icon()) continue;
-			auto drv = &driver_list::driver(driver_list::find(cat.at(x).text(1).c_str()));
-			auto icon = load_icon(drv);
-			if (!icon.empty())
-				cat.at(x).icon(icon);
-		}
-		m_machinebox.auto_draw(true);
-	})();
-*/
 	update_selection();
 }
 
@@ -221,9 +206,9 @@ void main_form::handle_events()
 	// Main listbox events
 	auto& events = m_machinebox.events();
 	events.scrolled([this](const arg_listbox_scroll& arg) {
+		m_machinebox.auto_draw(false);
 		for (auto &e : arg.item_pairs)
 		{
-			m_machinebox.auto_draw(false);
 			auto ip = m_machinebox.at(e);
 			if (ip.icon()) continue; // icon already loaded
 			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
@@ -241,8 +226,8 @@ void main_form::handle_events()
 						ip.icon(icon);
 				}
 			}
-			m_machinebox.auto_draw(true);
 		}
+		m_machinebox.auto_draw(true);
 	});
 
 	events.selected([this](const arg_listbox& arg) {
@@ -297,6 +282,7 @@ void main_form::handle_events()
 
 	// Filters event
 	m_treebox.events().selected([this](const arg_treebox& ei) {
+		if (!ei.operated) return;
 		auto filt = ei.item.text();
 		if (ei.item.level() == 1)
 		{
@@ -385,10 +371,10 @@ void main_form::init_filters()
 	}
 
 	// TEST
-	for (auto & m : filters_option)
+	for (auto & m : filters_option_ex)
 	{
 		auto node = m_treebox.insert(m.first, m.first);
-		switch (m.second)
+		switch (m.second.second)
 		{
 			case 0: // Manufacturers
 				for (auto & e : manuf)
@@ -458,7 +444,7 @@ void main_form::init_machinebox()
 		if (drv == &GAME_NAME(___empty)) continue;
 
 		if (driver_list::non_bios_clone(x) == -1)
-			m_sortedlist[drv->description].push_back(drv);
+			m_sortedlist[drv->description].emplace_back(drv, paint::image());
 	}
 
 	for (auto x = 0; x < driver_list::total(); ++x)
@@ -468,7 +454,7 @@ void main_form::init_machinebox()
 
 		auto id = driver_list::non_bios_clone(x);
 		if (id != -1)
-			m_sortedlist[driver_list::driver(id).description].push_back(drv);
+			m_sortedlist[driver_list::driver(id).description].emplace_back(drv, paint::image());
 	}
 
 	populate_listbox(m_treebox.selected().text());
@@ -566,43 +552,39 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 
 	auto cat = m_machinebox.at(0);
 	auto index = 0;
-	for (auto parent : m_sortedlist)
+	for (auto & parent : m_sortedlist)
 	{
-		for (auto drv : parent.second)
+		for (auto & drv : parent.second)
 		{
+			auto game = drv.first;
 			if (filter != "All")
 			{
 				if (subfilter.empty())
 				{
-					if (filter == "Working" && (drv->flags & MACHINE_NOT_WORKING) != 0) continue;
-					if (filter == "Not Working" && (drv->flags & MACHINE_NOT_WORKING) == 0) continue;
-					if (filter == "Parents" && parent.first != drv->description) continue;
-					if (filter == "Clones" && parent.first == drv->description) continue;
-					if (filter == "Horizontal" && (drv->flags & ORIENTATION_SWAP_XY) != 0) continue;
-					if (filter == "Vertical" && (drv->flags & ORIENTATION_SWAP_XY) == 0) continue;
-					if (filter == "Save State" && (drv->flags & MACHINE_SUPPORTS_SAVE) == 0) continue;
-					if (filter == "Mechanical" && (drv->flags & MACHINE_MECHANICAL) == 0) continue;
-					if (filter == "Not Mechanical" && (drv->flags & MACHINE_MECHANICAL) != 0) continue;
+					if (filter == "Parents" && parent.first != game->description) continue;
+					if (filter == "Clones" && parent.first == game->description) continue;
+					std::uint32_t tmp = game->flags;
+					if (filters_option_ex.at(filter).first(tmp)) continue;
 				}
 				else
 				{
-					switch (filters_option.at(filter))
+					switch (filters_option_ex.at(filter).second)
 					{
-						case 0: if (subfilter != drv->manufacturer) continue; break;
-						case 1: if (subfilter != drv->year) continue; break;
-						case 2: if (subfilter != core_filename_extract_base(drv->source_file)) continue; break;
+						case 0: if (subfilter != game->manufacturer) continue; break;
+						case 1: if (subfilter != game->year) continue; break;
+						case 2: if (subfilter != core_filename_extract_base(game->source_file)) continue; break;
 						default: break;
 					}
 				}
 			}
 
-			cat.append({ std::string(drv->description), std::string(drv->name), std::string(drv->manufacturer), std::string(drv->year), core_filename_extract_base(drv->source_file) });
-			if (m_latest_machine == drv->name) m_resel = index;
+			cat.append({ std::string(game->description), std::string(game->name), std::string(game->manufacturer), std::string(game->year), core_filename_extract_base(game->source_file) });
+			if (m_latest_machine == game->name) m_resel = index;
 
-			bool cloneof = strcmp(drv->parent, "0");
+			bool cloneof = strcmp(game->parent, "0");
 			if (cloneof)
 			{
-				auto cx = driver_list::find(drv->parent);
+				auto cx = driver_list::find(game->parent);
 				if (cx != -1 && (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) == 0)
 					cat.at(index).fgcolor(colors::gray);
 			}
@@ -651,8 +633,16 @@ paint::image main_form::load_icon(const game_driver* drv) const
 void main_form::update_selection()
 {
 	auto sel = m_machinebox.selected();
-	auto mm = m_machinebox.at(sel[0]);
-	update_selection(mm);
+	if (!sel.empty())
+	{
+		auto mm = m_machinebox.at(sel[0]);
+		update_selection(mm);
+	}
+	else if (m_machinebox.at(0).size() > 0)
+	{
+		auto mm = m_machinebox.at(0).at(0).select(true, true);
+		update_selection(mm);
+	}
 }
 
 
@@ -699,8 +689,6 @@ void main_form::update_selection(listbox::item_proxy &sel)
 	m_swpage.m_softwarebox.auto_draw(true);
 
 	work = (drv->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
-
-
 	m_statusbar.update(m_machinebox.at(0).size(), work); // Update status bar
 }
 

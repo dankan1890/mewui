@@ -279,7 +279,7 @@ void main_form::perform_search()
 		if (comp.find(text) != std::string::npos)
 		{
 			elem.select(true, true);
-			update_selection(elem);
+			//update_selection(elem);
 			break;
 		}
 	}

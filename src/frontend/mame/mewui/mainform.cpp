@@ -148,55 +148,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	{
 		cat.at(m_resel).select(true, true);
 		m_machinebox.focus();
-		m_machinebox.auto_draw(false);
-		auto sel = m_machinebox.selected().at(0).item;
-		auto ind = listbox::index_pair{ 0, sel };
-		for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
-		{
-			ind.item = x;
-			auto ip = m_machinebox.at(ind);
-			if (!ip.displayed()) break;
-
-			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-			auto icon = load_icon(drv);
-			if (!icon.empty())
-				ip.icon(icon);
-			else
-			{
-				auto clone = driver_list::non_bios_clone(*drv);
-				if (clone != -1)
-				{
-					drv = &driver_list::driver(clone);
-					icon = load_icon(drv);
-					if (!icon.empty())
-						ip.icon(icon);
-				}
-			}
-		}
-
-		for (auto x = sel; x < cat.size(); ++x)
-		{
-			ind.item = x;
-			auto ip = m_machinebox.at(ind);
-			if (!ip.displayed()) break;
-
-			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-			auto icon = load_icon(drv);
-			if (!icon.empty())
-				ip.icon(icon);
-			else
-			{
-				auto clone = driver_list::non_bios_clone(*drv);
-				if (clone != -1)
-				{
-					drv = &driver_list::driver(clone);
-					icon = load_icon(drv);
-					if (!icon.empty())
-						ip.icon(icon);
-				}
-			}
-		}
-		m_machinebox.auto_draw(true);
+		refresh_icons();
 	}
 	update_selection();
 }
@@ -294,6 +246,7 @@ void main_form::handle_events()
 			populate_listbox(ow, filt);
 		}
 		update_selection();
+		refresh_icons();
 	});
 
 	// DATs events
@@ -331,6 +284,63 @@ void main_form::perform_search()
 		}
 	}
 }
+
+void main_form::refresh_icons()
+{
+	auto ss = m_machinebox.selected();
+	if (ss.empty()) return;
+	auto cat = m_machinebox.at(0);
+	m_machinebox.auto_draw(false);
+	auto sel = ss.at(0).item;
+	auto ind = listbox::index_pair{ 0, sel };
+	for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
+	{
+		ind.item = x;
+		auto ip = m_machinebox.at(ind);
+		if (!ip.displayed()) break;
+
+		auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
+		auto icon = load_icon(drv);
+		if (!icon.empty())
+			ip.icon(icon);
+		else
+		{
+			auto clone = driver_list::non_bios_clone(*drv);
+			if (clone != -1)
+			{
+				drv = &driver_list::driver(clone);
+				icon = load_icon(drv);
+				if (!icon.empty())
+					ip.icon(icon);
+			}
+		}
+	}
+
+	for (auto x = sel; x < cat.size(); ++x)
+	{
+		ind.item = x;
+		auto ip = m_machinebox.at(ind);
+		if (!ip.displayed()) break;
+
+		auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
+		auto icon = load_icon(drv);
+		if (!icon.empty())
+			ip.icon(icon);
+		else
+		{
+			auto clone = driver_list::non_bios_clone(*drv);
+			if (clone != -1)
+			{
+				drv = &driver_list::driver(clone);
+				icon = load_icon(drv);
+				if (!icon.empty())
+					ip.icon(icon);
+			}
+		}
+	}
+	m_machinebox.auto_draw(true);
+}
+
 
 void main_form::save_options()
 {
@@ -640,8 +650,7 @@ void main_form::update_selection()
 	}
 	else if (m_machinebox.at(0).size() > 0)
 	{
-		auto mm = m_machinebox.at(0).at(0).select(true, true);
-		update_selection(mm);
+		m_machinebox.at(0).at(0).select(true);
 	}
 }
 

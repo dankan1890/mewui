@@ -154,6 +154,7 @@ private:
 
 	void handle_events();
 	paint::image load_icon(const game_driver *drv) const;
+	void refresh_icons();
 
 };
 } // namespace mewui

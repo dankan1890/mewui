@@ -24,6 +24,7 @@
 #include "mewui/optionsform.h"
 #include <set>
 #include "nana/paint/pixel_buffer.hpp"
+#include <future>
 
 namespace mewui
 {
@@ -279,7 +280,6 @@ void main_form::perform_search()
 		if (comp.find(text) != std::string::npos)
 		{
 			elem.select(true, true);
-			//update_selection(elem);
 			break;
 		}
 	}
@@ -287,58 +287,104 @@ void main_form::perform_search()
 
 void main_form::refresh_icons()
 {
-	auto ss = m_machinebox.selected();
-	if (ss.empty()) return;
-	auto cat = m_machinebox.at(0);
-	m_machinebox.auto_draw(false);
-	auto sel = ss.at(0).item;
-	auto ind = listbox::index_pair{ 0, sel };
-	for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
-	{
-		ind.item = x;
-		auto ip = m_machinebox.at(ind);
-		if (!ip.displayed()) break;
-
-		auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-		auto icon = load_icon(drv);
-		if (!icon.empty())
-			ip.icon(icon);
-		else
+	threads::pool_push(pool_, [&] {
+		auto ss = m_machinebox.selected();
+		if (ss.empty()) return;
+		auto cat = m_machinebox.at(0);
+		m_machinebox.auto_draw(false);
+		auto sel = ss.at(0).item;
+		auto ind = listbox::index_pair{ 0, sel };
+		for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
 		{
+			ind.item = x;
+			auto ip = m_machinebox.at(ind);
+			if (!ip.displayed()) break;
+
+			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
 			auto clone = driver_list::non_bios_clone(*drv);
-			if (clone != -1)
+			auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
+			auto &parent = m_sortedlist[desc];
+			paint::image icon;
+			for (auto &e : parent)
 			{
-				drv = &driver_list::driver(clone);
-				icon = load_icon(drv);
-				if (!icon.empty())
-					ip.icon(icon);
+				if (e.first != drv) continue;
+				if (e.second.empty())
+				{
+					icon = load_icon(drv);
+					if (!icon.empty())
+					{
+						ip.icon(icon);
+						e.second = icon;
+					}
+					else
+					{
+						if (clone != -1)
+						{
+							drv = &driver_list::driver(clone);
+							icon = load_icon(drv);
+							if (!icon.empty())
+							{
+								ip.icon(icon);
+								e.second = icon;
+							}
+						}
+					}
+					break;
+				}
+				else
+				{
+					ip.icon(e.second);
+					break;
+				}
 			}
 		}
-	}
 
-	for (auto x = sel; x < cat.size(); ++x)
-	{
-		ind.item = x;
-		auto ip = m_machinebox.at(ind);
-		if (!ip.displayed()) break;
-
-		auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-		auto icon = load_icon(drv);
-		if (!icon.empty())
-			ip.icon(icon);
-		else
+		for (auto x = sel; x < cat.size(); ++x)
 		{
+			ind.item = x;
+			auto ip = m_machinebox.at(ind);
+			if (!ip.displayed()) break;
+
+			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
 			auto clone = driver_list::non_bios_clone(*drv);
-			if (clone != -1)
+			auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
+			auto &parent = m_sortedlist[desc];
+			paint::image icon;
+			for (auto &e : parent)
 			{
-				drv = &driver_list::driver(clone);
-				icon = load_icon(drv);
-				if (!icon.empty())
-					ip.icon(icon);
+				if (e.first != drv) continue;
+				if (e.second.empty())
+				{
+					icon = load_icon(drv);
+					if (!icon.empty())
+					{
+						ip.icon(icon);
+						e.second = icon;
+					}
+					else
+					{
+						if (clone != -1)
+						{
+							drv = &driver_list::driver(clone);
+							icon = load_icon(drv);
+							if (!icon.empty())
+							{
+								ip.icon(icon);
+								e.second = icon;
+							}
+						}
+					}
+					break;
+				}
+				else
+				{
+					ip.icon(e.second);
+					break;
+				}
 			}
 		}
-	}
-	m_machinebox.auto_draw(true);
+		m_machinebox.auto_draw(true);
+	})();
 }
 
 

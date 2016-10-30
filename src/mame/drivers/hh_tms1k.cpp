@@ -136,6 +136,7 @@
 #include "amaztron.lh" // clickable
 #include "astro.lh"
 #include "bankshot.lh"
+#include "bcheetah.lh"
 #include "bigtrak.lh"
 #include "bship.lh" // clickable
 #include "cnfball.lh"
@@ -154,6 +155,7 @@
 #include "einvader.lh" // test-layout(but still playable)
 #include "elecbowl.lh"
 #include "elecdet.lh"
+#include "esbattle.lh"
 #include "esoccer.lh"
 #include "fxmcr165.lh" // clickable
 #include "gjackpot.lh"
@@ -168,6 +170,7 @@
 #include "mdndclab.lh" // clickable
 #include "merlin.lh" // clickable
 #include "mmerlin.lh" // clickable
+#include "monkeysee.lh"
 #include "raisedvl.lh"
 #include "simon.lh" // clickable
 #include "speechp.lh"
@@ -706,7 +709,12 @@ MACHINE_CONFIG_END
 
   Bandai System Control Car: Cheetah 「システムコントロールカー チーター」
   * TMS1000NLL MP0915 (die label 1000B, MP0915)
-  * x
+  * 2 motors (one for back axis, one for steering), no sound
+  
+  It's a programmable buggy, like Big Track but much simpler. To add a command
+  step in program-mode, press a direction key and one of the time delay number
+  keys at the same time. To run the program(max 24 steps), switch to run-mode
+  and press the go-key.
 
   known releases:
   - Japan: System Control Car: Cheetah
@@ -722,7 +730,6 @@ public:
 		: hh_tms1k_state(mconfig, type, tag)
 	{ }
 
-	void prepare_display();
 	DECLARE_WRITE16_MEMBER(write_r);
 	DECLARE_WRITE16_MEMBER(write_o);
 	DECLARE_READ8_MEMBER(read_k);
@@ -730,45 +737,70 @@ public:
 
 // handlers
 
-void bcheetah_state::prepare_display()
-{
-}
-
 WRITE16_MEMBER(bcheetah_state::write_r)
 {
+	// R0-R4: input mux
+	// R5,R6: tied to K4??
+	m_inp_mux = data & 0x1f;
 }
 
 WRITE16_MEMBER(bcheetah_state::write_o)
 {
+	// O1: back motor (drive)
+	// O0: front motor steer left
+	// O2: front motor steer right
+	// O3: GND, other: N/C
+	output().set_value("motor1", data >> 1 & 1);
+	output().set_value("motor2_left", data & 1);
+	output().set_value("motor2_right", data >> 2 & 1);
 }
 
 READ8_MEMBER(bcheetah_state::read_k)
 {
 	// K: multiplexed inputs
-	return read_inputs(1);
+	return read_inputs(5);
 }
 
 
 // config
 
 static INPUT_PORTS_START( bcheetah )
-	PORT_START("IN.0") // R1
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD )
+	PORT_START("IN.0") // R0
+	PORT_BIT( 0x0d, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_CONFNAME( 0x02, 0x02, "Mode")
+	PORT_CONFSETTING(    0x02, "Program" )
+	PORT_CONFSETTING(    0x00, "Run" )
+
+	PORT_START("IN.1") // R1
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_LEFT) PORT_NAME("Left")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_UP) PORT_NAME("Forward")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_RIGHT) PORT_NAME("Right")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_ENTER) PORT_CODE(KEYCODE_ENTER_PAD) PORT_NAME("Go")
+
+	PORT_START("IN.2") // R2
+	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_DOWN) PORT_NAME("Stop")
+
+	PORT_START("IN.3") // R3
+	PORT_BIT( 0x05, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_1) PORT_CODE(KEYCODE_1_PAD) PORT_NAME("1")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_2) PORT_CODE(KEYCODE_2_PAD) PORT_NAME("2")
+
+	PORT_START("IN.4") // R4
+	PORT_BIT( 0x05, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_3) PORT_CODE(KEYCODE_3_PAD) PORT_NAME("3")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_4) PORT_CODE(KEYCODE_4_PAD) PORT_NAME("4")
 INPUT_PORTS_END
 
 static MACHINE_CONFIG_START( bcheetah, bcheetah_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS1000, 325000) // approximation - RC osc. R=47K, C=47pf
+	MCFG_CPU_ADD("maincpu", TMS1000, 100000) // approximation - RC osc. R=47K, C=47pf
 	MCFG_TMS1XXX_READ_K_CB(READ8(bcheetah_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(bcheetah_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(bcheetah_state, write_o))
 
-	MCFG_TIMER_DRIVER_ADD_PERIODIC("display_decay", hh_tms1k_state, display_decay_tick, attotime::from_msec(1))
-	MCFG_DEFAULT_LAYOUT(layout_hh_tms1k_test)
+	MCFG_DEFAULT_LAYOUT(layout_bcheetah)
 
 	/* no sound! */
 MACHINE_CONFIG_END
@@ -2524,22 +2556,22 @@ MACHINE_CONFIG_END
 
   Entex Space Battle
   * TMS1000 EN-6004 MP0920 (die label 1000B, MP0920)
-  * x
+  * 2 7seg LEDs, and other LEDs behind bezel, 1-bit sound
   
   The Japanese version was published by Gakken, same name.
 
   led translation table: led zz from game PCB = MAME y.x:
 
-    00 = -     10 = 1.1   20 = 2.3   30 = 5.2
-    01 = 0.0   11 = 1.2   21 = 3.0   31 = 5.3
-    02 = 0.1   12 = 1.3   22 = 3.1   32 = 6.0
-    03 = 0.2   13 = 1.4   23 = 3.2   33 = 6.1
-    04 = 0.3   14 = 1.5   24 = 3.3   34 = 7.2
-    05 = 0.4   15 = 1.6   25 = 4.0   35 = 7.0
-    06 = 0.5   16 = 1.7   26 = 4.1   36 = 7.1
-    07 = 0.6   17 = 2.0   27 = 4.2
-    08 = 0.7   18 = 2.1   28 = 5.0
-    09 = 1.0   19 = 2.2   29 = 5.1
+    0 = -     10 = 1.1   20 = 2.3   30 = 5.2
+    1 = 0.0   11 = 1.2   21 = 3.0   31 = 5.3
+    2 = 0.1   12 = 1.3   22 = 3.1   32 = 6.0
+    3 = 0.2   13 = 1.4   23 = 3.2   33 = 6.1
+    4 = 0.3   14 = 1.5   24 = 3.3   34 = 6.2
+    5 = 0.4   15 = 1.6   25 = 4.0   35 = 7.0
+    6 = 0.5   16 = 1.7   26 = 4.1   36 = 7.1
+    7 = 0.6   17 = 2.0   27 = 4.2
+    8 = 0.7   18 = 2.1   28 = 5.0
+    9 = 1.0   19 = 2.2   29 = 5.1
 
 ***************************************************************************/
 
@@ -2560,43 +2592,66 @@ public:
 
 void esbattle_state::prepare_display()
 {
+	// R8,R9 are 7segs
+	set_display_segmask(0x300, 0x7f);
+	display_matrix(8, 10, m_o, m_r);
 }
 
 WRITE16_MEMBER(esbattle_state::write_r)
 {
+	// R0,R1: input mux
+	m_inp_mux = data & 3;
+
+	// R10: speaker out
+	m_speaker->level_w(data >> 10 & 1);
+
+	// R0-R9: led select
+	m_r = data;
+	prepare_display();
 }
 
 WRITE16_MEMBER(esbattle_state::write_o)
 {
+	// O0-O7: led state
+	m_o = data;
+	prepare_display();
 }
 
 READ8_MEMBER(esbattle_state::read_k)
 {
 	// K: multiplexed inputs
-	return read_inputs(1);
+	return read_inputs(2);
 }
 
 
 // config
 
 static INPUT_PORTS_START( esbattle )
-	PORT_START("IN.0") // R1
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD )
+	PORT_START("IN.0") // R0
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("P1 Fire 1") // F1
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("P1 Fire 2") // F2
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 Launch")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START("IN.1") // R1
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL PORT_NAME("P2 Fire 1") // F1
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL PORT_NAME("P2 Fire 2") // F2
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_COCKTAIL PORT_NAME("P2 Launch")
+	PORT_CONFNAME( 0x08, 0x08, "Players" )
+	PORT_CONFSETTING(    0x08, "1" ) // Auto
+	PORT_CONFSETTING(    0x00, "2" ) // Manual
 INPUT_PORTS_END
 
 static MACHINE_CONFIG_START( esbattle, esbattle_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS1000, 350000) // approximation - RC osc. R=47K, C=33pf
+	MCFG_CPU_ADD("maincpu", TMS1000, 425000) // approximation - RC osc. R=47K, C=33pf
 	MCFG_TMS1XXX_READ_K_CB(READ8(esbattle_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(esbattle_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(esbattle_state, write_o))
 
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("display_decay", hh_tms1k_state, display_decay_tick, attotime::from_msec(1))
-	MCFG_DEFAULT_LAYOUT(layout_hh_tms1k_test)
+	MCFG_DEFAULT_LAYOUT(layout_esbattle)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
@@ -6341,9 +6396,11 @@ MACHINE_CONFIG_END
 
   (Tandy) Radio Shack Monkey See (1982 version)
   * TMS1000 MP0271 (die label 1000E, MP0271), only half of ROM space used
-  * x
+  * 2 LEDs(one red, one green), 1-bit sound
   
   This is the TMS1000 version, the one from 1977 has a MM5780.
+  To play, enter an equation followed by the ?-key, and the calculator will
+  tell you if it was right(green) or wrong(red). For example 1+2=3?
 
   known releases:
   - USA(1): Monkey See
@@ -6358,7 +6415,6 @@ public:
 		: hh_tms1k_state(mconfig, type, tag)
 	{ }
 
-	void prepare_display();
 	DECLARE_WRITE16_MEMBER(write_r);
 	DECLARE_WRITE16_MEMBER(write_o);
 	DECLARE_READ8_MEMBER(read_k);
@@ -6366,47 +6422,78 @@ public:
 
 // handlers
 
-void monkeysee_state::prepare_display()
-{
-}
-
 WRITE16_MEMBER(monkeysee_state::write_r)
 {
+	// R0-R4: input mux
+	m_inp_mux = data & 0x1f;
+
+	// R5: speaker out
+	m_speaker->level_w(data >> 5 & 1);
 }
 
 WRITE16_MEMBER(monkeysee_state::write_o)
 {
+	// O6,O7: leds
+	// other: N/C
+	display_matrix(2, 1, data >> 6, 1);
 }
 
 READ8_MEMBER(monkeysee_state::read_k)
 {
 	// K: multiplexed inputs
-	return read_inputs(1);
+	return read_inputs(5);
 }
 
 
 // config
 
 static INPUT_PORTS_START( monkeysee )
-	PORT_START("IN.0") // R1
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD )
+	PORT_START("IN.0") // R0
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_0) PORT_CODE(KEYCODE_0_PAD) PORT_NAME("0")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_1) PORT_CODE(KEYCODE_1_PAD) PORT_NAME("1")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_3) PORT_CODE(KEYCODE_3_PAD) PORT_NAME("3")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_2) PORT_CODE(KEYCODE_2_PAD) PORT_NAME("2")
+
+	PORT_START("IN.1") // R1
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_4) PORT_CODE(KEYCODE_4_PAD) PORT_NAME("4")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_5) PORT_CODE(KEYCODE_5_PAD) PORT_NAME("5")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_7) PORT_CODE(KEYCODE_7_PAD) PORT_NAME("7")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_6) PORT_CODE(KEYCODE_6_PAD) PORT_NAME("6")
+
+	PORT_START("IN.2") // R2
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_8) PORT_CODE(KEYCODE_8_PAD) PORT_NAME("8")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_9) PORT_CODE(KEYCODE_9_PAD) PORT_NAME("9")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START("IN.3") // R3
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_ASTERISK) PORT_NAME(UTF8_MULTIPLY)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_SLASH_PAD) PORT_NAME(UTF8_DIVIDE)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_PLUS_PAD) PORT_NAME("+")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_MINUS_PAD) PORT_NAME("-")
+
+	PORT_START("IN.4") // R4
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_ENTER) PORT_CODE(KEYCODE_ENTER_PAD) PORT_NAME("=")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_SLASH) PORT_NAME("?")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_DEL) PORT_NAME("C")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_KEYPAD ) PORT_CODE(KEYCODE_STOP) PORT_CODE(KEYCODE_DEL_PAD) PORT_NAME(".")
 INPUT_PORTS_END
 
 static MACHINE_CONFIG_START( monkeysee, monkeysee_state )
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", TMS1000, 225000) // approximation - RC osc. R=68K, C=47pf
+	MCFG_CPU_ADD("maincpu", TMS1000, 250000) // approximation - RC osc. R=68K, C=47pf
 	MCFG_TMS1XXX_READ_K_CB(READ8(monkeysee_state, read_k))
 	MCFG_TMS1XXX_WRITE_R_CB(WRITE16(monkeysee_state, write_r))
 	MCFG_TMS1XXX_WRITE_O_CB(WRITE16(monkeysee_state, write_o))
 
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("display_decay", hh_tms1k_state, display_decay_tick, attotime::from_msec(1))
-	MCFG_DEFAULT_LAYOUT(layout_hh_tms1k_test)
+	MCFG_DEFAULT_LAYOUT(layout_monkeysee)
 
-	/* no sound! */
+	/* sound hardware */
+	MCFG_SPEAKER_STANDARD_MONO("mono")
+	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_CONFIG_END
 
 
@@ -7922,7 +8009,7 @@ CONS( 1979, matchnum,  0,        0, matchnum,  matchnum,  driver_device, 0, "A-O
 
 COMP( 1980, mathmagi,  0,        0, mathmagi,  mathmagi,  driver_device, 0, "APF Electronics Inc.", "Mathemagician", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW )
 
-CONS( 1979, bcheetah,  0,        0, bcheetah,  bcheetah,  driver_device, 0, "Bandai", "System Control Car: Cheetah", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW )
+CONS( 1979, bcheetah,  0,        0, bcheetah,  bcheetah,  driver_device, 0, "Bandai", "System Control Car: Cheetah", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW | MACHINE_MECHANICAL ) // ***
 
 CONS( 1978, amaztron,  0,        0, amaztron,  amaztron,  driver_device, 0, "Coleco", "Amaze-A-Tron", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // ***
 COMP( 1979, zodiac,    0,        0, zodiac,    zodiac,    driver_device, 0, "Coleco", "Zodiac - The Astrology Computer", MACHINE_SUPPORTS_SAVE )
@@ -7980,7 +8067,7 @@ CONS( 1982, lostreas,  0,        0, lostreas,  lostreas,  driver_device, 0, "Par
 CONS( 1980, tcfball,   0,        0, tcfball,   tcfball,   driver_device, 0, "Tandy Radio Shack", "Championship Football (model 60-2150)", MACHINE_SUPPORTS_SAVE )
 CONS( 1980, tcfballa,  tcfball,  0, tcfballa,  tcfballa,  driver_device, 0, "Tandy Radio Shack", "Championship Football (model 60-2151)", MACHINE_SUPPORTS_SAVE )
 CONS( 1981, tandy12,   0,        0, tandy12,   tandy12,   driver_device, 0, "Tandy Radio Shack", "Tandy-12: Computerized Arcade", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // some of the minigames: ***
-CONS( 1982, monkeysee, 0,        0, monkeysee, monkeysee, driver_device, 0, "Tandy Radio Shack", "Monkey See (1982 version)", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW )
+CONS( 1982, monkeysee, 0,        0, monkeysee, monkeysee, driver_device, 0, "Tandy Radio Shack", "Monkey See (1982 version)", MACHINE_SUPPORTS_SAVE )
 
 COMP( 1976, speechp,   0,        0, speechp,   speechp,   driver_device, 0, "Telesensory Systems, Inc.", "Speech+", MACHINE_SUPPORTS_SAVE )
 

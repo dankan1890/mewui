@@ -461,6 +461,7 @@ void main_form::init_filters()
 
 	this->get_place()["treebox"] << m_treebox;
 	m_treebox.renderer(treebox_custom_renderer(m_treebox.renderer()));
+	m_treebox.placer(custom_placer(m_treebox.placer()));
 }
 
 void main_form::init_tabbar()

@@ -1129,7 +1129,7 @@ class custom_renderer : public menu::renderer_interface
 public:
 	using cloneable_renderer = pat::cloneable<renderer_interface>;
 
-	custom_renderer(const cloneable_renderer& rd);
+	explicit custom_renderer(const cloneable_renderer& rd);
 
 private:
 	void background(graph_reference graph, window wd) override;
@@ -1178,7 +1178,7 @@ class tabbar_custom_renderer : public tabbar<std::string>::item_renderer
 public:
 	using cloneable_renderer = pat::cloneable<tabbar<std::string>::item_renderer>;
 
-	tabbar_custom_renderer(const cloneable_renderer& rd) : renderer_(rd) {}
+	explicit tabbar_custom_renderer(const cloneable_renderer& rd) : renderer_(rd) {}
 
 private:
 	void background(graph_reference graph, const nana::rectangle& r, const ::nana::color& bgcolor) override;
@@ -1220,6 +1220,43 @@ private:
 	cloneable_renderer renderer_;
 };
 
+class custom_placer	: public treebox::compset_placer_interface
+{
+	using cloneable_placer = pat::cloneable<treebox::compset_placer_interface>;
+public:
+	explicit custom_placer(const cloneable_placer& r)
+		: text_offset_(0)
+		, placer_(r) {}
+
+private:
+	void enable(component_t comp, bool enabled) override
+	{
+		return placer_->enable(comp, enabled);
+	}
+
+	bool enabled(component_t comp) const override
+	{
+		return placer_->enabled(comp);
+	}
+
+	unsigned item_height(graph_reference graph) const override
+	{
+		return placer_->item_height(graph);
+	}
+
+	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
+	{
+		return graph.width();
+	}
+
+	bool locate(component_t comp, const item_attribute_t& attr, nana::rectangle * r) const override
+	{
+		return placer_->locate(comp, attr, r);
+	}
+
+	mutable int text_offset_;
+	cloneable_placer placer_;
+};
 
 } // namespace mewui
 

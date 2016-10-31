@@ -280,6 +280,7 @@ void main_form::perform_search()
 		if (comp.find(text) != std::string::npos)
 		{
 			elem.select(true, true);
+			refresh_icons();
 			break;
 		}
 	}

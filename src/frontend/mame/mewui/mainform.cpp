@@ -96,7 +96,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	// Main title
 	auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
 	this->caption(maintitle);
-	this->bgcolor(color(214, 219, 233));
+	this->bgcolor(m_bgcolor);
 	if (m_ui->options().form_max()) this->zoom(true); // Maximize
 
 #if defined(NANA_WINDOWS)
@@ -288,38 +288,37 @@ void main_form::perform_search()
 
 void main_form::refresh_icons()
 {
-	threads::pool_push(pool_, [&] {
+	threads::pool_push(m_pool, [&] {
 		auto ss = m_machinebox.selected();
 		if (ss.empty()) return;
 		auto cat = m_machinebox.at(0);
 		m_machinebox.auto_draw(false);
 		auto sel = ss.at(0).item;
 		auto ind = listbox::index_pair{ 0, sel };
-		for (auto x = sel; x != std::numeric_limits<size_t>::max(); --x)
-		{
-			ind.item = x;
-			auto ip = m_machinebox.at(ind);
-			if (!ip.displayed()) break;
-
-			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-			auto clone = driver_list::non_bios_clone(*drv);
-			auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
-			auto &parent = m_sortedlist[desc];
-			paint::image icon;
-			for (auto &e : parent)
+		for (auto count = 0; count < 2; ++count)
+			for (auto x = sel; count ? x != std::numeric_limits<size_t>::max() : x < cat.size(); count ? --x : ++x)
 			{
-				if (e.first != drv) continue;
-				if (e.second.empty())
+				ind.item = x;
+				auto ip = m_machinebox.at(ind);
+				if (!ip.displayed()) break;
+
+				auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
+				auto clone = driver_list::non_bios_clone(*drv);
+				auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
+				auto &parent = m_sortedlist[desc];
+				paint::image icon;
+				for (auto &e : parent)
 				{
-					icon = load_icon(drv);
-					if (!icon.empty())
+					if (e.first != drv) continue;
+					if (e.second.empty())
 					{
-						ip.icon(icon);
-						e.second = icon;
-					}
-					else
-					{
-						if (clone != -1)
+						icon = load_icon(drv);
+						if (!icon.empty())
+						{
+							ip.icon(icon);
+							e.second = icon;
+						}
+						else if (clone != -1)
 						{
 							drv = &driver_list::driver(clone);
 							icon = load_icon(drv);
@@ -330,60 +329,13 @@ void main_form::refresh_icons()
 							}
 						}
 					}
-					break;
-				}
-				else
-				{
-					ip.icon(e.second);
-					break;
-				}
-			}
-		}
-
-		for (auto x = sel; x < cat.size(); ++x)
-		{
-			ind.item = x;
-			auto ip = m_machinebox.at(ind);
-			if (!ip.displayed()) break;
-
-			auto drv = &driver_list::driver(driver_list::find(ip.text(1).c_str()));
-			auto clone = driver_list::non_bios_clone(*drv);
-			auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
-			auto &parent = m_sortedlist[desc];
-			paint::image icon;
-			for (auto &e : parent)
-			{
-				if (e.first != drv) continue;
-				if (e.second.empty())
-				{
-					icon = load_icon(drv);
-					if (!icon.empty())
-					{
-						ip.icon(icon);
-						e.second = icon;
-					}
 					else
 					{
-						if (clone != -1)
-						{
-							drv = &driver_list::driver(clone);
-							icon = load_icon(drv);
-							if (!icon.empty())
-							{
-								ip.icon(icon);
-								e.second = icon;
-							}
-						}
+						ip.icon(e.second);
 					}
 					break;
 				}
-				else
-				{
-					ip.icon(e.second);
-					break;
-				}
 			}
-		}
 		m_machinebox.auto_draw(true);
 	})();
 }
@@ -468,21 +420,20 @@ void main_form::init_filters()
 void main_form::init_tabbar()
 {
 	this->get_place()["tab"] << m_tabbar;
-	this->get_place()["tab_frame"].fasten(m_textpage).fasten(m_imgpage); //Fasten the tab pages
-
+	this->get_place()["tab_frame"].fasten(m_textpage).fasten(m_imgpage);
 	m_tabbar.append("Images", m_imgpage).append("Info", m_textpage);
-	m_tabbar.bgcolor(color(214, 219, 233));
-	m_tabbar.tab_bgcolor(0, color(240, 240, 240));
-	m_tabbar.tab_bgcolor(1, color(240, 240, 240));
+	m_tabbar.bgcolor(m_bgcolor);
+	m_tabbar.tab_bgcolor(0, m_tab_color);
+	m_tabbar.tab_bgcolor(1, m_tab_color);
 	m_tabbar.activated(0);
 	m_tabbar.renderer(tabbar_custom_renderer(m_tabbar.renderer()));
 
 	this->get_place()["swtabf"] << m_tabsw;
-	this->get_place()["swtab"].fasten(m_swpage); //Fasten the tab pages
+	this->get_place()["swtab"].fasten(m_swpage);
 
 	m_tabsw.append("Software Packages", m_swpage);
-	m_tabsw.bgcolor(color(214, 219, 233));
-	m_tabsw.tab_bgcolor(0, color(240, 240, 240));
+	m_tabsw.bgcolor(m_bgcolor);
+	m_tabsw.tab_bgcolor(0, m_tab_color);
 	m_tabsw.activated(0);
 	m_tabsw.renderer(tabbar_custom_renderer(m_tabsw.renderer()));
 }
@@ -883,7 +834,7 @@ void main_form::load_sw_data(std::string list, std::string name, std::string par
 }
 void main_form::init_menubar()
 {
-	m_menubar.bgcolor(color(214, 219, 233));
+	m_menubar.bgcolor(m_bgcolor);
 
 	// Initialize menu
 	init_file_menu();

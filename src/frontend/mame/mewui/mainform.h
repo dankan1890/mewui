@@ -122,7 +122,8 @@ private:
 	std::map<std::string, std::vector<std::pair<const game_driver *, paint::image>>, ci_less> m_sortedlist;
 	std::string m_exename;
 	int m_resel = 0;
-	threads::pool pool_;
+	threads::pool m_pool;
+	color m_bgcolor{ 214, 219, 233 }, m_tab_color{ 240, 240, 240 };
 
 	// Init widgets
 	void init_tabbar();

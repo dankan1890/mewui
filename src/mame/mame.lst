@@ -9493,6 +9493,7 @@ bigrun                          // (c) 1989 Jaleco
 captflag                        // (c) 1993 Jaleco
 cischeat                        // (c) 1990 Jaleco
 f1gpstar                        // (c) 1991 Jaleco
+f1gpstaro                       // (c) 1991 Jaleco
 f1gpstr2                        // (c) 1993 Jaleco
 scudhamm                        // (c) 1994 Jaleco
 wildplt                         // (c) 1992 Jaleco
@@ -28746,6 +28747,7 @@ ms4plus                         // bootleg
 ms5plus                         // bootleg
 mslug                           // 0201 (c) 1996 Nazca
 mslug2                          // 0241 (c) 1998 SNK
+mslug2t                         // bootleg
 mslug3                          // 0256 (c) 2000 SNK
 mslug3b6                        // bootleg
 mslug3h                         // 0256 (c) 2000 SNK

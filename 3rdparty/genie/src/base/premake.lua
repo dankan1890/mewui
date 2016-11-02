@@ -32,6 +32,7 @@
 		io.output(f)
 		callback(obj)
 		f:close()
+		premake.stats.num_generated = premake.stats.num_generated + 1
 	end
 
 --

@@ -841,6 +841,8 @@ void main_form::init_menubar()
 	m_menubar.scheme().text_fgcolor = colors::white;
 	m_menubar.scheme().body_highlight = color{ "#3296AA" };
 	m_menubar.scheme().border_highlight = color{ "#3296AA" };
+	m_menubar.scheme().body_selected = color{ "#3296AA" };
+	m_menubar.scheme().border_selected = color{ "#3296AA" };
 
 	// Initialize menu
 	init_file_menu();
@@ -960,6 +962,8 @@ void main_form::init_context_menu()
 			start_machine(game);
 		}
 	});
+	m_context_menu.renderer(menu_renderer(m_context_menu.renderer()));
+
 /*	m_context_menu.append_splitter();
 	m_context_menu.append("Play and Record Input", [this](menu::item_proxy& ip) {});
 	m_context_menu.append_splitter();

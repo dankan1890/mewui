@@ -234,7 +234,7 @@ void main_form::handle_events()
 	});
 
 	// Filters event
-	m_treebox.events().selected([this](const arg_treebox& ei) {
+	m_filters.m_treebox.events().selected([this](const arg_treebox& ei) {
 		if (!ei.operated) return;
 		auto filt = ei.item.text();
 		if (ei.item.level() == 1)
@@ -356,11 +356,11 @@ void main_form::save_options()
 		auto game = m_machinebox.at(0).at(sel[0].item).text(1);
 		mui.set_value(OPTION_LAST_USED_MACHINE, game.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	}
-	auto tsel = m_treebox.selected();
+	auto tsel = m_filters.m_treebox.selected();
 	if (tsel.level() == 0)
-		mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+		mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	else
-		mui.set_value(OPTION_LAST_USED_FILTER, m_treebox.selected().owner().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+		mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_treebox.selected().owner().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	auto &pl = this->get_place().div();
 	mui.set_value(MEWUI_LAYOUT, pl.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
@@ -382,7 +382,7 @@ void main_form::init_filters()
 	// TEST
 	for (auto & m : filters_option_ex)
 	{
-		auto node = m_treebox.insert(m.first, m.first);
+		auto node = m_filters.m_treebox.insert(m.first, m.first);
 		switch (m.second.second)
 		{
 			case 0: // Manufacturers
@@ -405,16 +405,14 @@ void main_form::init_filters()
 		}
 	}
 
-	auto node = m_treebox.find(m_ui->options().last_used_filter());
+	auto node = m_filters.m_treebox.find(m_ui->options().last_used_filter());
 
 	if (node.level() == 0)
-		node = m_treebox.find("All");
+		node = m_filters.m_treebox.find("All");
 
 	node.select(true);
 
-	this->get_place()["treebox"] << m_treebox;
-	m_treebox.renderer(treebox_custom_renderer(m_treebox.renderer()));
-	m_treebox.placer(custom_placer(m_treebox.placer()));
+	this->get_place()["treebox"] << m_filters;
 }
 
 void main_form::init_tabbar()
@@ -426,7 +424,7 @@ void main_form::init_tabbar()
 	m_tabbar.tab_bgcolor(0, m_tab_color);
 	m_tabbar.tab_bgcolor(1, m_tab_color);
 	m_tabbar.activated(0);
-	m_tabbar.renderer(tabbar_custom_renderer(m_tabbar.renderer()));
+	m_tabbar.renderer(tabbar_renderer(m_tabbar.renderer()));
 
 	this->get_place()["swtabf"] << m_tabsw;
 	this->get_place()["swtab"].fasten(m_swpage);
@@ -435,7 +433,7 @@ void main_form::init_tabbar()
 	m_tabsw.bgcolor(m_bgcolor);
 	m_tabsw.tab_bgcolor(0, m_tab_color);
 	m_tabsw.activated(0);
-	m_tabsw.renderer(tabbar_custom_renderer(m_tabsw.renderer()));
+	m_tabsw.renderer(tabbar_renderer(m_tabsw.renderer()));
 }
 
 void main_form::init_machinebox()
@@ -466,15 +464,18 @@ void main_form::init_machinebox()
 			m_sortedlist[driver_list::driver(id).description].emplace_back(drv, paint::image());
 	}
 
-	populate_listbox(m_treebox.selected().text());
+	populate_listbox(m_filters.m_treebox.selected().text());
 
 	// Place into the layout
 	this->get_place()["machinebox"] << m_machinebox;
 
 	m_machinebox.enable_single(true, true);
-	m_machinebox.scheme().header_bgcolor = static_cast<color_rgb>(0x324565);
+	m_machinebox.scheme().header_bgcolor = m_menubar_color;
 	m_machinebox.scheme().header_fgcolor = colors::white;
-	m_machinebox.scheme().item_highlighted = colors::white;
+	m_machinebox.scheme().header_highlighted = color("#3296AA");
+	m_machinebox.scheme().item_highlighted = m_bgcolor;
+	m_machinebox.bgcolor(m_bgcolor);
+
 	m_machinebox.always_selected(true);
 }
 
@@ -588,6 +589,8 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			cat.append({ std::string(game->description), std::string(game->name), std::string(game->manufacturer), std::string(game->year), core_filename_extract_base(game->source_file) });
+			cat.at(index).bgcolor(color("#232323"));
+			cat.at(index).fgcolor(colors::white);
 			if (m_latest_machine == game->name) m_resel = index;
 
 			bool cloneof = strcmp(game->parent, "0");
@@ -834,7 +837,10 @@ void main_form::load_sw_data(std::string list, std::string name, std::string par
 }
 void main_form::init_menubar()
 {
-	m_menubar.bgcolor(m_bgcolor);
+	m_menubar.bgcolor(m_menubar_color);
+	m_menubar.scheme().text_fgcolor = colors::white;
+	m_menubar.scheme().body_highlight = color{ "#3296AA" };
+	m_menubar.scheme().border_highlight = color{ "#3296AA" };
 
 	// Initialize menu
 	init_file_menu();
@@ -872,7 +878,7 @@ void main_form::init_file_menu()
 */
 	menu.append_splitter();
 	menu.append("E&xit", [this](menu::item_proxy& ip) { this->close(); });
-	menu.renderer(custom_renderer(menu.renderer()));
+	menu.renderer(menu_renderer(menu.renderer()));
 }
 
 void main_form::init_view_menu()
@@ -889,7 +895,7 @@ void main_form::init_view_menu()
 		item.checked(this->get_place().field_display(e.second.c_str()));
 	}
 
-	menu.renderer(custom_renderer(menu.renderer()));
+	menu.renderer(menu_renderer(menu.renderer()));
 }
 
 void main_form::init_options_menu()
@@ -914,7 +920,7 @@ void main_form::init_options_menu()
 //	menu.append("Background Image", [this](menu::item_proxy& ip) {});
 //	menu.append_splitter();
 //	menu.append("Reset to Default", [this](menu::item_proxy& ip) {});
-	menu.renderer(custom_renderer(menu.renderer()));
+	menu.renderer(menu_renderer(menu.renderer()));
 }
 
 void main_form::init_help_menu()
@@ -941,7 +947,7 @@ void main_form::init_help_menu()
 		fm.show();
 		fm.modality();
 	});
-	menu.renderer(custom_renderer(menu.renderer()));
+	menu.renderer(menu_renderer(menu.renderer()));
 }
 
 void main_form::init_context_menu()
@@ -1004,7 +1010,7 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 tab_page_softwarebox::tab_page_softwarebox(window wd)
 	: panel<true>(wd)
 {
-	this->bgcolor(color(240, 240, 240));
+	this->bgcolor(color("#232323"));
 	m_softwarebox.append_header("Name", 180);
 	m_softwarebox.append_header("Set", 70);
 	m_softwarebox.append_header("Publisher", 180);
@@ -1015,8 +1021,11 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 	// Layout
 	m_place.div("<swbox>");
 	m_place["swbox"] << m_softwarebox;
-	m_softwarebox.scheme().header_bgcolor = static_cast<color_rgb>(0x324565);
+	m_softwarebox.scheme().header_bgcolor = color("#2C2C2C");
 	m_softwarebox.scheme().header_fgcolor = colors::white;
+	m_softwarebox.scheme().header_highlighted = color("#3296AA");
+	m_softwarebox.scheme().item_highlighted = colors::white;
+
 }
 
 tab_page_textbox::tab_page_textbox(window wd)
@@ -1049,6 +1058,22 @@ tab_page_textbox::tab_page_textbox(window wd)
 		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
 	});
+}
+
+panel_filter::panel_filter(window wd)
+	: panel<true>(wd)
+{
+	// Layout
+	m_place.div("<vert <weight=20 title><treebox>>");
+	m_place["title"] << m_title;
+	m_place["treebox"] << m_treebox;
+
+	m_title.bgcolor(color("#2C2C2C"));
+	m_title.fgcolor(colors::white);
+	m_title.text_align(align::left, align_v::center);
+	m_treebox.renderer(treebox_renderer(m_treebox.renderer()));
+	m_treebox.placer(custom_placer(m_treebox.placer()));
+	m_treebox.bgcolor(color("#232323"));
 }
 
 statusbar::statusbar(window wd)

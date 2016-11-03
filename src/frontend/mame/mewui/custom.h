@@ -17,6 +17,7 @@
 #include <nana/gui/widgets/tabbar.hpp>
 #include <nana/gui/element.hpp>
 #include <nana/gui/widgets/listbox.hpp>
+#include <nana/paint/text_renderer.hpp>
 using namespace nana;
 
 namespace mewui
@@ -1115,34 +1116,30 @@ const unsigned char logo_mewui[] = {
 	0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
 };
 
-class button_custom : public element::element_interface
+class button_renderer : public element::element_interface
 {
 public:
-	button_custom()	{}
+	button_renderer()	{}
 
 private:
 	bool draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state) override;
 };
 
-class custom_renderer : public menu::renderer_interface
+class menu_renderer : public menu::renderer_interface
 {
 public:
 	using cloneable_renderer = pat::cloneable<renderer_interface>;
 
-	explicit custom_renderer(const cloneable_renderer& rd);
+	explicit menu_renderer(const cloneable_renderer& rd);
 
 private:
 	void background(graph_reference graph, window wd) override;
 	void item(graph_reference graph, const nana::rectangle& r, const attr& at) override;
+	void item_text(graph_reference graph, const nana::point& pos, const std::string& text, unsigned pixels, const attr& atr) override;
 
 	void item_image(graph_reference graph, const nana::point& pos, unsigned image_px, const paint::image& img) override
 	{
 		rdptr_->item_image(graph, pos, image_px, img);
-	}
-
-	void item_text(graph_reference graph, const nana::point& pos, const std::string& text, unsigned pixels, const attr& atr) override
-	{
-		rdptr_->item_text(graph, pos, text, pixels, atr);
 	}
 
 	void sub_arrow(graph_reference graph, const nana::point& pos, unsigned pixels, const attr& atr) override
@@ -1154,12 +1151,12 @@ private:
 	facade<element::crook> crook_;
 };
 
-class treebox_custom_renderer
+class treebox_renderer
 	: public treebox::renderer_interface
 {
 	using cloneable_renderer = pat::cloneable<treebox::renderer_interface>;
 public:
-	explicit treebox_custom_renderer(const cloneable_renderer & rd)	: renderer_(rd)	{}
+	explicit treebox_renderer(const cloneable_renderer & rd)	: renderer_(rd)	{}
 private:
 	void set_color(const nana::color& bgcolor, const nana::color& fgcolor) override;
 	void bground(graph_reference graph, const compset_interface * compset) const override;
@@ -1173,12 +1170,12 @@ private:
 	mutable facade<element::crook> crook_;
 };
 
-class tabbar_custom_renderer : public tabbar<std::string>::item_renderer
+class tabbar_renderer : public tabbar<std::string>::item_renderer
 {
 public:
 	using cloneable_renderer = pat::cloneable<tabbar<std::string>::item_renderer>;
 
-	explicit tabbar_custom_renderer(const cloneable_renderer& rd) : renderer_(rd) {}
+	explicit tabbar_renderer(const cloneable_renderer& rd) : renderer_(rd) {}
 
 private:
 	void background(graph_reference graph, const nana::rectangle& r, const ::nana::color& bgcolor) override;

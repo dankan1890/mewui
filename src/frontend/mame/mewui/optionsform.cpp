@@ -34,11 +34,11 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	pl["abc"] << m_b_add << m_b_change << m_b_del << m_b_up << m_b_down;
 	m_listbox.append_header("");
 	m_listbox.show_header(false);
-	m_b_add.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
-	m_b_change.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
-	m_b_del.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
-	m_b_down.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
-	m_b_up.set_bground(button_custom()).edge_effects(false).enable_focus_color(false);
+	m_b_add.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
+	m_b_change.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
+	m_b_del.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
+	m_b_down.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
+	m_b_up.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
 
 	for (auto &opt : arts_info)
 		m_list[opt.first] = opt.second;
@@ -184,8 +184,8 @@ okcancel_panel::okcancel_panel(window wd)
 	this->bgcolor(color(240, 240, 240));
 	m_place.div("<><weight=177 <vert <><weight=24 gap=5 abc><> > ><weight=5>");
 	m_place["abc"] << m_ok << m_cancel;
-	m_cancel.set_bground(button_custom());
-	m_ok.set_bground(button_custom());
+	m_cancel.set_bground(button_renderer());
+	m_ok.set_bground(button_renderer());
 	m_ok.edge_effects(false);
 	m_cancel.edge_effects(false);
 }
@@ -258,7 +258,7 @@ folderbox::folderform::folderform(window wd)
 		m_tb.auto_draw(true);
 	});
 
-	m_tb.renderer(treebox_custom_renderer(m_tb.renderer()));
+	m_tb.renderer(treebox_renderer(m_tb.renderer()));
 	this->collocate();
 	this->modality();
 }

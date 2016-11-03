@@ -1155,9 +1155,10 @@ namespace nana
 			struct scheme
 				: public widget_geometrics
 			{
-				color_proxy header_bgcolor{static_cast<color_rgb>(0xf1f2f4)};
+				color_proxy header_bgcolor{ static_cast<color_rgb>(0xf1f2f4) };
 				color_proxy header_fgcolor{ colors::black };
-				color_proxy header_grabbed{ static_cast<color_rgb>(0x8BD6F6)};
+				color_proxy header_highlighted{ colors::white };
+				color_proxy header_grabbed{ static_cast<color_rgb>(0x8BD6F6) };
 				color_proxy header_floated{ static_cast<color_rgb>(0xBABBBC)};
 				color_proxy item_selected{ static_cast<color_rgb>(0xD5EFFC) };
 				color_proxy item_highlighted{ static_cast<color_rgb>(0xD5EFFC) };

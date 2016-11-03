@@ -3525,7 +3525,7 @@ namespace nana
 					switch(state)
 					{
 					case item_state::normal:		bgcolor = essence_->scheme_ptr->header_bgcolor.get_color(); break;
-					case item_state::highlighted:	bgcolor = essence_->scheme_ptr->header_bgcolor.get_color().blend(colors::white, 0.5); break;
+					case item_state::highlighted:	bgcolor = essence_->scheme_ptr->header_bgcolor.get_color().blend(essence_->scheme_ptr->header_highlighted, 0.5); break;
 					case item_state::pressed:
 					case item_state::grabbed:		bgcolor = essence_->scheme_ptr->header_grabbed.get_color(); break;
 					case item_state::floated:		bgcolor = essence_->scheme_ptr->header_floated.get_color();	break;

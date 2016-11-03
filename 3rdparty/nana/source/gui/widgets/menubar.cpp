@@ -85,24 +85,24 @@ namespace nana
 
 			//class item_renderer
 				item_renderer::item_renderer(window wd, graph_reference graph)
-					:handle_(wd), graph_(graph)
+					:handle_(wd), graph_(graph), scheme_ptr_(static_cast<scheme*>(API::dev::get_scheme(wd)))
 				{}
 
 				void item_renderer::background(const nana::point& pos, const nana::size& size, state item_state)
 				{
-					auto bground = API::fgcolor(handle_);
+					auto bground = scheme_ptr_->text_fgcolor;
 					::nana::color border, body, corner;
 
 					switch (item_state)
 					{
 					case state::highlighted:
-						border = colors::highlight;
-						body.from_rgb(0xC0, 0xDD, 0xFC);
+						border = scheme_ptr_->border_highlight;
+						body = scheme_ptr_->body_highlight;
 						corner = body.blend(bground, 0.5);
 						break;
 					case state::selected:
-						border = colors::dark_border;
-						body = colors::white;
+						border = scheme_ptr_->border_selected;
+						body = scheme_ptr_->body_selected;
 						corner = body.blend(bground, 0.5);
 						break;
 					default:	//Don't process other states.
@@ -120,7 +120,8 @@ namespace nana
 
 				void item_renderer::caption(const point& pos, const native_string_type& text)
 				{
-					graph_.string(pos, text, colors::black);
+					graph_.string(pos, text, scheme_ptr_->text_fgcolor);
+
 				}
 			//end class item_renderer
 
@@ -602,7 +603,7 @@ namespace nana
 
 		void menubar::create(window wd)
 		{
-			widget_object<category::widget_tag, drawerbase::menubar::trigger>
+			widget_object<category::widget_tag, drawerbase::menubar::trigger, ::nana::general_events, drawerbase::menubar::scheme>
 				::create(wd, rectangle(nana::size(API::window_size(wd).width, 28)));
 
 			API::dev::set_menubar(handle(), true);

@@ -77,6 +77,18 @@ private:
 	place m_place{ *this };
 };
 
+class panel_filter : public panel<true>
+{
+public:
+	explicit panel_filter(window);
+	treebox m_treebox{ *this };
+
+private:
+	//drawing dw{ *this };
+	label m_title{ *this, "   Filters" };
+	place m_place{ *this };
+};
+
 class statusbar : public panel<true>
 {
 public:
@@ -104,7 +116,6 @@ private:
 	button m_search_button{ *this };
 	menu m_context_menu;
 	notifier m_notif{ *this };
-	treebox m_treebox{ *this };
 	paint::font m_font;
 
 	tabbar<std::string> m_tabbar{ *this };
@@ -113,6 +124,7 @@ private:
 	tab_page_textbox m_textpage{ *this };
 	tab_page_picturebox m_imgpage{ *this };
 	tab_page_softwarebox m_swpage{ *this };
+	panel_filter m_filters{ *this };
 
 	const game_driver** m_system;
 	emu_options& m_options;
@@ -123,7 +135,7 @@ private:
 	std::string m_exename;
 	int m_resel = 0;
 	threads::pool m_pool;
-	color m_bgcolor{ 214, 219, 233 }, m_tab_color{ 240, 240, 240 };
+	color m_bgcolor{ "#232323" }, m_tab_color{ 240, 240, 240 }, m_menubar_color{ "#2C2C2C" };
 
 	// Init widgets
 	void init_tabbar();

@@ -64,6 +64,18 @@ namespace nana
 				metrics_type();
 			};
 
+			struct scheme
+				: public widget_geometrics
+			{
+				color_proxy bgrnd{ static_cast<color_rgb>(0xf0f0f0) };
+				color_proxy button_checked{ colors::black };
+				color_proxy button{ colors::gray };
+				color_proxy button_highlight{ static_cast<color_rgb>(0x979797) };
+				color_proxy button_actived{ static_cast<color_rgb>(0x86D5FD) };
+				color_proxy button_selected{ static_cast<color_rgb>(0x3C7FB1) };
+				bool scroll_rounded{ false };
+			};
+
 			class drawer
 			{
 			public:
@@ -80,14 +92,14 @@ namespace nana
 				buttons what(graph_reference, const point&);
 				void scroll_delta_pos(graph_reference, int);
 				void auto_scroll();
-				void draw(graph_reference, buttons);
+				void draw(graph_reference, buttons, scheme*);
 			private:
 				bool _m_check() const;
 				void _m_adjust_scroll(graph_reference);
-				void _m_background(graph_reference);
-				void _m_button_frame(graph_reference, ::nana::rectangle, int state);
-				void _m_draw_scroll(graph_reference, int state);
-				void _m_draw_button(graph_reference, ::nana::rectangle, buttons what, int state);
+				void _m_background(graph_reference, scheme*);
+				void _m_button_frame(graph_reference, ::nana::rectangle, int state, scheme *s);
+				void _m_draw_scroll(graph_reference, int state, scheme *s);
+				void _m_draw_button(graph_reference, ::nana::rectangle, buttons what, int state, scheme *s);
 			private:
 				metrics_type &metrics_;
 				bool	vertical_;
@@ -188,6 +200,7 @@ namespace nana
 					graph_ = &graph;
 					widget_ = static_cast< ::nana::scroll<Vertical>*>(&widget);
 					widget.caption("nana scroll");
+					scheme_ptr_ = static_cast<scheme*>(API::dev::get_scheme(widget));
 
 					timer_.stop();
 					timer_.elapse(std::bind(&trigger::_m_tick, this));
@@ -200,19 +213,19 @@ namespace nana
 
 				void refresh(graph_reference graph) override
 				{
-					drawer_.draw(graph, metrics_.what);
+					drawer_.draw(graph, metrics_.what, scheme_ptr_);
 				}
 
 				void resized(graph_reference graph, const ::nana::arg_resized&) override
 				{
-					drawer_.draw(graph, metrics_.what);
+					drawer_.draw(graph, metrics_.what, scheme_ptr_);
 					API::dev::lazy_refresh();
 				}
 
 				void mouse_enter(graph_reference graph, const ::nana::arg_mouse& arg) override
 				{
 					metrics_.what = drawer_.what(graph, arg.pos);
-					drawer_.draw(graph, metrics_.what);
+					drawer_.draw(graph, metrics_.what, scheme_ptr_);
 					API::dev::lazy_refresh();
 				}
 
@@ -238,7 +251,7 @@ namespace nana
 					}
 					if (redraw)
 					{
-						drawer_.draw(graph, metrics_.what);
+						drawer_.draw(graph, metrics_.what, scheme_ptr_);
 						API::dev::lazy_refresh();
 					}
 				}
@@ -278,7 +291,7 @@ namespace nana
 						default:	//Ignore buttons::none
 							break;
 						}
-						drawer_.draw(graph, metrics_.what);
+						drawer_.draw(graph, metrics_.what, scheme_ptr_);
 						API::dev::lazy_refresh();
 					}
 				}
@@ -291,7 +304,7 @@ namespace nana
 
 					metrics_.pressed = false;
 					metrics_.what = drawer_.what(graph, arg.pos);
-					drawer_.draw(graph, metrics_.what);
+					drawer_.draw(graph, metrics_.what, scheme_ptr_);
 					API::dev::lazy_refresh();
 				}
 
@@ -300,7 +313,7 @@ namespace nana
 					if (metrics_.pressed) return;
 
 					metrics_.what = buttons::none;
-					drawer_.draw(graph, buttons::none);
+					drawer_.draw(graph, buttons::none, scheme_ptr_);
 					API::dev::lazy_refresh();
 				}
 
@@ -308,7 +321,7 @@ namespace nana
 				{
 					if (make_step(arg.upwards == false, 3))
 					{
-						drawer_.draw(graph, metrics_.what);
+						drawer_.draw(graph, metrics_.what, scheme_ptr_);
 						API::dev::lazy_refresh();
 					}
 				}
@@ -326,6 +339,7 @@ namespace nana
 				}
 			private:
 				::nana::scroll<Vertical> * widget_;
+				scheme *scheme_ptr_;
 				nana::paint::graphics * graph_;
 				metrics_type metrics_;
 				drawer	drawer_;
@@ -384,7 +398,7 @@ namespace nana
 	/// Provides a way to display an object which is larger than the window's client area.
 	template<bool Vertical>
 	class scroll    // add a widget scheme?
-		:	public widget_object<category::widget_tag, drawerbase::scroll::trigger<Vertical>, drawerbase::scroll::scroll_events>,
+		:	public widget_object<category::widget_tag, drawerbase::scroll::trigger<Vertical>, drawerbase::scroll::scroll_events, drawerbase::scroll::scheme>,
 			public scroll_interface
 	{
 		typedef widget_object<category::widget_tag, drawerbase::scroll::trigger<Vertical> > base_type;

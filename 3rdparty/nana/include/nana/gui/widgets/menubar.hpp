@@ -12,8 +12,8 @@
  
 #ifndef NANA_GUI_WIDGETS_MENUBAR_HPP
 #define NANA_GUI_WIDGETS_MENUBAR_HPP
-#include "widget.hpp"
-#include "menu.hpp"
+#include <nana/gui/widgets/widget.hpp>
+#include <nana/gui/widgets/menu.hpp>
 #include <nana/push_ignore_diagnostic>
 
 namespace nana
@@ -43,11 +43,12 @@ namespace nana
 				};
 
 				using graph_reference = paint::graphics&;
-				using scheme = nana::drawerbase::menubar::scheme;
+				using scheme = ::nana::drawerbase::menubar::scheme;
 
 				item_renderer(window, graph_reference);
 				virtual void background(const point&, const ::nana::size&, state);
 				virtual void caption(const point&, const native_string_type&);
+				scheme *scheme_ptr() const { return scheme_ptr_; };
 			private:
 				window	handle_;
 				graph_reference graph_;
@@ -84,7 +85,7 @@ namespace nana
 				bool _m_track_mouse(const ::nana::point&);
 			private:
 				widget *widget_;
-				nana::paint::graphics	*graph_;
+				paint::graphics	*graph_;
 				
 				itembase*	items_;
 

@@ -129,12 +129,12 @@ namespace nana
 				}
 			}
 
-			void drawer::draw(graph_reference graph, buttons what)
+			void drawer::draw(graph_reference graph, buttons what, scheme *s)
 			{
 				if(false == metrics_.pressed || metrics_.what != buttons::scroll)
 					_m_adjust_scroll(graph);
 
-				_m_background(graph);
+				_m_background(graph, s);
 
 				rectangle_rotator r(vertical_, ::nana::rectangle{ graph.size() });
 				r.x_ref() = static_cast<int>(r.w() - fixedsize);
@@ -146,19 +146,19 @@ namespace nana
 				auto result = r.result();
 
 				//draw first
-				_m_draw_button(graph, { 0, 0, result.width, result.height }, buttons::first, (buttons::first == what ? moused_state : state));
+				_m_draw_button(graph, { 0, 0, result.width, result.height }, buttons::first, (buttons::first == what ? moused_state : state), s);
 
 				//draw second
-				_m_draw_button(graph, result, buttons::second, (buttons::second == what ? moused_state : state));
+				_m_draw_button(graph, result, buttons::second, (buttons::second == what ? moused_state : state), s);
 
 				//draw scroll
-				_m_draw_scroll(graph, (buttons::scroll == what ? moused_state : states::highlight));
+				_m_draw_scroll(graph, (buttons::scroll == what ? moused_state : states::highlight), s);
 				
 			}
 		//private:
-			void drawer::_m_background(graph_reference graph)
+			void drawer::_m_background(graph_reference graph, scheme *s)
 			{
-				graph.rectangle(true, {0xf0, 0xf0, 0xf0});
+				graph.rectangle(true, s->bgrnd);
 
 				if (!metrics_.pressed || !_m_check())
 					return;
@@ -182,18 +182,19 @@ namespace nana
 					graph.rectangle(result, true, static_cast<color_rgb>(0xDCDCDC));
 			}
 
-			void drawer::_m_button_frame(graph_reference graph, rectangle r, int state)
+			void drawer::_m_button_frame(graph_reference graph, rectangle r, int state, scheme *s)
 			{
 				if (!state)
 					return;
 				
-				::nana::color clr{0x97, 0x97, 0x97}; //highlight
+				::nana::color clr = s->button_highlight; //highlight
 				switch(state)
 				{
 				case states::actived:
-					clr.from_rgb(0x86, 0xD5, 0xFD); break;
+					clr = s->button_actived; break;
 				case states::selected:
-					clr.from_rgb(0x3C, 0x7F, 0xB1); break;
+					clr = s->button_selected; break;
+				default: break;
 				}
 				
 				graph.rectangle(r, false, clr);
@@ -205,7 +206,10 @@ namespace nana
 				if(vertical_)
 				{
 					unsigned half = r.width / 2;
-					graph.rectangle({ r.x + static_cast<int>(r.width - half), r.y, half, r.height }, true);
+					if (s->scroll_rounded)
+						graph.round_rectangle({ r.x, r.y, r.width, r.height }, 3, 3, clr, true, clr);
+					else
+						graph.rectangle({ r.x + static_cast<int>(r.width - half), r.y, half, r.height }, true);
 					r.width -= half;
 				}
 				else
@@ -214,7 +218,7 @@ namespace nana
 					graph.rectangle({r.x, r.y + static_cast<int>(r.height - half), r.width, half}, true);
 					r.height -= half;
 				}
-				graph.gradual_rectangle(r, colors::white, clr, !vertical_);
+				//graph.gradual_rectangle(r, colors::white, clr, !vertical_);
 			}
 
 			bool drawer::_m_check() const
@@ -253,7 +257,7 @@ namespace nana
 				metrics_.scroll_length = len;
 			}
 
-			void drawer::_m_draw_scroll(graph_reference graph, int state)
+			void drawer::_m_draw_scroll(graph_reference graph, int state, scheme *s)
 			{
 				if(_m_check())
 				{
@@ -261,14 +265,14 @@ namespace nana
 					r.x_ref() = static_cast<int>(fixedsize + metrics_.scroll_pos);
 					r.w_ref() = static_cast<unsigned>(metrics_.scroll_length);
 
-					_m_button_frame(graph, r.result(), state);
+					_m_button_frame(graph, r.result(), state, s);
 				}
 			}
 
-			void drawer::_m_draw_button(graph_reference graph, rectangle r, buttons what, int state)
+			void drawer::_m_draw_button(graph_reference graph, rectangle r, buttons what, int state, scheme* s)
 			{
 				if(_m_check())
-					_m_button_frame(graph, r, state);
+					_m_button_frame(graph, r, state, s);
 
 				if(buttons::first == what || buttons::second == what)
 				{
@@ -302,7 +306,7 @@ namespace nana
 
 					facade<element::arrow> arrow(states::none == state ? "hollow_triangle" : "solid_triangle");
 					arrow.direction(dir);
-					arrow.draw(graph, {}, (_m_check() ? colors::black : colors::gray), r, element_state::normal);
+					arrow.draw(graph, {}, (_m_check() ? s->button_checked : s->button), r, element_state::normal);
 				}
 			}
 		//end class drawer

@@ -34,6 +34,8 @@
 #include <cassert>
 #include <mutex>
 #include <map>
+#include "nana/gui/widgets/scroll.hpp"
+#include "nana/gui/widgets/scroll.hpp"
 
 namespace nana
 {
@@ -3976,14 +3978,15 @@ namespace nana
 								}
 							}
 
-							graph->line({ column_x - 1, y }, { column_x - 1, y + static_cast<int>(essence_->scheme_ptr->item_height) - 1 }, static_cast<color_rgb>(0xEBF4F9));
+							if (essence_->scheme_ptr->item_bordered)
+								graph->line({ column_x - 1, y }, { column_x - 1, y + static_cast<int>(essence_->scheme_ptr->item_height) - 1 }, essence_->scheme_ptr->item_border);
 						}
 
 						column_x += col.width_px;
 					}
 
 					//Draw selecting inner rectangle
-					if(item.flags.selected)
+					if(item.flags.selected && essence_->scheme_ptr->item_bordered)
 						_m_draw_border(content_r.x, y, show_w);
 				}
 
@@ -5504,6 +5507,11 @@ namespace nana
 				ess.checkable = chkable;
 				ess.update();
 			}
+		}
+
+		drawerbase::scroll::scheme &listbox::scroll_v_scheme() const
+		{
+			return _m_ess().scroll.v.scheme();
 		}
 
 		auto listbox::checked() const -> index_pairs

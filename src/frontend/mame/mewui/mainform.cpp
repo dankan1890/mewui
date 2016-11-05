@@ -96,7 +96,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	// Main title
 	auto maintitle = string_format("MEWUI %s", emulator_info::get_bare_build_version());
 	this->caption(maintitle);
-	this->bgcolor(m_bgcolor);
+	this->bgcolor(color("#1E1E1E"));
 	if (m_ui->options().form_max()) this->zoom(true); // Maximize
 
 #if defined(NANA_WINDOWS)
@@ -474,7 +474,16 @@ void main_form::init_machinebox()
 	m_machinebox.scheme().header_fgcolor = colors::white;
 	m_machinebox.scheme().header_highlighted = color("#3296AA");
 	m_machinebox.scheme().item_highlighted = m_bgcolor;
+	m_machinebox.scheme().item_selected = color("#3296AA");
+	m_machinebox.scheme().item_bordered = false;
 	m_machinebox.bgcolor(m_bgcolor);
+	m_machinebox.borderless(true);
+
+	auto &scheme = m_machinebox.scroll_v_scheme();
+	scheme.bgrnd = color("#1E1E1E");
+	scheme.button = colors::white;
+	scheme.button_checked = colors::white;
+	scheme.scroll_rounded = true;
 
 	m_machinebox.always_selected(true);
 }
@@ -693,8 +702,7 @@ void main_form::update_selection(listbox::item_proxy &sel)
 					auto it = std::find_if(soft_type.begin(), soft_type.end(), pred);
 					std::string part_name = (it != soft_type.end()) ? it->first : "unknown";
 					cat.append({ swinfo.longname(), swinfo.shortname(), swinfo.publisher(), swinfo.year(), part_name, swlistdev.list_name() });
-					if (!swinfo.parentname().empty())
-						cat.back().fgcolor(colors::gray);
+					swinfo.parentname().empty() ? cat.back().fgcolor(colors::white) : cat.back().fgcolor(colors::gray);
 				}
 	}
 	m_swpage.m_softwarebox.auto_draw(true);
@@ -1028,8 +1036,11 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 	m_softwarebox.scheme().header_bgcolor = color("#2C2C2C");
 	m_softwarebox.scheme().header_fgcolor = colors::white;
 	m_softwarebox.scheme().header_highlighted = color("#3296AA");
-	m_softwarebox.scheme().item_highlighted = colors::white;
-
+	m_softwarebox.scheme().item_highlighted = color("#232323");
+	m_softwarebox.scheme().item_selected = color("#3296AA");
+	m_softwarebox.scheme().item_bordered = false;
+	m_softwarebox.bgcolor(color("#232323"));
+	m_softwarebox.borderless(true);
 }
 
 tab_page_textbox::tab_page_textbox(window wd)

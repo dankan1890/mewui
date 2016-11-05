@@ -127,8 +127,9 @@ namespace nana
 
 			//class trigger
 				trigger::trigger()
-					: items_(new itembase)
-				{}
+					: widget_(nullptr)
+					, graph_(nullptr)
+					, items_(new itembase) {}
 
 				trigger::~trigger()
 				{
@@ -214,13 +215,13 @@ namespace nana
 						if (hotkey)
 						{
 							unsigned off_w = (hotkey_pos ? graph.text_extent_size(text.c_str(), hotkey_pos).width : 0);
-							nana::size hotkey_size = graph.text_extent_size(text.c_str() + hotkey_pos, 1);
+							auto hotkey_size = graph.text_extent_size(text.c_str() + hotkey_pos, 1);
 
 							unsigned ascent, descent, inleading;
 							graph.text_metrics(ascent, descent, inleading);
 							int x = item_pos.x + 8 + off_w;
 							int y = item_pos.y + text_top_off + ascent + 1;
-							graph.line({ x, y }, { x + static_cast<int>(hotkey_size.width) - 1, y }, ::nana::colors::black);
+							graph.line({ x, y }, { x + static_cast<int>(hotkey_size.width) - 1, y }, ird.scheme_ptr()->text_fgcolor);
 						}
 
 						item_pos.x += i->size.width;
@@ -236,7 +237,7 @@ namespace nana
 					bool popup = false;
 					if(state_.behavior == state_type::behavior_focus)
 					{
-						std::size_t index = _m_item_by_pos(arg.pos);
+						auto index = _m_item_by_pos(arg.pos);
 						if(index != npos && state_.active != index)
 						{
 							state_.active = index;
@@ -363,6 +364,7 @@ namespace nana
 							case 2: //GOTO SUBMENU
 								state_.menu->goto_submen();
 								break;
+							default: break;
 							}
 							break;
 						}
@@ -391,7 +393,7 @@ namespace nana
 							}
 							break;
 						default:
-							std::size_t index = items_->find(arg.key);
+							auto index = items_->find(arg.key);
 							if(index != npos)
 							{
 								state_.active = index;
@@ -419,7 +421,7 @@ namespace nana
 						else
 						{
 							state_.behavior = state_type::behavior_none;
-							nana::point pos = API::cursor_position();
+							auto pos = API::cursor_position();
 							API::calc_window_point(widget_->handle(), pos);
 							state_.active = _m_item_by_pos(pos);
 						}
@@ -434,7 +436,7 @@ namespace nana
 				{
 					API::focus_window(widget_->handle());
 
-					std::size_t index = items_->find(arg.key);
+					auto index = items_->find(arg.key);
 					if(index != npos && (index != state_.active || nullptr == state_.menu))
 					{
 						_m_close_menu();
@@ -456,7 +458,7 @@ namespace nana
 					if(items_->cont().empty()) return;
 
 					const std::size_t last_pos = items_->cont().size() - 1;
-					std::size_t index = state_.active;
+					auto index = state_.active;
 					if(to_left)
 					{
 						--index;
@@ -565,7 +567,7 @@ namespace nana
 				{
 					if(state_.nullify_mouse == false)
 					{
-						std::size_t which = _m_item_by_pos(pos);
+						auto which = _m_item_by_pos(pos);
 						if((which != state_.active) && (which != npos || (false == state_.menu_active)))
 						{
 							state_.active = which;
@@ -622,7 +624,7 @@ namespace nana
 
 		menu& menubar::at(std::size_t index) const
 		{
-			menu* p = get_drawer_trigger().at(index);
+			auto p = get_drawer_trigger().at(index);
 			if(nullptr == p)
 				throw std::out_of_range("menubar::at, out of range");
 			return *p;

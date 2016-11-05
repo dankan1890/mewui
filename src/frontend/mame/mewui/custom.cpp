@@ -14,6 +14,7 @@
 namespace mewui
 {
 
+// Menu
 menu_renderer::menu_renderer(const cloneable_renderer& rd)
 	: rdptr_(rd)
 	, crook_("menu_crook")
@@ -58,6 +59,8 @@ void menu_renderer::item_text(graph_reference graph, const nana::point& pos, con
 	tr.render(pos, wstr.c_str(), wstr.length(), pixels, true);
 }
 
+
+// Button
 bool button_renderer::draw(graph_reference graph, const nana::color& bgcolor, const nana::color& fgcolor, const nana::rectangle& r, element_state state)
 {
 	auto rc = r;
@@ -74,6 +77,7 @@ bool button_renderer::draw(graph_reference graph, const nana::color& bgcolor, co
 	return true;
 }
 
+// Treebox
 void treebox_renderer::set_color(const nana::color& bgcolor, const nana::color& fgcolor)
 {
 	fgcolor_ = colors::white;
@@ -168,7 +172,7 @@ void treebox_renderer::text(graph_reference graph, const compset_interface * com
 	}
 }
 
-
+// Tabbar
 void tabbar_renderer::background(graph_reference graph, const nana::rectangle& r, const ::nana::color& bgcolor)
 {
 	if (bgcolor_ != bgcolor)

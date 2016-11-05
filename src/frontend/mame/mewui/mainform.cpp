@@ -357,7 +357,7 @@ void main_form::save_options()
 		mui.set_value(OPTION_LAST_USED_MACHINE, game.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	}
 	auto tsel = m_filters.m_treebox.selected();
-	if (tsel.level() == 0)
+	if (tsel.level() == 1)
 		mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_treebox.selected().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	else
 		mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_treebox.selected().owner().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
@@ -479,11 +479,12 @@ void main_form::init_machinebox()
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
 
-	auto &scheme = m_machinebox.scroll_v_scheme();
-	scheme.bgrnd = color("#1E1E1E");
-	scheme.button = colors::white;
-	scheme.button_checked = colors::white;
-	scheme.scroll_rounded = true;
+	auto &vscheme = m_machinebox.scroll_scheme();
+	auto &hscheme = m_machinebox.scroll_scheme(false);
+	vscheme.bgrnd = hscheme.bgrnd = color("#1E1E1E");
+	vscheme.button = hscheme.button = colors::white;
+	vscheme.button_checked = hscheme.button_checked = colors::white;
+	vscheme.scroll_rounded = hscheme.scroll_rounded = true;
 
 	m_machinebox.always_selected(true);
 }

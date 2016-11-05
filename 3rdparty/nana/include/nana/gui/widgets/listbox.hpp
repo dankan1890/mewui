@@ -1441,8 +1441,8 @@ the nana::detail::basic_window member pointer scheme
 		bool sortable() const;
 		void sortable(bool enable);
 
-		drawerbase::scroll::scheme &scroll_v_scheme() const;
-		
+		drawerbase::scroll::scheme &scroll_scheme(bool Vertical = true) const;
+
 		///Sets a strict weak ordering comparer for a column
 		void set_sort_compare(	size_type col,
 								std::function<bool(const std::string&, nana::any*, const std::string&, nana::any*, bool reverse)> strick_ordering);

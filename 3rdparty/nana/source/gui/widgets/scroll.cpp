@@ -197,7 +197,7 @@ namespace nana
 				default: break;
 				}
 				
-				graph.rectangle(r, false, clr);
+				//graph.rectangle(r, false, clr);
 
 				clr = clr.blend(colors::white, 0.5);
 				graph.palette(false, clr);
@@ -215,7 +215,10 @@ namespace nana
 				else
 				{
 					unsigned half = r.height / 2;
-					graph.rectangle({r.x, r.y + static_cast<int>(r.height - half), r.width, half}, true);
+					if (s->scroll_rounded)
+						graph.round_rectangle({ r.x, r.y, r.width, r.height }, 3, 3, clr, true, clr);
+					else
+						graph.rectangle({r.x, r.y + static_cast<int>(r.height - half), r.width, half}, true);
 					r.height -= half;
 				}
 				//graph.gradual_rectangle(r, colors::white, clr, !vertical_);

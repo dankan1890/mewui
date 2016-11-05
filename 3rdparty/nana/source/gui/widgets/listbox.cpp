@@ -5509,9 +5509,9 @@ namespace nana
 			}
 		}
 
-		drawerbase::scroll::scheme &listbox::scroll_v_scheme() const
+		drawerbase::scroll::scheme &listbox::scroll_scheme(bool Vertical) const
 		{
-			return _m_ess().scroll.v.scheme();
+			return Vertical ? _m_ess().scroll.v.scheme() : _m_ess().scroll.h.scheme();
 		}
 
 		auto listbox::checked() const -> index_pairs

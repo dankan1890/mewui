@@ -85,6 +85,12 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	, m_ui(_mui)
 	, m_exename(exename)
 {
+	m_scroll_scheme.bgrnd = color("#1E1E1E");
+	m_scroll_scheme.button = colors::white;
+	m_scroll_scheme.button_checked = colors::white;
+	m_scroll_scheme.rounded = true;
+	m_scroll_scheme.radius = 6;
+	
 	// Load DATs data
 	m_datfile = nullptr;
 	auto& plugins = mame_machine_manager::instance()->plugins();
@@ -421,8 +427,10 @@ void main_form::init_tabbar()
 	this->get_place()["tab_frame"].fasten(m_textpage).fasten(m_imgpage);
 	m_tabbar.append("Images", m_imgpage).append("Info", m_textpage);
 	m_tabbar.bgcolor(m_bgcolor);
-	m_tabbar.tab_bgcolor(0, m_tab_color);
-	m_tabbar.tab_bgcolor(1, m_tab_color);
+	m_tabbar.tab_bgcolor(0, m_menubar_color);
+	m_tabbar.tab_bgcolor(1, m_menubar_color);
+	m_tabbar.tab_fgcolor(0, colors::white);
+	m_tabbar.tab_fgcolor(1, colors::white);
 	m_tabbar.activated(0);
 	m_tabbar.renderer(tabbar_renderer(m_tabbar.renderer()));
 
@@ -431,7 +439,8 @@ void main_form::init_tabbar()
 
 	m_tabsw.append("Software Packages", m_swpage);
 	m_tabsw.bgcolor(m_bgcolor);
-	m_tabsw.tab_bgcolor(0, m_tab_color);
+	m_tabsw.tab_bgcolor(0, m_menubar_color);
+	m_tabsw.tab_fgcolor(0, colors::white);
 	m_tabsw.activated(0);
 	m_tabsw.renderer(tabbar_renderer(m_tabsw.renderer()));
 }
@@ -479,12 +488,7 @@ void main_form::init_machinebox()
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
 
-	auto &vscheme = m_machinebox.scroll_scheme();
-	auto &hscheme = m_machinebox.scroll_scheme(false);
-	vscheme.bgrnd = hscheme.bgrnd = color("#1E1E1E");
-	vscheme.button = hscheme.button = colors::white;
-	vscheme.button_checked = hscheme.button_checked = colors::white;
-	vscheme.scroll_rounded = hscheme.scroll_rounded = true;
+	m_machinebox.scroll_scheme(m_scroll_scheme);
 
 	m_machinebox.always_selected(true);
 }
@@ -583,7 +587,7 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 				{
 					if (filter == "Parents" && parent.first != game->description) continue;
 					if (filter == "Clones" && parent.first == game->description) continue;
-					std::uint32_t tmp = game->flags;
+					auto tmp = game->flags;
 					if (filters_option_ex.at(filter).first(tmp)) continue;
 				}
 				else
@@ -1004,6 +1008,13 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 
 	m_combox.option(0);
 	m_combox.editable(false);
+	drawerbase::scroll::scheme s;
+	s.bgrnd = color("#1E1E1E");
+	s.button = colors::white;
+	s.button_checked = colors::white;
+	s.rounded = true;
+	s.radius = 6;
+	m_combox.scroll_scheme(s);
 
 	// Layout
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
@@ -1060,6 +1071,14 @@ tab_page_textbox::tab_page_textbox(window wd)
 	m_combox.push_back("MameScore");
 	m_combox.option(0);
 	m_combox.editable(false);
+
+	drawerbase::scroll::scheme s;
+	s.bgrnd = color("#1E1E1E");
+	s.button = colors::white;
+	s.button_checked = colors::white;
+	s.rounded = true;
+	s.radius = 6;
+	m_combox.scroll_scheme(s);
 
 	// Layout
 	m_place.div("vert margin=5 <weight=20 combobox><weight=5><txt>");

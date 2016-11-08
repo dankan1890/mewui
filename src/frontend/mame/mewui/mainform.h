@@ -136,6 +136,7 @@ private:
 	int m_resel = 0;
 	threads::pool m_pool;
 	color m_bgcolor{ "#232323" }, m_tab_color{ 240, 240, 240 }, m_menubar_color{ "#2C2C2C" };
+	drawerbase::scroll::scheme m_scroll_scheme;
 
 	// Init widgets
 	void init_tabbar();

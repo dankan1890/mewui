@@ -138,6 +138,11 @@ namespace nana
 					}
 				}
 
+				void scroll_scheme(drawerbase::scroll::scheme s)
+				{
+					scrollbar_.scheme() = s;
+				}
+
 				void move_items(bool upwards, bool recycle)
 				{
 					if(module_ && module_->items.size())
@@ -474,5 +479,11 @@ namespace nana
 		{
 			return get_drawer_trigger().get_drawer_impl().index();
 		}
+		
+		void float_listbox::scroll_scheme(drawerbase::scroll::scheme s)
+		{
+			get_drawer_trigger().get_drawer_impl().scroll_scheme(s);
+		}
+
 	//end class float_listbox
 }

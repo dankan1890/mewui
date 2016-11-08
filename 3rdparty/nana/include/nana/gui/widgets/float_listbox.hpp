@@ -20,7 +20,12 @@
 
 namespace nana
 {
-	namespace drawerbase{
+namespace drawerbase {namespace scroll {
+struct scheme;
+}
+}
+
+namespace drawerbase{
 		namespace float_listbox
 		{
 			class item_interface
@@ -100,6 +105,7 @@ namespace nana
 		void move_items(bool upwards, bool circle);
 		void renderer(item_renderer*);
 		std::size_t index() const;
+		void scroll_scheme(drawerbase::scroll::scheme s);
 	};
 }
 #include <nana/pop_ignore_diagnostic>

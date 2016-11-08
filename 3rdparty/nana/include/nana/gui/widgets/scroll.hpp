@@ -13,7 +13,7 @@
 #ifndef NANA_GUI_WIDGET_SCROLL_HPP
 #define NANA_GUI_WIDGET_SCROLL_HPP
 
-#include "widget.hpp"
+#include <nana/gui/widgets/widget.hpp>
 #include <nana/gui/timer.hpp>
 #include <nana/push_ignore_diagnostic>
 
@@ -73,7 +73,8 @@ namespace nana
 				color_proxy button_highlight{ static_cast<color_rgb>(0x979797) };
 				color_proxy button_actived{ static_cast<color_rgb>(0x86D5FD) };
 				color_proxy button_selected{ static_cast<color_rgb>(0x3C7FB1) };
-				bool scroll_rounded{ false };
+				bool rounded{ false };
+				unsigned radius{ 3 };
 			};
 
 			class drawer
@@ -87,7 +88,7 @@ namespace nana
 				using graph_reference = paint::graphics&;
 				const static unsigned fixedsize = 16; // make it part of a new "metric" in the widget_scheme
 
-				drawer(metrics_type& m);
+				explicit drawer(metrics_type& m);
 				void set_vertical(bool);
 				buttons what(graph_reference, const point&);
 				void scroll_delta_pos(graph_reference, int);
@@ -113,7 +114,9 @@ namespace nana
 				typedef metrics_type::size_type size_type;
 
 				trigger()
-					: graph_(nullptr), drawer_(metrics_)
+					: scheme_ptr_(nullptr)
+					, graph_(nullptr)
+					, drawer_(metrics_)
 				{
 					drawer_.set_vertical(Vertical);
 				}
@@ -209,6 +212,7 @@ namespace nana
 				void detached() override
 				{
 					graph_ = nullptr;
+					scheme_ptr_ = nullptr;
 				}
 
 				void refresh(graph_reference graph) override

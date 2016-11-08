@@ -34,8 +34,6 @@
 #include <cassert>
 #include <mutex>
 #include <map>
-#include "nana/gui/widgets/scroll.hpp"
-#include "nana/gui/widgets/scroll.hpp"
 
 namespace nana
 {
@@ -5509,9 +5507,10 @@ namespace nana
 			}
 		}
 
-		drawerbase::scroll::scheme &listbox::scroll_scheme(bool Vertical) const
+		void listbox::scroll_scheme(drawerbase::scroll::scheme s)
 		{
-			return Vertical ? _m_ess().scroll.v.scheme() : _m_ess().scroll.h.scheme();
+			_m_ess().scroll.v.scheme() = s;
+			_m_ess().scroll.h.scheme() = s;
 		}
 
 		auto listbox::checked() const -> index_pairs

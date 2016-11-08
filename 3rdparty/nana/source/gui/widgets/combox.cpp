@@ -251,6 +251,7 @@ namespace nana
 						std::copy(items_.cbegin(), items_.cend(), std::back_inserter(module_.items));
 						state_.lister = &form_loader<nana::float_listbox, false>()(widget_->handle(), nana::rectangle(0, widget_->size().height, widget_->size().width, 10), true);
 						state_.lister->renderer(item_renderer_);
+						state_.lister->scroll_scheme(scroll_scheme_);
 						state_.lister->set_module(module_, image_pixels_);
 						state_.item_index_before_selection = module_.index;
 
@@ -435,7 +436,10 @@ namespace nana
 						}
 					}
 				}
-
+				void scroll_scheme(drawerbase::scroll::scheme s)
+				{
+					scroll_scheme_ = s;
+				}
 				bool image_pixels(unsigned px)
 				{
 					if (image_pixels_ == px)
@@ -539,6 +543,7 @@ namespace nana
 					nana::float_listbox * lister;
 					std::size_t	item_index_before_selection;
 				}state_;
+				drawerbase::scroll::scheme scroll_scheme_;
 			};
 
 
@@ -965,6 +970,12 @@ namespace nana
 			impl.image(i, img);
 			if(i == impl.option())
 				API::refresh_window(*this);
+		}
+
+		void combox::scroll_scheme(drawerbase::scroll::scheme s)
+		{
+			internal_scope_guard lock;
+			return _m_impl().scroll_scheme(s);
 		}
 
 		nana::paint::image combox::image(std::size_t pos) const

@@ -24,7 +24,7 @@
 #include <initializer_list>
 #include <mutex>
 #include <typeinfo>
-#include "scroll.hpp"
+#include <nana/gui/widgets/scroll.hpp>
 
 namespace nana
 {
@@ -1441,7 +1441,7 @@ the nana::detail::basic_window member pointer scheme
 		bool sortable() const;
 		void sortable(bool enable);
 
-		drawerbase::scroll::scheme &scroll_scheme(bool Vertical = true) const;
+		void scroll_scheme(drawerbase::scroll::scheme s);
 
 		///Sets a strict weak ordering comparer for a column
 		void set_sort_compare(	size_type col,

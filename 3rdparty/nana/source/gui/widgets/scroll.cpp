@@ -204,7 +204,7 @@ namespace nana
 				default: break;
 				}
 				
-				if (!s->rounded)
+				if (!s->rounded && !s->flat)
 					graph.rectangle(r, false, clr);
 
 				clr = clr.blend(colors::white, 0.5);
@@ -215,7 +215,9 @@ namespace nana
 				{
 					auto half = r.width / 2;
 					if (s->rounded)
-						graph.round_rectangle({ r.x, r.y, r.width, r.height }, s->radius, s->radius, clr, true, clr);
+						graph.round_rectangle(r, s->radius, s->radius, clr, true, clr);
+					else if (s->flat)
+						graph.rectangle(r, true);
 					else
 						graph.rectangle({ r.x + static_cast<int>(r.width - half), r.y, half, r.height }, true);
 					r.width -= half;
@@ -224,13 +226,15 @@ namespace nana
 				{
 					auto half = r.height / 2;
 					if (s->rounded)
-						graph.round_rectangle({ r.x, r.y, r.width, r.height }, s->radius, s->radius, clr, true, clr);
+						graph.round_rectangle(r, s->radius, s->radius, clr, true, clr);
+					else if (s->flat)
+						graph.rectangle(r, true);
 					else
 						graph.rectangle({r.x, r.y + static_cast<int>(r.height - half), r.width, half}, true);
 					r.height -= half;
 				}
 
-				if (!s->rounded)
+				if (!s->rounded && !s->flat)
 					graph.gradual_rectangle(r, colors::white, clr, !vertical_);
 			}
 
@@ -284,7 +288,7 @@ namespace nana
 
 			void drawer::_m_draw_button(graph_reference graph, rectangle r, buttons what, int state, scheme* s)
 			{
-				if(_m_check() && !s->rounded)
+				if(_m_check() && !s->rounded && !s->flat)
 					_m_button_frame(graph, r, state, s);
 
 				if(buttons::first == what || buttons::second == what)

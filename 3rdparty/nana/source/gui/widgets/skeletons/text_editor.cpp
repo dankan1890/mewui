@@ -1307,6 +1307,7 @@ namespace nana{	namespace widgets
 			{
 				std::unique_ptr<nana::scroll<true>>		vscroll;
 				std::unique_ptr<nana::scroll<false>>	hscroll;
+				drawerbase::scroll::scheme scheme_;
 			}widgets;
 		};
 
@@ -2804,6 +2805,11 @@ namespace nana{	namespace widgets
 			return false;
 		}
 
+		void text_editor::scroll_scheme(drawerbase::scroll::scheme s)
+		{
+			impl_->widgets.scheme_ = s;
+		}
+
 		void text_editor::_m_pre_calc_lines(std::size_t line_off, std::size_t lines)
 		{
 			unsigned width_px = width_pixels();
@@ -2887,6 +2893,7 @@ namespace nana{	namespace widgets
 				if (!wdptr)
 				{
 					impl_->widgets.vscroll.reset(new nana::scroll<true>);
+					impl_->widgets.vscroll->scheme() = impl_->widgets.scheme_;
 					wdptr = impl_->widgets.vscroll.get();
 					wdptr->create(window_, nana::rectangle(x, text_area_.area.y, text_area_.vscroll, tx_area.height));
 
@@ -2920,6 +2927,7 @@ namespace nana{	namespace widgets
 				if(nullptr == wdptr)
 				{
 					impl_->widgets.hscroll.reset(new nana::scroll<false>);
+					impl_->widgets.hscroll->scheme() = impl_->widgets.scheme_;
 					wdptr = impl_->widgets.hscroll.get();
 					wdptr->create(window_, nana::rectangle(text_area_.area.x, y, tx_area.width, text_area_.hscroll));
 

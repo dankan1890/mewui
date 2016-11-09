@@ -19,7 +19,16 @@
 
 namespace nana
 {
-	class textbox;
+
+namespace drawerbase 
+{
+	namespace scroll 
+	{
+		struct scheme; // forward
+	}
+}
+
+class textbox;
 
 	struct arg_textbox
 		: public event_arg
@@ -220,6 +229,7 @@ namespace nana
 		textbox& from(double);
 
 		void clear_undo();
+		void scroll_scheme(drawerbase::scroll::scheme s);
 
 		void set_highlight(const std::string& name, const ::nana::color& fgcolor, const ::nana::color& bgcolor);
 		void erase_highlight(const std::string& name);

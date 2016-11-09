@@ -23,6 +23,7 @@
 #include <nana/gui/detail/general_events.hpp>
 
 #include <functional>
+#include <nana/gui/widgets/scroll.hpp>
 
 namespace nana
 {
@@ -122,7 +123,7 @@ namespace nana{	namespace widgets
 			/// Enables/disables the editability of text_editor
 			/**
 			 * @param enable Indicates whether to enable or disable the editability
-			 * @param enable_cart Indicates whether to show or hide the caret when the text_editor is not editable. It is ignored if enable is false.
+			 * @param enable_caret Indicates whether to show or hide the caret when the text_editor is not editable. It is ignored if enable is false.
 			 */
 			void editable(bool enable, bool enable_caret);
 			void enable_background(bool);
@@ -204,6 +205,7 @@ namespace nana{	namespace widgets
 			bool mouse_move(bool left_button, const point& screen_pos);
 			bool mouse_pressed(const arg_mouse& arg);
 
+			void scroll_scheme(drawerbase::scroll::scheme s);
 			skeletons::textbase<char_type>& textbase();
 			const skeletons::textbase<char_type>& textbase() const;
 		private:

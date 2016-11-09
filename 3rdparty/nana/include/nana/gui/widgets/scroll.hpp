@@ -74,6 +74,7 @@ namespace nana
 				color_proxy button_actived{ static_cast<color_rgb>(0x86D5FD) };
 				color_proxy button_selected{ static_cast<color_rgb>(0x3C7FB1) };
 				bool rounded{ false };
+				bool flat{ false };
 				unsigned radius{ 3 };
 			};
 

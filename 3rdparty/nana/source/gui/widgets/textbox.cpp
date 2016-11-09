@@ -289,6 +289,14 @@ namespace drawerbase {
 			return (editor ? editor->textbase().edited() : false);
 		}
 
+		void textbox::scroll_scheme(drawerbase::scroll::scheme s)
+		{
+			internal_scope_guard lock;
+			auto editor = get_drawer_trigger().editor();
+			if (editor)
+				editor->scroll_scheme(s);
+		}
+
 		textbox& textbox::edited_reset()
 		{
 			internal_scope_guard lock;

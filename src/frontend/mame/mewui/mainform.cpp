@@ -88,8 +88,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_scroll_scheme.bgrnd = color("#1E1E1E");
 	m_scroll_scheme.button = colors::white;
 	m_scroll_scheme.button_checked = colors::white;
-	m_scroll_scheme.rounded = true;
-	m_scroll_scheme.radius = 6;
+	m_scroll_scheme.flat = true;
 	
 	// Load DATs data
 	m_datfile = nullptr;
@@ -1012,8 +1011,7 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	s.bgrnd = color("#1E1E1E");
 	s.button = colors::white;
 	s.button_checked = colors::white;
-	s.rounded = true;
-	s.radius = 6;
+	s.flat = true;
 	m_combox.scroll_scheme(s);
 
 	// Layout
@@ -1076,9 +1074,9 @@ tab_page_textbox::tab_page_textbox(window wd)
 	s.bgrnd = color("#1E1E1E");
 	s.button = colors::white;
 	s.button_checked = colors::white;
-	s.rounded = true;
-	s.radius = 6;
+	s.flat = true;
 	m_combox.scroll_scheme(s);
+	m_textbox.scroll_scheme(s);
 
 	// Layout
 	m_place.div("vert margin=5 <weight=20 combobox><weight=5><txt>");

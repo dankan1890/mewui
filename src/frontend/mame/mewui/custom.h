@@ -16,8 +16,7 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/tabbar.hpp>
 #include <nana/gui/element.hpp>
-#include <nana/gui/widgets/listbox.hpp>
-#include <nana/paint/text_renderer.hpp>
+#include <algorithm>
 using namespace nana;
 
 namespace mewui
@@ -1243,12 +1242,17 @@ private:
 
 	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
 	{
-		return graph.width();
+		auto sz = graph.width() - text_offset_ * 2;
+		auto pl = placer_->item_width(graph, attr);
+		return (std::max)(sz, pl);
 	}
 
 	bool locate(component_t comp, const item_attribute_t& attr, nana::rectangle * r) const override
 	{
-		return placer_->locate(comp, attr, r);
+		auto ret = placer_->locate(comp, attr, r);
+		if (ret && comp == component_t::text)
+			text_offset_ = r->x;
+		return ret;
 	}
 
 	mutable int text_offset_;

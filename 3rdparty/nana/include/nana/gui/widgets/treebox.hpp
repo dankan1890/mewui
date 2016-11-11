@@ -29,7 +29,12 @@
 
 namespace nana
 {
-	class treebox;
+namespace drawerbase {namespace scroll {
+struct scheme;
+}
+}
+
+class treebox;
 
 	namespace drawerbase
 	{
@@ -450,6 +455,7 @@ namespace nana
 
 		::std::string make_key_path(item_proxy i, const ::std::string& splitter) const;///<returns the key path
 		item_proxy selected() const; ///< returns the selected node
+		void scroll_scheme(drawerbase::scroll::scheme s);
 	};//end class treebox
 }//end namespace nana
 #include <nana/pop_ignore_diagnostic>

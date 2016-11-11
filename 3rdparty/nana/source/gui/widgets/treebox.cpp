@@ -2265,5 +2265,11 @@ namespace nana
 		{
 			return item_proxy(const_cast<drawer_trigger_t*>(&get_drawer_trigger()), get_drawer_trigger().selected());
 		}
+
+		void treebox::scroll_scheme(drawerbase::scroll::scheme s)
+		{
+			get_drawer_trigger().impl()->shape.scroll.scheme() = s;
+		}
+
 	//end class treebox
 }//end namespace nana

@@ -89,6 +89,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_scroll_scheme.button = colors::white;
 	m_scroll_scheme.button_checked = colors::white;
 	m_scroll_scheme.flat = true;
+//	m_scroll_scheme.button_highlight = color("#3296AA");
 	
 	// Load DATs data
 	m_datfile = nullptr;
@@ -1013,6 +1014,8 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	s.button_checked = colors::white;
 	s.flat = true;
 	m_combox.scroll_scheme(s);
+	m_combox.bgcolor(s.bgrnd);
+	m_combox.scheme().background = s.bgrnd;
 
 	// Layout
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
@@ -1074,8 +1077,11 @@ tab_page_textbox::tab_page_textbox(window wd)
 	s.bgrnd = color("#1E1E1E");
 	s.button = colors::white;
 	s.button_checked = colors::white;
+	s.button_highlight = color("#3296AA");
 	s.flat = true;
 	m_combox.scroll_scheme(s);
+	m_combox.bgcolor(s.bgrnd);
+	m_combox.scheme().background = s.bgrnd;
 	m_textbox.scroll_scheme(s);
 
 	// Layout
@@ -1107,6 +1113,13 @@ panel_filter::panel_filter(window wd)
 	m_treebox.renderer(treebox_renderer(m_treebox.renderer()));
 	m_treebox.placer(custom_placer(m_treebox.placer()));
 	m_treebox.bgcolor(color("#232323"));
+	
+	drawerbase::scroll::scheme s;
+	s.bgrnd = color("#1E1E1E");
+	s.button = colors::white;
+	s.button_checked = colors::white;
+	s.flat = true;
+	m_treebox.scroll_scheme(s);
 }
 
 statusbar::statusbar(window wd)

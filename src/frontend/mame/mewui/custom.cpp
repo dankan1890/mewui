@@ -10,6 +10,7 @@
 
 #include "mewui/custom.h"
 #include <algorithm>
+#include <nana/paint/text_renderer.hpp>
 
 namespace mewui
 {

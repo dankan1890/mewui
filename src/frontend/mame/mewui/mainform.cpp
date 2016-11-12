@@ -89,7 +89,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	m_scroll_scheme.button = colors::white;
 	m_scroll_scheme.button_checked = colors::white;
 	m_scroll_scheme.flat = true;
-//	m_scroll_scheme.button_highlight = color("#3296AA");
+	m_scroll_scheme.button_actived = color("#3296AA");
 	
 	// Load DATs data
 	m_datfile = nullptr;
@@ -1001,8 +1001,8 @@ void main_form::init_context_menu()
 tab_page_picturebox::tab_page_picturebox(window wd)
 	: panel<true>(wd)
 {
-	this->bgcolor(color(240, 240, 240));
-	m_picture.bgcolor(color(240, 240, 240));
+	this->bgcolor(color("#2C2C2C"));
+	m_picture.bgcolor(color("#232323"));
 	for (auto& elem : arts_info)
 		m_combox.push_back(elem.first);
 
@@ -1021,7 +1021,7 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
 	m_place["combobox"] << m_combox;
 	m_place["pct"] << m_picture;
-	dw.draw([this](paint::graphics& graph) {
+/*	dw.draw([this](paint::graphics& graph) {
 		nana::rectangle r(graph.size());
 		auto right = r.right() - 1;
 		auto bottom = r.bottom() - 1;
@@ -1029,7 +1029,7 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	});
+	}); */
 }
 
 tab_page_softwarebox::tab_page_softwarebox(window wd)
@@ -1059,7 +1059,7 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 tab_page_textbox::tab_page_textbox(window wd)
 	: panel<true>(wd)
 {
-	this->bgcolor(color(240, 240, 240));
+	this->bgcolor(color("#232323"));
 	m_textbox.editable(false);
 	m_textbox.multi_lines(true);
 	m_textbox.focus_behavior(widgets::skeletons::text_focus_behavior::none);
@@ -1077,18 +1077,20 @@ tab_page_textbox::tab_page_textbox(window wd)
 	s.bgrnd = color("#1E1E1E");
 	s.button = colors::white;
 	s.button_checked = colors::white;
-	s.button_highlight = color("#3296AA");
+	s.button_actived = color("#3296AA");
 	s.flat = true;
 	m_combox.scroll_scheme(s);
 	m_combox.bgcolor(s.bgrnd);
 	m_combox.scheme().background = s.bgrnd;
 	m_textbox.scroll_scheme(s);
+	m_textbox.bgcolor(color("#2C2C2C"));
+	m_textbox.fgcolor(colors::white);
 
 	// Layout
 	m_place.div("vert margin=5 <weight=20 combobox><weight=5><txt>");
 	m_place["combobox"] << m_combox;
 	m_place["txt"] << m_textbox;
-	dw.draw([this](paint::graphics& graph) {
+/*	dw.draw([this](paint::graphics& graph) {
 		nana::rectangle r(graph.size());
 		auto right = r.right() - 1;
 		auto bottom = r.bottom() - 1;
@@ -1096,7 +1098,7 @@ tab_page_textbox::tab_page_textbox(window wd)
 		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
 		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	});
+	}); */
 }
 
 panel_filter::panel_filter(window wd)
@@ -1125,7 +1127,7 @@ panel_filter::panel_filter(window wd)
 statusbar::statusbar(window wd)
 	: panel<true>(wd)
 {
-	auto bgcolor = color(0, 122, 204);
+	auto bgcolor = color("#3296AA");
 	this->bgcolor(bgcolor);
 	m_machines.bgcolor(bgcolor);
 	m_machines.fgcolor(colors::white);

@@ -952,6 +952,7 @@ end
 				os.exit(-1)
 			end
 			buildoptions {
+				"-Wno-undefined-var-template",
 				"-Wno-cast-align",
 				"-Wno-tautological-compare",
 				"-Wno-unused-value",

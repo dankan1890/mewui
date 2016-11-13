@@ -112,9 +112,12 @@ namespace nana
 					nana::rectangle r(pos, size);
 					graph_.rectangle(r, false, border);
 
-					graph_.palette(false, corner);
+					if (scheme_ptr_->has_corner)
+					{
+						graph_.palette(false, corner);
+						paint::draw{ graph_ }.corner(r, 1);
+					}
 
-					paint::draw{ graph_ }.corner(r, 1);
 					graph_.rectangle(r.pare_off(1), true, body);
 				}
 

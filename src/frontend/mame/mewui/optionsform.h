@@ -81,8 +81,8 @@ class dir_form : public form
 {
 public:
 	explicit dir_form(window, emu_options&, std::unique_ptr<mame_ui_manager>&);
-
 private:
+	void up_down(int dir);
 	listbox m_listbox{ *this };
 	combox m_combox{ *this };
 	okcancel_panel m_panel{ *this };

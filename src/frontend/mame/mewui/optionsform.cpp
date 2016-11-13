@@ -24,7 +24,7 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	, m_options(_opt)
 {
 	this->caption("Setup Directories");
-	this->bgcolor(color(214, 219, 233));
+	this->bgcolor(color("#232323"));
 	auto& pl = this->get_place();
 
 	this->div("<vert<<vert margin=[2,5] <weight=25 comb><lbox>><weight=100 <vert margin=[10,5] gap=5 abc>>><weight=45 panel>>");
@@ -34,11 +34,11 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	pl["abc"] << m_b_add << m_b_change << m_b_del << m_b_up << m_b_down;
 	m_listbox.append_header("");
 	m_listbox.show_header(false);
-	m_b_add.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
-	m_b_change.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
-	m_b_del.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
-	m_b_down.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
-	m_b_up.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false);
+	m_b_add.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
+	m_b_change.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
+	m_b_del.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
+	m_b_down.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
+	m_b_up.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
 
 	for (auto &opt : arts_info)
 		m_list[opt.first] = opt.second;
@@ -54,7 +54,34 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	this->collocate();
 	auto sz = m_listbox.size().width - m_listbox.scheme().text_margin;
 	m_listbox.column_at(0).width(sz);
+	drawerbase::scroll::scheme m_scroll_scheme;
+	m_scroll_scheme.bgrnd = color("#1E1E1E");
+	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
+	m_scroll_scheme.flat = true;
+	m_scroll_scheme.button_actived = color("#3296AA");
+	m_combox.scroll_scheme(m_scroll_scheme);
+	m_listbox.scroll_scheme(m_scroll_scheme);
+	m_listbox.bgcolor(color("#2C2C2C"));
+	m_listbox.fgcolor(colors::white);
+	m_listbox.scheme().item_selected = m_scroll_scheme.button_actived;
+	m_listbox.scheme().item_bordered = false;
+	m_listbox.borderless(true);
 	this->modality();
+}
+
+void dir_form::up_down(int dir)
+{
+	auto sel = m_listbox.selected();
+	if (!sel.empty())
+	{
+		auto e = m_listbox.at(0).at(sel[0].item);
+		auto txt = e.text(0);
+		auto a = e.pos();
+		a.item += dir;
+		m_listbox.insert_item(a, txt);
+		m_listbox.erase(e);
+		m_listbox.focus();
+	}
 }
 
 void dir_form::handle()
@@ -70,7 +97,10 @@ void dir_form::handle()
 
 		std::string tmp;
 		while (pt.next(tmp))
+		{
 			m_listbox.at(0).append(tmp);
+			m_listbox.at(0).back().fgcolor(colors::white);
+		}
 
 		if (!m_listbox.empty())
 			m_listbox.at(0).at(0).select(true);
@@ -128,37 +158,11 @@ void dir_form::handle()
 		}
 	});
 
-	m_b_up.events().click([this] {
-		auto sel = m_listbox.selected();
-		if (!sel.empty())
-		{
-			auto txt = m_listbox.at(0).at(sel[0].item).text(0);
-			auto e = m_listbox.at(0).at(sel[0].item);
-			auto a = e.pos();
-			a.item -= 1;
-			m_listbox.insert_item(a, txt);
-			m_listbox.erase(e);
-			m_listbox.focus();
-		}
-	});
+	m_b_up.events().click([this] { up_down(-1);	});
 
-	m_b_down.events().click([this] {
-		auto sel = m_listbox.selected();
-		if (!sel.empty())
-		{
-			auto txt = m_listbox.at(0).at(sel[0].item).text(0);
-			auto e = m_listbox.at(0).at(sel[0].item);
-			auto a = e.pos();
-			a.item += 1;
-			m_listbox.insert_item(a, txt);
-			m_listbox.erase(e);
-			m_listbox.focus();
-		}
-	});
+	m_b_down.events().click([this] { up_down(1); });
 
-	m_panel.m_cancel.events().click([this] {
-		this->close();
-	});
+	m_panel.m_cancel.events().click([this] { this->close();	});
 
 	/*
 	m_panel.m_ok.events().click([this] {
@@ -181,11 +185,11 @@ void dir_form::handle()
 okcancel_panel::okcancel_panel(window wd)
 	: panel<true>(wd)
 {
-	this->bgcolor(color(240, 240, 240));
+	this->bgcolor(color("#232323"));
 	m_place.div("<><weight=177 <vert <><weight=24 gap=5 abc><> > ><weight=5>");
 	m_place["abc"] << m_ok << m_cancel;
-	m_cancel.set_bground(button_renderer());
-	m_ok.set_bground(button_renderer());
+	m_cancel.set_bground(button_renderer()).fgcolor(colors::white);
+	m_ok.set_bground(button_renderer()).fgcolor(colors::white);
 	m_ok.edge_effects(false);
 	m_cancel.edge_effects(false);
 }
@@ -286,17 +290,17 @@ std::string folderbox::show() const
 }
 
 plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
-	: form(wd, { 400, 200 }, appear::decorate<>())
+	: form(wd, { 400, 250 }, appear::decorate<>())
 	, m_ui(_mui)
 	, m_options(_opt)
 {
 	this->caption("Setup Plugins");
-	this->bgcolor(colors::white);
+	this->bgcolor(color("#232323"));
 	auto& pl = this->get_place();
 	this->div("<vert <<weight=2><vert <weight=2><gbox><weight=5>><weight=2>><weight=45 panel>>");
 
 	m_group.radio_mode(false);
-	m_group.bgcolor(colors::white);
+	m_group.bgcolor(color("#2C2C2C"));
 
 	auto& plugins = mame_machine_manager::instance()->plugins();
 	for (auto &curentry : plugins)
@@ -305,6 +309,8 @@ plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_m
 			auto enabled = std::string(curentry.value()) == "1";
 			auto &cb = m_group.add_option(curentry.description());
 			cb.check(enabled);
+			cb.fgcolor(colors::white);
+			cb.bgcolor(color("#2C2C2C"));
 		}
 
 	pl["panel"] << m_panel;

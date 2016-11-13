@@ -86,8 +86,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	, m_exename(exename)
 {
 	m_scroll_scheme.bgrnd = color("#1E1E1E");
-	m_scroll_scheme.button = colors::white;
-	m_scroll_scheme.button_checked = colors::white;
+	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
 	m_scroll_scheme.flat = true;
 	m_scroll_scheme.button_actived = color("#3296AA");
 	
@@ -312,26 +311,23 @@ void main_form::refresh_icons()
 				auto clone = driver_list::non_bios_clone(*drv);
 				auto desc = clone == -1 ? drv->description : driver_list::driver(clone).description;
 				auto &parent = m_sortedlist[desc];
-				paint::image icon;
 				for (auto &e : parent)
 				{
 					if (e.first != drv) continue;
 					if (e.second.empty())
 					{
-						icon = load_icon(drv);
-						if (!icon.empty())
+						e.second = load_icon(drv);
+						if (!e.second.empty())
 						{
-							ip.icon(icon);
-							e.second = icon;
+							ip.icon(e.second);
 						}
 						else if (clone != -1)
 						{
 							drv = &driver_list::driver(clone);
-							icon = load_icon(drv);
-							if (!icon.empty())
+							e.second = load_icon(drv);
+							if (!e.second.empty())
 							{
-								ip.icon(icon);
-								e.second = icon;
+								ip.icon(e.second);
 							}
 						}
 					}
@@ -385,7 +381,6 @@ void main_form::init_filters()
 		src.insert(core_filename_extract_base(drv->source_file));
 	}
 
-	// TEST
 	for (auto & m : filters_option_ex)
 	{
 		auto node = m_filters.m_treebox.insert(m.first, m.first);
@@ -412,12 +407,10 @@ void main_form::init_filters()
 	}
 
 	auto node = m_filters.m_treebox.find(m_ui->options().last_used_filter());
-
 	if (node.level() == 0)
 		node = m_filters.m_treebox.find("All");
 
 	node.select(true);
-
 	this->get_place()["treebox"] << m_filters;
 }
 
@@ -427,10 +420,11 @@ void main_form::init_tabbar()
 	this->get_place()["tab_frame"].fasten(m_textpage).fasten(m_imgpage);
 	m_tabbar.append("Images", m_imgpage).append("Info", m_textpage);
 	m_tabbar.bgcolor(m_bgcolor);
-	m_tabbar.tab_bgcolor(0, m_menubar_color);
-	m_tabbar.tab_bgcolor(1, m_menubar_color);
-	m_tabbar.tab_fgcolor(0, colors::white);
-	m_tabbar.tab_fgcolor(1, colors::white);
+	for (int x = 0; x < m_tabbar.length(); ++x)
+	{
+		m_tabbar.tab_bgcolor(x, m_menubar_color);
+		m_tabbar.tab_fgcolor(x, colors::white);
+	}
 	m_tabbar.activated(0);
 	m_tabbar.renderer(tabbar_renderer(m_tabbar.renderer()));
 
@@ -479,17 +473,16 @@ void main_form::init_machinebox()
 	this->get_place()["machinebox"] << m_machinebox;
 
 	m_machinebox.enable_single(true, true);
-	m_machinebox.scheme().header_bgcolor = m_menubar_color;
-	m_machinebox.scheme().header_fgcolor = colors::white;
-	m_machinebox.scheme().header_highlighted = color("#3296AA");
-	m_machinebox.scheme().item_highlighted = m_bgcolor;
-	m_machinebox.scheme().item_selected = color("#3296AA");
-	m_machinebox.scheme().item_bordered = false;
+	auto &sc = m_machinebox.scheme();
+	sc.header_bgcolor = m_menubar_color;
+	sc.header_fgcolor = colors::white;
+	sc.header_highlighted = sc.item_selected = color("#3296AA");
+	sc.item_highlighted = m_bgcolor;
+	sc.item_bordered = false;
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
 
 	m_machinebox.scroll_scheme(m_scroll_scheme);
-
 	m_machinebox.always_selected(true);
 }
 
@@ -642,17 +635,16 @@ paint::image main_form::load_icon(const game_driver* drv) const
 	if (filerr != osd_err::NONE) return img;
 
 	auto length = static_cast<std::uint32_t>(snapfile.size());
-	auto data = global_alloc_array(std::uint32_t, length);
+	auto data = new std::uint32_t[length];
 	if (snapfile.read(data, length) > 0)
 	{
 		if (img.open(data, length))
 		{
-			global_free_array(data);
+			delete[] data;
 			return img;
 		}
 	}
-	global_free_array(data);
-
+	delete[] data;
 	return img;
 }
 
@@ -851,11 +843,10 @@ void main_form::load_sw_data(std::string list, std::string name, std::string par
 void main_form::init_menubar()
 {
 	m_menubar.bgcolor(m_menubar_color);
-	m_menubar.scheme().text_fgcolor = colors::white;
-	m_menubar.scheme().body_highlight = color{ "#3296AA" };
-	m_menubar.scheme().border_highlight = color{ "#3296AA" };
-	m_menubar.scheme().body_selected = color{ "#3296AA" };
-	m_menubar.scheme().border_selected = color{ "#3296AA" };
+	auto &sc = m_menubar.scheme();
+	sc.text_fgcolor = colors::white;
+	sc.body_highlight = sc.border_highlight = sc.body_selected = sc.border_selected = color{ "#3296AA" };
+	sc.has_corner = false;
 
 	// Initialize menu
 	init_file_menu();
@@ -942,15 +933,13 @@ void main_form::init_help_menu()
 {
 	auto& menu = m_menubar.push_back("Help");
 	menu.append("About", [this](menu::item_proxy& ip) {
-		auto message = string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version());
 		form fm{ *this, API::make_center(300, 200), appear::decorate<>() };
 		fm.caption("About MEWUI");
 		fm.bgcolor(colors::white);
 		fm.div("<vert <><weight=128 <weight=128 logo><label>><>>");
 		label lbl{ fm };
 		lbl.transparent(true);
-		//lbl.format(true);
-		lbl.caption(message);
+		lbl.caption(string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version()));
 		picture pct{ fm };
 		paint::image img;
 		img.open(logo_mewui, ARRAY_LENGTH(logo_mewui));
@@ -1010,8 +999,7 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	m_combox.editable(false);
 	drawerbase::scroll::scheme s;
 	s.bgrnd = color("#1E1E1E");
-	s.button = colors::white;
-	s.button_checked = colors::white;
+	s.button = s.button_checked = colors::white;
 	s.flat = true;
 	m_combox.scroll_scheme(s);
 	m_combox.bgcolor(s.bgrnd);
@@ -1021,15 +1009,6 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
 	m_place["combobox"] << m_combox;
 	m_place["pct"] << m_picture;
-/*	dw.draw([this](paint::graphics& graph) {
-		nana::rectangle r(graph.size());
-		auto right = r.right() - 1;
-		auto bottom = r.bottom() - 1;
-		graph.line_begin(right, r.y);
-		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	}); */
 }
 
 tab_page_softwarebox::tab_page_softwarebox(window wd)
@@ -1046,14 +1025,20 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 	// Layout
 	m_place.div("<swbox>");
 	m_place["swbox"] << m_softwarebox;
-	m_softwarebox.scheme().header_bgcolor = color("#2C2C2C");
-	m_softwarebox.scheme().header_fgcolor = colors::white;
-	m_softwarebox.scheme().header_highlighted = color("#3296AA");
-	m_softwarebox.scheme().item_highlighted = color("#232323");
-	m_softwarebox.scheme().item_selected = color("#3296AA");
-	m_softwarebox.scheme().item_bordered = false;
-	m_softwarebox.bgcolor(color("#232323"));
+	auto &sc = m_softwarebox.scheme();
+	sc.header_bgcolor = color("#2C2C2C");
+	sc.header_fgcolor = colors::white;
+	sc.header_highlighted = sc.item_selected = color("#3296AA");
+	sc.item_highlighted = color("#232323");
+	sc.item_bordered = false;
+	m_softwarebox.bgcolor(sc.item_highlighted);
 	m_softwarebox.borderless(true);
+	drawerbase::scroll::scheme m_scroll_scheme;
+	m_scroll_scheme.bgrnd = color("#1E1E1E");
+	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
+	m_scroll_scheme.flat = true;
+	m_scroll_scheme.button_actived = color("#3296AA");
+	m_softwarebox.scroll_scheme(m_scroll_scheme);
 }
 
 tab_page_textbox::tab_page_textbox(window wd)
@@ -1063,20 +1048,14 @@ tab_page_textbox::tab_page_textbox(window wd)
 	m_textbox.editable(false);
 	m_textbox.multi_lines(true);
 	m_textbox.focus_behavior(widgets::skeletons::text_focus_behavior::none);
-	m_combox.push_back("History");
-	m_combox.push_back("MameInfo");
-	m_combox.push_back("SysInfo");
-	m_combox.push_back("MessInfo");
-	m_combox.push_back("Commands");
-	m_combox.push_back("Machine Init");
-	m_combox.push_back("MameScore");
+	m_combox.push_back("History").push_back("MameInfo").push_back("SysInfo").push_back("MessInfo");
+	m_combox.push_back("Commands").push_back("Machine Init").push_back("MameScore");
 	m_combox.option(0);
 	m_combox.editable(false);
 
 	drawerbase::scroll::scheme s;
 	s.bgrnd = color("#1E1E1E");
-	s.button = colors::white;
-	s.button_checked = colors::white;
+	s.button = s.button_checked = colors::white;
 	s.button_actived = color("#3296AA");
 	s.flat = true;
 	m_combox.scroll_scheme(s);
@@ -1090,15 +1069,6 @@ tab_page_textbox::tab_page_textbox(window wd)
 	m_place.div("vert margin=5 <weight=20 combobox><weight=5><txt>");
 	m_place["combobox"] << m_combox;
 	m_place["txt"] << m_textbox;
-/*	dw.draw([this](paint::graphics& graph) {
-		nana::rectangle r(graph.size());
-		auto right = r.right() - 1;
-		auto bottom = r.bottom() - 1;
-		graph.line_begin(right, r.y);
-		graph.line_to({ right, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		graph.line_to({ r.x, bottom }, static_cast<color_rgb>(0x9cb6c5));
-		graph.line_to({ r.x, r.y - 1 }, static_cast<color_rgb>(0x9cb6c5));
-	}); */
 }
 
 panel_filter::panel_filter(window wd)
@@ -1115,7 +1085,7 @@ panel_filter::panel_filter(window wd)
 	m_treebox.renderer(treebox_renderer(m_treebox.renderer()));
 	m_treebox.placer(custom_placer(m_treebox.placer()));
 	m_treebox.bgcolor(color("#232323"));
-	
+
 	drawerbase::scroll::scheme s;
 	s.bgrnd = color("#1E1E1E");
 	s.button = colors::white;
@@ -1143,10 +1113,8 @@ statusbar::statusbar(window wd)
 
 void statusbar::update(int m, std::string w)
 {
-	auto ma = string_format("Machines %d / %d", m, driver_list::total() - 1);
-	auto wo = string_format("Overall: %s", w);
-	m_machines.caption(ma);
-	m_working.caption(wo);
+	m_machines.caption(string_format("Machines %d / %d", m, driver_list::total() - 1));
+	m_working.caption(string_format("Overall: %s", w));
 }
 
 } // namespace mewui

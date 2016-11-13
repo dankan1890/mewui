@@ -32,6 +32,7 @@ namespace nana
 				color_proxy body_selected{ colors::white };
 				color_proxy border_selected{ colors::dark_border };
 				color_proxy border_highlight{ colors::highlight };
+				bool has_corner{ true };
 			};
 
 			class item_renderer

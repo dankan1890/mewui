@@ -51,7 +51,6 @@ public:
 	combox m_combox{ *this };
 
 private:
-	drawing dw{ *this };
 	place m_place{ *this };
 };
 
@@ -63,7 +62,6 @@ public:
 	combox m_combox{ *this };
 
 private:
-	drawing dw{ *this };
 	place m_place{ *this };
 };
 

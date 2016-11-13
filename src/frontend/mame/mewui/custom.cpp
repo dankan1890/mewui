@@ -67,13 +67,13 @@ bool button_renderer::draw(graph_reference graph, const nana::color& bgcolor, co
 	auto rc = r;
 	if (state == element_state::hovered)
 	{
-		graph.rectangle(rc, false, colors::blue);
-		graph.rectangle(rc.pare_off(1), true, color(229, 241, 251));
+		graph.rectangle(rc, false, colors::black);
+		graph.rectangle(rc.pare_off(1), true, color("#3296AA"));
 	}
 	else
 	{
-		graph.rectangle(rc, false, colors::gray_border);
-		graph.rectangle(rc.pare_off(1), true, color(225, 225, 225));
+		graph.rectangle(rc, false, colors::black);
+		graph.rectangle(rc.pare_off(1), true, color("#2C2C2C"));
 	}
 	return true;
 }

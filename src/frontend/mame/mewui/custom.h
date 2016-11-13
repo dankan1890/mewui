@@ -1242,6 +1242,7 @@ private:
 
 	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
 	{
+		return placer_->item_width(graph, attr);
 		auto sz = graph.width() - text_offset_ * 2;
 		auto pl = placer_->item_width(graph, attr);
 		return (std::max)(sz, pl);

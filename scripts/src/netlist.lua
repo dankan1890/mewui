@@ -14,12 +14,15 @@ project "netlist"
 	kind (LIBTYPE)
 
 	addprojectflags()
+
+	configuration { "gmake or ninja" }
 	if _OPTIONS["gcc"]~=nil and (string.find(_OPTIONS["gcc"], "clang") or string.find(_OPTIONS["gcc"], "android")) then
 		buildoptions {
 			"-Wno-undefined-var-template",
 		}
 	end
 
+	configuration { }
 
 	defines {
 		"__STDC_CONSTANT_MACROS",

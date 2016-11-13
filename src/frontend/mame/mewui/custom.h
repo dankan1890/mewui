@@ -16,7 +16,6 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/tabbar.hpp>
 #include <nana/gui/element.hpp>
-#include <algorithm>
 using namespace nana;
 
 namespace mewui
@@ -1216,13 +1215,12 @@ private:
 	cloneable_renderer renderer_;
 };
 
-class custom_placer	: public treebox::compset_placer_interface
+class treebox_placer : public treebox::compset_placer_interface
 {
 	using cloneable_placer = pat::cloneable<treebox::compset_placer_interface>;
 public:
-	explicit custom_placer(const cloneable_placer& r)
-		: text_offset_(0)
-		, placer_(r) {}
+	explicit treebox_placer(const cloneable_placer& r)
+		: placer_(r) {}
 
 private:
 	void enable(component_t comp, bool enabled) override
@@ -1243,20 +1241,13 @@ private:
 	unsigned item_width(graph_reference graph, const item_attribute_t& attr) const override
 	{
 		return placer_->item_width(graph, attr);
-		auto sz = graph.width() - text_offset_ * 2;
-		auto pl = placer_->item_width(graph, attr);
-		return (std::max)(sz, pl);
 	}
 
 	bool locate(component_t comp, const item_attribute_t& attr, nana::rectangle * r) const override
 	{
-		auto ret = placer_->locate(comp, attr, r);
-		if (ret && comp == component_t::text)
-			text_offset_ = r->x;
-		return ret;
+		return placer_->locate(comp, attr, r);
 	}
 
-	mutable int text_offset_;
 	cloneable_placer placer_;
 };
 

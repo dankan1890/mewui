@@ -1083,7 +1083,7 @@ panel_filter::panel_filter(window wd)
 	m_title.fgcolor(colors::white);
 	m_title.text_align(align::left, align_v::center);
 	m_treebox.renderer(treebox_renderer(m_treebox.renderer()));
-	m_treebox.placer(custom_placer(m_treebox.placer()));
+	m_treebox.placer(treebox_placer(m_treebox.placer()));
 	m_treebox.bgcolor(color("#232323"));
 
 	drawerbase::scroll::scheme s;

@@ -14,6 +14,11 @@ project "netlist"
 	kind (LIBTYPE)
 
 	addprojectflags()
+	if _OPTIONS["gcc"]~=nil and (string.find(_OPTIONS["gcc"], "clang") or string.find(_OPTIONS["gcc"], "android")) then
+		buildoptions {
+			"-Wno-undefined-var-template",
+		}
+	end
 
 
 	defines {

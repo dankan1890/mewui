@@ -67,7 +67,8 @@ namespace detail
 
 		public:
 			typedef UserData	element_type;
-			typedef tree_node<element_type> node_type;
+			using node_type = tree_node<element_type>;
+//			typedef typename tree_node<element_type> node_type;
 			typedef typename node_type::value_type	value_type;
 
 			tree_cont()

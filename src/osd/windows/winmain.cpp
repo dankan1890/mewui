@@ -80,7 +80,7 @@ public:
 				winwindow_toggle_full_screen();
 
 			vsnprintf(buffer, ARRAY_LENGTH(buffer), msg, args);
-			win_message_box_utf8(!osd_common_t::s_window_list.empty() ? osd_common_t::s_window_list.front()->platform_window<HWND>() : nullptr, buffer, emulator_info::get_appname(), MB_OK);
+			win_message_box_utf8(!osd_common_t::s_window_list.empty() ? std::static_pointer_cast<win_window_info>(osd_common_t::s_window_list.front())->platform_window() : nullptr, buffer, emulator_info::get_appname(), MB_OK);
 		}
 		else
 			chain_output(channel, msg, args);
@@ -98,9 +98,9 @@ class winuniversal_output_error : public osd_output
 public:
 	virtual void output_callback(osd_output_channel channel, const char *msg, va_list args) override
 	{
+		char buffer[2048];
 		if (channel == OSD_OUTPUT_CHANNEL_ERROR)
 		{
-			char buffer[1024];
 			vsnprintf(buffer, ARRAY_LENGTH(buffer), msg, args);
 
 			std::wstring wcbuffer(osd::text::to_wstring(buffer));
@@ -108,6 +108,15 @@ public:
 
 			auto dlg = ref new MessageDialog(ref new Platform::String(wcbuffer.data()), ref new Platform::String(wcbuffer.data()));
 			dlg->ShowAsync();
+		}
+		else if (channel == OSD_OUTPUT_CHANNEL_VERBOSE)
+		{
+			vsnprintf(buffer, ARRAY_LENGTH(buffer), msg, args);
+			std::wstring wcbuffer = osd::text::to_wstring(buffer);
+			OutputDebugString(wcbuffer.c_str());
+
+			// Chain to next anyway
+			chain_output(channel, msg, args);
 		}
 		else
 			chain_output(channel, msg, args);
@@ -358,6 +367,8 @@ int main(Platform::Array<Platform::String^>^ args)
 
 MameMainApp::MameMainApp()
 {
+	// Turn off application view scaling so XBOX gets full screen
+	Windows::UI::ViewManagement::ApplicationViewScaling::TrySetDisableLayoutScaling(true);
 }
 
 void MameMainApp::Initialize(Windows::ApplicationModel::Core::CoreApplicationView^ applicationView)
@@ -399,7 +410,7 @@ void MameMainApp::Run()
 	// To satisfy the latter things, pass in the module path name
 	char exe_path[MAX_PATH];
 	GetModuleFileNameA(nullptr, exe_path, MAX_PATH);
-	char* args[2] = { exe_path, (char*)"-verbose" };
+	char* args[3] = { exe_path, (char*)"-verbose", (char*)"-mouse" };
 
 	DWORD result = emulator_info::start_frontend(*m_options.get(), *m_osd.get(), ARRAY_LENGTH(args), args);
 	osd_output::pop(&winerror);
@@ -628,3 +639,4 @@ static int is_double_click_start(int argc)
 }
 
 #endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+

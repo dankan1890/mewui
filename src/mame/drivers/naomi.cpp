@@ -328,6 +328,7 @@ Game                                          on cart    IC22#   # of SOP56  IC3
 ----------------------------------------------------------------------------------------------------------------------------------
 Club Kart: European Session (2003, prototype)   no cart  *       21 (64Mb)   present  315-6206  not present   * instead of EPROM have tiny PCB with 2 flashroms on it
 Crackin' DJ part 2                            840-0068C  23674   20 (64Mb)   present  315-6206  317-0311-COM  PCB have label 840-0068B-01 837-14124, requires regular 837-13551 and 837-13938 rotary JVS boards, and turntable simulation
+Crazy Taxi                                    840-0002C  ?       13 (64Mb)   ?        315-6206  ?             not dumped, likely same as regular 171-7919A cart
 Ferrari F355 Challenge (twin/deluxe, prototype) no cart  22848P* 21 (64Mb)   present  315-6206  317-0267-COM  * flash-PCB have CRC 330B A417, the rest is the same as regular cart, not dumped but known to exist
 /Ferrari F355 Challenge 2 - International
 \Course Edition (twin/deluxe, prototype)        no cart  23399   21 (64Mb)   present  315-6206  317-0287-COM  content is the same as regular 171-7919A cart
@@ -3010,20 +3011,6 @@ Probably at some stage of development NAOMI was planned as non-JVS system as wel
 
 
 // only revisions E and higher supports DIMM board
-// DIMM firmwares:
-//  FPR-23489C - 1.02 not VxWorks based, no network, can not be software updated to 2.xx+
-// Net-DIMM firmwares:
-// all VxWorkx based, can be updated up to 4.0x, actually 1MB in size, must have CRC32 FFFFFFFF, 1st MB of flash ROM contain stock version, 2nd MB have some updated version
-//  ?          - 2.03 factory only, introduced ALL.net features, so far was seen only as stock firmware in 1st half of flash ROM, factory updated to some newer ver in 2nd ROM half
-//  FPR23718   - 2.06 factory only, most common version of NAOMI Net-DIMMs, have stock 2.03, IC label need verification
-//  ?            2.13 factory or update (NAOMI VF4)
-//  ?            2.17 factory or update (NAOMI VF4 Evolution)
-//  ?          - 3.01 added network boot support, supports Triforce and Chihiro
-//  FPR23905   - 3.03 factory or update (NAOMI WCCF)
-//  ?            3.12 factory only
-//  ?            3.17 latest known 3.xx version, factory or update (NAOMI VF4 Final Tuned or statndalone disks for Chihiro and Triforce)
-// update only - 4.01 supports Compact Flash GD-ROM-replacement
-//              "4.02" hack of 4.01 with CF card vendor check disabled
 #define NAOMIGD_BIOS \
 	ROM_REGION( 0x200000, "maincpu", 0) \
 	ROM_SYSTEM_BIOS( 0, "bios0", "epr-21576e (Japan)" ) \
@@ -3043,18 +3030,7 @@ Probably at some stage of development NAOMI was planned as non-JVS system as wel
 	ROM_SYSTEM_BIOS( 7, "bios7", "epr-21577g (USA)" ) \
 	ROM_LOAD16_WORD_SWAP_BIOS( 7, "epr-21577g.ic27",  0x000000, 0x200000, CRC(25f64af7) SHA1(99f9e6cc0642319bd2da492611220540add573e8) ) \
 	ROM_SYSTEM_BIOS( 8, "bios8", "epr-21577e (USA)" ) \
-	ROM_LOAD16_WORD_SWAP_BIOS( 8, "epr-21577e.ic27",  0x000000, 0x200000, CRC(cf36e97b) SHA1(b085305982e7572e58b03a9d35f17ae319c3bbc6) ) \
-	ROM_REGION( 0x200000, "user2", 0) \
-	ROM_LOAD("315-6301.ic11", 0x000000, 0x01ff01, NO_DUMP ) \
-	ROM_LOAD("315-6334.ic11", 0x000000, 0x01ff01, CRC(534c342d) SHA1(3e879f432c82305487922ab28c07107cf0f3c5cf) ) \
-	ROM_LOAD16_WORD_SWAP( "fpr-23489c.ic14", 0x000000, 0x200000, CRC(bc38bea1) SHA1(b36fcc6902f397d9749e9d02de1bbb7a5e29d468) ) \
-	ROM_LOAD16_WORD_SWAP( "203_203.bin",     0x000000, 0x200000, CRC(a738ea1c) SHA1(6f55f1ae0606816a4eca6645ed36eb7f9c7ad9cf) ) \
-	ROM_LOAD16_WORD_SWAP( "fpr23718.ic36",   0x000000, 0x200000, CRC(a738ea1c) SHA1(b7b5a55a6a4cf0aa2df1b3dff62ff67f864c55e8) ) \
-	ROM_LOAD16_WORD_SWAP( "213_203.bin",     0x000000, 0x200000, CRC(a738ea1c) SHA1(17131f318632610b87bc095156ffad4597fed4ca) ) \
-	ROM_LOAD16_WORD_SWAP( "217_203.bin",     0x000000, 0x200000, CRC(a738ea1c) SHA1(e5a229ae7ed48b2955cad63529fd938c6db555e5) ) \
-	ROM_LOAD16_WORD_SWAP( "fpr23905.ic36",   0x000000, 0x200000, CRC(ffffffff) SHA1(acade4362807c7571b1c2a48ed6067e4bddd404b) ) \
-	ROM_LOAD16_WORD_SWAP( "317_312.bin",     0x000000, 0x200000, CRC(a738ea1c) SHA1(31d698cd659446ee09a2eeedec6e4bc6a19d05e8) ) \
-	ROM_LOAD16_WORD_SWAP( "401_203.bin",     0x000000, 0x200000, CRC(a738ea1c) SHA1(edb52597108462bcea8eb2a47c19e51e5fb60638) )
+	ROM_LOAD16_WORD_SWAP_BIOS( 8, "epr-21577e.ic27",  0x000000, 0x200000, CRC(cf36e97b) SHA1(b085305982e7572e58b03a9d35f17ae319c3bbc6) )
 
 /* NAOMI2 BIOS:
 
@@ -7923,7 +7899,7 @@ ROM_START( lupinsho )
 	DISK_IMAGE_READONLY( "gds-0018", 0, BAD_DUMP SHA1(0633a99a666f363ab30450a76b9753685d6b1f57) )
 
 	ROM_REGION( 0x4000, "pic", ROMREGION_ERASEFF)
-	ROM_LOAD("317-0332-jpn.pic", 0x00, 0x4000, CRC(f71cb2fc) SHA1(281b3b3b03edf9a39e380976de528b7c9674de53) )
+	ROM_LOAD("317-0325-jpn.pic", 0x00, 0x4000, CRC(f71cb2fc) SHA1(281b3b3b03edf9a39e380976de528b7c9674de53) )
 ROM_END
 
 ROM_START( vathlete )
@@ -8087,13 +8063,12 @@ ROM_START( puyofev )
 ROM_END
 
 /*
-   note:
-   both Dragon Treasure game binaries have only first 16MB encrypted using DES key from security PIC provided with GD-ROMs.
-   the rest of data encrypted using some other key, same in both game versions.
-   presumably this data uploaded via network to satellite units and decrypted using DES key from their own security PICs.
+   Dragon Treasure 2 and 3 game binaries have only first 16MB encrypted using key from main unit security PIC.
+   data starting from 0x1000000 uploaded via network to satellite units and later decrypted using keys from satellite security PICs.
+   Dragon Treasure 2 binary also contain DIMM firmware updater ver 3.13 at 0x19000000
 */
 
-// requires 837-14381 "G2 EXPANSION BD" I/O board
+// requires 837-14381 "G2 EXPANSION BD" I/O board, NetDIMM, IC Card reader SAXA HW210 and coin mechanics
 ROM_START( dragntr2 )
 	NAOMIGD_BIOS
 	NAOMI_DEFAULT_EEPROM
@@ -8102,11 +8077,15 @@ ROM_START( dragntr2 )
 	DISK_IMAGE_READONLY( "gds-0037a", 0, SHA1(ce65fe84cabaa1ac3f40bff9535a42c2055b5f1c) )
 
 	ROM_REGION( 0x4000, "pic", ROMREGION_ERASEFF)
-	//PIC is missing
-	ROM_LOAD("317-xxxx-xxx.pic", 0x00, 0x4000, NO_DUMP )
+	//PIC16C621A (317-0389-COM)
+	ROM_LOAD("317-0389-com.pic", 0x00, 0x4000, CRC(35c511f9) SHA1(13073d6076d8b771f52a9cf461ed335471762574) )
+
+	ROM_REGION( 0x4000, "satl_pic", ROMREGION_ERASEFF)
+	//PIC16C621A (317-0390-COM)
+	ROM_LOAD("317-0390-com.pic", 0x00, 0x4000, CRC(92183b60) SHA1(1345a35ee4a3a02acc060f69d4faec5b72b7894b) )
 ROM_END
 
-// requires 837-14381 "G2 EXPANSION BD" I/O board
+// requires 837-14381 "G2 EXPANSION BD" I/O board, NetDIMM, IC Card reader SAXA HW210 and coin mechanics
 ROM_START( dragntr3 )
 	NAOMIGD_BIOS
 	NAOMI_DEFAULT_EEPROM
@@ -8117,7 +8096,11 @@ ROM_START( dragntr3 )
 	ROM_REGION( 0x4000, "pic", ROMREGION_ERASEFF)
 	//PIC16F628A
 	// copy, original labels unknown
-	ROM_LOAD("317-xxxx-xxx.pic", 0x00, 0x4000, CRC(8df4d33a) SHA1(0d27ec46a64af60b1e46ad4b3d34b6df5448f81a) )
+	ROM_LOAD("317-xxxx-com.pic", 0x00, 0x4000, CRC(8df4d33a) SHA1(0d27ec46a64af60b1e46ad4b3d34b6df5448f81a) )
+
+	ROM_REGION(0x4000, "satl_pic", ROMREGION_ERASEFF)
+	//PIC16C621A (317-0390-COM)
+	ROM_LOAD("317-0390-com.pic", 0x00, 0x4000, CRC(92183b60) SHA1(1345a35ee4a3a02acc060f69d4faec5b72b7894b) )
 ROM_END
 
 ROM_START( ndcfboxa )
@@ -8881,8 +8864,8 @@ ROM_START( wccf116 )
 	DISK_IMAGE_READONLY( "cdp-10001c", 0, SHA1(efa6ef20f278c99efbf7c3630b1c8e2cad0a05c0) ) // CD-R
 
 	ROM_REGION( 0x4000, "pic", ROMREGION_ERASEFF)
-	//PIC is missing
-	ROM_LOAD("wccf1.pic", 0x00, 0x4000, NO_DUMP )
+	//PIC16C621A (317-0329-JPN)
+	ROM_LOAD("317-0329-jpn.pic", 0x00, 0x4000, CRC(097f5f92) SHA1(ffe7df06007bd99908db15c300dd53bbd321bdb8) )
 ROM_END
 
 ROM_START( wccf1dup )
@@ -8893,8 +8876,8 @@ ROM_START( wccf1dup )
 	DISK_IMAGE_READONLY( "cdp-10003", 0, SHA1(13064b6e03527f1222b6bd01c0ba9a063d7be949) )
 
 	ROM_REGION( 0x4000, "pic", ROMREGION_ERASEFF)
-	//PIC is missing, same as CDP-10001C
-	ROM_LOAD("wccf1.pic", 0x00, 0x4000, NO_DUMP )
+	//PIC16C621A (317-0329-JPN)
+	ROM_LOAD("317-0329-jpn.pic", 0x00, 0x4000, CRC(097f5f92) SHA1(ffe7df06007bd99908db15c300dd53bbd321bdb8) )
 ROM_END
 
 ROM_START( wccf212e )
@@ -9905,15 +9888,15 @@ GAME( 2003, puyofevp, naomi, naomim1, naomi, naomi_state, naomi, ROT0, "Sega", "
 // 00??  ExZeus (GDL-00xx)
 
 /* CDP-xxxxx and CDV-xxxxx (CD-ROM and DVD-ROM for Naomi 2 Satellite Terminal) */
-/* CDP-10001C*/ GAME( 2003, wccf116,  naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2001-2002 Ver.2 (CDP-10001C)", GAME_FLAGS )
+/* CDP-10001C*/ GAME( 2003, wccf116,  naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2001-2002 Ver.2 (Japan) (CDP-10001C)", GAME_FLAGS )
 /* CDP-10003 */ GAME( 2002, wccf1dup, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2001-2002 DIMM FIRM Ver.3.03 (CDP-10003)", GAME_FLAGS )
-/* CDV-10002 */ GAME( 2004, wccf212e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2002-2003 Ver.2.12 (CDV-10002)", GAME_FLAGS )
+/* CDV-10002 */ GAME( 2004, wccf212e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2002-2003 Ver.2.12 (Export) (CDV-10002)", GAME_FLAGS )
 /* CDV-10007 */ GAME( 2004, wccf2chk, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2002-2003 Drive Checker (CDV-10007)", GAME_FLAGS )  // actually just disc ejector
-/* CDV-10008 */ GAME( 2004, wccf234j, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2002-2003 Ver.2.34 (CDV-10008)", GAME_FLAGS )
-/* CDV-10013 */ GAME( 2005, wccf310j, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 (CDV-10013)", GAME_FLAGS )
-/* CDV-10015 */ GAME( 2005, wccf331e, wccf322e,naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 Ver.1.1 (CDV-10015)", GAME_FLAGS )
-/* CDV-10015P*/ GAME( 2005, wccf322e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 Ver.3.22 (CDV-10015P)", GAME_FLAGS )
-/* CDV-10027 */ GAME( 2006, wccf420e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2005-2006 (CDV-10027)", GAME_FLAGS )
+/* CDV-10008 */ GAME( 2004, wccf234j, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Hitmaker / Sega", "World Club Champion Football Serie A 2002-2003 Ver.2.34 (Japan) (CDV-10008)", GAME_FLAGS )
+/* CDV-10013 */ GAME( 2005, wccf310j, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 (Japan) (CDV-10013)", GAME_FLAGS )
+/* CDV-10015 */ GAME( 2005, wccf331e, wccf322e,naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 Ver.1.1 (Export) (CDV-10015)", GAME_FLAGS )
+/* CDV-10015P*/ GAME( 2005, wccf322e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2004-2005 Ver.3.22 (Export) (CDV-10015P)", GAME_FLAGS )
+/* CDV-10027 */ GAME( 2006, wccf420e, naomigd, naomigd, naomi, naomi_state, naomigd, ROT0, "Sega",            "World Club Champion Football European Clubs 2005-2006 (Export) (CDV-10027)", GAME_FLAGS )
 // CD?-????? - World Club Champion Football Serie A 2001-2002 (Sega, 2002)
 // CD?-????? - World Club Champion Football Serie A 2001-2002 Ver.1.2 (Sega, 2002)
 // CD?-????? - World Club Champion Football Serie A 2002-2003 Ver.2 (Sega, 2004)

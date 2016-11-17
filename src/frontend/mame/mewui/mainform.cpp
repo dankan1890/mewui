@@ -85,10 +85,17 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	, m_ui(_mui)
 	, m_exename(exename)
 {
+	
+	// Set default scroll scheme
+	drawerbase::scroll::scheme m_scroll_scheme;
 	m_scroll_scheme.bgrnd = color("#1E1E1E");
 	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
 	m_scroll_scheme.flat = true;
 	m_scroll_scheme.button_actived = color("#3296AA");
+	scroll<true> sc;
+	sc.set_default_scheme(m_scroll_scheme);
+	sc.use_default_scheme(true);
+
 	
 	// Load DATs data
 	m_datfile = nullptr;
@@ -103,6 +110,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	this->caption(maintitle);
 	this->bgcolor(color("#1E1E1E"));
 	if (m_ui->options().form_max()) this->zoom(true); // Maximize
+
 
 #if defined(NANA_WINDOWS)
 	// Tray
@@ -481,8 +489,6 @@ void main_form::init_machinebox()
 	sc.item_bordered = false;
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
-
-	m_machinebox.scroll_scheme(m_scroll_scheme);
 	m_machinebox.always_selected(true);
 }
 
@@ -936,10 +942,13 @@ void main_form::init_help_menu()
 		form fm{ *this, API::make_center(300, 200), appear::decorate<>() };
 		fm.caption("About MEWUI");
 		fm.bgcolor(colors::white);
-		fm.div("<vert <><weight=128 <weight=128 logo><label>><>>");
-		label lbl{ fm };
+		fm.div("<vert <><weight=128 <weight=128 logo> <vert <label><labelurl> > ><>>");
+		label lbl{ fm }, lblurl{ fm };
 		lbl.transparent(true);
+		lblurl.transparent(true);
+		lblurl.format(true);
 		lbl.caption(string_format("MEWUI %s by Dankan1890", emulator_info::get_bare_build_version()));
+		lblurl.caption("<url=\"http://nanapro.org\">Nana</>");
 		picture pct{ fm };
 		paint::image img;
 		img.open(logo_mewui, ARRAY_LENGTH(logo_mewui));
@@ -947,6 +956,7 @@ void main_form::init_help_menu()
 		pct.transparent(true);
 		fm["logo"] << pct;
 		fm["label"] << lbl;
+		fm["labelurl"] << lblurl;
 		fm.collocate();
 		fm.show();
 		fm.modality();
@@ -997,13 +1007,8 @@ tab_page_picturebox::tab_page_picturebox(window wd)
 
 	m_combox.option(0);
 	m_combox.editable(false);
-	drawerbase::scroll::scheme s;
-	s.bgrnd = color("#1E1E1E");
-	s.button = s.button_checked = colors::white;
-	s.flat = true;
-	m_combox.scroll_scheme(s);
-	m_combox.bgcolor(s.bgrnd);
-	m_combox.scheme().background = s.bgrnd;
+	m_combox.bgcolor(color("#1E1E1E"));
+	m_combox.scheme().background = color("#1E1E1E");
 
 	// Layout
 	m_place.div("vert margin=5<weight=20 combobox><weight=5><pct>");
@@ -1033,12 +1038,6 @@ tab_page_softwarebox::tab_page_softwarebox(window wd)
 	sc.item_bordered = false;
 	m_softwarebox.bgcolor(sc.item_highlighted);
 	m_softwarebox.borderless(true);
-	drawerbase::scroll::scheme m_scroll_scheme;
-	m_scroll_scheme.bgrnd = color("#1E1E1E");
-	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
-	m_scroll_scheme.flat = true;
-	m_scroll_scheme.button_actived = color("#3296AA");
-	m_softwarebox.scroll_scheme(m_scroll_scheme);
 }
 
 tab_page_textbox::tab_page_textbox(window wd)
@@ -1053,15 +1052,8 @@ tab_page_textbox::tab_page_textbox(window wd)
 	m_combox.option(0);
 	m_combox.editable(false);
 
-	drawerbase::scroll::scheme s;
-	s.bgrnd = color("#1E1E1E");
-	s.button = s.button_checked = colors::white;
-	s.button_actived = color("#3296AA");
-	s.flat = true;
-	m_combox.scroll_scheme(s);
-	m_combox.bgcolor(s.bgrnd);
-	m_combox.scheme().background = s.bgrnd;
-	m_textbox.scroll_scheme(s);
+	m_combox.bgcolor(color("#1E1E1E"));
+	m_combox.scheme().background = color("#1E1E1E");
 	m_textbox.bgcolor(color("#2C2C2C"));
 	m_textbox.fgcolor(colors::white);
 
@@ -1085,13 +1077,6 @@ panel_filter::panel_filter(window wd)
 	m_treebox.renderer(treebox_renderer(m_treebox.renderer()));
 	m_treebox.placer(treebox_placer(m_treebox.placer()));
 	m_treebox.bgcolor(color("#232323"));
-
-	drawerbase::scroll::scheme s;
-	s.bgrnd = color("#1E1E1E");
-	s.button = colors::white;
-	s.button_checked = colors::white;
-	s.flat = true;
-	m_treebox.scroll_scheme(s);
 }
 
 statusbar::statusbar(window wd)

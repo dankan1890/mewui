@@ -95,16 +95,21 @@ namespace nana
 				void scroll_delta_pos(graph_reference, int);
 				void auto_scroll();
 				void draw(graph_reference, buttons, scheme*);
+				static void set_def_scheme(scheme s) { def_scheme_ = s; }
+				static void use_def_scheme(bool use) { use_def_ = use; }
 			private:
 				bool _m_check() const;
 				void _m_adjust_scroll(graph_reference);
-				void _m_background(graph_reference, scheme*);
-				void _m_button_frame(graph_reference, ::nana::rectangle, int state, scheme *s);
-				void _m_draw_scroll(graph_reference, int state, scheme *s);
-				void _m_draw_button(graph_reference, ::nana::rectangle, buttons what, int state, scheme *s);
+				void _m_background(graph_reference);
+				void _m_button_frame(graph_reference, ::nana::rectangle, int state);
+				void _m_draw_scroll(graph_reference, int state);
+				void _m_draw_button(graph_reference, ::nana::rectangle, buttons what, int state);
 			private:
 				metrics_type &metrics_;
 				bool	vertical_;
+				static scheme def_scheme_;
+				static bool use_def_;
+				scheme *scheme_ptr_;
 			};
 
 			template<bool Vertical>
@@ -162,6 +167,16 @@ namespace nana
 				void step(size_type s)
 				{
 					metrics_.step = s;
+				}
+
+				void set_default_scheme(scheme s)
+				{
+					drawer_.set_def_scheme(s);
+				}
+
+				void use_default_scheme(bool use)
+				{
+					drawer_.use_def_scheme(use);
 				}
 
 				bool make_step(bool forward, unsigned multiple)
@@ -520,6 +535,17 @@ namespace nana
 		{
 			return this->make_step(forward, static_cast<unsigned>(range() - 1));
 		}
+
+		void set_default_scheme(drawerbase::scroll::scheme s)
+		{
+			return this->get_drawer_trigger().set_default_scheme(s);
+		}
+
+		void use_default_scheme(bool use)
+		{
+			return this->get_drawer_trigger().use_default_scheme(use);
+		}
+
 	};//end class scroll
 }//end namespace nana
 #include <nana/pop_ignore_diagnostic>

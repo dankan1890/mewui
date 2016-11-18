@@ -31,14 +31,20 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	pl["panel"] << m_panel;
 	pl["comb"] << m_combox;
 	pl["lbox"] << m_listbox;
-	pl["abc"] << m_b_add << m_b_change << m_b_del << m_b_up << m_b_down;
+	pl["abc"] << m_b_add << m_b_change << m_b_del;
 	m_listbox.append_header("");
 	m_listbox.show_header(false);
 	m_b_add.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
 	m_b_change.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
 	m_b_del.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
-	m_b_down.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
-	m_b_up.set_bground(button_renderer()).edge_effects(false).enable_focus_color(false).fgcolor(colors::white);
+	m_listbox.enable_single(true, true);
+	m_listbox.bgcolor(color("#2C2C2C"));
+	m_listbox.fgcolor(colors::white);
+	m_listbox.scheme().item_selected = color("#3296AA");
+	m_listbox.scheme().item_bordered = false;
+	m_listbox.scheme().item_highlighted = color("#2C2C2C");
+	m_listbox.borderless(true);
+	m_listbox.always_selected(true);
 
 	for (auto &opt : arts_info)
 		m_list[opt.first] = opt.second;
@@ -47,41 +53,12 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	for (auto& opt : m_list)
 		m_combox.push_back(opt.first);
 
-	handle();
-
-	m_listbox.enable_single(true, true);
-	m_combox.option(0);
 	this->collocate();
+	handle();
+	m_combox.option(0);
 	auto sz = m_listbox.size().width - m_listbox.scheme().text_margin;
 	m_listbox.column_at(0).width(sz);
-	drawerbase::scroll::scheme m_scroll_scheme;
-	m_scroll_scheme.bgrnd = color("#1E1E1E");
-	m_scroll_scheme.button = m_scroll_scheme.button_checked = colors::white;
-	m_scroll_scheme.flat = true;
-	m_scroll_scheme.button_actived = color("#3296AA");
-	m_combox.scroll_scheme(m_scroll_scheme);
-	m_listbox.scroll_scheme(m_scroll_scheme);
-	m_listbox.bgcolor(color("#2C2C2C"));
-	m_listbox.fgcolor(colors::white);
-	m_listbox.scheme().item_selected = m_scroll_scheme.button_actived;
-	m_listbox.scheme().item_bordered = false;
-	m_listbox.borderless(true);
 	this->modality();
-}
-
-void dir_form::up_down(int dir)
-{
-	auto sel = m_listbox.selected();
-	if (!sel.empty())
-	{
-		auto e = m_listbox.at(0).at(sel[0].item);
-		auto txt = e.text(0);
-		auto a = e.pos();
-		a.item += dir;
-		m_listbox.insert_item(a, txt);
-		m_listbox.erase(e);
-		m_listbox.focus();
-	}
 }
 
 void dir_form::handle()
@@ -142,25 +119,6 @@ void dir_form::handle()
 			m_listbox.focus();
 		}
 	});
-
-	m_listbox.events().selected([this](const arg_listbox& sel) {
-		if (sel.item.selected())
-		{
-			if (sel.item.pos().item == 0)
-				m_b_up.enabled(false);
-			else
-				m_b_up.enabled(true);
-
-			if (sel.item.pos().item == m_listbox.at(0).size() - 1)
-				m_b_down.enabled(false);
-			else
-				m_b_down.enabled(true);
-		}
-	});
-
-	m_b_up.events().click([this] { up_down(-1);	});
-
-	m_b_down.events().click([this] { up_down(1); });
 
 	m_panel.m_cancel.events().click([this] { this->close();	});
 

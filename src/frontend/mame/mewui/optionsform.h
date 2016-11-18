@@ -82,11 +82,10 @@ class dir_form : public form
 public:
 	explicit dir_form(window, emu_options&, std::unique_ptr<mame_ui_manager>&);
 private:
-	void up_down(int dir);
 	listbox m_listbox{ *this };
 	combox m_combox{ *this };
 	okcancel_panel m_panel{ *this };
-	button m_b_add{ *this, "Add" }, m_b_change{ *this, "Edit" }, m_b_del{ *this, "Delete" }, m_b_up{ *this, "Move Up" }, m_b_down{ *this, "Move Down" };
+	button m_b_add{ *this, "Add" }, m_b_change{ *this, "Edit" }, m_b_del{ *this, "Delete" };
 	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
 	std::map<std::string, std::string> m_list;

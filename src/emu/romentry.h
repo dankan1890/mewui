@@ -14,6 +14,7 @@
 #include <string>
 
 #include "osdcomm.h"
+using namespace osd;
 
 /***************************************************************************
 CONSTANTS

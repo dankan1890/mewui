@@ -8,6 +8,7 @@
 
 ***************************************************************************/
 
+#include "emu.h"
 #include "fileio.h"
 #include "ui/ui.h"
 #include "emuopts.h"

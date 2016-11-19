@@ -13,8 +13,8 @@
 
 #include <string>
 
+#include "emucore.h"
 #include "osdcomm.h"
-using namespace osd;
 
 /***************************************************************************
 CONSTANTS

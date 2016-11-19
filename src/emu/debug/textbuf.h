@@ -11,7 +11,7 @@
 #ifndef MAME_EMU_DEBUG_TEXTBUF_H
 #define MAME_EMU_DEBUG_TEXTBUF_H
 
-using namespace osd;
+#include "emucore.h"
 
 /***************************************************************************
     TYPE DEFINITIONS

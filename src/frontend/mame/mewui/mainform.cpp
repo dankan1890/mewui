@@ -24,7 +24,6 @@
 #include "mewui/optionsform.h"
 #include <set>
 #include "nana/paint/pixel_buffer.hpp"
-#include <future>
 
 namespace mewui
 {

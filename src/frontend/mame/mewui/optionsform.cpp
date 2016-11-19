@@ -28,7 +28,7 @@ dir_form::dir_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager
 	this->bgcolor(color("#232323"));
 	auto& pl = this->get_place();
 
-	this->div("<vert<<vert margin=[2,5] <weight=25 comb><lbox>><weight=100 <vert margin=[10,5] gap=5 abc>>><weight=45 panel>>");
+	this->div("<vert<<vert margin=[2,5] <weight=25 comb><weight=5><lbox>><weight=100 <vert margin=[10,5] <vert gap=5 weight=100 abc>>>><weight=45 panel>>");
 	pl["panel"] << m_panel;
 	pl["comb"] << m_combox;
 	pl["lbox"] << m_listbox;

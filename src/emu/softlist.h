@@ -12,7 +12,6 @@
 #define __SOFTLIST_H_
 
 #include <list>
-#include "emucore.h"
 #include "romentry.h"
 #include "corefile.h"
 

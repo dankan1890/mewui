@@ -11,14 +11,13 @@
 #ifndef MAME_EMU_DEBUG_TEXTBUF_H
 #define MAME_EMU_DEBUG_TEXTBUF_H
 
-#include "emucore.h"
+using namespace osd;
 
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
 
 struct text_buffer;
-using namespace osd;
 
 
 /***************************************************************************

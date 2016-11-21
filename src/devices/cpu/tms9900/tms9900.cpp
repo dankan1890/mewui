@@ -109,7 +109,6 @@
 */
 
 #include "tms9900.h"
-#include "debug/debugcpu.h"
 
 #define NOPRG -1
 
@@ -419,12 +418,21 @@ void tms99xx_device::state_string_export(const device_state_entry &entry, std::s
 
 uint16_t tms99xx_device::read_workspace_register_debug(int reg)
 {
-	return machine().debugger().cpu().read_word(*m_prgspace, (WP+(reg<<1)) & m_prgaddr_mask & 0xfffe, true);
+	int temp = m_icount;
+	m_prgspace->set_debugger_access(true);
+	uint16_t value = m_prgspace->read_word((WP+(reg<<1)) & m_prgaddr_mask & 0xfffe);
+	m_prgspace->set_debugger_access(false);
+	m_icount = temp;
+	return value;
 }
 
 void tms99xx_device::write_workspace_register_debug(int reg, uint16_t data)
 {
-	machine().debugger().cpu().write_word(*m_prgspace, (WP+(reg<<1)) & m_prgaddr_mask & 0xfffe, data, true);
+	int temp = m_icount;
+	m_prgspace->set_debugger_access(true);
+	m_prgspace->write_word((WP+(reg<<1)) & m_prgaddr_mask & 0xfffe, data);
+	m_prgspace->set_debugger_access(false);
+	m_icount = temp;
 }
 
 const address_space_config *tms99xx_device::memory_space_config(address_spacenum spacenum) const
@@ -2761,10 +2769,10 @@ uint32_t tms99xx_device::disasm_max_opcode_bytes() const
 	return 6;
 }
 
-offs_t tms99xx_device::disasm_disassemble(char *buffer, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
+offs_t tms99xx_device::disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
 {
 	extern CPU_DISASSEMBLE( tms9900 );
-	return CPU_DISASSEMBLE_NAME(tms9900)(this, buffer, pc, oprom, opram, options);
+	return CPU_DISASSEMBLE_NAME(tms9900)(this, stream, pc, oprom, opram, options);
 }
 
 

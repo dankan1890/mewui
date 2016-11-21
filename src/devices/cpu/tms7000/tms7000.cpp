@@ -267,10 +267,10 @@ void tms7000_device::state_string_export(const device_state_entry &entry, std::s
 	}
 }
 
-offs_t tms7000_device::disasm_disassemble(char *buffer, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
+offs_t tms7000_device::disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
 {
 	extern CPU_DISASSEMBLE( tms7000 );
-	return CPU_DISASSEMBLE_NAME(tms7000)(this, buffer, pc, oprom, opram, options);
+	return CPU_DISASSEMBLE_NAME(tms7000)(this, stream, pc, oprom, opram, options);
 }
 
 
@@ -505,7 +505,7 @@ READ8_MEMBER(tms7000_device::tms7000_pf_r)
 		{
 			// note: port B is write-only, reading it returns the output value as if ddr is 0xff
 			int port = offset / 2 - 2;
-			if (!machine().debugger_access())
+			if (!space.debugger_access())
 				return (m_io->read_byte(port) & ~m_port_ddr[port]) | (m_port_latch[port] & m_port_ddr[port]);
 			break;
 		}
@@ -515,7 +515,7 @@ READ8_MEMBER(tms7000_device::tms7000_pf_r)
 			return m_port_ddr[offset / 2 - 2];
 
 		default:
-			if (!machine().debugger_access())
+			if (!space.debugger_access())
 				logerror("'%s' (%04X): tms7000_pf_r @ $%04x\n", tag(), m_pc, offset);
 			break;
 	}

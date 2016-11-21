@@ -52,7 +52,6 @@
 */
 
 #include "tms9980a.h"
-#include "debug/debugcpu.h"
 
 /*
     The following defines can be set to 0 or 1 to disable or enable certain
@@ -95,18 +94,20 @@ void tms9980a_device::resolve_lines()
 
 uint16_t tms9980a_device::read_workspace_register_debug(int reg)
 {
+	int temp = m_icount;
 	int addr = (WP+(reg<<1)) & 0xfffe & m_prgaddr_mask;
-
-	return (machine().debugger().cpu().read_byte(*m_prgspace, addr, true) << 8) |
-		(machine().debugger().cpu().read_byte(*m_prgspace, addr+1, true) & 0xff);
+	uint16_t value = (m_prgspace->read_byte(addr) << 8) | (m_prgspace->read_byte(addr+1) & 0xff);
+	m_icount = temp;
+	return value;
 }
 
 void tms9980a_device::write_workspace_register_debug(int reg, uint16_t data)
 {
+	int temp = m_icount;
 	int addr = (WP+(reg<<1)) & 0xfffe & m_prgaddr_mask;
-
-	machine().debugger().cpu().write_byte(*m_prgspace, addr, data>>8, true);
-	machine().debugger().cpu().write_byte(*m_prgspace, addr+1, data & 0xff, true);
+	m_prgspace->write_byte(addr, data>>8);
+	m_prgspace->write_byte(addr+1, data & 0xff);
+	m_icount = temp;
 }
 
 /*
@@ -290,10 +291,10 @@ uint32_t tms9980a_device::disasm_max_opcode_bytes() const
 	return 6;
 }
 
-offs_t tms9980a_device::disasm_disassemble(char *buffer, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
+offs_t tms9980a_device::disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
 {
 	extern CPU_DISASSEMBLE( tms9980 );
-	return CPU_DISASSEMBLE_NAME(tms9980)(this, buffer, pc, oprom, opram, options);
+	return CPU_DISASSEMBLE_NAME(tms9980)(this, stream, pc, oprom, opram, options);
 }
 
 const device_type TMS9980A = &device_creator<tms9980a_device>;

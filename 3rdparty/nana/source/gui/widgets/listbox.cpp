@@ -4081,7 +4081,7 @@ namespace nana
 							bottom - static_cast<int>(essence_->scroll.scale),
 							essence_->scroll.scale,
 							essence_->scroll.scale },
-							true, colors::button_face);
+							true, essence_->listbox_ptr->bgcolor());
 				}
 
 				void trigger::attached(widget_reference widget, graph_reference graph)

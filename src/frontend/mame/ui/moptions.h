@@ -72,12 +72,13 @@
 #define OPTION_UI_DIPSW_COLOR         "ui_dipsw_color"
 #define OPTION_UI_SLIDER_COLOR        "ui_slider_color"
 
-#define MEWUI_FORM_HEIGHT			  "mewui_form_heigth"
-#define MEWUI_FORM_WIDTH			  "mewui_form_width"
-#define MEWUI_FORM_X				  "mewui_form_x"
-#define MEWUI_FORM_Y				  "mewui_form_y"
-#define MEWUI_FORM_MAX				  "mewui_form_max"
-#define MEWUI_LAYOUT				  "mewui_layout"
+#define MEWUI_FORM_HEIGHT             "mewui_form_heigth"
+#define MEWUI_FORM_WIDTH              "mewui_form_width"
+#define MEWUI_FORM_X                  "mewui_form_x"
+#define MEWUI_FORM_Y                  "mewui_form_y"
+#define MEWUI_FORM_MAX                "mewui_form_max"
+#define MEWUI_LAYOUT                  "mewui_layout"
+#define MEWUI_LAYOUT_VERSION          "mewui_layout_version"
 
 class ui_options : public core_options
 {
@@ -148,6 +149,8 @@ public:
 	int form_y() const { return int_value(MEWUI_FORM_Y); }
 	bool form_max() const { return bool_value(MEWUI_FORM_MAX); }
 	const char *form_layout() const { return value(MEWUI_LAYOUT); }
+    float form_layout_version() const { return float_value(MEWUI_LAYOUT_VERSION); }
+
 
 private:
 	static const options_entry s_option_entries[];

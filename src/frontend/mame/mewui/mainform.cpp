@@ -122,7 +122,7 @@ main_form::main_form(running_machine& machine, const game_driver** _system, emu_
 	});
 #endif
 	// Main layout
-	if (std::string(m_ui->options().form_layout()).empty())
+	if (std::string(m_ui->options().form_layout()).empty() || m_ui->options().form_layout_version() != m_layout_version)
 		this->div("<vert <weight=25 margin=2 <menu><weight=200 search><weight=25 s_button>><weight=5><<weight=5><weight=200 treebox>|<vert <machinebox>|<vert weight=20% soft <weight=20 swtabf><swtab>>>|<vert weight=400 rpanel <weight=20 tab><tab_frame>><weight=5>><weight=20 statusbar>>");
 	else
 		this->div(m_ui->options().form_layout());
@@ -372,6 +372,7 @@ void main_form::save_options()
 		mui.set_value(OPTION_LAST_USED_FILTER, m_filters.m_treebox.selected().owner().text().c_str(), OPTION_PRIORITY_CMDLINE, err_str);
 	auto &pl = this->get_place().div();
 	mui.set_value(MEWUI_LAYOUT, pl.c_str(), OPTION_PRIORITY_CMDLINE, err_str);
+    mui.set_value(MEWUI_LAYOUT_VERSION, m_layout_version, OPTION_PRIORITY_CMDLINE, err_str);
 	m_ui->save_ui_options();
 }
 

@@ -83,6 +83,7 @@ const options_entry ui_options::s_option_entries[] =
 	{ MEWUI_FORM_Y,							"0",            OPTION_INTEGER,     "MEWUI main form top position" },
 	{ MEWUI_FORM_MAX,		                "0",            OPTION_BOOLEAN,     "MEWUI main form maximize status" },
 	{ MEWUI_LAYOUT,				            "",             OPTION_STRING,      "MEWUI layout" },
+    { MEWUI_LAYOUT_VERSION,                 "1.00",         OPTION_FLOAT,       "MEWUI layout version" },
 
 	{ nullptr }
 };

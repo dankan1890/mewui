@@ -135,6 +135,8 @@ private:
 	threads::pool m_pool;
 	color m_bgcolor{ "#232323" }, m_tab_color{ 240, 240, 240 }, m_menubar_color{ "#2C2C2C" };
 
+    float m_layout_version = 1.01f;
+
 	// Init widgets
 	void init_tabbar();
 	void init_machinebox();

@@ -124,13 +124,13 @@ private:
 class plugin_form : public form
 {
 public:
-	explicit plugin_form(window, emu_options&, std::unique_ptr<mame_ui_manager>&);
+	explicit plugin_form(window, emu_options&);
 
 private:
 	
 	group m_group{ *this };
 	okcancel_panel m_panel{ *this };
-	std::unique_ptr<mame_ui_manager>& m_ui;
+//	std::unique_ptr<mame_ui_manager>& m_ui;
 	emu_options& m_options;
 };
 

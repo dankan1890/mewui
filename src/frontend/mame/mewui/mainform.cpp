@@ -22,8 +22,8 @@
 #include "mame.h"
 #include "pluginopts.h"
 #include "mewui/optionsform.h"
-#include <set>
 #include "nana/paint/pixel_buffer.hpp"
+#include <set>
 
 namespace mewui
 {
@@ -378,7 +378,7 @@ void main_form::save_options()
 
 void main_form::init_filters()
 {
-	std::set<std::string> manuf, year, src;
+    std::set<std::string> manuf, year, src;
 	for (auto x = 0; x < driver_list::total(); x++)
 	{
 		auto drv = &driver_list::driver(x);
@@ -428,7 +428,7 @@ void main_form::init_tabbar()
 	this->get_place()["tab_frame"].fasten(m_textpage).fasten(m_imgpage);
 	m_tabbar.append("Images", m_imgpage).append("Info", m_textpage);
 	m_tabbar.bgcolor(m_bgcolor);
-	for (int x = 0; x < m_tabbar.length(); ++x)
+	for (auto x = 0; x < m_tabbar.length(); ++x)
 	{
 		m_tabbar.tab_bgcolor(x, m_menubar_color);
 		m_tabbar.tab_fgcolor(x, colors::white);
@@ -921,7 +921,7 @@ void main_form::init_options_menu()
 	});
 
 	menu.append("Plugins", [this](menu::item_proxy& ip) {
-		plugin_form form{ *this, m_options, m_ui };
+		plugin_form form{ *this, m_options };
 		form.show();
 	});
 

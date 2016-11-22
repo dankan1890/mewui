@@ -248,9 +248,8 @@ std::string folderbox::show() const
 	return fm.pick();
 }
 
-plugin_form::plugin_form(window wd, emu_options& _opt, std::unique_ptr<mame_ui_manager>& _mui)
+plugin_form::plugin_form(window wd, emu_options& _opt)
 	: form(wd, { 400, 250 }, appear::decorate<>())
-	, m_ui(_mui)
 	, m_options(_opt)
 {
 	this->caption("Setup Plugins");

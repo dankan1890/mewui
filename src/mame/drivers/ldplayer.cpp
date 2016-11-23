@@ -15,33 +15,9 @@
 #include "machine/ldpr8210.h"
 #include "machine/ldv1000.h"
 #include <ctype.h>
+#include "ui/uimain.h"
 
 #include "pr8210.lh"
-
-
-#define APPNAME                 "MAME"
-#define APPNAME_LOWER           "mame"
-#define CONFIGNAME              "mame"
-#define COPYRIGHT               "Copyright Nicola Salmoria\nand the MAME team\nhttp://mamedev.org"
-#define COPYRIGHT_INFO          "Copyright Nicola Salmoria and the MAME team"
-
-const char * emulator_info::get_appname() { return APPNAME;}
-const char * emulator_info::get_appname_lower() { return APPNAME_LOWER;}
-const char * emulator_info::get_configname() { return CONFIGNAME;}
-const char * emulator_info::get_copyright() { return COPYRIGHT;}
-const char * emulator_info::get_copyright_info() { return COPYRIGHT_INFO;}
-
-/*************************************
- *
- *  Constants
- *
- *************************************/
-
-/*************************************
- *
- *  Globals
- *
- *************************************/
 
 class ldplayer_state : public driver_device
 {
@@ -214,8 +190,10 @@ chd_file *ldplayer_state::get_disc()
 	}
 
 	// if we failed, pop a message and exit
-	if (found == false)
-		throw emu_fatalerror("No valid image file found!\n");
+	if (found == false) {
+		machine().ui().popup_time(10, "No valid image file found!\n");
+		return nullptr;
+	}
 
 	return machine().rom_load().get_disk_handle("laserdisc");
 }

@@ -7,10 +7,10 @@
     UI software menu.
 
 ***************************************************************************/
-#pragma once
-
 #ifndef MAME_FRONTEND_UI_SELSOFT_H
 #define MAME_FRONTEND_UI_SELSOFT_H
+
+#pragma once
 
 #include "ui/custmenu.h"
 #include "ui/selmenu.h"
@@ -37,10 +37,10 @@ private:
 	s_filter            m_filter;
 	int                 highlight;
 
+	virtual void populate(float &customtop, float &custombottom) override;
 	static std::pair<uint16_t, uint16_t> m_sub_filter;
 	static std::pair<const game_driver *, std::pair<uint16_t, uint16_t>> m_last_filter;
 
-	virtual void populate() override;
 	virtual void handle() override;
 
 	// draw left panel
@@ -81,7 +81,7 @@ protected:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	virtual void populate() override;
+	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
 	ui_software_info *m_uiinfo;
@@ -98,7 +98,7 @@ protected:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	virtual void populate() override;
+	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
 	void    *m_driver;

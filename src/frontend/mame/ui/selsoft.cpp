@@ -476,7 +476,7 @@ void menu_select_software::handle()
 //  populate
 //-------------------------------------------------
 
-void menu_select_software::populate()
+void menu_select_software::populate(float &customtop, float &custombottom)
 {
 	uint32_t flags_ui = FLAG_LEFT_ARROW | FLAG_RIGHT_ARROW;
 	m_has_empty_start = true;
@@ -1198,7 +1198,7 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
 			rgb_t fgcolor = UI_TEXT_COLOR;
 
-			if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y1 + line_height > mouse_y)
+			if (mouse_in_rect(x1, y1, x2, y1 + line_height))
 			{
 				bgcolor = UI_MOUSEOVER_BG_COLOR;
 				fgcolor = UI_MOUSEOVER_COLOR;
@@ -1268,7 +1268,7 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 
 		ui().draw_outlined_box(container(), x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
-		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
+		if (mouse_in_rect(x1, y1, x2, y2))
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
 			hover = HOVER_LPANEL_ARROW;
@@ -1291,7 +1291,7 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 
 		ui().draw_outlined_box(container(), x1, y1, x2, y2, rgb_t(0xEF, 0x12, 0x47, 0x7B));
 
-		if (mouse_hit && x1 <= mouse_x && x2 > mouse_x && y1 <= mouse_y && y2 > mouse_y)
+		if (mouse_in_rect(x1, y1, x2, y2))
 		{
 			fgcolor = UI_MOUSEOVER_COLOR;
 			hover = HOVER_LPANEL_ARROW;
@@ -1324,7 +1324,7 @@ software_parts::~software_parts()
 //  populate
 //-------------------------------------------------
 
-void software_parts::populate()
+void software_parts::populate(float &customtop, float &custombottom)
 {
 	for (auto & elem : m_parts)
 		item_append(elem.first, elem.second, 0, (void *)&elem);
@@ -1422,7 +1422,7 @@ bios_selection::~bios_selection()
 //  populate
 //-------------------------------------------------
 
-void bios_selection::populate()
+void bios_selection::populate(float &customtop, float &custombottom)
 {
 	for (auto & elem : m_bios)
 		item_append(elem.first, "", 0, (void *)&elem.first);

@@ -16,6 +16,7 @@
 #include "machine/msm58321.h"
 #include "machine/wd_fdc.h"
 #include "machine/68230pit.h"
+#include "bus/rs232/rs232.h"
 #include "softlist.h"
 
 #define MAINCPU_TAG "maincpu"
@@ -46,6 +47,7 @@ public:
 	virtual void machine_reset() override;
 	
 	DECLARE_WRITE_LINE_MEMBER(m68k_reset_callback);
+	DECLARE_READ32_MEMBER(buserror_r);
 	
 private:
 
@@ -60,8 +62,8 @@ void micro20_state::machine_reset()
 	uint32_t *pROM = (uint32_t *)m_rom->base();
 	uint32_t *pRAM = (uint32_t *)m_mainram.target();
 	
-	pRAM[0] = pROM[0];
-	pRAM[1] = pROM[1];
+	pRAM[0] = pROM[2];
+	pRAM[1] = pROM[3];
 	m_maincpu->reset();
 	
 	m_maincpu->set_reset_callback(write_line_delegate(FUNC(micro20_state::m68k_reset_callback),this));
@@ -73,12 +75,19 @@ WRITE_LINE_MEMBER(micro20_state::m68k_reset_callback)
 	m_pit->reset();
 }
 
+READ32_MEMBER(micro20_state::buserror_r)
+{
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, ASSERT_LINE);
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, CLEAR_LINE);
+	return 0xffff;
+}
 /***************************************************************************
     ADDRESS MAPS
 ***************************************************************************/
 
 static ADDRESS_MAP_START(micro20_map, AS_PROGRAM, 32, micro20_state )
 	AM_RANGE(0x00000000, 0x001fffff) AM_RAM AM_SHARE("mainram")
+	AM_RANGE(0x00200000, 0x002fffff) AM_READ(buserror_r)
 	AM_RANGE(0x00800000, 0x0083ffff) AM_ROM AM_REGION("bootrom", 0)
 	AM_RANGE(0xffff8000, 0xffff8003) AM_DEVREADWRITE8(FDC_TAG, wd1772_t, status_r, cmd_w,    0xff000000)	
 	AM_RANGE(0xffff8000, 0xffff8003) AM_DEVREADWRITE8(FDC_TAG, wd1772_t, track_r, track_w,   0x00ff0000)	
@@ -95,6 +104,11 @@ static MACHINE_CONFIG_START( micro20, micro20_state )
 	MCFG_CPU_PROGRAM_MAP(micro20_map)
 	
 	MCFG_MC68681_ADD(DUART_A_TAG, XTAL_3_6864MHz)
+	MCFG_MC68681_A_TX_CALLBACK(DEVWRITELINE("rs232", rs232_port_device, write_txd))
+
+	MCFG_RS232_PORT_ADD("rs232", default_rs232_devices, "terminal")
+	MCFG_RS232_RXD_HANDLER(DEVWRITELINE(DUART_A_TAG, mc68681_device, rx_a_w))
+
 //	MCFG_MC68681_IRQ_CALLBACK(WRITELINE(vt240_state, irq13_w))
 //	MCFG_MC68681_A_TX_CALLBACK(DEVWRITELINE("host", rs232_port_device, write_txd))
 //	MCFG_MC68681_B_TX_CALLBACK(DEVWRITELINE("printer", rs232_port_device, write_txd))

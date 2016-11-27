@@ -20,12 +20,9 @@
 
 namespace nana
 {
-namespace drawerbase {namespace scroll {
-struct scheme;
-}
-}
 
 namespace drawerbase{
+		namespace scroll { struct scheme; } // forward
 		namespace float_listbox
 		{
 			class item_interface

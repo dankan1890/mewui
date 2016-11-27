@@ -515,7 +515,7 @@ namespace nana
 			cur.level = _m_paragraph_level(str, end);
 
 			//First character type
-			bidi_char begin_char_type = bidi_char::L;
+			bidi_char begin_char_type = {};
 			const char_type * begin_character = nullptr;
 
 			for(const char_type * c = str; c < end; ++c)
@@ -811,7 +811,7 @@ namespace nana
 			//N1. A sequence of neutrals takes the direction of the surrounding strong text if the text on both sides has the same direction.
 			//European and Arabic numbers act as if they were R in terms of their influence on neutrals.
 			//Start-of-level-run (sor) and end-of-level-run (eor) are used at level run boundaries.
-			bidi_char left = bidi_char::L;
+			bidi_char left = {};
 			for(auto i = begin_character; i != end; ++i)
 			{
 				if(level_of_run != i->level)

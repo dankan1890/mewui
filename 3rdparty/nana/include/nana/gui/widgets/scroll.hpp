@@ -97,6 +97,8 @@ namespace nana
 				void draw(graph_reference, buttons, scheme*);
 				static void set_def_scheme(scheme s) { def_scheme_ = s; }
 				static void use_def_scheme(bool use) { use_def_ = use; }
+			    static bool use_def_scheme() { return use_def_; }
+			    static scheme *def_scheme() { return &def_scheme_; }
 			private:
 				bool _m_check() const;
 				void _m_adjust_scroll(graph_reference);
@@ -169,17 +171,26 @@ namespace nana
 					metrics_.step = s;
 				}
 
-				void set_default_scheme(scheme s)
+				void set_default_scheme(scheme s) const
 				{
 					drawer_.set_def_scheme(s);
 				}
 
-				void use_default_scheme(bool use)
+				void use_default_scheme(bool use) const
 				{
 					drawer_.use_def_scheme(use);
 				}
 
-				bool make_step(bool forward, unsigned multiple)
+                bool use_default_scheme() const
+                {
+                    return drawer_.use_def_scheme();
+                }
+
+                scheme *default_scheme() const
+                {
+                    return drawer_.def_scheme();
+				}
+			    bool make_step(bool forward, unsigned multiple)
 				{
 					if (!graph_)
 						return false;
@@ -425,7 +436,13 @@ namespace nana
 	public:
 
 		///  \brief The default constructor without creating the widget.
-		scroll(){}
+		scroll()
+		{
+		    if (this->get_drawer_trigger().use_default_scheme())
+		    {
+                this->scheme() = *this->get_drawer_trigger().default_scheme();
+		    }
+		}
 
 		/// \brief The construct that creates a widget.
 		/// @param wd  A handle to the parent window of the widget being created.
@@ -459,7 +476,7 @@ namespace nana
 
 		void amount(size_type peak) override
 		{
-			return this->get_drawer_trigger().peak(peak);
+			this->get_drawer_trigger().peak(peak);
 		}
 
 		/// Get the range of the widget (how many is shonw on a page, that is, How many to scroll after click on first or second)
@@ -471,7 +488,7 @@ namespace nana
 		/// Set the range of the widget.
 		void range(size_type r) override
 		{
-			return this->get_drawer_trigger().range(r);
+			this->get_drawer_trigger().range(r);
 		}
 
 		///  \brief Get the value (current offset calculated from the very beginnig)
@@ -485,7 +502,7 @@ namespace nana
 		/// @param s  a new value.
 		void value(size_type s) override
 		{
-			return this->get_drawer_trigger().value(s);
+			this->get_drawer_trigger().value(s);
 		}
 
 		///  \brief Get the step of the sroll widget. The step indicates a variation of the value.
@@ -499,7 +516,7 @@ namespace nana
 		/// @param s  a value for step.
 		void step(size_type s) override
 		{
-			return this->get_drawer_trigger().step(s);
+			this->get_drawer_trigger().step(s);
 		}
 
 		///  \brief Increase/decrease values by a step (alternativelly by some number of steps).
@@ -538,14 +555,23 @@ namespace nana
 
 		void set_default_scheme(drawerbase::scroll::scheme s)
 		{
-			return this->get_drawer_trigger().set_default_scheme(s);
+			this->get_drawer_trigger().set_default_scheme(s);
 		}
 
 		void use_default_scheme(bool use)
 		{
-			return this->get_drawer_trigger().use_default_scheme(use);
+			this->get_drawer_trigger().use_default_scheme(use);
 		}
 
+        bool use_default_scheme()
+        {
+            return this->get_drawer_trigger().use_default_scheme();
+        }
+
+	    drawerbase::scroll::scheme *default_scheme()
+		{
+            return this->get_drawer_trigger().default_scheme();
+		}
 	};//end class scroll
 }//end namespace nana
 #include <nana/pop_ignore_diagnostic>

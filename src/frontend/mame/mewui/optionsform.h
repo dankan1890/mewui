@@ -20,6 +20,7 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/label.hpp>
 #include <nana/gui/widgets/group.hpp>
+#include <nana/gui/widgets/textbox.hpp>
 
 using namespace nana;
 class emu_options;
@@ -130,7 +131,7 @@ private:
 	
 	group m_group{ *this };
 	okcancel_panel m_panel{ *this };
-//	std::unique_ptr<mame_ui_manager>& m_ui;
+	textbox tb{ *this };
 	emu_options& m_options;
 };
 

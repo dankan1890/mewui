@@ -1277,6 +1277,7 @@ namespace nana{	namespace widgets
 
 				accepts acceptive{ accepts::no_restrict };
 				std::function<bool(char_type)> pred_acceptive;
+				std::vector<std::function<bool(char_type)>> masked_acceptive;
 			}capacities;
 
 			struct inner_counterpart
@@ -1486,6 +1487,11 @@ namespace nana{	namespace widgets
 			}
 		}
 
+		std::vector<std::function<bool(wchar_t)>> &text_editor::masked()
+		{
+			return impl_->capacities.masked_acceptive;
+		}
+
 		void text_editor::set_accept(std::function<bool(char_type)> pred)
 		{
 			impl_->capacities.pred_acceptive = std::move(pred);
@@ -1514,6 +1520,14 @@ namespace nana{	namespace widgets
 
 			if (attributes_.editable && (!impl_->capacities.pred_acceptive || impl_->capacities.pred_acceptive(key)))
 			{
+				if (!impl_->capacities.masked_acceptive.empty())
+				{
+					auto wg = API::get_widget(window_);
+					auto sz = wg->caption().size();
+					if (sz == impl_->capacities.masked_acceptive.size()) return false;
+					auto cp = points_.caret.x;
+					if (!impl_->capacities.masked_acceptive[cp](key)) return false;
+				}
 				switch (key)
 				{
 				case '\b':

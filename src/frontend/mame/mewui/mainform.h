@@ -91,10 +91,10 @@ class statusbar : public panel<true>
 {
 public:
 	explicit statusbar(window);
-	void update(int, std::string);
+	void update(int);
 
 private:
-	label m_machines{ *this }, m_working{ *this };
+	label m_machines{ *this };
 	place m_place{ *this };
 };
 

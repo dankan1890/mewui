@@ -8,7 +8,6 @@
 
 ***************************************************************************/
 
-#include "emucore.h"
 #include "fileio.h"
 #include "ui/ui.h"
 #include "emuopts.h"
@@ -161,7 +160,8 @@ folderbox::folderform::folderform(window wd)
 	this->get_place()["panel"] << m_panel;
 	this->get_place()["label"] << m_lbl;
 	this->caption("Browse For Folder");
-	this->bgcolor(color(214, 219, 233));
+	this->bgcolor(color("#1E1E1E"));
+    m_lbl.fgcolor(colors::white);
 	m_lbl.transparent(true);
 
 	m_panel.m_ok.events().click.connect_unignorable([this](const arg_click& arg) {
@@ -221,7 +221,9 @@ folderbox::folderform::folderform(window wd)
 		m_tb.auto_draw(true);
 	});
 
+    m_tb.bgcolor(color("#232323"));
 	m_tb.renderer(treebox_renderer(m_tb.renderer()));
+    m_tb.placer(treebox_placer(m_tb.placer()));
 	this->collocate();
 	this->modality();
 }
@@ -255,6 +257,7 @@ plugin_form::plugin_form(window wd, emu_options& _opt)
 	this->caption("Setup Plugins");
 	this->bgcolor(color("#232323"));
 	auto& pl = this->get_place();
+	//this->div("<vert <<weight=2><vert <weight=2><gbox><weight=5>><weight=2>><weight=20 tb><weight=45 panel>>"); // Testing masked
 	this->div("<vert <<weight=2><vert <weight=2><gbox><weight=5>><weight=2>><weight=45 panel>>");
 
 	m_group.radio_mode(false);
@@ -273,6 +276,8 @@ plugin_form::plugin_form(window wd, emu_options& _opt)
 
 	pl["panel"] << m_panel;
 	pl["gbox"] << m_group;
+//	pl["tb"] << tb;
+//	tb.masked("#?#?#");
 
 	m_panel.m_cancel.events().click([this] {
 		this->close();

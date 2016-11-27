@@ -230,6 +230,7 @@ class textbox;
 
 		void clear_undo();
 		void scroll_scheme(drawerbase::scroll::scheme s);
+		std::vector<std::function<bool(wchar_t)>> &masked(const char *mask);
 
 		void set_highlight(const std::string& name, const ::nana::color& fgcolor, const ::nana::color& bgcolor);
 		void erase_highlight(const std::string& name);

@@ -16,6 +16,7 @@
 #include <nana/gui/widgets/treebox.hpp>
 #include <nana/gui/widgets/tabbar.hpp>
 #include <nana/gui/element.hpp>
+#include "nana/gui/widgets/listbox.hpp"
 using namespace nana;
 
 namespace mewui
@@ -1251,6 +1252,55 @@ private:
 	cloneable_placer placer_;
 };
 
+class inline_widget : public listbox::inline_notifier_interface
+{
+	void create(window wd) override
+	{
+	}
+
+	//Activates the inline widget, bound to a certain item of the listbox
+	//The inline_indicator is an object to operate the listbox item,
+	//pos is an index object refers to the item of listbox
+	void activate(inline_indicator& ind, index_type pos) override
+	{
+		indicator_ = &ind;
+		pos_ = pos;
+	}
+
+	void notify_status(status_type status, bool status_on) override
+	{
+	}
+
+	//Sets the inline widget size
+	//dimension represents the max size can be set
+	//The coordinate of inline widget is a logical coordinate to the sub item of listbox
+	void resize(const size& dimension) override
+	{
+	}
+
+	//Sets the value of inline widget with the value of the sub item
+	void set(const value_type& value) override
+	{
+		//Avoid emitting text_changed to set caption again, otherwise it
+		//causes infinite recursion.
+		if (txt != value)
+		{
+			txt = value;
+		}
+	}
+
+	//Determines whether to draw the value of sub item
+	//e.g, when the inline widgets covers the whole background of the sub item,
+	//it should return false to avoid listbox useless drawing
+	bool whether_to_draw() const override
+	{
+		return false;
+	}
+private:
+	inline_indicator * indicator_{ nullptr };
+	index_type pos_;
+	static std::string txt;
+};
 } // namespace mewui
 
 #endif /* MEWUI_CUSTOM_H */

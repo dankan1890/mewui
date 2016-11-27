@@ -205,6 +205,7 @@ namespace nana{	namespace widgets
 			bool mouse_pressed(const arg_mouse& arg);
 
 			void scroll_scheme(drawerbase::scroll::scheme s);
+			std::vector<std::function<bool(wchar_t)>>& masked();
 			skeletons::textbase<char_type>& textbase();
 			const skeletons::textbase<char_type>& textbase() const;
 		private:

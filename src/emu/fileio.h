@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "emucore.h"
 #include "corefile.h"
 #include "hash.h"
 

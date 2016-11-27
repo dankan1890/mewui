@@ -297,6 +297,36 @@ namespace drawerbase {
 				editor->scroll_scheme(s);
 		}
 
+		std::vector<std::function<bool(wchar_t)>> &textbox::masked(const char* mask)
+		{
+			internal_scope_guard lock;
+			auto editor = get_drawer_trigger().editor();
+			if (editor)
+			{
+				editor->multi_lines(false);
+				editor->masked().clear();
+				std::function<bool(wchar_t)> fnc = {};
+				while (*mask)
+				{
+					switch (*mask)
+					{
+						case '#':
+							fnc = [](wchar_t e) { return isdigit(e) || isspace(e) || e == '+' || e == '-'; };
+							break;
+						case '?':
+							fnc = [](wchar_t e) { return isalpha(e); };
+							break;
+						default:
+							fnc = [](wchar_t e) { return true; };
+							break;
+					}
+					editor->masked().push_back(fnc);
+					mask++;
+				}
+			}
+			return editor->masked();
+		}
+
 		textbox& textbox::edited_reset()
 		{
 			internal_scope_guard lock;

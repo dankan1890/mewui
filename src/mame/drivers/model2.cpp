@@ -3099,7 +3099,7 @@ ROM_START( srallycb ) /* Sega Rally Championship Revision B, Model 2A, Sega game
 	MODEL2A_VID_BOARD
 ROM_END
 
-ROM_START( srallyca ) /* Sega Rally Championship DX Revision A, Model 2A - Single player cabinet - NO LINK option!, Sega ROM board ID# 834-11254 RALLY 50 */
+ROM_START( srallycdx ) /* Sega Rally Championship DX Revision A, Model 2A - Single player cabinet - NO LINK option!, Sega ROM board ID# 834-11254 RALLY 50 */
 	ROM_REGION( 0x200000, "maincpu", 0 ) // i960 program
 	ROM_LOAD32_WORD( "epr-17760a.12",  0x000000, 0x020000, CRC(2c1b996b) SHA1(28c1196aac1c242e61069ee809c9e8229c061950) ) /* AMD 27C1024 EPROM */
 	ROM_LOAD32_WORD( "epr-17761a.13",  0x000002, 0x020000, CRC(50813f66) SHA1(f27ffb314e06fa18d863fdf172dafe56122cd606) ) /* AMD 27C1024 EPROM */
@@ -3109,12 +3109,62 @@ ROM_START( srallyca ) /* Sega Rally Championship DX Revision A, Model 2A - Singl
 	ROM_LOAD32_WORD( "mpr-17747.11", 0x000002, 0x200000, CRC(543593fd) SHA1(5ba63a77e9fc70569af21d50b3171bc8ff4522b8) )
 	ROM_LOAD32_WORD( "mpr-17744.8",  0x400000, 0x200000, CRC(71fed098) SHA1(1d187cad375121a45348d640edd3cc7dce658d28) )
 	ROM_LOAD32_WORD( "mpr-17745.9",  0x400002, 0x200000, CRC(8ecca705) SHA1(ed2b3298aad6f4e52dc672a0168183e457564b43) )
-	ROM_LOAD32_WORD( "mpr-17764a.6", 0x800000, 0x200000, CRC(dcb91e31) SHA1(2725268e97b9f4c14d56c040af38bc82f5020e3e) )
+	ROM_LOAD32_WORD( "mpr-17764a.6", 0x800000, 0x200000, CRC(dcb91e31) SHA1(2725268e97b9f4c14d56c040af38bc82f5020e3e) )	// IC 6 and 7 likely EPROMs
 	ROM_LOAD32_WORD( "mpr-17765a.7", 0x800002, 0x200000, CRC(b657dc48) SHA1(ae0f1bc6e2479fa51ca36f8be3a1785981c4dfe9) )
 
 	ROM_REGION( 0x800000, "tgp", 0 ) // TGP program? (COPRO socket)
 	ROM_LOAD32_WORD( "mpr-17754.28", 0x000000, 0x200000, CRC(81a84f67) SHA1(c0a9b690523a529e4015e9af10dc3fb2a1726f08) )
 	ROM_LOAD32_WORD( "mpr-17755.29", 0x000002, 0x200000, CRC(2a6e7da4) SHA1(e60803ae951489fe47d66731d15c32249ca547b4) )
+
+	ROM_REGION( 0x010000, "drivecpu", 0 ) // Drive I/O program
+	ROM_LOAD( "epr-17762.ic12", 0x000000, 0x010000, NO_DUMP ) /* Need to verify actual EPR-xxxx number, might be EPR-17759 */
+	ROM_LOAD( "epr-17891.ic12", 0x000000, 0x010000, CRC(9a33b437) SHA1(3e8f210aa5159e78f640126cb5ce7f05f22560f2) ) /* REMOVE when EPR-17762 is dumped & added */
+
+	ROM_REGION( 0x2000000, "user2", 0 ) // Models
+	ROM_LOAD32_WORD( "mpr-17748.16", 0x000000, 0x200000, CRC(3148a2b2) SHA1(283cc49bfb6c6381a7ead9273fd097dca5b981b6) )
+	ROM_LOAD32_WORD( "mpr-17750.20", 0x000002, 0x200000, CRC(232aec29) SHA1(4d470e71df61298282c356814e2d151fda323fb6) )
+	ROM_LOAD32_WORD( "mpr-17749.17", 0x400000, 0x200000, CRC(0838d184) SHA1(704175c8b29e4c989afcb7be42e7e0e096740eaf) )
+	ROM_LOAD32_WORD( "mpr-17751.21", 0x400002, 0x200000, CRC(ed87ac62) SHA1(601542149d33ca52a47536b4b0af47bf1fd87eb2) )
+
+	ROM_REGION( 0x1000000, "user3", 0 ) // Textures
+	ROM_LOAD32_WORD( "mpr-17753.25", 0x000000, 0x200000, CRC(6db0eb36) SHA1(dd5fd3c9592360d3e95623ac2491e6faabe9dbcb) )
+	ROM_LOAD32_WORD( "mpr-17752.24", 0x000002, 0x200000, CRC(d6aa86ce) SHA1(1d342f87d1af1e5438d1ae818b1b14268e765897) )
+
+	ROM_REGION( 0x20000, "cpu4", 0) // Communication program
+	ROM_LOAD( "epr-16726.bin", 0x000000, 0x020000, CRC(c179b8c7) SHA1(86d3e65c77fb53b1d380b629348f4ab5b3d39228) )
+
+	ROM_REGION( 0x100000, "audiocpu", 0 ) // Sound program
+	ROM_LOAD16_WORD_SWAP( "epr-17763.30", 0x080000, 0x040000, NO_DUMP ) /* Number verified via Sega Rally Champ DX manual */
+	ROM_LOAD16_WORD_SWAP( "epr-17890a.30", 0x080000, 0x040000, CRC(5bac3fa1) SHA1(3635333d36463b6fab25560ed918e05138f964dc) ) /* REMOVE when EPR-17763 & EPR-17758 is dumped & added */
+
+	ROM_REGION( 0x800000, "scsp", 0 ) // Samples
+	ROM_LOAD( "mpr-17756.31", 0x000000, 0x200000, CRC(7725f111) SHA1(1f1ee3f19a6bcf57bc5a1c7dd64ee83f8b81f084) )
+	ROM_LOAD( "mpr-17757.32", 0x200000, 0x200000, CRC(1616e649) SHA1(1d3a0e441d150ada0535a9d50e2f69dd4b99c584) )
+	ROM_LOAD( "mpr-17758.36", 0x400000, 0x200000, NO_DUMP ) /* Number verified via Sega Rally Champ DX manual */
+	/* The DX version doesn't have any sound rom at IC37 */
+	ROM_LOAD( "mpr-17886.36", 0x400000, 0x200000, CRC(54a72923) SHA1(103c4838b27378c834c08d29d6fb6ba95e7f9d03) ) /* REMOVE when EPR-17758 & EPR-17763 is dumped & added */
+	ROM_LOAD( "mpr-17887.37", 0x600000, 0x200000, CRC(38c31fdd) SHA1(a85f05160b060d9d4a431aaa73cfc03f24214fb9) ) /* REMOVE when EPR-17758 & EPR-17763 is dumped & added */
+
+	MODEL2_CPU_BOARD
+	MODEL2A_VID_BOARD
+ROM_END
+
+ROM_START( srallycdxa ) // Sega Rally Championship DX, Model 2A? - Single player cabinet - NO LINK option!
+	ROM_REGION( 0x200000, "maincpu", 0 ) // i960 program
+	ROM_LOAD32_WORD( "epr-17760.12",  0x000000, 0x020000, CRC(2b5c4321) SHA1(5bcdd8cdfd8f3a95062f83be4a417ba999b50e47) ) // AMD 27C1024 EPROM
+	ROM_LOAD32_WORD( "epr-17761.13",  0x000002, 0x020000, CRC(50813f66) SHA1(f27ffb314e06fa18d863fdf172dafe56122cd606) ) // AMD 27C1024 EPROM
+
+	ROM_REGION32_LE( 0x2400000, "user1", 0 ) // Data
+	ROM_LOAD32_WORD( "mpr-17746.10", 0x000000, 0x200000, CRC(8fe311f4) SHA1(f4ada8e5c906fc384bed1b96f09cdf313f89e825) )
+	ROM_LOAD32_WORD( "mpr-17747.11", 0x000002, 0x200000, CRC(543593fd) SHA1(5ba63a77e9fc70569af21d50b3171bc8ff4522b8) )
+	ROM_LOAD32_WORD( "mpr-17744.8",  0x400000, 0x200000, CRC(71fed098) SHA1(1d187cad375121a45348d640edd3cc7dce658d28) )
+	ROM_LOAD32_WORD( "mpr-17745.9",  0x400002, 0x200000, CRC(8ecca705) SHA1(ed2b3298aad6f4e52dc672a0168183e457564b43) )
+	ROM_LOAD32_WORD( "epr-17764.6",  0x800000, 0x100000, CRC(68254fcf) SHA1(d90d962b5f81d6598fc9d94c44d9cee71767fc26) ) // NEC D27C8000D EPROM
+	ROM_LOAD32_WORD( "epr-17765.7",  0x800002, 0x100000, CRC(81112ea5) SHA1(a0251b4f5f18ae2e2d0576087a687dd7c2e49c34) ) // NEC D27C8000D EPROM
+
+	ROM_REGION( 0x800000, "tgp", 0 ) // TGP program? (COPRO socket)
+	ROM_LOAD32_WORD( "mpr-17754.28", 0x000000, 0x200000, CRC(81a84f67) SHA1(c0a9b690523a529e4015e9af10dc3fb2a1726f08) )	// not present in this rev memory test, why ?
+	ROM_LOAD32_WORD( "mpr-17755.29", 0x000002, 0x200000, CRC(2a6e7da4) SHA1(e60803ae951489fe47d66731d15c32249ca547b4) )	//
 
 	ROM_REGION( 0x010000, "drivecpu", 0 ) // Drive I/O program
 	ROM_LOAD( "epr-17762.ic12", 0x000000, 0x010000, NO_DUMP ) /* Need to verify actual EPR-xxxx number, might be EPR-17759 */
@@ -4791,6 +4841,46 @@ ROM_START( topskatr ) /* Top Skater Revision A (Export), Model 2C, Sega Game ID#
 	ROM_LOAD("mpr-19750.24s", 0xc00000, 0x400000, CRC(cd95d0bf) SHA1(40e2a2980c89049c339fefd48bf7aac79962cd2e) )
 ROM_END
 
+ROM_START( topskatruo ) /* Top Skater (USA), Model 2C, Sega Game ID# 833-13080-01, ROM board ID# 834-13081-01 */
+	ROM_REGION( 0x200000, "maincpu", 0 ) // i960 program
+	ROM_LOAD32_WORD( "epr-19753.15", 0x000000, 0x080000, CRC(179a0954) SHA1(5d82455808e80ab6de615848fbefce7f4def12d0) )
+	ROM_LOAD32_WORD( "epr-19754.16", 0x000002, 0x080000, CRC(a4c62e01) SHA1(45ae0219a15b96f2283cd8e3df1940f6d48a3f63) )
+
+	ROM_REGION32_LE( 0x2000000, "user1", 0 ) // Data
+	ROM_LOAD32_WORD("mpr-19735.11",  0x000000, 0x400000, CRC(8e509266) SHA1(49afc91467f08befaf34e743cbe823de3e3c9d85) )
+	ROM_LOAD32_WORD("mpr-19736.12",  0x000002, 0x400000, CRC(094e0a0d) SHA1(de2c739f71e51166263446b9f6a566866ab8bee8) )
+	ROM_LOAD32_WORD("mpr-19737.9",   0x800000, 0x400000, CRC(281a7dde) SHA1(71d5ba434328a81969bfdc71ac1160c5ff3ae9d3) )
+	ROM_LOAD32_WORD("mpr-19738.10",  0x800002, 0x400000, CRC(f688327e) SHA1(68c9db242ef7e8f98979e968a09e4b093bc5d470) )
+
+	ROM_REGION( 0x800000, "cpu2", 0 ) // TGPx4 program
+	ROM_LOAD32_WORD("mpr-19743.29",  0x000000, 0x200000, CRC(d41a41bf) SHA1(a5f6b24e6526d0d2ef9c526c273c018d1e0fed59) )
+	ROM_LOAD32_WORD("mpr-19744.30",  0x000002, 0x200000, CRC(84f203bf) SHA1(4952b764e6bf6cd735018738c5eff08781ee2315) )
+
+	ROM_REGION( 0x400000, "user2", 0 ) // Models
+	ROM_LOAD32_WORD("mpr-19741.17",  0x000000, 0x200000, CRC(111a6e29) SHA1(8664059f157626e4bbdcf8357e3d30b37d3c25b8) )
+	ROM_LOAD32_WORD("mpr-19742.21",  0x000002, 0x200000, CRC(28510aff) SHA1(3e68aec090f36a60b3b70bc90f09e2f9ce088718) )
+
+	ROM_REGION( 0x800000, "user3", 0 ) // Textures
+	ROM_LOAD32_WORD("mpr-19740.27",  0x000000, 0x400000, CRC(b20f508b) SHA1(c90fa3b42d87291ea459ccc137f3a2f3eb7efec0) )
+	ROM_LOAD32_WORD("mpr-19739.25",  0x000002, 0x400000, CRC(8120cfd8) SHA1(a82744bff5dcdfae296c7c3e8c3fbfda26324e85) )
+
+	ROM_REGION( 0x100000, "audiocpu", 0 ) // Sound program
+	ROM_LOAD16_WORD_SWAP("mpr-19759.31", 0x080000,  0x80000, CRC(573530f2) SHA1(7b205085965d6694f8e75e29c4028f7cb6f631ab) )
+
+	ROM_REGION( 0x20000, "cpu3", 0) // DSB program
+	ROM_LOAD16_WORD_SWAP("mpr-19760.2s", 0x000000,  0x20000, CRC(2e41ca15) SHA1(a302209bfe0f1491dff2da64b32cfaa13c3d3304) )
+
+	ROM_REGION( 0x800000, "scsp", 0 ) // Samples
+	ROM_LOAD16_WORD_SWAP("mpr-19745.32", 0x000000, 0x400000, CRC(7082a0af) SHA1(415f9d0793a697cb1719bbd96370f4a741866527) )
+	ROM_LOAD16_WORD_SWAP("mpr-19746.34", 0x400000, 0x400000, CRC(657b5977) SHA1(ca76f211d68b6b55678a4d7949bfd2ddef1b1710) )
+
+	ROM_REGION( 0x1000000, "mpeg", 0 ) // MPEG audio data
+	ROM_LOAD("mpr-19747.18s", 0x000000, 0x400000, CRC(6e895aaa) SHA1(4c67c1e1d58a3034bbd711252a78689db9f235bb) )
+	ROM_LOAD("mpr-19748.20s", 0x400000, 0x400000, CRC(fcd74de3) SHA1(fd4da4cf40c4342c6263cf22eee5968292a4d2c0) )
+	ROM_LOAD("mpr-19749.22s", 0x800000, 0x400000, CRC(842ca1eb) SHA1(6ee6b2eb2ea400bdb9c0a9b4a126b4b86886e813) )
+	ROM_LOAD("mpr-19750.24s", 0xc00000, 0x400000, CRC(cd95d0bf) SHA1(40e2a2980c89049c339fefd48bf7aac79962cd2e) )
+ROM_END
+
 ROM_START( topskatru ) /* Top Skater Revision A (USA), Model 2C, Sega Game ID# 833-13080-01, ROM board ID# 834-13081-01 */
 	ROM_REGION( 0x200000, "maincpu", 0 ) // i960 program
 	ROM_LOAD32_WORD( "epr-19753a.15", 0x000000, 0x080000, CRC(3b3028de) SHA1(717ebf0ccd87128a24776e618cf15f07aaf48537) )
@@ -5918,9 +6008,10 @@ GAME( 1994, vcopa,        vcop, model2o, vcop,    driver_device, 0,        ROT0,
 // Model 2A-CRX (TGPs, SCSP sound board)
 GAME( 1995, manxtt,          0, manxttdx,     manxtt,   driver_device, 0,       ROT0, "Sega",   "Manx TT Superbike - DX (Revision D)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1995, manxttc,         0, model2a,      manxtt,   driver_device, 0,       ROT0, "Sega",   "Manx TT Superbike - Twin (Revision C)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1995, srallyc,         0, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - TWIN (Revision C)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1995, srallycb,  srallyc, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - TWIN (Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
-GAME( 1995, srallyca,  srallyc, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - DX (Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1995, srallyc,         0, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - TWIN/DX (Revision C)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1995, srallycb,  srallyc, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - TWIN/DX (Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1995, srallycdx, srallyc, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - DX (Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1995, srallycdxa,srallyc, srallyc,      srallyc,  model2_state,  srallyc, ROT0, "Sega",   "Sega Rally Championship - DX", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1995, vf2,             0, model2a,      model2,   driver_device, 0,       ROT0, "Sega",   "Virtua Fighter 2 (Version 2.1)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1995, vf2b,          vf2, model2a,      model2,   driver_device, 0,       ROT0, "Sega",   "Virtua Fighter 2 (Revision B)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1995, vf2a,          vf2, model2a,      model2,   driver_device, 0,       ROT0, "Sega",   "Virtua Fighter 2 (Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
@@ -5973,6 +6064,7 @@ GAME( 1997, overrev,         0, model2c,      srallyc, driver_device, 0,       R
 GAME( 1997, segawski,        0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Sega Water Ski (Japan, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatr,        0, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (Export, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatru,topskatr, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (USA, Revision A)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1997, topskatruo,topskatr,model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (USA)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatrj,topskatr, model2c,      model2,  driver_device, 0,       ROT0, "Sega",   "Top Skater (Japan)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1998, bel,             0, model2c,      bel,     driver_device, 0,       ROT0, "Sega / EPL Productions", "Behind Enemy Lines", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )
 GAME( 1998, dynamcopc,dynamcop, model2c_5881, model2,  model2_state,  genprot, ROT0, "Sega",   "Dynamite Cop (USA, Model 2C)", MACHINE_NOT_WORKING|MACHINE_IMPERFECT_GRAPHICS )

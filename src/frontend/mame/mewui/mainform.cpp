@@ -491,6 +491,7 @@ void main_form::init_machinebox()
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
 	m_machinebox.always_selected(true);
+	m_machinebox.checkable(true);
 }
 
 void main_form::start_software()
@@ -601,9 +602,8 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 		}
 
 		for (auto & e : cells)
-		{
 			e.custom_format = std::make_unique<listbox::cell::format>(color("#232323"), fgcolor);
-		}
+
 		return cells;
 	};
 
@@ -636,18 +636,7 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 			}
 
 			games.push_back(game);
-//			auto work = (game->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
-//			cat.append({ std::string(game->description), work, std::string(game->name), std::string(game->manufacturer), std::string(game->year), core_filename_extract_base(game->source_file) });
-//			cat.back().bgcolor(color("#232323")).fgcolor(colors::white);
 			if (m_latest_machine == game->name) m_resel = index;
-
-//			bool cloneof = strcmp(game->parent, "0");
-//			if (cloneof)
-//			{
-//				auto cx = driver_list::find(game->parent);
-//				if (cx != -1 && (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) == 0)
-//					cat.back().fgcolor(colors::gray);
-//			}
 			index++;
 		}
 	}

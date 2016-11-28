@@ -491,7 +491,6 @@ void main_form::init_machinebox()
 	m_machinebox.bgcolor(m_bgcolor);
 	m_machinebox.borderless(true);
 	m_machinebox.always_selected(true);
-	m_machinebox.checkable(true);
 }
 
 void main_form::start_software()

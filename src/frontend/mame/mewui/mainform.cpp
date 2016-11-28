@@ -574,6 +574,39 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 	if (!m_machinebox.empty())
 		m_machinebox.clear(0);
 
+	std::vector<const game_driver*> games;
+
+	auto value_translator = [](const std::vector<nana::listbox::cell>& cells) {
+		const game_driver* p = nullptr;
+		return p;
+	};
+
+	auto cell_translator = [](const game_driver* p) {
+		std::vector<nana::listbox::cell> cells;
+		auto work = (p->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
+		cells.emplace_back(p->description);
+		cells.emplace_back(work);
+		cells.emplace_back(p->name);
+		cells.emplace_back(p->manufacturer);
+		cells.emplace_back(p->year);
+		cells.emplace_back(core_filename_extract_base(p->source_file));
+		color fgcolor{colors::white};
+		
+		bool cloneof = strcmp(p->parent, "0");
+		if (cloneof)
+		{
+			auto cx = driver_list::find(p->parent);
+			if (cx != -1 && (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) == 0)
+				fgcolor = colors::gray;
+		}
+
+		for (auto & e : cells)
+		{
+			e.custom_format = std::make_unique<listbox::cell::format>(color("#232323"), fgcolor);
+		}
+		return cells;
+	};
+
 	auto cat = m_machinebox.at(0);
 	auto index = 0;
 	for (auto & parent : m_sortedlist)
@@ -602,22 +635,23 @@ void main_form::populate_listbox(const std::string& filter, const std::string& s
 				}
 			}
 
-			auto work = (game->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
-			cat.append({ std::string(game->description), work, std::string(game->name), std::string(game->manufacturer), std::string(game->year), core_filename_extract_base(game->source_file) });
-			cat.at(index).bgcolor(color("#232323"));
-			cat.at(index).fgcolor(colors::white);
+			games.push_back(game);
+//			auto work = (game->flags & MACHINE_NOT_WORKING) ? "Not Working" : "Working";
+//			cat.append({ std::string(game->description), work, std::string(game->name), std::string(game->manufacturer), std::string(game->year), core_filename_extract_base(game->source_file) });
+//			cat.back().bgcolor(color("#232323")).fgcolor(colors::white);
 			if (m_latest_machine == game->name) m_resel = index;
 
-			bool cloneof = strcmp(game->parent, "0");
-			if (cloneof)
-			{
-				auto cx = driver_list::find(game->parent);
-				if (cx != -1 && (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) == 0)
-					cat.at(index).fgcolor(colors::gray);
-			}
+//			bool cloneof = strcmp(game->parent, "0");
+//			if (cloneof)
+//			{
+//				auto cx = driver_list::find(game->parent);
+//				if (cx != -1 && (driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) == 0)
+//					cat.back().fgcolor(colors::gray);
+//			}
 			index++;
 		}
 	}
+	cat.model<std::recursive_mutex>(std::move(games), value_translator, cell_translator);
 	m_machinebox.auto_draw(true);
 	m_latest_machine.clear();
 }

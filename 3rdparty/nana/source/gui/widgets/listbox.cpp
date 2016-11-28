@@ -3976,7 +3976,7 @@ namespace nana
 									if (item.flags.selected)
 										it_bgcolor = it_bgcolor.blend(bgcolor, 0.5);
 									if (item_state::highlighted == state)
-										it_bgcolor = it_bgcolor.blend(static_cast<color_rgb>(0x99defd), 0.8);
+										it_bgcolor = it_bgcolor.blend(essence_->scheme_ptr->item_highlighted, 0.8);
 
 									graph->rectangle(rectangle{ column_x, y, col.width_px, essence_->scheme_ptr->item_height }, true, it_bgcolor);
 

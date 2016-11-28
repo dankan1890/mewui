@@ -20,14 +20,6 @@
 namespace nana
 {
 
-namespace drawerbase 
-{
-	namespace scroll 
-	{
-		struct scheme; // forward
-	}
-}
-
 class textbox;
 
 	struct arg_textbox
@@ -41,6 +33,8 @@ class textbox;
 
 	namespace drawerbase
 	{
+		namespace scroll { struct scheme; } // forward
+
 		namespace textbox
 		{
 			struct textbox_events

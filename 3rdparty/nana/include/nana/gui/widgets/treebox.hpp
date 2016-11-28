@@ -29,15 +29,11 @@
 
 namespace nana
 {
-namespace drawerbase {namespace scroll {
-struct scheme;
-}
-}
-
 class treebox;
 
 	namespace drawerbase
 	{
+		namespace scroll { struct scheme; } // forward
 		namespace treebox
 		{
 			enum class component

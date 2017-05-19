@@ -1323,7 +1323,6 @@ if _OPTIONS["targetos"]=="linux" then
 			"dl",
 			"rt",
 		}
-	configuration { }
 end
 
 configuration { }

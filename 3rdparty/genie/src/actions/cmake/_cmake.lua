@@ -6,15 +6,6 @@
 
 premake.cmake = { }
 
-function premake.cmake.list(value)
-	if #value > 0 then
-		return " " .. table.concat(value, " ")
-	else
-		return ""
-	end
-end
-
-
 newaction {
 	trigger         = "cmake",
 	shortname       = "CMake",

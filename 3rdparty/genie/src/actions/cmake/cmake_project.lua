@@ -2,6 +2,7 @@
 -- _cmake.lua
 -- Define the CMake action(s).
 -- Copyright (c) 2015 Miodrag Milanovic
+-- Modifications and additions in 2017 by Maurizio Petrarota
 --
 
 local cmake = premake.cmake
@@ -14,7 +15,6 @@ function cmake.list(value)
         return ""
     end
 end
-
 
 function cmake.files(prj)
     local tr = premake.project.buildsourcetree(prj)
@@ -29,21 +29,12 @@ function cmake.files(prj)
     }, true, 1)
 end
 
---function cmake.defines(cfg)
---    table.insert(r, cfg)
---    for _, v in ipairs(cfg.defines) do
---        table.insert(r.config, v)
---    end
---end
-
 function cmake.linkdepends(prj, platforms, nativeplatform, cc)
     for _, platform in ipairs(platforms) do
         for cfg in premake.eachconfig(prj, platform) do
             if cfg.platform == nativeplatform then
                 _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
-                _p(1, 'target_link_libraries(%s%s%s)', premake.esc(prj.name)
-                    , cmake.list(premake.esc(premake.getlinks(cfg, "siblings", "basename")))
-                    , cmake.list(cc.getlinkflags(cfg)))
+                _p(1, 'target_link_libraries(%s%s%s)', premake.esc(prj.name), cmake.list(premake.esc(premake.getlinks(cfg, "siblings", "basename"))), cmake.list(cc.getlinkflags(cfg)))
                 _p('endif()')
             end
         end
@@ -53,13 +44,15 @@ end
 function cmake.customtasks(prj)
     for _, custombuildtask in ipairs(prj.custombuildtask or {}) do
         for _, buildtask in ipairs(custombuildtask or {}) do
-            local deps =  string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location,buildtask[1]))
-            local outputs = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location,buildtask[2]))
-            local dir = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location,buildtask[2])))
+            local deps = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[1]))
+            local outputs = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[2]))
+
+            local dir = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location, buildtask[2])))
+
             local msg = ""
             _p('file(MAKE_DIRECTORY \"%s\")', dir)
             for _, depdata in ipairs(buildtask[3] or {}) do
-                deps = deps .. string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location,depdata))
+                deps = deps .. string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, depdata))
             end
 
             _p('add_custom_command(')
@@ -67,15 +60,15 @@ function cmake.customtasks(prj)
             _p(1, 'DEPENDS %s', deps)
 
             for _, cmdline in ipairs(buildtask[4] or {}) do
-                if (cmdline:sub(1,1) ~= "@") then
+                if (cmdline:sub(1, 1) ~= "@") then
                     local cmd = cmdline
                     local num = 1
                     for _, depdata in ipairs(buildtask[3] or {}) do
-                        cmd = string.gsub(cmd,"%$%(" .. num .."%)", string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ",path.getrelative(prj.location,depdata)))
+                        cmd = string.gsub(cmd, "%$%(" .. num .. "%)", string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, depdata)))
                         num = num + 1
                     end
 
-                    cmd = string.gsub(cmd, "%$%(<%)", string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ",path.getrelative(prj.location,buildtask[1])))
+                    cmd = string.gsub(cmd, "%$%(<%)", string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[1])))
                     cmd = string.gsub(cmd, "%$%(@%)", outputs)
 
                     _p(1, 'COMMAND %s', cmd)
@@ -90,26 +83,15 @@ function cmake.customtasks(prj)
 end
 
 function cmake.dependencyRules(prj)
-    for _, dependency in ipairs(prj.dependency or {}) do
+    for key, dependency in ipairs(prj.dependency or {}) do
+        _p('add_custom_target(')
+        local customname = string.format("customdep_%s_%s", premake.esc(prj.name), key)
+        _p(1, '%s', customname)
         for _, dep in ipairs(dependency or {}) do
---            if (dep[3]==nil or dep[3]==false) then
---                _p('$(OBJDIR)/%s.o: %s'
---                    , _MAKE.esc(path.trimdots(path.removeext(path.getrelative(prj.location, dep[1]))))
---                    , _MAKE.esc(path.getrelative(prj.location, dep[2]))
---                )
---            else
-                _p('set_source_files_properties(')
-                _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../%s'
-                    , premake.esc(path.getrelative(prj.location, dep[1]))
-                    , premake.esc(path.getrelative(prj.location, dep[2]))
-                )
---                _p('${CMAKE_CURRENT_SOURCE_DIR}/../%s: ${CMAKE_CURRENT_SOURCE_DIR}/../%s'
---                    , _MAKE.esc(path.getrelative(prj.location, dep[1]))
---                    , _MAKE.esc(path.getrelative(prj.location, dep[2]))
---                )
---            end
-            _p(')')
+            _p(1, 'DEPENDS \"${CMAKE_CURRENT_SOURCE_DIR}/../%s\"', premake.esc(path.getrelative(prj.location, dep[2])))
         end
+        _p(')')
+        _p('add_dependencies(%s %s)', premake.esc(prj.name), customname)
     end
 end
 
@@ -142,33 +124,33 @@ function cmake.project(prj)
             if cfg.platform == nativeplatform then
                 _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
 
+                -- add includes directories
                 for _, v in ipairs(cfg.includedirs) do
                     _p(1, 'include_directories(../%s)', premake.esc(v))
                 end
 
+                -- add build defines
                 for _, v in ipairs(cfg.defines) do
                     _p(1, 'add_definitions(-D%s)', v)
                 end
 
-                _p(1, 'set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} %s\")'
-                    , cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg)
-                        , cc.getcxxflags(cfg), cfg.buildoptions, cfg.buildoptions_cpp)))
-                _p(1, 'set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} %s\")'
-                    , cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg)
-                        , cfg.buildoptions, cfg.buildoptions_c)))
+                -- set CXX flags
+                _p(1, 'set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} %s\")', cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg), cc.getcxxflags(cfg), cfg.buildoptions, cfg.buildoptions_cpp)))
+
+                -- set C flags
+                _p(1, 'set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} %s\")', cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg), cfg.buildoptions, cfg.buildoptions_c)))
 
                 _p('endif()')
             end
         end
     end
 
+    -- force CPP if needed
     if (prj.options.ForceCPP) then
         _p('set_source_files_properties(${source_list} PROPERTIES LANGUAGE CXX)')
     end
 
-    -- per-dependency build rules
-    cmake.dependencyRules(prj)
-
+    -- add custom tasks
     cmake.customtasks(prj)
 
     if (prj.kind == 'StaticLib') then
@@ -179,6 +161,11 @@ function cmake.project(prj)
     end
     if (prj.kind == 'ConsoleApp' or prj.kind == 'WindowedApp') then
         _p('add_executable(%s ${source_list})', premake.esc(prj.name))
+
+        -- add library dependencies
         cmake.linkdepends(prj, platforms, nativeplatform, cc)
     end
+
+    -- per-dependency build rules
+    cmake.dependencyRules(prj)
 end

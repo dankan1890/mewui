@@ -42,6 +42,21 @@ function cmake.linkdepends(prj, platforms, nativeplatform, cc)
 end
 
 function cmake.customtasks(prj)
+    local dirs = {}
+    for _, custombuildtask in ipairs(prj.custombuildtask or {}) do
+        for _, buildtask in ipairs(custombuildtask or {}) do
+            local d = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location, buildtask[2])))
+            if not table.contains(dirs, d) then
+                table.insert(dirs, d)
+            end
+        end
+    end
+
+    for _, v in ipairs(dirs) do
+        _p('file(MAKE_DIRECTORY \"%s\")', v)
+    end
+    _p('')
+
     for _, custombuildtask in ipairs(prj.custombuildtask or {}) do
         for _, buildtask in ipairs(custombuildtask or {}) do
             local deps = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[1]))
@@ -50,7 +65,7 @@ function cmake.customtasks(prj)
             local dir = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location, buildtask[2])))
 
             local msg = ""
-            _p('file(MAKE_DIRECTORY \"%s\")', dir)
+--            _p('file(MAKE_DIRECTORY \"%s\")', dir)
             for _, depdata in ipairs(buildtask[3] or {}) do
                 deps = deps .. string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, depdata))
             end
@@ -78,6 +93,7 @@ function cmake.customtasks(prj)
             end
             _p(1, 'COMMENT \"%s\"', msg)
             _p(')')
+            _p('')
         end
     end
 end
@@ -92,6 +108,7 @@ function cmake.dependencyRules(prj)
         end
         _p(')')
         _p('add_dependencies(%s %s)', premake.esc(prj.name), customname)
+        _p('')
     end
 end
 
@@ -105,6 +122,7 @@ function cmake.project(prj)
     _p('source_list')
     cmake.files(prj)
     _p(')')
+    _p('')
 
     local nativeplatform = iif(os.is64bit(), "x64", "x32")
     local cc = premake.gettool(prj)
@@ -141,6 +159,7 @@ function cmake.project(prj)
                 _p(1, 'set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} %s\")', cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg), cfg.buildoptions, cfg.buildoptions_c)))
 
                 _p('endif()')
+                _p('')
             end
         end
     end
@@ -165,7 +184,7 @@ function cmake.project(prj)
         -- add library dependencies
         cmake.linkdepends(prj, platforms, nativeplatform, cc)
     end
-
+    _p('')
     -- per-dependency build rules
     cmake.dependencyRules(prj)
 end

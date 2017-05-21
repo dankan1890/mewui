@@ -61,11 +61,8 @@ function cmake.customtasks(prj)
         for _, buildtask in ipairs(custombuildtask or {}) do
             local deps = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[1]))
             local outputs = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, buildtask[2]))
-
-            local dir = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location, buildtask[2])))
-
             local msg = ""
---            _p('file(MAKE_DIRECTORY \"%s\")', dir)
+
             for _, depdata in ipairs(buildtask[3] or {}) do
                 deps = deps .. string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, depdata))
             end
@@ -112,6 +109,17 @@ function cmake.dependencyRules(prj)
     end
 end
 
+function cmake.includeRules(cfg)
+    for _, v in ipairs(cfg.includedirs) do
+        _p(1, 'include_directories(../%s)', premake.esc(v))
+    end
+end
+
+function cmake.definesRules(cfg)
+    for _, v in ipairs(cfg.defines) do
+        _p(1, 'add_definitions(-D%s)', v)
+    end
+end
 
 function cmake.project(prj)
     io.indent = "  "
@@ -143,14 +151,10 @@ function cmake.project(prj)
                 _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
 
                 -- add includes directories
-                for _, v in ipairs(cfg.includedirs) do
-                    _p(1, 'include_directories(../%s)', premake.esc(v))
-                end
+                cmake.includeRules(cfg)
 
                 -- add build defines
-                for _, v in ipairs(cfg.defines) do
-                    _p(1, 'add_definitions(-D%s)', v)
-                end
+                cmake.definesRules(cfg)
 
                 -- set CXX flags
                 _p(1, 'set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} %s\")', cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg), cc.getcxxflags(cfg), cfg.buildoptions, cfg.buildoptions_cpp)))
@@ -185,6 +189,8 @@ function cmake.project(prj)
         cmake.linkdepends(prj, platforms, nativeplatform, cc)
     end
     _p('')
+
     -- per-dependency build rules
     cmake.dependencyRules(prj)
+
 end

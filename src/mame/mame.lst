@@ -29292,6 +29292,16 @@ m82p                            // Nintendo M82 Display Unit PAL
 nes                             // Nintendo Entertainment System
 nespal                          // Nintendo Entertainment System PAL
 
+@source:nes_vt.cpp
+vdogdemo
+mc_dgear
+dgun2500
+dgun2561
+ii8in1
+ii32in1
+lexcyber
+cybar120
+
 @source:newbrain.cpp
 newbrain                        //
 newbraina                       //
@@ -33902,6 +33912,9 @@ sichuan2a                       // (c) 1989 Tamtex
 shootout                        // (c) 1985 Data East USA (US)
 shootoutb                       // bootleg
 shootoutj                       // (c) 1985 Data East USA (Japan)
+
+@source:shootaway2.cpp
+shootaw2						// (c) 1996 Namco
 
 @source:shougi.cpp
 shougi                          // (c) 1982 (Arcade TV Game List - P.80, Left, 9 from top)

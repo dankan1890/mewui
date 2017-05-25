@@ -38,7 +38,7 @@ function cmake.customtasks(prj)
             local d = string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s", path.getdirectory(path.getrelative(prj.location, buildtask[2])))
             if not table.contains(dirs, d) then
                 table.insert(dirs, d)
-                _p('file(MAKE_DIRECTORY \"%s\")', v)
+                _p('file(MAKE_DIRECTORY \"%s\")', d)
             end
         end
     end

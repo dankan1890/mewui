@@ -12178,6 +12178,9 @@ waveterm                        //
 @source:europc.cpp
 europc                          // 1988 Schneider Euro PC (CGA or Hercules)
 
+@source:eva.cpp
+eva11                           //
+
 @source:evmbug.cpp
 evmbug                          //
 
@@ -12973,6 +12976,7 @@ levers                          // (c) 1983 Rock-ola
 losttomb                        // (c) 1982 Stern
 losttombh                       // (c) 1982 Stern
 luctoday                        // 1980 Sigma
+mandinga                        // bootleg (Artemi)
 mltiwars                        // bootleg (Gayton Games)
 monsterz                        // (c) 1982 Nihon (Arcade TV Game List - P.102, Left, 20 from top)
 moonal2                         // [1980] Nichibutsu
@@ -29539,6 +29543,7 @@ raiders5                        // UPL-85004 (c) 1985
 raiders5t                       // UPL-85004 (c) 1985 Taito license
 
 @source:novag6502.cpp
+cfortea                         //
 cforteb                         //
 sexperta                        //
 sexpertb                        //
@@ -30495,6 +30500,7 @@ peps0470                        // (c) 1996 IGT - International Game Technology
 peps0581                        // (c) 1996 IGT - International Game Technology
 peps0615                        // (c) 1996 IGT - International Game Technology
 peps0628                        // (c) 1996 IGT - International Game Technology
+peps0629                        // (c) 1996 IGT - International Game Technology
 peps0631                        // (c) 1996 IGT - International Game Technology
 peps0708                        // (c) 1996 IGT - International Game Technology
 peps0716                        // (c) 1996 IGT - International Game Technology
@@ -36095,6 +36101,7 @@ snspellfr                       //
 snspellit                       //
 snspelljp                       //
 snspellp                        //
+snspellsp                       //
 snspellua                       //
 snspellub                       //
 snspelluk                       //
@@ -36731,6 +36738,10 @@ cbombersp                       //
 undrfire                        // D67 (c) 1993 Taito Corporation Japan (World)
 undrfirej                       // D67 (c) 1993 Taito Corporation (Japan)
 undrfireu                       // D67 (c) 1993 Taito America Corporation (US)
+
+@source:unianapc.cpp
+dhunting                        // (c) 2002 Game Box Entertainment
+hogwild                         // (c) 2003 Uniana
 
 @source:unichamp.cpp
 unichamp                        //

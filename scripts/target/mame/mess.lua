@@ -918,6 +918,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"cce",
 		"ccs",
 		"chromatics",
+		"chrysler",
 		"coleco",
 		"compugraphic",
 		"cromemco",
@@ -1675,6 +1676,11 @@ files {
 	MAME_DIR .. "src/mame/drivers/cgc7900.cpp",
 	MAME_DIR .. "src/mame/includes/cgc7900.h",
 	MAME_DIR .. "src/mame/video/cgc7900.cpp",
+}
+
+createMESSProjects(_target, _subtarget, "chrysler")
+files {
+	MAME_DIR .. "src/mame/drivers/eva.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "coleco")
@@ -3288,7 +3294,6 @@ files {
 createMESSProjects(_target, _subtarget, "xussrpc")
 files {
 	MAME_DIR .. "src/mame/drivers/ec184x.cpp",
-	MAME_DIR .. "src/mame/includes/ec184x.h",
 	MAME_DIR .. "src/mame/drivers/iskr103x.cpp",
 	MAME_DIR .. "src/mame/drivers/mc1502.cpp",
 	MAME_DIR .. "src/mame/machine/kb_7007_3.h",

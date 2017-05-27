@@ -6,6 +6,10 @@
 
 premake.cmake = { }
 
+--
+-- Register the "cmake" action
+--
+
 newaction {
 	trigger         = "cmake",
 	shortname       = "CMake",

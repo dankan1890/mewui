@@ -8,6 +8,19 @@
 local cmake = premake.cmake
 local tree = premake.tree
 
+local function is_excluded(prj, cfg, file)
+    if table.icontains(prj.excludes, file) then
+        return true
+    end
+
+    if table.icontains(cfg.excludes, file) then
+        return true
+    end
+
+    return false
+end
+
+
 function cmake.list(value)
     if #value > 0 then
         return " " .. table.concat(value, " ")
@@ -103,35 +116,17 @@ function cmake.dependencyRules(prj)
     return customdeps
 end
 
-function cmake.commonIncludes(conf)
+function cmake.commonRules(conf, str)
     local Dupes = {}
     local t2 = {}
     for _, cfg in ipairs(conf) do
-        for _, v in ipairs(cfg.includedirs) do
+        local cfgd = iif(str == 'include_directories(../%s)', cfg.includedirs, cfg.defines)
+        for _, v in ipairs(cfgd) do
             if(t2[v] == #conf - 1) then
-                _p('include_directories(../%s)', premake.esc(v))
+                _p(str, v)
                 table.insert(Dupes, v)
             end
-            if (t2[v] == nil) then
-                t2[v] = 1
-            else
-                t2[v] = t2[v] + 1
-            end
-        end
-    end
-    return Dupes
-end
-
-function cmake.commonDefines(conf)
-    local Dupes = {}
-    local t2 = {}
-    for _, cfg in ipairs(conf) do
-        for _, v in ipairs(cfg.defines) do
-            if(t2[v] == #conf - 1) then
-                _p('add_definitions(-D%s)', v)
-                table.insert(Dupes, v)
-            end
-            if (t2[v] == nil) then
+            if not t2[v] then
                 t2[v] = 1
             else
                 t2[v] = t2[v] + 1
@@ -183,8 +178,8 @@ function cmake.project(prj)
         end
     end
 
-    local commonIncludes = cmake.commonIncludes(configurations)
-    local commonDefines = cmake.commonDefines(configurations)
+    local commonIncludes = cmake.commonRules(configurations, 'include_directories(../%s)')
+    local commonDefines = cmake.commonRules(configurations, 'add_definitions(-D%s)')
     _p('')
 
     for _, cfg in ipairs(configurations) do

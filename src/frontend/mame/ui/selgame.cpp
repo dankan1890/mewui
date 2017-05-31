@@ -761,7 +761,7 @@ void menu_select_game::force_game_select(mame_ui_manager &mui, render_container 
 	mui.show_menu();
 
 	// make sure MAME is paused
-	mui.machine().pause();
+//	mui.machine().pause();
 }
 
 //-------------------------------------------------

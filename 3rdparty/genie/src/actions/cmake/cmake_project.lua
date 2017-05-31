@@ -116,6 +116,18 @@ function cmake.dependencyRules(prj)
     return customdeps
 end
 
+function cmake.depRules(prj)
+    for _, dependency in ipairs(prj.dependency or {}) do
+        for _, dep in ipairs(dependency or {}) do
+            _p('set_source_files_properties(')
+            _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', premake.esc(path.getrelative(prj.location, dep[1])))
+            _p(1, 'PROPERTIES OBJECT_DEPENDS')
+            _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', premake.esc(path.getrelative(prj.location, dep[2])))
+            _p(')')
+        end
+    end
+end
+
 function cmake.commonRules(conf, str)
     local Dupes = {}
     local t2 = {}
@@ -211,6 +223,8 @@ function cmake.project(prj)
 
     -- per-dependency build rules
     local customdeps = cmake.dependencyRules(prj)
+
+    cmake.depRules(prj)
 
     for _, cfg in ipairs(configurations) do
         _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)

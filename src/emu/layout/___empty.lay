@@ -73,9 +73,9 @@
 	<!-- build screen -->
 
 	<view name="Internal Layout">
-		<bounds left="0" right="47" top="0" bottom="53" />
+		<bounds left="0" right="~scr0width~" top="0" bottom="~scr0height~" />
 		<bezel element="static_black">
-			<bounds left="0" right="47" top="0" bottom="53" />
+			<bounds left="0" right="~scr0width~" top="0" bottom="~scr0height~" />
 		</bezel>
 
 		<!-- lamps -->

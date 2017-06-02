@@ -100,31 +100,38 @@ function cmake.customtasks(prj)
     end
 end
 
-function cmake.dependencyRules(prj)
-    local customdeps = {}
-    for key, dependency in ipairs(prj.dependency or {}) do
-        _p('add_custom_target(')
-        local customname = string.format("customdep_%s_%s", premake.esc(prj.name), key)
-        table.insert(customdeps, customname)
-        _p(1, '%s', customname)
-        for _, dep in ipairs(dependency or {}) do
-            _p(1, 'DEPENDS \"${CMAKE_CURRENT_SOURCE_DIR}/../%s\"', premake.esc(path.getrelative(prj.location, dep[2])))
-        end
-        _p(')')
-        _p('')
-    end
-    return customdeps
-end
-
 function cmake.depRules(prj)
+    local maintable = {}
     for _, dependency in ipairs(prj.dependency or {}) do
         for _, dep in ipairs(dependency or {}) do
-            _p('set_source_files_properties(')
-            _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', premake.esc(path.getrelative(prj.location, dep[1])))
-            _p(1, 'PROPERTIES OBJECT_DEPENDS')
-            _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', premake.esc(path.getrelative(prj.location, dep[2])))
-            _p(')')
+            if path.issourcefile(dep[1]) then
+                local dep1 = premake.esc(path.getrelative(prj.location, dep[1]))
+                local dep2 = premake.esc(path.getrelative(prj.location, dep[2]))
+                if not maintable[dep1] then maintable[dep1] = {} end
+                table.insert(maintable[dep1], dep2)
+            end
         end
+	end
+
+    for key, _ in pairs(maintable) do
+		local deplist = {}
+		local depsname = string.format('%s_deps', path.getname(key))
+
+		for _, d2 in pairs(maintable[key]) do
+			table.insert(deplist, d2)
+		end
+		_p('set(')
+		_p(1, depsname)
+		for _, v in pairs(deplist) do
+			_p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', v)
+		end
+		_p(')')
+		_p('')
+		_p('set_source_files_properties(')
+		_p(1, '\"${CMAKE_CURRENT_SOURCE_DIR}/../%s\"', key)
+		_p(1, 'PROPERTIES OBJECT_DEPENDS \"${%s}\"', depsname)
+		_p(')')
+		_p('')
     end
 end
 
@@ -222,8 +229,6 @@ function cmake.project(prj)
     cmake.customtasks(prj)
 
     -- per-dependency build rules
-    local customdeps = cmake.dependencyRules(prj)
-
     cmake.depRules(prj)
 
     for _, cfg in ipairs(configurations) do
@@ -240,11 +245,7 @@ function cmake.project(prj)
             _p(1, 'add_executable(%s ${source_list})', premake.esc(cfg.buildtarget.basename))
             _p(1, 'target_link_libraries(%s%s%s)', premake.esc(cfg.buildtarget.basename), cmake.list(premake.esc(premake.getlinks(cfg, "siblings", "basename"))), cmake.list(cc.getlinkflags(cfg)))
         end
-
-        for _, v in ipairs(customdeps) do
-            _p(1, 'add_dependencies(%s %s)', premake.esc(cfg.buildtarget.basename), v)
-        end
-        _p('endif()')
+		_p('endif()')
         _p('')
     end
 end

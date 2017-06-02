@@ -8,18 +8,35 @@
 local cmake = premake.cmake
 local tree = premake.tree
 
-local function is_excluded(prj, cfg, file)
+local includestr = 'include_directories(../%s)'
+local definestr = 'add_definitions(-D%s)'
+
+
+local function is_excluded(prj, file)
     if table.icontains(prj.excludes, file) then
         return true
     end
 
-    if table.icontains(cfg.excludes, file) then
-        return true
-    end
+--    if table.icontains(cfg.excludes, file) then
+--        return true
+--    end
 
     return false
 end
 
+function cmake.emitFiles(prj, files)
+	_p('set(')
+	_p('source_list')
+	for _, file in ipairs(files) do
+		-- check if file is excluded.
+		if not is_excluded(prj, file) then
+			-- if not excluded, add it.
+			_p(1, '%s', file)
+		end
+	end
+	_p(')')
+	_p('')
+end
 
 function cmake.list(value)
     if #value > 0 then
@@ -30,6 +47,7 @@ function cmake.list(value)
 end
 
 function cmake.files(prj)
+	local ret = {}
     local tr = premake.project.buildsourcetree(prj)
     tree.traverse(tr, {
         onbranchenter = function(node, depth)
@@ -37,9 +55,10 @@ function cmake.files(prj)
         onbranchexit = function(node, depth)
         end,
         onleaf = function(node, depth)
-            _p(1, '../%s', node.cfg.name)
+			table.insert(ret, string.format('../%s', node.cfg.name))
         end,
     }, true, 1)
+	return ret
 end
 
 function cmake.header(prj)
@@ -139,7 +158,7 @@ function cmake.commonRules(conf, str)
     local Dupes = {}
     local t2 = {}
     for _, cfg in ipairs(conf) do
-        local cfgd = iif(str == 'include_directories(../%s)', cfg.includedirs, cfg.defines)
+        local cfgd = iif(str == includestr, cfg.includedirs, cfg.defines)
         for _, v in ipairs(cfgd) do
             if(t2[v] == #conf - 1) then
                 _p(str, v)
@@ -174,11 +193,7 @@ end
 function cmake.project(prj)
     io.indent = "  "
     cmake.header(prj)
-    _p('set(')
-    _p('source_list')
-    cmake.files(prj)
-    _p(')')
-    _p('')
+	cmake.emitFiles(prj, cmake.files(prj))
 
     local nativeplatform = iif(os.is64bit(), "x64", "x32")
     local cc = premake.gettool(prj)
@@ -195,20 +210,20 @@ function cmake.project(prj)
                 table.insert(configurations, cfg)
             end
         end
-    end
+	end
 
-    local commonIncludes = cmake.commonRules(configurations, 'include_directories(../%s)')
-    local commonDefines = cmake.commonRules(configurations, 'add_definitions(-D%s)')
+    local commonIncludes = cmake.commonRules(configurations, includestr)
+    local commonDefines = cmake.commonRules(configurations, definestr)
     _p('')
 
     for _, cfg in ipairs(configurations) do
         _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
 
         -- add includes directories
-        cmake.cfgRules(cfg.includedirs, commonIncludes, 'include_directories(../%s)')
+        cmake.cfgRules(cfg.includedirs, commonIncludes, includestr)
 
         -- add build defines
-        cmake.cfgRules(cfg.defines, commonDefines, 'add_definitions(-D%s)')
+        cmake.cfgRules(cfg.defines, commonDefines, definestr)
 
         -- set CXX flags
         _p(1, 'set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} %s\")', cmake.list(table.join(cc.getcppflags(cfg), cc.getcflags(cfg), cc.getcxxflags(cfg), cfg.buildoptions, cfg.buildoptions_cpp)))

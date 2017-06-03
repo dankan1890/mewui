@@ -10691,6 +10691,9 @@ dblcrown                        // (c) 1994 Excellent System
 @source:dblewing.cpp
 dblewing                        // MBE (c) 1993 Mitchell
 
+@source:dbox.cpp
+dbox							// (c) 1996 Nokia Multimedia
+
 @source:dbz.cpp
 dbz                             // (c) 1993 Banpresto
 dbz2                            // (c) 1994 Banpresto
@@ -15183,6 +15186,7 @@ shufshot139                     // (c) Strata/Incredible Technologies
 timekill                        // (c) 1992 Strata/Incredible Technologies
 timekill121                     // (c) 1992 Strata/Incredible Technologies
 timekill131                     // (c) 1992 Strata/Incredible Technologies
+timekill132i                    // (c) 1992 Strata/Incredible Technologies
 wcbowl                          // (c) 1995 Incredible Technologies
 wcbowl11                        // (c) 1995 Incredible Technologies
 wcbowl12                        // (c) 1995 Incredible Technologies

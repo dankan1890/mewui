@@ -12,30 +12,25 @@ local includestr = 'include_directories(../%s)'
 local definestr = 'add_definitions(-D%s)'
 
 
-local function is_excluded(prj, file)
+local function is_excluded(prj, cfg, file)
     if table.icontains(prj.excludes, file) then
         return true
     end
 
---    if table.icontains(cfg.excludes, file) then
---        return true
---    end
+    if table.icontains(cfg.excludes, file) then
+        return true
+    end
 
     return false
 end
 
-function cmake.emitFiles(prj, files)
-	_p('set(')
-	_p('source_list')
-	for _, file in ipairs(files) do
-		-- check if file is excluded.
-		if not is_excluded(prj, file) then
-			-- if not excluded, add it.
-			_p(1, '%s', file)
+function cmake.excludedFiles(prj, cfg, src)
+	for _, v in ipairs(src) do
+		if (is_excluded(prj, cfg, v)) then
+			_p(1, 'list(REMOVE_ITEM source_list ../%s)', v)
 		end
+
 	end
-	_p(')')
-	_p('')
 end
 
 function cmake.list(value)
@@ -55,9 +50,11 @@ function cmake.files(prj)
         onbranchexit = function(node, depth)
         end,
         onleaf = function(node, depth)
-			table.insert(ret, string.format('../%s', node.cfg.name))
+			table.insert(ret, node.cfg.name)
+			_p(1, '../%s', node.cfg.name)
         end,
     }, true, 1)
+
 	return ret
 end
 
@@ -193,7 +190,11 @@ end
 function cmake.project(prj)
     io.indent = "  "
     cmake.header(prj)
-	cmake.emitFiles(prj, cmake.files(prj))
+	_p('set(')
+	_p('source_list')
+	local source_files = cmake.files(prj)
+	_p(')')
+	_p('')
 
     local nativeplatform = iif(os.is64bit(), "x64", "x32")
     local cc = premake.gettool(prj)
@@ -218,6 +219,9 @@ function cmake.project(prj)
 
     for _, cfg in ipairs(configurations) do
         _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
+
+		-- list excluded files
+		cmake.excludedFiles(prj, cfg, source_files)
 
         -- add includes directories
         cmake.cfgRules(cfg.includedirs, commonIncludes, includestr)

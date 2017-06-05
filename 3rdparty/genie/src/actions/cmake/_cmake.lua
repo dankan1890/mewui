@@ -32,4 +32,3 @@ newaction {
 		premake.clean.file(prj, "%%/CMakeLists.txt")
 	end
 }
-

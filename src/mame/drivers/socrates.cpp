@@ -81,6 +81,7 @@ TODO:
 ******************************************************************************/
 
 /* Core includes */
+#include "emu.h"
 #include "audio/socrates.h"
 #include "cpu/z80/z80.h"
 
@@ -578,10 +579,10 @@ logerror("write to i/o 0x60 of %x\n",data);
 
 /* stuff below belongs in video/socrates.c */
 /* graphics section:
-	0x20 - W - lsb offset of screen display
-	0x21 - W - msb offset of screen display
-	resulting screen line is one of 512 total offsets on 128-byte boundaries in the whole 64k ram
-	*/
+    0x20 - W - lsb offset of screen display
+    0x21 - W - msb offset of screen display
+    resulting screen line is one of 512 total offsets on 128-byte boundaries in the whole 64k ram
+    */
 WRITE8_MEMBER(socrates_state::socrates_scroll_w)
 {
 	if (offset == 0)
@@ -966,7 +967,7 @@ static ADDRESS_MAP_START(z80_io, AS_IO, 8, socrates_state )
 	0xC0 produces a DMC wave read from an unknown address at around 342hz
 	<todo: test the others, maybe take samples?>
 	*/
-	AM_RANGE(0x20, 0x21) AM_READWRITE(read_f3, socrates_scroll_w) AM_MIRROR (0xe) 
+	AM_RANGE(0x20, 0x21) AM_READWRITE(read_f3, socrates_scroll_w) AM_MIRROR (0xe)
 	AM_RANGE(0x30, 0x30) AM_READWRITE(read_f3, kbmcu_strobe) AM_MIRROR (0xf) /* resets the keyboard IR decoder MCU */
 	AM_RANGE(0x40, 0x40) AM_READWRITE(status_and_speech, speech_command ) AM_MIRROR(0xf) /* reads status register for vblank/hblank/speech, also reads and writes speech module */
 	AM_RANGE(0x50, 0x50) AM_READWRITE(socrates_keyboard_low_r, socrates_keyboard_clear) AM_MIRROR(0xE) /* Keyboard keycode low, latched on keypress, can be unlatched by writing anything here */
@@ -1373,69 +1374,23 @@ static MACHINE_CONFIG_START( socrates )
 	MCFG_SOFTWARE_LIST_ADD("cart_list", "socrates")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( socrates_pal )
-	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, XTAL_26_601712MHz/6)  /* Toshiba TMPZ84C00AP @ 4.433 MHz? /6 or 7 or 8? TODO: verify divider!*/
+static MACHINE_CONFIG_DERIVED( socrates_pal, socrates )
+	MCFG_CPU_REPLACE("maincpu", Z80, XTAL_26_601712MHz/8)
 	MCFG_CPU_PROGRAM_MAP(z80_mem)
 	MCFG_CPU_IO_MAP(z80_io)
 	MCFG_QUANTUM_TIME(attotime::from_hz(50))
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", socrates_state,  assert_irq)
-	//MCFG_MACHINE_START_OVERRIDE(socrates_state,socrates)
 
-	MCFG_DEVICE_ADD("rombank1", ADDRESS_MAP_BANK, 0)
-	MCFG_DEVICE_PROGRAM_MAP(socrates_rombank_map)
-	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
-	MCFG_ADDRESS_MAP_BANK_DATABUS_WIDTH(8)
-	MCFG_ADDRESS_MAP_BANK_STRIDE(0x4000)
-
-	MCFG_DEVICE_ADD("rambank1", ADDRESS_MAP_BANK, 0)
-	MCFG_DEVICE_PROGRAM_MAP(socrates_rambank_map)
-	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
-	MCFG_ADDRESS_MAP_BANK_DATABUS_WIDTH(8)
-	MCFG_ADDRESS_MAP_BANK_STRIDE(0x4000)
-
-	MCFG_DEVICE_ADD("rambank2", ADDRESS_MAP_BANK, 0)
-	MCFG_DEVICE_PROGRAM_MAP(socrates_rambank_map)
-	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
-	MCFG_ADDRESS_MAP_BANK_DATABUS_WIDTH(8)
-	MCFG_ADDRESS_MAP_BANK_STRIDE(0x4000)
-
-	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
+	MCFG_SCREEN_MODIFY("screen")
 	MCFG_SCREEN_REFRESH_RATE(50)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
+	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) // not accurate
 	MCFG_SCREEN_SIZE(264, 238) // technically the screen size is 256x228 but super painter abuses what I suspect is a hardware bug to display repeated pixels of the very last pixel beyond this horizontal space, well into hblank
 	MCFG_SCREEN_VISIBLE_AREA(0, 263, 0, 229) // the last few rows are usually cut off by the screen bottom but are indeed displayed if you mess with v-hold
 	MCFG_SCREEN_UPDATE_DRIVER(socrates_state, screen_update_socrates)
-	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_PALETTE_ADD("palette", 256)
-	MCFG_PALETTE_INIT_OWNER(socrates_state, socrates)
-
-	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("soc_snd", SOCRATES_SOUND, XTAL_26_601712MHz/(512+256)) // TODO: verify divider for pal mode
+	MCFG_SOUND_REPLACE("soc_snd", SOCRATES_SOUND, XTAL_26_601712MHz/(512+256)) // this is correct, as strange as it sounds.
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MCFG_GENERIC_CARTSLOT_ADD("cartslot", generic_plain_slot, "socrates_cart")
-
-	/* Software lists */
-	MCFG_SOFTWARE_LIST_ADD("cart_list", "socrates")
 MACHINE_CONFIG_END
-
-/* This doesn't work for some reason.
-static MACHINE_CONFIG_DERIVED( socrates_pal, socrates )
-    MCFG_CPU_REPLACE("maincpu", Z80, XTAL_26_601712MHz/8)
-    MCFG_SCREEN_REPLACE("screen", RASTER)
-    MCFG_SCREEN_REFRESH_RATE(50)
-    MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500))
-    MCFG_SCREEN_SIZE(264, 256) // technically the screen size is 256x228 but super painter abuses what I suspect is a hardware bug to display repeated pixels of the very last pixel beyond this horizontal space, well into hblank
-    MCFG_SCREEN_VISIBLE_AREA(0, 263, 0, 256) // the last few rows are usually cut off by the screen bottom but are indeed displayed if you mess with v-hold
-    MCFG_SCREEN_UPDATE_DRIVER(socrates_state, screen_update_socrates)
-    MCFG_SOUND_REPLACE("soc_snd", SOCRATES_SOUND, XTAL_26_601712MHz/(512+256)) // this is correct, as strange as it sounds.
-    MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_CONFIG_END
-*/
 
 static MACHINE_CONFIG_START( iqunlimz )
 	/* basic machine hardware */

@@ -1,8 +1,9 @@
-// license:LGPL-2.1+
+// license:BSD-3-Clause
 // copyright-holders:Tomasz Slanina,Pierpaolo Prazzoli
 
 #include "cpu/mcs51/mcs51.h"
 #include "sound/qs1000.h"
+#include "screen.h"
 
 class eolith_state : public driver_device
 {

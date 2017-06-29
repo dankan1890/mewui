@@ -1,14 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Carl
-#ifndef __I8086_H__
-#define __I8086_H__
+#ifndef MAME_CPU_I86_I86_H
+#define MAME_CPU_I86_I86_H
 
-#include "emu.h"
+#pragma once
+
 
 /////////////////////////////////////////////////////////////////
 
-extern const device_type I8086;
-extern const device_type I8088;
+DECLARE_DEVICE_TYPE(I8086, i8086_cpu_device)
+DECLARE_DEVICE_TYPE(I8088, i8088_cpu_device)
 
 #define INPUT_LINE_INT0         INPUT_LINE_IRQ0
 #define INPUT_LINE_TEST         20
@@ -20,21 +21,18 @@ extern const device_type I8088;
 
 enum
 {
-	I8086_PC=0,
-	I8086_IP, I8086_AX, I8086_CX, I8086_DX, I8086_BX, I8086_SP, I8086_BP, I8086_SI, I8086_DI,
+	I8086_PC = STATE_GENPC,
+	I8086_IP = 1, I8086_AX, I8086_CX, I8086_DX, I8086_BX, I8086_SP, I8086_BP, I8086_SI, I8086_DI,
 	I8086_FLAGS, I8086_ES, I8086_CS, I8086_SS, I8086_DS,
-	I8086_VECTOR, I8086_PENDING
+	I8086_VECTOR, I8086_HALT
 };
 
 
 class i8086_common_cpu_device : public cpu_device
 {
 public:
-	// construction/destruction
-	i8086_common_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
-
-	template<class _Object> static devcb_base &set_lock_handler(device_t &device, _Object object)
-		{ return downcast<i8086_common_cpu_device &>(device).m_lock_handler.set_callback(object); }
+	template <class Object> static devcb_base &set_lock_handler(device_t &device, Object &&cb)
+	{ return downcast<i8086_common_cpu_device &>(device).m_lock_handler.set_callback(std::forward<Object>(cb)); }
 
 protected:
 	enum
@@ -112,6 +110,9 @@ protected:
 	enum SREGS { ES=0, CS, SS, DS };
 	enum WREGS { AX=0, CX, DX, BX, SP, BP, SI, DI };
 
+	// construction/destruction
+	i8086_common_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -127,6 +128,7 @@ protected:
 	virtual offs_t disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options) override;
 
 	// device_state_interface overrides
+	virtual void state_import(const device_state_entry &entry) override;
 	virtual void state_string_export(const device_state_entry &entry, std::string &str) const override;
 
 	virtual void interrupt(int int_num, int trap = 1);
@@ -246,8 +248,6 @@ protected:
 	inline void ADJ4(int8_t param1, int8_t param2);
 	inline void ADJB(int8_t param1, int8_t param2);
 
-protected:
-
 	union
 	{                   /* eight general registers */
 		uint16_t w[8];    /* viewed as 16 bits registers */
@@ -297,8 +297,8 @@ protected:
 	uint8_t   m_fire_trap;
 	uint8_t   m_test_state;
 
-	address_space *m_program;
-	direct_read_data *m_direct;
+	address_space *m_program, *m_opcodes;
+	direct_read_data *m_direct, *m_direct_opcodes;
 	address_space *m_io;
 	offs_t m_fetch_xor;
 	int m_icount;
@@ -342,12 +342,13 @@ class i8086_cpu_device : public i8086_common_cpu_device
 public:
 	// construction/destruction
 	i8086_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	i8086_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, int data_bus_size);
 
 	// device_memory_interface overrides
-	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override { return (spacenum == AS_PROGRAM) ? &m_program_config : ( (spacenum == AS_IO) ? &m_io_config : nullptr ); }
+	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override;
 
 protected:
+	i8086_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int data_bus_size);
+
 	virtual void execute_run() override;
 	virtual void device_start() override;
 	virtual uint32_t execute_input_lines() const override { return 1; }
@@ -356,6 +357,7 @@ protected:
 	uint32_t pc() { return m_pc = (m_sregs[CS] << 4) + m_ip; }
 
 	address_space_config m_program_config;
+	address_space_config m_opcodes_config;
 	address_space_config m_io_config;
 	static const uint8_t m_i8086_timing[200];
 };
@@ -368,4 +370,4 @@ public:
 };
 
 
-#endif /* __I8086_H__ */
+#endif // MAME_CPU_I86_I86_H

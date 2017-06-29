@@ -118,11 +118,6 @@
 
 *******************************************************************************/
 
-
-#define MAIN_CLOCK  XTAL_18MHz
-#define SEC_CLOCK   XTAL_8MHz
-#define AUX_CLOCK   XTAL_3_579545MHz
-
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6840ptm.h"
@@ -131,8 +126,15 @@
 #include "machine/nvram.h"
 #include "sound/3812intf.h"
 #include "video/hd63484.h"
+#include "screen.h"
+#include "speaker.h"
 
 #include "sigmab52.lh"
+
+
+#define MAIN_CLOCK  XTAL_18MHz
+#define SEC_CLOCK   XTAL_8MHz
+#define AUX_CLOCK   XTAL_3_579545MHz
 
 class sigmab52_state : public driver_device
 {
@@ -573,7 +575,7 @@ void sigmab52_state::machine_reset()
 *    Machine Drivers     *
 *************************/
 
-static MACHINE_CONFIG_START( jwildb52, sigmab52_state )
+static MACHINE_CONFIG_START( jwildb52 )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, MAIN_CLOCK/9)    /* 2 MHz */
@@ -582,12 +584,10 @@ static MACHINE_CONFIG_START( jwildb52, sigmab52_state )
 	MCFG_CPU_ADD("audiocpu", M6809, MAIN_CLOCK/9)   /* 2 MHz */
 	MCFG_CPU_PROGRAM_MAP(sound_prog_map)
 
-	MCFG_DEVICE_ADD("6840ptm_1", PTM6840, 0)
-	MCFG_PTM6840_INTERNAL_CLOCK(MAIN_CLOCK/9)       // FIXME
+	MCFG_DEVICE_ADD("6840ptm_1", PTM6840, MAIN_CLOCK/9) // FIXME
 	MCFG_PTM6840_IRQ_CB(INPUTLINE("maincpu", M6809_IRQ_LINE))
 
-	MCFG_DEVICE_ADD("6840ptm_2", PTM6840, 0)
-	MCFG_PTM6840_INTERNAL_CLOCK(MAIN_CLOCK/18)      // FIXME
+	MCFG_DEVICE_ADD("6840ptm_2", PTM6840, MAIN_CLOCK/18) // FIXME
 	MCFG_PTM6840_IRQ_CB(WRITELINE(sigmab52_state, ptm2_irq))
 
 	MCFG_NVRAM_ADD_NO_FILL("nvram")

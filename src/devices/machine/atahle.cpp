@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
+#include "emu.h"
 #include "atahle.h"
 
 #define VERBOSE                     0
@@ -39,10 +40,9 @@ enum
 #define DEVICE1_PDIAG_TIME                  (attotime::from_msec(2))
 #define DIAGNOSTIC_TIME                     (attotime::from_msec(2))
 
-ata_hle_device::ata_hle_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock,const char *shortname, const char *source)
-	: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
-	ata_device_interface(mconfig, *this),
-	device_slot_card_interface(mconfig, *this),
+ata_hle_device::ata_hle_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, type, tag, owner, clock),
+	device_ata_interface(mconfig, *this),
 	m_buffer_offset(0),
 	m_buffer_size(0),
 	m_error(0),
@@ -852,7 +852,7 @@ WRITE16_MEMBER( ata_hle_device::write_cs0 )
 
 			/* sector count */
 			case IDE_CS0_SECTOR_COUNT_RW:
-				m_sector_count = data ? data : 256;
+				m_sector_count = (data & 0xff) ? (data & 0xff) : 0x100;
 				break;
 
 			/* current sector */

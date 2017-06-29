@@ -1,7 +1,8 @@
-// license:LGPL-2.1+
+// license:BSD-3-Clause
 // copyright-holders:Tomasz Slanina
 
 #include "machine/st0016.h"
+#include "screen.h"
 
 class st0016_state : public driver_device
 {

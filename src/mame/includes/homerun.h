@@ -1,4 +1,4 @@
-// license:LGPL-2.1+
+// license:BSD-3-Clause
 // copyright-holders:Tomasz Slanina
 /*************************************************************************
 
@@ -8,6 +8,7 @@
 
 #include "sound/upd7759.h"
 #include "sound/samples.h"
+#include "screen.h"
 
 class homerun_state : public driver_device
 {

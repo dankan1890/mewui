@@ -13,6 +13,10 @@ driver by
 Main CPU : z80 (with encryption, external to z80)
 Sound CPU: custom T5182 cpu (like seibu sound system but with internal code)
 
+The SEI8608B sound board, which features the T5182 "CPU CUSTOM" and YM2151, also
+has unpopulated locations for a 76489AN, 2x MSM5205, 2x 27512 EPROM (presumably
+for ADPCM samples), and additional TTL chips to support all these.
+
 $e000 - coins (two bytes)
 $e2b7 - player 1 energy
 
@@ -25,8 +29,9 @@ TODO:
 */
 
 #include "emu.h"
-#include "cpu/z80/z80.h"
 #include "includes/darkmist.h"
+#include "cpu/z80/z80.h"
+#include "speaker.h"
 
 void darkmist_state::machine_start()
 {
@@ -232,7 +237,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(darkmist_state::scanline)
 
 
 
-static MACHINE_CONFIG_START( darkmist, darkmist_state )
+static MACHINE_CONFIG_START( darkmist )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,4000000)         /* ? MHz */
 	MCFG_CPU_PROGRAM_MAP(memmap)

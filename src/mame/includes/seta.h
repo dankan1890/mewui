@@ -55,7 +55,6 @@ public:
 		m_dsw2_3(*this, "DSW2_3"),
 		m_bet(*this, {"BET0", "BET1", "BET2", "BET3", "BET4"}),
 		m_sharedram(*this,"sharedram"),
-		m_workram(*this,"workram"),
 		m_vregs(*this,"vregs"),
 		m_vram_0(*this,"vram_0"),
 		m_vctrl_0(*this,"vctrl_0"),
@@ -92,7 +91,6 @@ public:
 	optional_ioport_array<5> m_bet;
 
 	optional_shared_ptr<uint8_t> m_sharedram;
-	optional_shared_ptr<uint16_t> m_workram;
 	optional_shared_ptr<uint16_t> m_vregs;
 	optional_shared_ptr<uint16_t> m_vram_0;
 	optional_shared_ptr<uint16_t> m_vctrl_0;
@@ -156,7 +154,6 @@ public:
 	DECLARE_WRITE16_MEMBER(sharedram_68000_w);
 	DECLARE_WRITE16_MEMBER(sub_ctrl_w);
 	DECLARE_READ16_MEMBER(seta_dsw_r);
-	DECLARE_READ16_MEMBER(calibr50_ip_r);
 	DECLARE_WRITE16_MEMBER(calibr50_soundlatch_w);
 	DECLARE_READ16_MEMBER(usclssic_dsw_r);
 	DECLARE_READ16_MEMBER(usclssic_trackball_x_r);
@@ -248,8 +245,14 @@ public:
 	uint32_t screen_update_setaroul(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_inttoote(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_seta_layers(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	void screen_eof_seta_buffer_sprites(screen_device &screen, bool state);
-	void screen_eof_setaroul(screen_device &screen, bool state);
+	DECLARE_WRITE_LINE_MEMBER(screen_vblank_seta_buffer_sprites);
+	DECLARE_WRITE_LINE_MEMBER(screen_vblank_setaroul);
+	DECLARE_READ16_MEMBER(ipl0_ack_r);
+	DECLARE_WRITE16_MEMBER(ipl0_ack_w);
+	DECLARE_READ16_MEMBER(ipl1_ack_r);
+	DECLARE_WRITE16_MEMBER(ipl1_ack_w);
+	DECLARE_READ16_MEMBER(ipl2_ack_r);
+	DECLARE_WRITE16_MEMBER(ipl2_ack_w);
 	void uPD71054_update_timer(device_t *cpu, int no);
 	INTERRUPT_GEN_MEMBER(wrofaero_interrupt);
 	TIMER_CALLBACK_MEMBER(uPD71054_timer_callback);

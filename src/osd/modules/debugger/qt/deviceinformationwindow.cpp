@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Andrew Gardner
+#include "emu.h"
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QVBoxLayout>
@@ -122,14 +123,14 @@ void DeviceInformationWindowQtConfig::applyToQWidget(QWidget* widget)
 }
 
 
-void DeviceInformationWindowQtConfig::addToXmlDataNode(xml_data_node &node) const
+void DeviceInformationWindowQtConfig::addToXmlDataNode(util::xml::data_node &node) const
 {
 	WindowQtConfig::addToXmlDataNode(node);
 	node.set_attribute("device-tag", m_device_tag.c_str());
 }
 
 
-void DeviceInformationWindowQtConfig::recoverFromXmlNode(xml_data_node const &node)
+void DeviceInformationWindowQtConfig::recoverFromXmlNode(util::xml::data_node const &node)
 {
 	WindowQtConfig::recoverFromXmlNode(node);
 	m_device_tag = node.get_attribute_string("device-tag", ":");

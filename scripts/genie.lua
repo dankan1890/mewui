@@ -386,6 +386,11 @@ newoption {
 	description = "Produce WebAssembly output when building with Emscripten.",
 }
 
+newoption {
+	trigger = "PROJECT",
+	description = "Select projects to be built. Will look into project folder for files.",
+}
+
 dofile ("extlib.lua")
 
 if _OPTIONS["SHLIB"]=="1" then
@@ -460,6 +465,9 @@ flags {
 }
 
 configuration { "vs*" }
+	buildoptions {
+		"/bigobj",
+	}
 	flags {
 		"NoPCH",
 		"ExtraWarnings",
@@ -475,6 +483,7 @@ configuration { "vs*" }
 configuration { "Debug", "vs*" }
 	flags {
 		"Symbols",
+		"NoIncrementalLink",
 	}
 
 configuration { "Release", "vs*" }
@@ -515,7 +524,14 @@ msgprecompile ("Precompiling $(subst ../,,$<)...")
 
 messageskip { "SkipCreatingMessage", "SkipBuildingMessage", "SkipCleaningMessage" }
 
-if (_OPTIONS["SOURCES"] == nil) then
+if (_OPTIONS["PROJECT"] ~= nil) then
+	PROJECT_DIR = path.join(path.getabsolute(".."),"projects",_OPTIONS["PROJECT"]) .. "/"
+	if (not os.isfile(path.join("..", "projects", _OPTIONS["PROJECT"], "scripts", "target", _OPTIONS["target"],_OPTIONS["subtarget"] .. ".lua"))) then
+		error("File definition for TARGET=" .. _OPTIONS["target"] .. " SUBTARGET=" .. _OPTIONS["subtarget"] .. " does not exist")
+	end
+	dofile (path.join(".." ,"projects", _OPTIONS["PROJECT"], "scripts", "target", _OPTIONS["target"],_OPTIONS["subtarget"] .. ".lua"))
+end
+if (_OPTIONS["SOURCES"] == nil and _OPTIONS["PROJECT"] == nil) then
 	if (not os.isfile(path.join("target", _OPTIONS["target"],_OPTIONS["subtarget"] .. ".lua"))) then
 		error("File definition for TARGET=" .. _OPTIONS["target"] .. " SUBTARGET=" .. _OPTIONS["subtarget"] .. " does not exist")
 	end
@@ -1119,10 +1135,14 @@ configuration { "osx* or xcode4" }
 		}
 
 configuration { "mingw*" }
+		local version = str_to_version(_OPTIONS["gcc_version"])
+		if not (_OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "clang")) or version < 40000
+		then
+			linkoptions {
+				"-static",
+			}
+		end
 		linkoptions {
-			"-static-libgcc",
-			"-static-libstdc++",
-			"-static",
 			"-Wl,--start-group",
 		}
 		links {
@@ -1307,6 +1327,13 @@ configuration { "Debug", "gmake" }
 configuration { }
 
 if (_OPTIONS["SOURCES"] ~= nil) then
+	local str = _OPTIONS["SOURCES"]
+	for word in string.gmatch(str, '([^,]+)') do
+		if (not os.isfile(path.join(MAME_DIR ,word))) then
+			print("File " .. word.. " does not exist")
+			os.exit()
+		end
+	end
 	OUT_STR = os.outputof( PYTHON .. " " .. MAME_DIR .. "scripts/build/makedep.py " .. MAME_DIR .. " " .. _OPTIONS["SOURCES"] .. " target " .. _OPTIONS["subtarget"])
 	load(OUT_STR)()
 	os.outputof( PYTHON .. " " .. MAME_DIR .. "scripts/build/makedep.py " .. MAME_DIR .. " " .. _OPTIONS["SOURCES"] .. " drivers " .. _OPTIONS["subtarget"] .. " > ".. GEN_DIR  .. _OPTIONS["target"] .. "/" .. _OPTIONS["subtarget"]..".flt")

@@ -28,11 +28,13 @@
 
 #include "emu.h"
 #include "includes/esripsys.h"
+
 #include "cpu/esrip/esrip.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6840ptm.h"
 #include "machine/nvram.h"
 #include "sound/volt_reg.h"
+#include "speaker.h"
 
 
 /*************************************
@@ -658,7 +660,7 @@ DRIVER_INIT_MEMBER(esripsys_state,esripsys)
 	save_item(NAME(m_fbsel));
 }
 
-static MACHINE_CONFIG_START( esripsys, esripsys_state )
+static MACHINE_CONFIG_START( esripsys )
 	MCFG_CPU_ADD("game_cpu", M6809E, XTAL_8MHz)
 	MCFG_CPU_PROGRAM_MAP(game_cpu_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", esripsys_state,  esripsys_vblank_irq)
@@ -699,8 +701,7 @@ static MACHINE_CONFIG_START( esripsys, esripsys_state )
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 1.0)
 
 	/* 6840 PTM */
-	MCFG_DEVICE_ADD("6840ptm", PTM6840, 0)
-	MCFG_PTM6840_INTERNAL_CLOCK(XTAL_8MHz / 4)
+	MCFG_DEVICE_ADD("6840ptm", PTM6840, XTAL_8MHz / 4)
 	MCFG_PTM6840_EXTERNAL_CLOCKS(0, 0, 0)
 	MCFG_PTM6840_IRQ_CB(WRITELINE(esripsys_state, ptm_irq))
 MACHINE_CONFIG_END

@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Andrew Gardner
+#include "emu.h"
 #include <QtGui/QClipboard>
 #include <QtGui/QMouseEvent>
 #include <QtWidgets/QActionGroup>
@@ -430,7 +431,7 @@ void MemoryWindowQtConfig::applyToQWidget(QWidget* widget)
 }
 
 
-void MemoryWindowQtConfig::addToXmlDataNode(xml_data_node &node) const
+void MemoryWindowQtConfig::addToXmlDataNode(util::xml::data_node &node) const
 {
 	WindowQtConfig::addToXmlDataNode(node);
 	node.set_attribute_int("memoryregion", m_memoryRegion);
@@ -440,7 +441,7 @@ void MemoryWindowQtConfig::addToXmlDataNode(xml_data_node &node) const
 }
 
 
-void MemoryWindowQtConfig::recoverFromXmlNode(xml_data_node const &node)
+void MemoryWindowQtConfig::recoverFromXmlNode(util::xml::data_node const &node)
 {
 	WindowQtConfig::recoverFromXmlNode(node);
 	m_memoryRegion = node.get_attribute_int("memoryregion", m_memoryRegion);

@@ -17,7 +17,6 @@
     - Hard drive controllers and drives
     - Test Centronics printer
     - PIO connections
-    - RTC not working
 
     Note of MAME restrictions:
     - Votrax doesn't sound anything like the real thing
@@ -31,7 +30,11 @@
     Includes
 
 ************************************************************/
+#include "emu.h"
 #include "includes/aussiebyte.h"
+
+#include "screen.h"
+#include "speaker.h"
 
 
 /***********************************************************
@@ -54,7 +57,7 @@ static ADDRESS_MAP_START( aussiebyte_io, AS_IO, 8, aussiebyte_state )
 	AM_RANGE(0x04, 0x07) AM_DEVREADWRITE("pio1", z80pio_device, read, write)
 	AM_RANGE(0x08, 0x0b) AM_DEVREADWRITE("ctc", z80ctc_device, read, write)
 	AM_RANGE(0x0c, 0x0f) AM_NOP // winchester interface
-	AM_RANGE(0x10, 0x13) AM_DEVREADWRITE("fdc", wd2797_t, read, write)
+	AM_RANGE(0x10, 0x13) AM_DEVREADWRITE("fdc", wd2797_device, read, write)
 	AM_RANGE(0x14, 0x14) AM_DEVREADWRITE("dma", z80dma_device, read, write)
 	AM_RANGE(0x15, 0x15) AM_WRITE(port15_w) // boot rom disable
 	AM_RANGE(0x16, 0x16) AM_WRITE(port16_w) // fdd select
@@ -76,7 +79,7 @@ static ADDRESS_MAP_START( aussiebyte_io, AS_IO, 8, aussiebyte_state )
 	AM_RANGE(0x35, 0x35) AM_WRITE(port35_w) // data to vram and aram
 	AM_RANGE(0x36, 0x36) AM_READ(port36_r) // data from vram and aram
 	AM_RANGE(0x37, 0x37) AM_READ(port37_r) // read dispen flag
-	AM_RANGE(0x40, 0x4f) AM_DEVREADWRITE("rtc", msm5832_device, data_r, data_w)
+	AM_RANGE(0x40, 0x4f) AM_READWRITE(rtc_r, rtc_w)
 ADDRESS_MAP_END
 
 /***********************************************************
@@ -215,11 +218,35 @@ WRITE8_MEMBER( aussiebyte_state::port1c_w )
 WRITE8_MEMBER( aussiebyte_state::port20_w )
 {
 	m_speaker->level_w(BIT(data, 7));
+	m_rtc->cs_w(BIT(data, 0));
+	m_rtc->hold_w(BIT(data, 0));
 }
 
 READ8_MEMBER( aussiebyte_state::port28_r )
 {
 	return m_port28;
+}
+
+/***********************************************************
+
+    RTC
+
+************************************************************/
+READ8_MEMBER( aussiebyte_state::rtc_r )
+{
+	m_rtc->read_w(1);
+	m_rtc->address_w(offset);
+	uint8_t data = m_rtc->data_r(space,0);
+	m_rtc->read_w(0);
+	return data;
+}
+
+WRITE8_MEMBER( aussiebyte_state::rtc_w )
+{
+	m_rtc->address_w(offset);
+	m_rtc->data_w(space,0,data);
+	m_rtc->write_w(1);
+	m_rtc->write_w(0);
 }
 
 /***********************************************************
@@ -429,9 +456,6 @@ MACHINE_RESET_MEMBER( aussiebyte_state, aussiebyte )
 	m_port1a = 1;
 	m_alpha_address = 0;
 	m_graph_address = 0;
-	m_p_chargen = memregion("chargen")->base();
-	m_p_videoram = memregion("vram")->base();
-	m_p_attribram = memregion("aram")->base();
 	membank("bankr0")->set_entry(16); // point at rom
 	membank("bankw0")->set_entry(1); // always write to ram
 	membank("bank1")->set_entry(2);
@@ -439,7 +463,7 @@ MACHINE_RESET_MEMBER( aussiebyte_state, aussiebyte )
 	m_maincpu->reset();
 }
 
-static MACHINE_CONFIG_START( aussiebyte, aussiebyte_state )
+static MACHINE_CONFIG_START( aussiebyte )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_16MHz / 4)
 	MCFG_CPU_PROGRAM_MAP(aussiebyte_map)
@@ -569,5 +593,5 @@ ROM_START(aussieby)
 	ROM_REGION(0x00800, "aram", ROMREGION_ERASEFF) // attribute ram, 2k static
 ROM_END
 
-/*    YEAR  NAME      PARENT    COMPAT  MACHINE     INPUT        CLASS             INIT         COMPANY         FULLNAME          FLAGS */
+//    YEAR  NAME      PARENT    COMPAT  MACHINE     INPUT        CLASS             INIT        COMPANY         FULLNAME           FLAGS
 COMP( 1984, aussieby,     0,        0,  aussiebyte, aussiebyte,  aussiebyte_state, aussiebyte, "SME Systems",  "Aussie Byte II" , MACHINE_IMPERFECT_GRAPHICS )

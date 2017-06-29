@@ -71,14 +71,15 @@
     00002CA2: 17 37
 */
 
-const device_type SEIBU_SOUND = &device_creator<seibu_sound_device>;
+DEFINE_DEVICE_TYPE(SEIBU_SOUND, seibu_sound_device, "seibu_sound", "Seibu Sound System")
 
 seibu_sound_device::seibu_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SEIBU_SOUND, "Seibu Sound System", tag, owner, clock, "seibu_sound", __FILE__),
+	: device_t(mconfig, SEIBU_SOUND, tag, owner, clock),
 		m_ym_read_cb(*this),
 		m_ym_write_cb(*this),
 		m_sound_cpu(*this, finder_base::DUMMY_TAG),
 		m_sound_rom(*this, finder_base::DUMMY_TAG),
+		m_rom_bank(*this, finder_base::DUMMY_TAG),
 		m_main2sub_pending(0),
 		m_sub2main_pending(0),
 		m_rst10_irq(0xff),
@@ -92,6 +93,11 @@ void seibu_sound_device::static_set_cpu_tag(device_t &device, const char *tag)
 	downcast<seibu_sound_device &>(device).m_sound_rom.set_tag(tag);
 }
 
+void seibu_sound_device::static_set_rombank_tag(device_t &device, const char *tag)
+{
+	downcast<seibu_sound_device &>(device).m_rom_bank.set_tag(tag);
+}
+
 //-------------------------------------------------
 //  device_start - device-specific startup
 //-------------------------------------------------
@@ -101,16 +107,16 @@ void seibu_sound_device::device_start()
 	m_ym_read_cb.resolve_safe(0);
 	m_ym_write_cb.resolve_safe();
 
-	if (m_sound_rom.found() && membank(":seibu_bank1") != nullptr)
+	if (m_sound_rom.found() && m_rom_bank.found())
 	{
 		if (m_sound_rom.length() > 0x10000)
 		{
-			membank(":seibu_bank1")->configure_entries(0, (m_sound_rom.length() - 0x10000) / 0x8000, &m_sound_rom[0x10000], 0x8000);
+			m_rom_bank->configure_entries(0, (m_sound_rom.length() - 0x10000) / 0x8000, &m_sound_rom[0x10000], 0x8000);
 
 			/* Denjin Makai definitely needs this at start-up, it never writes to the bankswitch */
-			membank(":seibu_bank1")->set_entry(0);
+			m_rom_bank->set_entry(0);
 		} else
-			membank(":seibu_bank1")->set_base(&m_sound_rom[0x8000]);
+			m_rom_bank->set_base(&m_sound_rom[0x8000]);
 	}
 
 	m_main2sub[0] = m_main2sub[1] = 0;
@@ -205,7 +211,8 @@ WRITE8_MEMBER( seibu_sound_device::ym_w )
 
 WRITE8_MEMBER( seibu_sound_device::bank_w )
 {
-	membank(":seibu_bank1")->set_entry(data & 1);
+	if (m_rom_bank.found())
+		m_rom_bank->set_entry(data & 1);
 }
 
 WRITE8_MEMBER( seibu_sound_device::coin_w )
@@ -313,10 +320,10 @@ ADDRESS_MAP_END
 
 /***************************************************************************/
 
-const device_type SEI80BU = &device_creator<sei80bu_device>;
+DEFINE_DEVICE_TYPE(SEI80BU, sei80bu_device, "sei80bu", "SEI80BU Encrypted Z80 Interface")
 
 sei80bu_device::sei80bu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SEI80BU, "SEI80BU Encrypted Z80 Interface", tag, owner, clock, "sei80bu", __FILE__),
+	: device_t(mconfig, SEI80BU, tag, owner, clock),
 		device_rom_interface(mconfig, *this, 16)
 {
 }
@@ -367,10 +374,10 @@ READ8_MEMBER(sei80bu_device::opcode_r)
     FIXME: hook up an actual MSM5205 in place of this custom implementation
 ***************************************************************************/
 
-const device_type SEIBU_ADPCM = &device_creator<seibu_adpcm_device>;
+DEFINE_DEVICE_TYPE(SEIBU_ADPCM, seibu_adpcm_device, "seibu_adpcm", "Seibu ADPCM (MSM5205)")
 
 seibu_adpcm_device::seibu_adpcm_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SEIBU_ADPCM, "Seibu ADPCM (MSM5205)", tag, owner, clock, "seibu_adpcm", __FILE__),
+	: device_t(mconfig, SEIBU_ADPCM, tag, owner, clock),
 		device_sound_interface(mconfig, *this),
 		m_stream(nullptr),
 		m_current(0),

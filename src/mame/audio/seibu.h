@@ -24,6 +24,10 @@
     * = encrypted
 
 ***************************************************************************/
+#ifndef MAME_AUDIO_SEIBU_H
+#define MAME_AUDIO_SEIBU_H
+
+#pragma once
 
 #include "cpu/z80/z80.h"
 #include "sound/okiadpcm.h"
@@ -38,6 +42,7 @@ public:
 
 	// static configuration
 	static void static_set_cpu_tag(device_t &device, const char *tag);
+	static void static_set_rombank_tag(device_t &device, const char *tag);
 	template<class _Object> static devcb_base &set_ym_read_callback(device_t &device, _Object object)  { return downcast<seibu_sound_device &>(device).m_ym_read_cb.set_callback(object); }
 	template<class _Object> static devcb_base &set_ym_write_callback(device_t &device, _Object object) { return downcast<seibu_sound_device &>(device).m_ym_write_cb.set_callback(object); }
 
@@ -72,6 +77,7 @@ private:
 	// internal state
 	required_device<cpu_device> m_sound_cpu;
 	optional_region_ptr<uint8_t> m_sound_rom;
+	optional_memory_bank m_rom_bank;
 	uint8_t m_main2sub[2];
 	uint8_t m_sub2main[2];
 	int m_main2sub_pending;
@@ -89,7 +95,7 @@ private:
 	};
 };
 
-extern const device_type SEIBU_SOUND;
+DECLARE_DEVICE_TYPE(SEIBU_SOUND, seibu_sound_device)
 
 
 // SEI80BU (Z80 program decryption)
@@ -108,7 +114,7 @@ protected:
 	virtual void rom_bank_updated() override { }
 };
 
-extern const device_type SEI80BU;
+DECLARE_DEVICE_TYPE(SEI80BU, sei80bu_device)
 
 // Seibu ADPCM device
 
@@ -141,7 +147,7 @@ private:
 	required_region_ptr<uint8_t> m_base;
 };
 
-extern const device_type SEIBU_ADPCM;
+DECLARE_DEVICE_TYPE(SEIBU_ADPCM, seibu_adpcm_device)
 
 /**************************************************************************/
 
@@ -170,6 +176,9 @@ extern const device_type SEIBU_ADPCM;
 #define MCFG_SEIBU_SOUND_CPU(_audiocputag) \
 	seibu_sound_device::static_set_cpu_tag(*device, "^" _audiocputag);
 
+#define MCFG_SEIBU_SOUND_ROMBANK(_banktag) \
+	seibu_sound_device::static_set_rombank_tag(*device, "^" _banktag);
+
 #define MCFG_SEIBU_SOUND_YM_READ_CB(_devcb) \
 	devcb = &seibu_sound_device::set_ym_read_callback(*device, DEVCB_##_devcb);
 
@@ -177,3 +186,5 @@ extern const device_type SEIBU_ADPCM;
 	devcb = &seibu_sound_device::set_ym_write_callback(*device, DEVCB_##_devcb);
 
 /**************************************************************************/
+
+#endif // MAME_AUDIO_SEIBU_H

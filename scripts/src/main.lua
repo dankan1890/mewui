@@ -269,18 +269,31 @@ if (STANDALONE~=true) then
 	}
 if (_OPTIONS["osd"] ~= "uwp") then
 	links {
-		"linenoise-ng",
-		"nana",
-		"png",
+		"linenoise",
 	}
 end
 end
 	links {
 		ext_lib("zlib"),
 		ext_lib("flac"),
+		ext_lib("utf8proc"),
+	}
+if (STANDALONE~=true) then
+	links {
 		ext_lib("sqlite3"),
 	}
+end
 
+	if _OPTIONS["NO_USE_PORTAUDIO"]~="1" then
+		links {
+			ext_lib("portaudio"),
+		}
+		if _OPTIONS["targetos"]=="windows" then
+			links {
+				"setupapi",
+			}
+		end
+	end
 	if _OPTIONS["NO_USE_MIDI"]~="1" then
 		links {
 			ext_lib("portmidi"),
@@ -288,6 +301,7 @@ end
 	end
 	links {
 		"bgfx",
+		"bx",
 		"ocore_" .. _OPTIONS["osd"],
 	}
 

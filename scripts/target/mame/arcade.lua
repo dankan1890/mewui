@@ -103,7 +103,7 @@ CPUS["MINX"] = true
 CPUS["SSEM"] = true
 CPUS["AVR8"] = true
 --CPUS["TMS1000"] = true
-CPUS["I4004"] = true
+CPUS["MCS40"] = true
 CPUS["SUPERFX"] = true
 CPUS["Z8"] = true
 CPUS["I8008"] = true
@@ -1629,6 +1629,8 @@ files {
 	MAME_DIR .. "src/mame/machine/deco146.h",
 	MAME_DIR .. "src/mame/video/decbac06.cpp",
 	MAME_DIR .. "src/mame/video/decbac06.h",
+	MAME_DIR .. "src/mame/video/decrmc3.cpp",
+	MAME_DIR .. "src/mame/video/decrmc3.h",
 	MAME_DIR .. "src/mame/video/deco16ic.cpp",
 	MAME_DIR .. "src/mame/video/deco16ic.h",
 	MAME_DIR .. "src/mame/video/decocomn.cpp",

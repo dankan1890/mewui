@@ -13,6 +13,7 @@
 #include "machine/z80dart.h"
 #include "machine/watchdog.h"
 #include "audio/midway.h"
+#include "audio/csd.h"
 #include "sound/samples.h"
 
 /* constants */
@@ -32,9 +33,9 @@ public:
 		m_paletteram(*this, "paletteram"),
 		m_sio(*this, "ipu_sio"),
 		m_ssio(*this, "ssio"),
-		m_chip_squeak_deluxe(*this, "csd"),
+		m_cheap_squeak_deluxe(*this, "csd"),
 		m_sounds_good(*this, "sg"),
-		m_turbo_chip_squeak(*this, "tcs"),
+		m_turbo_cheap_squeak(*this, "tcs"),
 		m_squawk_n_talk(*this, "snt"),
 		m_dpoker_coin_in_timer(*this, "dp_coinin"),
 		m_dpoker_hopper_timer(*this, "dp_hopper"),
@@ -52,9 +53,9 @@ public:
 
 	optional_device<z80dart_device> m_sio;
 	optional_device<midway_ssio_device> m_ssio;
-	optional_device<midway_chip_squeak_deluxe_device> m_chip_squeak_deluxe;
+	optional_device<midway_cheap_squeak_deluxe_device> m_cheap_squeak_deluxe;
 	optional_device<midway_sounds_good_device> m_sounds_good;
-	optional_device<midway_turbo_chip_squeak_device> m_turbo_chip_squeak;
+	optional_device<midway_turbo_cheap_squeak_device> m_turbo_cheap_squeak;
 	optional_device<midway_squawk_n_talk_device> m_squawk_n_talk;
 	optional_device<timer_device> m_dpoker_coin_in_timer;
 	optional_device<timer_device> m_dpoker_hopper_timer;

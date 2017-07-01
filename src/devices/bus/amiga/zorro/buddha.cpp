@@ -6,22 +6,23 @@
 
     Zorro-II IDE controller
 
-	The 'speed' register is used to select the IDE timing according to
-	the following table (bits 7-5 are used):
+    The 'speed' register is used to select the IDE timing according to
+    the following table (bits 7-5 are used):
 
-	0    497ns   7c  to select, IOR/IOW after 172ns  2c
-	1    639ns   9c  to select, IOR/IOW after 243ns  3c
-	2    781ns  11c  to select, IOR/IOW after 314ns  4c
-	3    355ns   5c  to select, IOR/IOW after 101ns  1c
-	4    355ns   5c  to select, IOR/IOW after 172ns  2c
-	5    355ns   5c  to select, IOR/IOW after 243ns  3c
-	6   1065ns  15c  to select, IOR/IOW after 314ns  4c
-	7    355ns   5c  to select, IOR/IOW after 101ns  1c
+    0    497ns   7c  to select, IOR/IOW after 172ns  2c
+    1    639ns   9c  to select, IOR/IOW after 243ns  3c
+    2    781ns  11c  to select, IOR/IOW after 314ns  4c
+    3    355ns   5c  to select, IOR/IOW after 101ns  1c
+    4    355ns   5c  to select, IOR/IOW after 172ns  2c
+    5    355ns   5c  to select, IOR/IOW after 243ns  3c
+    6   1065ns  15c  to select, IOR/IOW after 314ns  4c
+    7    355ns   5c  to select, IOR/IOW after 101ns  1c
 
-	c = clock cycles. This isn't emulated.
+    c = clock cycles. This isn't emulated.
 
 ***************************************************************************/
 
+#include "emu.h"
 #include "buddha.h"
 
 //**************************************************************************
@@ -35,7 +36,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-const device_type BUDDHA = &device_creator<buddha_device>;
+DEFINE_DEVICE_TYPE(BUDDHA, buddha_device, "buddha", "Buddha IDE controller")
 
 //-------------------------------------------------
 //  mmio_map - device-specific memory mapped I/O
@@ -53,21 +54,15 @@ DEVICE_ADDRESS_MAP_START( mmio_map, 16, buddha_device )
 ADDRESS_MAP_END
 
 //-------------------------------------------------
-//  machine_config_additions - device-specific
-//  machine configurations
+//  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-static MACHINE_CONFIG_FRAGMENT( buddha )
+MACHINE_CONFIG_MEMBER( buddha_device::device_add_mconfig )
 	MCFG_ATA_INTERFACE_ADD("ata_0", ata_devices, nullptr, nullptr, false)
 	MCFG_ATA_INTERFACE_IRQ_HANDLER(WRITELINE(buddha_device, ide_0_interrupt_w))
 	MCFG_ATA_INTERFACE_ADD("ata_1", ata_devices, nullptr, nullptr, false)
 	MCFG_ATA_INTERFACE_IRQ_HANDLER(WRITELINE(buddha_device, ide_1_interrupt_w))
 MACHINE_CONFIG_END
-
-machine_config_constructor buddha_device::device_mconfig_additions() const
-{
-	return MACHINE_CONFIG_NAME( buddha );
-}
 
 //-------------------------------------------------
 //  rom_region - device-specific ROM region
@@ -97,7 +92,7 @@ const tiny_rom_entry *buddha_device::device_rom_region() const
 //-------------------------------------------------
 
 buddha_device::buddha_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, BUDDHA, "Buddha IDE controller", tag, owner, clock, "buddha", __FILE__),
+	device_t(mconfig, BUDDHA, tag, owner, clock),
 	device_zorro2_card_interface(mconfig, *this),
 	m_ata_0(*this, "ata_0"),
 	m_ata_1(*this, "ata_1"),

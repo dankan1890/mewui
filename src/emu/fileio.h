@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "emucore.h"
 #include "corefile.h"
 #include "hash.h"
 
@@ -25,9 +24,6 @@
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
-
-// forward declarations
-namespace util { class archive_file; }
 
 // ======================> path_iterator
 

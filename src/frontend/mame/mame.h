@@ -52,10 +52,12 @@ public:
 
 	virtual void create_custom(running_machine& machine) override;
 
+	virtual void load_cheatfiles(running_machine& machine) override;
+
 	virtual void ui_initialize(running_machine& machine) override;
 
 	/* execute as configured by the OPTION_SYSTEMNAME option on the specified options */
-	int execute(std::string exename);
+	int execute();
 	void start_luaengine();
 	void schedule_new_driver(const game_driver &driver);
 	mame_ui_manager& ui() const { assert(m_ui != nullptr); return *m_ui; }

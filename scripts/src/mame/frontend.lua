@@ -30,8 +30,6 @@ includedirs {
 	MAME_DIR .. "src/lib",
 	MAME_DIR .. "src/lib/util",
 	MAME_DIR .. "3rdparty/rapidjson/include",
-	MAME_DIR .. "3rdparty/nana/include",
-	MAME_DIR .. "3rdparty/libpng",
 	MAME_DIR .. "3rdparty",
 	GEN_DIR  .. "emu",
 	GEN_DIR  .. "emu/layout",
@@ -44,10 +42,6 @@ includedirs {
 	ext_includedir("flac"),
 	MAME_DIR .. "3rdparty/asio/include",
 }
-
-
-
-
 
 configuration { }
 if (_OPTIONS["targetos"] == "windows") then
@@ -62,13 +56,6 @@ if (_OPTIONS["osd"] == "sdl") then
 	}
 end
 
-configuration { "gmake or ninja" }
-	buildoptions_cpp {
-		"-Wno-overloaded-virtual",
-	}
-
-configuration { }
-	
 files {
 	MAME_DIR .. "src/frontend/mame/audit.cpp",
 	MAME_DIR .. "src/frontend/mame/audit.h",
@@ -179,14 +166,4 @@ files {
 	MAME_DIR .. "src/frontend/mame/ui/utils.h",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.h",
-	MAME_DIR .. "src/frontend/nanamame/nanamame.cpp",
-	MAME_DIR .. "src/frontend/nanamame/nanamame.h",
-	MAME_DIR .. "src/frontend/nanamame/mainform.cpp",
-	MAME_DIR .. "src/frontend/nanamame/mainform.h",
-	MAME_DIR .. "src/frontend/nanamame/optionsform.cpp",
-	MAME_DIR .. "src/frontend/nanamame/optionsform.h",
-	MAME_DIR .. "src/frontend/nanamame/custom.cpp",
-	MAME_DIR .. "src/frontend/nanamame/custom.h",
-	MAME_DIR .. "src/frontend/nanamame/datfile.cpp",
-	MAME_DIR .. "src/frontend/nanamame/datfile.h",
 }

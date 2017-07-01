@@ -2,72 +2,6 @@
 // ENABLE BY UNCOMMENTING.  ADDITIONALLY, SET SMOOTH SCROLL IN EMULATION (DISABLE BY SETTING JUMP SCROLL. To enter SETUP hit ScrollLock)-
 //#define BOOST_DEBUG_PERFORMANCE
 
-
-/* GDC COLOR EMULATION
-//-------------------- Differences to VT240: ---------------------------------------------------
-// - Registers of graphics option not directly mapped (indirect access via mode register)
-// - write mask is 16 bits wide (not only 8)
-// - scroll register is 8 bits wide - not 16.
-// - no "LINE ERASE MODE", 7220 DMA lines are unused. No ZOOM hardware (factor must always be 1)
-
-// Two modes: highres and medres mode (different bank length..?)
-// - MEDRES: palette of 16 colors out of 4096.   384 x 240
-// - HIGRES: palette of  4 colors out of 4096.   800 x 240
-// Palette takes 2 byte per palette entry. CLUT ("color map") is 32 byte long.
-------------------------------------------------------------------------------------------------
-
-THE DEC 'R-M-B' COLOR CABLE VS. THE UNOFFICIAL 'R-G-B' MODE (A BIT OF HISTORY)
-// The standard DEC "color cable" connected the green gun of a VR241 to the mono output of the Rainbow
-// (DIP setting COLOR_MONITOR).
-//
-// An unofficial DIY cable enabled R-G-B graphics + seperate text (emulated by DIP setting DUAL MONITOR).
-// As DEC decided not to endorse R-G-B, many commercial programs show incorrect colors.
-// A patch from one of the archives corrects the GWBASIC palette problem when using 2 monitors [Bavarese].
-
-EMULATION SPECIFIC
-// DUAL MONITOR enables both screens, even if onboard graphics has been accidently shut off
-// (helps debugging semi broken programs, for example Doodle).
-
-SCREEN 1 vs. SCREEN 2 IN EMULATION
-// All GDC 7220 output is displayed on the right. Be it color or monochrome, Option Graphics output is on screen 2.
-// If you select MONO_MONITOR via DIP, output from GDC will appear on screen 2 in 16 shades of grey.
-// The type of monochrome monitor (VR-210 A, B or C) is selectable via another DIP (coarsly simulates a phosphor color).
-
-BUGS
-- GDC diagnostic disk fails on 9 of 13 tests (tests 4 and 6 - 13). 
-
-Details
-a. (Rainbow driver) : interaction between DEC's external hardware and the NEC 7220 isn't fully understood (see page 173 of AA-AE36A)
-   It is also unclear what port $50 actually does when it 'synchronizes R-M-W cycles'. 
-   For now, we provide sane defaults for both vector and bitmap units without disturbing display mode(s) or the NEC 7220.
-b. the HBLANK / VBLANK ratio is plainly wrong (QUICK TEST / subtest #6),
-c. IRQs are flagged as 'erratic' (QUICK TEST / subtest #12). 
-d. (7220) : incorrect fifo stati are handed out (GDC reports FIFO_EMPTY instead of _FULL when QUICK TEST #4 floods the queue)
-e. (7220) : RDAT with MOD 2 used extensively here, but unimplemented (modes other than 0 undocumented by NEC / Intel) 
-
-Programs with initialization / redraw / reentrance problems (invocation order after reset * matters *, at least in emulation):
-- CANON (high resolution + vectors), Solitaire (SOLIT.EXE) and GDEMO (from GRPHCS.ARC, interactive graphics interpreter '85),
-  plus the Monitor Aligment Test (from the GDC test disk). 
-
-Graphical apps. that work well: MMIND (MasterMind), PACMAN, SCRAM, (G)OTELO.
-
-UNIMPLEMENTED:
-// - Rainbow 100 A palette quirks (2 bit palette... applies to certain modes only)
-
-UNKNOWN IMPLEMENTATION DETAILS:
-// 1. READBACK (hard copy programs like JOBSDUMP definitely use it. See also GDC diagnostics).  VRAM_R ?
-
-// 2. UNVERIFIED DIVIDER (31.188 Mhz / 32) is at least close to 1 Mhz (as on the VT240, which uses a very similar design)
-
-// 3. UPD7220 / CORE oddities: 
-// 3.1. occasional redraw problems (only when screen 1 runs at 60 Hz and screen 2 at 29.99 Hz interlaced = HIRES ?).
-// Quote from Haze: "if you have 2 screens running at different refresh rates one of them won't update properly
-//                  (the partial update system gets very confused because it expects both the screens to end at the same time
-//                  and if that isn't the case large parts of one screen end up not updating at all)
-
-   3.2 pixels are stretched out too wide at 384 x 240 (not fixable in Rainbow driver, -keepaspect seems to have no effect)
-*/
-
 // license:GPL-2.0+
 // copyright-holders:Miodrag Milanovic,Karl-Ludwig Deisenhofer
 /***************************************************************************************************
@@ -94,13 +28,13 @@ PLEASE USE THE RIGHT SLOT - AND ALWAYS SAVE YOUR DATA BEFORE MOUNTING FOREIGN DI
 You * should * also reassign SETUP (away from F3, where it sits on a LK201).
 DATA LOSS POSSIBLE: when in partial emulation mode, F3 performs a hard reset!
 
-STATE AS OF DECEMBER 2016
--------------------------
+STATE AS OF JANUARY 2017
+------------------------
 Driver is based entirely on the DEC-100 'B' variant (DEC-190 and DEC-100 A models are treated as clones).
 While this is OK for the compatible -190, it doesn't do justice to ancient '100 A' hardware.
 The public domain file RBCONVERT.ZIP documents how model 'A' differs from version B.
 
-There is some evidence that the The Design Maturity Test (DMT disk) was designed for the Rainbow-100-A.
+There is some evidence that the The Design Maturity Test was designed for the Rainbow-100-A.
 NVRAM files from -A and -B machines are not interchangeable. If problems arise, delete the NVRAM file.
 
 CPM 2.1 / DOS2.11 / DOS 3.x and UCSD systems (fort_sys, pas_sys) + diag disks boot.
@@ -109,8 +43,8 @@ It is possible to boot DOS 3.10 from floppy A: and later use a hard disk attache
 NB.: a single hard disk (5 - 67 MB, 512 byte sectors) may be attached before startup. It should remain there
 until shutdown. "Hot swapping" wasn't possible on the original system (our GUI just doesn't forbid it).
 
-To create a RD50/ST506 compatible image (153 cylinders, 4 heads, 16 sectors, standard 512 byte sectors) enter
->chdman64 createhd - c none - chs 153, 4, 16 - ss 512 - o RD50_ST506.chd
+To create a DEC RD50/ST506 compatible image (153 cylinders, 4 heads, 16 sectors, standard 512 byte sectors) enter
+>chdman createhd -c none -chs 153,4,16 -ss 512 -o RD50_ST506.chd
 NOTE: use -c none parameter for no compression. No more than 8 heads or 1024 cylinders.
 
 Some BUGS remain: BIOS autoboot doesnt work at all. It is not possible to boot from a properly formatted
@@ -119,16 +53,119 @@ Some BUGS remain: BIOS autoboot doesnt work at all. It is not possible to boot f
 CTRL-SETUP (soft reboot) always triggers ERROR 19 (64 K RAM err.). One explanation is that ZFLIP/ZRESET is
 handled wrongly, so shared mem. just below $8000 is tainted by Z80 stack data. A reentrance problem?
 
-Occassionally, ERROR 13 for keyboard stuck or ERROR 27 for RAM BOARD error appear (for reasons yet unknown).
+Occassionally, ERROR 13 -keyboard stuck- appears (for reasons yet unknown).
+
+
+CORVUS HARD DISK
+----------------
+Up to 4 Corvus Disks with up to 20 MB each can be emulated (to be mounted as hard disks 2 - 5).
+MS DOS 2.x and CP/M v2.x were once supported, but are untested (in part because no binary drivers have survived).
+
+To get a Corvus 11 drive up and running under CP/M 1.x, you'll need drcdutil.td0 from Donald Maslin's Archive.
+
+First, create a 11 MB hard disk:
+>Chdman createhd -c none -chs 306,4,20 -ss 512 -o CORVUS11.chd
+[ -chs 306,2,20 for the 6 MB model and  -chs 306,6,20 for the 20 MB type ]
+
+Then make a copy of your CP/M 86-80 V1.x boot disk. This copy must be patched to make the Corvus hard drive usable!
+With 'drcdutil.td0' mounted in A: and a write enabled (non TeleDisk) image of CPM 1.x in B: type:
+b:>SUBMIT A:hinstall
+
+This replaces the following CP/M files on B:
+   B:Z80CCP.SYS  <- A:HZ80CCP.SYS
+   B:Z80.SYS     <- A:HZ80.SYS
+   B:PRMTVPV.SYS <- A:HPRMTVPV.SYS
+
+Due to a missing drive specification in HINSTALL.SUB, the last PIP must be invoked manually:
+b:>PIP B:PRMTVPVT.SYS=A:HPRMTVPV.SYS[V]
+
+Finally, boot from the newly patched CP/M disk and type CLINK2TN (a step necessary after each cold boot).
+CLINK2TN can only be used together with a Corvus 11 MB hard disk. It needs a patched CP/M 1.x disk and won't run on CP/M 2.x.
+[ use CLINK2FV for the 6 MB model and CLINK2TW for the 20 MB type ]
+
+Two steps are needed to initialize the new disk:
+Step 1: invoke PUTGET, then press "f". Enter "Drive no: 1", "HEX BYTE? e5", "Starting disc address?  2320", "Number of Sectors? 64"
+Step 2: invoke PUTGET, then press "f". Enter "Drive no: 1", "HEX BYTE? e5", "Starting disc address?  48592", "Number of Sectors? 64"
+Done.
+
+Required steps vary with 5 and 20 MB models (look into the *.DOC files in DRCDUTIL.TD0 / CLINK86.A86 / DRIVEL.COM).
+Parameters for initialization can be taken from Chapter 2 of the Disk System Installion Guide for TRS-80 II (same type H drives).
+
+
+COLOR EMULATION (NEC 7220 + extra hardware)
+-------------------------------------------
+
+-------------------- Differences to VT240: ---------------------------------------------------
+   - Registers of graphics option not directly mapped (indirect access via mode register)
+   - write mask is 16 bits wide (not only 8)
+   - scroll register is 8 bits wide - not 16.
+   - no "LINE ERASE MODE", 7220 DMA lines are unused. No ZOOM hardware (factor must always be 1)
+
+   Two modes: highres and medres mode (different bank length..?)
+   - MEDRES: palette of 16 colors out of 4096.   384 x 240
+   - HIGRES: palette of  4 colors out of 4096.   800 x 240
+   Palette takes 2 byte per palette entry. CLUT ("color map") is 32 byte long.
+------------------------------------------------------------------------------------------------
+
+THE DEC 'R-M-B' COLOR CABLE VS. THE UNOFFICIAL 'R-G-B' MODE (A BIT OF HISTORY)
+   The standard DEC "color cable" connected the green gun of a VR241 to the mono output of the Rainbow
+   (DIP setting COLOR_MONITOR).
+
+   An unofficial DIY cable enabled R-G-B graphics + seperate text (emulated by DIP setting DUAL MONITOR).
+   As DEC decided not to endorse R-G-B, many commercial programs show incorrect colors.
+   A patch from one of the archives corrects the GWBASIC palette problem when using 2 monitors [Bavarese].
+
+EMULATION SPECIFIC
+   DUAL MONITOR enables both screens, even if onboard graphics has been accidently shut off
+   (helps debugging semi broken programs, for example Doodle).
+
+SCREEN 1 vs. SCREEN 2 IN EMULATION
+   All GDC 7220 output is displayed on the right. Be it color or monochrome, Option Graphics output is on screen 2.
+   If you select MONO_MONITOR via DIP, output from GDC will appear on screen 2 in 16 shades of grey.
+   The type of monochrome monitor (VR-210 A, B or C) is selectable via another DIP (coarsly simulates a phosphor color).
+
+BUGS
+- GDC diagnostic disk fails on 9 of 13 tests (tests 4 and 6 - 13).
+
+Details
+a. (Rainbow driver) : interaction between DEC's external hardware and the NEC 7220 isn't fully understood (see page 173 of AA-AE36A)
+   It is also unclear what port $50 actually does when it 'synchronizes R-M-W cycles'.
+   For now, we provide sane defaults for both vector and bitmap units without disturbing display mode(s) or the NEC 7220.
+b. the Hblank / Vblank ratio is plainly wrong (quick test / subtest #6),
+c. IRQs are flagged as 'erratic' (quick test / subtest #12).
+d. (7220) : incorrect fifo stati are handed out (GDC reports FIFO_EMPTY instead of _FULL when quick test #4 floods the queue)
+e. (7220) : RDAT with MOD 2 used extensively here, but unimplemented (modes other than 0 undocumented by NEC / Intel)
+
+UNIMPLEMENTED:
+- Rainbow 100 A palette quirks (2 bit palette... applies to certain modes only)
+
+UNKNOWN IMPLEMENTATION DETAILS:
+1. READBACK (hard copy programs like JOBSDUMP definitely use it. See also GDC diagnostics).  VRAM_R...?
+
+2. UNVERIFIED DIVIDERS (31.188 Mhz / 32) is at least close to 1 Mhz (as on the VT240, which uses a very similar design)
+
+3. UPD7220 / CORE oddities
+
+To obtain pixel exact graphics use 'Graphics Only' in Video Options and cmd.line switches -nowindow -aspect1 auto -nokeepaspect
+(Over-Under or Side-by-Side modes always distorted on my 1600 x 900 laptop)
+
+Programs with initialization / redraw / reentrance problems (invocation order after reset matters in emulation):
+
+- Canon (high resolution + vectors), Solitaire (SOLIT.EXE) and GDEMO (from GRPHCS.ARC, interactive graphics interpreter '85),
+  plus 'Monitor Aligment' (from the GDC test disk).             Sloppy programming or a bug related to a) to e)...?
+
+ Quote from Haze: "if you have 2 screens running at different refresh rates one of them won't update properly
+                    (the partial update system gets very confused because it expects both the screens to end at the same time
+                    and if that isn't the case large parts of one screen end up not updating at all)
+
+The following games work well: Tetris, Pacman, MasterMind (MMIND), (G)otelo (needs GSX),  Scram (uses scroll extensively).
 
 CURRENTY UNEMULATED
 -------------------
-(a) the serial port does work one way only (incomplete null modem or wiring?), no reception yet.
- The printer interface does not work, so a non fatal ERROR 40 (serial printer interface) will appear.
+(a) the serial printer on port B prints garbage. It is worth to mention that port B relies on XON/XOFF,
+    while DTR_L (CTS B) means 'printer ready'. There is also a ROM patch in place (WORKAROUND macro)...
 
-(b1) LOOPBACK circuit not emulated, NMI from RAM card also unemulated (NMI vector 02).
-The former is used in startup tests, the latter seems less relevant (must use menu self test "S"
- or memory diagnostic test. TODO: mem.test causes a CPU crash when reaching higher RAM regions.
+(b1) LOOPBACK circuit not emulated (used in startup tests).
 
 (b2) system interaction tests HALT Z80 CPU at location $0211 (forever). Boot the RX50 diag.disk
  to see what happens (key 3 - individual tests, then 12 - system interaction). Uses LOOPBACK too?
@@ -303,29 +340,74 @@ WIRE CONNECTORS - SEEN ON SCHEMATICS - NOT PRESENT ON DEC-100 B (-A only?):
 W16 pulls J2 printer port pin 1 to GND when set (chassis to logical GND).
 W17 pulls J1 serial  port pin 1 to GND when set (chassis to logical GND).
 ****************************************************************************/
+#include "emu.h"
+
+#include "cpu/i86/i86.h"
+#include "cpu/z80/z80.h"
+#include "video/vtvideo.h"
+#include "video/upd7220.h"
+
+#include "machine/wd_fdc.h"
+#include "formats/rx50_dsk.h"
+#include "formats/pc_dsk.h" // PC Formats
+#include "imagedev/flopdrv.h"
+
+#include "imagedev/harddriv.h"
+#include "machine/wd2010.h"
+#include "machine/corvushd.h"
+
+#include "machine/z80dart.h"
+#include "bus/rs232/rs232.h"
+#include "imagedev/bitbngr.h"
+#include "machine/com8116.h"
+
+#include "machine/i8251.h"
+#include "machine/clock.h"
+#include "machine/dec_lk201.h"
+#include "machine/nvram.h"
+
+#include "machine/ds1315.h"
+#include "softlist.h"
+#include "screen.h"
+
+#include "rainbow.lh" // BEZEL - LAYOUT with LEDs for diag 1-7, keyboard 8-11 and floppy 20-23
+
+
 #define RD51_MAX_HEAD 8
 #define RD51_MAX_CYLINDER 1024
-#define RD51_SECTORS_PER_TRACK 17 // OLD: #define RD51_SECTORS_PER_TRACK 16
+#define RD51_SECTORS_PER_TRACK 17
 
-#define RTC_BASE 0xFC000
-// Do not pretend to emulate newer RAM board; stick with the old one:
-// (only affects presence bit in 'system_parameter_r')
-#define OLD_RAM_BOARD_PRESENT
+#define RTC_ENABLED
+// Tested drivers (from Suitable Solutions distribution disk and Latrobe archive), preferred first -
+// File.........Version / author ------------------- YY/YYYY ----- Read only RTC_BASE ---- Platform
+// RBCLIK21.COM Author: Vincent Esser. With source.. 4 digits (Y2K)..Y.......$fc000/fe000..100-B (default cfg.)
+// CLIKA.COM .. V1.03A (C) 1987 Suitable Solutions.. 2 digits........N (*)...$ed000........100-A
+// CLIKCLOK.COM V1.01 (C) 1986,87 Suitable Solutions 2 digits........N (*)...$fc000/fe000..100-B (default   " )
+// CLIKF4.COM . V1.0  (C) 1986 Suitable Solutions... 2 digits........N (*)...$f4000........100-B (alternate " )
+// (*)   Time or date changes are not persistent in emulation. To prove the setter works, changes are logged.
 
+// (Y2K) DS1315 unit only holds 2 digits, so Vincent Esser's freeware employs a windowing technique.
+//       While Suitable's DOS 3.10 accepts dates > 2000, don't take that for granted with software from the 80s.
 #ifdef      ASSUME_MODEL_A_HARDWARE
+	#define RTC_BASE 0xED000
+
 	// Define standard and maximum RAM sizes (A model):
 	#define MOTHERBOARD_RAM 0x0ffff  // 64 K base RAM  (100-A)
 	#define END_OF_RAM 0xcffff // Very last byte (theretical; on 100-A) DO NOT CHANGE.
+
+	// Pretend to emulate older RAM board (no NMI, also affects presence bit in 'system_parameter_r'):
+	#define OLD_RAM_BOARD_PRESENT
 #else
+	#define RTC_BASE 0xFC000 // (default configuration, also covers FE000+)
+//  #define RTC_BASE 0xF4000 // (alternate configuration) - ClikClok V1.0 / CLIKF4.COM
+
 	// DEC-100-B probes until a 'flaky' area is found (BOOT ROM around F400:0E04).
 	// It is no longer possible to key in the RAM size from within the 100-B BIOS.
 	#define MOTHERBOARD_RAM 0x1ffff  // 128 K base RAM (100-B)
 	#define END_OF_RAM 0xdffff // very last byte (100-B theoretical max.) DO NOT CHANGE.
 
 	#define WORKAROUND_RAINBOW_B // work around DRIVE ERROR (tested on 100-B ROM only)
-
-	#define RTC_ENABLED
-#endif
+ #endif
 
 // ----------------------------------------------------------------------------------------------
 // * MHFU disabled by writing a _sensible_ value to port 0x10C (instead of port 0x0c)
@@ -393,35 +475,6 @@ W17 pulls J1 serial  port pin 1 to GND when set (chassis to logical GND).
 #define DUAL_MONITOR  0x03
 
 // ----------------------------------------------------------------------------------------------
-#include "emu.h"
-#include "cpu/i86/i86.h"
-#include "cpu/z80/z80.h"
-#include "video/vtvideo.h"
-#include "video/upd7220.h"
-
-#include "machine/wd_fdc.h"
-#include "formats/rx50_dsk.h"
-#include "formats/pc_dsk.h" // PC Formats
-#include "imagedev/flopdrv.h"
-
-#include "imagedev/harddriv.h"
-#include "machine/wd2010.h"
-
-#include "machine/z80dart.h"
-#include "bus/rs232/rs232.h"
-#include "imagedev/bitbngr.h"
-#include "machine/com8116.h"
-
-#include "machine/i8251.h"
-#include "machine/clock.h"
-#include "machine/dec_lk201.h"
-#include "machine/nvram.h"
-
-#include "machine/ds1315.h"
-#include "softlist.h"
-
-#include "rainbow.lh" // BEZEL - LAYOUT with LEDs for diag 1-7, keyboard 8-11 and floppy 20-23
-
 #define LK201_TAG   "lk201"
 #define FD1793_TAG  "fd1793x"
 
@@ -438,8 +491,8 @@ public:
 		m_inp2(*this, "W14"),
 		m_inp3(*this, "W15"),
 		m_inp4(*this, "W18"),
-		m_inp5(*this, "HARD DISK PRESENT"), // DO NOT CHANGE ORDER (also: COMMUNICATION EXTENSION)
-		m_inp6(*this, "FLOPPY CONTROLLER"), // DO NOT CHANGE ORDER
+		m_inp5(*this, "DEC HARD DISK"), // DO NOT CHANGE ORDER
+		m_inp6(*this, "CORVUS HARD DISKS"), // DO NOT CHANGE ORDER
 		m_inp7(*this, "GRAPHICS OPTION"),   // DO NOT CHANGE ORDER
 		m_inp8(*this, "MEMORY PRESENT"),    // DO NOT CHANGE ORDER
 		m_inp9(*this, "MONO MONITOR TYPE"),
@@ -455,9 +508,11 @@ public:
 
 		m_fdc(*this, FD1793_TAG),
 		m_hdc(*this, "hdc"),
+		m_corvus_hdc(*this, "corvus"),
 
 		m_mpsc(*this, "upd7201"),
-		m_dbrg(*this, "com8116"),
+		m_dbrg_A(*this, "com8116_a"),
+		m_dbrg_B(*this, "com8116_b"),
 
 		m_kbd8251(*this, "kbdser"),
 		m_lk201(*this, LK201_TAG),
@@ -468,6 +523,7 @@ public:
 		m_p_nvram(*this, "nvram"),
 
 		m_shared(*this, "sh_ram"),
+		m_ext_ram(*this, "ext_ram"),
 
 		m_rtc(*this, "rtc"),
 		m_hgdc(*this, "upd7220"), // GDC-NEW
@@ -512,6 +568,8 @@ public:
 	DECLARE_READ_LINE_MEMBER(hdc_drive_ready);
 	DECLARE_READ_LINE_MEMBER(hdc_write_fault);
 
+	DECLARE_READ8_MEMBER(corvus_status_r);
+
 	DECLARE_READ8_MEMBER(i8088_latch_r);
 	DECLARE_WRITE8_MEMBER(i8088_latch_w);
 	DECLARE_READ8_MEMBER(z80_latch_r);
@@ -536,12 +594,17 @@ public:
 	DECLARE_READ8_MEMBER(rtc_reset);
 	DECLARE_READ8_MEMBER(rtc_enable);
 	DECLARE_READ8_MEMBER(rtc_r);
+	DECLARE_WRITE8_MEMBER(rtc_w);
+
+	DECLARE_WRITE8_MEMBER(ext_ram_w);
 
 	DECLARE_WRITE_LINE_MEMBER(mpsc_irq);
 	DECLARE_WRITE8_MEMBER(comm_bitrate_w);
 	DECLARE_WRITE8_MEMBER(printer_bitrate_w);
 	DECLARE_WRITE_LINE_MEMBER( com8116_a_fr_w );
 	DECLARE_WRITE_LINE_MEMBER( com8116_a_ft_w );
+	DECLARE_WRITE_LINE_MEMBER( com8116_b_fr_w );
+	DECLARE_WRITE_LINE_MEMBER( com8116_b_ft_w );
 
 	DECLARE_WRITE8_MEMBER(GDC_EXTRA_REGISTER_w);
 	DECLARE_READ8_MEMBER(GDC_EXTRA_REGISTER_r);
@@ -597,17 +660,21 @@ private:
 	required_device<cpu_device> m_i8088;
 	required_device<cpu_device> m_z80;
 
-	required_device<fd1793_t> m_fdc;
+	required_device<fd1793_device> m_fdc;
 	optional_device<wd2010_device> m_hdc;
 
+	required_device<corvus_hdc_device> m_corvus_hdc;
+
 	required_device<upd7201_device> m_mpsc;
-	required_device<com8116_device> m_dbrg;
+	required_device<com8116_device> m_dbrg_A;
+	required_device<com8116_device> m_dbrg_B;
 	required_device<i8251_device> m_kbd8251;
 	required_device<lk201_device> m_lk201;
 	required_shared_ptr<uint8_t> m_p_ram;
 	required_shared_ptr<uint8_t> m_p_vol_ram;
 	required_shared_ptr<uint8_t> m_p_nvram;
 	required_shared_ptr<uint8_t> m_shared;
+	required_shared_ptr<uint8_t> m_ext_ram;
 
 	optional_device<ds1315_device> m_rtc;
 
@@ -704,10 +771,10 @@ private:
 // THIS MACRO * RESETS *  the PATTERN TO DEFAULT.
 // NOTE 2: m_patmult  MUST BE LOADED BEFORE !!
 #define OPTION_RESET_PATTERNS \
-m_vpat = 0xff;				  \
+m_vpat = 0xff;                \
 if(m_patmult == 0)  m_patmult = 0x01;\
 if(m_patcnt == 0)   m_patcnt = m_patmult;\
-if(m_patidx == 0)	m_patidx = 7; 
+if(m_patidx == 0)   m_patidx = 7;
 
 
 // GDC RESET MACRO - used in  "machine_reset"  & GDC_EXTRA_REGISTER_w   !
@@ -720,11 +787,11 @@ m_color_map_changed = true;                                 \
 for(int i=0; i <256; i++) { m_GDC_SCROLL_BUFFER[i] = i; };  \
 m_GDC_scroll_index = 0;                                     \
 m_GDC_write_buffer_index = 0;                               \
-m_GDC_WRITE_MASK = 0x00;									\
+m_GDC_WRITE_MASK = 0x00;                                    \
 m_GDC_ALU_PS_REGISTER = 0x0F;                               \
 m_GDC_FG_BG = 0xF0;                                         \
 m_GDC_MODE_REGISTER &= GDC_MODE_VECTOR | GDC_MODE_HIGHRES | GDC_MODE_ENABLE_WRITES | GDC_MODE_READONLY_SCROLL_MAP;\
-m_GDC_MODE_REGISTER |= GDC_MODE_ENABLE_VIDEO;				\
+m_GDC_MODE_REGISTER |= GDC_MODE_ENABLE_VIDEO;               \
 printf("\n** OPTION GRFX. RESET **\n");
 
 UPD7220_DISPLAY_PIXELS_MEMBER( rainbow_state::hgdc_display_pixels )
@@ -745,33 +812,32 @@ UPD7220_DISPLAY_PIXELS_MEMBER( rainbow_state::hgdc_display_pixels )
 	uint8_t pen;
 
 	if(m_ONBOARD_GRAPHICS_SELECTED && (m_inp13->read() != DUAL_MONITOR) )
-	{	
+	{
 		for(xi=0;xi<16;xi++) // blank screen when VT102 output active (..)
-		{			
+		{
 			if (bitmap.cliprect().contains(x + xi, y))
-				bitmap.pix32(y, x + xi) = 0; 
+				bitmap.pix32(y, x + xi) = 0;
 		}
 		return; // no output from graphics option
 	}
-
-	address = ( m_GDC_SCROLL_BUFFER[ ((address & 0x7FC0) >> 7) & 0xff ] << 7) |  (address & 0x7F);
 
 	// ********************* GET BITMAP DATA FOR 4 PLANES ***************************************
 	// _READ_ BIT MAP  from 2 or 4 planes (plane 0 is least, plane 3 most significant). See page 42 / 43
 	if(m_GDC_MODE_REGISTER & GDC_MODE_HIGHRES)
 	{
-			plane0 = m_video_ram[((address & 0x7fff) + 0x00000) >> 1];
-			plane1 = m_video_ram[((address & 0x7fff) + 0x10000) >> 1];
-			plane2 = plane3 = 0;
+		address = ( m_GDC_SCROLL_BUFFER[ ((address & 0x7FC0) >> 7) & 0xff ] << 7) |  (address & 0x7F);
+		plane0 = m_video_ram[((address & 0x7fff) + 0x00000) >> 1];
+		plane1 = m_video_ram[((address & 0x7fff) + 0x10000) >> 1];
+		plane2 = plane3 = 0;
 	}
-		else
+	else
 	{
-			// MED.RESOLUTION (4 planes, 4 color bits, 16 color map entries / 16 (4) MONOCHROME SHADES)
-			// MANUAL SAYS:   (GDC "sees" 4 planes X 16 bits X 8K words)!
-			plane0 = m_video_ram[((address & 0x3fff) + 0x00000) >> 1];
-			plane1 = m_video_ram[((address & 0x3fff) + 0x10000) >> 1];
-			plane2 = m_video_ram[((address & 0x3fff) + 0x20000) >> 1];
-			plane3 = m_video_ram[((address & 0x3fff) + 0x30000) >> 1];
+		address = ( m_GDC_SCROLL_BUFFER[ ((address & 0x3FC0) >> 7) & 0xff ] << 7) |  (address & 0x7F);
+		// MED.RESOLUTION (4 planes, 4 color bits, 16 color map entries / 16 -or 4- MONOCHROME SHADES)
+		plane0 = m_video_ram[((address & 0x3fff) + 0x00000) >> 1];
+		plane1 = m_video_ram[((address & 0x3fff) + 0x10000) >> 1];
+		plane2 = m_video_ram[((address & 0x3fff) + 0x20000) >> 1];
+		plane3 = m_video_ram[((address & 0x3fff) + 0x30000) >> 1];
 	}
 
 	bool mono = (m_inp13->read() == MONO_MONITOR) ? true : false; // 1 = MONO, 2 = COLOR, 3 = DUAL MONITOR
@@ -829,9 +895,13 @@ void rainbow_state::machine_start()
 	if (rom[0xf4000 + 0x3ffc] == 0x31) // 100-B (5.01)    0x35 would test for V5.05
 	{
 		rom[0xf4000 + 0x0303] = 0x00; // disable CRC check
-		rom[0xf4000 + 0x135e] = 0x00; // FLOPPY / RX-50 WORKAROUND: in case of Z80 RESPONSE FAILURE ($80 bit set in AL), do not block floppy access.
+		rom[0xf4000 + 0x135e] = 0x00; // Floppy / RX-50 workaround: in case of Z80 RESPONSE FAILURE ($80 bit set in AL), do not block floppy access.
 
 		rom[0xf4000 + 0x198F] = 0xeb; // cond.JMP to uncond.JMP (disables error message 60...)
+
+		rom[0xf4000 + 0x315D] = 0x00; // AND DL,0 (make sure DL is zero before ROM_Initialize7201)
+		rom[0xf4000 + 0x315E] = 0xe2;
+		rom[0xf4000 + 0x315F] = 0x02;
 	}
 #endif
 }
@@ -839,12 +909,12 @@ void rainbow_state::machine_start()
 static ADDRESS_MAP_START(rainbow8088_map, AS_PROGRAM, 8, rainbow_state)
 ADDRESS_MAP_UNMAP_HIGH
 AM_RANGE(0x00000, 0x0ffff) AM_RAM AM_SHARE("sh_ram")
-AM_RANGE(0x10000, END_OF_RAM) AM_RAM
+AM_RANGE(0x10000, END_OF_RAM) AM_RAM AM_SHARE("ext_ram") AM_WRITE(ext_ram_w)
 
 // There is a 2212 (256 x 4 bit) NVRAM from 0xed000 to 0xed0ff (*)
 // shadowed at $ec000 - $ecfff and from $ed100 - $edfff.
 
-// (*) ED000 - ED0FF is the area the DEC-100-B BIOS accesses and checks
+// (*) ED000 - ED0FF is the area the DEC-100-B Bios accesses and checks
 
 //  - Specs say that the CPU has direct access to volatile RAM only.
 //    So NVRAM is hidden and loads & saves are triggered within the
@@ -885,6 +955,11 @@ AM_RANGE(0x11, 0x11) AM_DEVREADWRITE("kbdser", i8251_device, status_r, control_w
 // ===========================================================
 // 0x20 -> 0x2f ***** EXTENDED COMM. OPTION / Option Select 1.
 // See boot rom @1EA6: 0x27 (<- RESET EXTENDED COMM OPTION  )
+
+// Corvus B/H harddisk controller (incompatible with EXT.COMM OPTION):
+AM_RANGE(0x20, 0x20) AM_DEVREADWRITE("corvus", corvus_hdc_device, read, write)
+AM_RANGE(0x21, 0x21) AM_READ(corvus_status_r)
+
 // ===========================================================
 // 0x30 -> 0x3f ***** Option Select 3
 // ===========================================================
@@ -895,20 +970,11 @@ AM_RANGE(0x11, 0x11) AM_DEVREADWRITE("kbdser", i8251_device, status_r, control_w
 // ===========================================================
 // 0x50 - 0x57 ***** COLOR GRAPHICS OPTION:
 
-// * Color graphics option (uses NEC upd7220 GDC).         REFERENCE: Programmer's Reference: AA-AE36A-TV.
+// * Color graphics option (NEC upd7220 GDC plus external hw.). See Programmer's Reference AA-AE36A-TV.
 // Either 384 x 240 x 16 or 800 x 240 x 4 colors (out of 4096). 8 x 64 K video RAM.
-
-// Color graphics independent from text output if 8088 port $0a (bit 2) is zero.
-
-// This driver offers a DIP switch to enable or disable COLOR GRAPHICS altogether (affects "system_parameter_r" ...)
-
-// EXTRA HARDWARE (Write Buffer, Pattern Register/Multiplier, ALU/PS, Color Map, readback and offset/scroll hardware):
-AM_RANGE(0x50, 0x55) AM_WRITE(GDC_EXTRA_REGISTER_w)
-AM_RANGE(0x50, 0x55) AM_READ(GDC_EXTRA_REGISTER_r)
-
-//  56h   Data written is loaded into the GDC's FIFO and flagged as a parameter.
-//  57h   Data written is loaded into the GDC's FIFO and flagged as a command.
-AM_RANGE (0x56, 0x57) AM_DEVREADWRITE("upd7220", upd7220_device, read, write) // GDC-NEW
+// (Write Buffer, Pattern Register/Multiplier, ALU/PS, Color Map, readback and offset/scroll hardware):
+AM_RANGE(0x50, 0x55) AM_READWRITE(GDC_EXTRA_REGISTER_r, GDC_EXTRA_REGISTER_w)
+AM_RANGE(0x56, 0x57) AM_DEVREADWRITE("upd7220", upd7220_device, read, write) // 56 param, 57 command
 
 // ===========================================================
 // 0x60 -> 0x6f ***** EXTENDED COMM. OPTION / Option Select 2.
@@ -966,14 +1032,14 @@ AM_RANGE(0x00, 0x00) AM_READWRITE(z80_latch_r, z80_latch_w)
 AM_RANGE(0x20, 0x20) AM_READWRITE(z80_generalstat_r, z80_diskdiag_read_w) // read to port 0x20 used by MS-DOS 2.x diskette loader.
 AM_RANGE(0x21, 0x21) AM_READWRITE(z80_generalstat_r, z80_diskdiag_write_w)
 AM_RANGE(0x40, 0x40) AM_READWRITE(z80_diskstatus_r, z80_diskcontrol_w)
-AM_RANGE(0x60, 0x63) AM_DEVREADWRITE(FD1793_TAG, fd1793_t, read, write)
+AM_RANGE(0x60, 0x63) AM_DEVREADWRITE(FD1793_TAG, fd1793_device, read, write)
 
 // Z80 I/O shadow area > $80
 AM_RANGE(0x80, 0x80) AM_READWRITE(z80_latch_r, z80_latch_w)
 AM_RANGE(0xA0, 0xA0) AM_READWRITE(z80_generalstat_r, z80_diskdiag_read_w) // read to port 0x20 used by MS-DOS 2.x diskette loader.
 AM_RANGE(0xA1, 0xA1) AM_READWRITE(z80_generalstat_r, z80_diskdiag_write_w)
 AM_RANGE(0xC0, 0xC0) AM_READWRITE(z80_diskstatus_r, z80_diskcontrol_w)
-AM_RANGE(0xE0, 0xE3) AM_DEVREADWRITE(FD1793_TAG, fd1793_t, read, write)
+AM_RANGE(0xE0, 0xE3) AM_DEVREADWRITE(FD1793_TAG, fd1793_device, read, write)
 ADDRESS_MAP_END
 
 /* Input ports */
@@ -1005,13 +1071,14 @@ PORT_DIPSETTING(0xC0000, "768 K (100-B MEMORY OPTION)")
 PORT_DIPSETTING(0xD0000, "832 K (100-B MEMORY OPTION)") // see END_OF_RAM
 PORT_DIPSETTING(0xE0000, "896 K (100-B MAX.   MEMORY)")
 
-PORT_START("FLOPPY CONTROLLER") // floppy controller is not optional
-PORT_DIPNAME(0x01, 0x01, "FLOPPY CONTROLLER") PORT_TOGGLE
+// EXT.COMM.card -or- RD51 HD. controller (marketed later).
+PORT_START("DEC HARD DISK") // BUNDLE_OPTION
+PORT_DIPNAME(0x01, 0x00, "DEC HARD DISK") PORT_TOGGLE
+PORT_DIPSETTING(0x00, DEF_STR(Off))
 PORT_DIPSETTING(0x01, DEF_STR(On))
 
-// EXT.COMM.card -or- RD51 HD. controller (marketed later).
-PORT_START("HARD DISK PRESENT") // BUNDLE_OPTION
-PORT_DIPNAME(0x01, 0x00, "HARD DISK PRESENT") PORT_TOGGLE
+PORT_START("CORVUS HARD DISKS")
+PORT_DIPNAME(0x01, 0x00, "CORVUS HARD DISKS") PORT_TOGGLE
 PORT_DIPSETTING(0x00, DEF_STR(Off))
 PORT_DIPSETTING(0x01, DEF_STR(On))
 
@@ -1066,6 +1133,10 @@ INPUT_PORTS_END
 
 void rainbow_state::machine_reset()
 {
+	// 'F3' (in partial emulation) here replaces 'CTRL-SETUP' (soft reboot on an original Rainbow)
+	// FIXME: BIOS reports error 19 when CTRL-SETUP is pressed (Z80 or flags aren't fully reset then?)
+	popmessage("Reset");
+
 	// Configure RAM
 	address_space &program = machine().device<cpu_device>("maincpu")->space(AS_PROGRAM);
 	uint32_t unmap_start = m_inp8->read();
@@ -1083,8 +1154,16 @@ void rainbow_state::machine_reset()
 		printf("\nWARNING: 896 K is not a valid memory configuration on Rainbow 100 A!\n");
 	}
 
-//  check = (unmap_start >> 16)-1;  // guess.
-//  NVRAM_LOCATION = nv[0xed084];   // location not verified yet. DMT RAM check tests offset $84 !
+	check = (unmap_start >> 16)-1;  // guess.
+	NVRAM_LOCATION = nv[0xed084];   // location not verified yet. DMT RAM check tests offset $84 !
+
+	#ifdef RTC_ENABLED
+	// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-A' ***************************************
+	program.install_read_handler(RTC_BASE, RTC_BASE, read8_delegate(FUNC(rainbow_state::rtc_r), this));
+	program.install_write_handler(RTC_BASE + 0xFE, RTC_BASE + 0xFF, write8_delegate(FUNC(rainbow_state::rtc_w), this));
+	// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-A' ***************************************
+	#endif
+
 #else
 	printf("\n*** RAINBOW B MODEL ASSUMED (128 - 896 K RAM)\n");
 	if (unmap_start < 0x20000)
@@ -1095,30 +1174,32 @@ void rainbow_state::machine_reset()
 
 	check = (unmap_start >> 16) - 2;
 	NVRAM_LOCATION = nv[0xed0db];
+
+	#ifdef RTC_ENABLED
+	// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-B' ***************************************
+	// No address space needed ( -> IRQs must be disabled to block ROM accesses during reads ).
+	program.install_read_handler(RTC_BASE, RTC_BASE + 0x2104, read8_delegate(FUNC(rainbow_state::rtc_r), this));
+	// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-B' ***************************************
+	#endif
 #endif
 	if (check != NVRAM_LOCATION)
 		printf("\nNOTE: RAM configuration does not match NVRAM.\nUNMAP_START = %05x   NVRAM VALUE = %02x   SHOULD BE: %02x\n", unmap_start, NVRAM_LOCATION, check);
 
 	if(END_OF_RAM > unmap_start)
+	{
+		printf("\nUnmapping from %x to %x",unmap_start, END_OF_RAM);
 		program.unmap_readwrite(unmap_start, END_OF_RAM);
+	}
 
 	m_crtc->MHFU(MHFU_RESET_and_DISABLE);
 
-#ifdef RTC_ENABLED
-// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-B' ***************************************
-// No address space needed ( -> IRQs must be disabled to block ROM accesses during reads ).
-	program.install_read_handler(RTC_BASE, RTC_BASE + 0x2104, read8_delegate(FUNC(rainbow_state::rtc_r), this));
-// *********************************** / DS1315 'PHANTOM CLOCK' IMPLEMENTATION FOR 'DEC-100-B' ***************************************
-#endif
-
 	m_rtc->chip_reset();     // * Reset RTC to a defined state *
 
-
-	//  *********** HARD DISK CONTROLLER...
+	//  *********** HARD DISK CONTROLLERS...
+	address_space &io = machine().device<cpu_device>("maincpu")->space(AS_IO);
 	if (m_inp5->read() == 0x01) // ...PRESENT?
 	{
 		// Install 8088 read / write handler
-		address_space &io = machine().device<cpu_device>("maincpu")->space(AS_IO);
 		io.unmap_readwrite(0x60, 0x60);
 		io.install_read_handler(0x60, 0x60, read8_delegate(FUNC(rainbow_state::hd_status_60_r), this));
 		io.install_write_handler(0x60, 0x60, write8_delegate(FUNC(rainbow_state::hd_status_60_w), this));
@@ -1139,7 +1220,7 @@ void rainbow_state::machine_reset()
 				output().set_value("led1", 1);
 
 				uint32_t max_sector = (info->cylinders) * (info->heads) * (info->sectors);
-				printf("\n%u (%3.2f) MB HARD DISK MOUNTED. GEOMETRY: %d HEADS (1..%d ARE OK).\n%d CYLINDERS (151 to %d ARE OK).\n%d SECTORS / TRACK (up to %d ARE OK). \n%d BYTES / SECTOR (128 to 1024 ARE OK).\n",
+				popmessage("DEC %u (%3.2f) MB HARD DISK MOUNTED.\nGEOMETRY: %d HEADS (1..%d ARE OK).\n%d CYLINDERS (151 to %d ARE OK).\n%d SECTORS / TRACK (up to %d ARE OK). \n%d BYTES / SECTOR (128 to 1024 ARE OK).\n",
 					max_sector * info->sectorbytes / 1000000,
 					(float)max_sector * (float)info->sectorbytes / 1048576.0f,
 					info->heads, RD51_MAX_HEAD,
@@ -1150,6 +1231,9 @@ void rainbow_state::machine_reset()
 		}
 	}
 
+	if (m_inp6->read() == 0x00) // Unmap port if Corvus not present
+			io.unmap_readwrite(0x20, 0x20);
+
 	// *********** FLOPPY DISK CONTROLLER [ NOT OPTIONAL ]
 	m_unit = INVALID_DRIVE;
 	m_fdc->reset();
@@ -1158,10 +1242,10 @@ void rainbow_state::machine_reset()
 
 	// *********** NEC 7220 DISPLAY CONTROLLER [ OPTIONAL ]
 	OPTION_GRFX_RESET
-		
+
 	OPTION_RESET_PATTERNS
 
-	for(int i=0; i <32; i++) { m_GDC_COLOR_MAP[i] = 0x00; };  
+	for(int i=0; i <32; i++) { m_GDC_COLOR_MAP[i] = 0x00; };
 	m_GDC_color_map_index = 0;
 	m_color_map_changed = true;
 	// *********** Z80
@@ -1201,9 +1285,6 @@ void rainbow_state::machine_reset()
 	output().set_value("led_compose", 0); // led9
 	output().set_value("led_lock", 0);    // led10
 	output().set_value("led_hold", 0);    // led11
-
-	if (m_POWER_GOOD) // When user presses F3, a hard reset is executed.
-		machine().schedule_hard_reset(); // better ask via GUI? How...?
 }
 
 // Simulate AC_OK signal (power good) and RESET after ~ 108 ms.
@@ -1232,15 +1313,6 @@ uint32_t rainbow_state::screen_update_rainbow(screen_device &screen, bitmap_ind1
 {
 	static int old_palette, old_monitor;
 
-#ifdef BOOST_DEBUG_PERFORMANCE
-	uint8_t *ram = memregion("maincpu")->base();
-	if( !(m_p_vol_ram[0x84] == 0x00) )
-	{
-		if( (MOTOR_DISABLE_counter) || (ram[0xEFFFE] & 16) ) // if HDD/FDD ACTIVITY -OR- SMOOTH SCROLL IN PROGRESS
-			return 0;
-	}
-#endif
-
 	int monitor_selected = m_inp13->read();
 	if(monitor_selected != old_monitor)
 	{
@@ -1259,6 +1331,15 @@ uint32_t rainbow_state::screen_update_rainbow(screen_device &screen, bitmap_ind1
 		old_palette = palette_selected;
 		m_color_map_changed = true;
 	}
+
+#ifdef BOOST_DEBUG_PERFORMANCE
+	uint8_t *ram = memregion("maincpu")->base();
+	if( !(m_p_vol_ram[0x84] == 0x00) )
+	{
+		if( (MOTOR_DISABLE_counter) || (ram[0xEFFFE] & 16) ) // if HDD/FDD ACTIVITY -OR- SMOOTH SCROLL IN PROGRESS
+			return 0;
+	}
+#endif
 
 	m_crtc->palette_select(palette_selected);
 
@@ -1295,7 +1376,6 @@ void rainbow_state::update_8088_irqs()
 void rainbow_state::raise_8088_irq(int ref)
 {
 	m_irq_mask |= (1 << ref);
-
 	update_8088_irqs();
 }
 
@@ -1309,12 +1389,10 @@ void rainbow_state::lower_8088_irq(int ref)
 // IRQ service for 7201 (commm / printer)
 void rainbow_state::update_mpsc_irq()
 {
-	if (m_mpsc_irq == 0) {
+	if (m_mpsc_irq == 0)
 		lower_8088_irq(IRQ_COMM_PTR_INTR_L);
-		m_mpsc->m1_r();  // interrupt acknowledge
-	} else
+	else
 		raise_8088_irq(IRQ_COMM_PTR_INTR_L);
-
 }
 
 WRITE_LINE_MEMBER(rainbow_state::mpsc_irq)
@@ -1323,23 +1401,25 @@ WRITE_LINE_MEMBER(rainbow_state::mpsc_irq)
 	update_mpsc_irq();
 }
 
-// PORT 0x0e : Printer bit rates
-WRITE8_MEMBER(rainbow_state::printer_bitrate_w)
-{
-	printf("\nPRINTER bitrate = %02x HEX\n",data & 7);
-
-	// "bit 3 controls the communications port clock (RxC,TxC). External clock when 1, internal when 0"
-	printf(" - CLOCK BIT: %02x", data & 8);
-}
-
 // PORT 0x06 : Communication bit rates (see page 21 of PC 100 SPEC)
 WRITE8_MEMBER(rainbow_state::comm_bitrate_w)
 {
-	m_dbrg->str_w(data & 0x0f);  // PDF is wrong, low nibble is RECEIVE clock (verified in SETUP).
+	m_dbrg_A->str_w(data & 0x0f);  // PDF is wrong, low nibble is RECEIVE clock (verified in SETUP).
 	printf("\nRECEIVE bitrate = %02x HEX\n",data & 0x0f);
 
-	m_dbrg->stt_w( ((data & 0xf0) >> 4) );
+	m_dbrg_A->stt_w( ((data & 0xf0) >> 4) );
 	printf("\nTRANSMIT bitrate = %02x HEX\n",(data & 0xf0) >> 4);
+}
+
+// PORT 0x0e : Printer bit rates
+WRITE8_MEMBER(rainbow_state::printer_bitrate_w)
+{
+	m_dbrg_B->str_w(data & 7); // bits 0 - 2
+	m_dbrg_B->stt_w(data & 7); // TX and RX rate cannot be programmed independently.
+	printf("\n(PRINTER) RECEIVE / TRANSMIT bitrate = %02x HEX\n",data & 7);
+
+	// "bit 3 controls the communications port clock (RxC,TxC). External clock when 1, internal when 0"
+	printf(" - CLOCK (0 = internal): %02x", data & 8);
 }
 
 WRITE_LINE_MEMBER(rainbow_state::com8116_a_fr_w)
@@ -1352,6 +1432,15 @@ WRITE_LINE_MEMBER(rainbow_state::com8116_a_ft_w)
 	m_mpsc->txca_w(state);
 }
 
+WRITE_LINE_MEMBER(rainbow_state::com8116_b_fr_w)
+{
+	m_mpsc->rxcb_w(state);
+}
+
+WRITE_LINE_MEMBER(rainbow_state::com8116_b_ft_w)
+{
+	m_mpsc->txcb_w(state);
+}
 
 // Only Z80 * private SRAM * is wait state free
 // (= fast enough to allow proper I/O to the floppy)
@@ -1411,22 +1500,63 @@ WRITE8_MEMBER(rainbow_state::share_z80_w)
 	return;
 }
 
+// NMI logic (parity test)
+WRITE8_MEMBER(rainbow_state::ext_ram_w)
+{
+	m_ext_ram[offset] = data;
 
-// ------------------------ClikClok (for model B; DS1315)  ---------------------------------
-// DESCRIPTION: version for 100-A plugs into NVRAM chip socket (unemulated yet)
-//   On a 100-B, it occupies one of the EPROM sockets. There is a socket on the ClikClok for the NVRAM / EPROM.
+#ifndef OLD_RAM_BOARD_PRESENT
+	if(m_diagnostic & 0x08)
+		if( (offset + 0x10000) >= (MOTHERBOARD_RAM + 1))
+			m_i8088->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
+#endif
+}
 
-// DRIVERS: (a) DOS and CP/M binaries plus source from DEC employee (rbclik); Reads & displays times. Y2K READY!
-// (b) Suitable Solutions ClikClok distribution disk; Uses $FE000 and up. 2 digit year. Needed to set time & date.
-//
-// TODO: obtain hardware / check address decoders.
-// RTC accesses here were derived from Vincent Esser's published source.
+// ------------------------ClikClok (for 100-A; DS1315) ------------------------------------------
+// Version for 100-A plugs into NVRAM chip socket. There is a socket on the ClikClok for the NVRAM
+
+// Requires a short program from the Suitable Solutions ClikClok distribution disk (CLIKA.COM)
+// - also needed to set time/date (*).                   Reads $ed000, writes ed0fe/ed0ff.
+WRITE8_MEMBER(rainbow_state::rtc_w)
+{
+	if((m_inp11->read() == 0x01)) // if enabled...
+	{
+		switch (offset)
+		{
+			case 0x00: // Write to 0xED0FE
+				if (m_rtc->chip_enable())
+					m_rtc->write_data(space, offset & 0x01); // Transfer data to DS1315 (data = offset):
+				else
+					m_rtc->read_0(space, 0); // (RTC ACTIVATION) read magic pattern 0
+				break;
+
+			case 0x01: // Write to 0xED0FF
+				if (m_rtc->chip_enable())
+					m_rtc->write_data(space, offset & 0x01); // Transfer data to DS1315 (data = offset):
+				else
+					m_rtc->read_1(space, 0); // (RTC ACTIVATION) read magic pattern 1
+				break;
+		}
+	}
+	m_p_vol_ram[offset] = data;  // Poke value into VOL_RAM.
+}
+
+// ------------------------ClikClok (for 100-B; DS1315)  ------------------------------------------------
+// Add-on hardware, occupies one of the EPROM sockets of the 100-B. TODO: check address decoders on board
+// Requires CLIKCLOK.COM or RBCLIK21.COM (freeware from Latrobe).                       Uses FC000/FE000.
 READ8_MEMBER(rainbow_state::rtc_r)
 {
 	if((m_inp11->read() == 0x01)) // if enabled...
 	{
 		switch (offset)
 		{
+#ifdef ASSUME_RAINBOW_A_HARDWARE
+			case 0x00: // read time/date from 0xED000 (ClikClok for 100-A)
+				if (m_rtc->chip_enable())
+					return m_rtc->read_data(space, 0) & 0x01;
+				 else
+					m_rtc->chip_reset();
+#else
 			// Transfer data to DS1315 (data = offset):
 			case 0x0000:  // RTC_WRITE_DATA_0 0xFC000
 			case 0x2000:  // RTC_WRITE_DATA_0 0xFE000 (MIRROR)
@@ -1442,13 +1572,13 @@ READ8_MEMBER(rainbow_state::rtc_r)
 				if (m_rtc->chip_enable())
 					return (m_rtc->read_data(space, 0) & 0x01);
 
-			// (RTC ACTIVATION) READ MAGIC PATTERN 0
+			// (RTC ACTIVATION) read magic pattern 0
 			case 0x0100:  // 0xFC100
 			case 0x2100:  // 0xFE100 (MIRROR)
 				m_rtc->read_0(space, 0);
 				break;
 
-			// (RTC ACTIVATION) READ MAGIC PATTERN 1
+			// (RTC ACTIVATION) read magic pattern 1
 			case 0x0101:  // 0xFC101
 			case 0x2101:  // 0xFE101 (MIRROR)
 				m_rtc->read_1(space, 0);
@@ -1459,13 +1589,41 @@ READ8_MEMBER(rainbow_state::rtc_r)
 			case 0x2104:  // 0xFE104 (MIRROR)
 				m_rtc->chip_reset();
 				break;
+#endif
 		}
 	}
 
+#ifdef ASSUME_RAINBOW_A_HARDWARE
+	return m_p_vol_ram[offset];  // return volatile RAM
+#else
 	uint8_t *rom = memregion("maincpu")->base();
-	return rom[RTC_BASE + offset];  // Return ROM to prevent crashes
+	return rom[RTC_BASE + offset];  // return ROM
+#endif
 }
-// ------------------------/ ClikClok (for model B; DS1315)  ---------------------------------
+// ------------------------/ ClikClok (for model B; DS1315)  -------------------------------
+
+
+// --------------------------------- Corvus (B/H)  -----------------------------------------
+// PORT 0x21 : Corvus status register (ready / direction)
+READ8_MEMBER(rainbow_state::corvus_status_r)
+{
+	if(m_inp6->read() == 0) // Corvus controller
+	{
+		popmessage("Corvus controller invoked - but not switched on. Check DIP and perform a reset.");
+		return 0;
+	}
+		else
+	{
+		output().set_value("led2", 0);
+		MOTOR_DISABLE_counter = 5;
+
+		uint8_t status = m_corvus_hdc->status_r(space, 0);
+		uint8_t data = (status & 0x80) ? 1 : 0; // 0x80 BUSY (Set = Busy, Clear = Ready)
+		data        |= (status & 0x40) ? 0 : 2; // 0x40 DIR. (Controller -> Host, or Host->Controller)
+		return data;
+	}
+}
+// ---------------------------------/ Corvus (B/H)  ----------------------------------------
 
 
 // ---------------------------- RD51 HARD DISK CONTROLLER ----------------------------------
@@ -1502,7 +1660,7 @@ hard_disk_file *(rainbow_state::rainbow_hdc_file(int drv))
 		return nullptr;
 
 	harddisk_image_device *img = nullptr;
-	img = dynamic_cast<harddisk_image_device *>(machine().device(subtag("harddisk1").c_str()));
+	img = dynamic_cast<harddisk_image_device *>(machine().device(subtag("decharddisk1").c_str()));
 
 	if (!img)
 		return nullptr;
@@ -1525,18 +1683,15 @@ hard_disk_file *(rainbow_state::rainbow_hdc_file(int drv))
 	}
 	else
 	{
-		printf("\n <<< === REJECTED = (SANITY CHECK FAILED) === >>> \n");
-
 		uint32_t max_sector = info->cylinders * info->heads * info->sectors;
-				printf("\n%u (%3.2f) MB HARD DISK REJECTED. GEOMETRY: %d HEADS (1..%d ARE OK).\n%d CYLINDERS (151 to %d ARE OK).\n%d SECTORS / TRACK (up to %d ARE OK). \n%d BYTES / SECTOR (128 to 1024 ARE OK).\n",
+		popmessage("DEC %u (%3.2f) MB HARD DISK REJECTED.\nGEOMETRY: %d HEADS (1..%d ARE OK).\n%d CYLINDERS (151 to %d ARE OK).\n%d SECTORS / TRACK (up to %d ARE OK). \n%d BYTES / SECTOR (128 to 1024 ARE OK).\n",
 					max_sector * info->sectorbytes / 1000000,
 					(float)max_sector * (float)info->sectorbytes / 1048576.0f,
 					info->heads, RD51_MAX_HEAD,
 					info->cylinders, RD51_MAX_CYLINDER,
 					info->sectors, RD51_SECTORS_PER_TRACK,
 					info->sectorbytes);
-
-		printf("\n <<< === REJECTED = (SANITY CHECK FAILED) === >>> \n");
+		printf("\n <<< === HARD DISK IMAGE REJECTED = (invalid geometry) === >>> \n");
 		return nullptr;
 	}
 }
@@ -1996,14 +2151,13 @@ READ8_MEMBER(rainbow_state::system_parameter_r)
 	BIOS uses a seperate IRQ vector for RAM board detection (at least on a 100-B).
 	*/
 	return  (((m_inp5->read() == 1) ? 0 : 1) |
-		((m_inp6->read() == 1) ? 0 : 2) |
-		((m_inp7->read() == 1) ? 0 : 4) |
+			 ((m_inp7->read() == 1) ? 0 : 4) | // Floppy is always present (bit 1 zero)
 #ifdef      OLD_RAM_BOARD_PRESENT
 		((m_inp8->read() > MOTHERBOARD_RAM) ? 0 : 8) |
 #else
-		8  |
+		8  |  // unverified
 #endif
-		16 | 32 | 64 | 128  // to be verified.
+		16 | 32 | 64 | 128  // unverified
 			);
 }
 
@@ -2151,7 +2305,7 @@ READ8_MEMBER(rainbow_state::z80_generalstat_r)
 	int fdc_write_gate = 0;
 	int last_dir = 0;
 
-//	printf("\nFLOPPY %02d - ", m_unit);
+//  printf("\nFLOPPY %02d - ", m_unit);
 	if (m_fdc)
 	{
 			track = m_fdc->track_r(space, 0);
@@ -2374,6 +2528,9 @@ IRQ_CALLBACK_MEMBER(rainbow_state::irq_callback)
 				if (i == IRQ_8088_VBL)  // If VBL IRQ acknowledged...
 					m_crtc->MHFU(MHFU_RESET); // ...reset counter (also: DC012_W)
 
+				if (i == IRQ_COMM_PTR_INTR_L)
+					m_mpsc->m1_r();  // serial interrupt acknowledge
+
 				intnum = vectors[i] | m_irq_high;
 				break;
 			}
@@ -2451,8 +2608,8 @@ WRITE_LINE_MEMBER(rainbow_state::GDC_vblank_irq)
 							}
 
 							case COLOR_MONITOR:
-									
-									if(!(m_GDC_MODE_REGISTER & GDC_MODE_ENABLE_VIDEO)) 
+
+									if(!(m_GDC_MODE_REGISTER & GDC_MODE_ENABLE_VIDEO))
 										red = blue = 0; // Page 21 of PDF AA-AE36A (PDF) explains why
 									red   = uint8_t( red   * 17 *  ( (255-video_levels[ red ]  )  / 255.0f) );
 									green = uint8_t( mono * 17 *  ( (255-video_levels[ mono ])  / 255.0f) ); // BCC-17 cable (red, mono -> green, blue)
@@ -2479,7 +2636,6 @@ WRITE_LINE_MEMBER(rainbow_state::GDC_vblank_irq)
 				printf(" [HINT: DUAL MONITOR (DIP SWITCH) WRONG! NO GREEN PALETTE] ");
 	} // color map changed?
 
-
 } // 7220 vblank IRQ
 
 
@@ -2490,10 +2646,10 @@ INTERRUPT_GEN_MEMBER(rainbow_state::vblank_irq)
 
 	if (m_POWER_GOOD && m_crtc->MHFU(MHFU_IS_ENABLED)) // If enabled...
 	{
-		if (m_crtc->MHFU(MHFU_VALUE) > 7) // + more than (7 * 16.666) msecs gone (108 ms would be by the book)
+		if (m_crtc->MHFU(MHFU_VALUE) > 10) // + more than (10 * 16.666) msecs gone (108 ms would be by the book)
 		{
 			m_crtc->MHFU(MHFU_RESET_and_DISABLE);
-			printf("\n**** WATCHDOG TRIPPED:nVBL IRQ not acknowledged within (at least) 108 milliseconds. ****\n");
+			popmessage("**** WATCHDOG TRIPPED:nVBL IRQ not acknowledged within (at least) 108 milliseconds. ****");
 
 			if (m_inp12->read() == 0x01) // (DIP) for watchdog active?
 				cmd_timer->adjust(attotime::from_msec(RESET_DURATION_MS));
@@ -2566,13 +2722,9 @@ WRITE8_MEMBER(rainbow_state::diagnostic_w) // 8088 (port 0A WRITTEN). Fig.4-28 +
 			printf("DATA: %x (PC=%x)\n", data, machine().device("maincpu")->safe_pc());
 	}
 
-	// BIT 3: PARITY TEST (1 = enables parity test on memory option board).
+	// BIT 3: PARITY (1 enables parity test on memory board. Usually 64K per bank). -> ext_ram_w.
 	if(data & 0x08)
-	{
-		printf("\n*** UNEMULATED PARITY TEST [on RAM EXTENSION] - (bit 3 in diagnostic_w) ");
-		//   FIXME: parity test = NMI? When should NMI fire? Per RAM bank?
-		//   m_i8088->set_input_line_and_vector(INPUT_LINE_NMI, ASSERT_LINE, 0x02);
-	}
+		printf("\n*** PARITY TEST [on RAM EXTENSION] - (bit 3 - diagnostic_w) ");
 
 	// MISSING BITS (* not vital for normal operation, see diag.disk) -
 	// * BIT 4: DIAG LOOPBACK (0 at power-up; 1 directs RX50 and DC12 output to printer port)
@@ -2684,6 +2836,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(rainbow_state::motor_tick)
 		output().set_value("driveled3", 0); // DRIVE 3 (D)
 
 		output().set_value("led1", 1);  // 1 = OFF (One of the CPU LEDs as DRIVE LED)
+		output().set_value("led2", 1);  // 1 = OFF (One of the CPU LEDs as DRIVE LED)
 	}
 }
 
@@ -2706,7 +2859,7 @@ WRITE_LINE_MEMBER(rainbow_state::irq_hi_w)
 
 READ16_MEMBER(rainbow_state::vram_r)
 {
-	if((!(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR)) || space.debugger_access())  // (NOT VECTOR MODE)
+	if((!(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR)) || machine().side_effect_disabled())  // (NOT VECTOR MODE)
 	{
 		// SCROLL_MAP IN BITMAP MODE ONLY...?
 		if(m_GDC_MODE_REGISTER & GDC_MODE_HIGHRES)
@@ -2727,36 +2880,32 @@ READ16_MEMBER(rainbow_state::vram_r)
 // NOTE: Rainbow has separate registers for fore and background.
 WRITE16_MEMBER(rainbow_state::vram_w)
 {
-	if(!(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR))
-	{
-		// SCROLL_MAP IN BITMAP MODE ONLY...?
-		if(m_GDC_MODE_REGISTER & GDC_MODE_HIGHRES)
-			offset = ( m_GDC_SCROLL_BUFFER[ (offset & 0x3FC0) >> 6 ] << 6) |  (offset & 0x3F);
-		else
-			offset = ( m_GDC_SCROLL_BUFFER[ (offset & 0x1FC0) >> 6 ] << 6) |  (offset & 0x3F);
-	}
+	if(m_GDC_MODE_REGISTER & GDC_MODE_HIGHRES)
+		offset = ( m_GDC_SCROLL_BUFFER[ (offset & 0x3FC0) >> 6 ] << 6) |  (offset & 0x3F);
+	else
+		offset = ( m_GDC_SCROLL_BUFFER[ (offset & 0x1FC0) >> 6 ] << 6) |  (offset & 0x3F);
 
 	offset &= 0xffff; // same as in VT240?
 	uint16_t chr = data; // VT240 : uint8_t
 
 	if(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR) // VT240 : if(SELECT_VECTOR_PATTERN_REGISTER)
 	{
-			chr = BITSWAP8(m_vpat, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx);
-			chr |= (chr << 8);
-			if(m_patcnt-- == 0)
-			{
-				m_patcnt = m_patmult;
-				if(m_patidx-- == 0)
-					m_patidx = 7;
-			}
+		chr = BITSWAP8(m_vpat, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx, m_patidx);
+		chr |= (chr << 8);
+		if(m_patcnt-- == 0)
+		{
+			m_patcnt = m_patmult;
+			if(m_patidx-- == 0)
+				m_patidx = 7;
+		}
 	}
-		else
+	else
 	{
-			chr = m_GDC_WRITE_BUFFER[ m_GDC_write_buffer_index++ ];
-			m_GDC_write_buffer_index &= 0xf;
+		chr = m_GDC_WRITE_BUFFER[ m_GDC_write_buffer_index++ ];
+		m_GDC_write_buffer_index &= 0xf;
 
-			chr |= (m_GDC_WRITE_BUFFER[m_GDC_write_buffer_index++] << 8);
-			m_GDC_write_buffer_index &= 0xf;
+		chr |= (m_GDC_WRITE_BUFFER[m_GDC_write_buffer_index++] << 8);
+		m_GDC_write_buffer_index &= 0xf;
 	}
 
 	if(m_GDC_MODE_REGISTER & GDC_MODE_ENABLE_WRITES) // 0x10
@@ -2791,10 +2940,10 @@ WRITE16_MEMBER(rainbow_state::vram_w)
 						break;
 				}
 
-				if(!(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR)) // 0 : (NOT VECTOR MODE) Text Mode and Write Mask Batch
+				if(!(m_GDC_MODE_REGISTER & GDC_MODE_VECTOR)) // 0 : Text Mode and Write Mask Batch
 					out = (out & ~m_GDC_WRITE_MASK) | (mem & m_GDC_WRITE_MASK); // // M_MASK (1st use)
 				else
-					out = (out & ~data) | (mem & data); // VECTOR MODE !
+					out = (out & ~data) | (mem & data); // vector mode
 
 				if(m_GDC_MODE_REGISTER & GDC_MODE_ENABLE_WRITES) // 0x10
 					m_video_ram[(offset & 0xffff) + (0x8000 * i)] = out;
@@ -2845,13 +2994,13 @@ WRITE8_MEMBER(rainbow_state::GDC_EXTRA_REGISTER_w)
 	if(offset > 0) // Port $50 reset done @ boot ROM 1EB4/8 regardless if option present.
 		if (m_inp7->read() != 1)
 		{
-				if(last_message != 1)
-				{
-					printf("\nCOLOR GRAPHICS ADAPTER INVOKED.  PLEASE TURN ON THE APPROPRIATE DIP SWITCH, THEN RESTART.\n");
-					printf("OFFSET: %x (PC=%x)\n", 0x50 +offset , machine().device("maincpu")->safe_pc());
-					last_message = 1;
-				}
-				return;
+			if(last_message != 1)
+			{
+				popmessage("\nCOLOR GRAPHICS ADAPTER INVOKED.  PLEASE TURN ON THE APPROPRIATE DIP SWITCH, THEN REBOOT.\n");
+				printf("OFFSET: %x (PC=%x)\n", 0x50 +offset , machine().device("maincpu")->safe_pc());
+				last_message = 1;
+			}
+			return;
 		}
 
 	switch(offset)
@@ -2860,15 +3009,12 @@ WRITE8_MEMBER(rainbow_state::GDC_EXTRA_REGISTER_w)
 			// FIXME: "Any write to this port also resynchronizes the
 			//        read/modify/write memory cycles of the Graphics Option to those of the GDC." (?)
 
-			//if( (!(m_PORT50 & 1)) && (data & 1)) // PDF QV069 suggests 1 -> 0 -> 1			
-			if( data & 1 ) // ; most programs just set bit 0 (PACMAN).
-			{	
+			if( data & 1 ) // PDF QV069 suggests 1 -> 0 -> 1. Most programs just set bit 0 (PACMAN).
+			{
 				// Graphics option software reset (separate from GDC reset...)
-				OPTION_GRFX_RESET 
-
+				OPTION_GRFX_RESET
 				OPTION_RESET_PATTERNS
 			}
-			m_PORT50  = data;
 			break;
 
 		case 1: //  51h - DATA loaded into register previously written to 53h.
@@ -3064,7 +3210,7 @@ static ADDRESS_MAP_START( upd7220_map, AS_0, 16, rainbow_state)
 	AM_RANGE(0x00000, 0x3ffff) AM_READWRITE(vram_r, vram_w) AM_SHARE("vram")
 ADDRESS_MAP_END
 
-static MACHINE_CONFIG_START(rainbow, rainbow_state)
+static MACHINE_CONFIG_START(rainbow)
 MCFG_DEFAULT_LAYOUT(layout_rainbow)
 
 /* basic machine hardware */
@@ -3079,10 +3225,7 @@ MCFG_CPU_VBLANK_INT_DRIVER("screen", rainbow_state, vblank_irq)
 
 /* video hardware */
 MCFG_SCREEN_ADD("screen", RASTER)
-MCFG_SCREEN_REFRESH_RATE(60)
-MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
-MCFG_SCREEN_SIZE(132 * 10, 49 * 10)
-MCFG_SCREEN_VISIBLE_AREA(0, 80 * 10 - 1, 0, 48 * 10 - 1)
+MCFG_SCREEN_RAW_PARAMS(XTAL_24_0734MHz / 6, 442, 0, 400, 264, 0, 240) // ~NTSC compatible video timing (?)
 
 MCFG_SCREEN_UPDATE_DRIVER(rainbow_state, screen_update_rainbow)
 MCFG_SCREEN_PALETTE("vt100_video:palette")
@@ -3096,7 +3239,7 @@ MCFG_VT_VIDEO_RAM_CALLBACK(READ8(rainbow_state, read_video_ram_r))
 MCFG_VT_VIDEO_CLEAR_VIDEO_INTERRUPT_CALLBACK(WRITELINE(rainbow_state, clear_video_interrupt))
 
 // *************************** COLOR GRAPHICS (OPTION) **************************************
-// While the OSC frequency is confirmed, the divider is not. Refresh rate is ~60 Hz with 32.
+// While the OSC frequency is confirmed, the divider is not (refresh rate is ~60 Hz with 32).
 MCFG_DEVICE_ADD("upd7220", UPD7220, 31188000 / 32) // Duell schematics shows a 31.188 Mhz oscillator (confirmed by RFKA).
 MCFG_UPD7220_VSYNC_CALLBACK(WRITELINE(rainbow_state, GDC_vblank_irq)) // "The vsync callback line needs to be below the 7220 DEVICE_ADD line."
 
@@ -3107,12 +3250,15 @@ MCFG_PALETTE_ADD("palette2", 32)
 
 MCFG_SCREEN_ADD("screen2", RASTER)
 MCFG_SCREEN_VIDEO_ATTRIBUTES(VIDEO_UPDATE_AFTER_VBLANK | VIDEO_ALWAYS_UPDATE)
-MCFG_SCREEN_REFRESH_RATE(60)
-MCFG_SCREEN_UPDATE_DEVICE("upd7220", upd7220_device, screen_update)
 
-MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) // not accurate
-MCFG_SCREEN_SIZE(800, 256)                   // should be 240
-MCFG_SCREEN_VISIBLE_AREA(0, 800-1, 0, 256-1) // should be 240
+// VR241 color monitor is specified for 20 MHz bandwidth ( 60 Hz / 15.72 kHz horizontal rate )
+// - sufficient for 800 x 240 non-interlaced at 60 Hz (non interlaced).
+//MCFG_SCREEN_RAW_PARAMS(31188000 / 2 , 992, 0, 800, 262, 0, 240)
+
+// Alternate configuration:
+MCFG_SCREEN_RAW_PARAMS(31188000 / 4 , 496, 0, 400, 262, 0, 240)
+
+MCFG_SCREEN_UPDATE_DEVICE("upd7220", upd7220_device, screen_update)
 
 MCFG_FD1793_ADD(FD1793_TAG, XTAL_24_0734MHz / 24) // no separate 1 Mhz quartz
 MCFG_FLOPPY_DRIVE_ADD(FD1793_TAG ":0", rainbow_floppies, "525qd0", rainbow_state::floppy_formats)
@@ -3142,14 +3288,28 @@ MCFG_WD2010_IN_SC_CB(VCC)                                        // SEEK COMPLET
 MCFG_WD2010_IN_TK000_CB(VCC) // CURRENTLY NOT EVALUATED WITHIN 'WD2010'
 MCFG_WD2010_IN_INDEX_CB(VCC) //    "
 
-MCFG_HARDDISK_ADD("harddisk1")
+MCFG_HARDDISK_ADD("decharddisk1")
 /// ******************************** / HARD DISK CONTROLLER ****************************************
+
+MCFG_DEVICE_ADD("corvus", CORVUS_HDC, 0)
+MCFG_HARDDISK_ADD("harddisk1")
+MCFG_HARDDISK_INTERFACE("corvus_hdd")
+MCFG_HARDDISK_ADD("harddisk2")
+MCFG_HARDDISK_INTERFACE("corvus_hdd")
+MCFG_HARDDISK_ADD("harddisk3")
+MCFG_HARDDISK_INTERFACE("corvus_hdd")
+MCFG_HARDDISK_ADD("harddisk4")
+MCFG_HARDDISK_INTERFACE("corvus_hdd")
 
 MCFG_DS1315_ADD("rtc") // DS1315 (ClikClok for DEC-100 B)   * OPTIONAL *
 
-MCFG_DEVICE_ADD("com8116", COM8116, XTAL_5_0688MHz)     // Baud rate generator
+MCFG_DEVICE_ADD("com8116_a", COM8116, XTAL_5_0688MHz)     // Baud rate generator A
 MCFG_COM8116_FR_HANDLER(WRITELINE(rainbow_state, com8116_a_fr_w))
 MCFG_COM8116_FT_HANDLER(WRITELINE(rainbow_state, com8116_a_ft_w))
+
+MCFG_DEVICE_ADD("com8116_b", COM8116, XTAL_5_0688MHz) // Baud rate generator B
+MCFG_COM8116_FR_HANDLER(WRITELINE(rainbow_state, com8116_b_fr_w))
+MCFG_COM8116_FT_HANDLER(WRITELINE(rainbow_state, com8116_b_ft_w))
 
 MCFG_UPD7201_ADD("upd7201", XTAL_2_5MHz, 0, 0, 0, 0)    // 2.5 Mhz from schematics
 MCFG_Z80DART_OUT_INT_CB(WRITELINE(rainbow_state, mpsc_irq))
@@ -3298,7 +3458,7 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME          PARENT   COMPAT   MACHINE       INPUT      STATE          INIT COMPANY                         FULLNAME       FLAGS */
-COMP(1982, rainbow100a, rainbow, 0, rainbow, rainbow100b_in, driver_device, 0, "Digital Equipment Corporation", "Rainbow 100-A", MACHINE_IS_SKELETON)
-COMP(1983, rainbow, 0, 0, rainbow, rainbow100b_in, driver_device, 0, "Digital Equipment Corporation", "Rainbow 100-B", MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_COLORS)
-COMP(1985, rainbow190, rainbow, 0, rainbow, rainbow100b_in, driver_device, 0, "Digital Equipment Corporation", "Rainbow 190-B", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_COLORS)
+/*   YEAR  NAME         PARENT   COMPAT  MACHINE  INPUT           STATE          INIT  COMPANY                          FULLNAME         FLAGS */
+COMP(1982, rainbow100a, rainbow, 0,      rainbow, rainbow100b_in, rainbow_state, 0,    "Digital Equipment Corporation", "Rainbow 100-A", MACHINE_IS_SKELETON)
+COMP(1983, rainbow,     0,       0,      rainbow, rainbow100b_in, rainbow_state, 0,    "Digital Equipment Corporation", "Rainbow 100-B", MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_COLORS)
+COMP(1985, rainbow190,  rainbow, 0,      rainbow, rainbow100b_in, rainbow_state, 0,    "Digital Equipment Corporation", "Rainbow 190-B", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_COLORS)

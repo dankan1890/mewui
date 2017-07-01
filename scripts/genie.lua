@@ -968,7 +968,6 @@ end
 				os.exit(-1)
 			end
 			buildoptions {
-				"-Wno-undefined-var-template",
 				"-Wno-cast-align",
 				"-Wno-tautological-compare",
 				"-Wno-unused-value",
@@ -1082,8 +1081,6 @@ configuration { "linux-* or rpi or ci20"}
 		links {
 			"dl",
 			"rt",
-			"Xft",
-			"stdc++fs",
 		}
 		if _OPTIONS["distro"]=="debian-stable" then
 			defines
@@ -1138,10 +1135,8 @@ configuration { "mingw*" }
 		local version = str_to_version(_OPTIONS["gcc_version"])
 		if not (_OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "clang")) or version < 40000
 		then
-		linkoptions {
-
-
-			"-static",
+			linkoptions {
+				"-static",
 			}
 		end
 		linkoptions {

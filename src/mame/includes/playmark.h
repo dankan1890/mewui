@@ -16,6 +16,7 @@ public:
 		m_spriteram(*this, "spriteram"),
 		m_rowscroll(*this, "rowscroll"),
 		m_oki(*this, "oki"),
+		m_okibank(*this, "okibank"),
 		m_eeprom(*this, "eeprom"),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
@@ -51,11 +52,13 @@ public:
 	uint16_t      m_snd_flag;
 	uint8_t       m_oki_control;
 	uint8_t       m_oki_command;
-	int         m_old_oki_bank;
 	uint8_t       m_dispenser_latch;
+	int         m_oki_numbanks;
+	void configure_oki_banks();
 
 	/* devices */
 	required_device<okim6295_device> m_oki;
+	optional_memory_bank m_okibank;
 	optional_device<eeprom_serial_93cxx_device> m_eeprom;
 	DECLARE_WRITE16_MEMBER(coinctrl_w);
 	DECLARE_WRITE16_MEMBER(wbeachvl_coin_eeprom_w);
@@ -68,7 +71,6 @@ public:
 	DECLARE_WRITE8_MEMBER(playmark_oki_w);
 	DECLARE_WRITE8_MEMBER(playmark_snd_control_w);
 	DECLARE_WRITE8_MEMBER(hrdtimes_snd_control_w);
-	DECLARE_READ_LINE_MEMBER(PIC16C5X_T0_clk_r);
 	DECLARE_WRITE16_MEMBER(wbeachvl_txvideoram_w);
 	DECLARE_WRITE16_MEMBER(wbeachvl_fgvideoram_w);
 	DECLARE_WRITE16_MEMBER(wbeachvl_bgvideoram_w);

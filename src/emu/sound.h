@@ -22,7 +22,7 @@
 //  CONSTANTS
 //**************************************************************************
 
-const int STREAM_SYNC       = -1;       // special rate value indicating a one-sample-at-a-time stream
+constexpr int STREAM_SYNC   = -1;       // special rate value indicating a one-sample-at-a-time stream
 										// with actual rate defined by its input
 
 //**************************************************************************
@@ -34,9 +34,6 @@ typedef delegate<void (sound_stream &, stream_sample_t **inputs, stream_sample_t
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
-
-// forward references
-struct wav_file;
 
 
 // structure describing an indexed mixer
@@ -223,8 +220,8 @@ private:
 	void reset();
 	void pause();
 	void resume();
-	void config_load(config_type cfg_type, xml_data_node *parentnode);
-	void config_save(config_type cfg_type, xml_data_node *parentnode);
+	void config_load(config_type cfg_type, util::xml::data_node const *parentnode);
+	void config_save(config_type cfg_type, util::xml::data_node *parentnode);
 
 	void update(void *ptr = nullptr, s32 param = 0);
 
@@ -250,4 +247,4 @@ private:
 };
 
 
-#endif  /* MAME_EMU_SOUND_H */
+#endif // MAME_EMU_SOUND_H

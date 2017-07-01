@@ -287,7 +287,13 @@ static const uint8_t int_register_map[REG_I_COUNT] =
 
 static uint8_t float_register_map[REG_F_COUNT] =
 {
+#ifdef X64_WINDOWS_ABI
 	REG_XMM6, REG_XMM7, REG_XMM8, REG_XMM9, REG_XMM10, REG_XMM11, REG_XMM12, REG_XMM13, REG_XMM14, REG_XMM15
+#else
+	// on AMD x64 ABI, XMM0-7 are FP function args.  since this code has no args, and we
+	// save/restore them around CALLC, they should be safe for our use.
+	REG_XMM0, REG_XMM1, REG_XMM2, REG_XMM3, REG_XMM4, REG_XMM5, REG_XMM6, REG_XMM7
+#endif
 };
 
 // condition mapping table
@@ -612,7 +618,7 @@ inline void drcbe_x64::emit_smart_call_m64(x86code *&dst, x86code **target)
 drcbe_x64::drcbe_x64(drcuml_state &drcuml, device_t &device, drc_cache &cache, uint32_t flags, int modes, int addrbits, int ignorebits)
 	: drcbe_interface(drcuml, cache, device),
 		m_hash(cache, modes, addrbits, ignorebits),
-		m_map(cache, 0),
+		m_map(cache, 0xaaaaaaaa5555),
 		m_labels(cache),
 		m_log(nullptr),
 		m_sse41(false),

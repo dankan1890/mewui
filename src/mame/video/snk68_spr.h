@@ -1,12 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail, Acho A. Tang, Nicola Salmoria
-#ifndef MAME_VIDEO_SNK68_SPR_H
-#define MAME_VIDEO_SNK68_SPR_H
-
-#pragma once
-
-#include "screen.h"
-
 typedef device_delegate<void (int&, int&, int&, int&)> snk68_tile_indirection_delegate;
 
 #define MCFG_SNK68_SPR_GFXDECODE(_gfxtag) \
@@ -50,6 +43,4 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(SNK68_SPR, snk68_spr_device)
-
-#endif // MAME_VIDEO_SNK68_SPR_H
+extern const device_type SNK68_SPR;

@@ -83,7 +83,6 @@ Notes:
 */
 
 
-#include "emu.h"
 #include "s1410.h"
 #include "cpu/z80/z80.h"
 #include "imagedev/harddriv.h"
@@ -102,7 +101,7 @@ Notes:
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(S1410, s1410_device, "s1410", "Xebec S1410")
+const device_type S1410 = &device_creator<s1410_device>;
 
 //-------------------------------------------------
 //  ROM( s1410 )
@@ -160,10 +159,10 @@ ADDRESS_MAP_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_DRIVER( s1410 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( s1410_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( s1410 )
 	MCFG_CPU_ADD(Z8400A_TAG, Z80, XTAL_16MHz/4)
 	MCFG_CPU_PROGRAM_MAP(s1410_mem)
 	MCFG_CPU_IO_MAP(s1410_io)
@@ -171,6 +170,17 @@ MACHINE_CONFIG_MEMBER( s1410_device::device_add_mconfig )
 
 	MCFG_HARDDISK_ADD("image")
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor s1410_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( s1410 );
+}
 
 
 
@@ -183,7 +193,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 s1410_device::s1410_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: scsihd_device(mconfig, S1410, tag, owner, clock)
+	: scsihd_device(mconfig, S1410, "Xebec S1410", tag, owner, clock, "s1410", __FILE__)
 {
 }
 

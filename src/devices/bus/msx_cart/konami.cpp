@@ -2,22 +2,19 @@
 // copyright-holders:Wilbert Pol
 #include "emu.h"
 #include "konami.h"
-
 #include "sound/volt_reg.h"
-#include "speaker.h"
+
+const device_type MSX_CART_KONAMI = &device_creator<msx_cart_konami>;
+const device_type MSX_CART_KONAMI_SCC = &device_creator<msx_cart_konami_scc>;
+const device_type MSX_CART_GAMEMASTER2 = &device_creator<msx_cart_gamemaster2>;
+const device_type MSX_CART_SYNTHESIZER = &device_creator<msx_cart_synthesizer>;
+const device_type MSX_CART_SOUND_SNATCHER = &device_creator<msx_cart_konami_sound_snatcher>;
+const device_type MSX_CART_SOUND_SDSNATCHER = &device_creator<msx_cart_konami_sound_sdsnatcher>;
+const device_type MSX_CART_KEYBOARD_MASTER = &device_creator<msx_cart_keyboard_master>;
 
 
-DEFINE_DEVICE_TYPE(MSX_CART_KONAMI,           msx_cart_konami_device,                  "msx_cart_konami",           "MSX Cartridge - KONAMI")
-DEFINE_DEVICE_TYPE(MSX_CART_KONAMI_SCC,       msx_cart_konami_scc_device,              "msx_cart_konami_scc",       "MSX Cartridge - KONAMI+SCC")
-DEFINE_DEVICE_TYPE(MSX_CART_GAMEMASTER2,      msx_cart_gamemaster2_device,             "msx_cart_gamemaster2",      "MSX Cartridge - GAMEMASTER2")
-DEFINE_DEVICE_TYPE(MSX_CART_SYNTHESIZER,      msx_cart_synthesizer_device,             "msx_cart_synthesizer",      "MSX Cartridge - Synthesizer")
-DEFINE_DEVICE_TYPE(MSX_CART_SOUND_SNATCHER,   msx_cart_konami_sound_snatcher_device,   "msx_cart_sound_snatcher",   "MSX Cartridge - Sound Snatcher")
-DEFINE_DEVICE_TYPE(MSX_CART_SOUND_SDSNATCHER, msx_cart_konami_sound_sdsnatcher_device, "msx_cart_sound_sdsnatcher", "MSX Cartridge - Sound SD Snatcher")
-DEFINE_DEVICE_TYPE(MSX_CART_KEYBOARD_MASTER,  msx_cart_keyboard_master_device,         "msx_cart_keyboard_master",  "MSX Cartridge - Keyboard Master")
-
-
-msx_cart_konami_device::msx_cart_konami_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSX_CART_KONAMI, tag, owner, clock)
+msx_cart_konami::msx_cart_konami(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MSX_CART_KONAMI, "MSX Cartridge - KONAMI", tag, owner, clock, "msx_cart_konami", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 	, m_bank_mask(0)
 {
@@ -32,15 +29,15 @@ msx_cart_konami_device::msx_cart_konami_device(const machine_config &mconfig, co
 }
 
 
-void msx_cart_konami_device::device_start()
+void msx_cart_konami::device_start()
 {
 	save_item(NAME(m_selected_bank));
 
-	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami_device::restore_banks), this));
+	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami::restore_banks), this));
 }
 
 
-void msx_cart_konami_device::restore_banks()
+void msx_cart_konami::restore_banks()
 {
 	m_bank_base[0] = get_rom_base() + ( m_selected_bank[0] & m_bank_mask ) * 0x2000;
 	m_bank_base[1] = get_rom_base() + ( m_selected_bank[1] & m_bank_mask ) * 0x2000;
@@ -53,7 +50,7 @@ void msx_cart_konami_device::restore_banks()
 }
 
 
-void msx_cart_konami_device::device_reset()
+void msx_cart_konami::device_reset()
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -62,7 +59,7 @@ void msx_cart_konami_device::device_reset()
 }
 
 
-void msx_cart_konami_device::initialize_cartridge()
+void msx_cart_konami::initialize_cartridge()
 {
 	uint32_t size = get_rom_size();
 
@@ -84,13 +81,13 @@ void msx_cart_konami_device::initialize_cartridge()
 }
 
 
-READ8_MEMBER(msx_cart_konami_device::read_cart)
+READ8_MEMBER(msx_cart_konami::read_cart)
 {
 	return m_bank_base[offset >> 13][offset & 0x1fff];
 }
 
 
-WRITE8_MEMBER(msx_cart_konami_device::write_cart)
+WRITE8_MEMBER(msx_cart_konami::write_cart)
 {
 	switch (offset & 0xe000)
 	{
@@ -123,8 +120,8 @@ WRITE8_MEMBER(msx_cart_konami_device::write_cart)
 
 
 
-msx_cart_konami_scc_device::msx_cart_konami_scc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSX_CART_KONAMI_SCC, tag, owner, clock)
+msx_cart_konami_scc::msx_cart_konami_scc(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MSX_CART_KONAMI_SCC, "MSX Cartridge - KONAMI+SCC", tag, owner, clock, "msx_cart_konami_scc", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 	, m_k051649(*this, "k051649")
 	, m_bank_mask(0)
@@ -141,7 +138,7 @@ msx_cart_konami_scc_device::msx_cart_konami_scc_device(const machine_config &mco
 }
 
 
-MACHINE_CONFIG_MEMBER( msx_cart_konami_scc_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( konami_scc )
 	// This is actually incorrect. The sound output is passed back into the MSX machine where it is mixed internally and output through the system 'speaker'.
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 	MCFG_SOUND_ADD("k051649", K051649, XTAL_10_738635MHz/3/2)
@@ -149,16 +146,22 @@ MACHINE_CONFIG_MEMBER( msx_cart_konami_scc_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
-void msx_cart_konami_scc_device::device_start()
+machine_config_constructor msx_cart_konami_scc::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( konami_scc );
+}
+
+
+void msx_cart_konami_scc::device_start()
 {
 	save_item(NAME(m_selected_bank));
 	save_item(NAME(m_scc_active));
 
-	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami_scc_device::restore_banks), this));
+	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami_scc::restore_banks), this));
 }
 
 
-void msx_cart_konami_scc_device::restore_banks()
+void msx_cart_konami_scc::restore_banks()
 {
 	m_bank_base[0] = get_rom_base() + ( m_selected_bank[2] & m_bank_mask ) * 0x2000;
 	m_bank_base[1] = get_rom_base() + ( m_selected_bank[3] & m_bank_mask ) * 0x2000;
@@ -171,7 +174,7 @@ void msx_cart_konami_scc_device::restore_banks()
 }
 
 
-void msx_cart_konami_scc_device::device_reset()
+void msx_cart_konami_scc::device_reset()
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -181,7 +184,7 @@ void msx_cart_konami_scc_device::device_reset()
 }
 
 
-void msx_cart_konami_scc_device::initialize_cartridge()
+void msx_cart_konami_scc::initialize_cartridge()
 {
 	uint32_t size = get_rom_size();
 
@@ -203,7 +206,7 @@ void msx_cart_konami_scc_device::initialize_cartridge()
 }
 
 
-READ8_MEMBER(msx_cart_konami_scc_device::read_cart)
+READ8_MEMBER(msx_cart_konami_scc::read_cart)
 {
 	if ( m_scc_active && offset >= 0x9800 && offset < 0xa000 )
 	{
@@ -225,7 +228,7 @@ READ8_MEMBER(msx_cart_konami_scc_device::read_cart)
 }
 
 
-WRITE8_MEMBER(msx_cart_konami_scc_device::write_cart)
+WRITE8_MEMBER(msx_cart_konami_scc::write_cart)
 {
 	switch (offset & 0xf800)
 	{
@@ -293,8 +296,8 @@ WRITE8_MEMBER(msx_cart_konami_scc_device::write_cart)
 
 
 
-msx_cart_gamemaster2_device::msx_cart_gamemaster2_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSX_CART_GAMEMASTER2, tag, owner, clock)
+msx_cart_gamemaster2::msx_cart_gamemaster2(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MSX_CART_GAMEMASTER2, "MSX Cartridge - GAMEMASTER2", tag, owner, clock, "msx_cart_gamemaster2", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 {
 	for (auto & elem : m_selected_bank)
@@ -308,15 +311,15 @@ msx_cart_gamemaster2_device::msx_cart_gamemaster2_device(const machine_config &m
 }
 
 
-void msx_cart_gamemaster2_device::device_start()
+void msx_cart_gamemaster2::device_start()
 {
 	save_item(NAME(m_selected_bank));
 
-	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_gamemaster2_device::restore_banks), this));
+	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_gamemaster2::restore_banks), this));
 }
 
 
-void msx_cart_gamemaster2_device::setup_bank(uint8_t bank)
+void msx_cart_gamemaster2::setup_bank(uint8_t bank)
 {
 	switch (bank)
 	{
@@ -362,7 +365,7 @@ void msx_cart_gamemaster2_device::setup_bank(uint8_t bank)
 }
 
 
-void msx_cart_gamemaster2_device::restore_banks()
+void msx_cart_gamemaster2::restore_banks()
 {
 	m_bank_base[0] = get_rom_base();
 	m_bank_base[2] = get_rom_base();
@@ -372,7 +375,7 @@ void msx_cart_gamemaster2_device::restore_banks()
 }
 
 
-void msx_cart_gamemaster2_device::device_reset()
+void msx_cart_gamemaster2::device_reset()
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -381,7 +384,7 @@ void msx_cart_gamemaster2_device::device_reset()
 }
 
 
-void msx_cart_gamemaster2_device::initialize_cartridge()
+void msx_cart_gamemaster2::initialize_cartridge()
 {
 	if ( get_rom_size() != 0x20000 )
 	{
@@ -397,7 +400,7 @@ void msx_cart_gamemaster2_device::initialize_cartridge()
 }
 
 
-READ8_MEMBER(msx_cart_gamemaster2_device::read_cart)
+READ8_MEMBER(msx_cart_gamemaster2::read_cart)
 {
 	uint8_t bank = offset >> 13;
 
@@ -431,7 +434,7 @@ READ8_MEMBER(msx_cart_gamemaster2_device::read_cart)
 }
 
 
-WRITE8_MEMBER(msx_cart_gamemaster2_device::write_cart)
+WRITE8_MEMBER(msx_cart_gamemaster2::write_cart)
 {
 	switch (offset & 0xf000)
 	{
@@ -463,8 +466,8 @@ WRITE8_MEMBER(msx_cart_gamemaster2_device::write_cart)
 
 
 
-msx_cart_synthesizer_device::msx_cart_synthesizer_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSX_CART_SYNTHESIZER, tag, owner, clock)
+msx_cart_synthesizer::msx_cart_synthesizer(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MSX_CART_SYNTHESIZER, "MSX Cartridge - Synthesizer", tag, owner, clock, "msx_cart_synthesizer", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 	, m_bank_base(nullptr)
 	, m_dac(*this, "dac")
@@ -472,7 +475,7 @@ msx_cart_synthesizer_device::msx_cart_synthesizer_device(const machine_config &m
 }
 
 
-MACHINE_CONFIG_MEMBER( msx_cart_synthesizer_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( synthesizer )
 	// This is actually incorrect. The sound output is passed back into the MSX machine where it is mixed internally and output through the system 'speaker'.
 	MCFG_SPEAKER_STANDARD_MONO("speaker")
 	MCFG_SOUND_ADD("dac", DAC_8BIT_R2R, 0) MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.1) // unknown DAC
@@ -481,12 +484,18 @@ MACHINE_CONFIG_MEMBER( msx_cart_synthesizer_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
-void msx_cart_synthesizer_device::device_start()
+machine_config_constructor msx_cart_synthesizer::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( synthesizer );
+}
+
+
+void msx_cart_synthesizer::device_start()
 {
 }
 
 
-void msx_cart_synthesizer_device::initialize_cartridge()
+void msx_cart_synthesizer::initialize_cartridge()
 {
 	if ( get_rom_size() != 0x8000 )
 	{
@@ -497,7 +506,7 @@ void msx_cart_synthesizer_device::initialize_cartridge()
 }
 
 
-READ8_MEMBER(msx_cart_synthesizer_device::read_cart)
+READ8_MEMBER(msx_cart_synthesizer::read_cart)
 {
 	if (offset >= 0x4000 && offset < 0xc000 )
 	{
@@ -507,7 +516,7 @@ READ8_MEMBER(msx_cart_synthesizer_device::read_cart)
 }
 
 
-WRITE8_MEMBER(msx_cart_synthesizer_device::write_cart)
+WRITE8_MEMBER(msx_cart_synthesizer::write_cart)
 {
 	if ((offset & 0xc010) == 0x4000)
 	{
@@ -518,8 +527,8 @@ WRITE8_MEMBER(msx_cart_synthesizer_device::write_cart)
 
 
 
-msx_cart_konami_sound_device::msx_cart_konami_sound_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock)
+msx_cart_konami_sound::msx_cart_konami_sound(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source)
 	, msx_cart_interface(mconfig, *this)
 	, m_k052539(*this, "k052539")
 	, m_scc_active(false)
@@ -545,7 +554,7 @@ msx_cart_konami_sound_device::msx_cart_konami_sound_device(const machine_config 
 }
 
 
-MACHINE_CONFIG_MEMBER( msx_cart_konami_sound_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( konami_sound )
 	// This is actually incorrect. The sound output is passed back into the MSX machine where it is mixed internally and output through the system 'speaker'.
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 	MCFG_SOUND_ADD("k052539", K051649, XTAL_10_738635MHz/3/2)
@@ -553,18 +562,24 @@ MACHINE_CONFIG_MEMBER( msx_cart_konami_sound_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
-void msx_cart_konami_sound_device::device_start()
+machine_config_constructor msx_cart_konami_sound::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( konami_sound );
+}
+
+
+void msx_cart_konami_sound::device_start()
 {
 	save_item(NAME(m_selected_bank));
 	save_item(NAME(m_scc_active));
 	save_item(NAME(m_sccplus_active));
 	save_item(NAME(m_ram_enabled));
 
-	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami_sound_device::restore_banks), this));
+	machine().save().register_postload(save_prepost_delegate(FUNC(msx_cart_konami_sound::restore_banks), this));
 }
 
 
-void msx_cart_konami_sound_device::restore_banks()
+void msx_cart_konami_sound::restore_banks()
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -573,7 +588,7 @@ void msx_cart_konami_sound_device::restore_banks()
 }
 
 
-void msx_cart_konami_sound_device::setup_bank(uint8_t bank)
+void msx_cart_konami_sound::setup_bank(uint8_t bank)
 {
 	switch (bank)
 	{
@@ -600,7 +615,7 @@ void msx_cart_konami_sound_device::setup_bank(uint8_t bank)
 }
 
 
-void msx_cart_konami_sound_device::device_reset()
+void msx_cart_konami_sound::device_reset()
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -612,13 +627,13 @@ void msx_cart_konami_sound_device::device_reset()
 }
 
 
-void msx_cart_konami_sound_device::initialize_cartridge()
+void msx_cart_konami_sound::initialize_cartridge()
 {
 	restore_banks();
 }
 
 
-READ8_MEMBER(msx_cart_konami_sound_device::read_cart)
+READ8_MEMBER(msx_cart_konami_sound::read_cart)
 {
 	if ( m_scc_active && offset >= 0x9800 && offset < 0x9fe0 )
 	{
@@ -666,7 +681,7 @@ READ8_MEMBER(msx_cart_konami_sound_device::read_cart)
 }
 
 
-WRITE8_MEMBER(msx_cart_konami_sound_device::write_cart)
+WRITE8_MEMBER(msx_cart_konami_sound::write_cart)
 {
 	switch (offset & 0xe000)
 	{
@@ -808,15 +823,15 @@ WRITE8_MEMBER(msx_cart_konami_sound_device::write_cart)
 }
 
 
-msx_cart_konami_sound_snatcher_device::msx_cart_konami_sound_snatcher_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: msx_cart_konami_sound_device(mconfig, MSX_CART_SOUND_SNATCHER, tag, owner, clock)
+msx_cart_konami_sound_snatcher::msx_cart_konami_sound_snatcher(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: msx_cart_konami_sound(mconfig, MSX_CART_SOUND_SNATCHER, "MSX Cartridge - Sound Snatcher", tag, owner, clock, "msx_cart_sound_snatcher", __FILE__)
 {
 }
 
 
-void msx_cart_konami_sound_snatcher_device::initialize_cartridge()
+void msx_cart_konami_sound_snatcher::initialize_cartridge()
 {
-	msx_cart_konami_sound_device::initialize_cartridge();
+	msx_cart_konami_sound::initialize_cartridge();
 
 	if (get_ram_size() != 0x10000)
 	{
@@ -832,15 +847,15 @@ void msx_cart_konami_sound_snatcher_device::initialize_cartridge()
 }
 
 
-msx_cart_konami_sound_sdsnatcher_device::msx_cart_konami_sound_sdsnatcher_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: msx_cart_konami_sound_device(mconfig, MSX_CART_SOUND_SDSNATCHER, tag, owner, clock)
+msx_cart_konami_sound_sdsnatcher::msx_cart_konami_sound_sdsnatcher(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: msx_cart_konami_sound(mconfig, MSX_CART_SOUND_SDSNATCHER, "MSX Cartridge - Sound SD Snatcher", tag, owner, clock, "msx_cart_sound_sdsnatcher", __FILE__)
 {
 }
 
 
-void msx_cart_konami_sound_sdsnatcher_device::initialize_cartridge()
+void msx_cart_konami_sound_sdsnatcher::initialize_cartridge()
 {
-	msx_cart_konami_sound_device::initialize_cartridge();
+	msx_cart_konami_sound::initialize_cartridge();
 
 	if (get_ram_size() != 0x10000)
 	{
@@ -858,20 +873,20 @@ void msx_cart_konami_sound_sdsnatcher_device::initialize_cartridge()
 
 
 
-msx_cart_keyboard_master_device::msx_cart_keyboard_master_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSX_CART_KEYBOARD_MASTER, tag, owner, clock)
+msx_cart_keyboard_master::msx_cart_keyboard_master(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MSX_CART_KEYBOARD_MASTER, "MSX Cartridge - Keyboard Master", tag, owner, clock, "msx_cart_keyboard_master", __FILE__)
 	, msx_cart_interface(mconfig, *this)
 	, m_vlm5030(*this, "vlm5030")
 {
 }
 
 
-static ADDRESS_MAP_START( vlm_map, AS_0, 8, msx_cart_keyboard_master_device )
+static ADDRESS_MAP_START( vlm_map, AS_0, 8, msx_cart_keyboard_master )
 	AM_RANGE(0x0000, 0xffff) AM_READ(read_vlm)
 ADDRESS_MAP_END
 
 
-MACHINE_CONFIG_MEMBER( msx_cart_keyboard_master_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( msx_cart_keyboard_master )
 	// This is actually incorrect. The sound output is passed back into the MSX machine where it is mixed internally and output through the system 'speaker'.
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 	MCFG_SOUND_ADD("vlm5030", VLM5030, XTAL_3_579545MHz)
@@ -880,17 +895,23 @@ MACHINE_CONFIG_MEMBER( msx_cart_keyboard_master_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
-void msx_cart_keyboard_master_device::device_start()
+machine_config_constructor msx_cart_keyboard_master::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( msx_cart_keyboard_master );
+}
+
+
+void msx_cart_keyboard_master::device_start()
 {
 	// Install IO read/write handlers
 	address_space &space = machine().device<cpu_device>("maincpu")->space(AS_IO);
 	space.install_write_handler(0x00, 0x00, write8_delegate(FUNC(vlm5030_device::data_w), m_vlm5030.target()));
-	space.install_write_handler(0x20, 0x20, write8_delegate(FUNC(msx_cart_keyboard_master_device::io_20_w), this));
-	space.install_read_handler(0x00, 0x00, read8_delegate(FUNC(msx_cart_keyboard_master_device::io_00_r), this));
+	space.install_write_handler(0x20, 0x20, write8_delegate(FUNC(msx_cart_keyboard_master::io_20_w), this));
+	space.install_read_handler(0x00, 0x00, read8_delegate(FUNC(msx_cart_keyboard_master::io_00_r), this));
 }
 
 
-void msx_cart_keyboard_master_device::initialize_cartridge()
+void msx_cart_keyboard_master::initialize_cartridge()
 {
 	if (get_rom_size() != 0x4000)
 	{
@@ -899,7 +920,7 @@ void msx_cart_keyboard_master_device::initialize_cartridge()
 }
 
 
-READ8_MEMBER(msx_cart_keyboard_master_device::read_cart)
+READ8_MEMBER(msx_cart_keyboard_master::read_cart)
 {
 	if (offset >= 0x4000 && offset < 0x8000)
 	{
@@ -909,13 +930,13 @@ READ8_MEMBER(msx_cart_keyboard_master_device::read_cart)
 }
 
 
-READ8_MEMBER(msx_cart_keyboard_master_device::read_vlm)
+READ8_MEMBER(msx_cart_keyboard_master::read_vlm)
 {
 	return m_rom_vlm5030[offset];
 }
 
 
-WRITE8_MEMBER(msx_cart_keyboard_master_device::io_20_w)
+WRITE8_MEMBER(msx_cart_keyboard_master::io_20_w)
 {
 	m_vlm5030->rst((data & 0x01) ? 1 : 0);
 	m_vlm5030->vcu((data & 0x04) ? 1 : 0);
@@ -923,7 +944,7 @@ WRITE8_MEMBER(msx_cart_keyboard_master_device::io_20_w)
 }
 
 
-READ8_MEMBER(msx_cart_keyboard_master_device::io_00_r)
+READ8_MEMBER(msx_cart_keyboard_master::io_00_r)
 {
 	return m_vlm5030->bsy() ? 0x10 : 0x00;
 }

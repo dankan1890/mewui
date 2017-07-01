@@ -13,7 +13,6 @@
  * - wd2793, nms8255
  */
 
-#include "emu.h"
 #include "includes/msx.h"
 
 #define VERBOSE 0

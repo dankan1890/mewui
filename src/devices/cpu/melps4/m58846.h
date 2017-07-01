@@ -6,10 +6,8 @@
 
 */
 
-#ifndef MAME_CPU_MELPS4_M58846_H
-#define MAME_CPU_MELPS4_M58846_H
-
-#pragma once
+#ifndef _M58846_H_
+#define _M58846_H_
 
 #include "melps4.h"
 
@@ -41,6 +39,8 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(M58846, m58846_device)
 
-#endif // MAME_CPU_MELPS4_M58846_H
+extern const device_type M58846;
+
+
+#endif /* _M58846_H_ */

@@ -14,26 +14,17 @@
  *  probably too low.  I suspect that screen is not really
  *  512 pixels wide -- most likely 384, which would give 60Hz
  *
- *  Based on photographs of the PCB, and analysis of videos of
- *  actual gameplay, the horizontal screen really is 384 clocks.
- *
- *  However, some of the graphics, like the starfield, are
- *  clocked with the 12MHz signal.  This effectively doubles
- *  the horizontal resolution:
- *
- *                             6.048Mhz clocks     12.096Mhz clocks
- *  Horizontal Visible Area    384 (0x180)         768 (0x300)
- *  Horizontal Blanking Time   128 (0x080)         256 (0x100)
+ *  Some of the graphics, like the starfield, is clocked with the
+ *  12MHz signal, effectively doubling the horizontal resolution
  */
 
 #include "sound/discrete.h"
-#include "screen.h"
 
 
 #define STARSHP1_MASTER_CLOCK       (12096000)
 #define STARSHP1_CPU_CLOCK          (STARSHP1_MASTER_CLOCK / 16)
-#define STARSHP1_PIXEL_CLOCK        (STARSHP1_MASTER_CLOCK)
-#define STARSHP1_HTOTAL             (0x300)
+#define STARSHP1_PIXEL_CLOCK        (STARSHP1_MASTER_CLOCK / 2)
+#define STARSHP1_HTOTAL             (0x200)
 #define STARSHP1_HBEND              (0x000)
 #define STARSHP1_HBSTART            (0x200)
 #define STARSHP1_VTOTAL             (0x106)
@@ -95,7 +86,7 @@ public:
 	virtual void video_start() override;
 	DECLARE_PALETTE_INIT(starshp1);
 	uint32_t screen_update_starshp1(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_starshp1);
+	void screen_eof_starshp1(screen_device &screen, bool state);
 	INTERRUPT_GEN_MEMBER(starshp1_interrupt);
 	void set_pens();
 	void draw_starfield(bitmap_ind16 &bitmap);

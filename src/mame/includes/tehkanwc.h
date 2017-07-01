@@ -50,7 +50,6 @@ public:
 	uint8_t m_led1;
 	tilemap_t *m_bg_tilemap;
 	tilemap_t *m_fg_tilemap;
-	emu_timer *m_reset_timer;
 
 	DECLARE_WRITE8_MEMBER(sub_cpu_halt_w);
 	DECLARE_READ8_MEMBER(track_0_r);

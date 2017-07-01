@@ -8,14 +8,16 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_ATAHLE_H
-#define MAME_MACHINE_ATAHLE_H
-
 #pragma once
+
+#ifndef __ATAHLE_H__
+#define __ATAHLE_H__
 
 #include "atadev.h"
 
-class ata_hle_device : public device_t, public device_ata_interface
+class ata_hle_device : public device_t,
+	public ata_device_interface,
+	public device_slot_card_interface
 {
 public:
 	virtual uint16_t read_dma() override;
@@ -31,7 +33,7 @@ public:
 	virtual DECLARE_WRITE_LINE_MEMBER(write_pdiag) override;
 
 protected:
-	ata_hle_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	ata_hle_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -216,4 +218,4 @@ private:
 	emu_timer *m_buffer_empty_timer;
 };
 
-#endif // MAME_MACHINE_ATAHLE_H
+#endif

@@ -13,18 +13,12 @@
  *
  */
 
-#include "emu.h"
-
 #define VERBOSE 0
 
 #include "includes/apollo.h"
-
 #include "rendlay.h"
-#include "screen.h"
-
 #include "apollo.lh"
 #include "apollo_15i.lh"
-
 
 /***************************************************************************
  TYPE DEFINITIONS
@@ -1712,7 +1706,7 @@ void apollo_graphics_15i::register_vblank_callback()
  MACHINE DRIVERS
  ***************************************************************************/
 
-MACHINE_CONFIG_START( apollo_graphics )
+MACHINE_CONFIG_FRAGMENT( apollo_graphics )
 	MCFG_DEFAULT_LAYOUT( layout_apollo_15i )
 	MCFG_SCREEN_ADD(VIDEO_SCREEN_TAG, RASTER)
 	MCFG_SCREEN_VIDEO_ATTRIBUTES(VIDEO_UPDATE_AFTER_VBLANK)
@@ -1720,17 +1714,17 @@ MACHINE_CONFIG_START( apollo_graphics )
 	MCFG_SCREEN_UPDATE_DEVICE(APOLLO_SCREEN_TAG, apollo_graphics_15i, screen_update)
 MACHINE_CONFIG_END
 
-DEFINE_DEVICE_TYPE(APOLLO_GRAPHICS, apollo_graphics_15i, "apollo_graphics_15i", "Apollo Screen")
+const device_type APOLLO_GRAPHICS = &device_creator<apollo_graphics_15i> ;
 
 apollo_graphics_15i::apollo_graphics_15i(const machine_config &mconfig,const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, APOLLO_GRAPHICS, tag, owner, clock),
+	device_t(mconfig, APOLLO_GRAPHICS, "Apollo Screen", tag, owner, clock,"apollo_graphics_15i", __FILE__),
 	m_lut_fifo(nullptr),
 	m_bt458(nullptr)
 {
 }
 
-apollo_graphics_15i::apollo_graphics_15i(const machine_config &mconfig,const char *tag, device_t *owner, uint32_t clock, device_type type) :
-	device_t(mconfig, type, tag, owner, clock),
+apollo_graphics_15i::apollo_graphics_15i(const machine_config &mconfig,const char *tag, device_t *owner, uint32_t clock, device_type type,const char *name, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 	m_lut_fifo(nullptr),
 	m_bt458(nullptr)
 {
@@ -1740,6 +1734,16 @@ apollo_graphics_15i::~apollo_graphics_15i()
 {
 	if (m_lut_fifo) global_free(m_lut_fifo);
 	if (m_bt458) global_free(m_bt458);
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void apollo_graphics_15i::device_config_complete()
+{
 }
 
 //-------------------------------------------------
@@ -1882,7 +1886,7 @@ void apollo_graphics_15i::device_reset()
 
 //-------------------------------------------------
 
-MACHINE_CONFIG_START( apollo_mono19i )
+MACHINE_CONFIG_FRAGMENT( apollo_mono19i )
 	MCFG_DEFAULT_LAYOUT( layout_apollo )
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 	MCFG_SCREEN_ADD(VIDEO_SCREEN_TAG, RASTER)
@@ -1891,10 +1895,22 @@ MACHINE_CONFIG_START( apollo_mono19i )
 	MCFG_SCREEN_UPDATE_DEVICE(APOLLO_SCREEN_TAG, apollo_graphics_19i, screen_update)
 	MACHINE_CONFIG_END
 
-DEFINE_DEVICE_TYPE(APOLLO_MONO19I, apollo_graphics_19i, "apollo_graphics_19i", "Apollo 19\" Monochrome Screen")
+const device_type APOLLO_MONO19I = &device_creator<apollo_graphics_19i> ;
 
-apollo_graphics_19i::apollo_graphics_19i(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	apollo_graphics_15i(mconfig, tag, owner, clock, APOLLO_MONO19I)
+apollo_graphics_19i::apollo_graphics_19i(const machine_config &mconfig,
+		const char *tag, device_t *owner, uint32_t clock) :
+	apollo_graphics_15i(mconfig, tag, owner, clock, APOLLO_MONO19I,
+			"Apollo 19\" Monochrome Screen", "apollo_graphics_19i", __FILE__)
+{
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void apollo_graphics_19i::device_config_complete()
 {
 }
 

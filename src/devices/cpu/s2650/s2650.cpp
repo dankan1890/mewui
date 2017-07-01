@@ -18,25 +18,24 @@
 #include "s2650cpu.h"
 
 /* define this to have some interrupt information logged */
-//#define VERBOSE 1
-#include "logmacro.h"
+#define VERBOSE 0
+
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
 /* define this to expand all EA calculations inline */
 #define INLINE_EA   1
 
 
-DEFINE_DEVICE_TYPE(S2650, s2650_device, "s2650", "S2650")
+const device_type S2650 = &device_creator<s2650_device>;
 
 
 s2650_device::s2650_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, S2650, tag, owner, clock)
+	: cpu_device(mconfig, S2650, "S2650", tag, owner, clock, "s2650", __FILE__ )
 	, m_program_config("program", ENDIANNESS_LITTLE, 8, 15)
-	, m_io_config("io", ENDIANNESS_LITTLE, 8, 8)
-	, m_data_config("data", ENDIANNESS_LITTLE, 8, 1)
-	, m_sense_handler(*this)
+	, m_io_config("io", ENDIANNESS_LITTLE, 8, 9)
 	, m_flag_handler(*this), m_intack_handler(*this)
 	, m_ppc(0), m_page(0), m_iar(0), m_ea(0), m_psl(0), m_psu(0), m_r(0)
-	, m_halt(0), m_ir(0), m_irq_state(0), m_icount(0), m_direct(nullptr)
+	, m_halt(0), m_ir(0), m_irq_state(0), m_icount(0), m_program(nullptr), m_direct(nullptr), m_io(nullptr)
 	, m_debugger_temp(0)
 {
 	memset(m_reg, 0x00, sizeof(m_reg));
@@ -47,26 +46,6 @@ offs_t s2650_device::disasm_disassemble(std::ostream &stream, offs_t pc, const u
 {
 	extern CPU_DISASSEMBLE( s2650 );
 	return CPU_DISASSEMBLE_NAME(s2650)(this, stream, pc, oprom, opram, options);
-}
-
-
-const address_space_config *s2650_device::memory_space_config(address_spacenum spacenum) const
-{
-	switch (spacenum)
-	{
-		// Memory-mapped: M/~IO=1
-		case AS_PROGRAM: return &m_program_config;
-
-		// Extended I/O: M/~IO=0 ADR13(E)=1 ADR14=Don't Care
-		case AS_IO: return &m_io_config;
-
-		// Non-extended I/O: M/~IO=0 ADR13(~NE)=0 ADR14=D/~C
-		// "The D/~C line can be used as a 1-bit device address in simple systems."
-		// -- Signetics 2650 Microprocessor databook, page 41
-		case AS_DATA: return &m_data_config;
-
-		default: return nullptr;
-	}
 }
 
 
@@ -167,7 +146,7 @@ static const int S2650_relative[0x100] =
  * RDMEM
  * read memory byte from addr
  ***************************************************************/
-#define RDMEM(addr) space(AS_PROGRAM).read_byte(addr)
+#define RDMEM(addr) m_program->read_byte(addr)
 
 inline void s2650_device::set_psu(uint8_t new_val)
 {
@@ -176,19 +155,6 @@ inline void s2650_device::set_psu(uint8_t new_val)
 	m_psu = new_val;
 	if ((new_val ^ old) & FO)
 		m_flag_handler((new_val & FO) ? 1 : 0);
-}
-
-inline uint8_t s2650_device::get_psu()
-{
-	if (!m_sense_handler.isnull())
-	{
-		if (m_sense_handler())
-			m_psu |= SI;
-		else
-			m_psu &= ~SI;
-	}
-
-	return m_psu;
 }
 
 inline uint8_t s2650_device::get_sp()
@@ -231,7 +197,7 @@ inline int s2650_device::check_irq_line()
 				if (!(++addr & PMSK)) addr -= PLEN;
 				m_ea = (m_ea + RDMEM(addr)) & AMSK;
 			}
-			LOG("S2650 interrupt to $%04x\n", m_ea);
+			LOG(("S2650 interrupt to $%04x\n", m_ea));
 			set_sp(get_sp() + 1);
 			set_psu(m_psu | II);
 			m_ras[get_sp()] = m_page + m_iar;
@@ -563,7 +529,7 @@ inline uint8_t s2650_device::ARG()
  * Store source register to memory addr (CC unchanged)
  ***************************************************************/
 #define M_STR(address,source)                                   \
-	space(AS_PROGRAM).write_byte(address, source)
+	m_program->write_byte(address, source)
 
 /***************************************************************
  * M_AND
@@ -708,7 +674,7 @@ inline uint8_t s2650_device::ARG()
  ***************************************************************/
 #define M_SPSU()                                                \
 {                                                               \
-	R0 = get_psu() & ~PSU34;                                    \
+	R0 = ((m_psu & ~PSU34) | (m_io->read_byte(S2650_SENSE_PORT) ? SI : 0)); \
 	SET_CC(R0);                                                 \
 }
 
@@ -728,7 +694,7 @@ inline uint8_t s2650_device::ARG()
  ***************************************************************/
 #define M_CPSU()                                                \
 {                                                               \
-	uint8_t cpsu = ARG() & ~SI;                                 \
+	uint8_t cpsu = ARG();                                   \
 	set_psu(m_psu & ~cpsu);                       \
 	m_icount -= check_irq_line();                   \
 }
@@ -777,7 +743,7 @@ inline uint8_t s2650_device::ARG()
 #define M_TPSU()                                                \
 {                                                               \
 	uint8_t tpsu = ARG();                                       \
-	uint8_t rpsu = get_psu();                                   \
+	uint8_t rpsu = (m_psu | (m_io->read_byte(S2650_SENSE_PORT) ? SI : 0)); \
 	m_psl &= ~CC;                                             \
 	if( (rpsu & tpsu) != tpsu )                                 \
 		m_psl |= 0x80;                                            \
@@ -822,11 +788,12 @@ static void BRA_EA(void) _BRA_EA()
 
 void s2650_device::device_start()
 {
-	m_sense_handler.resolve();
 	m_flag_handler.resolve_safe();
 	m_intack_handler.resolve_safe();
 
-	m_direct = &space(AS_PROGRAM).direct();
+	m_program = &space(AS_PROGRAM);
+	m_direct = &m_program->direct();
+	m_io = &space(AS_IO);
 
 	save_item(NAME(m_ppc));
 	save_item(NAME(m_page));
@@ -855,7 +822,7 @@ void s2650_device::device_start()
 	state_add( S2650_FO,   "FO", m_debugger_temp).mask(0x01).callimport().callexport().formatstr("%01X");
 
 	state_add( STATE_GENPC, "GENPC", m_debugger_temp).callexport().noshow();
-	state_add( STATE_GENPCBASE, "CURPC", m_ppc).noshow();
+	state_add( STATE_GENPCBASE, "CURPC", m_debugger_temp).callexport().noshow();
 	state_add( STATE_GENFLAGS, "GENFLAGS", m_debugger_temp).formatstr("%16s").noshow();
 
 	m_icountptr = &m_icount;
@@ -947,6 +914,9 @@ void s2650_device::device_reset()
 	memset(m_reg, 0, sizeof(m_reg));
 	memset(m_ras, 0, sizeof(m_ras));
 
+	m_program = &space(AS_PROGRAM);
+	m_direct = &m_program->direct();
+	m_io = &space(AS_IO);
 	m_psl = COM | WC;
 	/* force write */
 	m_psu = 0xff;
@@ -1126,7 +1096,7 @@ void s2650_device::execute_run()
 			case 0x32:      /* REDC,2 */
 			case 0x33:      /* REDC,3 */
 				m_icount -= 6;
-				m_reg[m_r] = space(AS_DATA).read_byte(S2650_CTRL_PORT);
+				m_reg[m_r] = m_io->read_byte(S2650_CTRL_PORT);
 				SET_CC( m_reg[m_r] );
 				break;
 
@@ -1216,7 +1186,7 @@ void s2650_device::execute_run()
 			case 0x56:      /* REDE,2 v */
 			case 0x57:      /* REDE,3 v */
 				m_icount -= 9;
-				m_reg[m_r] = space(AS_IO).read_byte(ARG());
+				m_reg[m_r] = m_io->read_byte( ARG() );
 				SET_CC(m_reg[m_r]);
 				break;
 
@@ -1275,7 +1245,7 @@ void s2650_device::execute_run()
 			case 0x72:      /* REDD,2 */
 			case 0x73:      /* REDD,3 */
 				m_icount -= 6;
-				m_reg[m_r] = space(AS_DATA).read_byte(S2650_DATA_PORT);
+				m_reg[m_r] = m_io->read_byte(S2650_DATA_PORT);
 				SET_CC(m_reg[m_r]);
 				break;
 
@@ -1352,7 +1322,7 @@ void s2650_device::execute_run()
 				break;
 			case 0x92:      /* LPSU */
 				m_icount -= 6;
-				set_psu((R0 & ~PSU34 & ~SI) | (m_psu & SI));
+				set_psu((R0 & ~PSU34) & ~SI);
 				break;
 			case 0x93:      /* LPSL */
 				m_icount -= 6;
@@ -1431,7 +1401,7 @@ void s2650_device::execute_run()
 			case 0xb2:      /* WRTC,2 */
 			case 0xb3:      /* WRTC,3 */
 				m_icount -= 6;
-				space(AS_DATA).write_byte(S2650_CTRL_PORT,m_reg[m_r]);
+				m_io->write_byte(S2650_CTRL_PORT,m_reg[m_r]);
 				break;
 
 			case 0xb4:      /* TPSU */
@@ -1517,7 +1487,7 @@ void s2650_device::execute_run()
 			case 0xd6:      /* WRTE,2 v */
 			case 0xd7:      /* WRTE,3 v */
 				m_icount -= 9;
-				space(AS_IO).write_byte( ARG(), m_reg[m_r] );
+				m_io->write_byte( ARG(), m_reg[m_r] );
 				break;
 
 			case 0xd8:      /* BIRR,0 (*)a */
@@ -1575,7 +1545,7 @@ void s2650_device::execute_run()
 			case 0xf2:      /* WRTD,2 */
 			case 0xf3:      /* WRTD,3 */
 				m_icount -= 6;
-				space(AS_DATA).write_byte(S2650_DATA_PORT, m_reg[m_r]);
+				m_io->write_byte(S2650_DATA_PORT, m_reg[m_r]);
 				break;
 
 			case 0xf4:      /* TMI,0  v */

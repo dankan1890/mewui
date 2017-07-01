@@ -17,17 +17,14 @@
 */
 
 #include "emu.h"
-#include "audio/redbaron.h"
+#include "includes/bzone.h"
 #include "sound/pokey.h"
-
-#include <algorithm>
-
 
 #define OUTPUT_RATE     (48000)
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(REDBARON, redbaron_sound_device, "redbaron_custom", "Red Baron Audio Custom")
+const device_type REDBARON = &device_creator<redbaron_sound_device>;
 
 
 //**************************************************************************
@@ -39,7 +36,7 @@ DEFINE_DEVICE_TYPE(REDBARON, redbaron_sound_device, "redbaron_custom", "Red Baro
 //-------------------------------------------------
 
 redbaron_sound_device::redbaron_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, REDBARON, tag, owner, clock),
+	: device_t(mconfig, REDBARON, "Red Baron Audio Custom", tag, owner, clock, "redbaron_custom", __FILE__),
 		device_sound_interface(mconfig, *this),
 		m_vol_lookup(nullptr),
 		m_channel(nullptr),
@@ -56,7 +53,7 @@ redbaron_sound_device::redbaron_sound_device(const machine_config &mconfig, cons
 		m_squeal_on_counter(0),
 		m_squeal_out(0)
 {
-	std::fill(std::begin(m_vol_crash), std::end(m_vol_crash), 0);
+		memset(m_vol_crash, 0, sizeof(int16_t)*16);
 }
 
 

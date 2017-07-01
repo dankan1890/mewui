@@ -70,13 +70,10 @@ TO DO :
 */
 
 #include "emu.h"
-#include "includes/stlforce.h"
-
 #include "cpu/m68000/m68000.h"
 #include "machine/eepromser.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/stlforce.h"
 
 
 WRITE16_MEMBER(stlforce_state::eeprom_w)
@@ -188,7 +185,7 @@ static GFXDECODE_START( stlforce )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( stlforce )
+static MACHINE_CONFIG_START( stlforce, stlforce_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 15000000)
@@ -213,7 +210,7 @@ static MACHINE_CONFIG_START( stlforce )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_OKIM6295_ADD("oki", XTAL_32MHz/32 , PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki", 937500 , OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 

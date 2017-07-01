@@ -1,10 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Raphael Nabet, Michael Zapf
-#ifndef MAME_MACHINE_STRATA_H
-#define MAME_MACHINE_STRATA_H
-
-#pragma once
-
+/*
+    strata.h: header file for strata.c
+*/
 
 class strataflash_device : public device_t, public device_nvram_interface
 {
@@ -21,6 +19,8 @@ public:
 
 protected:
 	// device-level overrides
+	void device_config_complete() override;
+
 	void device_start() override;
 
 	void nvram_default() override;
@@ -69,9 +69,7 @@ private:
 	uint8_t*      m_prot_regs;        // protection registers
 };
 
-DECLARE_DEVICE_TYPE(STRATAFLASH, strataflash_device)
+extern const device_type STRATAFLASH;
 
 #define MCFG_STRATAFLASH_ADD(_tag) \
-		MCFG_DEVICE_ADD(_tag, STRATAFLASH, 0)
-
-#endif // MAME_MACHINE_STRATA_H
+	MCFG_DEVICE_ADD(_tag, STRATAFLASH, 0)

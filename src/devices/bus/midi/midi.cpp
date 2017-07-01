@@ -1,12 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:R. Belmont
-#include "emu.h"
 #include "midi.h"
 
-DEFINE_DEVICE_TYPE(MIDI_PORT, midi_port_device, "midi_port", "MIDI port")
+const device_type MIDI_PORT = &device_creator<midi_port_device>;
 
 midi_port_device::midi_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MIDI_PORT, tag, owner, clock),
+	: device_t(mconfig, MIDI_PORT, "Midi Port", tag, owner, clock, "midi_port", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_rxd(0),
 	m_rxd_handler(*this),

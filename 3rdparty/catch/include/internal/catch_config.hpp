@@ -74,7 +74,6 @@ namespace Catch {
 
         std::vector<std::string> reporterNames;
         std::vector<std::string> testsOrTags;
-        std::vector<std::string> sectionsToRun;
     };
 
 
@@ -116,8 +115,7 @@ namespace Catch {
 
         bool shouldDebugBreak() const { return m_data.shouldDebugBreak; }
 
-        std::vector<std::string> const& getReporterNames() const { return m_data.reporterNames; }
-        std::vector<std::string> const& getSectionsToRun() const CATCH_OVERRIDE { return m_data.sectionsToRun; }
+        std::vector<std::string> getReporterNames() const { return m_data.reporterNames; }
 
         int abortAfter() const { return m_data.abortAfter; }
 

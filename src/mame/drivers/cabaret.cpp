@@ -26,8 +26,6 @@ are the same of IGS.  AMT may be previous IGS name.
 #include "emu.h"
 #include "cpu/z180/z180.h"
 #include "sound/ym2413.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class cabaret_state : public driver_device
@@ -341,7 +339,7 @@ INTERRUPT_GEN_MEMBER(cabaret_state::cabaret_interrupt)
 		device.execute().set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static MACHINE_CONFIG_START( cabaret )
+static MACHINE_CONFIG_START( cabaret, cabaret_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z180, XTAL_12MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(cabaret_map)

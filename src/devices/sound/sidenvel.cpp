@@ -33,12 +33,11 @@
 /*========================================================================= */
 
 #include "emu.h"
-#include "sidenvel.h"
-
-#include "sid.h"
-#include "side6581.h"
 #include "sidvoice.h"
+#include "sid.h"
 
+#include "side6581.h"
+#include "sidenvel.h"
 
 const uint8_t masterVolumeLevels[16] =
 {

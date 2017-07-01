@@ -284,7 +284,7 @@ uint32_t ssrj_state::screen_update(screen_device &screen, bitmap_ind16 &bitmap, 
 	return 0;
 }
 
-WRITE_LINE_MEMBER(ssrj_state::screen_vblank)
+void ssrj_state::screen_eof(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

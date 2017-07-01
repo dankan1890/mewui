@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_BUS_SCSI_D9060HD_H
-#define MAME_BUS_SCSI_D9060HD_H
-
 #pragma once
+
+#ifndef __D9060HD__
+#define __D9060HD__
 
 #include "scsihd.h"
 
@@ -17,6 +17,6 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(D9060HD, d9060hd_device)
+extern const device_type D9060HD;
 
-#endif // MAME_BUS_SCSI_D9060HD_H
+#endif

@@ -158,6 +158,7 @@ void menu_control_device_image::load_software_part()
 
 void menu_control_device_image::hook_load(const std::string &name)
 {
+	if (m_image.is_reset_on_load()) m_image.set_init_phase();
 	m_image.load(name);
 	stack_pop();
 }
@@ -222,7 +223,7 @@ void menu_control_device_image::handle()
 		}
 		else
 		{
-			m_swp = m_swi->find_part("", m_image.image_interface());
+			m_swp = &m_swi->parts().front();
 			load_software_part();
 		}
 		break;

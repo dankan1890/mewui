@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "ecbbus.h"
 
 
@@ -15,7 +14,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ECBBUS_SLOT, ecbbus_slot_device, "ecbbus_slot", "ECB bus slot")
+const device_type ECBBUS_SLOT = &device_creator<ecbbus_slot_device>;
 
 
 
@@ -28,9 +27,8 @@ DEFINE_DEVICE_TYPE(ECBBUS_SLOT, ecbbus_slot_device, "ecbbus_slot", "ECB bus slot
 //-------------------------------------------------
 
 ecbbus_slot_device::ecbbus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ECBBUS_SLOT, tag, owner, clock),
-	device_slot_interface(mconfig, *this),
-	m_bus_tag(nullptr), m_bus_num(0), m_bus(nullptr)
+		device_t(mconfig, ECBBUS_SLOT, "ECB bus slot", tag, owner, clock, "ecbbus_slot", __FILE__),
+		device_slot_interface(mconfig, *this), m_bus_tag(nullptr), m_bus_num(0), m_bus(nullptr)
 {
 }
 
@@ -64,7 +62,7 @@ void ecbbus_slot_device::device_start()
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ECBBUS, ecbbus_device, "ecbbus", "ECB bus")
+const device_type ECBBUS = &device_creator<ecbbus_device>;
 
 
 
@@ -93,11 +91,12 @@ device_ecbbus_card_interface::device_ecbbus_card_interface(const machine_config 
 //-------------------------------------------------
 
 ecbbus_device::ecbbus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ECBBUS, tag, owner, clock),
+	device_t(mconfig, ECBBUS, "ECB bus", tag, owner, clock, "ecbbus", __FILE__),
 	m_write_irq(*this),
 	m_write_nmi(*this)
 {
-	std::fill(std::begin(m_ecbbus_device), std::end(m_ecbbus_device), nullptr);
+	for (auto & elem : m_ecbbus_device)
+		elem = nullptr;
 }
 
 

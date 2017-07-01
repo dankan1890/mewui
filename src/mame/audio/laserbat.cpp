@@ -7,7 +7,6 @@
     audio emulation by Vas Crabb
 */
 
-#include "emu.h"
 #include "includes/laserbat.h"
 
 

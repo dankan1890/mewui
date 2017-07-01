@@ -152,25 +152,30 @@ WRITE16_MEMBER(rpunch_state::rpunch_scrollreg_w)
 }
 
 
-WRITE8_MEMBER(rpunch_state::rpunch_gga_w)
+WRITE16_MEMBER(rpunch_state::rpunch_crtc_data_w)
 {
-	m_gga->write(space, offset >> 4, data & 0xff);
+	if (ACCESSING_BITS_0_7)
+	{
+		data &= 0xff;
+		switch (m_crtc_register)
+		{
+			/* only register we know about.... */
+			case 0x0b:
+				m_crtc_timer->adjust(m_screen->time_until_vblank_start(), (data == 0xc0) ? 2 : 1);
+				break;
+
+			default:
+				logerror("CRTC register %02X = %02X\n", m_crtc_register, data & 0xff);
+				break;
+		}
+	}
 }
 
 
-WRITE8_MEMBER(rpunch_state::rpunch_gga_data_w)
+WRITE16_MEMBER(rpunch_state::rpunch_crtc_register_w)
 {
-	switch (offset)
-	{
-		/* only register we know about.... */
-		case 0x0b:
-			m_crtc_timer->adjust(m_screen->time_until_vblank_start(), (data == 0xc0) ? 2 : 1);
-			break;
-
-		default:
-			logerror("CRTC register %02X = %02X\n", offset, data);
-			break;
-	}
+	if (ACCESSING_BITS_0_7)
+		m_crtc_register = data & 0xff;
 }
 
 

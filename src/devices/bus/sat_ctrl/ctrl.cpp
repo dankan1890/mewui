@@ -6,9 +6,7 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "ctrl.h"
-
 // slot devices
 #include "analog.h"
 #include "joy.h"
@@ -25,7 +23,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SATURN_CONTROL_PORT, saturn_control_port_device, "saturn_control_port", "Sega Saturn controller port")
+const device_type SATURN_CONTROL_PORT = &device_creator<saturn_control_port_device>;
 
 
 //**************************************************************************
@@ -61,8 +59,8 @@ device_saturn_control_port_interface::~device_saturn_control_port_interface()
 //-------------------------------------------------
 
 saturn_control_port_device::saturn_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SATURN_CONTROL_PORT, tag, owner, clock),
-	device_slot_interface(mconfig, *this), m_device(nullptr)
+						device_t(mconfig, SATURN_CONTROL_PORT, "Sega Saturn control port", tag, owner, clock, "saturn_control_port", __FILE__),
+						device_slot_interface(mconfig, *this), m_device(nullptr)
 {
 }
 

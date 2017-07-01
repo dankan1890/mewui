@@ -3,7 +3,6 @@
 
 // MELPS 4 opcode handlers
 
-#include "emu.h"
 #include "melps4.h"
 
 

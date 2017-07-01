@@ -11,13 +11,8 @@
 #ifndef MAME_EMU_DEBUG_DVMEMORY_H
 #define MAME_EMU_DEBUG_DVMEMORY_H
 
-#pragma once
-
-#include "debugvw.h"
-
 #include "softfloat/mamesf.h"
 #include "softfloat/softfloat.h"
-
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -49,6 +44,7 @@ private:
 // debug view for memory
 class debug_view_memory : public debug_view
 {
+	friend resource_pool_object<debug_view_memory>::~resource_pool_object();
 	friend class debug_view_manager;
 
 	// construction/destruction
@@ -65,7 +61,7 @@ public:
 	offs_t addressAtCursorPosition(const debug_view_xy& pos) { return get_cursor_pos(pos).m_address; }
 
 	// setters
-	void set_expression(const std::string &expression);
+	void set_expression(const char *expression);
 	void set_chunks_per_row(u32 rowchunks);
 	void set_data_format(int format); // 1-8 current values 9 32bit floating point
 	void set_reverse(bool reverse);
@@ -133,7 +129,8 @@ private:
 	static const memory_view_pos s_memory_pos_table[12]; // table for rendering at different data formats
 
 	// constants
-	static constexpr int MEM_MAX_LINE_WIDTH = 1024;
+	static const int MEM_MAX_LINE_WIDTH = 1024;
 };
+
 
 #endif // MAME_EMU_DEBUG_DVMEMORY_H

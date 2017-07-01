@@ -1,9 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:pSXAuthor, R. Belmont
-#ifndef MAME_SOUND_SPU_H
-#define MAME_SOUND_SPU_H
-
 #pragma once
+
+#ifndef __SPU_H__
+#define __SPU_H__
+
+#include "spureverb.h"
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
@@ -18,10 +20,12 @@
 	MCFG_PSX_SPU_WRITE_HANDLER(DEVWRITE16(_tag, spu_device, write)) \
 	MCFG_DEVICE_ADD(_tag, SPU, _clock) \
 	MCFG_SPU_IRQ_HANDLER(DEVWRITELINE("maincpu:irq", psxirq_device, intin9)) \
-	MCFG_PSX_DMA_CHANNEL_READ( "maincpu", 4, psxdma_device::read_delegate(&spu_device::dma_read, (spu_device *) device ) ) \
-	MCFG_PSX_DMA_CHANNEL_WRITE( "maincpu", 4, psxdma_device::write_delegate(&spu_device::dma_write, (spu_device *) device ) )
+	MCFG_PSX_DMA_CHANNEL_READ( "maincpu", 4, psx_dma_read_delegate(&spu_device::dma_read, (spu_device *) device ) ) \
+	MCFG_PSX_DMA_CHANNEL_WRITE( "maincpu", 4, psx_dma_write_delegate(&spu_device::dma_write, (spu_device *) device ) )
 
 // ======================> spu_device
+
+const unsigned int spu_base_frequency_hz=44100;
 
 class stream_buffer;
 
@@ -41,9 +45,6 @@ class spu_device : public device_t, public device_sound_interface
 	};
 
 protected:
-	static constexpr unsigned int spu_base_frequency_hz=44100;
-	class reverb;
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -51,15 +52,6 @@ protected:
 	virtual void device_stop() override;
 
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
-
-	static constexpr float ms_to_rate(float ms) { return 1.0f / (ms * (float(spu_base_frequency_hz) / 1000.0f)); }
-	static constexpr float s_to_rate(float s) { return ms_to_rate(s * 1000.0f); }
-	static const float linear_rate[];
-	static const float pos_exp_rate[];
-	static const float neg_exp_rate[];
-	static const float decay_rate[];
-	static const float linear_release_rate[];
-	static const float exp_release_rate[];
 
 	// internal state
 	devcb_write_line m_irq_handler;
@@ -145,15 +137,16 @@ protected:
 
 	#pragma pack(pop,spureg)
 
-	struct reverb_params;
-	struct reverb_preset;
+	struct reverb_preset
+	{
+		const char *name;
+		unsigned short param[32];
+		reverb_params cfg;
+	};
 
 	reverb_preset *cur_reverb_preset;
 
-	sound_stream *m_stream;
-
 	static reverb_preset reverb_presets[];
-	static reverb_params *spu_reverb_cfg;
 
 	void key_on(const int v);
 	void key_off(const int v);
@@ -231,7 +224,7 @@ public:
 	spu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_irq_handler(device_t &device, Object &&cb) { return downcast<spu_device &>(device).m_irq_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_handler(device_t &device, _Object object) { return downcast<spu_device &>(device).m_irq_handler.set_callback(object); }
 
 	void dma_read( uint32_t *ram, uint32_t n_address, int32_t n_size );
 	void dma_write( uint32_t *ram, uint32_t n_address, int32_t n_size );
@@ -245,11 +238,15 @@ public:
 	void flush_xa(const unsigned int sector=0);
 	void flush_cdda(const unsigned int sector=0);
 
+	sound_stream *m_stream;
+
 	DECLARE_READ16_MEMBER( read );
 	DECLARE_WRITE16_MEMBER( write );
 };
 
-// device type definition
-DECLARE_DEVICE_TYPE(SPU, spu_device)
+extern reverb_params *spu_reverb_cfg;
 
-#endif // MAME_SOUND_SPU_H
+// device type definition
+extern const device_type SPU;
+
+#endif

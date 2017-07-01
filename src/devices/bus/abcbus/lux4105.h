@@ -6,12 +6,13 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_ABCBUS_LUX4105_H
-#define MAME_BUS_ABCBUS_LUX4105_H
-
 #pragma once
 
+#ifndef __LUXOR_4105__
+#define __LUXOR_4105__
 
+
+#include "emu.h"
 #include "abcbus.h"
 #include "bus/scsi/scsi.h"
 
@@ -38,14 +39,20 @@ public:
 	// construction/destruction
 	luxor_4105_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+
+	// not really public
+	DECLARE_WRITE_LINE_MEMBER( write_sasi_bsy );
+	DECLARE_WRITE_LINE_MEMBER( write_sasi_req );
+	DECLARE_WRITE_LINE_MEMBER( write_sasi_cd );
+	DECLARE_WRITE_LINE_MEMBER( write_sasi_io );
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
 
 	// device_abcbus_interface overrides
 	virtual void abcbus_cs(uint8_t data) override;
@@ -60,12 +67,7 @@ protected:
 private:
 	inline void update_trrq_int();
 
-	DECLARE_WRITE_LINE_MEMBER( write_sasi_bsy );
-	DECLARE_WRITE_LINE_MEMBER( write_sasi_req );
-	DECLARE_WRITE_LINE_MEMBER( write_sasi_cd );
-	DECLARE_WRITE_LINE_MEMBER( write_sasi_io );
-
-	required_device<scsi_port_device> m_sasibus;
+	required_device<SCSI_PORT_DEVICE> m_sasibus;
 	required_device<output_latch_device> m_sasi_data_out;
 	required_device<input_buffer_device> m_sasi_data_in;
 	required_ioport m_1e;
@@ -83,7 +85,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(LUXOR_4105, luxor_4105_device)
+extern const device_type LUXOR_4105;
 
 
-#endif // MAME_BUS_ABCBUS_LUX4105_H
+
+#endif

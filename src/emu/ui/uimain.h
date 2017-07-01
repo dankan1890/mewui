@@ -2,17 +2,18 @@
 // copyright-holders:Nicola Salmoria, Aaron Giles, Nathan Woods
 /***************************************************************************
 
-    ui/uimain.h
+    ui/menu.h
 
     Internal MAME menus for the user interface.
 
 ***************************************************************************/
 
-#ifndef MAME_EMU_UI_UIMAIN_H
-#define MAME_EMU_UI_UIMAIN_H
-
 #pragma once
 
+#ifndef __BASIC_UI_H__
+#define __BASIC_UI_H__
+
+#include "emu.h"
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -65,4 +66,4 @@ inline void ui_manager::popup_time(int seconds, Format &&fmt, Params &&... args)
 	popup_time_string(seconds, string_format(std::forward<Format>(fmt), std::forward<Params>(args)...));
 }
 
-#endif // MAME_EMU_UI_UIMAIN_H
+#endif  // __BASIC_UI_H__

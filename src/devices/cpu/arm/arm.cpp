@@ -18,8 +18,8 @@
 */
 
 #include "emu.h"
-#include "arm.h"
 #include "debugger.h"
+#include "arm.h"
 
 CPU_DISASSEMBLE( arm );
 CPU_DISASSEMBLE( arm_be );
@@ -224,28 +224,32 @@ enum
 
 /***************************************************************************/
 
-DEFINE_DEVICE_TYPE(ARM,    arm_cpu_device,    "arm_le", "ARM (little)")
-DEFINE_DEVICE_TYPE(ARM_BE, arm_be_cpu_device, "arm_be", "ARM (big)")
+const device_type ARM = &device_creator<arm_cpu_device>;
+const device_type ARM_BE = &device_creator<arm_be_cpu_device>;
 
 
 arm_cpu_device::arm_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: arm_cpu_device(mconfig, ARM, tag, owner, clock, ENDIANNESS_LITTLE)
+	: cpu_device(mconfig, ARM, "ARM", tag, owner, clock, "arm", __FILE__)
+	, m_program_config("program", ENDIANNESS_LITTLE, 32, 26, 0)
+	, m_endian(ENDIANNESS_LITTLE)
+	, m_copro_type(ARM_COPRO_TYPE_UNKNOWN_CP15)
 {
+	memset(m_sArmRegister, 0x00, sizeof(m_sArmRegister));
 }
 
 
-arm_cpu_device::arm_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, endianness_t endianness)
-	: cpu_device(mconfig, type, tag, owner, clock)
+arm_cpu_device::arm_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, endianness_t endianness)
+	: cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
 	, m_program_config("program", endianness, 32, 26, 0)
 	, m_endian(endianness)
-	, m_copro_type(copro_type::UNKNOWN_CP15)
+	, m_copro_type(ARM_COPRO_TYPE_UNKNOWN_CP15)
 {
-	std::fill(std::begin(m_sArmRegister), std::end(m_sArmRegister), 0);
+	memset(m_sArmRegister, 0x00, sizeof(m_sArmRegister));
 }
 
 
 arm_be_cpu_device::arm_be_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: arm_cpu_device(mconfig, ARM_BE, tag, owner, clock, ENDIANNESS_BIG)
+	: arm_cpu_device(mconfig, ARM_BE, "ARM (big endian)", tag, owner, clock, "arm be", __FILE__, ENDIANNESS_BIG)
 {
 }
 
@@ -416,7 +420,7 @@ void arm_cpu_device::execute_run()
 		}
 		else if ((insn & 0x0f000000u) == 0x0e000000u)   /* Coprocessor */
 		{
-			if (m_copro_type == copro_type::VL86C020)
+			if (m_copro_type == ARM_COPRO_TYPE_VL86C020)
 				HandleCoProVL86C020(insn);
 			else
 				HandleCoPro(insn);
@@ -631,7 +635,13 @@ void arm_cpu_device::HandleMemSingle( uint32_t insn )
 				rnv = (R15 & ADDRESS_MASK) - off;
 		}
 
-		if (rn == eR15)
+		if (insn & INSN_SDT_W)
+		{
+			SetRegister(rn,rnv);
+			if (ARM_DEBUG_CORE && rn == eR15)
+				logerror("writeback R15 %08x\n", R15);
+		}
+		else if (rn == eR15)
 		{
 			rnv = rnv + 8;
 		}
@@ -675,7 +685,7 @@ void arm_cpu_device::HandleMemSingle( uint32_t insn )
 
 				In other cases, 4 is subracted from R15 here to account for pipelining.
 				*/
-				if (m_copro_type == copro_type::VL86C020 || (cpu_read32(rnv)&3)==0)
+				if ((cpu_read32(rnv)&3)==0)
 					R15 -= 4;
 
 				m_icount -= S_CYCLE + N_CYCLE;
@@ -704,18 +714,6 @@ void arm_cpu_device::HandleMemSingle( uint32_t insn )
 
 			cpu_write32(rnv, rd == eR15 ? R15 + 8 : GetRegister(rd));
 		}
-	}
-
-	/* Do pre-indexing writeback */
-	if ((insn & INSN_SDT_P) && (insn & INSN_SDT_W))
-	{
-		if ((insn & INSN_SDT_L) && rd == rn)
-			SetRegister(rn, GetRegister(rd));
-		else
-			SetRegister(rn, rnv);
-
-		if (ARM_DEBUG_CORE && rn == eR15)
-			logerror("writeback R15 %08x\n", R15);
 	}
 
 	/* Do post-indexing writeback */

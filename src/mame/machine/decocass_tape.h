@@ -1,9 +1,7 @@
 // license:GPL-2.0+
 // copyright-holders:Juergen Buchmueller, David Haywood
-#ifndef MAME_MACHINE_DECOCASS_TAPE_H
-#define MAME_MACHINE_DECOCASS_TAPE_H
-
-#pragma once
+#ifndef __DECOCASS_TAPE_H__
+#define __DECOCASS_TAPE_H__
 
 class decocass_tape_device : public device_t
 {
@@ -17,6 +15,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -71,9 +70,9 @@ private:
 	TIMER_CALLBACK_MEMBER( tape_clock_callback );
 };
 
-DECLARE_DEVICE_TYPE(DECOCASS_TAPE, decocass_tape_device)
+extern const device_type DECOCASS_TAPE;
 
 #define MCFG_DECOCASS_TAPE_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, DECOCASS_TAPE, 0)
 
-#endif // MAME_MACHINE_DECOCASS_TAPE_H
+#endif

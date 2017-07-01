@@ -14,7 +14,6 @@
 #include "emu.h"
 #include "cpu/mcs51/mcs51.h"
 #include "machine/ram.h"
-#include "screen.h"
 
 
 class vt220_state : public driver_device
@@ -59,7 +58,7 @@ uint32_t vt220_state::screen_update_vt220(screen_device &screen, bitmap_ind16 &b
 }
 
 
-static MACHINE_CONFIG_START( vt220 )
+static MACHINE_CONFIG_START( vt220, vt220_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8051, XTAL_11_0592MHz) // from schematic
 	MCFG_CPU_PROGRAM_MAP(vt220_mem)
@@ -110,5 +109,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE         INIT  COMPANY                          FULLNAME  FLAGS */
-COMP( 1983, vt220,  0,      0,       vt220,     vt220, vt220_state,  0,    "Digital Equipment Corporation", "VT220",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY                      FULLNAME       FLAGS */
+COMP( 1983, vt220,  0,      0,       vt220,     vt220, driver_device,   0,  "Digital Equipment Corporation", "VT220", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

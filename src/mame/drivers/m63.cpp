@@ -123,8 +123,6 @@ Dip locations verified for:
 #include "machine/gen_latch.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
-#include "screen.h"
-#include "speaker.h"
 
 class m63_state : public driver_device
 {
@@ -191,7 +189,7 @@ public:
 	DECLARE_WRITE8_MEMBER(p1_w);
 	DECLARE_WRITE8_MEMBER(p2_w);
 	DECLARE_READ8_MEMBER(snd_status_r);
-	DECLARE_READ_LINE_MEMBER(irq_r);
+	DECLARE_READ8_MEMBER(irq_r);
 	DECLARE_READ8_MEMBER(snddata_r);
 	DECLARE_WRITE8_MEMBER(fghtbskt_samples_w);
 	SAMPLES_START_CB_MEMBER(fghtbskt_sh_start);
@@ -432,7 +430,7 @@ READ8_MEMBER(m63_state::snd_status_r)
 	return m_sound_status;
 }
 
-READ_LINE_MEMBER(m63_state::irq_r)
+READ8_MEMBER(m63_state::irq_r)
 {
 	if (m_sound_irq)
 	{
@@ -518,6 +516,9 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( i8039_port_map, AS_IO, 8, m63_state )
 	AM_RANGE(0x00, 0xff) AM_READWRITE(snddata_r, snddata_w)
+	AM_RANGE(MCS48_PORT_P1, MCS48_PORT_P1) AM_WRITE(p1_w)
+	AM_RANGE(MCS48_PORT_P2, MCS48_PORT_P2) AM_WRITE(p2_w)
+	AM_RANGE(MCS48_PORT_T1, MCS48_PORT_T1) AM_READ(irq_r)
 ADDRESS_MAP_END
 
 
@@ -749,7 +750,7 @@ INTERRUPT_GEN_MEMBER(m63_state::vblank_irq)
 		device.execute().set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static MACHINE_CONFIG_START( m63 )
+static MACHINE_CONFIG_START( m63, m63_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80,XTAL_12MHz/4)     /* 3 MHz */
@@ -759,9 +760,6 @@ static MACHINE_CONFIG_START( m63 )
 	MCFG_CPU_ADD("soundcpu",I8039,XTAL_12MHz/4) /* ????? */
 	MCFG_CPU_PROGRAM_MAP(i8039_map)
 	MCFG_CPU_IO_MAP(i8039_port_map)
-	MCFG_MCS48_PORT_P1_OUT_CB(WRITE8(m63_state, p1_w))
-	MCFG_MCS48_PORT_P2_OUT_CB(WRITE8(m63_state, p2_w))
-	MCFG_MCS48_PORT_T1_IN_CB(READLINE(m63_state, irq_r))
 	MCFG_CPU_PERIODIC_INT_DRIVER(m63_state, snd_irq,  60)
 
 	MCFG_MACHINE_START_OVERRIDE(m63_state,m63)
@@ -799,7 +797,7 @@ static MACHINE_CONFIG_DERIVED( atomboy, m63 )
 	MCFG_CPU_PERIODIC_INT_DRIVER(m63_state, snd_irq,  60/2)
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( fghtbskt )
+static MACHINE_CONFIG_START( fghtbskt, m63_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_12MHz/4)     /* 3 MHz */
@@ -824,7 +822,7 @@ static MACHINE_CONFIG_START( fghtbskt )
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", fghtbskt)
-	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
+	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", 256)
 	MCFG_VIDEO_START_OVERRIDE(m63_state,m63)
 
 	/* sound hardware */

@@ -5,7 +5,6 @@
 
 #include "emu.h"
 #include "includes/pgm.h"
-#include "screen.h"
 
 /******************************************************************************
  Sprites
@@ -664,7 +663,7 @@ uint32_t pgm_state::screen_update_pgm(screen_device &screen, bitmap_ind16 &bitma
 
 }
 
-WRITE_LINE_MEMBER(pgm_state::screen_vblank_pgm)
+void pgm_state::screen_eof_pgm(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

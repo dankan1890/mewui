@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -23,7 +22,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ADAM_EXPANSION_SLOT, adam_expansion_slot_device, "adam_expansion_slot", "ADAM expansion slot")
+const device_type ADAM_EXPANSION_SLOT = &device_creator<adam_expansion_slot_device>;
 
 
 
@@ -53,7 +52,7 @@ device_adam_expansion_slot_card_interface::device_adam_expansion_slot_card_inter
 //-------------------------------------------------
 
 adam_expansion_slot_device::adam_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ADAM_EXPANSION_SLOT, tag, owner, clock),
+	device_t(mconfig, ADAM_EXPANSION_SLOT, "ADAM expansion slot", tag, owner, clock, "adam_expansion_slot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	device_image_interface(mconfig, *this),
 	m_write_irq(*this), m_card(nullptr)
@@ -93,7 +92,7 @@ image_init_result adam_expansion_slot_device::call_load()
 	{
 		size_t size;
 
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			size = length();
 
@@ -113,7 +112,7 @@ image_init_result adam_expansion_slot_device::call_load()
 //  get_default_card_software -
 //-------------------------------------------------
 
-std::string adam_expansion_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string adam_expansion_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("standard");
 }

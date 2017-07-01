@@ -45,19 +45,14 @@
 ******************************************************************************/
 
 #include "emu.h"
-
 #include "cpu/m6800/m6800.h"
-#include "imagedev/cassette.h"
 #include "machine/6821pia.h"
 #include "machine/6850acia.h"
 #include "machine/clock.h"
 #include "machine/keyboard.h"
+#include "imagedev/cassette.h"
 #include "sound/wave.h"
-
 #include "bus/rs232/rs232.h"
-
-#include "screen.h"
-#include "speaker.h"
 
 
 class proteus3_state : public driver_device
@@ -66,8 +61,6 @@ public:
 	proteus3_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
-		, m_p_videoram(*this, "vram")
-		, m_p_chargen(*this, "chargen")
 		, m_pia(*this, "pia")
 		, m_acia1(*this, "acia1")
 		, m_acia2(*this, "acia2")
@@ -76,7 +69,7 @@ public:
 
 	DECLARE_WRITE_LINE_MEMBER(ca2_w);
 	DECLARE_WRITE8_MEMBER(video_w);
-	void kbd_put(u8 data);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	DECLARE_WRITE_LINE_MEMBER(acia1_txdata_w);
 	DECLARE_WRITE_LINE_MEMBER(acia1_clock_w);
 	DECLARE_WRITE_LINE_MEMBER(acia2_clock_w);
@@ -88,14 +81,14 @@ private:
 	uint8_t m_video_data;
 	uint8_t m_flashcnt;
 	uint16_t m_curs_pos;
+	uint8_t *m_p_chargen;
+	uint8_t *m_p_videoram;
 	uint8_t m_cass_data[4];
 	bool m_cass_state;
 	bool m_cassold;
 	uint8_t m_clockcnt;
 	virtual void machine_reset() override;
 	required_device<cpu_device> m_maincpu;
-	required_region_ptr<u8> m_p_videoram;
-	required_region_ptr<u8> m_p_chargen;
 	required_device<pia6821_device> m_pia;
 	required_device<acia6850_device> m_acia1; // cassette uart
 	required_device<acia6850_device> m_acia2; // tty keyboard uart
@@ -128,7 +121,7 @@ ADDRESS_MAP_END
 static INPUT_PORTS_START(proteus3)
 INPUT_PORTS_END
 
-void proteus3_state::kbd_put(u8 data)
+WRITE8_MEMBER( proteus3_state::kbd_put )
 {
 	if (data == 0x08)
 		data = 0x0f; // take care of backspace (bios 1 and 2)
@@ -305,6 +298,8 @@ GFXDECODE_END
 
 void proteus3_state::machine_reset()
 {
+	m_p_chargen = memregion("chargen")->base();
+	m_p_videoram = memregion("vram")->base();
 	m_curs_pos = 0;
 	m_cass_data[0] = m_cass_data[1] = m_cass_data[2] = m_cass_data[3] = 0;
 	m_cass_state = 1;
@@ -317,7 +312,7 @@ void proteus3_state::machine_reset()
  Machine Drivers
 ******************************************************************************/
 
-static MACHINE_CONFIG_START( proteus3 )
+static MACHINE_CONFIG_START( proteus3, proteus3_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6800, XTAL_3_579545MHz)  /* Divided by 4 internally */
 	MCFG_CPU_PROGRAM_MAP(proteus3_mem)
@@ -339,7 +334,7 @@ static MACHINE_CONFIG_START( proteus3 )
 	MCFG_PIA_CA2_HANDLER(WRITELINE(proteus3_state, ca2_w))
 	MCFG_PIA_IRQB_HANDLER(INPUTLINE("maincpu", M6800_IRQ_LINE))
 	MCFG_DEVICE_ADD("keyboard", GENERIC_KEYBOARD, 0)
-	MCFG_GENERIC_KEYBOARD_CB(PUT(proteus3_state, kbd_put))
+	MCFG_GENERIC_KEYBOARD_CB(WRITE8(proteus3_state, kbd_put))
 
 	/* cassette */
 	MCFG_DEVICE_ADD ("acia1", ACIA6850, 0)
@@ -409,5 +404,5 @@ ROM_END
  Drivers
 ******************************************************************************/
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     CLASS           INIT  COMPANY                  FULLNAME       FLAGS
-COMP( 1978, proteus3, 0,      0,      proteus3, proteus3, proteus3_state, 0,    "Proteus International", "Proteus III", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW)
+/*    YEAR  NAME        PARENT      COMPAT  MACHINE     INPUT     CLASS          INIT      COMPANY                     FULLNAME        FLAGS */
+COMP( 1978, proteus3,   0,          0,      proteus3,   proteus3, driver_device,   0,     "Proteus International", "Proteus III", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW)

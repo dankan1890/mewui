@@ -8,14 +8,13 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_ATARIGEN_H
-#define MAME_MACHINE_ATARIGEN_H
+#ifndef __MACHINE_ATARIGEN__
+#define __MACHINE_ATARIGEN__
 
-#include "includes/slapstic.h"
-#include "cpu/m6502/m6502.h"
 #include "machine/eeprompar.h"
 #include "video/atarimo.h"
-#include "screen.h"
+#include "cpu/m6502/m6502.h"
+#include "includes/slapstic.h"
 
 
 /***************************************************************************
@@ -103,9 +102,9 @@
 // ======================> atari_sound_comm_device
 
 // device type definition
-DECLARE_DEVICE_TYPE(ATARI_SOUND_COMM, atari_sound_comm_device)
+extern const device_type ATARI_SOUND_COMM;
 
-class atari_sound_comm_device : public device_t
+class atari_sound_comm_device :  public device_t
 {
 public:
 	// construction/destruction
@@ -175,7 +174,7 @@ private:
 // ======================> atari_vad_device
 
 // device type definition
-DECLARE_DEVICE_TYPE(ATARI_VAD, atari_vad_device)
+extern const device_type ATARI_VAD;
 
 class atari_vad_device :    public device_t,
 							public device_video_interface
@@ -256,14 +255,14 @@ private:
 // ======================> atari_eeprom_device
 
 // device type definition
-DECLARE_DEVICE_TYPE(ATARI_EEPROM_2804, atari_eeprom_2804_device)
-DECLARE_DEVICE_TYPE(ATARI_EEPROM_2816, atari_eeprom_2816_device)
+extern const device_type ATARI_EEPROM_2804;
+extern const device_type ATARI_EEPROM_2816;
 
 class atari_eeprom_device : public device_t
 {
 protected:
 	// construction/destruction
-	atari_eeprom_device(const machine_config &mconfig, device_type devtype, const char *tag, device_t *owner);
+	atari_eeprom_device(const machine_config &mconfig, device_type devtype, const char *name, const char *tag, device_t *owner, const char *shortname, const char *file);
 
 public:
 	// unlock controls
@@ -298,7 +297,7 @@ public:
 
 protected:
 	// device-level overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 class atari_eeprom_2816_device : public atari_eeprom_device
@@ -309,7 +308,7 @@ public:
 
 protected:
 	// device-level overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 
@@ -459,4 +458,4 @@ public:
 ***************************************************************************/
 
 
-#endif // MAME_MACHINE_ATARIGEN_H
+#endif

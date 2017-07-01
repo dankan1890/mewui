@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "cdp1879.h"
 #include "machine/timehelp.h"
 
@@ -15,14 +14,14 @@
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(CDP1879, cdp1879_device, "cdp1879", "RCA CDP1879 RTC")
+const device_type CDP1879 = &device_creator<cdp1879_device>;
 
 //-------------------------------------------------
 //  cdp1879_device - constructor
 //-------------------------------------------------
 
 cdp1879_device::cdp1879_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, CDP1879, tag, owner, clock),
+	: device_t(mconfig, CDP1879, "RCA CDP1879", tag, owner, clock, "cdp1879", __FILE__),
 		device_rtc_interface(mconfig, *this),
 		m_irq_w(*this)
 {
@@ -116,7 +115,7 @@ void cdp1879_device::update_rtc()
 
 READ8_MEMBER(cdp1879_device::read)
 {
-	if (offset == R_CTL_IRQSTATUS && !machine().side_effect_disabled())
+	if (offset == R_CTL_IRQSTATUS && !space.debugger_access())
 	{
 		// reading the IRQ status clears IRQ line and IRQ status
 		uint8_t data = m_regs[offset];

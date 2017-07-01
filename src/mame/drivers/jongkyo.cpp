@@ -28,10 +28,8 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/segacrpt_device.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/segacrpt_device.h"
 
 #define JONGKYO_CLOCK 18432000
 
@@ -490,7 +488,7 @@ void jongkyo_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( jongkyo )
+static MACHINE_CONFIG_START( jongkyo, jongkyo_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", SEGA_315_5084,JONGKYO_CLOCK/4)

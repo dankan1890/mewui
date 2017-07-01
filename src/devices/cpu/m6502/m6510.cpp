@@ -11,15 +11,19 @@
 #include "emu.h"
 #include "m6510.h"
 
-DEFINE_DEVICE_TYPE(M6510, m6510_device, "m6510", "M6510")
+const device_type M6510 = &device_creator<m6510_device>;
 
 m6510_device::m6510_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	m6510_device(mconfig, M6510, tag, owner, clock)
+	m6502_device(mconfig, M6510, "M6510", tag, owner, clock, "m6510", __FILE__),
+	read_port(*this),
+	write_port(*this), dir(0), port(0), drive(0)
 {
+	pullup = 0x00;
+	floating = 0x00;
 }
 
-m6510_device::m6510_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	m6502_device(mconfig, type, tag, owner, clock),
+m6510_device::m6510_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	m6502_device(mconfig, type, name, tag, owner, clock, shortname, source),
 	read_port(*this),
 	write_port(*this), dir(0), port(0), drive(0)
 {

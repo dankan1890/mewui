@@ -223,8 +223,6 @@
 #include "machine/gen_latch.h"
 #include "machine/nvram.h"
 #include "machine/watchdog.h"
-#include "screen.h"
-#include "speaker.h"
 
 #include "omegrace.lh"
 
@@ -496,7 +494,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( omegrace )
+static MACHINE_CONFIG_START( omegrace, omegrace_state )
 
 	/* basic machine hardware */
 

@@ -71,9 +71,8 @@ namespace ImGui
     }
 } // namespace
 
-#include "widgets/color_picker.inl"
-#include "widgets/dock.inl"
+
 #include "widgets/file_list.inl"
-#include "widgets/gizmo.inl"
 #include "widgets/memory_editor.inl"
-#include "widgets/range_slider.inl"
+#include "widgets/gizmo.inl"
+#include "widgets/dock.inl"

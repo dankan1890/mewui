@@ -34,9 +34,8 @@
 */
 
 #include "emu.h"
-#include "includes/hec2hrp.h"
 
-#include "screen.h"
+#include "includes/hec2hrp.h"
 
 
 void hec2hrp_state::Init_Hector_Palette()

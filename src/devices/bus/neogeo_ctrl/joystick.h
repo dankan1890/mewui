@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NEOGEO_CTRL_JOYSTICK_H
-#define MAME_BUS_NEOGEO_CTRL_JOYSTICK_H
-
 #pragma once
 
+#ifndef __NEOGEO_JOYSTICK__
+#define __NEOGEO_JOYSTICK__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -20,7 +21,8 @@
 
 // ======================> neogeo_joystick_device
 
-class neogeo_joystick_device : public device_t, public device_neogeo_control_port_interface
+class neogeo_joystick_device : public device_t,
+							public device_neogeo_control_port_interface
 {
 public:
 	// construction/destruction
@@ -46,7 +48,8 @@ private:
 
 // ======================> neogeo_joy_ac_device
 
-class neogeo_joy_ac_device : public device_t, public device_neogeo_ctrl_edge_interface
+class neogeo_joy_ac_device : public device_t,
+							public device_neogeo_ctrl_edge_interface
 {
 public:
 	// construction/destruction
@@ -71,8 +74,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NEOGEO_JOY,    neogeo_joystick_device)
-DECLARE_DEVICE_TYPE(NEOGEO_JOY_AC, neogeo_joy_ac_device)
+extern const device_type NEOGEO_JOY;
+extern const device_type NEOGEO_JOY_AC;
 
 
-#endif // MAME_BUS_NEOGEO_CTRL_JOYSTICK_H
+#endif

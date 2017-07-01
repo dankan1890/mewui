@@ -21,10 +21,8 @@
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
 #include "video/deco16ic.h"
-#include "video/decospr.h"
 #include "rendlay.h"
-#include "screen.h"
-#include "speaker.h"
+#include "video/decospr.h"
 
 
 class backfire_state : public driver_device
@@ -470,7 +468,7 @@ void backfire_state::machine_start()
 {
 }
 
-static MACHINE_CONFIG_START( backfire )
+static MACHINE_CONFIG_START( backfire, backfire_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", ARM, 28000000/4) /* Unconfirmed */

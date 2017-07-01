@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_POFO_HPC101_H
-#define MAME_BUS_POFO_HPC101_H
-
 #pragma once
 
+#ifndef __HPC101__
+#define __HPC101__
+
+#include "emu.h"
 #include "exp.h"
 #include "bus/centronics/ctronics.h"
 #include "machine/i8255.h"
@@ -21,21 +22,22 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> pofo_hpc101_device
+// ======================> hpc101_t
 
-class pofo_hpc101_device : public device_t, public device_portfolio_expansion_slot_interface
+class hpc101_t :  public device_t,
+					public device_portfolio_expansion_slot_interface
 {
 public:
 	// construction/destruction
-	pofo_hpc101_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	hpc101_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	// device_portfolio_expansion_slot_interface overrides
 	bool pdet() override { return 1; }
@@ -49,6 +51,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(POFO_HPC101, pofo_hpc101_device)
+extern const device_type HPC101;
 
-#endif // MAME_BUS_POFO_HPC101_H
+
+
+#endif

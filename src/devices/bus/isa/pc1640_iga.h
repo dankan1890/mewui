@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_ISA_PC1640_IGA_H
-#define MAME_BUS_ISA_PC1640_IGA_H
-
 #pragma once
 
+#ifndef __ISA8_PC1640_IGA__
+#define __ISA8_PC1640_IGA__
+
+#include "emu.h"
 #include "isa.h"
 #include "ega.h"
 
@@ -38,7 +39,8 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_PC1640_IGA, isa8_pc1640_iga_device)
+extern const device_type ISA8_PC1640_IGA;
 
 
-#endif // MAME_BUS_ISA_PC1640_IGA_H
+
+#endif

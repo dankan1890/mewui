@@ -86,8 +86,6 @@ TODO:
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 
@@ -520,7 +518,7 @@ INTERRUPT_GEN_MEMBER(champbas_state::vblank_irq)
 }
 
 
-static MACHINE_CONFIG_START( talbot )
+static MACHINE_CONFIG_START( talbot, champbas_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_18_432MHz/6)
@@ -557,7 +555,7 @@ static MACHINE_CONFIG_START( talbot )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( champbas )
+static MACHINE_CONFIG_START( champbas, champbas_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_18_432MHz/6)
@@ -629,7 +627,7 @@ static MACHINE_CONFIG_DERIVED( champbb2, champbasj )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( exctsccr )
+static MACHINE_CONFIG_START( exctsccr, champbas_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_18_432MHz/6 )
@@ -690,7 +688,7 @@ static MACHINE_CONFIG_START( exctsccr )
 MACHINE_CONFIG_END
 
 /* Bootleg running on a modified Champion Baseball board */
-static MACHINE_CONFIG_START( exctsccrb )
+static MACHINE_CONFIG_START( exctsccrb, champbas_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_18_432MHz/6)
@@ -1243,8 +1241,8 @@ DRIVER_INIT_MEMBER(champbas_state,exctsccr)
  *
  *************************************/
 
-/*    YEAR  NAME        PARENT    MACHINE     INPUT     INIT                      MONITOR COMPANY, FULLNAME, FLAGS */
-GAME( 1982, talbot,     0,        talbot,     talbot,   champbas_state, 0,        ROT270, "Alpha Denshi Co. (Volt Electronics license)", "Talbot", MACHINE_SUPPORTS_SAVE )
+/*    YEAR  NAME        PARENT    MACHINE     INPUT     INIT                      MONITOR, COMPANY, FULLNAME, FLAGS */
+GAME( 1982, talbot,     0,        talbot,     talbot,   driver_device,  0,        ROT270, "Alpha Denshi Co. (Volt Electronics license)", "Talbot", MACHINE_SUPPORTS_SAVE )
 
 GAME( 1983, champbas,   0,        champbas,   champbas, champbas_state, champbas, ROT0,   "Alpha Denshi Co. (Sega license)", "Champion Base Ball", MACHINE_SUPPORTS_SAVE ) // no protection
 GAME( 1983, champbasj,  champbas, champbasj,  champbas, champbas_state, champbas, ROT0,   "Alpha Denshi Co.", "Champion Base Ball (Japan set 1)", MACHINE_SUPPORTS_SAVE )

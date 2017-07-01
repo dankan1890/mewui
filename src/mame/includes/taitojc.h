@@ -8,7 +8,6 @@
 
 #include "video/tc0780fpa.h"
 #include "machine/taitoio.h"
-#include "screen.h"
 
 class taitojc_state : public driver_device
 {
@@ -21,6 +20,7 @@ public:
 		m_gfx2(*this, "gfx2"),
 		m_vram(*this, "vram"),
 		m_objlist(*this, "objlist"),
+		m_snd_shared_ram(*this, "snd_shared"),
 		m_main_ram(*this, "main_ram"),
 		m_dsp_shared_ram(*this, "dsp_shared"),
 		m_palette_ram(*this, "palette_ram"),
@@ -43,6 +43,7 @@ public:
 
 	required_shared_ptr<uint32_t> m_vram;
 	required_shared_ptr<uint32_t> m_objlist;
+	required_shared_ptr<uint32_t> m_snd_shared_ram;
 	required_shared_ptr<uint32_t> m_main_ram;
 	required_shared_ptr<uint16_t> m_dsp_shared_ram;
 	required_shared_ptr<uint32_t> m_palette_ram;
@@ -78,10 +79,10 @@ public:
 	int m_speed_meter;
 	int m_brake_meter;
 
-	DECLARE_WRITE8_MEMBER(coin_control_w);
-
 	DECLARE_READ8_MEMBER(mcu_comm_r);
 	DECLARE_WRITE8_MEMBER(mcu_comm_w);
+	DECLARE_READ32_MEMBER(snd_share_r);
+	DECLARE_WRITE32_MEMBER(snd_share_w);
 	DECLARE_READ8_MEMBER(jc_pcbid_r);
 	DECLARE_READ8_MEMBER(jc_lan_r);
 	DECLARE_WRITE8_MEMBER(jc_lan_w);

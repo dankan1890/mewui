@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Sandro Ronco
-#ifndef MAME_BUS_IQ151_VIDEO32_H
-#define MAME_BUS_IQ151_VIDEO32_H
-
 #pragma once
 
+#ifndef __IQ151_VIDEO32_H__
+#define __IQ151_VIDEO32_H__
+
+#include "emu.h"
 #include "iq151.h"
 
 //**************************************************************************
@@ -36,12 +37,12 @@ protected:
 	virtual void video_update(bitmap_ind16 &bitmap, const rectangle &cliprect) override;
 
 private:
-	required_region_ptr<uint8_t> m_videoram;
-	required_region_ptr<uint8_t> m_chargen;
+	uint8_t *     m_videoram;
+	uint8_t *     m_chargen;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(IQ151_VIDEO32, iq151_video32_device)
+extern const device_type IQ151_VIDEO32;
 
-#endif // MAME_BUS_IQ151_VIDEO32_H
+#endif  /* __IQ151_VIDEO32_H__ */

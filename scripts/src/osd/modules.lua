@@ -80,7 +80,6 @@ function osdmodulesbuild()
 		MAME_DIR .. "src/osd/modules/midi/none.cpp",
 		MAME_DIR .. "src/osd/modules/sound/js_sound.cpp",
 		MAME_DIR .. "src/osd/modules/sound/direct_sound.cpp",
-		MAME_DIR .. "src/osd/modules/sound/pa_sound.cpp",
 		MAME_DIR .. "src/osd/modules/sound/coreaudio_sound.cpp",
 		MAME_DIR .. "src/osd/modules/sound/sdl_sound.cpp",
 		MAME_DIR .. "src/osd/modules/sound/xaudio2_sound.cpp",
@@ -123,7 +122,6 @@ function osdmodulesbuild()
 		includedirs {
 			MAME_DIR .. "3rdparty/winpcap/Include",
 			MAME_DIR .. "3rdparty/compat/mingw",
-			MAME_DIR .. "3rdparty/portaudio/include",
 		}
 
 		includedirs {
@@ -216,16 +214,6 @@ function osdmodulesbuild()
 		MAME_DIR .. "3rdparty/bx/include",
 		MAME_DIR .. "3rdparty/rapidjson/include",
 	}
-
-	if _OPTIONS["NO_USE_PORTAUDIO"]=="1" then
-		defines {
-			"NO_USE_PORTAUDIO",
-		}
-	else
-		includedirs {
-			ext_includedir("portaudio"),
-		}
-	end
 
 	if _OPTIONS["NO_USE_MIDI"]=="1" then
 		defines {
@@ -330,15 +318,15 @@ function qtdebuggerbuild()
 
 
 		custombuildtask {
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/debuggerview.h",             GEN_DIR .. "osd/modules/debugger/qt/debuggerview.moc.cpp", { },         { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/windowqt.h",                 GEN_DIR .. "osd/modules/debugger/qt/windowqt.moc.cpp", { },                 { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/logwindow.h",                GEN_DIR .. "osd/modules/debugger/qt/logwindow.moc.cpp", { },                { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/dasmwindow.h",               GEN_DIR .. "osd/modules/debugger/qt/dasmwindow.moc.cpp", { },           { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/mainwindow.h",               GEN_DIR .. "osd/modules/debugger/qt/mainwindow.moc.cpp", { },           { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/memorywindow.h",             GEN_DIR .. "osd/modules/debugger/qt/memorywindow.moc.cpp", { },             { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/breakpointswindow.h",        GEN_DIR .. "osd/modules/debugger/qt/breakpointswindow.moc.cpp", { },        { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/deviceswindow.h",            GEN_DIR .. "osd/modules/debugger/qt/deviceswindow.moc.cpp", { },            { MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
-			{ MAME_DIR .. "src/osd/modules/debugger/qt/deviceinformationwindow.h",  GEN_DIR .. "osd/modules/debugger/qt/deviceinformationwindow.moc.cpp", { },{ MOC .. "$(MOCINCPATH) -b emu.h $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/debuggerview.h",             GEN_DIR .. "osd/modules/debugger/qt/debuggerview.moc.cpp", { },         { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/windowqt.h",                 GEN_DIR .. "osd/modules/debugger/qt/windowqt.moc.cpp", { },                 { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/logwindow.h",                GEN_DIR .. "osd/modules/debugger/qt/logwindow.moc.cpp", { },                { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/dasmwindow.h",               GEN_DIR .. "osd/modules/debugger/qt/dasmwindow.moc.cpp", { },           { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/mainwindow.h",               GEN_DIR .. "osd/modules/debugger/qt/mainwindow.moc.cpp", { },           { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/memorywindow.h",             GEN_DIR .. "osd/modules/debugger/qt/memorywindow.moc.cpp", { },             { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/breakpointswindow.h",        GEN_DIR .. "osd/modules/debugger/qt/breakpointswindow.moc.cpp", { },        { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/deviceswindow.h",            GEN_DIR .. "osd/modules/debugger/qt/deviceswindow.moc.cpp", { },            { MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
+			{ MAME_DIR .. "src/osd/modules/debugger/qt/deviceinformationwindow.h",  GEN_DIR .. "osd/modules/debugger/qt/deviceinformationwindow.moc.cpp", { },{ MOC .. "$(MOCINCPATH) $(<) -o $(@)" }},
 
 		}
 
@@ -502,23 +490,6 @@ if not _OPTIONS["NO_USE_MIDI"] then
 		_OPTIONS["NO_USE_MIDI"] = "1"
 	else
 		_OPTIONS["NO_USE_MIDI"] = "0"
-	end
-end
-
-newoption {
-	trigger = "NO_USE_PORTAUDIO",
-	description = "Disable PortAudio interface",
-	allowed = {
-		{ "0",  "Enable PortAudio"  },
-		{ "1",  "Disable PortAudio" },
-	},
-}
-
-if not _OPTIONS["NO_USE_PORTAUDIO"] then
-	if _OPTIONS["targetos"]=="windows" or _OPTIONS["targetos"]=="linux" or _OPTIONS["targetos"]=="macosx" then
-		_OPTIONS["NO_USE_PORTAUDIO"] = "0"
-	else
-		_OPTIONS["NO_USE_PORTAUDIO"] = "1"
 	end
 end
 

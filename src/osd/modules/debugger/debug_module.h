@@ -10,6 +10,7 @@
 
 #include "osdepend.h"
 #include "modules/osdmodule.h"
+#include "emu.h"
 
 //============================================================
 //  CONSTANTS

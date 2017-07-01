@@ -19,24 +19,24 @@ namespace ui {
 //-------------------------------------------------
 //  class audit menu
 //-------------------------------------------------
+using vptr_game = std::vector<const game_driver *>;
+
 class menu_audit : public menu
 {
 public:
-	enum class mode { FAST, FULL };
-
-	menu_audit(mame_ui_manager &mui, render_container &container, vptr_game &availablesorted, vptr_game &unavailablesorted, mode audit_mode);
+	menu_audit(mame_ui_manager &mui, render_container &container, vptr_game &availablesorted, vptr_game &unavailablesorted, int audit_mode);
 	virtual ~menu_audit() override;
 
 private:
 	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
-	void save_available_machines() const;
+	void save_available_machines();
 
 	vptr_game &m_availablesorted;
 	vptr_game &m_unavailablesorted;
 
-	mode m_audit_mode;
+	int m_audit_mode;
 	bool m_first;
 };
 

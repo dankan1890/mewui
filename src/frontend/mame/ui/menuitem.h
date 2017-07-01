@@ -14,6 +14,7 @@
 #ifndef MAME_FRONTEND_UI_MENUITEM_H
 #define MAME_FRONTEND_UI_MENUITEM_H
 
+#include "emu.h"
 
 namespace ui {
 // special menu item for separators

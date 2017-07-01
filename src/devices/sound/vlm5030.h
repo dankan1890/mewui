@@ -1,14 +1,16 @@
 // license:BSD-3-Clause
 // copyright-holders:Tatsuyuki Satoh
-#ifndef MAME_SOUND_VLM5030_H
-#define MAME_SOUND_VLM5030_H
-
 #pragma once
 
-class vlm5030_device : public device_t, public device_sound_interface, public device_rom_interface
-{
-public:
+#ifndef __VLM5030_H__
+#define __VLM5030_H__
+
+	class vlm5030_device : public device_t,
+									public device_sound_interface, public device_rom_interface
+	{
+	public:
 	vlm5030_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~vlm5030_device() {}
 
 	/* get BSY pin level */
 	DECLARE_READ_LINE_MEMBER( bsy );
@@ -41,7 +43,7 @@ private:
 	const address_space_config m_space_config;
 
 	// internal state
-	sound_stream *m_channel;
+	sound_stream * m_channel;
 
 	/* coefficient tables */
 	const struct tms5100_coeffs *m_coeff;
@@ -93,6 +95,7 @@ private:
 	void restore_state();
 };
 
-DECLARE_DEVICE_TYPE(VLM5030, vlm5030_device)
+extern const device_type VLM5030;
 
-#endif // MAME_SOUND_VLM5030_H
+
+#endif /* __VLM5030_H__ */

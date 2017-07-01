@@ -8,11 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_EMU_RENDLAY_H
-#define MAME_EMU_RENDLAY_H
-
-#pragma once
-
+#ifndef __RENDLAY_H__
+#define __RENDLAY_H__
 
 //**************************************************************************
 //  GLOBAL VARIABLES
@@ -43,4 +40,5 @@ extern const internal_layout layout_lcd_rot;     // same, for use with ROT90 or 
 // SVG screen layouts
 extern const internal_layout layout_svg;         // generic 1:1 lcd screen layout
 
-#endif // MAME_EMU_RENDLAY_H
+
+#endif  // __RENDLAY_H__

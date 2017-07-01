@@ -170,13 +170,11 @@ lev 7 : 0x7c : 0000 07e0 - input device clear?
 *******************************************************************************************/
 
 #include "emu.h"
-#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "cpu/m68000/m68000.h"
 #include "machine/gen_latch.h"
 #include "sound/8950intf.h"
 #include "rendlay.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class cybertnk_state : public driver_device
@@ -831,7 +829,7 @@ GFXDECODE_END
 */
 
 
-static MACHINE_CONFIG_START( cybertnk )
+static MACHINE_CONFIG_START( cybertnk, cybertnk_state )
 	MCFG_CPU_ADD("maincpu", M68000,XTAL_20MHz/2)
 	MCFG_CPU_PROGRAM_MAP(master_mem)
 	MCFG_CPU_VBLANK_INT_DRIVER("lscreen", cybertnk_state,  irq1_line_assert)

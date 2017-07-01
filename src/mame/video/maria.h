@@ -1,10 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Dan Boris
-#ifndef MAME_VIDEO_MARIA_H
-#define MAME_VIDEO_MARIA_H
+#ifndef __ATARI_MARIA__
+#define __ATARI_MARIA__
 
-#pragma once
-
+#include "emu.h"
 
 // ======================> atari_maria_device
 
@@ -63,11 +62,11 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ATARI_MARIA, atari_maria_device)
+extern const device_type ATARI_MARIA;
 
 
 #define MCFG_MARIA_DMACPU(_tag) \
 	atari_maria_device::set_cpu_tag(*device, _tag);
 
 
-#endif // MAME_VIDEO_MARIA_H
+#endif

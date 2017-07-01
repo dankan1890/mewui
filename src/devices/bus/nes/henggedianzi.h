@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_NES_HENGGEDIANZI_H
-#define MAME_BUS_NES_HENGGEDIANZI_H
-
-#pragma once
+#ifndef __NES_HENGGEDIANZI_H
+#define __NES_HENGGEDIANZI_H
 
 #include "nxrom.h"
 
@@ -16,13 +14,11 @@ public:
 	// construction/destruction
 	nes_hengg_srich_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_WRITE8_MEMBER(write_h) override;
 
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 };
 
 
@@ -34,14 +30,12 @@ public:
 	// construction/destruction
 	nes_hengg_xhzs_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_WRITE8_MEMBER(write_l) override;
 	virtual DECLARE_WRITE8_MEMBER(write_h) override;
 
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 };
 
 
@@ -53,14 +47,12 @@ public:
 	// construction/destruction
 	nes_hengg_shjy3_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_WRITE8_MEMBER(write_h) override;
 
 	virtual void hblank_irq(int scanline, int vblank, int blanked) override;
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 
 private:
 	void update_banks();
@@ -74,9 +66,13 @@ private:
 	uint8_t m_mmc_extra_bank[8];
 };
 
-// device type definition
-DECLARE_DEVICE_TYPE(NES_HENGG_SRICH, nes_hengg_srich_device)
-DECLARE_DEVICE_TYPE(NES_HENGG_XHZS,  nes_hengg_xhzs_device)
-DECLARE_DEVICE_TYPE(NES_HENGG_SHJY3, nes_hengg_shjy3_device)
 
-#endif // MAME_BUS_NES_HENGGEDIANZI_H
+
+
+
+// device type definition
+extern const device_type NES_HENGG_SRICH;
+extern const device_type NES_HENGG_XHZS;
+extern const device_type NES_HENGG_SHJY3;
+
+#endif

@@ -1,9 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Angelo Salese
-#ifndef MAME_MACHINE_AICARTC_H
-#define MAME_MACHINE_AICARTC_H
+/***************************************************************************
+
+Template for skeleton device
+
+***************************************************************************/
 
 #pragma once
+
+#ifndef __AICARTCDEV_H__
+#define __AICARTCDEV_H__
 
 #include "dirtc.h"
 
@@ -21,7 +27,8 @@
 
 // ======================> aicartc_device
 
-class aicartc_device : public device_t, public device_rtc_interface
+class aicartc_device : public device_t,
+						public device_rtc_interface
 {
 public:
 	// construction/destruction
@@ -53,6 +60,14 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(AICARTC, aicartc_device)
+extern const device_type AICARTC;
 
-#endif // MAME_MACHINE_AICARTC_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

@@ -8,11 +8,10 @@
     See tms9900.c for documentation
 */
 
-#ifndef MAME_CPU_TMS9900_TMS9900_H
-#define MAME_CPU_TMS9900_TMS9900_H
+#ifndef __TMS9900_H__
+#define __TMS9900_H__
 
-#pragma once
-
+#include "emu.h"
 #include "debugger.h"
 #include "tms99com.h"
 
@@ -43,6 +42,10 @@ static const char opname[][5] =
 class tms99xx_device : public cpu_device
 {
 public:
+	tms99xx_device(const machine_config &mconfig, device_type type,  const char *name,
+				const char *tag, int databus_width, int prg_addr_bits, int cru_addr_bits,
+				device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
 	~tms99xx_device();
 
 	// READY input line. When asserted (high), the memory is ready for data exchange.
@@ -63,10 +66,6 @@ public:
 	template<class _Object> static devcb_base &static_set_dbin_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_dbin_line.set_callback(object); }
 
 protected:
-	tms99xx_device(const machine_config &mconfig, device_type type,
-				const char *tag, int databus_width, int prg_addr_bits, int cru_addr_bits,
-				device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void        device_start() override;
 	virtual void        device_stop() override;
@@ -393,6 +392,6 @@ public:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(TMS9900, tms9900_device)
+extern const device_type TMS9900;
 
-#endif // MAME_CPU_TMS9900_TMS9900_H
+#endif /* __TMS9900_H__ */

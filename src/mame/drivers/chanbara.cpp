@@ -53,8 +53,6 @@ ToDo:
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class chanbara_state : public driver_device
@@ -385,7 +383,7 @@ void chanbara_state::machine_reset()
 	m_scrollhi = 0;
 }
 
-static MACHINE_CONFIG_START( chanbara )
+static MACHINE_CONFIG_START( chanbara, chanbara_state )
 
 	MCFG_CPU_ADD("maincpu", M6809, 12000000/8)
 	MCFG_CPU_PROGRAM_MAP(chanbara_map)

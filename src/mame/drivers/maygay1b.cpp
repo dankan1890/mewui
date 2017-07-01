@@ -73,7 +73,6 @@
 ******************************************************************************************/
 #include "emu.h"
 #include "includes/maygay1b.h"
-#include "speaker.h"
 
 #include "maygay1b.lh"
 
@@ -767,7 +766,7 @@ ADDRESS_MAP_END
 
 // machine driver for maygay m1 board /////////////////////////////////
 
-MACHINE_CONFIG_START( maygay_m1 )
+MACHINE_CONFIG_START( maygay_m1, maygay1b_state )
 
 	MCFG_CPU_ADD("maincpu", M6809, M1_MASTER_CLOCK/2)
 	MCFG_CPU_PROGRAM_MAP(m1_memmap)

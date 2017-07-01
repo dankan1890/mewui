@@ -10,15 +10,13 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "includes/redalert.h"
-
-#include "cpu/i8085/i8085.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/rescap.h"
+#include "cpu/i8085/i8085.h"
 #include "machine/6821pia.h"
 #include "sound/ay8910.h"
-#include "speaker.h"
+#include "includes/redalert.h"
 
 
 
@@ -176,7 +174,7 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( redalert_audio_m37b )
+static MACHINE_CONFIG_FRAGMENT( redalert_audio_m37b )
 
 	MCFG_CPU_ADD("audiocpu", M6502, REDALERT_AUDIO_CPU_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(redalert_audio_map)
@@ -199,7 +197,7 @@ MACHINE_CONFIG_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( redalert_audio_voice )
+static MACHINE_CONFIG_FRAGMENT( redalert_audio_voice )
 
 	MCFG_CPU_ADD("voice", I8085A, REDALERT_VOICE_CPU_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(redalert_voice_map)
@@ -218,7 +216,7 @@ MACHINE_CONFIG_END
  *
  *************************************/
 
-MACHINE_CONFIG_START( redalert_audio )
+MACHINE_CONFIG_FRAGMENT( redalert_audio )
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
@@ -235,7 +233,7 @@ MACHINE_CONFIG_END
  *
  *************************************/
 
-MACHINE_CONFIG_START( ww3_audio )
+MACHINE_CONFIG_FRAGMENT( ww3_audio )
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
@@ -341,7 +339,7 @@ SOUND_START_MEMBER( redalert_state, demoneye )
  *
  *************************************/
 
-MACHINE_CONFIG_START( demoneye_audio )
+MACHINE_CONFIG_FRAGMENT( demoneye_audio )
 
 	MCFG_CPU_ADD("audiocpu", M6802, DEMONEYE_AUDIO_CPU_CLOCK)
 	MCFG_CPU_PROGRAM_MAP(demoneye_audio_map)

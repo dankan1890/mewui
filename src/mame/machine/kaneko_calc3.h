@@ -1,10 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia, David Haywood
 /* CALC 3 */
-#ifndef MAME_MACHINE_KANEKO_CALC3_H
-#define MAME_MACHINE_KANEKO_CALC3_H
 
-#pragma once
+#define VERBOSE_OUTPUT 0
+
 
 
 class kaneko_calc3_device : public device_t
@@ -60,6 +59,4 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(KANEKO_CALC3, kaneko_calc3_device)
-
-#endif // MAME_MACHINE_KANEKO_CALC3_H
+extern const device_type KANEKO_CALC3;

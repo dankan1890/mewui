@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_CPU_M6502_M3745X_H
-#define MAME_CPU_M6502_M3745X_H
-
 #pragma once
+
+#ifndef __M3745X_H__
+#define __M3745X_H__
 
 #include "m740.h"
 
@@ -59,6 +59,9 @@ public:
 
 		M3745X_SET_OVERFLOW = M740_SET_OVERFLOW
 	};
+
+	// construction/destruction
+	m3745x_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, address_map_constructor internal_map, const char *shortname, const char *source);
 
 	const address_space_config m_program_config;
 
@@ -117,9 +120,6 @@ public:
 	bool are_port_bits_output(uint8_t port, uint8_t mask) { return ((m_ddrs[port] & mask) == mask) ? true : false; }
 
 protected:
-	// construction/destruction
-	m3745x_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, address_map_constructor internal_map);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -145,11 +145,9 @@ class m37450_device : public m3745x_device
 {
 public:
 	m37450_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-protected:
-	m37450_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	m37450_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 };
 
-DECLARE_DEVICE_TYPE(M37450, m37450_device)
+extern const device_type M37450;
 
-#endif // MAME_CPU_M6502_M3745X_H
+#endif

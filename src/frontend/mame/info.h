@@ -8,17 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_FRONTEND_MAME_INFO_H
-#define MAME_FRONTEND_MAME_INFO_H
-
 #pragma once
 
-#include "emuopts.h"
-
-#include <type_traits>
-#include <unordered_set>
-#include <vector>
-
+#ifndef __INFO_H__
+#define __INFO_H__
 
 class driver_enumerator;
 
@@ -32,49 +25,44 @@ class info_xml_creator
 {
 public:
 	// construction/destruction
-	info_xml_creator(emu_options const &options);
+	info_xml_creator(driver_enumerator &drivlist);
 
 	// output
-	void output(FILE *out, std::vector<std::string> const &patterns);
-	void output(FILE *out, driver_enumerator &drivlist, bool nodevices);
+	void output(FILE *out, bool nodevices = false);
 
 private:
-	typedef std::unordered_set<std::add_pointer_t<device_type> > device_type_set;
-
 	// internal helper
-	void output_header();
-	void output_footer();
-
-	void output_one(driver_enumerator &drivlist, device_type_set *devtypes);
-	void output_sampleof(device_t &device);
-	void output_bios(game_driver const &driver);
-	void output_rom(driver_enumerator *drivlist, device_t &device);
-	void output_device_roms(device_t &root);
+	void output_one();
+	void output_sampleof();
+	void output_bios();
+	void output_rom(device_t &device);
+	void output_device_roms();
 	void output_sample(device_t &device);
 	void output_chips(device_t &device, const char *root_tag);
-	void output_display(device_t &device, u32 const *flags, const char *root_tag);
+	void output_display(device_t &device, const char *root_tag);
 	void output_sound(device_t &device);
 	void output_input(const ioport_list &portlist);
 	void output_switches(const ioport_list &portlist, const char *root_tag, int type, const char *outertag, const char *innertag);
 	void output_ports(const ioport_list &portlist);
 	void output_adjusters(const ioport_list &portlist);
-	void output_driver(game_driver const &driver);
+	void output_driver();
 	void output_images(device_t &device, const char *root_tag);
-	void output_slots(machine_config &config, device_t &device, const char *root_tag, device_type_set *devtypes);
-	void output_software_list(device_t &root);
-	void output_ramoptions(device_t &root);
+	void output_slots(device_t &device, const char *root_tag);
+	void output_software_list();
+	void output_ramoptions();
 
-	void output_one_device(machine_config &config, device_t &device, const char *devtag);
-	void output_devices(device_type_set const *filter);
+	void output_one_device(device_t &device, const char *devtag);
+	void output_devices();
 
-	const char *get_merge_name(driver_enumerator &drivlist, util::hash_collection const &romhashes);
+	const char *get_merge_name(const util::hash_collection &romhashes);
 
 	// internal state
-	FILE *          m_output; // FIXME: this is not reentrancy-safe
-	emu_options     m_lookup_options;
+	FILE *                  m_output;
+	driver_enumerator &     m_drivlist;
+	emu_options             m_lookup_options;
 
 	static const char s_dtd_string[];
 };
 
 
-#endif  // MAME_FRONTEND_MAME_INFO_H
+#endif  /* __INFO_H__ */

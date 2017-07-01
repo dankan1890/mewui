@@ -41,8 +41,8 @@ public:
 	DECLARE_PALETTE_INIT(redclash);
 	uint32_t screen_update_sraider(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_redclash(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_sraider);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_redclash);
+	void screen_eof_sraider(screen_device &screen, bool state);
+	void screen_eof_redclash(screen_device &screen, bool state);
 	DECLARE_WRITE8_MEMBER( redclash_videoram_w );
 	DECLARE_WRITE8_MEMBER( redclash_gfxbank_w );
 	DECLARE_WRITE8_MEMBER( redclash_flipscreen_w );

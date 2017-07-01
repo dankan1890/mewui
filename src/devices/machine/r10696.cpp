@@ -32,9 +32,12 @@
 #include "emu.h"
 #include "machine/r10696.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
-
+#define VERBOSE 1
+#if VERBOSE
+#define LOG(x) logerror x
+#else
+#define LOG(x)
+#endif
 
 /*************************************
  *
@@ -42,12 +45,12 @@
  *
  *************************************/
 
-DEFINE_DEVICE_TYPE(R10696, r10696_device, "r10696", "Rockwell 10696 GPIO")
+const device_type R10696 = &device_creator<r10696_device>;
 
 r10696_device::r10696_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, R10696, tag, owner, clock)
-	, m_io_a(0), m_io_b(0), m_io_c(0)
-	, m_iord(*this), m_iowr(*this)
+	: device_t(mconfig, R10696, "Rockwell 10696", tag, owner, clock, "r10696", __FILE__),
+		m_io_a(0), m_io_b(0), m_io_c(0),
+		m_iord(*this), m_iowr(*this)
 {
 }
 

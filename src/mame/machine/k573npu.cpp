@@ -5,7 +5,6 @@
  *
  */
 
-#include "emu.h"
 #include "k573npu.h"
 
 /*
@@ -73,7 +72,7 @@
 */
 
 k573npu_device::k573npu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, KONAMI_573_NETWORK_PCB_UNIT, tag, owner, clock)
+	device_t(mconfig, KONAMI_573_NETWORK_PCB_UNIT, "Konami 573 Network PCB Unit", tag, owner, clock, "k573npu", __FILE__)
 {
 }
 
@@ -91,4 +90,4 @@ const tiny_rom_entry *k573npu_device::device_rom_region() const
 	return ROM_NAME( k573npu );
 }
 
-DEFINE_DEVICE_TYPE(KONAMI_573_NETWORK_PCB_UNIT, k573npu_device, "k573npu", "Konami 573 Network PCB Unit")
+const device_type KONAMI_573_NETWORK_PCB_UNIT = &device_creator<k573npu_device>;

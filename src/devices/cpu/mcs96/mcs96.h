@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_MCS96_MCS96_H
-#define MAME_CPU_MCS96_MCS96_H
-
-#pragma once
+#ifndef __MCS96_H__
+#define __MCS96_H__
 
 class mcs96_device : public cpu_device {
 public:
@@ -19,11 +17,7 @@ public:
 		EXINT_LINE = 1
 	};
 
-	enum {
-		MCS96_PC = 1,
-		MCS96_PSW,
-		MCS96_R       // 0x74 entries
-	};
+	mcs96_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, int data_width, const char *shortname, const char *source);
 
 protected:
 	enum {
@@ -73,8 +67,6 @@ protected:
 		DASM_indexed_2,         /* Indexed, short or long, 2 operators */
 		DASM_indexed_3         /* Indexed, short or long, 3 operators */
 	};
-
-	mcs96_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int data_width);
 
 	// device-level overrides
 	virtual void device_start() override;
@@ -255,4 +247,10 @@ protected:
 #undef O
 };
 
-#endif // MAME_CPU_MCS96_MCS96_H
+enum {
+	MCS96_PC = 1,
+	MCS96_PSW,
+	MCS96_R       // 0x74 entries
+};
+
+#endif

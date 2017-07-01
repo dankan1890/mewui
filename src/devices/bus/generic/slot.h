@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_GENERIC_SLOT_H
-#define MAME_BUS_GENERIC_SLOT_H
-
-#pragma once
+#ifndef __GENERIC_SLOT_H
+#define __GENERIC_SLOT_H
 
 #include "softlist_dev.h"
 
@@ -19,6 +17,7 @@ class device_generic_cart_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_generic_cart_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_generic_cart_interface();
 
 	// reading and writing
@@ -41,10 +40,7 @@ public:
 	uint8_t* get_ram_base() { return &m_ram[0]; }
 	uint32_t get_ram_size() { return m_ram.size(); }
 
-	void save_ram() { device().save_item(NAME(m_ram)); }
-
-protected:
-	device_generic_cart_interface(const machine_config &mconfig, device_t &device);
+	void save_ram()   { device().save_item(NAME(m_ram)); }
 
 	// internal state
 	uint8_t  *m_rom;
@@ -116,6 +112,7 @@ public:
 
 	// device-level overrides
 	virtual void device_start() override;
+	virtual void device_config_complete() override;
 
 	// image-level overrides
 	virtual image_init_result call_load() override;
@@ -135,7 +132,7 @@ public:
 	virtual const char *file_extensions() const override { return m_extensions; }
 
 	// slot interface overrides
-	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
+	virtual std::string get_default_card_software() override;
 
 	// reading and writing
 	virtual DECLARE_READ8_MEMBER(read_rom);
@@ -148,8 +145,7 @@ public:
 	virtual void rom_alloc(size_t size, int width, endianness_t end) { if (m_cart) m_cart->rom_alloc(size, width, end, tag()); }
 	virtual void ram_alloc(uint32_t size)  { if (m_cart) m_cart->ram_alloc(size); }
 
-	uint8_t* get_rom_base()
-	{
+	uint8_t* get_rom_base()  {
 		if (m_cart)
 		{
 			if (!user_loadable())
@@ -159,8 +155,7 @@ public:
 		}
 		return nullptr;
 	}
-	uint32_t get_rom_size()
-	{
+	uint32_t get_rom_size()   {
 		if (m_cart)
 		{
 			if (!user_loadable())
@@ -172,9 +167,10 @@ public:
 	}
 	uint8_t* get_ram_base() { if (m_cart) return m_cart->get_ram_base(); return nullptr; }
 
-	void save_ram() { if (m_cart && m_cart->get_ram_size()) m_cart->save_ram(); }
+	void save_ram()   { if (m_cart && m_cart->get_ram_size()) m_cart->save_ram(); }
 
 protected:
+
 	const char *m_interface;
 	const char *m_default_card;
 	const char *m_extensions;
@@ -188,7 +184,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(GENERIC_SOCKET, generic_slot_device)
+extern const device_type GENERIC_SOCKET;
 
 
 /***************************************************************************
@@ -208,5 +204,4 @@ DECLARE_DEVICE_TYPE(GENERIC_SOCKET, generic_slot_device)
 	MCFG_DEVICE_ADD(_tag, GENERIC_SOCKET, 0) \
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _default, false) \
 	MCFG_GENERIC_INTERFACE(_dev_intf)
-
-#endif // MAME_BUS_GENERIC_SLOT_H
+#endif

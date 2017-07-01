@@ -9,14 +9,15 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_P1_SOUND_H
-#define MAME_BUS_P1_SOUND_H
-
 #pragma once
 
+#ifndef __P1_SOUND__
+#define __P1_SOUND__
 
-#include "isa.h"
+#include "emu.h"
+
 #include "bus/midi/midi.h"
+#include "isa.h"
 #include "machine/i8251.h"
 #include "machine/pit8253.h"
 #include "sound/dac.h"
@@ -33,6 +34,9 @@ public:
 	// construction/destruction
 	p1_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// Optional information overrides
+	virtual machine_config_constructor  device_mconfig_additions() const override;
+
 	DECLARE_READ8_MEMBER(d14_r);
 	DECLARE_READ8_MEMBER(d16_r);
 	DECLARE_READ8_MEMBER(d17_r);
@@ -40,6 +44,7 @@ public:
 	DECLARE_WRITE8_MEMBER(d16_w);
 	DECLARE_WRITE8_MEMBER(d17_w);
 
+	DECLARE_WRITE_LINE_MEMBER(sampler_sync);
 	DECLARE_READ8_MEMBER(adc_r);
 	DECLARE_WRITE8_MEMBER(dac_w);
 
@@ -48,18 +53,13 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
-	// Optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-
 private:
-	DECLARE_WRITE_LINE_MEMBER(sampler_sync);
-
-	uint8_t m_dac_data[16];
-	int m_dac_ptr;
+	uint8_t                           m_dac_data[16];
+	int                             m_dac_ptr;
 
 	required_device<dac_byte_interface> m_dac;
-	optional_device<filter_rc_device> m_filter;
-	required_device<i8251_device> m_midi;
+	optional_device<filter_rc_device>   m_filter;
+	required_device<i8251_device>   m_midi;
 	required_device<pit8253_device> m_d14;
 	required_device<pit8253_device> m_d16;
 	required_device<pit8253_device> m_d17;
@@ -67,7 +67,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(P1_SOUND, p1_sound_device)
+extern const device_type P1_SOUND;
 
 
-#endif // MAME_BUS_P1_SOUND_H
+#endif

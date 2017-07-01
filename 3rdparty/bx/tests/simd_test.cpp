@@ -1,22 +1,20 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
 #include "test.h"
 #include <bx/simd_t.h>
 #include <bx/fpumath.h>
-#include <bx/string.h>
+#include <string.h>
 
 #if 0
 #	define SIMD_DBG DBG
 #else
-#	define SIMD_DBG unused
+#	define SIMD_DBG(_fmt, ...) BX_UNUSED(__VA_ARGS__);
 #endif // 0
 
 using namespace bx;
-
-inline void unused(...) {}
 
 union simd_cast
 {
@@ -61,6 +59,7 @@ void simd_check_int32(
 	REQUIRE(c.i[3] == _3);
 }
 
+#if 0
 void simd_check_int32(
 	  const char* _str
 	, bx::simd256_t _a
@@ -90,6 +89,7 @@ void simd_check_int32(
 	REQUIRE(c.i[6] == _6);
 	REQUIRE(c.i[7] == _7);
 }
+#endif // 0
 
 void simd_check_uint32(
 	  const char* _str
@@ -114,6 +114,7 @@ void simd_check_uint32(
 	REQUIRE(c.ui[3] == _3);
 }
 
+#if 0
 void simd_check_uint32(
 	  const char* _str
 	, bx::simd256_t _a
@@ -144,6 +145,7 @@ void simd_check_uint32(
 	REQUIRE(c.ui[6] == _6);
 	REQUIRE(c.ui[7] == _7);
 }
+#endif // 0
 
 void simd_check_float(
 	  const char* _str
@@ -168,6 +170,7 @@ void simd_check_float(
 	CHECK(bx::fequal(c.f[3], _3, 0.0001f) );
 }
 
+#if 0
 void simd_check_float(
 	  const char* _str
 	, bx::simd256_t _a
@@ -198,6 +201,7 @@ void simd_check_float(
 	CHECK(bx::fequal(c.f[6], _6, 0.0001f) );
 	CHECK(bx::fequal(c.f[7], _7, 0.0001f) );
 }
+#endif // 0
 
 void simd_check_string(const char* _str, bx::simd128_t _a)
 {
@@ -206,7 +210,7 @@ void simd_check_string(const char* _str, bx::simd128_t _a)
 
 	SIMD_DBG("%s %s", _str, test);
 
-	CHECK(0 == bx::strncmp(_str, test) );
+	CHECK(0 == strcmp(_str, test) );
 }
 
 TEST_CASE("simd_swizzle", "")
@@ -220,7 +224,7 @@ TEST_CASE("simd_swizzle", "")
 #define BX_SIMD128_IMPLEMENT_SWIZZLE(_x, _y, _z, _w) \
 			simd_check_string("" #_x #_y #_z #_w "", simd_swiz_##_x##_y##_z##_w(xyzw) ); \
 
-#include <bx/inline/simd128_swizzle.inl>
+#include <bx/simd128_swizzle.inl>
 
 #undef BX_SIMD128_IMPLEMENT_SWIZZLE
 #undef ELEMw
@@ -322,20 +326,20 @@ TEST_CASE("simd_load", "")
 		, 0.0f, 1.0f, 2.0f, 3.0f
 		);
 
-	simd_check_float("ld"
-		, simd_ld<simd256_t>(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f)
-		, 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f
-		);
+//	simd_check_float("ld"
+//		, simd_ld<simd256_t>(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f)
+//		, 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f
+//		);
 
 	simd_check_int32("ild"
 		, simd_ild(uint32_t(-1), 0, 1, 2)
 		, uint32_t(-1), 0, 1, 2
 		);
 
-	simd_check_int32("ild"
-		, simd_ild<simd256_t>(uint32_t(-1), 0, 1, 2, 3, 4, 5, 6)
-		, uint32_t(-1), 0, 1, 2, 3, 4, 5, 6
-		);
+//	simd_check_int32("ild"
+//		, simd_ild<simd256_t>(uint32_t(-1), 0, 1, 2, 3, 4, 5, 6)
+//		, uint32_t(-1), 0, 1, 2, 3, 4, 5, 6
+//		);
 
 	simd_check_int32("ild"
 		, simd_ild(uint32_t(-1), uint32_t(-2), uint32_t(-3), uint32_t(-4) )
@@ -346,20 +350,12 @@ TEST_CASE("simd_load", "")
 		, 0, 0, 0, 0
 		);
 
-	simd_check_uint32("isplat", simd_isplat<simd128_t>(0x80000001)
+	simd_check_uint32("isplat", simd_isplat(0x80000001)
 		, 0x80000001, 0x80000001, 0x80000001, 0x80000001
 		);
 
-	simd_check_float("splat", simd_splat<simd128_t>(1.0f)
+	simd_check_float("isplat", simd_splat(1.0f)
 		, 1.0f, 1.0f, 1.0f, 1.0f
-		);
-
-	simd_check_uint32("isplat", simd_isplat<simd256_t>(0x80000001)
-		, 0x80000001, 0x80000001, 0x80000001, 0x80000001, 0x80000001, 0x80000001, 0x80000001, 0x80000001
-		);
-
-	simd_check_float("splat", simd_splat<simd256_t>(1.0f)
-		, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
 		);
 }
 
@@ -394,7 +390,7 @@ TEST_CASE("simd_sqrt", "")
 		);
 }
 
-TEST_CASE("simd", "")
+TEST_CASE("float4", "")
 {
 	const simd128_t isplat = simd_isplat(0x80000001);
 	simd_check_uint32("sll"

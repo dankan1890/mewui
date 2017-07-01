@@ -11,10 +11,8 @@
     with semi-independent scrolling, and the ability to transition
     between scrolling different sections.
 
-    Additionally it supports the headlight and tunnel effects also
-    needed for a Highway Chase style game. These both produce a pen
-    modification effect which is not emulated properly now. The lack
-    of tunnel .
+    Additionally it supports the headlight effect also needed for
+    a Highway Chase style game.
 
     ---
 
@@ -34,15 +32,18 @@
         - different game revision to emulated version, main
           boss enemy shown at the top of the scoreboard differs
           so notes below could be invalid
-        - bullets should be white, not black (OK)
-        - BG layer changes to orange colours for first level, but
-          reverts to red when player explodes
+
+        - bullets should be white, not black
+        - BG layer changes to orange colours for first level
+          (this would require a palette bitplane re-order we
+           don't currently support)
 
     mamedev.emulab.it/haze/reference/sm18975592-HWY_CHASE.mp4
         - road / bg colour should be darkish blue outside of tunnels
         - road / bg colour should be black in tunnels
         - headlight should be the same darkish blue as the road
           at all times, so only visible in tunnels
+        - our headlight is misplaced (should be simple fix)
         - center line of road does not exist on hw!
         - enemies are hidden in tunnels (like madalien)
         - road / bg flashs regular blue when enemy is hit revealing
@@ -52,7 +53,7 @@
         - colours of BG tilemap are glitchy even on hardware eg.
           Pink desert after first tunnel, Green water after 2nd
           tunnel even when the right palettes exist!
-        - player bullets are yellow, enemy bullets are red (OK)
+        - enemy bullets are red
 
     mamedev.emulab.it/haze/reference/sm17433759-PRO_BOWLING.mp4
         - no notes
@@ -80,7 +81,8 @@
           blue, they appear green in our emulation
 
     mamedev.emulab.it/haze/reference/sm17202201-SKATER.mp4
-        - the game turns on the 'cross' bit, why?
+        - shadow handling (headlight sprite) positioning is wrong, the
+          game also turns on the 'cross' bit, why?
 
     mamedev.emulab.it/haze/reference/sm17201813-ZEROIZE.mp4
         - no notes
@@ -556,7 +558,7 @@ void decocass_state::draw_missiles(bitmap_ind16 &bitmap, const rectangle &clipre
 			for (x = 0; x < 4; x++)
 			{
 				if (sx >= cliprect.min_x && sx <= cliprect.max_x)
-					bitmap.pix16(sy, sx) = (m_color_missiles & 7) | 8;
+					bitmap.pix16(sy, sx) = (m_color_missiles >> 4) & 7;
 				sx++;
 			}
 
@@ -572,7 +574,7 @@ void decocass_state::draw_missiles(bitmap_ind16 &bitmap, const rectangle &clipre
 			for (x = 0; x < 4; x++)
 			{
 				if (sx >= cliprect.min_x && sx <= cliprect.max_x)
-					bitmap.pix16(sy, sx) = ((m_color_missiles >> 4) & 7) | 8;
+					bitmap.pix16(sy, sx) = m_color_missiles & 7;
 				sx++;
 			}
 	}
@@ -739,17 +741,8 @@ uint32_t decocass_state::screen_update_decocass(screen_device &screen, bitmap_in
 			draw_edge(bitmap,cliprect,1,false);
 		}
 	}
-
-	// LS148 @ 2B (DSP-8 board) sets pen priority
-
-	// priority 1: sprites
-	draw_sprites(bitmap, cliprect, (m_color_center_bot >> 1) & 1, 0, 0, m_fgvideoram, 0x20);
-
-	// priority 2 & 3: missiles
-	draw_missiles(bitmap, cliprect, 1, 0, m_colorram, 0x20);
-
-	// priority 4: foreground
 	m_fg_tilemap->draw(screen, bitmap, cliprect, 0, 0);
-
+	draw_sprites(bitmap, cliprect, (m_color_center_bot >> 1) & 1, 0, 0, m_fgvideoram, 0x20);
+	draw_missiles(bitmap, cliprect, 1, 0, m_colorram, 0x20);
 	return 0;
 }

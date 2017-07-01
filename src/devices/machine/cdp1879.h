@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_CDP1879_H
-#define MAME_MACHINE_CDP1879_H
-
 #pragma once
 
+#ifndef __CDP1879_H__
+#define __CDP1879_H__
+
+#include "emu.h"
 #include "dirtc.h"
 
 
@@ -79,6 +80,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(CDP1879, cdp1879_device)
+extern const device_type CDP1879;
 
-#endif // MAME_MACHINE_CDP1879_H
+#endif

@@ -12,8 +12,6 @@ similar hardware.
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
 
 class drtomy_state : public driver_device
 {
@@ -299,7 +297,7 @@ void drtomy_state::machine_reset()
 	m_oki_bank = 0;
 }
 
-static MACHINE_CONFIG_START( drtomy )
+static MACHINE_CONFIG_START( drtomy, drtomy_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000,24000000/2)          /* ? MHz */
@@ -324,7 +322,7 @@ static MACHINE_CONFIG_START( drtomy )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_OKIM6295_ADD("oki", 26000000/16, PIN7_LOW)
+	MCFG_OKIM6295_ADD("oki", 26000000/16, OKIM6295_PIN7_LOW)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.8)
 MACHINE_CONFIG_END
 
@@ -355,4 +353,4 @@ ROM_START( drtomy )
 ROM_END
 
 
-GAME( 1993, drtomy, 0, drtomy, drtomy, drtomy_state, 0, ROT0, "Playmark", "Dr. Tomy", MACHINE_SUPPORTS_SAVE )
+GAME( 1993, drtomy, 0, drtomy, drtomy, driver_device, 0, ROT0, "Playmark", "Dr. Tomy", MACHINE_SUPPORTS_SAVE )

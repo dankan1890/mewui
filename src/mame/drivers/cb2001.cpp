@@ -44,10 +44,8 @@ this seems more like 8-bit hardware, maybe it should be v25, not v35...
 
 #include "emu.h"
 #include "cpu/nec/v25.h"
-#include "machine/i8255.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/i8255.h"
 
 
 class cb2001_state : public driver_device
@@ -807,7 +805,7 @@ PALETTE_INIT_MEMBER(cb2001_state, cb2001)
 	}
 }
 
-static MACHINE_CONFIG_START( cb2001 )
+static MACHINE_CONFIG_START( cb2001, cb2001_state )
 	MCFG_CPU_ADD("maincpu", V35, 20000000) // CPU91A-011-0016JK004; encrypted cpu like nec v25/35 used in some irem game
 	MCFG_V25_CONFIG(cb2001_decryption_table)
 	MCFG_CPU_PROGRAM_MAP(cb2001_map)
@@ -869,5 +867,5 @@ ROM_START( scherrym )
 	ROM_LOAD( "n82s135-2.bin", 0x200, 0x100, CRC(a19821db) SHA1(62dda90dd67dfbc0b96f161f1f2b7a46a5805eae) )
 ROM_END
 
-GAME( 2001, cb2001,    0,      cb2001,      cb2001, cb2001_state,   0, ROT0,  "Dyna", "Cherry Bonus 2001",   MACHINE_NOT_WORKING|MACHINE_NO_SOUND )
-GAME( 2001, scherrym,  0,      cb2001,      cb2001, cb2001_state,   0, ROT0,  "Dyna", "Super Cherry Master", MACHINE_NOT_WORKING|MACHINE_NO_SOUND ) // 2001 version? (we have bootlegs running on z80 hw of a 1996 version)
+GAME( 2001, cb2001,    0,      cb2001,      cb2001, driver_device,   0, ROT0,  "Dyna", "Cherry Bonus 2001", MACHINE_NOT_WORKING|MACHINE_NO_SOUND )
+GAME( 2001, scherrym,  0,      cb2001,      cb2001, driver_device,   0, ROT0,  "Dyna", "Super Cherry Master", MACHINE_NOT_WORKING|MACHINE_NO_SOUND ) // 2001 version? (we have bootlegs running on z80 hw of a 1996 version)

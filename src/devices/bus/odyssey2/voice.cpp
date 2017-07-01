@@ -14,21 +14,20 @@
 
 #include "emu.h"
 #include "voice.h"
-#include "speaker.h"
 
 
 //-------------------------------------------------
 //  o2_voice_device - constructor
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(O2_ROM_VOICE, o2_voice_device, "o2_voice", "Odyssey 2 The Voice Passthrough Cart")
+const device_type O2_ROM_VOICE = &device_creator<o2_voice_device>;
 
 
 o2_voice_device::o2_voice_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: o2_rom_device(mconfig, O2_ROM_VOICE, tag, owner, clock)
-	, m_speech(*this, "sp0256_speech")
-	, m_subslot(*this, "subslot")
-	, m_lrq_state(0)
+					: o2_rom_device(mconfig, O2_ROM_VOICE, "Odyssey 2 The Voice Passthrough Cart", tag, owner, clock, "o2_voice", __FILE__),
+					m_speech(*this, "sp0256_speech"),
+					m_subslot(*this, "subslot"),
+					m_lrq_state(0)
 {
 }
 
@@ -38,12 +37,11 @@ void o2_voice_device::device_start()
 	save_item(NAME(m_lrq_state));
 }
 
-
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( sub_slot )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( o2_voice_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( o2voice )
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
 	MCFG_SOUND_ADD("sp0256_speech", SP0256, 3120000)
@@ -53,6 +51,17 @@ MACHINE_CONFIG_MEMBER( o2_voice_device::device_add_mconfig )
 
 	MCFG_O2_CARTRIDGE_ADD("subslot", o2_cart, nullptr)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor o2_voice_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( o2voice );
+}
 
 
 ROM_START( o2voice )

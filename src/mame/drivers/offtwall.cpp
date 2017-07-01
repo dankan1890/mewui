@@ -20,11 +20,9 @@
 
 
 #include "emu.h"
-#include "includes/offtwall.h"
-
 #include "cpu/m68000/m68000.h"
 #include "machine/watchdog.h"
-#include "speaker.h"
+#include "includes/offtwall.h"
 
 
 
@@ -360,7 +358,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( offtwall )
+static MACHINE_CONFIG_START( offtwall, offtwall_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, ATARI_CLOCK_14MHz/2)

@@ -3,12 +3,18 @@
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+#include <stdio.h>
+#include <string.h>
+
 #include <string>
 #include <vector>
 #include <map>
 #include <tinystl/allocator.h>
 #include <tinystl/unordered_map.h>
 namespace stl = tinystl;
+
+namespace std { namespace tr1 {} }
+using namespace std::tr1;
 
 #include "common.h"
 #include "bgfx_utils.h"
@@ -661,7 +667,7 @@ struct HalfEdges
 		m_offsets = (uint32_t*)malloc(numRows * sizeof(uint32_t) );
 
 		HalfEdge* he = m_data;
-		for (uint16_t ii = 0; ii < numRows; ++ii)
+		for (uint32_t ii = 0; ii < numRows; ++ii)
 		{
 			m_offsets[ii] = uint32_t(he - m_data);
 
@@ -753,15 +759,15 @@ uint16_t weldVertices(WeldedVertex* _output, const bgfx::VertexDecl& _decl, cons
 	const uint32_t hashMask = hashSize-1;
 	const float epsilonSq = _epsilon*_epsilon;
 
-	uint16_t numVertices = 0;
+	uint32_t numVertices = 0;
 
 	const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
 	uint16_t* hashTable = (uint16_t*)alloca(size);
-	bx::memSet(hashTable, 0xff, size);
+	memset(hashTable, 0xff, size);
 
 	uint16_t* next = hashTable + hashSize;
 
-	for (uint16_t ii = 0; ii < _num; ++ii)
+	for (uint32_t ii = 0; ii < _num; ++ii)
 	{
 		float pos[4];
 		vertexUnpack(pos, bgfx::Attrib::Position, _decl, _data, ii);
@@ -885,7 +891,7 @@ struct Group
 			face.m_i[0] = i0;
 			face.m_i[1] = i1;
 			face.m_i[2] = i2;
-			bx::memCopy(face.m_plane, plane, 4*sizeof(float) );
+			memcpy(face.m_plane, plane, 4*sizeof(float) );
 			m_faces.push_back(face);
 
 			//Use unique indices for EdgeMap.
@@ -913,14 +919,14 @@ struct Group
 				if (iter != edgeMap.end() )
 				{
 					EdgeAndPlane& ep = iter->second;
-					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = true;
 				}
 				else
 				{
 					std::pair<EdgeMap::iterator, bool> result = edgeMap.insert(std::make_pair(key, EdgeAndPlane(ui0, ui1) ) );
 					EdgeAndPlane& ep = result.first->second;
-					bx::memCopy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
+					memcpy(ep.m_plane[ep.m_faceIndex].m_plane, plane, 4*sizeof(float) );
 					ep.m_faceReverseOrder[ep.m_faceIndex] = false;
 					ep.m_faceIndex++;
 				}
@@ -935,8 +941,8 @@ struct Group
 			Edge* edge = &m_edges[m_numEdges];
 			Plane* plane = &m_edgePlanes[index];
 
-			bx::memCopy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
-			bx::memCopy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
+			memcpy(edge, iter->second.m_faceReverseOrder, sizeof(Edge) );
+			memcpy(plane, iter->second.m_plane, 2 * sizeof(Plane) );
 
 			m_numEdges++;
 			index += 2;
@@ -988,7 +994,7 @@ namespace bgfx
 
 struct Mesh
 {
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		Group group;
 		const bgfx::Memory* mem;
@@ -999,7 +1005,7 @@ struct Mesh
 		size = _numVertices*_decl.getStride();
 
 		group.m_vertices = (uint8_t*)malloc(size);
-		bx::memCopy(group.m_vertices, _vertices, size);
+		memcpy(group.m_vertices, _vertices, size);
 
 		mem = bgfx::makeRef(group.m_vertices, size);
 		group.m_vbh = bgfx::createVertexBuffer(mem, _decl);
@@ -1009,7 +1015,7 @@ struct Mesh
 		size = _numIndices*2;
 
 		group.m_indices = (uint16_t*)malloc(size);
-		bx::memCopy(group.m_indices, _indices, size);
+		memcpy(group.m_indices, _indices, size);
 
 		mem = bgfx::makeRef(group.m_indices, size);
 		group.m_ibh = bgfx::createIndexBuffer(mem);
@@ -1023,29 +1029,29 @@ struct Mesh
 #define BGFX_CHUNK_MAGIC_IB  BX_MAKEFOURCC('I', 'B', ' ', 0x0)
 #define BGFX_CHUNK_MAGIC_PRI BX_MAKEFOURCC('P', 'R', 'I', 0x0)
 
-		bx::FileReaderI* reader = entry::getFileReader();
-		bx::open(reader, _filePath);
+		bx::CrtFileReader reader;
+		bx::open(&reader, _filePath);
 
 		Group group;
 
 		uint32_t chunk;
-		while (4 == bx::read(reader, chunk) )
+		while (4 == bx::read(&reader, chunk) )
 		{
 			switch (chunk)
 			{
 			case BGFX_CHUNK_MAGIC_VB:
 				{
-					bx::read(reader, group.m_sphere);
-					bx::read(reader, group.m_aabb);
-					bx::read(reader, group.m_obb);
+					bx::read(&reader, group.m_sphere);
+					bx::read(&reader, group.m_aabb);
+					bx::read(&reader, group.m_obb);
 
-					bgfx::read(reader, m_decl);
+					bgfx::read(&reader, m_decl);
 					uint16_t stride = m_decl.getStride();
 
-					bx::read(reader, group.m_numVertices);
+					bx::read(&reader, group.m_numVertices);
 					const uint32_t size = group.m_numVertices*stride;
 					group.m_vertices = (uint8_t*)malloc(size);
-					bx::read(reader, group.m_vertices, size);
+					bx::read(&reader, group.m_vertices, size);
 
 					const bgfx::Memory* mem = bgfx::makeRef(group.m_vertices, size);
 					group.m_vbh = bgfx::createVertexBuffer(mem, m_decl);
@@ -1054,10 +1060,10 @@ struct Mesh
 
 			case BGFX_CHUNK_MAGIC_IB:
 				{
-					bx::read(reader, group.m_numIndices);
+					bx::read(&reader, group.m_numIndices);
 					const uint32_t size = group.m_numIndices*2;
 					group.m_indices = (uint16_t*)malloc(size);
-					bx::read(reader, group.m_indices, size);
+					bx::read(&reader, group.m_indices, size);
 
 					const bgfx::Memory* mem = bgfx::makeRef(group.m_indices, size);
 					group.m_ibh = bgfx::createIndexBuffer(mem);
@@ -1067,31 +1073,31 @@ struct Mesh
 			case BGFX_CHUNK_MAGIC_PRI:
 				{
 					uint16_t len;
-					bx::read(reader, len);
+					bx::read(&reader, len);
 
 					std::string material;
 					material.resize(len);
-					bx::read(reader, const_cast<char*>(material.c_str() ), len);
+					bx::read(&reader, const_cast<char*>(material.c_str() ), len);
 
 					uint16_t num;
-					bx::read(reader, num);
+					bx::read(&reader, num);
 
 					for (uint32_t ii = 0; ii < num; ++ii)
 					{
-						bx::read(reader, len);
+						bx::read(&reader, len);
 
 						std::string name;
 						name.resize(len);
-						bx::read(reader, const_cast<char*>(name.c_str() ), len);
+						bx::read(&reader, const_cast<char*>(name.c_str() ), len);
 
 						Primitive prim;
-						bx::read(reader, prim.m_startIndex);
-						bx::read(reader, prim.m_numIndices);
-						bx::read(reader, prim.m_startVertex);
-						bx::read(reader, prim.m_numVertices);
-						bx::read(reader, prim.m_sphere);
-						bx::read(reader, prim.m_aabb);
-						bx::read(reader, prim.m_obb);
+						bx::read(&reader, prim.m_startIndex);
+						bx::read(&reader, prim.m_numIndices);
+						bx::read(&reader, prim.m_startVertex);
+						bx::read(&reader, prim.m_numVertices);
+						bx::read(&reader, prim.m_sphere);
+						bx::read(&reader, prim.m_aabb);
+						bx::read(&reader, prim.m_obb);
 
 						group.m_prims.push_back(prim);
 					}
@@ -1102,13 +1108,13 @@ struct Mesh
 				break;
 
 			default:
-				DBG("%08x at %d", chunk, bx::seek(reader) );
+				DBG("%08x at %d", chunk, reader.seek() );
 				abort();
 				break;
 			}
 		}
 
-		bx::close(reader);
+		bx::close(&reader);
 
 		for (GroupArray::iterator it = m_groups.begin(), itEnd = m_groups.end(); it != itEnd; ++it)
 		{
@@ -1137,7 +1143,7 @@ struct Model
 		m_texture.idx = bgfx::invalidHandle;
 	}
 
-	void load(const void* _vertices, uint16_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
+	void load(const void* _vertices, uint32_t _numVertices, const bgfx::VertexDecl _decl, const uint16_t* _indices, uint32_t _numIndices)
 	{
 		m_mesh.load(_vertices, _numVertices, _decl, _indices, _numIndices);
 	}
@@ -1173,7 +1179,7 @@ struct Model
 			{
 				bgfx::setTexture(0, s_texColor, m_texture);
 			}
-			bgfx::setTexture(1, s_texStencil, bgfx::getTexture(s_stencilFb) );
+			bgfx::setTexture(1, s_texStencil, s_stencilFb);
 
 			// Apply render state
 			::setRenderState(_renderState);
@@ -1201,7 +1207,7 @@ struct Instance
 
 	void submit(uint8_t _viewId, const RenderState& _renderState)
 	{
-		bx::memCopy(s_uniforms.m_color, m_color, 3*sizeof(float) );
+		memcpy(s_uniforms.m_color, m_color, 3*sizeof(float) );
 
 		float mtx[16];
 		bx::mtxSRT(mtx
@@ -1371,7 +1377,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 		VertexData(const float* _v3, float _extrude = 0.0f, float _k = 1.0f)
 		{
-			bx::memCopy(m_v, _v3, 3*sizeof(float) );
+			memcpy(m_v, _v3, 3*sizeof(float) );
 			m_extrude = _extrude;
 			m_k = _k;
 		}
@@ -1562,7 +1568,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 				for (uint16_t jj = 0; jj < 2; ++jj)
 				{
-					int32_t kk = res[jj] + res[jj+2];
+					int16_t kk = res[jj] + res[jj+2];
 					if (kk != 0)
 					{
 						float* v0 = (float*)&vertices[edges[ii+jj].m_i0*_stride];
@@ -1574,7 +1580,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 						kk = _textureAsStencil ? 1 : kk;
 						uint16_t winding = uint16_t(kk > 0);
-						for (int32_t ll = 0, end = abs(kk); ll < end; ++ll)
+						for (uint8_t ll = 0, end = abs(kk); ll < end; ++ll)
 						{
 							indicesSide[sideI++] = indexSide;
 							indicesSide[sideI++] = indexSide + 2 - winding;
@@ -1611,7 +1617,7 @@ void shadowVolumeCreate(ShadowVolume& _shadowVolume
 
 					kk = _textureAsStencil ? 1 : kk;
 					uint16_t winding = uint16_t(kk > 0);
-					for (int32_t jj = 0, end = abs(kk); jj < end; ++jj)
+					for (uint8_t jj = 0, end = abs(kk); jj < end; ++jj)
 					{
 						indicesSide[sideI++] = indexSide;
 						indicesSide[sideI++] = indexSide + 2 - winding;
@@ -1735,7 +1741,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	// -1.0f - behind near plane
 	float lightSide = float( (d > delta) - (d < -delta) );
 
-	float t = bx::ftan(bx::toRad(_fovy)*0.5f) * _near;
+	float t = tanf(bx::toRad(_fovy)*0.5f) * _near;
 	float b = -t;
 	float r = t * _aspect;
 	float l = -r;
@@ -1774,7 +1780,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 		normal[1] *= lightSide;
 		normal[2] *= lightSide;
 
-		float lenInv = 1.0f / bx::fsqrt(bx::vec3Dot(normal, normal) );
+		float lenInv = 1.0f / sqrtf(bx::vec3Dot(normal, normal) );
 
 		plane[0] = normal[0] * lenInv;
 		plane[1] = normal[1] * lenInv;
@@ -1797,7 +1803,7 @@ void createNearClipVolume(float* __restrict _outPlanes24f
 	bx::vec3MulMtx(tmp, lightPlaneNormal, mtxViewInv);
 	bx::vec3Sub(lightPlaneNormal, tmp, _lightPos);
 
-	float lenInv = 1.0f / bx::fsqrt(bx::vec3Dot(lightPlaneNormal, lightPlaneNormal) );
+	float lenInv = 1.0f / sqrtf(bx::vec3Dot(lightPlaneNormal, lightPlaneNormal) );
 
 	lightPlane[0] = lightPlaneNormal[0] * lenInv;
 	lightPlane[1] = lightPlaneNormal[1] * lenInv;
@@ -1878,8 +1884,8 @@ int _main_(int _argc, char** _argv)
 
 	bgfx::TextureHandle fbtextures[] =
 	{
-		bgfx::createTexture2D(uint16_t(viewState.m_width), uint16_t(viewState.m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP | BGFX_TEXTURE_RT),
-		bgfx::createTexture2D(uint16_t(viewState.m_width), uint16_t(viewState.m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
+		bgfx::createTexture2D(viewState.m_width, viewState.m_height, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT),
+		bgfx::createTexture2D(viewState.m_width, viewState.m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY),
 	};
 	s_stencilFb  = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 
@@ -2072,8 +2078,8 @@ int _main_(int _argc, char** _argv)
 
 			bgfx::destroyFrameBuffer(s_stencilFb);
 
-			fbtextures[0] = bgfx::createTexture2D(uint16_t(viewState.m_width), uint16_t(viewState.m_height), false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT);
-			fbtextures[1] = bgfx::createTexture2D(uint16_t(viewState.m_width), uint16_t(viewState.m_height), false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
+			fbtextures[0] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_U_CLAMP|BGFX_TEXTURE_V_CLAMP|BGFX_TEXTURE_RT);
+			fbtextures[1] = bgfx::createTexture2D(viewState.m_width, viewState.m_height, false, 1, bgfx::TextureFormat::D16, BGFX_TEXTURE_RT_WRITE_ONLY);
 			s_stencilFb = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
 
@@ -2116,8 +2122,8 @@ int _main_(int _argc, char** _argv)
 			| (mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
 			| (mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
 			, mouseState.m_mz
-			, uint16_t(viewState.m_width)
-			, uint16_t(viewState.m_height)
+			, viewState.m_width
+			, viewState.m_height
 			);
 
 		imguiBeginScrollArea("Settings", viewState.m_width - 256 - 10, 10, 256, 700, &scrollAreaRight);
@@ -2256,9 +2262,9 @@ int _main_(int _argc, char** _argv)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = bx::fcos(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][0] = cosf(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = bx::fsin(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
+				lightPosRadius[ii][2] = sinf(2.0f*bx::pi/settings_numLights * float(ii) + lightTimeAccumulator * 1.1f + 3.0f) * 20.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2266,9 +2272,9 @@ int _main_(int _argc, char** _argv)
 		{
 			for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 			{
-				lightPosRadius[ii][0] = bx::fcos(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
+				lightPosRadius[ii][0] = cosf(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][1] = 20.0f;
-				lightPosRadius[ii][2] = bx::fsin(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
+				lightPosRadius[ii][2] = sinf(float(ii) * 2.0f/settings_numLights + lightTimeAccumulator * 1.3f + bx::pi) * 40.0f;
 				lightPosRadius[ii][3] = 20.0f;
 			}
 		}
@@ -2342,9 +2348,9 @@ int _main_(int _argc, char** _argv)
 			inst.m_rotation[0] = 0.0f;
 			inst.m_rotation[1] = 0.0f;
 			inst.m_rotation[2] = 0.0f;
-			inst.m_pos[0]      = bx::fsin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[0]      = sinf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_pos[1]      = 6.0f;
-			inst.m_pos[2]      = bx::fcos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[2]      = cosf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_model       = &cubeModel;
 		}
 
@@ -2359,9 +2365,9 @@ int _main_(int _argc, char** _argv)
 			inst.m_rotation[0] = 0.0f;
 			inst.m_rotation[1] = 0.0f;
 			inst.m_rotation[2] = 0.0f;
-			inst.m_pos[0]      = bx::fsin(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[0]      = sinf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_pos[1]      = 22.0f;
-			inst.m_pos[2]      = bx::fcos(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
+			inst.m_pos[2]      = cosf(ii * 2.0f + 13.0f + sceneTimeAccumulator * 1.1f) * 13.0f;
 			inst.m_model       = &cubeModel;
 		}
 
@@ -2572,9 +2578,9 @@ int _main_(int _argc, char** _argv)
 		{
 			const float* lightPos = lightPosRadius[ii];
 
-			bx::memCopy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float) );
-			bx::memCopy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float) );
-			bx::memCopy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float) );
+			memcpy(s_uniforms.m_lightPosRadius, lightPosRadius[ii], 4*sizeof(float) );
+			memcpy(s_uniforms.m_lightRgbInnerR, lightRgbInnerR[ii], 3*sizeof(float) );
+			memcpy(s_uniforms.m_color,          lightRgbInnerR[ii], 3*sizeof(float) );
 
 			if (settings_useStencilTexture)
 			{
@@ -2636,7 +2642,7 @@ int _main_(int _argc, char** _argv)
 					);
 
 				// Set virtual light pos.
-				bx::memCopy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
+				memcpy(s_uniforms.m_virtualLightPos_extrusionDist, transformedLightPos, 3*sizeof(float) );
 				s_uniforms.m_virtualLightPos_extrusionDist[3] = instance.m_svExtrusionDistance;
 
 				// Compute transform for shadow volume.
@@ -2783,7 +2789,7 @@ int _main_(int _argc, char** _argv)
 		const float lightScale[3] = { 1.5f, 1.5f, 1.5f };
 		for (uint8_t ii = 0; ii < settings_numLights; ++ii)
 		{
-			bx::memCopy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float) );
+			memcpy(s_uniforms.m_color, lightRgbInnerR[ii], 3*sizeof(float) );
 
 			float lightMtx[16];
 			mtxBillboard(lightMtx, viewState.m_view, lightPosRadius[ii], lightScale);
@@ -2792,7 +2798,7 @@ int _main_(int _argc, char** _argv)
 		}
 
 		// Setup view rect and transform for all used views.
-		setViewRectMask(s_viewMask, 0, 0, uint16_t(viewState.m_width), uint16_t(viewState.m_height) );
+		setViewRectMask(s_viewMask, 0, 0, viewState.m_width, viewState.m_height);
 		setViewTransformMask(s_viewMask, viewState.m_view, viewState.m_proj);
 		s_viewMask = 0;
 

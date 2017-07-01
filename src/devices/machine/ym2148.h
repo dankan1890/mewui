@@ -8,10 +8,8 @@
 
 *********************************************************************/
 
-#ifndef MAME_MACHINE_YM2148_H
-#define MAME_MACHINE_YM2148_H
-
-#pragma once
+#ifndef __YM2148_H__
+#define __YM2148_H__
 
 
 //**************************************************************************
@@ -31,17 +29,18 @@
 	devcb = &ym2148_device::set_irq_handler(*device, DEVCB_##_devcb);
 
 
-class ym2148_device : public device_t, public device_serial_interface
+class ym2148_device :  public device_t,
+	public device_serial_interface
 {
 public:
 	// construction/destruction
 	ym2148_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_txd_handler(device_t &device, Object &&cb) { return downcast<ym2148_device &>(device).m_txd_handler.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_port_write_handler(device_t &device, Object &&cb) { return downcast<ym2148_device &>(device).m_port_write_handler.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_port_read_handler(device_t &device, Object &&cb) { return downcast<ym2148_device &>(device).m_port_read_handler.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_irq_handler(device_t &device, Object &&cb) { return downcast<ym2148_device &>(device).m_irq_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_txd_handler(device_t &device, _Object object) { return downcast<ym2148_device &>(device).m_txd_handler.set_callback(object); }
+	template<class _Object> static devcb_base &set_port_write_handler(device_t &device, _Object object) { return downcast<ym2148_device &>(device).m_port_write_handler.set_callback(object); }
+	template<class _Object> static devcb_base &set_port_read_handler(device_t &device, _Object object) { return downcast<ym2148_device &>(device).m_port_read_handler.set_callback(object); }
+	template<class _Object> static devcb_base &set_irq_handler(device_t &device, _Object object) { return downcast<ym2148_device &>(device).m_irq_handler.set_callback(object); }
 
 	DECLARE_READ8_MEMBER(read);
 	DECLARE_WRITE8_MEMBER(write);
@@ -88,6 +87,7 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(YM2148, ym2148_device)
+extern const device_type YM2148;
 
-#endif // MAME_MACHINE_YM2148_H
+
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -7,7 +7,6 @@
 #define BX_SIMD_T_H_HEADER_GUARD
 
 #include "bx.h"
-#include "fpumath.h"
 
 #define BX_SIMD_FORCE_INLINE BX_FORCE_INLINE
 #define BX_SIMD_INLINE inline
@@ -53,7 +52,7 @@ namespace bx
 #define BX_SIMD128_IMPLEMENT_SWIZZLE(_x, _y, _z, _w) \
 			template<typename Ty> \
 			BX_SIMD_FORCE_INLINE Ty simd_swiz_##_x##_y##_z##_w(Ty _a);
-#include "inline/simd128_swizzle.inl"
+#include "simd128_swizzle.inl"
 
 #undef BX_SIMD128_IMPLEMENT_SWIZZLE
 #undef ELEMw
@@ -362,19 +361,19 @@ BX_SIMD128_IMPLEMENT_TEST(xyzw);
 } // namespace bx
 
 #if BX_SIMD_AVX
-#	include "inline/simd256_avx.inl"
+#	include "simd256_avx.inl"
 #endif // BX_SIMD_AVX
 
 #if BX_SIMD_LANGEXT
-#	include "inline/simd128_langext.inl"
+#	include "simd128_langext.inl"
 #endif // BX_SIMD_LANGEXT
 
 #if BX_SIMD_NEON
-#	include "inline/simd128_neon.inl"
+#	include "simd128_neon.inl"
 #endif // BX_SIMD_NEON
 
 #if BX_SIMD_SSE
-#	include "inline/simd128_sse.inl"
+#	include "simd128_sse.inl"
 #endif // BX_SIMD_SSE
 
 namespace bx
@@ -403,14 +402,8 @@ namespace bx
 
 	struct simd256_ref_t
 	{
-#if BX_COMPILER_MSVC
-		typedef simd128_ref_t type;
-#else
-		typedef simd128_t type;
-#endif // BX_COMPILER_MSVC
-
-		type simd128_0;
-		type simd128_1;
+		simd128_t simd128_0;
+		simd128_t simd128_1;
 	};
 
 #if !BX_SIMD_AVX
@@ -423,8 +416,8 @@ namespace bx
 
 } // namespace bx
 
-#include "inline/simd128_ref.inl"
-#include "inline/simd256_ref.inl"
+#include "simd128_ref.inl"
+#include "simd256_ref.inl"
 
 namespace bx
 {

@@ -103,7 +103,7 @@ static int cActionAscending(const void* a, const void* b)
 {
 	const device_debug::watchpoint* left = *(device_debug::watchpoint**)a;
 	const device_debug::watchpoint* right = *(device_debug::watchpoint**)b;
-	return left->action().compare(right->action());
+	return strcmp(left->action(), right->action());
 }
 
 static int cActionDescending(const void* a, const void* b)

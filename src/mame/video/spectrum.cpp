@@ -17,8 +17,6 @@
 
 #include "emu.h"
 #include "includes/spectrum.h"
-#include "screen.h"
-
 
 /***************************************************************************
   Start the video hardware emulation.
@@ -67,7 +65,7 @@ inline unsigned char spectrum_state::get_display_color (unsigned char color, int
 
 /* Code to change the FLASH status every 25 frames. Note this must be
    independent of frame skip etc. */
-WRITE_LINE_MEMBER(spectrum_state::screen_vblank_spectrum)
+void spectrum_state::screen_eof_spectrum(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

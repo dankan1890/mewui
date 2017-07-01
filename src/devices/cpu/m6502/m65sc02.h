@@ -8,8 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_M6502_M65SC02_H
-#define MAME_CPU_M6502_M65SC02_H
+#ifndef __M65SC02_H__
+#define __M65SC02_H__
 
 #include "r65c02.h"
 
@@ -24,6 +24,6 @@ enum {
 	M65SC02_SET_OVERFLOW = m6502_device::V_LINE
 };
 
-DECLARE_DEVICE_TYPE(M65SC02, m65sc02_device)
+extern const device_type M65SC02;
 
-#endif // MAME_CPU_M6502_M65SC02_H
+#endif

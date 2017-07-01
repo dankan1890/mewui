@@ -14,8 +14,7 @@
 #include "awacs.h"
 
 // device type definition
-DEFINE_DEVICE_TYPE(AWACS, awacs_device, "awacs", "AWACS")
-
+const device_type AWACS = &device_creator<awacs_device>;
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -26,12 +25,8 @@ DEFINE_DEVICE_TYPE(AWACS, awacs_device, "awacs", "AWACS")
 //-------------------------------------------------
 
 awacs_device::awacs_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, AWACS, tag, owner, clock)
-	, device_sound_interface(mconfig, *this)
-	, m_stream(nullptr)
-	, m_play_ptr(0), m_buffer_size(0), m_buffer_num(0), m_playback_enable(false)
-	, m_dma_space(nullptr), m_dma_offset_0(0), m_dma_offset_1(0)
-	, m_timer(nullptr)
+	: device_t(mconfig, AWACS, "AWACS", tag, owner, clock, "awacs", __FILE__),
+		device_sound_interface(mconfig, *this), m_stream(nullptr), m_play_ptr(0), m_buffer_size(0), m_buffer_num(0), m_playback_enable(false), m_dma_space(nullptr), m_dma_offset_0(0), m_dma_offset_1(0), m_timer(nullptr)
 {
 }
 

@@ -6,11 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_PC_FDC_H
-#define MAME_MACHINE_PC_FDC_H
+#ifndef PC_FDC_H
+#define PC_FDC_H
 
-#pragma once
-
+#include "emu.h"
 #include "machine/upd765.h"
 
 #define MCFG_PC_FDC_XT_ADD(_tag) \
@@ -27,8 +26,12 @@
 
 class pc_fdc_family_device : public pc_fdc_interface {
 public:
-	template <class Object> static devcb_base &set_intrq_wr_callback(device_t &device, Object &&cb) { return downcast<pc_fdc_family_device &>(device).intrq_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_drq_wr_callback(device_t &device, Object &&cb) { return downcast<pc_fdc_family_device &>(device).drq_cb.set_callback(std::forward<Object>(cb)); }
+	pc_fdc_family_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
+	template<class _Object> static devcb_base &set_intrq_wr_callback(device_t &device, _Object object) { return downcast<pc_fdc_family_device &>(device).intrq_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_drq_wr_callback(device_t &device, _Object object) { return downcast<pc_fdc_family_device &>(device).drq_cb.set_callback(object); }
+
+	required_device<upd765a_device> fdc;
 
 	virtual DECLARE_ADDRESS_MAP(map, 8) override;
 
@@ -41,19 +44,13 @@ public:
 	WRITE8_MEMBER(dor_w);
 	READ8_MEMBER(dir_r);
 	WRITE8_MEMBER(ccr_w);
-
-	required_device<upd765a_device> fdc;
-
-protected:
-	pc_fdc_family_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
-	virtual void device_start() override;
-	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
-
-private:
 	DECLARE_WRITE_LINE_MEMBER( irq_w );
 	DECLARE_WRITE_LINE_MEMBER( drq_w );
+
+protected:
+	virtual void device_start() override;
+	virtual void device_reset() override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	bool irq, drq, fdc_drq, fdc_irq;
 	devcb_write_line intrq_cb, drq_cb;
@@ -80,7 +77,7 @@ public:
 	virtual DECLARE_ADDRESS_MAP(map, 8) override;
 };
 
-DECLARE_DEVICE_TYPE(PC_FDC_XT, pc_fdc_xt_device)
-DECLARE_DEVICE_TYPE(PC_FDC_AT, pc_fdc_at_device)
+extern const device_type PC_FDC_XT;
+extern const device_type PC_FDC_AT;
 
-#endif // MAME_MACHINE_PC_FDC_H
+#endif /* PC_FDC_H */

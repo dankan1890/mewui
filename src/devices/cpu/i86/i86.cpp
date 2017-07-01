@@ -12,8 +12,8 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "i86.h"
 #include "debugger.h"
+#include "i86.h"
 #include "i86inline.h"
 
 #define I8086_NMI_INT_VECTOR 2
@@ -87,46 +87,36 @@ const uint8_t i8086_cpu_device::m_i8086_timing[] =
 
 /***************************************************************************/
 
-DEFINE_DEVICE_TYPE(I8086, i8086_cpu_device, "i8086", "I8086")
-DEFINE_DEVICE_TYPE(I8088, i8088_cpu_device, "i8088", "I8088")
+const device_type I8086 = &device_creator<i8086_cpu_device>;
+const device_type I8088 = &device_creator<i8088_cpu_device>;
 
 i8088_cpu_device::i8088_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: i8086_cpu_device(mconfig, I8088, tag, owner, clock, 8)
+	: i8086_cpu_device(mconfig, I8088, "I8088", tag, owner, clock, "i8088", __FILE__, 8)
 {
 	memcpy(m_timing, m_i8086_timing, sizeof(m_i8086_timing));
 	m_fetch_xor = 0;
 }
 
 i8086_cpu_device::i8086_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: i8086_cpu_device(mconfig, I8086, tag, owner, clock, 16)
+	: i8086_common_cpu_device(mconfig, I8086, "I8086", tag, owner, clock, "i8086", __FILE__)
+	, m_program_config("program", ENDIANNESS_LITTLE, 16, 20, 0)
+	, m_io_config("io", ENDIANNESS_LITTLE, 16, 16, 0)
 {
 	memcpy(m_timing, m_i8086_timing, sizeof(m_i8086_timing));
 	m_fetch_xor = BYTE_XOR_LE(0);
 }
 
-i8086_cpu_device::i8086_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int data_bus_size)
-	: i8086_common_cpu_device(mconfig, type, tag, owner, clock)
+i8086_cpu_device::i8086_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, int data_bus_size)
+	: i8086_common_cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
 	, m_program_config("program", ENDIANNESS_LITTLE, data_bus_size, 20, 0)
-	, m_opcodes_config("opcodes", ENDIANNESS_LITTLE, data_bus_size, 20, 0)
 	, m_io_config("io", ENDIANNESS_LITTLE, data_bus_size, 16, 0)
 {
-}
-
-const address_space_config *i8086_cpu_device::memory_space_config(address_spacenum spacenum) const
-{
-	switch(spacenum)
-	{
-	case AS_PROGRAM:           return &m_program_config;
-	case AS_IO:                return &m_io_config;
-	case AS_DECRYPTED_OPCODES: return has_configured_map(AS_DECRYPTED_OPCODES) ? &m_opcodes_config : nullptr;
-	default:                   return nullptr;
-	}
 }
 
 uint8_t i8086_cpu_device::fetch_op()
 {
 	uint8_t data;
-	data = m_direct_opcodes->read_byte(pc(), m_fetch_xor);
+	data = m_direct->read_byte(pc(), m_fetch_xor);
 	m_ip++;
 	return data;
 }
@@ -134,7 +124,7 @@ uint8_t i8086_cpu_device::fetch_op()
 uint8_t i8086_cpu_device::fetch()
 {
 	uint8_t data;
-	data = m_direct_opcodes->read_byte(pc(), m_fetch_xor);
+	data = m_direct->read_byte(pc(), m_fetch_xor);
 	m_ip++;
 	return data;
 }
@@ -266,7 +256,7 @@ void i8086_cpu_device::execute_run()
 				if(!common_op(op))
 				{
 					m_icount -= 10;
-					logerror("%06x: Invalid Opcode %02x\n", pc(), op);
+					logerror("%s: %06x: Invalid Opcode %02x\n", tag(), pc(), op);
 					break;
 				}
 				break;
@@ -288,8 +278,8 @@ void i8086_cpu_device::device_start()
 	state_add( I8086_HALT, "HALT", m_halt ).mask(1);
 }
 
-i8086_common_cpu_device::i8086_common_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, type, tag, owner, clock)
+i8086_common_cpu_device::i8086_common_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
 	, m_ip(0)
 	, m_TF(0)
 	, m_int_vector(0)
@@ -392,9 +382,7 @@ void i8086_common_cpu_device::state_string_export(const device_state_entry &entr
 void i8086_common_cpu_device::device_start()
 {
 	m_program = &space(AS_PROGRAM);
-	m_opcodes = has_space(AS_DECRYPTED_OPCODES) ? &space(AS_DECRYPTED_OPCODES) : m_program;
 	m_direct = &m_program->direct();
-	m_direct_opcodes = &m_opcodes->direct();
 	m_io = &space(AS_IO);
 
 	save_item(NAME(m_regs.w));
@@ -1264,7 +1252,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 
 		case 0x6d:
 		case 0x7d: // i_jnl
-			JMP(SF==OF);
+			JMP((ZF)||(SF==OF));
 			break;
 
 		case 0x6e:
@@ -1896,7 +1884,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 			m_modrm = fetch();
 			GetRMByte();
 			CLK(NOP);
-			logerror("%06x: Unimplemented floating point escape %02x%02x\n", pc(), op, m_modrm);
+			logerror("%s: %06x: Unimplemented floating point escape %02x%02x\n", tag(), pc(), op, m_modrm);
 			break;
 
 
@@ -2063,7 +2051,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 
 		case 0xf0: // i_lock
 		case 0xf1: // 0xf1 is 0xf0; verified on real CPU
-			logerror("%06x: Warning - BUSLOCK\n", pc());
+			logerror("%s: %06x: Warning - BUSLOCK\n", tag(), pc());
 			m_lock = true;
 			m_no_interrupt = 1;
 			CLK(NOP);
@@ -2088,7 +2076,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 				case 0xae:  CLK(OVERRIDE); if (c) do { i_scasb(); c--; } while (c>0 && !ZF && m_icount>0);   m_regs.w[CX]=c; m_seg_prefix = false; m_seg_prefix_next = false; break;
 				case 0xaf:  CLK(OVERRIDE); if (c) do { i_scasw(); c--; } while (c>0 && !ZF && m_icount>0);   m_regs.w[CX]=c; m_seg_prefix = false; m_seg_prefix_next = false; break;
 				default:
-					logerror("%06x: REPNE invalid\n", pc());
+					logerror("%s: %06x: REPNE invalid\n", tag(), pc());
 					// Decrement IP so the normal instruction will be executed next
 					m_ip--;
 					invalid = true;
@@ -2121,7 +2109,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 				case 0xae:  CLK(OVERRIDE); if (c) do { i_scasb(); c--; } while (c>0 && ZF && m_icount>0);    m_regs.w[CX]=c; m_seg_prefix = false; m_seg_prefix_next = false; break;
 				case 0xaf:  CLK(OVERRIDE); if (c) do { i_scasw(); c--; } while (c>0 && ZF && m_icount>0);    m_regs.w[CX]=c; m_seg_prefix = false; m_seg_prefix_next = false; break;
 				default:
-					logerror("%06x: REPE invalid\n", pc());
+					logerror("%s: %06x: REPE invalid\n", tag(), pc());
 					// Decrement IP so the normal instruction will be executed next
 					m_ip--;
 					invalid = true;
@@ -2381,7 +2369,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 					CLKM(INCDEC_R8,INCDEC_M8);
 					break;
 				default:
-					logerror("%06x: FE Pre with unimplemented mod\n", pc());
+					logerror("%s: %06x: FE Pre with unimplemented mod\n", tag(), pc());
 					break;
 				}
 			}
@@ -2437,7 +2425,7 @@ bool i8086_common_cpu_device::common_op(uint8_t op)
 					CLKM(PUSH_R16,PUSH_M16);
 					break;
 				default:
-					logerror("%06x: FF Pre with unimplemented mod\n", pc());
+					logerror("%s: %06x: FF Pre with unimplemented mod\n", tag(), pc());
 					break;
 				}
 			}

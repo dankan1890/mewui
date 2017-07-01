@@ -54,14 +54,12 @@ namespace detail
 		return _mm_popcnt_u32(x);
 	}
 
-#	if(GLM_MODEL == GLM_MODEL_64)
 	template <>
 	GLM_FUNC_QUALIFIER int bitCount(uint64 x)
 	{
 		return static_cast<int>(_mm_popcnt_u64(x));
 	}
-#	endif//GLM_MODEL
-#	endif//GLM_ARCH
+#	endif
 
 }//namespace glm
 

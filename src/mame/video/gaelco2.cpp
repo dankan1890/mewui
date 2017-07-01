@@ -80,7 +80,6 @@ Multi monitor notes:
 
 #include "emu.h"
 #include "includes/gaelco2.h"
-#include "screen.h"
 
 
 /***************************************************************************

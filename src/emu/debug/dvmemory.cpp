@@ -9,12 +9,12 @@
 ***************************************************************************/
 
 #include "emu.h"
+#include "debugvw.h"
 #include "dvmemory.h"
-
 #include "debugcpu.h"
 #include "debugger.h"
-
 #include <ctype.h>
+
 
 
 //**************************************************************************
@@ -739,14 +739,9 @@ bool debug_view_memory::read(u8 size, offs_t offs, u64 &data)
 	// if no raw data, just use the standard debug routines
 	if (source.m_space != nullptr)
 	{
-		auto dis = machine().disable_side_effect();
+		offs_t dummyaddr = offs;
 
-		bool ismapped = offs <= m_maxaddr;
-		if (ismapped && !m_no_translation)
-		{
-			offs_t dummyaddr = offs;
-			ismapped = source.m_memintf->translate(source.m_space->spacenum(), TRANSLATE_READ_DEBUG, dummyaddr);
-		}
+		bool ismapped = m_no_translation ? true : source.m_memintf->translate(source.m_space->spacenum(), TRANSLATE_READ_DEBUG, dummyaddr);
 		data = ~u64(0);
 		if (ismapped)
 		{
@@ -822,8 +817,6 @@ void debug_view_memory::write(u8 size, offs_t offs, u64 data)
 	// if no raw data, just use the standard debug routines
 	if (source.m_space != nullptr)
 	{
-		auto dis = machine().disable_side_effect();
-
 		switch (size)
 		{
 			case 1: machine().debugger().cpu().write_byte(*source.m_space, offs, data, !m_no_translation); break;
@@ -873,7 +866,7 @@ void debug_view_memory::write(u8 size, offs_t offs, u64 data)
 //  describing the home address
 //-------------------------------------------------
 
-void debug_view_memory::set_expression(const std::string &expression)
+void debug_view_memory::set_expression(const char *expression)
 {
 	begin_update();
 	m_expression.set_string(expression);

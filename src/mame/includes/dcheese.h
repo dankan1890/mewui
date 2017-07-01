@@ -9,7 +9,6 @@
 
 #include "machine/gen_latch.h"
 #include "sound/bsmt2000.h"
-#include "screen.h"
 
 class dcheese_state : public driver_device
 {
@@ -36,10 +35,10 @@ public:
 
 	std::unique_ptr<bitmap_ind16> m_dstbitmap;
 	emu_timer *m_blitter_timer;
-	emu_timer *m_signal_irq_timer;
 
 	/* misc */
 	uint8_t    m_irq_state[5];
+	uint8_t    m_soundlatch_full;
 	uint8_t    m_sound_control;
 	uint8_t    m_sound_msb_latch;
 
@@ -51,6 +50,8 @@ public:
 	required_device<generic_latch_8_device> m_soundlatch;
 
 	DECLARE_WRITE16_MEMBER(eeprom_control_w);
+	DECLARE_WRITE16_MEMBER(sound_command_w);
+	DECLARE_READ8_MEMBER(sound_command_r);
 	DECLARE_READ8_MEMBER(sound_status_r);
 	DECLARE_WRITE8_MEMBER(sound_control_w);
 	DECLARE_WRITE8_MEMBER(bsmt_data_w);

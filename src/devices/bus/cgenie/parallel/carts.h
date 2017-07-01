@@ -6,12 +6,16 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_CGENIE_PARALLEL_CARTS_H
-#define MAME_BUS_CGENIE_PARALLEL_CARTS_H
-
 #pragma once
 
+#ifndef __CGENIE_PARALLEL_CARTS_H__
+#define __CGENIE_PARALLEL_CARTS_H__
 
-SLOT_INTERFACE_EXTERN( cg_parallel_slot_carts );
+#include "emu.h"
 
-#endif // MAME_BUS_CGENIE_PARALLEL_CARTS_H
+#include "joystick.h"
+#include "printer.h"
+
+SLOT_INTERFACE_EXTERN( parallel_slot_carts );
+
+#endif // __CGENIE_PARALLEL_CARTS_H__

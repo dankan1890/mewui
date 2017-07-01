@@ -8,10 +8,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_IEEE488_SHARK_H
-#define MAME_BUS_IEEE488_SHARK_H
-
 #pragma once
+
+#ifndef __SHARK__
+#define __SHARK__
 
 #include "ieee488.h"
 
@@ -30,14 +30,14 @@ public:
 	// construction/destruction
 	mshark_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
-
-	// optional information overrides
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
 
 private:
 	required_device<cpu_device> m_maincpu;
@@ -45,6 +45,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(MSHARK, mshark_device)
+extern const device_type SHARK;
 
-#endif // MAME_BUS_IEEE488_SHARK_H
+
+
+#endif

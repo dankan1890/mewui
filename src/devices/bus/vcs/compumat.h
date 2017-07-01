@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_VCS_COMPUMAT_H
-#define MAME_BUS_VCS_COMPUMAT_H
-
-#pragma once
+#ifndef __VCS_COMPUMAT_H
+#define __VCS_COMPUMAT_H
 
 #include "rom.h"
 
@@ -30,6 +28,6 @@ public:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(A26_ROM_COMPUMATE, a26_rom_cm_device)
+extern const device_type A26_ROM_COMPUMATE;
 
-#endif // MAME_BUS_VCS_COMPUMAT_H
+#endif

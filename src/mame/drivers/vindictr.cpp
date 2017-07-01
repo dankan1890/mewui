@@ -20,11 +20,9 @@
 
 
 #include "emu.h"
-#include "includes/vindictr.h"
-
 #include "cpu/m68000/m68000.h"
 #include "machine/watchdog.h"
-#include "speaker.h"
+#include "includes/vindictr.h"
 
 
 
@@ -181,7 +179,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( vindictr )
+static MACHINE_CONFIG_START( vindictr, vindictr_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68010, ATARI_CLOCK_14MHz/2)

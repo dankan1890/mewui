@@ -25,9 +25,6 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/starwars.h"
-#include "includes/slapstic.h"
-
 #include "cpu/m6809/m6809.h"
 #include "machine/watchdog.h"
 #include "video/vector.h"
@@ -35,8 +32,8 @@
 #include "sound/tms5220.h"
 #include "sound/pokey.h"
 #include "machine/x2212.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/starwars.h"
+#include "includes/slapstic.h"
 
 
 #define MASTER_CLOCK (XTAL_12_096MHz)
@@ -207,7 +204,7 @@ static INPUT_PORTS_START( starwars )
 	PORT_START("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Diagnostic Step")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Diagnostic Step") PORT_CODE(KEYCODE_F1)
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -297,7 +294,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( starwars )
+static MACHINE_CONFIG_START( starwars, starwars_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, MASTER_CLOCK / 8)

@@ -11,8 +11,6 @@
 #ifndef MAME_EMU_DEBUG_DEBUGHLP_H
 #define MAME_EMU_DEBUG_DEBUGHLP_H
 
-#pragma once
-
 
 /***************************************************************************
     FUNCTION PROTOTYPES

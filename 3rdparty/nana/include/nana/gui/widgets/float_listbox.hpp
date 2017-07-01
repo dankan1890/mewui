@@ -15,6 +15,7 @@
 #include <nana/push_ignore_diagnostic>
 
 #include "widget.hpp"
+#include <nana/gui/widgets/scroll.hpp>
 #include <vector>
 #include <memory>
 
@@ -22,7 +23,6 @@ namespace nana
 {
 
 namespace drawerbase{
-		namespace scroll { struct scheme; } // forward
 		namespace float_listbox
 		{
 			class item_interface

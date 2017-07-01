@@ -37,7 +37,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "applefdc.h"
 
 
@@ -106,8 +105,8 @@ enum
 //  ctor
 //-------------------------------------------------
 
-applefdc_base_device::applefdc_base_device(applefdc_base_device::applefdc_t fdc_type, const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock),
+applefdc_base_device::applefdc_base_device(applefdc_base_device::applefdc_t fdc_type, const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 		m_type(fdc_type),
 		m_interface(nullptr)
 {
@@ -565,10 +564,10 @@ uint8_t applefdc_base_device::get_lines()
     APPLE FDC - Used on Apple II
 ***************************************************************************/
 
-DEFINE_DEVICE_TYPE(APPLEFDC, applefdc_device, "apple_fdc", "Apple FDC")
+const device_type APPLEFDC = &device_creator<applefdc_device>;
 
 applefdc_device::applefdc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: applefdc_base_device(APPLEFDC_APPLE2, mconfig, APPLEFDC, tag, owner, clock)
+	: applefdc_base_device(APPLEFDC_APPLE2, mconfig, APPLEFDC, "Apple FDC", tag, owner, clock, "apple_fdc", __FILE__)
 {
 }
 
@@ -578,9 +577,9 @@ applefdc_device::applefdc_device(const machine_config &mconfig, const char *tag,
     IWM - Used on early Macs
 ***************************************************************************/
 
-DEFINE_DEVICE_TYPE(IWM, iwm_device, "iwm", "Apple IWM (Integrated Woz Machine)")
+const device_type IWM = &device_creator<iwm_device>;
 
 iwm_device::iwm_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: applefdc_base_device(APPLEFDC_IWM, mconfig, IWM, tag, owner, clock)
+	: applefdc_base_device(APPLEFDC_IWM, mconfig, IWM, "Apple IWM (Integrated Woz Machine)", tag, owner, clock, "iwm", __FILE__)
 {
 }

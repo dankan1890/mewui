@@ -40,15 +40,13 @@ public:
 	{
 	}
 
+	required_device<cpu_device> m_maincpu;
+	required_device<generic_terminal_device> m_terminal;
 	DECLARE_READ16_MEMBER( dms86_82_r );
 	DECLARE_READ16_MEMBER( dms86_84_r );
 	DECLARE_READ16_MEMBER( dms86_86_r );
 	DECLARE_READ16_MEMBER( dms86_9a_r );
-	void kbd_put(u8 data);
-
-protected:
-	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
+	DECLARE_WRITE8_MEMBER( kbd_put );
 	uint8_t *m_ram;
 	uint8_t m_term_data;
 	virtual void machine_reset() override;
@@ -104,12 +102,12 @@ void dms86_state::machine_reset()
 {
 }
 
-void dms86_state::kbd_put(u8 data)
+WRITE8_MEMBER( dms86_state::kbd_put )
 {
 	m_term_data = data;
 }
 
-static MACHINE_CONFIG_START( dms86 )
+static MACHINE_CONFIG_START( dms86, dms86_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",I8086, XTAL_9_8304MHz)
 	MCFG_CPU_PROGRAM_MAP(dms86_mem)
@@ -117,7 +115,7 @@ static MACHINE_CONFIG_START( dms86 )
 
 
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(dms86_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(dms86_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -129,5 +127,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY                 FULLNAME  FLAGS */
-COMP( 1982, dms86,  0,       0,      dms86,     dms86,  dms86_state,  0,    "Digital Microsystems", "DMS-86", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT     COMPANY              FULLNAME       FLAGS */
+COMP( 1982, dms86,  0,       0,      dms86,     dms86, driver_device,    0,   "Digital Microsystems", "DMS-86", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

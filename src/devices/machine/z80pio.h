@@ -29,10 +29,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_Z80PIO_H
-#define MAME_MACHINE_Z80PIO_H
-
-#pragma once
+#ifndef __Z80PIO__
+#define __Z80PIO__
 
 #include "cpu/z80/z80daisy.h"
 
@@ -84,13 +82,13 @@ public:
 	// construction/destruction
 	z80pio_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_out_int_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_out_int_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_in_pa_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_in_pa_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_pa_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_out_pa_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_ardy_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_out_ardy_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_in_pb_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_in_pb_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_pb_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_out_pb_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_brdy_callback(device_t &device, Object &&cb) { return downcast<z80pio_device &>(device).m_out_brdy_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_int_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_out_int_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_in_pa_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_in_pa_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_pa_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_out_pa_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_ardy_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_out_ardy_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_in_pb_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_in_pb_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_pb_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_out_pb_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_brdy_callback(device_t &device, _Object object) { return downcast<z80pio_device &>(device).m_out_brdy_cb.set_callback(object); }
 
 	// I/O line access
 	int rdy(int which) { return m_port[which].rdy(); }
@@ -256,6 +254,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(Z80PIO, z80pio_device)
+extern const device_type Z80PIO;
 
-#endif // MAME_MACHINE_Z80PIO_H
+
+#endif

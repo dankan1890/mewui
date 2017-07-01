@@ -6,13 +6,26 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SNES_SNES_CARTS_H
-#define MAME_BUS_SNES_SNES_CARTS_H
-
 #pragma once
 
+#ifndef __SNES_CARTS_H__
+#define __SNES_CARTS_H__
+
+#include "emu.h"
+
+#include "rom.h"
+#include "rom21.h"
+#include "bsx.h"
+#include "sa1.h"
+#include "sdd1.h"
+#include "sfx.h"
+#include "sgb.h"
+#include "spc7110.h"
+#include "sufami.h"
+#include "upd.h"
+#include "event.h"
 
 // supported devices
 SLOT_INTERFACE_EXTERN(snes_cart);
 
-#endif // MAME_BUS_SNES_SNES_CARTS_H
+#endif // __SNES_CARTS_H__

@@ -12,13 +12,10 @@ OTHER: 5 * M5L8255AP
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/taxidriv.h"
-
 #include "cpu/z80/z80.h"
 #include "machine/i8255.h"
+#include "includes/taxidriv.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 void taxidriv_state::machine_start()
@@ -330,7 +327,7 @@ PALETTE_INIT_MEMBER(taxidriv_state, taxidriv)
 	}
 }
 
-static MACHINE_CONFIG_START( taxidriv )
+static MACHINE_CONFIG_START( taxidriv, taxidriv_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,4000000)    /* 4 MHz ??? */
@@ -448,4 +445,4 @@ ROM_START( taxidriv )
 ROM_END
 
 
-GAME( 1984, taxidriv,  0,        taxidriv, taxidriv, taxidriv_state, 0, ROT90, "Graphic Techno", "Taxi Driver", MACHINE_IMPERFECT_GRAPHICS | MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )
+GAME( 1984, taxidriv,  0,        taxidriv, taxidriv, driver_device, 0, ROT90, "Graphic Techno", "Taxi Driver", MACHINE_IMPERFECT_GRAPHICS | MACHINE_NO_COCKTAIL | MACHINE_SUPPORTS_SAVE )

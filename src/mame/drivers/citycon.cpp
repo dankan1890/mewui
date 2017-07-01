@@ -10,14 +10,11 @@ Dip locations added from dip listing at crazykong.com
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/citycon.h"
-
 #include "cpu/m6809/m6809.h"
 #include "machine/gen_latch.h"
 #include "sound/ay8910.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/citycon.h"
 
 
 READ8_MEMBER(citycon_state::citycon_in_r)
@@ -186,7 +183,7 @@ void citycon_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( citycon )
+static MACHINE_CONFIG_START( citycon, citycon_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, 2048000)        /* 2.048 MHz ??? */

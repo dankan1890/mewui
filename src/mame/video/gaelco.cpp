@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "includes/gaelco.h"
-#include "screen.h"
 
 /***************************************************************************
 

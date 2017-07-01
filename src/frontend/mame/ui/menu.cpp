@@ -496,9 +496,15 @@ void *menu::m_pool_alloc(size_t size)
 
 void menu::set_selection(void *selected_itemref)
 {
-	auto pred = [&selected_itemref](const ui::menu_item & i) { return i.ref == selected_itemref; };
-	auto it = std::find_if(item.begin(), item.end(), pred);
-	selected = (it != item.end()) ? std::distance(item.begin(), it) : -1;
+	selected = -1;
+	for (int itemnum = 0; itemnum < item.size(); itemnum++)
+	{
+		if (item[itemnum].ref == selected_itemref)
+		{
+			selected = itemnum;
+			break;
+		}
+	}
 }
 
 

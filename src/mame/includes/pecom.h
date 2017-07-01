@@ -1,12 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Miodrag Milanovic
-#ifndef MAME_INCLUDES_PECOM_H
-#define MAME_INCLUDES_PECOM_H
+#ifndef __PECOM__
+#define __PECOM__
 
 #include "cpu/cosmac/cosmac.h"
 #include "imagedev/cassette.h"
 #include "machine/ram.h"
-#include "sound/cdp1869.h"
 
 #define SCREEN_TAG  "screen"
 #define CDP1802_TAG "cdp1802"
@@ -74,4 +73,4 @@ protected:
 
 MACHINE_CONFIG_EXTERN( pecom_video );
 
-#endif // MAME_INCLUDES_PECOM_H
+#endif

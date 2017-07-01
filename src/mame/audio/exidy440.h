@@ -1,11 +1,39 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#ifndef MAME_AUDIO_EXIDY440_H
-#define MAME_AUDIO_EXIDY440_H
+/* channel_data structure holds info about each 6844 DMA channel */
+struct m6844_channel_data
+{
+	int active;
+	int address;
+	int counter;
+	uint8_t control;
+	int start_address;
+	int start_counter;
+};
 
-#pragma once
 
-class exidy440_sound_device : public device_t, public device_sound_interface
+/* channel_data structure holds info about each active sound channel */
+struct sound_channel_data
+{
+	int16_t *base;
+	int offset;
+	int remaining;
+};
+
+
+/* sound_cache_entry structure contains info on each decoded sample */
+struct sound_cache_entry
+{
+	struct sound_cache_entry *next;
+	int address;
+	int length;
+	int bits;
+	int frequency;
+	int16_t data[1];
+};
+
+class exidy440_sound_device : public device_t,
+									public device_sound_interface
 {
 public:
 	exidy440_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -24,6 +52,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_stop() override;
 
@@ -31,39 +60,6 @@ protected:
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
 
 private:
-	/* channel_data structure holds info about each 6844 DMA channel */
-	struct m6844_channel_data
-	{
-		int active;
-		int address;
-		int counter;
-		uint8_t control;
-		int start_address;
-		int start_counter;
-	};
-
-
-	/* channel_data structure holds info about each active sound channel */
-	struct sound_channel_data
-	{
-		int16_t *base;
-		int offset;
-		int remaining;
-	};
-
-
-	/* sound_cache_entry structure contains info on each decoded sample */
-	struct sound_cache_entry
-	{
-		struct sound_cache_entry *next;
-		int address;
-		int length;
-		int bits;
-		int frequency;
-		int16_t data[1];
-	};
-
-
 	// internal state
 	uint8_t m_sound_command;
 	uint8_t m_sound_command_ack;
@@ -109,8 +105,6 @@ private:
 	void mix_to_16(int length, stream_sample_t *dest_left, stream_sample_t *dest_right);
 };
 
-DECLARE_DEVICE_TYPE(EXIDY440, exidy440_sound_device)
+extern const device_type EXIDY440;
 
 MACHINE_CONFIG_EXTERN( exidy440_audio );
-
-#endif // MAME_AUDIO_EXIDY440_H

@@ -58,9 +58,8 @@ mae(forward), migi(right), ushiro(back), hidari(left)
 
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
-#include "machine/i8255.h"
 #include "sound/msm5205.h"
-#include "speaker.h"
+#include "machine/i8255.h"
 
 #include "kungfur.lh"
 
@@ -284,7 +283,7 @@ void kungfur_state::machine_reset()
 	m_control = 0;
 }
 
-static MACHINE_CONFIG_START( kungfur )
+static MACHINE_CONFIG_START( kungfur, kungfur_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, 8000000/2)   // 4MHz?
@@ -310,12 +309,12 @@ static MACHINE_CONFIG_START( kungfur )
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 	MCFG_SOUND_ADD("adpcm1", MSM5205, XTAL_384kHz)  // clock verified with recording
 	MCFG_MSM5205_VCLK_CB(WRITELINE(kungfur_state, kfr_adpcm1_int))
-	MCFG_MSM5205_PRESCALER_SELECTOR(S48_4B)
+	MCFG_MSM5205_PRESCALER_SELECTOR(MSM5205_S48_4B)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 1.0)
 
 	MCFG_SOUND_ADD("adpcm2", MSM5205, XTAL_384kHz)  // "
 	MCFG_MSM5205_VCLK_CB(WRITELINE(kungfur_state, kfr_adpcm2_int))
-	MCFG_MSM5205_PRESCALER_SELECTOR(S48_4B)
+	MCFG_MSM5205_PRESCALER_SELECTOR(MSM5205_S48_4B)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "rspeaker", 1.0)
 MACHINE_CONFIG_END
 
@@ -340,4 +339,4 @@ ROM_START( kungfur )
 	ROM_LOAD( "kr6.bin",   0x20000, 0x10000, CRC(9ea75d4a) SHA1(57445ccb961acb11a25cdac81f2e543d92bcb7f9) )
 ROM_END
 
-GAMEL(1987, kungfur,  0,       kungfur,  kungfur, kungfur_state,  0, ROT0, "Namco", "Kung-Fu Roushi", MACHINE_SUPPORTS_SAVE, layout_kungfur )
+GAMEL(1987, kungfur,  0,       kungfur,  kungfur, driver_device,  0, ROT0, "Namco", "Kung-Fu Roushi", MACHINE_SUPPORTS_SAVE, layout_kungfur )

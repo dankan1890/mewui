@@ -8,11 +8,12 @@
  *
  */
 
-#ifndef MAME_MACHINE_APOLLO_KBD_H
-#define MAME_MACHINE_APOLLO_KBD_H
-
 #pragma once
 
+#ifndef __APOLLO_KBD_H__
+#define __APOLLO_KBD_H__
+
+#include "emu.h"
 #include "sound/beep.h"
 
 // BSD-derived systems get very sad when you party with system reserved names.
@@ -42,7 +43,7 @@ INPUT_PORTS_EXTERN(apollo_kbd);
 
 // ======================> apollo_kbd_device
 
-class apollo_kbd_device : public device_t, public device_serial_interface
+class apollo_kbd_device :   public device_t, public device_serial_interface
 {
 public:
 	// construction/destruction
@@ -155,6 +156,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(APOLLO_KBD, apollo_kbd_device)
+extern const device_type APOLLO_KBD;
 
-#endif // MAME_MACHINE_APOLLO_KBD_H
+#endif

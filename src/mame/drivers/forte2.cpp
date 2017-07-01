@@ -40,8 +40,6 @@ found/dumped yet. */
 #include "cpu/z80/z80.h"
 #include "video/tms9928a.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class forte2_state : public driver_device
@@ -117,7 +115,7 @@ void forte2_state::machine_start()
 }
 
 
-static MACHINE_CONFIG_START( pesadelo )
+static MACHINE_CONFIG_START( pesadelo, forte2_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_3_579545MHz)

@@ -14,10 +14,7 @@
 
 */
 
-#include "emu.h"
 #include "vp550.h"
-
-#include "speaker.h"
 
 
 
@@ -43,14 +40,14 @@ enum
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VP550, vp550_device, "vp550", "VP-550 Super Sound")
+const device_type VP550 = &device_creator<vp550_device>;
 
 
 //-------------------------------------------------
-//  MACHINE_CONFIG_START( vp550 )
+//  MACHINE_CONFIG_FRAGMENT( vp550 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( vp550_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( vp550 )
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
 	MCFG_CDP1863_ADD(CDP1863_A_TAG, 0, 0)
@@ -59,6 +56,17 @@ MACHINE_CONFIG_MEMBER( vp550_device::device_add_mconfig )
 	MCFG_CDP1863_ADD(CDP1863_B_TAG, 0, 0)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor vp550_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( vp550 );
+}
 
 
 
@@ -71,11 +79,10 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 vp550_device::vp550_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VP550, tag, owner, clock),
+	device_t(mconfig, VP550, "VP550", tag, owner, clock, "vp550", __FILE__),
 	device_vip_expansion_card_interface(mconfig, *this),
 	m_pfg_a(*this, CDP1863_A_TAG),
-	m_pfg_b(*this, CDP1863_B_TAG),
-	m_sync_timer(nullptr)
+	m_pfg_b(*this, CDP1863_B_TAG), m_sync_timer(nullptr)
 {
 }
 

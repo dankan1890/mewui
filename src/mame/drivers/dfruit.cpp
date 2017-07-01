@@ -19,11 +19,9 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/i8255.h"
-#include "machine/tc009xlvc.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/tc009xlvc.h"
+#include "machine/i8255.h"
 
 class dfruit_state : public driver_device
 {
@@ -32,14 +30,14 @@ public:
 		: driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_vdp(*this, "tc0091lvc")
-	{ }
+		{ }
 
 	required_device<cpu_device> m_maincpu;
 	required_device<tc0091lvc_device> m_vdp;
 
 	virtual void video_start() override;
 	uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank);
+	void screen_eof(screen_device &screen, bool state);
 
 	uint8_t m_ram_bank[4];
 	uint8_t m_rom_bank;
@@ -84,7 +82,7 @@ uint32_t dfruit_state::screen_update(screen_device &screen, bitmap_ind16 &bitmap
 	return 0;
 }
 
-WRITE_LINE_MEMBER(dfruit_state::screen_vblank)
+void dfruit_state::screen_eof(screen_device &screen, bool state)
 {
 	if (state)
 	{
@@ -364,7 +362,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(dfruit_state::dfruit_irq_scanline)
 
 #define MASTER_CLOCK XTAL_14MHz
 
-static MACHINE_CONFIG_START( dfruit )
+static MACHINE_CONFIG_START( dfruit, dfruit_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80,MASTER_CLOCK/2) //!!! TC0091LVC !!!
@@ -381,7 +379,7 @@ static MACHINE_CONFIG_START( dfruit )
 	MCFG_SCREEN_SIZE(64*8, 32*8)
 	MCFG_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MCFG_SCREEN_UPDATE_DRIVER(dfruit_state, screen_update)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(dfruit_state, screen_vblank))
+	MCFG_SCREEN_VBLANK_DRIVER(dfruit_state, screen_eof)
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", dfruit )
@@ -417,4 +415,4 @@ ROM_START( dfruit )
 	ROM_LOAD( "c2.ic10", 0x00000, 0x80000, CRC(d869ab24) SHA1(382e874a846855a7f6f8811625aaa30d9dfa1ce2) )
 ROM_END
 
-GAME( 1993, dfruit,  0,   dfruit, dfruit, dfruit_state,  0, ROT0, "Nippon Data Kiki / Star Fish", "Fruit Dream (Japan)", MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1993, dfruit,  0,   dfruit, dfruit, driver_device,  0, ROT0, "Nippon Data Kiki / Star Fish", "Fruit Dream (Japan)", MACHINE_IMPERFECT_GRAPHICS )

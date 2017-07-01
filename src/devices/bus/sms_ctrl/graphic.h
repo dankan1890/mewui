@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SMS_CTRL_GRAPHIC_H
-#define MAME_BUS_SMS_CTRL_GRAPHIC_H
-
 #pragma once
 
+#ifndef __SMS_GRAPHIC__
+#define __SMS_GRAPHIC__
 
+
+#include "emu.h"
 #include "smsctrl.h"
 
 
@@ -52,7 +53,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SMS_GRAPHIC, sms_graphic_device)
+extern const device_type SMS_GRAPHIC;
 
 
-#endif // MAME_BUS_SMS_CTRL_GRAPHIC_H
+#endif

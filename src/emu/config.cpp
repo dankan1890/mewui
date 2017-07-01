@@ -36,7 +36,7 @@ configuration_manager::configuration_manager(running_machine &machine)
  *
  *************************************/
 
-void configuration_manager::config_register(const char* nodename, config_load_delegate load, config_save_delegate save)
+void configuration_manager::config_register(const char* nodename, config_saveload_delegate load, config_saveload_delegate save)
 {
 	config_element element;
 	element.name = nodename;
@@ -61,7 +61,7 @@ int configuration_manager::load_settings()
 
 	/* loop over all registrants and call their init function */
 	for (auto type : m_typelist)
-		type.load(config_type::INIT, nullptr);
+		type.load(config_type::CONFIG_TYPE_INIT, nullptr);
 
 	/* now load the controller file */
 	if (controller[0] != 0)
@@ -74,7 +74,7 @@ int configuration_manager::load_settings()
 			throw emu_fatalerror("Could not load controller file %s.cfg", controller);
 
 		/* load the XML */
-		if (!load_xml(file, config_type::CONTROLLER))
+		if (!load_xml(file, config_type::CONFIG_TYPE_CONTROLLER))
 			throw emu_fatalerror("Could not load controller file %s.cfg", controller);
 	}
 
@@ -82,16 +82,16 @@ int configuration_manager::load_settings()
 	emu_file file(machine().options().cfg_directory(), OPEN_FLAG_READ);
 	osd_file::error filerr = file.open("default.cfg");
 	if (filerr == osd_file::error::NONE)
-		load_xml(file, config_type::DEFAULT);
+		load_xml(file, config_type::CONFIG_TYPE_DEFAULT);
 
 	/* finally, load the game-specific file */
 	filerr = file.open(machine().basename(), ".cfg");
 	if (filerr == osd_file::error::NONE)
-		loaded = load_xml(file, config_type::GAME);
+		loaded = load_xml(file, config_type::CONFIG_TYPE_GAME);
 
 	/* loop over all registrants and call their final function */
 	for (auto type : m_typelist)
-		type.load(config_type::FINAL, nullptr);
+		type.load(config_type::CONFIG_TYPE_FINAL, nullptr);
 
 	/* if we didn't find a saved config, return 0 so the main core knows that it */
 	/* is the first time the game is run and it should diplay the disclaimer. */
@@ -103,22 +103,22 @@ void configuration_manager::save_settings()
 {
 	/* loop over all registrants and call their init function */
 	for (auto type : m_typelist)
-		type.save(config_type::INIT, nullptr);
+		type.save(config_type::CONFIG_TYPE_INIT, nullptr);
 
 	/* save the defaults file */
 	emu_file file(machine().options().cfg_directory(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
 	osd_file::error filerr = file.open("default.cfg");
 	if (filerr == osd_file::error::NONE)
-		save_xml(file, config_type::DEFAULT);
+		save_xml(file, config_type::CONFIG_TYPE_DEFAULT);
 
 	/* finally, save the game-specific file */
 	filerr = file.open(machine().basename(), ".cfg");
 	if (filerr == osd_file::error::NONE)
-		save_xml(file, config_type::GAME);
+		save_xml(file, config_type::CONFIG_TYPE_GAME);
 
 	/* loop over all registrants and call their final function */
 	for (auto type : m_typelist)
-		type.save(config_type::FINAL, nullptr);
+		type.save(config_type::CONFIG_TYPE_FINAL, nullptr);
 }
 
 
@@ -131,37 +131,39 @@ void configuration_manager::save_settings()
 
 int configuration_manager::load_xml(emu_file &file, config_type which_type)
 {
+	xml_data_node *root, *confignode, *systemnode;
+	const char *srcfile;
+	int version, count;
+
 	/* read the file */
-	std::unique_ptr<util::xml::data_node, void (*)(util::xml::data_node *)> const root(
-			util::xml::data_node::file_read(file, nullptr),
-			[] (util::xml::data_node *node) { node->file_free(); });
+	root = xml_data_node::file_read(file, nullptr);
 	if (!root)
-		return 0;
+		goto error;
 
 	/* find the config node */
-	util::xml::data_node const *const confignode = root->get_child("mameconfig");
+	confignode = root->get_child("mameconfig");
 	if (!confignode)
-		return 0;
+		goto error;
 
 	/* validate the config data version */
-	int const version = confignode->get_attribute_int("version", 0);
+	version = confignode->get_attribute_int("version", 0);
 	if (version != CONFIG_VERSION)
-		return 0;
+		goto error;
 
 	/* strip off all the path crap from the source filename */
-	const char *srcfile = strrchr(machine().system().type.source(), '/');
+	srcfile = strrchr(machine().system().source_file, '/');
 	if (!srcfile)
-		srcfile = strrchr(machine().system().type.source(), '\\');
+		srcfile = strrchr(machine().system().source_file, '\\');
 	if (!srcfile)
-		srcfile = strrchr(machine().system().type.source(), ':');
+		srcfile = strrchr(machine().system().source_file, ':');
 	if (!srcfile)
-		srcfile = machine().system().type.source();
+		srcfile = machine().system().source_file;
 	else
 		srcfile++;
 
 	/* loop over all system nodes in the file */
-	int count = 0;
-	for (util::xml::data_node const *systemnode = confignode->get_child("system"); systemnode; systemnode = systemnode->get_next_sibling("system"))
+	count = 0;
+	for (systemnode = confignode->get_child("system"); systemnode; systemnode = systemnode->get_next_sibling("system"))
 	{
 		/* look up the name of the system here; skip if none */
 		const char *name = systemnode->get_attribute_string("name", "");
@@ -169,19 +171,19 @@ int configuration_manager::load_xml(emu_file &file, config_type which_type)
 		/* based on the file type, determine whether we have a match */
 		switch (which_type)
 		{
-		case config_type::GAME:
-			/* only match on the specific game name */
-			if (strcmp(name, machine().system().name) != 0)
-				continue;
-			break;
+			case config_type::CONFIG_TYPE_GAME:
+				/* only match on the specific game name */
+				if (strcmp(name, machine().system().name) != 0)
+					continue;
+				break;
 
-		case config_type::DEFAULT:
-			/* only match on default */
-			if (strcmp(name, "default") != 0)
-				continue;
-			break;
+			case config_type::CONFIG_TYPE_DEFAULT:
+				/* only match on default */
+				if (strcmp(name, "default") != 0)
+					continue;
+				break;
 
-		case config_type::CONTROLLER:
+			case config_type::CONFIG_TYPE_CONTROLLER:
 			{
 				int clone_of;
 				/* match on: default, game name, source file name, parent name, grandparent name */
@@ -193,9 +195,8 @@ int configuration_manager::load_xml(emu_file &file, config_type which_type)
 					continue;
 				break;
 			}
-
-		default:
-			break;
+			default:
+				break;
 		}
 
 		/* log that we are processing this entry */
@@ -210,9 +211,16 @@ int configuration_manager::load_xml(emu_file &file, config_type which_type)
 
 	/* error if this isn't a valid game match */
 	if (count == 0)
-		return 0;
+		goto error;
 
+	/* free the parser */
+	root->file_free();
 	return 1;
+
+error:
+	if (root)
+		root->file_free();
+	return 0;
 }
 
 
@@ -225,33 +233,32 @@ int configuration_manager::load_xml(emu_file &file, config_type which_type)
 
 int configuration_manager::save_xml(emu_file &file, config_type which_type)
 {
-	std::unique_ptr<util::xml::data_node, void (*)(util::xml::data_node *)> const root(
-			util::xml::data_node::file_create(),
-			[] (util::xml::data_node *node) { node->file_free(); });
+	xml_data_node *const root = xml_data_node::file_create();
+	xml_data_node *confignode, *systemnode;
 
 	/* if we don't have a root, bail */
 	if (!root)
 		return 0;
 
 	/* create a config node */
-	util::xml::data_node *const confignode = root->add_child("mameconfig", nullptr);
+	confignode = root->add_child("mameconfig", nullptr);
 	if (!confignode)
-		return 0;
+		goto error;
 	confignode->set_attribute_int("version", CONFIG_VERSION);
 
 	/* create a system node */
-	util::xml::data_node *const systemnode = confignode->add_child("system", nullptr);
+	systemnode = confignode->add_child("system", nullptr);
 	if (!systemnode)
-		return 0;
-	systemnode->set_attribute("name", (which_type == config_type::DEFAULT) ? "default" : machine().system().name);
+		goto error;
+	systemnode->set_attribute("name", (which_type == config_type::CONFIG_TYPE_DEFAULT) ? "default" : machine().system().name);
 
 	/* create the input node and write it out */
 	/* loop over all registrants and call their save function */
 	for (auto type : m_typelist)
 	{
-		util::xml::data_node *const curnode = systemnode->add_child(type.name.c_str(), nullptr);
+		xml_data_node *curnode = systemnode->add_child(type.name.c_str(), nullptr);
 		if (!curnode)
-			return 0;
+			goto error;
 		type.save(which_type, curnode);
 
 		/* if nothing was added, just nuke the node */
@@ -263,5 +270,10 @@ int configuration_manager::save_xml(emu_file &file, config_type which_type)
 	root->file_write(file);
 
 	/* free and get out of here */
+	root->file_free();
 	return 1;
+
+error:
+	root->file_free();
+	return 0;
 }

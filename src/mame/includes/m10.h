@@ -8,7 +8,6 @@
 
 #include "sound/samples.h"
 #include "machine/74123.h"
-#include "screen.h"
 
 #define IREMM10_MASTER_CLOCK        (12500000)
 
@@ -75,7 +74,6 @@ public:
 
 	/* misc */
 	int                 m_last;
-	emu_timer *m_interrupt_timer;
 
 	/* devices */
 	required_device<cpu_device> m_maincpu;

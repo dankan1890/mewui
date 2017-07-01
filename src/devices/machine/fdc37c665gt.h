@@ -5,8 +5,8 @@
 *
 */
 
-#ifndef MAME_MACHINE_FDC37C665GT_H
-#define MAME_MACHINE_FDC37C665GT_H
+#ifndef _FDC37C665GT_H_
+#define _FDC37C665GT_H_
 
 #pragma once
 
@@ -24,7 +24,7 @@ public:
 protected:
 	// device-level overrides
 	virtual void device_start() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 private:
 	required_device<ns16550_device> m_uart1;
@@ -32,6 +32,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(FDC37C665GT, fdc37c665gt_device)
+extern const device_type FDC37C665GT;
 
-#endif // MAME_MACHINE_FDC37C665GT_H
+#endif

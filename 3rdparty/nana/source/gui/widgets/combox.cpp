@@ -105,6 +105,7 @@ namespace nana
 
 					auto scheme = dynamic_cast< ::nana::widgets::skeletons::text_editor_scheme*>(API::dev::get_scheme(wd));
 					editor_ = new widgets::skeletons::text_editor(widget_->handle(), graph, scheme);
+					scheme_ptr_ = dynamic_cast< ::nana::drawerbase::combox::combox_scheme*>(API::dev::get_scheme(wd));
 					editor_->multi_lines(false);
 					editable(false);
 					graph_ = &graph;
@@ -174,10 +175,9 @@ namespace nana
 						editor_->show_caret(enb);
 						if (!enb)
 						{
-							editor_->customized_renderers().background = [this](graph_reference graph, const ::nana::rectangle&, const ::nana::color&)
-							{
-								auto clr_from = colors::white;
-								auto clr_to = colors::white;
+							editor_->customized_renderers().background = [this](graph_reference graph, const ::nana::rectangle&, const ::nana::color&) {
+								auto clr_from = editor_colors_.bgcolor_from_;
+								auto clr_to = editor_colors_.bgcolor_to_;
 
 								int pare_off_px = 1;
 								if (element_state::pressed == state_.button_state)
@@ -187,6 +187,7 @@ namespace nana
 								}
 
 								graph.gradual_rectangle(::nana::rectangle(graph.size()).pare_off(pare_off_px), clr_from, clr_to, true);
+
 							};
 						}
 						else
@@ -436,10 +437,18 @@ namespace nana
 						}
 					}
 				}
+
 				void scroll_scheme(drawerbase::scroll::scheme s)
 				{
 					scroll_scheme_ = s;
 				}
+
+				void textbox_colors(color bgfrom, color bgto)
+				{
+					editor_colors_.bgcolor_from_ = bgfrom;
+					editor_colors_.bgcolor_to_ = bgto;
+				}
+
 				bool image_pixels(unsigned px)
 				{
 					if (image_pixels_ == px)
@@ -467,16 +476,14 @@ namespace nana
 						estate = element_state::disabled;
 
 					facade<element::button> button;
-					button.draw(*graph_, colors::white, colors::white, r, estate);
+					button.draw(*graph_, scheme_ptr_->button_color, colors::white, r, estate);
 
-					//facade<element::arrow> arrow("solid_triangle");
-					facade<element::arrow> arrow("");
+					facade<element::arrow> arrow(scheme_ptr_->arrow_type.c_str());
 					arrow.direction(::nana::direction::south);
 
 					r.y += (r.height / 2) - 7;
 					r.width = r.height = 16;
-					r.x += (r.width / 2) - 3;
-					arrow.draw(*graph_, {}, colors::black, r, estate);
+					arrow.draw(*graph_, {}, scheme_ptr_->arrow_color, r, element_state::normal);
 				}
 
 				void _m_draw_image()
@@ -534,6 +541,14 @@ namespace nana
 				unsigned image_pixels_{ 16 };
 				widgets::skeletons::text_editor * editor_{ nullptr };
 				std::unique_ptr<event_agent> evt_agent_;
+				drawerbase::combox::combox_scheme *scheme_ptr_;
+
+				struct editor_colors
+				{
+					color_proxy bgcolor_from_{colors::white};
+					color_proxy bgcolor_to_{colors::white};
+				} editor_colors_;
+
 				struct state_type
 				{
 					bool	focused;
@@ -976,6 +991,12 @@ namespace nana
 		{
 			internal_scope_guard lock;
 			return _m_impl().scroll_scheme(s);
+		}
+
+		void combox::textbox_colors(color bgfrom, color bgto)
+		{
+			internal_scope_guard lock;
+			_m_impl().textbox_colors(bgfrom, bgto);
 		}
 
 		nana::paint::image combox::image(std::size_t pos) const

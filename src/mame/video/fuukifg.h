@@ -1,9 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia, David Haywood
-#ifndef MAME_VIDEO_FUUKIFH_H
-#define MAME_VIDEO_FUUKIFH_H
 
-#pragma once
 
 
 class fuukivid_device : public device_t,
@@ -41,9 +38,7 @@ private:
 	required_device<gfxdecode_device> m_gfxdecode;
 };
 
-DECLARE_DEVICE_TYPE(FUUKI_VIDEO, fuukivid_device)
+extern const device_type FUUKI_VIDEO;
 
 #define MCFG_FUUKI_VIDEO_GFXDECODE(_gfxtag) \
 	fuukivid_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
-
-#endif // MAME_VIDEO_FUUKIFH_H

@@ -5,7 +5,7 @@
 */
 
 /*
- * $Id$
+ * $Id: patest_prime.c 1371 2008-03-11 14:27:26Z bjornroche $
  *
  * This program uses the PortAudio Portable Audio Library.
  * For more information see: http://www.portaudio.com

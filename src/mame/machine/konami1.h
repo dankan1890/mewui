@@ -1,10 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_KONAMI1_H
-#define MAME_MACHINE_KONAMI1_H
-
-#pragma once
-
 
 #include "cpu/m6809/m6809.h"
 
@@ -28,6 +23,4 @@ protected:
 	virtual void device_start() override;
 };
 
-DECLARE_DEVICE_TYPE(KONAMI1, konami1_device)
-
-#endif // MAME_MACHINE_KONAMI1_H
+extern const device_type KONAMI1;

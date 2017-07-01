@@ -32,7 +32,6 @@
 
 */
 
-#include "emu.h"
 #include "bus/rs232/rs232.h"
 #include "bus/s100/s100.h"
 #include "cpu/z80/z80.h"
@@ -141,7 +140,7 @@ SLOT_INTERFACE_END
 //  MACHINE_CONFIG( horizon )
 //-------------------------------------------------
 
-static MACHINE_CONFIG_START( horizon )
+static MACHINE_CONFIG_START( horizon, horizon_state )
 	// basic machine hardware
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(horizon_mem)
@@ -218,6 +217,6 @@ ROM_END
 //  SYSTEM DRIVERS
 //**************************************************************************
 
-//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    STATE          INIT  COMPANY                 FULLNAME                          FLAGS
-COMP( 1976, nshrz,   0,      0,      horizon, horizon, horizon_state, 0,    "North Star Computers", "Horizon (North Star Computers)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
-COMP( 1979, vector1, nshrz,  0,      horizon, horizon, horizon_state, 0,    "Vector Graphic",       "Vector 1+ (DD drive)",           MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+//    YEAR  NAME    PARENT  COMPAT  MACHINE INPUT   INIT    COMPANY                             FULLNAME    FLAGS
+COMP( 1976, nshrz,   0,       0,    horizon,   horizon, driver_device, 0,  "North Star Computers", "Horizon (North Star Computers)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+COMP( 1979, vector1,  nshrz, 0,    horizon,   horizon, driver_device, 0,  "Vector Graphic", "Vector 1+ (DD drive)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )

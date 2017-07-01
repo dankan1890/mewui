@@ -815,9 +815,11 @@ READ16_MEMBER(rbisland_state::rbisland_cchip_ram_r)
 
 void rbisland_state::rbisland_cchip_init( int version )
 {
+	int i;
+
 	m_extra_version = version;
 
-	for (int i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		m_CRAM[i] = std::make_unique<uint8_t[]>(0x400);
 
@@ -826,6 +828,5 @@ void rbisland_state::rbisland_cchip_init( int version )
 
 	save_item(m_current_bank, "cchip/m_current_bank");
 
-	m_cchip_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(rbisland_state::cchip_timer), this));
-	m_cchip_timer->adjust(attotime::from_hz(60), 0, attotime::from_hz(60));
+	machine().scheduler().timer_pulse(attotime::from_hz(60), timer_expired_delegate(FUNC(rbisland_state::cchip_timer),this));
 }

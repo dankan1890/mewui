@@ -46,15 +46,14 @@
 
 *************************************************************************/
 
+
+#define MASTER_CLOCK    XTAL_12MHz
+
 #include "emu.h"
 #include "cpu/tms9900/tms9980a.h"
 //#include "cpu/tms9900/tms9900.h"
 #include "sound/ay8910.h"
 #include "video/mc6845.h"
-#include "screen.h"
-
-
-#define MASTER_CLOCK    XTAL_12MHz
 
 
 class nibble_state : public driver_device
@@ -301,7 +300,7 @@ GFXDECODE_END
 *    Machine Drivers     *
 *************************/
 
-static MACHINE_CONFIG_START( nibble )
+static MACHINE_CONFIG_START( nibble, nibble_state )
 
 	MCFG_TMS99xx_ADD("maincpu", TMS9900, MASTER_CLOCK/4, nibble_map, nibble_cru_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", nibble_state,  nibble_interrupt)
@@ -359,5 +358,5 @@ ROM_END
 *      Game Drivers      *
 *************************/
 
-//    YEAR  NAME      PARENT  MACHINE  INPUT   STATE         INIT  ROT   COMPANY   FULLNAME    FLAGS
-GAME( 19??, l9nibble, 0,      nibble,  nibble, nibble_state, 0,    ROT0, "Nibble", "Lucky 9",  MACHINE_NO_SOUND | MACHINE_NOT_WORKING )
+/*    YEAR  NAME      PARENT  MACHINE  INPUT   STATE          INIT  ROT    COMPANY   FULLNAME   FLAGS... */
+GAME( 19??, l9nibble, 0,      nibble,  nibble, driver_device, 0,    ROT0, "Nibble", "Lucky 9",  MACHINE_NO_SOUND | MACHINE_NOT_WORKING )

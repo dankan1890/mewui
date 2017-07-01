@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Ville Linde, Angelo Salese, hap
-#ifndef MAME_CPU_MC68HC11_MC68HC11_H
-#define MAME_CPU_MC68HC11_MC68HC11_H
-
 #pragma once
+
+#ifndef __MC68HC11_H__
+#define __MC68HC11_H__
 
 
 #define MC68HC11_IO_PORTA           0x00
@@ -29,7 +29,7 @@
 #define MC68HC11_TOC1_LINE          1
 
 
-DECLARE_DEVICE_TYPE(MC68HC11, mc68hc11_cpu_device)
+extern const device_type MC68HC11;
 
 
 #define MCFG_MC68HC11_CONFIG(_has_extended_io, _internal_ram_size, _init_value) \
@@ -439,4 +439,5 @@ private:
 	void check_irq_lines();
 };
 
-#endif // MAME_CPU_MC68HC11_MC68HC11_H
+
+#endif /* __MC68HC11_H__ */

@@ -12,8 +12,8 @@
  *  Created on: 23/08/2014
  */
 
-#ifndef MAME_BUS_CENTRONICS_DIGIBLST_H
-#define MAME_BUS_CENTRONICS_DIGIBLST_H
+#ifndef DIGIBLST_H_
+#define DIGIBLST_H_
 
 #pragma once
 
@@ -29,12 +29,12 @@ public:
 	// construction/destruction
 	centronics_digiblaster_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	virtual DECLARE_WRITE_LINE_MEMBER( input_data0 ) override { if (state) m_data |= 0x01; else m_data &= ~0x01; update_dac(); }
 	virtual DECLARE_WRITE_LINE_MEMBER( input_data1 ) override { if (state) m_data |= 0x02; else m_data &= ~0x02; update_dac(); }
@@ -54,7 +54,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(CENTRONICS_DIGIBLASTER, centronics_digiblaster_device)
+extern const device_type CENTRONICS_DIGIBLASTER;
 
 
-#endif // MAME_BUS_CENTRONICS_DIGIBLST_H
+#endif /* DIGIBLST_H_ */

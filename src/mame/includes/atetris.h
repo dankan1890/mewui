@@ -7,7 +7,6 @@
 *************************************************************************/
 
 #include "includes/slapstic.h"
-#include "screen.h"
 
 class atetris_state : public driver_device
 {

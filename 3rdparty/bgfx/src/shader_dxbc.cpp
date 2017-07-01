@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -730,21 +730,21 @@ namespace bgfx
 		}
 
 		uint32_t last[16];
-		bx::memSet(last, 0, sizeof(last) );
+		memset(last, 0, sizeof(last) );
 
 		const uint32_t remaining = _size & 0x3f;
 
 		if (remaining >= 56)
 		{
-			bx::memCopy(&last[0], data, remaining);
+			memcpy(&last[0], data, remaining);
 			last[remaining/4] = 0x80;
 			dxbcHashBlock(last, hash);
 
-			bx::memSet(&last[1], 0, 56);
+			memset(&last[1], 0, 56);
 		}
 		else
 		{
-			bx::memCopy(&last[1], data, remaining);
+			memcpy(&last[1], data, remaining);
 			last[1 + remaining/4] = 0x80;
 		}
 
@@ -752,7 +752,7 @@ namespace bgfx
 		last[15] = _size * 2 + 1;
 		dxbcHashBlock(last, hash);
 
-		bx::memCopy(_digest, hash, 16);
+		memcpy(_digest, hash, 16);
 	}
 
 	int32_t read(bx::ReaderI* _reader, DxbcSubOperand& _subOperand, bx::Error* _err)
@@ -1928,7 +1928,7 @@ namespace bgfx
 		uint8_t* data = (uint8_t*)mb.more();
 		uint32_t size = uint32_t(bx::getSize(&writer) );
 		_dst.byteCode.reserve(size);
-		bx::memCopy(_dst.byteCode.data(), data, size);
+		memcpy(_dst.byteCode.data(), data, size);
 	}
 
 } // namespace bgfx

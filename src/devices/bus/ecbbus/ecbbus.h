@@ -42,11 +42,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_ECBBUS_ECBBUS_H
-#define MAME_BUS_ECBBUS_ECBBUS_H
-
 #pragma once
 
+#ifndef __ECBBUS__
+#define __ECBBUS__
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -54,6 +55,9 @@
 //**************************************************************************
 
 #define ECBBUS_TAG          "ecbbus"
+
+
+#define MAX_ECBBUS_SLOTS    16
 
 
 
@@ -107,7 +111,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ECBBUS_SLOT, ecbbus_slot_device)
+extern const device_type ECBBUS_SLOT;
 
 
 // ======================> ecbbus_interface
@@ -123,8 +127,8 @@ public:
 	// construction/destruction
 	ecbbus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_irq_wr_callback(device_t &device, Object &&cb) { return downcast<ecbbus_device &>(device).m_write_irq.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_nmi_wr_callback(device_t &device, Object &&cb) { return downcast<ecbbus_device &>(device).m_write_nmi.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_wr_callback(device_t &device, _Object object) { return downcast<ecbbus_device &>(device).m_write_irq.set_callback(object); }
+	template<class _Object> static devcb_base &set_nmi_wr_callback(device_t &device, _Object object) { return downcast<ecbbus_device &>(device).m_write_nmi.set_callback(object); }
 
 	void add_card(device_ecbbus_card_interface *card, int pos);
 
@@ -142,8 +146,6 @@ protected:
 	virtual void device_start() override;
 
 private:
-	static constexpr unsigned MAX_ECBBUS_SLOTS = 16;
-
 	devcb_write_line   m_write_irq;
 	devcb_write_line   m_write_nmi;
 
@@ -152,7 +154,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ECBBUS, ecbbus_device)
+extern const device_type ECBBUS;
 
 
 // ======================> device_ecbbus_card_interface
@@ -163,16 +165,17 @@ class device_ecbbus_card_interface : public device_slot_card_interface
 	friend class ecbbus_device;
 
 public:
+	// construction/destruction
+	device_ecbbus_card_interface(const machine_config &mconfig, device_t &device);
+	virtual ~device_ecbbus_card_interface() { }
+
 	// optional operation overrides
 	virtual uint8_t ecbbus_mem_r(offs_t offset) { return 0; };
 	virtual void ecbbus_mem_w(offs_t offset, uint8_t data) { };
 	virtual uint8_t ecbbus_io_r(offs_t offset) { return 0; };
 	virtual void ecbbus_io_w(offs_t offset, uint8_t data) { };
 
-protected:
-	// construction/destruction
-	device_ecbbus_card_interface(const machine_config &mconfig, device_t &device);
-
+public:
 	ecbbus_slot_device  *m_slot;
 };
 
@@ -181,4 +184,4 @@ SLOT_INTERFACE_EXTERN( ecbbus_cards );
 
 
 
-#endif // MAME_BUS_ECBBUS_ECBBUS_H
+#endif

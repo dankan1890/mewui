@@ -9,9 +9,8 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/finalizr.h"
 #include "video/resnet.h"
-#include "screen.h"
+#include "includes/finalizr.h"
 
 
 /***************************************************************************
@@ -218,17 +217,9 @@ uint32_t finalizr_state::screen_update_finalizr(screen_device &screen, bitmap_in
 	const rectangle &visarea = screen.visible_area();
 	rectangle clip = cliprect;
 
-	if (flip_screen())
-	{
-		clip.min_x = visarea.max_x - 31;
-		clip.max_x = visarea.max_x;
-	}
-	else
-	{
-		clip.min_x = visarea.min_x;
-		clip.max_x = visarea.min_x + 31;
-	}
-
+	clip.min_x = visarea.min_x;
+	clip.max_x = visarea.min_x + 31;
+	m_fg_tilemap->set_scrolldx(0,-32);
 	m_fg_tilemap->draw(screen, bitmap, clip, 0, 0);
 
 	return 0;

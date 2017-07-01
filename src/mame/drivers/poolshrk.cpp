@@ -7,13 +7,10 @@ Atari Poolshark Driver
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/poolshrk.h"
-
 #include "cpu/m6800/m6800.h"
+#include "includes/poolshrk.h"
 #include "sound/discrete.h"
 
-#include "screen.h"
-#include "speaker.h"
 
 
 
@@ -215,7 +212,7 @@ PALETTE_INIT_MEMBER(poolshrk_state, poolshrk)
 }
 
 
-static MACHINE_CONFIG_START( poolshrk )
+static MACHINE_CONFIG_START( poolshrk, poolshrk_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6800, 11055000 / 8) /* ? */

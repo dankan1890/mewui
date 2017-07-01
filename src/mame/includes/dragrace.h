@@ -8,7 +8,6 @@
 
 #include "machine/watchdog.h"
 #include "sound/discrete.h"
-#include "screen.h"
 
 /* Discrete Sound Input Nodes */
 #define DRAGRACE_SCREECH1_EN    NODE_01

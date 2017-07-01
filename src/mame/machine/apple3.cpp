@@ -47,7 +47,6 @@
 #include "emu.h"
 #include "includes/apple3.h"
 #include "includes/apple2.h"
-#include "screen.h"
 
 #define LOG_MEMORY      1
 #define LOG_INDXADDR    1
@@ -788,7 +787,7 @@ READ8_MEMBER(apple3_state::apple3_memory_r)
 	uint8_t rv = 0xff;
 
 	// (zp), y or (zp,x) read
-	if (!machine().side_effect_disabled())
+	if (!space.debugger_access())
 	{
 		if ((m_indir_bank & 0x80) && (offset >= 0x100))
 		{
@@ -832,7 +831,7 @@ READ8_MEMBER(apple3_state::apple3_memory_r)
 	{
 		if (m_via_0_a & ENV_IOENABLE)
 		{
-			if (!machine().side_effect_disabled())
+			if (!space.debugger_access())
 			{
 				rv = apple3_c0xx_r(space, offset-0xc000);
 			}
@@ -957,7 +956,7 @@ WRITE8_MEMBER(apple3_state::apple3_memory_w)
 	{
 		if (m_via_0_a & ENV_IOENABLE)
 		{
-			if (!machine().side_effect_disabled())
+			if (!space.debugger_access())
 			{
 				apple3_c0xx_w(space, offset-0xc000, data);
 			}
@@ -1049,14 +1048,14 @@ WRITE8_MEMBER(apple3_state::apple3_memory_w)
 		}
 		else if (offset >= 0xffd0 && offset <= 0xffdf)
 		{
-			if (!machine().side_effect_disabled())
+			if (!space.debugger_access())
 			{
 				m_via_0->write(space, offset, data);
 			}
 		}
 		else if (offset >= 0xffe0 && offset <= 0xffef)
 		{
-			if (!machine().side_effect_disabled())
+			if (!space.debugger_access())
 			{
 				m_via_1->write(space, offset, data);
 			}

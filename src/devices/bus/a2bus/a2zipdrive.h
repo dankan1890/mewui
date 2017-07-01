@@ -10,11 +10,10 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_A2BUS_ZIPDRIVE_H
-#define MAME_BUS_A2BUS_ZIPDRIVE_H
+#ifndef __A2BUS_ZIPDRIVE__
+#define __A2BUS_ZIPDRIVE__
 
-#pragma once
-
+#include "emu.h"
 #include "a2bus.h"
 #include "machine/ataintf.h"
 
@@ -26,14 +25,17 @@ class a2bus_zipdrivebase_device:
 	public device_t,
 	public device_a2bus_card_interface
 {
-protected:
+public:
 	// construction/destruction
-	a2bus_zipdrivebase_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	a2bus_zipdrivebase_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
+
+protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
 
 	// overrides of standard a2bus slot functions
 	virtual uint8_t read_c0nx(address_space &space, uint8_t offset) override;
@@ -56,6 +58,6 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(A2BUS_ZIPDRIVE, a2bus_zipdrive_device)
+extern const device_type A2BUS_ZIPDRIVE;
 
-#endif // MAME_BUS_A2BUS_ZIPDRIVE_H
+#endif /* __A2BUS_ZIPDRIVE__ */

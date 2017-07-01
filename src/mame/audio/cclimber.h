@@ -7,18 +7,19 @@
     Functions to emulate the cclimber audio boards
 
 ***************************************************************************/
-#ifndef MAME_AUDIO_CCLIMBER_H
-#define MAME_AUDIO_CCLIMBER_H
 
 #pragma once
 
-#include "sound/samples.h"
+#ifndef __CCLIMBER_AUDIO__
+#define __CCLIMBER_AUDIO__
 
+#include "emu.h"
+#include "sound/samples.h"
 //**************************************************************************
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DECLARE_DEVICE_TYPE(CCLIMBER_AUDIO, cclimber_audio_device)
+extern const device_type CCLIMBER_AUDIO;
 
 //**************************************************************************
 //  DEVICE CONFIGURATION MACROS
@@ -39,11 +40,14 @@ public:
 	DECLARE_WRITE8_MEMBER( sample_trigger_w );
 	DECLARE_WRITE8_MEMBER( sample_rate_w );
 	DECLARE_WRITE8_MEMBER( sample_volume_w );
+	DECLARE_WRITE8_MEMBER( sample_select_w );
+
+	SAMPLES_START_CB_MEMBER( sh_start );
 
 protected:
 	// device level overrides
 	virtual void device_start() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	void play_sample(int start,int freq,int volume);
 
@@ -54,11 +58,7 @@ private:
 	int m_sample_volume;
 	optional_device<samples_device> m_samples;
 	optional_region_ptr<uint8_t> m_samples_region;
-
-	DECLARE_WRITE8_MEMBER( sample_select_w );
-
-	SAMPLES_START_CB_MEMBER( sh_start );
 };
 
 
-#endif // MAME_AUDIO_CCLIMBER_H
+#endif

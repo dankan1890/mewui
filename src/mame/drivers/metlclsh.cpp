@@ -34,13 +34,10 @@ metlclsh:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/metlclsh.h"
-
 #include "cpu/m6809/m6809.h"
 #include "sound/2203intf.h"
 #include "sound/3526intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/metlclsh.h"
 
 
 /***************************************************************************
@@ -273,7 +270,7 @@ void metlclsh_state::machine_reset()
 	m_gfxbank = 0;
 }
 
-static MACHINE_CONFIG_START( metlclsh )
+static MACHINE_CONFIG_START( metlclsh, metlclsh_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, 1500000)        // ?
@@ -416,4 +413,4 @@ ROM_START( metlclsh )
 	ROM_LOAD( "82s123.prm",   0x0000, 0x20, CRC(6844cc88) SHA1(89d23367aa6ff541205416e82781fe938dfeeb52) )
 ROM_END
 
-GAME( 1985, metlclsh, 0, metlclsh, metlclsh, metlclsh_state, 0, ROT0, "Data East", "Metal Clash (Japan)", MACHINE_SUPPORTS_SAVE )
+GAME( 1985, metlclsh, 0, metlclsh, metlclsh, driver_device, 0, ROT0, "Data East", "Metal Clash (Japan)", MACHINE_SUPPORTS_SAVE )

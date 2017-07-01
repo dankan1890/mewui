@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_NAOMIROM_H
-#define MAME_MACHINE_NAOMIROM_H
+#ifndef _NAOMIROM_H_
+#define _NAOMIROM_H_
 
 #include "naomibd.h"
 
@@ -26,6 +26,6 @@ private:
 	required_memory_region m_region;
 };
 
-DECLARE_DEVICE_TYPE(NAOMI_ROM_BOARD, naomi_rom_board)
+extern const device_type NAOMI_ROM_BOARD;
 
-#endif // MAME_MACHINE_NAOMIROM_H
+#endif

@@ -89,12 +89,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/skydiver.h"
-
 #include "cpu/m6800/m6800.h"
+#include "includes/skydiver.h"
 #include "sound/discrete.h"
-#include "screen.h"
-#include "speaker.h"
 
 #include "skydiver.lh"
 
@@ -375,7 +372,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( skydiver )
+static MACHINE_CONFIG_START( skydiver, skydiver_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6800,MASTER_CLOCK/16)     /* ???? */
@@ -439,4 +436,4 @@ ROM_END
  *
  *************************************/
 
-GAMEL(1978, skydiver, 0, skydiver, skydiver, skydiver_state, 0, ROT0, "Atari", "Sky Diver", MACHINE_SUPPORTS_SAVE, layout_skydiver )
+GAMEL(1978, skydiver, 0, skydiver, skydiver, driver_device, 0, ROT0, "Atari", "Sky Diver", MACHINE_SUPPORTS_SAVE, layout_skydiver )

@@ -33,21 +33,42 @@ ADDRESS_MAP_END
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(AT28C16, at28c16_device, "at28c16", "AT28C16 2Kx8 EEPROM")
+const device_type AT28C16 = &device_creator<at28c16_device>;
 
 //-------------------------------------------------
 //  at28c16_device - constructor
 //-------------------------------------------------
 
-at28c16_device::at28c16_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, AT28C16, tag, owner, clock),
+at28c16_device::at28c16_device( const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock )
+	: device_t(mconfig, AT28C16, "AT28C16", tag, owner, clock, "at28c16", __FILE__),
 		device_memory_interface(mconfig, *this),
 		device_nvram_interface(mconfig, *this),
-		m_space_config("at28c16", ENDIANNESS_BIG, 8,  12, 0, *ADDRESS_MAP_NAME(at28c16_map8)),
-		m_a9_12v(0),
-		m_oe_12v(0),
-		m_last_write(-1),
+		m_a9_12v( 0 ),
+		m_oe_12v( 0 ),
+		m_last_write( -1 ),
 		m_default_data(*this, DEVICE_SELF, AT28C16_DATA_BYTES)
+{
+}
+
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void at28c16_device::device_config_complete()
+{
+	m_space_config = address_space_config( "at28c16", ENDIANNESS_BIG, 8,  12, 0, *ADDRESS_MAP_NAME( at28c16_map8 ) );
+}
+
+
+//-------------------------------------------------
+//  device_validity_check - perform validity checks
+//  on this device
+//-------------------------------------------------
+
+void at28c16_device::device_validity_check(validity_checker &valid) const
 {
 }
 
@@ -57,9 +78,9 @@ at28c16_device::at28c16_device(const machine_config &mconfig, const char *tag, d
 //  any address spaces owned by this device
 //-------------------------------------------------
 
-const address_space_config *at28c16_device::memory_space_config(address_spacenum spacenum) const
+const address_space_config *at28c16_device::memory_space_config( address_spacenum spacenum ) const
 {
-	return (spacenum == AS_0) ? &m_space_config : nullptr;
+	return ( spacenum == 0 ) ? &m_space_config : nullptr;
 }
 
 
@@ -74,6 +95,15 @@ void at28c16_device::device_start()
 	save_item( NAME(m_a9_12v) );
 	save_item( NAME(m_oe_12v) );
 	save_item( NAME(m_last_write) );
+}
+
+
+//-------------------------------------------------
+//  device_reset - device-specific reset
+//-------------------------------------------------
+
+void at28c16_device::device_reset()
+{
 }
 
 

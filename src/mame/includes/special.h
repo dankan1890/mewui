@@ -6,11 +6,10 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_SPECIAL_H
-#define MAME_INCLUDES_SPECIAL_H
+#ifndef SPECIAL_H_
+#define SPECIAL_H_
 
-#pragma once
-
+#include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8085/i8085.h"
 #include "audio/special.h"
@@ -43,7 +42,7 @@ public:
 		m_pit(*this, "pit8253"),
 		m_cassette(*this, "cassette"),
 		m_ram(*this, RAM_TAG),
-		m_p_videoram(*this, "videoram"),
+		m_p_videoram(*this, "p_videoram"),
 		m_region_maincpu(*this, "maincpu"),
 		m_bank1(*this, "bank1"),
 		m_bank2(*this, "bank2"),
@@ -85,6 +84,27 @@ public:
 	DECLARE_WRITE8_MEMBER(specialist_8255_porta_w);
 	DECLARE_WRITE8_MEMBER(specialist_8255_portb_w);
 	DECLARE_WRITE8_MEMBER(specialist_8255_portc_w);
+	void specimx_set_bank(offs_t i, uint8_t data);
+	void erik_set_bank();
+	std::unique_ptr<uint8_t[]> m_specimx_colorram;
+	uint8_t m_erik_color_1;
+	uint8_t m_erik_color_2;
+	uint8_t m_erik_background;
+	uint8_t m_specimx_color;
+	int m_specialist_8255_porta;
+	int m_specialist_8255_portb;
+	int m_specialist_8255_portc;
+	uint8_t m_RR_register;
+	uint8_t m_RC_register;
+	required_device<cpu_device> m_maincpu;
+	optional_device<i8255_device> m_ppi;
+	optional_device<fd1793_t> m_fdc;
+	optional_device<dac_bit_interface> m_dac;
+	optional_device<pit8253_device> m_pit;
+	optional_device<cassette_image_device> m_cassette;
+	optional_device<ram_device> m_ram;
+	optional_shared_ptr<uint8_t> m_p_videoram;
+	int m_drive;
 	DECLARE_DRIVER_INIT(erik);
 	DECLARE_DRIVER_INIT(special);
 	DECLARE_MACHINE_RESET(special);
@@ -104,28 +124,7 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(fdc_drq);
 	DECLARE_FLOPPY_FORMATS( specimx_floppy_formats );
 
-private:
-	void specimx_set_bank(offs_t i, uint8_t data);
-	void erik_set_bank();
-	std::unique_ptr<uint8_t[]> m_specimx_colorram;
-	uint8_t m_erik_color_1;
-	uint8_t m_erik_color_2;
-	uint8_t m_erik_background;
-	uint8_t m_specimx_color;
-	int m_specialist_8255_porta;
-	int m_specialist_8255_portb;
-	int m_specialist_8255_portc;
-	uint8_t m_RR_register;
-	uint8_t m_RC_register;
-	required_device<cpu_device> m_maincpu;
-	optional_device<i8255_device> m_ppi;
-	optional_device<fd1793_device> m_fdc;
-	optional_device<dac_bit_interface> m_dac;
-	optional_device<pit8253_device> m_pit;
-	optional_device<cassette_image_device> m_cassette;
-	optional_device<ram_device> m_ram;
-	optional_shared_ptr<uint8_t> m_p_videoram;
-	int m_drive;
+protected:
 	required_memory_region m_region_maincpu;
 	required_memory_bank m_bank1;
 	optional_memory_bank m_bank2;
@@ -146,8 +145,9 @@ private:
 	required_ioport m_io_line10;
 	required_ioport m_io_line11;
 	required_ioport m_io_line12;
+
 	required_device<palette_device> m_palette;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 };
 
-#endif // MAME_INCLUDES_SPECIAL_H
+#endif /* SPECIAL_H_ */

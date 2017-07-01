@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_ZAXXON_H
-#define MAME_BUS_C64_ZAXXON_H
-
 #pragma once
 
+#ifndef __ZAXXON__
+#define __ZAXXON__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -42,7 +43,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_ZAXXON, c64_zaxxon_cartridge_device)
+extern const device_type C64_ZAXXON;
 
 
-#endif // MAME_BUS_C64_ZAXXON_H
+#endif

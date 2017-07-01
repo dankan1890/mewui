@@ -9,6 +9,7 @@
 *********************************************************************/
 
 #include "emu.h"
+#include "includes/apple2.h"
 #include "a2estd80col.h"
 
 
@@ -20,19 +21,20 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2EAUX_STD80COL, a2eaux_std80col_device, "a2estd80", "Apple IIe Standard 80-Column Card")
+const device_type A2EAUX_STD80COL = &device_creator<a2eaux_std80col_device>;
 
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 a2eaux_std80col_device::a2eaux_std80col_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-		a2eaux_std80col_device(mconfig, A2EAUX_STD80COL, tag, owner, clock)
+		device_t(mconfig, A2EAUX_STD80COL, "Apple IIe Standard 80-Column Card", tag, owner, clock, "a2estd80", __FILE__),
+		device_a2eauxslot_card_interface(mconfig, *this)
 {
 }
 
-a2eaux_std80col_device::a2eaux_std80col_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-		device_t(mconfig, type, tag, owner, clock),
+a2eaux_std80col_device::a2eaux_std80col_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+		device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 		device_a2eauxslot_card_interface(mconfig, *this)
 {
 }

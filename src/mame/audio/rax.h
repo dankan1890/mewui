@@ -5,10 +5,9 @@
     Acclaim RAX Sound Board
 
 ****************************************************************************/
-#ifndef MAME_AUDIO_RAX_H
-#define MAME_AUDIO_RAX_H
 
-#pragma once
+#ifndef __ACCLAIM_H__
+#define __ACCLAIM_H__
 
 #include "cpu/adsp2100/adsp2100.h"
 #include "machine/gen_latch.h"
@@ -36,15 +35,12 @@ public:
 	void adsp_irq(int which);
 	void recompute_sample_rate(int which);
 
-	TIMER_DEVICE_CALLBACK_MEMBER( dma_timer_callback );
+	WRITE32_MEMBER(adsp_sound_tx_callback);
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	TIMER_DEVICE_CALLBACK_MEMBER(adsp_irq0);
+	TIMER_DEVICE_CALLBACK_MEMBER(sport0_irq);
+	WRITE32_MEMBER(dmovlay_callback);
 
-private:
 	required_device<adsp2181_device>    m_cpu;
 	required_shared_ptr<uint32_t>       m_adsp_pram;
 	required_memory_bank                m_adsp_data_bank;
@@ -83,15 +79,16 @@ private:
 	required_device<generic_latch_16_device> m_data_out;
 
 	timer_device *m_dma_timer;
+	TIMER_DEVICE_CALLBACK_MEMBER( dma_timer_callback );
 
-	WRITE32_MEMBER(adsp_sound_tx_callback);
-
-	TIMER_DEVICE_CALLBACK_MEMBER(adsp_irq0);
-	TIMER_DEVICE_CALLBACK_MEMBER(sport0_irq);
-	WRITE32_MEMBER(dmovlay_callback);
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ACCLAIM_RAX, acclaim_rax_device)
+extern const device_type ACCLAIM_RAX;
 
-#endif // MAME_AUDIO_RAX_H
+#endif

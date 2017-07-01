@@ -6,20 +6,11 @@
     8080-based black and white hardware
 
 ****************************************************************************/
-#ifndef MAME_INCLUDES_8080BW_H
-#define MAME_INCLUDES_8080BW_H
-
-#pragma once
 
 #include "includes/mw8080bw.h"
-
-#include "machine/eepromser.h"
 #include "sound/sn76477.h"
-#include "sound/spkrdev.h"
-
-#include "screen.h"
-
-
+#include "sound/speaker.h"
+#include "machine/eepromser.h"
 /* for games in 8080bw.c */
 #define CABINET_PORT_TAG                  "CAB"
 
@@ -185,5 +176,3 @@ DISCRETE_SOUND_EXTERN( ballbomb );
 DISCRETE_SOUND_EXTERN( indianbt );
 DISCRETE_SOUND_EXTERN( polaris );
 DISCRETE_SOUND_EXTERN( schaser );
-
-#endif // MAME_INCLUDES_8080BW_H

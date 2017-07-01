@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol
-#ifndef MAME_BUS_MSX_SLOT_DISK_H
-#define MAME_BUS_MSX_SLOT_DISK_H
-
-#pragma once
+#ifndef __MSX_SLOT_DISK_H
+#define __MSX_SLOT_DISK_H
 
 #include "bus/msx_slot/slot.h"
 #include "bus/msx_slot/rom.h"
@@ -14,17 +12,17 @@
 
 
 /* WD FDC accessed through 7ffx */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK1, msx_slot_disk1_device)
+extern const device_type MSX_SLOT_DISK1;
 /* WD FDC accessed through 7fbx */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK2, msx_slot_disk2_device)
+extern const device_type MSX_SLOT_DISK2;
 /* TC8566 accessed through 7ff8-7fff */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK3, msx_slot_disk3_device)
+extern const device_type MSX_SLOT_DISK3;
 /* TC8566 accessed through 7ff0-7ff7 (used in Turob-R, untested) */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK4, msx_slot_disk4_device)
+extern const device_type MSX_SLOT_DISK4;
 /* WD FDC accessed through i/o ports 0xd0-0xd4 */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK5, msx_slot_disk5_device)
+extern const device_type MSX_SLOT_DISK5;
 /* WD FDC accessed through 7ff0-7ff? (used in Toshiba HX34) */
-DECLARE_DEVICE_TYPE(MSX_SLOT_DISK6, msx_slot_disk6_device)
+extern const device_type MSX_SLOT_DISK6;
 
 
 #define MCFG_MSX_SLOT_DISK1_ADD(_tag, _startpage, _numpages, _region, _offset, _fdc_tag, _floppy0_tag, _floppy1_tag) \
@@ -75,6 +73,10 @@ DECLARE_DEVICE_TYPE(MSX_SLOT_DISK6, msx_slot_disk6_device)
 class msx_slot_disk_device : public msx_slot_rom_device
 {
 public:
+	msx_slot_disk_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
+	virtual void device_start() override;
+
 	// static configuration helpers
 	static void set_fdc_tag(device_t &device, const char *tag) { dynamic_cast<msx_slot_disk_device &>(device).m_fdc_tag = tag; }
 	static void set_floppy0_tag(device_t &device, const char *tag) { dynamic_cast<msx_slot_disk_device &>(device).m_floppy0_tag = tag; }
@@ -83,10 +85,6 @@ public:
 	static void set_floppy3_tag(device_t &device, const char *tag) { dynamic_cast<msx_slot_disk_device &>(device).m_floppy3_tag = tag; }
 
 protected:
-	msx_slot_disk_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
-	virtual void device_start() override;
-
 	floppy_connector *m_floppy0;
 	floppy_connector *m_floppy1;
 	floppy_connector *m_floppy2;
@@ -103,22 +101,24 @@ protected:
 
 class msx_slot_wd_disk_device : public msx_slot_disk_device
 {
-protected:
-	msx_slot_wd_disk_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+public:
+	msx_slot_wd_disk_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual void device_start() override;
 
-	wd_fdc_analog_device_base *m_fdc;
+protected:
+	wd_fdc_analog_t *m_fdc;
 };
 
 
 class msx_slot_tc8566_disk_device : public msx_slot_disk_device
 {
-protected:
-	msx_slot_tc8566_disk_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+public:
+	msx_slot_tc8566_disk_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual void device_start() override;
 
+protected:
 	tc8566af_device *m_fdc;
 };
 
@@ -128,12 +128,11 @@ class msx_slot_disk1_device : public msx_slot_wd_disk_device
 public:
 	msx_slot_disk1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	virtual DECLARE_READ8_MEMBER(read) override;
-	virtual DECLARE_WRITE8_MEMBER(write) override;
-
-protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
+
+	virtual DECLARE_READ8_MEMBER(read) override;
+	virtual DECLARE_WRITE8_MEMBER(write) override;
 
 	void post_load();
 
@@ -151,12 +150,11 @@ class msx_slot_disk2_device : public msx_slot_wd_disk_device
 public:
 	msx_slot_disk2_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	virtual DECLARE_READ8_MEMBER(read) override;
-	virtual DECLARE_WRITE8_MEMBER(write) override;
-
-protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
+
+	virtual DECLARE_READ8_MEMBER(read) override;
+	virtual DECLARE_WRITE8_MEMBER(write) override;
 
 	void post_load();
 
@@ -192,12 +190,11 @@ class msx_slot_disk5_device : public msx_slot_wd_disk_device
 public:
 	msx_slot_disk5_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	DECLARE_READ8_MEMBER(io_read);
-	DECLARE_WRITE8_MEMBER(io_write);
-
-protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
+
+	DECLARE_READ8_MEMBER(io_read);
+	DECLARE_WRITE8_MEMBER(io_write);
 
 	void post_load();
 
@@ -213,12 +210,11 @@ class msx_slot_disk6_device : public msx_slot_wd_disk_device
 public:
 	msx_slot_disk6_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	virtual DECLARE_READ8_MEMBER(read) override;
-	virtual DECLARE_WRITE8_MEMBER(write) override;
-
-protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
+
+	virtual DECLARE_READ8_MEMBER(read) override;
+	virtual DECLARE_WRITE8_MEMBER(write) override;
 
 	void post_load();
 
@@ -232,4 +228,4 @@ private:
 };
 
 
-#endif // MAME_BUS_MSX_SLOT_DISK_H
+#endif

@@ -120,7 +120,6 @@
 
 #include "includes/apple2gs.h"
 #include "includes/apple2.h"
-
 #include "machine/applefdc.h"
 #include "machine/sonydriv.h"
 #include "machine/8530scc.h"
@@ -128,9 +127,7 @@
 #include "cpu/g65816/g65816.h"
 #include "sound/es5503.h"
 #include "machine/ram.h"
-
 #include "debugger.h"
-#include "screen.h"
 
 #define LOG_C0XX            0
 #define LOG_ADB             0
@@ -899,7 +896,7 @@ READ8_MEMBER( apple2gs_state::apple2gs_c0xx_r )
 {
 	uint8_t result;
 
-	if(machine().side_effect_disabled())
+	if(space.debugger_access())
 	{
 		return 0;
 	}
@@ -1674,7 +1671,7 @@ uint8_t apple2gs_state::apple2gs_xxCxxx_r(address_space &space, offs_t address)
 			slotdevice = nullptr;
 
 			// if CFFF accessed, reset C800 area to internal ROM
-			if(!machine().side_effect_disabled())
+			if(!space.debugger_access())
 			{
 				if ((address & 0xfff) == 0xfff)
 				{
@@ -1708,7 +1705,7 @@ void apple2gs_state::apple2gs_xxCxxx_w(address_space &space, offs_t address, uin
 	int slot;
 
 	// if CFFF accessed, reset C800 area to internal ROM
-	if(!machine().side_effect_disabled())
+	if(!space.debugger_access())
 	{
 		if ((address & 0xfff) == 0xfff)
 		{

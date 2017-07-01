@@ -11,6 +11,7 @@
 
 #include "debugwin.h"
 
+#include "emu.h"
 
 #include "modules/lib/osdobj_common.h"
 

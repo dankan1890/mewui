@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_T6A04_H
-#define MAME_VIDEO_T6A04_H
-
 #pragma once
+
+#ifndef __T6A04_H__
+#define __T6A04_H__
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -64,9 +64,9 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(T6A04, t6a04_device)
+extern const device_type T6A04;
 
 #define MCFG_T6A04_SIZE(_width, _height) \
 	t6a04_device::set_size(*device, _width, _height);
 
-#endif // MAME_VIDEO_T6A04_H
+#endif

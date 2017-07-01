@@ -7,7 +7,6 @@
     2. Undocumented cursor start and end-lines is not supported by MMD, so we do it here. */
 
 
-#include "emu.h"
 #include "includes/super80.h"
 
 
@@ -54,7 +53,7 @@ PALETTE_INIT_MEMBER( super80_state, super80m )
 
 
 
-WRITE_LINE_MEMBER(super80_state::screen_vblank_super80m)
+void super80_state::screen_eof_super80m(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)
@@ -278,6 +277,8 @@ uint32_t super80_state::screen_update_super80m(screen_device &screen, bitmap_ind
 VIDEO_START_MEMBER(super80_state,super80)
 {
 	m_vidpg = 0xfe00;
+	m_p_chargen = memregion("chargen")->base();
+	m_p_ram = memregion("maincpu")->base();
 }
 
 /**************************** I/O PORTS *****************************************************************/
@@ -318,9 +319,9 @@ READ8_MEMBER( super80_state::super80v_high_r )
 		return m_p_colorram[0x800 | offset];
 	else
 	if (BIT(m_portf0, 4))
-		return m_p_ram[0xf800 | offset];
+		return m_p_pcgram[0x800 | offset];
 	else
-		return m_p_ram[0xf000 | offset];
+		return m_p_pcgram[offset];
 }
 
 WRITE8_MEMBER( super80_state::super80v_high_w )
@@ -332,7 +333,7 @@ WRITE8_MEMBER( super80_state::super80v_high_w )
 		m_p_videoram[0x800 | offset] = data;
 
 		if (BIT(m_portf0, 4))
-			m_p_ram[0xf800 | offset] = data;
+			m_p_pcgram[0x800 | offset] = data;
 	}
 }
 
@@ -369,6 +370,13 @@ void super80_state::mc6845_cursor_configure()
 	if (curs_type == 1) for (i = r10;i < r11;i++) m_mc6845_cursor[i]=0xff; // for each line that should show, turn on that scan line
 
 	if (curs_type == 3) for (i = r11; i < r10;i++) m_mc6845_cursor[i]=0; // now take a bite out of the middle
+}
+
+VIDEO_START_MEMBER(super80_state,super80v)
+{
+	m_p_pcgram = memregion("maincpu")->base()+0xf000;
+	m_p_videoram = memregion("videoram")->base();
+	m_p_colorram = memregion("colorram")->base();
 }
 
 uint32_t super80_state::screen_update_super80v(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
@@ -416,7 +424,7 @@ MC6845_UPDATE_ROW( super80_state::crtc_update_row )
 			inv ^= m_mc6845_cursor[ra];
 
 		/* get pattern of pixels for that character scanline */
-		gfx = m_p_ram[0xf000 | ((chr<<4) | ra)] ^ inv;
+		gfx = m_p_pcgram[(chr<<4) | ra] ^ inv;
 
 		/* Display a scanline of a character */
 		*p++ = palette[BIT(gfx, 7) ? fg : bg];

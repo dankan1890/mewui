@@ -7,10 +7,14 @@
     General debugging interfaces
 ****************************************************************************/
 
-#ifndef MAME_EMU_DEBUGGER_H
-#define MAME_EMU_DEBUGGER_H
-
 #pragma once
+
+#ifndef __DEBUGGER_H__
+#define __DEBUGGER_H__
+
+class debugger_commands;
+class debugger_cpu;
+class debugger_console;
 
 
 // ======================> debugger_manager
@@ -50,7 +54,7 @@ private:
 ***************************************************************************/
 
 /* OSD can call this to safely flush all traces in the event of a crash */
-void debugger_flush_all_traces_on_abnormal_exit();
+void debugger_flush_all_traces_on_abnormal_exit(void);
 
 
 
@@ -72,4 +76,4 @@ void debugger_stop_cpu_hook(device_t *device);
 void debugger_interrupt_hook(device_t *device, int irqline);
 
 
-#endif // MAME_EMU_DEBUGGER_H
+#endif  /* __DEBUGGER_H__ */

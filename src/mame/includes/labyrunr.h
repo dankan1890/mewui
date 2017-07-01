@@ -8,7 +8,6 @@
 
 #include "video/k007121.h"
 #include "video/k051733.h"
-#include "screen.h"
 
 class labyrunr_state : public driver_device
 {

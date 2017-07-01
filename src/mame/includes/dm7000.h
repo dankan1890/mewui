@@ -1,10 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Lukasz Markowski
-#ifndef MAME_INCLUDES_DM7000_H
-#define MAME_INCLUDES_DM7000_H
+#ifndef DM7000_H_
+#define DM7000_H_
 
-#pragma once
-
+#include "emu.h"
 #include "cpu/powerpc/ppc.h"
 #include "machine/terminal.h"
 
@@ -30,7 +29,7 @@ public:
 
 	DECLARE_WRITE8_MEMBER ( dm7000_scc0_w );
 	DECLARE_READ8_MEMBER ( dm7000_scc0_r );
-	void kbd_put(u8 data);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	uint8_t m_scc0_lcr;
 	uint8_t m_scc0_lsr;
 	uint8_t m_term_data;
@@ -92,4 +91,4 @@ public:
 #define DCRSTB045_DISP_MODE         0x154       /* Display Mode Register */
 #define DCRSTB045_FRAME_BUFR_BASE   0x179       /* Frame Buffers Base Address Register */
 
-#endif // MAME_INCLUDES_DM7000_H
+#endif /* DM7000_H_ */

@@ -9,7 +9,6 @@
 
 #include "emu.h"
 #include "cpu/i8085/i8085.h"
-#include "screen.h"
 
 #include "sstrangr.lh"
 
@@ -184,7 +183,7 @@ static INPUT_PORTS_START( sstrangr )
 INPUT_PORTS_END
 
 
-static MACHINE_CONFIG_START( sstrangr )
+static MACHINE_CONFIG_START( sstrangr, sstrangr_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",I8080,1996800)   /* clock is a guess, taken from mw8080bw */
@@ -289,5 +288,5 @@ ROM_START( sstrangr2 )
 ROM_END
 
 
-GAMEL( 1978, sstrangr,  0,        sstrangr, sstrangr, sstrangr_state, 0, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger",   MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_sstrangr )
-GAME(  1979, sstrangr2, sstrangr, sstrngr2, sstrngr2, sstrangr_state, 0, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE )
+GAMEL( 1978, sstrangr, 0,        sstrangr, sstrangr, driver_device, 0, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_sstrangr )
+GAME( 1979, sstrangr2,sstrangr, sstrngr2, sstrngr2, driver_device, 0, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE )

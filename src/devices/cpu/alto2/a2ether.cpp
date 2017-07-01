@@ -5,7 +5,6 @@
  *   Xerox AltoII ethernet task
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 #include "a2roms.h"
 

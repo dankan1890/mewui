@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SAT_CTRL_RACING_H
-#define MAME_BUS_SAT_CTRL_RACING_H
-
 #pragma once
 
+#ifndef __SATURN_RACING__
+#define __SATURN_RACING__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -47,6 +48,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SATURN_WHEEL, saturn_wheel_device)
+extern const device_type SATURN_WHEEL;
 
-#endif // MAME_BUS_SAT_CTRL_RACING_H
+
+#endif

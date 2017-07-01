@@ -41,10 +41,8 @@
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
-#include "sound/ay8910.h"
 #include "video/resnet.h"
-#include "screen.h"
-#include "speaker.h"
+#include "sound/ay8910.h"
 
 class carjmbre_state : public driver_device
 {
@@ -345,7 +343,7 @@ static GFXDECODE_START( carjmbre )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( carjmbre )
+static MACHINE_CONFIG_START( carjmbre, carjmbre_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_18_432MHz/6)
@@ -419,4 +417,4 @@ ROM_START( carjmbre )
 ROM_END
 
 
-GAME( 1983, carjmbre, 0, carjmbre, carjmbre, carjmbre_state, 0, ROT90, "Omori Electric Co., Ltd.", "Car Jamboree", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1983, carjmbre, 0, carjmbre, carjmbre, driver_device, 0, ROT90, "Omori Electric Co., Ltd.", "Car Jamboree", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_GRAPHICS )

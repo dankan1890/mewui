@@ -35,7 +35,6 @@
 */
 
 
-#include "emu.h"
 #include "includes/xor100.h"
 #include "bus/rs232/rs232.h"
 
@@ -185,7 +184,7 @@ READ8_MEMBER( xor100_state::fdc_wait_r )
 
 	*/
 
-	if (!machine().side_effect_disabled())
+	if (!space.debugger_access())
 	{
 		if (!m_fdc_irq && !m_fdc_drq)
 		{
@@ -512,7 +511,7 @@ void xor100_state::post_load()
 
 /* Machine Driver */
 
-static MACHINE_CONFIG_START( xor100 )
+static MACHINE_CONFIG_START( xor100, xor100_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_8MHz/2)
 	MCFG_CPU_PROGRAM_MAP(xor100_mem)
@@ -597,5 +596,5 @@ ROM_END
 
 /* System Drivers */
 
-//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT   STATE         INIT  COMPANY             FULLNAME        FLAGS
-COMP( 1980, xor100, 0,      0,      xor100,  xor100, xor100_state, 0,    "Xor Data Science", "XOR S-100-12", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW )
+/*    YEAR  NAME    PARENT  COMPAT  MACHINE     INPUT       INIT    COMPANY                 FULLNAME        FLAGS */
+COMP( 1980, xor100, 0,      0,      xor100,     xor100, driver_device,     0,   "Xor Data Science",     "XOR S-100-12", MACHINE_SUPPORTS_SAVE | MACHINE_NO_SOUND_HW)

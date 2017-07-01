@@ -9,12 +9,9 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "includes/turrett.h"
-
 #include "cpu/mips/r3000.h"
 #include "machine/ataintf.h"
-#include "machine/idehd.h"
-#include "speaker.h"
+#include "includes/turrett.h"
 
 
 
@@ -318,13 +315,15 @@ INTERRUPT_GEN_MEMBER( turrett_state::adc )
 /// HACK: The game expects a different LBA mapping to the standard HDD.
 /// The reason for this is unknown.
 
-DECLARE_DEVICE_TYPE(TURRETT_HARDDISK, turrett_hdd)
+#include "machine/idehd.h"
+
+extern const device_type TURRETT_HARDDISK;
 
 class turrett_hdd : public ide_hdd_device
 {
 public:
 	turrett_hdd(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-		: ide_hdd_device(mconfig, TURRETT_HARDDISK, tag, owner, clock)
+		: ide_hdd_device(mconfig, TURRETT_HARDDISK, "HDD Turrett Tower", tag, owner, clock, "turrett_hdd", __FILE__)
 	{
 	}
 
@@ -337,7 +336,7 @@ public:
 	}
 };
 
-DEFINE_DEVICE_TYPE(TURRETT_HARDDISK, turrett_hdd, "turrett_hdd", "Turret Tower HDD")
+const device_type TURRETT_HARDDISK = &device_creator<turrett_hdd>;
 
 SLOT_INTERFACE_START(turrett_devices)
 	SLOT_INTERFACE("hdd", TURRETT_HARDDISK)
@@ -349,7 +348,7 @@ SLOT_INTERFACE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( turrett )
+static MACHINE_CONFIG_START( turrett, turrett_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", R3041, R3041_CLOCK)
@@ -412,4 +411,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 2001, turrett, 0, turrett, turrett, turrett_state, 0, ROT0, "Dell Electronics (Namco license)", "Turret Tower", 0 )
+GAME( 2001, turrett, 0, turrett, turrett, driver_device, 0, ROT0, "Dell Electronics (Namco license)", "Turret Tower", 0 )

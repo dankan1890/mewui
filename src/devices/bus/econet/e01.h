@@ -6,10 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_ECONET_E01_H
-#define MAME_BUS_ECONET_E01_H
-
 #pragma once
+
+#ifndef __E01__
+#define __E01__
 
 #include "econet.h"
 #include "bus/centronics/ctronics.h"
@@ -24,12 +24,21 @@
 #include "machine/wd_fdc.h"
 #include "formats/afs_dsk.h"
 
-class econet_e01_device : public device_t,
+class e01_device : public device_t,
 	public device_econet_interface
 {
 public:
 	// construction/destruction
-	econet_e01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	e01_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+	e01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	enum
+	{
+		TYPE_E01 = 0,
+		TYPE_E01S
+	};
+
+	DECLARE_FLOPPY_FORMATS(floppy_formats_afs);
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
@@ -47,31 +56,6 @@ public:
 	DECLARE_WRITE8_MEMBER( rtc_address_w );
 	DECLARE_READ8_MEMBER( rtc_data_r );
 	DECLARE_WRITE8_MEMBER( rtc_data_w );
-
-protected:
-	enum
-	{
-		TYPE_E01 = 0,
-		TYPE_E01S
-	};
-
-	econet_e01_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int variant);
-
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-
-	// optional information overrides
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
-
-	// device_econet_interface overrides
-	virtual void econet_data(int state) override;
-	virtual void econet_clk(int state) override;
-
-private:
 	DECLARE_WRITE_LINE_MEMBER( rtc_irq_w );
 	DECLARE_WRITE_LINE_MEMBER( adlc_irq_w );
 	DECLARE_WRITE_LINE_MEMBER( econet_data_w );
@@ -82,14 +66,27 @@ private:
 	DECLARE_WRITE_LINE_MEMBER( scsi_bsy_w );
 	DECLARE_WRITE_LINE_MEMBER( scsi_req_w );
 
-	DECLARE_FLOPPY_FORMATS(floppy_formats_afs);
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
+
+	// optional information overrides
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+
+	// device_econet_interface overrides
+	virtual void econet_data(int state) override;
+	virtual void econet_clk(int state) override;
 
 	required_device<m65c02_device> m_maincpu;
-	required_device<wd2793_device> m_fdc;
+	required_device<wd2793_t> m_fdc;
 	required_device<mc6854_device> m_adlc;
 	required_device<mc146818_device> m_rtc;
 	required_device<ram_device> m_ram;
-	required_device<scsi_port_device> m_scsibus;
+	required_device<SCSI_PORT_DEVICE> m_scsibus;
 	required_device<output_latch_device> m_scsi_data_out;
 	required_device<input_buffer_device> m_scsi_data_in;
 	required_device<input_buffer_device> m_scsi_ctrl_in;
@@ -114,27 +111,27 @@ private:
 	int m_clk_en;
 	bool m_ram_en;
 
-	const int m_variant;
+	int m_variant;
 
 	// timers
 	emu_timer *m_clk_timer;
 };
 
 
-// ======================> econet_e01s_device
+// ======================> e01s_device
 
-class econet_e01s_device :  public econet_e01_device
+class e01s_device :  public e01_device
 {
 public:
 	// construction/destruction
-	econet_e01s_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	e01s_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ECONET_E01,  econet_e01_device)
-DECLARE_DEVICE_TYPE(ECONET_E01S, econet_e01s_device)
+extern const device_type E01;
+extern const device_type E01S;
 
 
 
-#endif // MAME_BUS_ECONET_E01_H
+#endif

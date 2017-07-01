@@ -15,11 +15,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PET_CASS_H
-#define MAME_BUS_PET_CASS_H
-
 #pragma once
 
+#ifndef __PET_DATASSETTE_PORT__
+#define __PET_DATASSETTE_PORT__
+
+#include "emu.h"
 
 
 
@@ -51,7 +52,8 @@
 
 class device_pet_datassette_port_interface;
 
-class pet_datassette_port_device : public device_t, public device_slot_interface
+class pet_datassette_port_device : public device_t,
+									public device_slot_interface
 {
 public:
 	// construction/destruction
@@ -59,7 +61,7 @@ public:
 	virtual ~pet_datassette_port_device();
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_read_handler(device_t &device, Object &&cb) { return downcast<pet_datassette_port_device &>(device).m_read_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_read_handler(device_t &device, _Object object) { return downcast<pet_datassette_port_device &>(device).m_read_handler.set_callback(object); }
 
 	// computer interface
 	DECLARE_READ_LINE_MEMBER( read );
@@ -87,24 +89,29 @@ class device_pet_datassette_port_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_pet_datassette_port_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_pet_datassette_port_interface();
 
-	virtual int datassette_read() { return 1; }
-	virtual void datassette_write(int state) { }
-	virtual int datassette_sense() { return 1; }
-	virtual void datassette_motor(int state) { }
+	virtual int datassette_read() { return 1; };
+	virtual void datassette_write(int state) { };
+	virtual int datassette_sense() { return 1; };
+	virtual void datassette_motor(int state) { };
 
 protected:
-	device_pet_datassette_port_interface(const machine_config &mconfig, device_t &device);
-
 	pet_datassette_port_device *m_slot;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PET_DATASSETTE_PORT, pet_datassette_port_device)
+extern const device_type PET_DATASSETTE_PORT;
 
+
+// slot devices
+#include "c2n.h"
+#include "diag264_lb_tape.h"
 
 SLOT_INTERFACE_EXTERN( cbm_datassette_devices );
 
-#endif // MAME_BUS_PET_CASS_H
+
+
+#endif

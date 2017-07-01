@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
-#ifndef MAME_VIDEO_TC0080VCO_H
-#define MAME_VIDEO_TC0080VCO_H
-
-#pragma once
+#ifndef __TC0080VCO_H__
+#define __TC0080VCO_H__
 
 class tc0080vco_device : public device_t
 {
 public:
 	tc0080vco_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~tc0080vco_device() {}
 
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
@@ -83,7 +82,7 @@ private:
 	void bg1_tilemap_draw( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int flags, uint32_t priority );
 };
 
-DECLARE_DEVICE_TYPE(TC0080VCO, tc0080vco_device)
+extern const device_type TC0080VCO;
 
 #define MCFG_TC0080VCO_GFX_REGION(_region) \
 	tc0080vco_device::set_gfx_region(*device, _region);
@@ -100,4 +99,4 @@ DECLARE_DEVICE_TYPE(TC0080VCO, tc0080vco_device)
 #define MCFG_TC0080VCO_GFXDECODE(_gfxtag) \
 	tc0080vco_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
 
-#endif // MAME_VIDEO_TC0080VCO_H
+#endif

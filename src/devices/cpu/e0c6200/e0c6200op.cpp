@@ -3,7 +3,6 @@
 
 // E0C6200 opcode handlers
 
-#include "emu.h"
 #include "e0c6200.h"
 
 
@@ -11,38 +10,38 @@
 
 // MX/MY
 
-u8 e0c6200_cpu_device::read_mx()
+uint8_t e0c6200_cpu_device::read_mx()
 {
-	u16 address = m_xp << 8 | m_xh << 4 | m_xl;
+	uint16_t address = m_xp << 8 | m_xh << 4 | m_xl;
 	return m_data->read_byte(address) & 0xf;
 }
 
-u8 e0c6200_cpu_device::read_my()
+uint8_t e0c6200_cpu_device::read_my()
 {
-	u16 address = m_yp << 8 | m_yh << 4 | m_yl;
+	uint16_t address = m_yp << 8 | m_yh << 4 | m_yl;
 	return m_data->read_byte(address) & 0xf;
 }
 
-void e0c6200_cpu_device::write_mx(u8 data)
+void e0c6200_cpu_device::write_mx(uint8_t data)
 {
-	u16 address = m_xp << 8 | m_xh << 4 | m_xl;
+	uint16_t address = m_xp << 8 | m_xh << 4 | m_xl;
 	m_data->write_byte(address, data);
 }
 
-void e0c6200_cpu_device::write_my(u8 data)
+void e0c6200_cpu_device::write_my(uint8_t data)
 {
-	u16 address = m_yp << 8 | m_yh << 4 | m_yl;
+	uint16_t address = m_yp << 8 | m_yh << 4 | m_yl;
 	m_data->write_byte(address, data);
 }
 
 // Mn(RP)
 
-u8 e0c6200_cpu_device::read_mn()
+uint8_t e0c6200_cpu_device::read_mn()
 {
 	return m_data->read_byte(m_op & 0xf) & 0xf;
 }
 
-void e0c6200_cpu_device::write_mn(u8 data)
+void e0c6200_cpu_device::write_mn(uint8_t data)
 {
 	m_data->write_byte(m_op & 0xf, data);
 }
@@ -50,12 +49,12 @@ void e0c6200_cpu_device::write_mn(u8 data)
 
 // common stack ops
 
-void e0c6200_cpu_device::push(u8 data)
+void e0c6200_cpu_device::push(uint8_t data)
 {
 	m_data->write_byte(--m_sp, data);
 }
 
-u8 e0c6200_cpu_device::pop()
+uint8_t e0c6200_cpu_device::pop()
 {
 	return m_data->read_byte(m_sp++) & 0xf;
 }
@@ -71,7 +70,7 @@ void e0c6200_cpu_device::push_pc()
 void e0c6200_cpu_device::pop_pc()
 {
 	// the highest bit(bank bit) is unchanged
-	u16 bank = m_pc & 0x1000;
+	uint16_t bank = m_pc & 0x1000;
 	m_pc = pop();
 	m_pc |= pop() << 4;
 	m_pc |= pop() << 8;
@@ -81,13 +80,13 @@ void e0c6200_cpu_device::pop_pc()
 
 // misc internal helpers
 
-void e0c6200_cpu_device::set_cf(u8 data)
+void e0c6200_cpu_device::set_cf(uint8_t data)
 {
 	// set carry flag if bit 4 is set, reset otherwise
 	m_f = (m_f & ~C_FLAG) | ((data & 0x10) ? C_FLAG : 0);
 }
 
-void e0c6200_cpu_device::set_zf(u8 data)
+void e0c6200_cpu_device::set_zf(uint8_t data)
 {
 	// set zero flag if 4-bit data is 0, reset otherwise
 	m_f = (m_f & ~Z_FLAG) | ((data & 0xf) ? 0 : Z_FLAG);
@@ -122,7 +121,7 @@ void e0c6200_cpu_device::do_branch(int condition)
 
 // arithmetic instructions
 
-u8 e0c6200_cpu_device::op_inc(u8 x)
+uint8_t e0c6200_cpu_device::op_inc(uint8_t x)
 {
 	// INC x: increment x (flags: C, Z)
 	m_icount -= 2;
@@ -131,7 +130,7 @@ u8 e0c6200_cpu_device::op_inc(u8 x)
 	return x & 0xf;
 }
 
-u8 e0c6200_cpu_device::op_dec(u8 x)
+uint8_t e0c6200_cpu_device::op_dec(uint8_t x)
 {
 	// DEC x: decrement x (flags: C, Z)
 	m_icount -= 2;
@@ -140,7 +139,7 @@ u8 e0c6200_cpu_device::op_dec(u8 x)
 	return x & 0xf;
 }
 
-u8 e0c6200_cpu_device::op_add(u8 x, u8 y, int decimal)
+uint8_t e0c6200_cpu_device::op_add(uint8_t x, uint8_t y, int decimal)
 {
 	// ADD x,y: add y to x (flags: C, Z)
 	m_icount -= 2;
@@ -158,13 +157,13 @@ u8 e0c6200_cpu_device::op_add(u8 x, u8 y, int decimal)
 	return x & 0xf;
 }
 
-u8 e0c6200_cpu_device::op_adc(u8 x, u8 y, int decimal)
+uint8_t e0c6200_cpu_device::op_adc(uint8_t x, uint8_t y, int decimal)
 {
 	// ADC x,y: add with carry y to x (flags: C, Z)
 	return op_add(x, y + (m_f & 1), decimal);
 }
 
-u8 e0c6200_cpu_device::op_sub(u8 x, u8 y, int decimal)
+uint8_t e0c6200_cpu_device::op_sub(uint8_t x, uint8_t y, int decimal)
 {
 	// SUB x,y: subtract y from x (flags: C, Z)
 	m_icount -= 2;
@@ -179,7 +178,7 @@ u8 e0c6200_cpu_device::op_sub(u8 x, u8 y, int decimal)
 	return x & 0xf;
 }
 
-u8 e0c6200_cpu_device::op_sbc(u8 x, u8 y, int decimal)
+uint8_t e0c6200_cpu_device::op_sbc(uint8_t x, uint8_t y, int decimal)
 {
 	// SBC x,y: subtract with carry y from x (flags: C, Z)
 	return op_sub(x, y + (m_f & 1), decimal);
@@ -188,7 +187,7 @@ u8 e0c6200_cpu_device::op_sbc(u8 x, u8 y, int decimal)
 
 // logical instructions
 
-u8 e0c6200_cpu_device::op_and(u8 x, u8 y)
+uint8_t e0c6200_cpu_device::op_and(uint8_t x, uint8_t y)
 {
 	// AND x,y: logical AND x with y (flags: Z)
 	m_icount -= 2;
@@ -197,7 +196,7 @@ u8 e0c6200_cpu_device::op_and(u8 x, u8 y)
 	return x;
 }
 
-u8 e0c6200_cpu_device::op_or(u8 x, u8 y)
+uint8_t e0c6200_cpu_device::op_or(uint8_t x, uint8_t y)
 {
 	// OR x,y: logical OR x with y (flags: Z)
 	m_icount -= 2;
@@ -206,7 +205,7 @@ u8 e0c6200_cpu_device::op_or(u8 x, u8 y)
 	return x;
 }
 
-u8 e0c6200_cpu_device::op_xor(u8 x, u8 y)
+uint8_t e0c6200_cpu_device::op_xor(uint8_t x, uint8_t y)
 {
 	// XOR x,y: exclusive-OR x with y (flags: Z)
 	m_icount -= 2;
@@ -215,7 +214,7 @@ u8 e0c6200_cpu_device::op_xor(u8 x, u8 y)
 	return x;
 }
 
-u8 e0c6200_cpu_device::op_rlc(u8 x)
+uint8_t e0c6200_cpu_device::op_rlc(uint8_t x)
 {
 	// RLC x: rotate x left through carry (flags: C, Z)
 	m_icount -= 2;
@@ -224,7 +223,7 @@ u8 e0c6200_cpu_device::op_rlc(u8 x)
 	return x & 0xf;
 }
 
-u8 e0c6200_cpu_device::op_rrc(u8 x)
+uint8_t e0c6200_cpu_device::op_rrc(uint8_t x)
 {
 	// RRC x: rotate x right through carry (flags: C, Z)
 	// note: RRC only takes 5 clock cycles

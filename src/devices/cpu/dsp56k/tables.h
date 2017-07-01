@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "emu.h"
 #include "dsp56k.h"
 
 namespace DSP56K

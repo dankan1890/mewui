@@ -134,19 +134,16 @@ public:
 
 	HRESULT enum_attached_devices(int devclass, device_enum_interface *enumerate_interface, void *state) const;
 
-	static std::string guid_to_string(const GUID& guid)
+	std::string guid_to_string(const GUID& guid) const
 	{
-		// Size of a GUID string with dashes plus null terminator
 		char guid_string[37];
-
-		snprintf(
+		sprintf_s(
 			guid_string, ARRAY_LENGTH(guid_string),
-			"%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+			"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 			guid.Data1, guid.Data2, guid.Data3,
 			guid.Data4[0], guid.Data4[1], guid.Data4[2],
 			guid.Data4[3], guid.Data4[4], guid.Data4[5],
 			guid.Data4[6], guid.Data4[7]);
-
 		return guid_string;
 	}
 };

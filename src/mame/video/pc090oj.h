@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
-#ifndef MAME_VIDEO_PC090OJ_H
-#define MAME_VIDEO_PC090OJ_H
-
-#pragma once
+#ifndef __PC090OJ_H__
+#define __PC090OJ_H__
 
 class pc090oj_device : public device_t
 {
 public:
 	pc090oj_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~pc090oj_device() {}
 
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
@@ -59,7 +58,7 @@ private:
 	required_device<palette_device> m_palette;
 };
 
-DECLARE_DEVICE_TYPE(PC090OJ, pc090oj_device)
+extern const device_type PC090OJ;
 
 
 #define MCFG_PC090OJ_GFX_REGION(_region) \
@@ -77,4 +76,4 @@ DECLARE_DEVICE_TYPE(PC090OJ, pc090oj_device)
 #define MCFG_PC090OJ_PALETTE(_palette_tag) \
 	pc090oj_device::static_set_palette_tag(*device, "^" _palette_tag);
 
-#endif // MAME_VIDEO_PC090)J_H
+#endif

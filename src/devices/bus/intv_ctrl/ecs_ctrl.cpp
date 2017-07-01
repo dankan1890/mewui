@@ -22,7 +22,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "ecs_ctrl.h"
 
 
@@ -30,7 +29,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(INTVECS_CONTROL_PORT, intvecs_control_port_device, "intvecs_control_port", "Mattel Intellivision ECS control port (HACK)")
+const device_type INTVECS_CONTROL_PORT = &device_creator<intvecs_control_port_device>;
 
 
 //**************************************************************************
@@ -66,8 +65,8 @@ device_intvecs_control_port_interface::~device_intvecs_control_port_interface()
 //-------------------------------------------------
 
 intvecs_control_port_device::intvecs_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, INTVECS_CONTROL_PORT, tag, owner, clock),
-	device_slot_interface(mconfig, *this), m_device(nullptr)
+						device_t(mconfig, INTVECS_CONTROL_PORT, "Mattel Intellivision ECS control port (HACK)", tag, owner, clock, "intvecs_control_port", __FILE__),
+						device_slot_interface(mconfig, *this), m_device(nullptr)
 {
 }
 
@@ -137,20 +136,25 @@ SLOT_INTERFACE_END
 //  ECS_CTRLS - A pair of hand controllers
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(ECS_CTRLS, intvecs_ctrls_device, "intvecs_ctrls", "Mattel Intellivision ECS Hand Controller x2 (HACK)")
+const device_type ECS_CTRLS = &device_creator<intvecs_ctrls_device>;
 
 static SLOT_INTERFACE_START( intvecs_controller )
 	SLOT_INTERFACE("handctrl", INTV_HANDCTRL)
 SLOT_INTERFACE_END
 
-MACHINE_CONFIG_MEMBER( intvecs_ctrls_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( intvecs_ctrls )
 	MCFG_INTV_CONTROL_PORT_ADD("port1", intvecs_controller, "handctrl")
 	MCFG_INTV_CONTROL_PORT_ADD("port2", intvecs_controller, "handctrl")
 MACHINE_CONFIG_END
 
 
+machine_config_constructor intvecs_ctrls_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( intvecs_ctrls );
+}
+
 intvecs_ctrls_device::intvecs_ctrls_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ECS_CTRLS, tag, owner, clock),
+	device_t(mconfig, ECS_CTRLS, "Mattel Intellivision ECS Hand Controller x2 (HACK)", tag, owner, clock, "intvecs_ctrls", __FILE__),
 	device_intvecs_control_port_interface(mconfig, *this),
 	m_hand1(*this, "port1"),
 	m_hand2(*this, "port2")
@@ -179,7 +183,7 @@ uint8_t intvecs_ctrls_device::read_portB()
 //  ECS_KEYBD - Keyboard
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(ECS_KEYBD, intvecs_keybd_device, "intvecs_keybd", "Mattel Intellivision ECS Keyboard")
+const device_type ECS_KEYBD = &device_creator<intvecs_keybd_device>;
 
 static INPUT_PORTS_START( intvecs_keybd )
 /*
@@ -276,7 +280,7 @@ ioport_constructor intvecs_keybd_device::device_input_ports() const
 }
 
 intvecs_keybd_device::intvecs_keybd_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, ECS_KEYBD, tag, owner, clock)
+	: device_t(mconfig, ECS_KEYBD, "Mattel Intellivision ECS Keyboard", tag, owner, clock, "intvecs_keybd", __FILE__)
 	, device_intvecs_control_port_interface(mconfig, *this)
 	, m_keybd(*this, "ROW.%u", 0)
 {
@@ -315,7 +319,7 @@ void intvecs_keybd_device::write_portA(uint8_t data)
 //  ECS_SYNTH - Synth
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(ECS_SYNTH, intvecs_synth_device, "intvecs_synth", "Mattel Intellivision ECS Synthesizer")
+const device_type ECS_SYNTH = &device_creator<intvecs_synth_device>;
 
 
 static INPUT_PORTS_START( intvecs_synth )
@@ -409,7 +413,7 @@ ioport_constructor intvecs_synth_device::device_input_ports() const
 
 
 intvecs_synth_device::intvecs_synth_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ECS_SYNTH, tag, owner, clock),
+	device_t(mconfig, ECS_SYNTH, "Mattel Intellivision ECS Synthetizer", tag, owner, clock, "intvecs_synth", __FILE__),
 	device_intvecs_control_port_interface(mconfig, *this),
 	m_synth(*this, "SYNTH.%u", 0)
 {

@@ -48,7 +48,7 @@ void lemmings_state::video_start()
 	save_item(NAME(m_sprite_triple_buffer_1));
 }
 
-WRITE_LINE_MEMBER(lemmings_state::screen_vblank_lemmings)
+void lemmings_state::screen_eof_lemmings(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

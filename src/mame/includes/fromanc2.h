@@ -3,7 +3,6 @@
 
 #include "machine/gen_latch.h"
 #include "machine/eepromser.h"
-#include "machine/ins8250.h"
 
 class fromanc2_state : public driver_device
 {
@@ -18,8 +17,7 @@ public:
 		m_lpalette(*this, "lpalette"),
 		m_rpalette(*this, "rpalette"),
 		m_soundlatch(*this, "soundlatch"),
-		m_soundlatch2(*this, "soundlatch2"),
-		m_uart(*this, "uart") { }
+		m_soundlatch2(*this, "soundlatch2") { }
 
 	/* memory pointers */
 	std::unique_ptr<uint16_t[]>   m_videoram[2][4];
@@ -50,7 +48,6 @@ public:
 	required_device<palette_device> m_rpalette;
 	required_device<generic_latch_8_device> m_soundlatch;
 	required_device<generic_latch_8_device> m_soundlatch2;
-	optional_device<ns16550_device> m_uart;
 
 	DECLARE_WRITE16_MEMBER(fromanc2_sndcmd_w);
 	DECLARE_WRITE16_MEMBER(fromanc2_portselect_w);
@@ -65,7 +62,6 @@ public:
 	DECLARE_WRITE8_MEMBER(fromanc2_subcpu_nmi_clr);
 	DECLARE_READ8_MEMBER(fromanc2_sndcpu_nmi_clr);
 	DECLARE_WRITE8_MEMBER(fromanc2_subcpu_rombank_w);
-	DECLARE_WRITE16_MEMBER(uart_w);
 	DECLARE_WRITE16_MEMBER(fromanc2_videoram_0_w);
 	DECLARE_WRITE16_MEMBER(fromanc2_videoram_1_w);
 	DECLARE_WRITE16_MEMBER(fromanc2_videoram_2_w);

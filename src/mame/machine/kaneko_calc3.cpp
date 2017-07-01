@@ -27,13 +27,10 @@
 #include "kaneko_calc3.h"
 #include "machine/eepromser.h"
 
-#define VERBOSE_OUTPUT 0
-
-
-DEFINE_DEVICE_TYPE(KANEKO_CALC3, kaneko_calc3_device, "kaneko_calc3", "Kaneko CALC3 MCU")
+const device_type KANEKO_CALC3 = &device_creator<kaneko_calc3_device>;
 
 kaneko_calc3_device::kaneko_calc3_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, KANEKO_CALC3, tag, owner, clock),
+	: device_t(mconfig, KANEKO_CALC3, "Kaneko CALC3 MCU", tag, owner, clock, "kaneko_calc3", __FILE__),
 		m_mcuram(*this, ":mcuram"),
 		m_mcu_status(0),
 		m_mcu_command_offset(0),

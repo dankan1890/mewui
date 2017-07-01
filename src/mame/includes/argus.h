@@ -1,7 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Yochizo
 #include "video/jalblend.h"
-#include "screen.h"
 
 class argus_state : public driver_device
 {

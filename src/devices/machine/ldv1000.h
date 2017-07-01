@@ -8,10 +8,10 @@
 
 *************************************************************************/
 
-#ifndef MAME_MACHINE_LDV1000_H
-#define MAME_MACHINE_LDV1000_H
-
 #pragma once
+
+#ifndef __LDV1000_H__
+#define __LDV1000_H__
 
 #include "laserdsc.h"
 #include "cpu/z80/z80.h"
@@ -27,7 +27,7 @@
 	MCFG_DEVICE_ADD(_tag, PIONEER_LDV1000, 0)
 
 #define MCFG_LASERDISC_LDV1000_COMMAND_STROBE_CB(_cb) \
-	devcb = &downcast<pioneer_ldv1000_device *>(device)->set_command_strobe_callback(DEVCB_##_cb);
+	downcast<pioneer_ldv1000_device *>(device)->set_command_strobe_callback(DEVCB_##_cb);
 
 
 
@@ -36,7 +36,7 @@
 //**************************************************************************
 
 // device type definition
-DECLARE_DEVICE_TYPE(PIONEER_LDV1000, pioneer_ldv1000_device)
+extern const device_type PIONEER_LDV1000;
 
 
 
@@ -53,7 +53,7 @@ public:
 	// construction/destruction
 	pioneer_ldv1000_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class cmd_strobe_cb> devcb_base &set_command_strobe_callback(cmd_strobe_cb &&latch) { return m_command_strobe_cb.set_callback(std::forward<cmd_strobe_cb>(latch)); }
+	template<class _cmd_strobe_cb> void set_command_strobe_callback(_cmd_strobe_cb latch) { m_command_strobe_cb.set_callback(latch); }
 
 	// input and output
 	void data_w(uint8_t data);
@@ -76,7 +76,7 @@ protected:
 	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	// subclass overrides
 	virtual void player_vsync(const vbi_metadata &vbi, int fieldnum, const attotime &curtime) override;
@@ -90,14 +90,11 @@ protected:
 
 public:
 	// internal read/write handlers
+	DECLARE_WRITE_LINE_MEMBER( ctc_interrupt );
 	DECLARE_WRITE8_MEMBER( z80_decoder_display_port_w );
 	DECLARE_READ8_MEMBER( z80_decoder_display_port_r );
 	DECLARE_READ8_MEMBER( z80_controller_r );
 	DECLARE_WRITE8_MEMBER( z80_controller_w );
-
-private:
-	// internal read/write handlers
-	DECLARE_WRITE_LINE_MEMBER( ctc_interrupt );
 	DECLARE_WRITE8_MEMBER( ppi0_porta_w );
 	DECLARE_READ8_MEMBER( ppi0_portb_r );
 	DECLARE_READ8_MEMBER( ppi0_portc_r );
@@ -106,6 +103,7 @@ private:
 	DECLARE_WRITE8_MEMBER( ppi1_portb_w );
 	DECLARE_WRITE8_MEMBER( ppi1_portc_w );
 
+protected:
 	// internal state
 	required_device<z80_device> m_z80_cpu;                  /* CPU index of the Z80 */
 	required_device<z80ctc_device> m_z80_ctc;                   /* CTC device */
@@ -134,4 +132,5 @@ private:
 
 };
 
-#endif // MAME_MACHINE_LDV1000_H
+
+#endif

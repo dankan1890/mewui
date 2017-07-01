@@ -276,11 +276,8 @@ namespace nana
 		class arrow_solid_triangle
 			: public arrow_interface
 		{
-			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state sta, direction dir) override
+			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state, direction dir) override
 			{
-				if (sta == element_state::disabled)
-					graph.palette(false, colors::light_gray);
-
 				::nana::point pos{ r.x + 3, r.y + 3 };
 				switch (dir)
 				{
@@ -366,11 +363,8 @@ namespace nana
 		class arrowhead
 			: public arrow_interface
 		{
-			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state sta, ::nana::direction dir) override
+			bool draw(graph_reference graph, const ::nana::color&, const ::nana::color&, const ::nana::rectangle& r, element_state, ::nana::direction dir) override
 			{
-				if (sta == element_state::disabled)
-					graph.palette(false, colors::light_gray);
-
 				int x = r.x;
 				int y = r.y + 5;
 				switch (dir)
@@ -497,17 +491,45 @@ namespace nana
 
 				switch (estate)
 				{
-					case element_state::hovered:
-					case element_state::focus_hovered:
-					case element_state::pressed:
-					case element_state::focus_normal:
-						bgcolor = arg_bgcolor.blend(color(0, 122, 204), 0.8);
-						break;
-					default:
-						return true;
+				case element_state::hovered:
+				case element_state::focus_hovered:
+					bgcolor = arg_bgcolor.blend(colors::white, 0.8);
+					break;
+				case element_state::pressed:
+					bgcolor = arg_bgcolor.blend(colors::black, 0.8);
+					break;
+				case element_state::disabled:
+					bgcolor = colors::dark_gray;
+				default:
+					break;
 				}
 
-				graph.rectangle(r, true, bgcolor);
+				auto part_px = (r.height - 3) * 5 / 13;
+				graph.rectangle(r, false, bgcolor.blend(colors::black, 0.6));
+				
+				::nana::point left_top{ r.x + 1, r.y + 1 }, right_top{r.right() - 2, r.y + 1};
+				::nana::point left_mid{ r.x + 1, r.y + 1 + static_cast<int>(part_px) }, right_mid{ right_top.x, left_mid.y };
+				::nana::point left_bottom{ r.x + 1, r.bottom() - 2 }, right_bottom{ r.right() - 2, r.bottom() - 2 };
+
+				graph.palette(false, bgcolor.blend(colors::white, 0.9));
+				graph.line(left_top, left_mid);
+				graph.line(right_top, right_mid);
+
+				graph.palette(false, bgcolor.blend(colors::white, 0.5));
+				graph.line(left_top, right_top);
+
+				left_mid.y++;
+				right_mid.y++;
+				graph.palette(false, bgcolor.blend(colors::black, 0.8));
+				graph.line(left_mid, left_bottom);
+				graph.line(right_mid, right_bottom);
+
+				::nana::rectangle part_r{ r.x + 2, r.y + 2, r.width - 4, part_px };
+				graph.rectangle(part_r, true, bgcolor.blend(colors::white, 0.8));
+
+				part_r.y += static_cast<int>(part_r.height);
+				part_r.height = (r.height - 3 - part_r.height);
+				graph.rectangle(part_r, true, bgcolor);
 				return true;
 			}
 		};//end class annex_button

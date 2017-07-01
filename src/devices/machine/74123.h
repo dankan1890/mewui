@@ -45,11 +45,12 @@
 
 *****************************************************************************/
 
-#ifndef MAME_MACHINE_74123_H
-#define MAME_MACHINE_74123_H
-
 #pragma once
 
+#ifndef __TTL74123_H__
+#define __TTL74123_H__
+
+#include "emu.h"
 
 
 
@@ -103,7 +104,7 @@ public:
 	static void set_a_pin_value(device_t &device, int value) { downcast<ttl74123_device &>(device).m_a = value; }
 	static void set_b_pin_value(device_t &device, int value) { downcast<ttl74123_device &>(device).m_b = value; }
 	static void set_clear_pin_value(device_t &device, int value) { downcast<ttl74123_device &>(device).m_clear = value; }
-	template <class Object> static devcb_base &set_output_changed_callback(device_t &device, Object &&cb) { return downcast<ttl74123_device &>(device).m_output_changed_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_output_changed_callback(device_t &device, _Object object) { return downcast<ttl74123_device &>(device).m_output_changed_cb.set_callback(object); }
 
 	DECLARE_WRITE8_MEMBER(a_w);
 	DECLARE_WRITE8_MEMBER(b_w);
@@ -121,6 +122,7 @@ protected:
 	TIMER_CALLBACK_MEMBER( clear_callback );
 
 private:
+
 	int timer_running();
 	void start_pulse();
 	void set_output();
@@ -138,6 +140,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(TTL74123, ttl74123_device)
+extern const device_type TTL74123;
 
-#endif // MAME_MACHINE_74123_H
+#endif

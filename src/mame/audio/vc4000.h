@@ -6,10 +6,10 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_AUDIO_VC4000_H
-#define MAME_AUDIO_VC4000_H
+#ifndef _VC4000SND_H_
+#define _VC4000SND_H_
 
-#pragma once
+#include "emu.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -17,7 +17,8 @@
 
 // ======================> vc4000_sound_device
 
-class vc4000_sound_device : public device_t, public device_sound_interface
+class vc4000_sound_device : public device_t,
+								public device_sound_interface
 {
 public:
 	vc4000_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -41,6 +42,6 @@ private:
 	unsigned m_level;
 };
 
-DECLARE_DEVICE_TYPE(VC4000_SND, vc4000_sound_device)
+extern const device_type VC4000_SND;
 
-#endif // MAME_AUDIO_VC4000_H
+#endif /* _VC4000SND_H_ */

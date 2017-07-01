@@ -1,8 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Anthony Kruize, Wilbert Pol
 // thanks-to:Shay Green
-#ifndef MAME_SOUND_GB_H
-#define MAME_SOUND_GB_H
+#ifndef __GBSOUND_H__
+#define __GBSOUND_H__
 
 
 class gameboy_sound_device : public device_t,
@@ -10,6 +10,7 @@ class gameboy_sound_device : public device_t,
 {
 public:
 	gameboy_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	gameboy_sound_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	DECLARE_READ8_MEMBER(sound_r);
 	virtual DECLARE_READ8_MEMBER(wave_r) = 0;
@@ -17,8 +18,6 @@ public:
 	virtual DECLARE_WRITE8_MEMBER(wave_w) = 0;
 
 protected:
-	gameboy_sound_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -192,9 +191,9 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(DMG_APU, dmg_apu_device)
-//DECLARE_DEVICE_TYPE(CGB02_APU, cgb02_apu_device)
-DECLARE_DEVICE_TYPE(CGB04_APU, cgb04_apu_device)
-//DECLARE_DEVICE_TYPE(CGB05_APU, cgb05_apu_device)
+extern const device_type DMG_APU;
+//extern const device_type CGB02_APU;
+extern const device_type CGB04_APU;
+//extern const device_type CGB05_APU;
 
-#endif // MAME_SOUND_GB_H
+#endif

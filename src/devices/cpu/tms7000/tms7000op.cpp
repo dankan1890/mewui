@@ -3,7 +3,6 @@
 
 // TMS7000 opcode handlers
 
-#include "emu.h"
 #include "tms7000.h"
 
 // flag helpers

@@ -22,11 +22,8 @@ namespace ui {
     CONSTANTS
 ***************************************************************************/
 
-// time (in seconds) to display errors
+/* time (in seconds) to display errors */
 #define ERROR_MESSAGE_TIME      5
-
-// item reference for "Switch Item Ordering"
-#define ITEMREF_SWITCH_ITEM_ORDERING    ((void *)1)
 
 
 /***************************************************************************
@@ -217,15 +214,12 @@ void menu_software_list::append_software_entry(const software_info &swinfo)
 
 void menu_software_list::populate(float &customtop, float &custombottom)
 {
-	// clear all entries before populating
-	m_entrylist.clear();
-
 	// build up the list of entries for the menu
 	for (const software_info &swinfo : m_swlist->get_info())
 		append_software_entry(swinfo);
 
 	// add an entry to change ordering
-	item_append(_("Switch Item Ordering"), "", 0, ITEMREF_SWITCH_ITEM_ORDERING);
+	item_append(_("Switch Item Ordering"), "", 0, (void *)1);
 
 	// append all of the menu entries
 	for (auto &entry : m_entrylist)
@@ -247,7 +241,7 @@ void menu_software_list::handle()
 
 	if (event && event->itemref)
 	{
-		if (event->itemref == ITEMREF_SWITCH_ITEM_ORDERING && event->iptkey == IPT_UI_SELECT)
+		if ((uintptr_t)event->itemref == 1 && event->iptkey == IPT_UI_SELECT)
 		{
 			m_ordered_by_shortname = !m_ordered_by_shortname;
 
@@ -360,12 +354,8 @@ void menu_software::populate(float &customtop, float &custombottom)
 			{
 				bool found = false;
 				for (const software_info &swinfo : swlistdev.get_info())
-					for (const software_part &swpart : swinfo.parts())
-						if (swpart.matches_interface(m_interface))
-						{
-							found = true;
-							break;
-						}
+					if (swinfo.parts().front().matches_interface(m_interface))
+						found = true;
 				if (found)
 					item_append(swlistdev.description(), "", 0, (void *)&swlistdev);
 			}
@@ -377,12 +367,8 @@ void menu_software::populate(float &customtop, float &custombottom)
 			{
 				bool found = false;
 				for (const software_info &swinfo : swlistdev.get_info())
-					for (const software_part &swpart : swinfo.parts())
-						if (swpart.matches_interface(m_interface))
-						{
-							found = true;
-							break;
-						}
+					if (swinfo.parts().front().matches_interface(m_interface))
+						found = true;
 				if (found)
 				{
 					if (!have_compatible)

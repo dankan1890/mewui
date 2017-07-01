@@ -9,10 +9,10 @@
 #include "emu.h"
 #include "7404.h"
 
-DEFINE_DEVICE_TYPE(TTL7404, ttl7404_device, "7404", "5/7404 Hex Inverters")
+const device_type TTL7404 = &device_creator<ttl7404_device>;
 
 ttl7404_device::ttl7404_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TTL7404, tag, owner, clock)
+	: device_t(mconfig, TTL7404, "5/7404 Hex Inverters", tag, owner, clock, "7404", __FILE__)
 	, m_y1_func(*this)
 	, m_y2_func(*this)
 	, m_y3_func(*this)

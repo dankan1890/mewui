@@ -1,7 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Stefan Jokisch
 #include "machine/mb14241.h"
-#include "screen.h"
 
 class fgoal_state : public driver_device
 {

@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_DINAMIC_H
-#define MAME_BUS_C64_DINAMIC_H
-
 #pragma once
 
+#ifndef __DINAMIC__
+#define __DINAMIC__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -43,7 +44,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_DINAMIC, c64_dinamic_cartridge_device)
+extern const device_type C64_DINAMIC;
 
 
-#endif // MAME_BUS_C64_DINAMIC_H
+#endif

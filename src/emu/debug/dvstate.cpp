@@ -9,12 +9,8 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "dvstate.h"
-
 #include "debugvw.h"
-
-#include "screen.h"
-
+#include "dvstate.h"
 
 const int debug_view_state::REG_DIVIDER;
 const int debug_view_state::REG_CYCLES;

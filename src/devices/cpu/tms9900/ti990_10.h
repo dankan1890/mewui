@@ -5,12 +5,10 @@
     See ti990_10.c for documentation
 */
 
-#ifndef MAME_CPU_TMS9900_TI990_10_H
-#define MAME_CPU_TMS9900_TI990_10_H
+#ifndef __TI990_10_H__
+#define __TI990_10_H__
 
-#pragma once
-
-
+#include "emu.h"
 #include "debugger.h"
 #include "tms99com.h"
 
@@ -58,6 +56,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(TI990_10, ti990_10_device)
+extern const device_type TI990_10;
 
-#endif // MAME_CPU_TMS9900_TI990_10_H
+#endif /* __TI990_10_H__ */

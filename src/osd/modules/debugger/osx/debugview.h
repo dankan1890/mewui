@@ -8,6 +8,7 @@
 
 #import "debugosx.h"
 
+#include "emu.h"
 #include "debug/debugvw.h"
 
 #import <Cocoa/Cocoa.h>

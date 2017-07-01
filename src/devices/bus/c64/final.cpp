@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "final.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_FINAL, c64_final_cartridge_device, "c64_final", "C64 Final Cartridge")
+const device_type C64_FINAL = &device_creator<c64_final_cartridge_device>;
 
 
 //-------------------------------------------------
@@ -64,7 +63,7 @@ ioport_constructor c64_final_cartridge_device::device_input_ports() const
 //-------------------------------------------------
 
 c64_final_cartridge_device::c64_final_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_FINAL, tag, owner, clock),
+	device_t(mconfig, C64_FINAL, "C64 Final cartridge", tag, owner, clock, "c64_final", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this)
 {
 }

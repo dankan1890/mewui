@@ -37,6 +37,15 @@ namespace nana
 	{
 		namespace combox
 		{
+
+			struct combox_scheme 
+				: public ::nana::widgets::skeletons::text_editor_scheme
+			{
+				color_proxy button_color{ static_cast<color_rgb>(0x03418C) };
+				color_proxy arrow_color{ colors::white };
+				std::string arrow_type = "solid_triangle";
+			};
+
 			struct combox_events
 				: public general_events
 			{
@@ -157,7 +166,7 @@ namespace nana
 	}//end namespace drawerbase
 
 	class combox
-		:	public widget_object<category::widget_tag, drawerbase::combox::trigger, drawerbase::combox::combox_events, ::nana::widgets::skeletons::text_editor_scheme>,
+		:	public widget_object<category::widget_tag, drawerbase::combox::trigger, drawerbase::combox::combox_events, drawerbase::combox::combox_scheme>,
 			public nana::concepts::any_objective<std::size_t, 1>
 	{
 	public:
@@ -218,6 +227,7 @@ namespace nana
 		nana::paint::image image(std::size_t) const;
 		void image_pixels(unsigned);  ///<Sets the width of image area. Default is 16 pixels.
 		void scroll_scheme(drawerbase::scroll::scheme s);
+		void textbox_colors(color bgfrom, color bgto);
 	private:
 		item_proxy _m_at_key(std::shared_ptr<nana::detail::key_interface>&&);
 		void _m_erase(nana::detail::key_interface*);

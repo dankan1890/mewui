@@ -5,6 +5,7 @@
 
 #include <QtWidgets/QMainWindow>
 
+#include "emu.h"
 #include "config.h"
 #include "debugger.h"
 
@@ -91,8 +92,8 @@ public:
 
 	virtual void buildFromQWidget(QWidget* widget);
 	virtual void applyToQWidget(QWidget* widget);
-	virtual void addToXmlDataNode(util::xml::data_node &node) const;
-	virtual void recoverFromXmlNode(util::xml::data_node const &node);
+	virtual void addToXmlDataNode(xml_data_node &node) const;
+	virtual void recoverFromXmlNode(xml_data_node const &node);
 };
 
 

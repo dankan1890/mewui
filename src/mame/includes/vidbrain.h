@@ -5,6 +5,7 @@
 #ifndef __VIDBRAIN__
 #define __VIDBRAIN__
 
+#include "emu.h"
 #include "bus/vidbrain/exp.h"
 #include "cpu/f8/f8.h"
 #include "machine/f3853.h"

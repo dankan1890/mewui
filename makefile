@@ -31,7 +31,6 @@
 # SDL_INI_PATH = .;$HOME/.mame/;ini;
 # SDL2_MULTIAPI = 1
 # NO_USE_MIDI = 1
-# NO_USE_PORTAUDIO = 1
 # DONT_USE_NETWORK = 1
 # USE_QTDEBUG = 1
 # NO_X11 = 1
@@ -64,7 +63,6 @@
 # USE_SYSTEM_LIB_PORTMIDI = 1
 # USE_SYSTEM_LIB_PORTAUDIO = 1
 # USE_BUNDLED_LIB_SDL2 = 1
-# USE_SYSTEM_LIB_UTF8PROC = 1
 
 # MESA_INSTALL_ROOT = /opt/mesa
 # SDL_INSTALL_ROOT = /opt/sdl2
@@ -237,9 +235,7 @@ SUBTARGET_FULL := $(subst -,_,$(SUBTARGET))
 
 CONFIG = release
 ifdef DEBUG
-ifneq '$(DEBUG)' '0'
 CONFIG := debug
-endif
 endif
 
 ifdef VERBOSE
@@ -461,10 +457,6 @@ ifdef USE_SYSTEM_LIB_PORTAUDIO
 PARAMS += --with-system-portaudio='$(USE_SYSTEM_LIB_PORTAUDIO)'
 endif
 
-ifdef USE_SYSTEM_LIB_UTF8PROC
-PARAMS += --with-system-utf8proc='$(USE_SYSTEM_LIB_UTF8PROC)'
-endif
-
 # reverse logic for this one
 
 ifdef USE_BUNDLED_LIB_SDL2
@@ -519,10 +511,8 @@ endif
 
 # profiler defaults to on for DEBUG builds
 ifdef DEBUG
-ifneq '$(DEBUG)' '0'
 ifndef PROFILER
 PROFILER = 1
-endif
 endif
 endif
 
@@ -531,6 +521,9 @@ endif
 ifdef PROFILE
 PROFILER =
 SYMBOLS = 1
+ifndef SYMLEVEL
+SYMLEVEL = 1
+endif
 endif
 
 # specify a default optimization level if none explicitly stated
@@ -540,14 +533,10 @@ endif
 
 # set the symbols level
 ifdef SYMBOLS
-PARAMS += --SYMBOLS='$(SYMBOLS)'
-ifneq '$(SYMBOLS)' '0'
 ifndef SYMLEVEL
+SYMLEVEL = 1
 ifdef SOURCES
 SYMLEVEL = 2
-else
-SYMLEVEL = 1
-endif
 endif
 endif
 endif
@@ -568,6 +557,10 @@ ifdef BENCHMARKS
 ifneq '$(BENCHMARKS)' '0'
 PARAMS += --with-benchmarks
 endif
+endif
+
+ifdef SYMBOLS
+PARAMS += --SYMBOLS='$(SYMBOLS)'
 endif
 
 ifdef SYMLEVEL
@@ -648,10 +641,6 @@ endif
 
 ifdef NO_USE_MIDI
 PARAMS += --NO_USE_MIDI='$(NO_USE_MIDI)'
-endif
-
-ifdef NO_USE_PORTAUDIO
-PARAMS += --NO_USE_PORTAUDIO='$(NO_USE_PORTAUDIO)'
 endif
 
 ifdef USE_QTDEBUG
@@ -815,7 +804,7 @@ SCRIPTS += scripts/target/$(TARGET)/mess.lua
 endif
 
 ifndef SOURCES
-ifdef PROJECT
+ifdef PROJECT 
 SCRIPTS += projects/$(PROJECT)/scripts/target/$(TARGET)/$(SUBTARGET_FULL).lua
 else
 SCRIPTS += scripts/target/$(TARGET)/$(SUBTARGET_FULL).lua
@@ -1058,7 +1047,7 @@ endif
 
 .PHONY: vs2015_uwp
 vs2015_uwp: generate
-	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=winstore82 --osd=uwp --NO_USE_MIDI=1 --NO_OPENGL=1 --USE_QTDEBUG=0 --NO_USE_PORTAUDIO=1 --MODERN_WIN_API=1 vs2015
+	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=winstore82 --osd=uwp --NO_USE_MIDI=1 --NO_OPENGL=1 --USE_QTDEBUG=0 --MODERN_WIN_API=1 vs2015
 ifdef MSBUILD
 	$(SILENT) msbuild.exe $(PROJECTDIR_WIN)/vs2015-winstore82/$(PROJECT_NAME).sln $(MSBUILD_PARAMS)
 endif
@@ -1097,7 +1086,7 @@ endif
 
 .PHONY: vs2017_uwp
 vs2017_uwp: generate
-	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=winstore82 --osd=uwp --NO_USE_MIDI=1 --NO_OPENGL=1 --USE_QTDEBUG=0 --NO_USE_PORTAUDIO=1 --MODERN_WIN_API=1 vs2015
+	$(SILENT) $(GENIE) $(PARAMS) $(TARGET_PARAMS) --vs=winstore82 --osd=uwp --NO_USE_MIDI=1 --NO_OPENGL=1 --USE_QTDEBUG=0 --MODERN_WIN_API=1 vs2015
 ifdef MSBUILD
 	$(SILENT) msbuild.exe $(PROJECTDIR_WIN)/vs2017-winstore82/$(PROJECT_NAME).sln $(MSBUILD_PARAMS)
 endif
@@ -1546,14 +1535,14 @@ endif
 
 ifeq (posix,$(SHELLTYPE))
 $(GENDIR)/version.cpp: $(GENDIR)/git_desc | $(GEN_FOLDERS)
-	@echo '#define BARE_BUILD_VERSION "0.187"' > $@
+	@echo '#define BARE_BUILD_VERSION "0.180"' > $@
 	@echo 'extern const char bare_build_version[];' >> $@
 	@echo 'extern const char build_version[];' >> $@
 	@echo 'const char bare_build_version[] = BARE_BUILD_VERSION;' >> $@
 	@echo 'const char build_version[] = BARE_BUILD_VERSION " ($(NEW_GIT_VERSION))";' >> $@
 else
 $(GENDIR)/version.cpp: $(GENDIR)/git_desc
-	@echo #define BARE_BUILD_VERSION "0.187" > $@
+	@echo #define BARE_BUILD_VERSION "0.180" > $@
 	@echo extern const char bare_build_version[]; >> $@
 	@echo extern const char build_version[]; >> $@
 	@echo const char bare_build_version[] = BARE_BUILD_VERSION; >> $@

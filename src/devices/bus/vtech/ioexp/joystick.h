@@ -9,11 +9,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_VTECH_IOEXP_JOYSTICK_H
-#define MAME_BUS_VTECH_IOEXP_JOYSTICK_H
-
 #pragma once
 
+#ifndef __VTECH_IOEXP_JOYSTICK_H__
+#define __VTECH_IOEXP_JOYSTICK_H__
+
+#include "emu.h"
 #include "ioexp.h"
 
 
@@ -23,11 +24,11 @@
 
 // ======================> joystick_interface_device
 
-class vtech_joystick_interface_device : public device_t, public device_vtech_ioexp_interface
+class joystick_interface_device : public device_t, public device_ioexp_interface
 {
 public:
 	// construction/destruction
-	vtech_joystick_interface_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	joystick_interface_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	DECLARE_READ8_MEMBER( joystick_r );
 
@@ -44,6 +45,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(VTECH_JOYSTICK_INTERFACE, vtech_joystick_interface_device)
+extern const device_type JOYSTICK_INTERFACE;
 
-#endif // MAME_BUS_VTECH_IOEXP_JOYSTICK_H
+#endif // __VTECH_IOEXP_JOYSTICK_H__

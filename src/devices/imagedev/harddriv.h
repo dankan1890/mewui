@@ -8,8 +8,8 @@
 
 *********************************************************************/
 
-#ifndef MAME_DEVICES_IMAGEDEV_HARDDRIV_H
-#define MAME_DEVICES_IMAGEDEV_HARDDRIV_H
+#ifndef HARDDRIV_H
+#define HARDDRIV_H
 
 #include "harddisk.h"
 #include "softlist_dev.h"
@@ -54,7 +54,7 @@ public:
 	chd_file *get_chd_file();
 
 protected:
-	harddisk_image_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	harddisk_image_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// device-level overrides
 	virtual void device_config_complete() override;
@@ -74,7 +74,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(HARDDISK, harddisk_image_device)
+extern const device_type HARDDISK;
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -92,4 +92,4 @@ DECLARE_DEVICE_TYPE(HARDDISK, harddisk_image_device)
 #define MCFG_HARDDISK_INTERFACE(_interface)                         \
 	harddisk_image_device::static_set_interface(*device, _interface);
 
-#endif // MAME_DEVICES_IMAGEDEV_HARDDRIV_H
+#endif /* HARDDRIV_H */

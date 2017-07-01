@@ -47,8 +47,7 @@ public:
 
 	DECLARE_READ16_MEMBER(read);
 	DECLARE_WRITE16_MEMBER(write);
-	void kbd_put(u8 data);
-
+	DECLARE_WRITE8_MEMBER(kbd_put);
 private:
 	virtual void machine_reset() override;
 	required_device<cpu_device> m_maincpu;
@@ -99,13 +98,13 @@ void seattle_comp_state::machine_reset()
 	m_term_data = 0;
 }
 
-void seattle_comp_state::kbd_put(u8 data)
+WRITE8_MEMBER( seattle_comp_state::kbd_put )
 {
 	m_term_data = data;
 	m_key_available = 1;
 }
 
-static MACHINE_CONFIG_START( seattle )
+static MACHINE_CONFIG_START( seattle, seattle_comp_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8086, 4000000) // no idea
 	MCFG_CPU_PROGRAM_MAP(seattle_mem)
@@ -113,7 +112,7 @@ static MACHINE_CONFIG_START( seattle )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(seattle_comp_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(seattle_comp_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -124,5 +123,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME     PARENT  COMPAT   MACHINE   INPUT    CLASS               INIT  COMPANY             FULLNAME    FLAGS
-COMP( 1986, seattle, 0,      0,       seattle,  seattle, seattle_comp_state, 0,    "Seattle Computer", "SCP-300F", MACHINE_NO_SOUND_HW )
+/*    YEAR  NAME     PARENT  COMPAT   MACHINE   INPUT    CLASS          INIT  COMPANY            FULLNAME       FLAGS */
+COMP( 1986, seattle, 0,      0,       seattle,  seattle, driver_device,  0,  "Seattle Computer", "SCP-300F", MACHINE_NO_SOUND_HW)

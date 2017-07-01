@@ -21,7 +21,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2BUS_DISKIING, a2bus_diskiing_device, "a2diskiing", "Apple Disk II NG controller")
+const device_type A2BUS_DISKIING = &device_creator<a2bus_diskiing_device>;
 
 #define WOZFDC_TAG         "wozfdc"
 #define DISKII_ROM_REGION  "diskii_rom"
@@ -29,6 +29,12 @@ DEFINE_DEVICE_TYPE(A2BUS_DISKIING, a2bus_diskiing_device, "a2diskiing", "Apple D
 static SLOT_INTERFACE_START( a2_floppies )
 	SLOT_INTERFACE( "525", FLOPPY_525_SD )
 SLOT_INTERFACE_END
+
+static MACHINE_CONFIG_FRAGMENT( diskiing )
+	MCFG_DEVICE_ADD(WOZFDC_TAG, DISKII_FDC, 1021800*2)
+	MCFG_FLOPPY_DRIVE_ADD("0", a2_floppies, "525", a2bus_diskiing_device::floppy_formats)
+	MCFG_FLOPPY_DRIVE_ADD("1", a2_floppies, "525", a2bus_diskiing_device::floppy_formats)
+MACHINE_CONFIG_END
 
 ROM_START( diskiing )
 	ROM_REGION(0x100, DISKII_ROM_REGION, 0)
@@ -40,14 +46,14 @@ FLOPPY_FORMATS_MEMBER( a2bus_diskiing_device::floppy_formats )
 FLOPPY_FORMATS_END
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( a2bus_diskiing_device::device_add_mconfig )
-	MCFG_DEVICE_ADD(WOZFDC_TAG, DISKII_FDC, 1021800*2)
-	MCFG_FLOPPY_DRIVE_ADD("0", a2_floppies, "525", a2bus_diskiing_device::floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD("1", a2_floppies, "525", a2bus_diskiing_device::floppy_formats)
-MACHINE_CONFIG_END
+machine_config_constructor a2bus_diskiing_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( diskiing );
+}
 
 //-------------------------------------------------
 //  rom_region - device-specific ROM region
@@ -63,12 +69,11 @@ const tiny_rom_entry *a2bus_diskiing_device::device_rom_region() const
 //**************************************************************************
 
 a2bus_diskiing_device::a2bus_diskiing_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, A2BUS_DISKIING, tag, owner, clock),
+	device_t(mconfig, A2BUS_DISKIING, "Apple Disk II NG controller", tag, owner, clock, "a2diskiing", __FILE__),
 	device_a2bus_card_interface(mconfig, *this),
 	m_wozfdc(*this, WOZFDC_TAG),
 	floppy0(*this, "0"),
-	floppy1(*this, "1"),
-	m_rom(nullptr)
+	floppy1(*this, "1"), m_rom(nullptr)
 {
 }
 

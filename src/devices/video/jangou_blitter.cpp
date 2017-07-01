@@ -23,7 +23,7 @@
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(JANGOU_BLITTER, jangou_blitter_device, "jangou_blitter", "Jangou Blitter Custom Chip")
+const device_type JANGOU_BLITTER = &device_creator<jangou_blitter_device>;
 
 
 //**************************************************************************
@@ -35,7 +35,7 @@ DEFINE_DEVICE_TYPE(JANGOU_BLITTER, jangou_blitter_device, "jangou_blitter", "Jan
 //-------------------------------------------------
 
 jangou_blitter_device::jangou_blitter_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, JANGOU_BLITTER, tag, owner, clock)
+	: device_t(mconfig, JANGOU_BLITTER, "Jangou Blitter Custom Chip", tag, owner, clock, "jangou_blitter", __FILE__)
 {
 }
 

@@ -8,7 +8,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "includes/thomson.h"
 #include "machine/wd_fdc.h"
 
@@ -276,7 +275,7 @@ static uint8_t to7_5p14_select;
 
 READ8_MEMBER( thomson_state::to7_5p14_r )
 {
-	wd2793_device *fdc = machine().device<wd2793_device>("wd2793");
+	wd2793_t *fdc = machine().device<wd2793_t>("wd2793");
 
 	if ( offset < 4 )
 		return fdc->read(space, offset );
@@ -291,7 +290,7 @@ READ8_MEMBER( thomson_state::to7_5p14_r )
 
 WRITE8_MEMBER( thomson_state::to7_5p14_w )
 {
-	wd2793_device *fdc = machine().device<wd2793_device>("wd2793");
+	wd2793_t *fdc = machine().device<wd2793_t>("wd2793");
 	if ( offset < 4 )
 		fdc->write(space, offset, data );
 	else if ( offset == 8 )
@@ -320,7 +319,7 @@ WRITE8_MEMBER( thomson_state::to7_5p14_w )
 
 void thomson_state::to7_5p14_reset()
 {
-	wd2793_device *fdc = machine().device<wd2793_device>("wd2793");
+	wd2793_t *fdc = machine().device<wd2793_t>("wd2793");
 	LOG(( "to7_5p14_reset: CD 90-640 controller\n" ));
 	fdc->reset();
 }

@@ -9,9 +9,7 @@
 ****************************************************************************/
 
 
-#include "emu.h"
 #include "includes/vector06.h"
-#include "screen.h"
 
 
 READ8_MEMBER( vector06_state::vector06_8255_portb_r )
@@ -187,7 +185,7 @@ void vector06_state::update_mem()
 
 WRITE8_MEMBER(vector06_state::vector06_ramdisk_w)
 {
-	const uint8_t oldbank = m_rambank;
+	uint8_t oldbank = m_rambank;
 	m_rambank = data;
 	if (oldbank != m_rambank)
 		update_mem();
@@ -195,8 +193,8 @@ WRITE8_MEMBER(vector06_state::vector06_ramdisk_w)
 
 WRITE8_MEMBER(vector06_state::vector06_status_callback)
 {
-	const bool oldstate = m_stack_state;
-	m_stack_state = bool(data & i8080_cpu_device::STATUS_STACK);
+	bool oldstate = m_stack_state;
+	m_stack_state = (data & I8085_STATUS_STACK) ? true : false;
 	if (oldstate != m_stack_state && (m_rambank & 0x10))
 		update_mem();
 }
@@ -218,8 +216,7 @@ READ8_MEMBER(vector06_state::pit8253_r)
 
 void vector06_state::machine_start()
 {
-	m_reset_check_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(vector06_state::reset_check_callback), this));
-	m_reset_check_timer->adjust(attotime::from_hz(50), 0, attotime::from_hz(50));
+	machine().scheduler().timer_pulse(attotime::from_hz(50), timer_expired_delegate(FUNC(vector06_state::reset_check_callback),this));
 }
 
 void vector06_state::machine_reset()

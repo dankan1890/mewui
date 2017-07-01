@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "diag264_lb_tape.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(DIAG264_CASSETTE_LOOPBACK, diag264_cassette_loopback_device, "diag264_loopback_cassette", "Diag264 Cassette Loopback")
+const device_type DIAG264_CASSETTE_LOOPBACK = &device_creator<diag264_cassette_loopback_device>;
 
 
 
@@ -28,12 +27,11 @@ DEFINE_DEVICE_TYPE(DIAG264_CASSETTE_LOOPBACK, diag264_cassette_loopback_device, 
 //-------------------------------------------------
 
 diag264_cassette_loopback_device::diag264_cassette_loopback_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, DIAG264_CASSETTE_LOOPBACK, tag, owner, clock)
-	, device_pet_datassette_port_interface(mconfig, *this)
-	, m_read(1)
-	, m_sense(0)
-{
-}
+	: device_t(mconfig, DIAG264_CASSETTE_LOOPBACK, "Diag264 Cassette Loopback", tag, owner, clock, "diag264_loopback_cassette", __FILE__),
+		device_pet_datassette_port_interface(mconfig, *this),
+		m_read(1),
+		m_sense(0)
+{ }
 
 
 //-------------------------------------------------

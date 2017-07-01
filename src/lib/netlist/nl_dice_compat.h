@@ -27,10 +27,7 @@ sed -e 's/#define \(.*\)"\(.*\)"[ \t]*,[ \t]*\(.*\)/NET_ALIAS(\1,\2.\3)/' src/ma
 #ifndef NL_CONVERT_CPP
 #include "devices/net_lib.h"
 #include "analog/nld_twoterm.h"
-
-#include <cmath>
 #endif
-
 
 /* --------------------------------------------------------------------
  * Compatibility macros for DICE netlists ...

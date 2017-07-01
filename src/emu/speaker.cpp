@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "speaker.h"
 
 
 
@@ -28,7 +27,7 @@
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
+const device_type SPEAKER = &device_creator<speaker_device>;
 
 
 
@@ -41,15 +40,16 @@ DEFINE_DEVICE_TYPE(SPEAKER, speaker_device, "speaker", "Speaker")
 //-------------------------------------------------
 
 speaker_device::speaker_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: device_t(mconfig, SPEAKER, tag, owner, clock)
-	, device_mixer_interface(mconfig, *this)
-	, m_x(0.0)
-	, m_y(0.0)
-	, m_z(0.0)
+	: device_t(mconfig, SPEAKER, "Speaker", tag, owner, clock, "speaker", __FILE__),
+		device_mixer_interface(mconfig, *this),
+		m_x(0.0),
+		m_y(0.0),
+		m_z(0.0)
 #ifdef MAME_DEBUG
-	, m_max_sample(0)
-	, m_clipped_samples(0)
-	, m_total_samples(0)
+	,
+		m_max_sample(0),
+		m_clipped_samples(0),
+		m_total_samples(0)
 #endif
 {
 }

@@ -2,10 +2,10 @@
 #include <gli/gli.hpp>
 #include <gli/gtx/loader.hpp>
 
-std::size_t const Size = 64;
-
 int test_simplex()
 {
+	std::size_t const Size = 256;
+
 	{
 		std::vector<glm::byte> ImageData(Size * Size * 3);
 		
@@ -62,6 +62,8 @@ int test_simplex()
 
 int test_perlin()
 {
+	std::size_t const Size = 256;
+
 	{
 		std::vector<glm::byte> ImageData(Size * Size * 3);
 		
@@ -118,6 +120,8 @@ int test_perlin()
 
 int test_perlin_pedioric()
 {
+	std::size_t const Size = 256;
+
 	{
 		std::vector<glm::byte> ImageData(Size * Size * 3);
 		

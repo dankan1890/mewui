@@ -67,18 +67,16 @@ Notes:
 */
 
 #include "emu.h"
-#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
-#include "machine/deco102.h"
-#include "machine/deco104.h"
+#include "cpu/m68000/m68000.h"
 #include "machine/decocrpt.h"
-#include "machine/gen_latch.h"
-#include "sound/okim6295.h"
+#include "machine/deco102.h"
 #include "sound/ym2151.h"
+#include "sound/okim6295.h"
 #include "video/deco16ic.h"
 #include "video/decospr.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/deco104.h"
+#include "machine/gen_latch.h"
 
 class dblewing_state : public driver_device
 {
@@ -367,7 +365,7 @@ void dblewing_state::dblewing_sound_cb( address_space &space, uint16_t data, uin
 	m_audiocpu->set_input_line(0, (m_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static MACHINE_CONFIG_START( dblewing )
+static MACHINE_CONFIG_START( dblewing, dblewing_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, XTAL_28MHz/2)   /* DE102 */
@@ -429,7 +427,7 @@ static MACHINE_CONFIG_START( dblewing )
 	MCFG_YM2151_IRQ_HANDLER(WRITELINE(dblewing_state, sound_irq))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
-	MCFG_OKIM6295_ADD("oki", XTAL_28MHz/28, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki", XTAL_28MHz/28, OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_CONFIG_END
 

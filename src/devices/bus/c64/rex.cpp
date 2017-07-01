@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "rex.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_REX, c64_rex_cartridge_device, "c64_rex", "C64 Rex cartridge")
+const device_type C64_REX = &device_creator<c64_rex_cartridge_device>;
 
 
 
@@ -28,7 +27,7 @@ DEFINE_DEVICE_TYPE(C64_REX, c64_rex_cartridge_device, "c64_rex", "C64 Rex cartri
 //-------------------------------------------------
 
 c64_rex_cartridge_device::c64_rex_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_REX, tag, owner, clock),
+	device_t(mconfig, C64_REX, "C64 Rex cartridge", tag, owner, clock, "c64_rex", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this)
 {
 }

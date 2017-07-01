@@ -21,6 +21,8 @@
 #include <queue>
 #include <algorithm>
 #include <functional>
+#undef min
+#undef max
 
 
 //============================================================

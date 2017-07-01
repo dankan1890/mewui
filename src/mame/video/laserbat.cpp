@@ -79,7 +79,6 @@
     more detail
 */
 
-#include "emu.h"
 #include "includes/laserbat.h"
 
 

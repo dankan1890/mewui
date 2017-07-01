@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "gdrom.h"
 
 #define GDROM_BUSY_STATE    0x00
@@ -434,10 +433,10 @@ void gdrom_device::WriteData( uint8_t *data, int dataLength )
 }
 
 // device type definition
-DEFINE_DEVICE_TYPE(GDROM, gdrom_device, "gdrom", "GD-ROM")
+const device_type GDROM = &device_creator<gdrom_device>;
 
 gdrom_device::gdrom_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	atapi_cdrom_device(mconfig, GDROM, tag, owner, clock)
+	atapi_cdrom_device(mconfig, GDROM, "GDROM", tag, owner, clock, "gdrom", __FILE__)
 {
 }
 

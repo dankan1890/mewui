@@ -18,9 +18,7 @@
 
 */
 
-#include "emu.h"
 #include "hrg.h"
-#include "screen.h"
 
 
 
@@ -38,8 +36,8 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(CBM2_HRG_A, cbm2_hrg_a_device, "cbm2_hrga", "CBM 500/600/700 High Resolution Graphics (A)")
-DEFINE_DEVICE_TYPE(CBM2_HRG_B, cbm2_hrg_b_device, "cbm2_hrgb", "CBM 500/600/700 High Resolution Graphics (B)")
+const device_type CBM2_HRG_A = &device_creator<cbm2_hrg_a_t>;
+const device_type CBM2_HRG_B = &device_creator<cbm2_hrg_b_t>;
 
 
 //-------------------------------------------------
@@ -56,7 +54,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const tiny_rom_entry *cbm2_hrg_device::device_rom_region() const
+const tiny_rom_entry *cbm2_hrg_t::device_rom_region() const
 {
 	return ROM_NAME( cbm2_hrg );
 }
@@ -66,7 +64,7 @@ const tiny_rom_entry *cbm2_hrg_device::device_rom_region() const
 //  ADDRESS_MAP( hrg_a_map )
 //-------------------------------------------------
 
-static ADDRESS_MAP_START( hrg_a_map, AS_0, 8, cbm2_hrg_a_device )
+static ADDRESS_MAP_START( hrg_a_map, AS_0, 8, cbm2_hrg_a_t )
 	ADDRESS_MAP_GLOBAL_MASK(0x7fff)
 	AM_RANGE(0x0000, 0x7fff) AM_RAM
 ADDRESS_MAP_END
@@ -76,17 +74,17 @@ ADDRESS_MAP_END
 //  ADDRESS_MAP( hrg_b_map )
 //-------------------------------------------------
 
-static ADDRESS_MAP_START( hrg_b_map, AS_0, 8, cbm2_hrg_b_device )
+static ADDRESS_MAP_START( hrg_b_map, AS_0, 8, cbm2_hrg_b_t )
 	ADDRESS_MAP_GLOBAL_MASK(0x3fff)
 	AM_RANGE(0x0000, 0x3fff) AM_RAM
 ADDRESS_MAP_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( cbm2_hrg_a )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( cbm2_hrg_a_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( cbm2_hrg_a )
 	MCFG_SCREEN_ADD_MONOCHROME(SCREEN_TAG, RASTER, rgb_t::green())
 	MCFG_SCREEN_UPDATE_DEVICE(EF9365_TAG, ef9365_device, screen_update)
 	MCFG_SCREEN_SIZE(512, 512)
@@ -99,10 +97,15 @@ MACHINE_CONFIG_MEMBER( cbm2_hrg_a_device::device_add_mconfig )
 	MCFG_DEVICE_ADDRESS_MAP(AS_0, hrg_a_map)
 	MCFG_EF936X_PALETTE("palette")
 	MCFG_EF936X_BITPLANES_CNT(1);
-	MCFG_EF936X_DISPLAYMODE(DISPLAY_MODE_512x512);
+	MCFG_EF936X_DISPLAYMODE(EF936X_512x512_DISPLAY_MODE);
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_MEMBER( cbm2_hrg_b_device::device_add_mconfig )
+
+//-------------------------------------------------
+//  MACHINE_CONFIG_FRAGMENT( cbm2_hrg_b )
+//-------------------------------------------------
+
+static MACHINE_CONFIG_FRAGMENT( cbm2_hrg_b )
 	MCFG_SCREEN_ADD_MONOCHROME(SCREEN_TAG, RASTER, rgb_t::green())
 	MCFG_SCREEN_UPDATE_DEVICE(EF9366_TAG, ef9365_device, screen_update)
 	MCFG_SCREEN_SIZE(512, 256)
@@ -115,8 +118,24 @@ MACHINE_CONFIG_MEMBER( cbm2_hrg_b_device::device_add_mconfig )
 	MCFG_DEVICE_ADDRESS_MAP(AS_0, hrg_b_map)
 	MCFG_EF936X_PALETTE("palette")
 	MCFG_EF936X_BITPLANES_CNT(1);
-	MCFG_EF936X_DISPLAYMODE(DISPLAY_MODE_512x256);
+	MCFG_EF936X_DISPLAYMODE(EF936X_512x256_DISPLAY_MODE);
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor cbm2_hrg_a_t::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( cbm2_hrg_a );
+}
+
+machine_config_constructor cbm2_hrg_b_t::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( cbm2_hrg_b );
+}
 
 
 
@@ -125,24 +144,24 @@ MACHINE_CONFIG_END
 //**************************************************************************
 
 //-------------------------------------------------
-//  cbm2_hrg_device - constructor
+//  cbm2_hrg_t - constructor
 //-------------------------------------------------
 
-cbm2_hrg_device::cbm2_hrg_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
+cbm2_hrg_t::cbm2_hrg_t(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 	device_cbm2_expansion_card_interface(mconfig, *this),
 	m_gdc(*this, EF9366_TAG),
 	m_bank3(*this, "bank3")
 {
 }
 
-cbm2_hrg_a_device::cbm2_hrg_a_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	cbm2_hrg_device(mconfig, CBM2_HRG_A, tag, owner, clock)
+cbm2_hrg_a_t::cbm2_hrg_a_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	cbm2_hrg_t(mconfig, CBM2_HRG_A, "CBM 500/600/700 High Resolution Graphics (A)", tag, owner, clock, "cbm2_hrga", __FILE__)
 {
 }
 
-cbm2_hrg_b_device::cbm2_hrg_b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	cbm2_hrg_device(mconfig, CBM2_HRG_B, tag, owner, clock)
+cbm2_hrg_b_t::cbm2_hrg_b_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	cbm2_hrg_t(mconfig, CBM2_HRG_B, "CBM 500/600/700 High Resolution Graphics (B)", tag, owner, clock, "cbm2_hrgb", __FILE__)
 {
 }
 
@@ -151,7 +170,7 @@ cbm2_hrg_b_device::cbm2_hrg_b_device(const machine_config &mconfig, const char *
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void cbm2_hrg_device::device_start()
+void cbm2_hrg_t::device_start()
 {
 }
 
@@ -160,7 +179,7 @@ void cbm2_hrg_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void cbm2_hrg_device::device_reset()
+void cbm2_hrg_t::device_reset()
 {
 	m_gdc->reset();
 }
@@ -170,7 +189,7 @@ void cbm2_hrg_device::device_reset()
 //  cbm2_bd_r - cartridge data read
 //-------------------------------------------------
 
-uint8_t cbm2_hrg_device::cbm2_bd_r(address_space &space, offs_t offset, uint8_t data, int csbank1, int csbank2, int csbank3)
+uint8_t cbm2_hrg_t::cbm2_bd_r(address_space &space, offs_t offset, uint8_t data, int csbank1, int csbank2, int csbank3)
 {
 	if (!csbank3)
 	{
@@ -213,7 +232,7 @@ uint8_t cbm2_hrg_device::cbm2_bd_r(address_space &space, offs_t offset, uint8_t 
 //  cbm2_bd_w - cartridge data write
 //-------------------------------------------------
 
-void cbm2_hrg_device::cbm2_bd_w(address_space &space, offs_t offset, uint8_t data, int csbank1, int csbank2, int csbank3)
+void cbm2_hrg_t::cbm2_bd_w(address_space &space, offs_t offset, uint8_t data, int csbank1, int csbank2, int csbank3)
 {
 	if (!csbank3)
 	{

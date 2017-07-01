@@ -20,7 +20,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(IQ151CART_SLOT, iq151cart_slot_device, "iq151cart_slot", "IQ151 cartridge slot")
+const device_type IQ151CART_SLOT = &device_creator<iq151cart_slot_device>;
 
 //**************************************************************************
 //    IQ151 cartridge interface
@@ -53,16 +53,15 @@ device_iq151cart_interface::~device_iq151cart_interface()
 //  iq151cart_slot_device - constructor
 //-------------------------------------------------
 iq151cart_slot_device::iq151cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, IQ151CART_SLOT, tag, owner, clock),
-	device_slot_interface(mconfig, *this),
-	device_image_interface(mconfig, *this),
-	m_out_irq0_cb(*this),
-	m_out_irq1_cb(*this),
-	m_out_irq2_cb(*this),
-	m_out_irq3_cb(*this),
-	m_out_irq4_cb(*this),
-	m_out_drq_cb(*this),
-	m_cart(nullptr)
+		device_t(mconfig, IQ151CART_SLOT, "IQ151 cartridge slot", tag, owner, clock, "iq151cart_slot", __FILE__),
+		device_slot_interface(mconfig, *this),
+		device_image_interface(mconfig, *this),
+		m_out_irq0_cb(*this),
+		m_out_irq1_cb(*this),
+		m_out_irq2_cb(*this),
+		m_out_irq3_cb(*this),
+		m_out_irq4_cb(*this),
+		m_out_drq_cb(*this), m_cart(nullptr)
 {
 }
 
@@ -91,6 +90,18 @@ void iq151cart_slot_device::device_start()
 	m_out_irq4_cb.resolve_safe();
 	m_out_drq_cb.resolve_safe();
 
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void iq151cart_slot_device::device_config_complete()
+{
+	// set brief and instance name
+	update_names();
 }
 
 
@@ -160,7 +171,7 @@ image_init_result iq151cart_slot_device::call_load()
 
 		if (cart_base != nullptr)
 		{
-			if (!loaded_through_softlist())
+			if (software_entry() == nullptr)
 			{
 				read_length = length();
 				fread(m_cart->get_cart_base(), read_length);
@@ -182,7 +193,7 @@ image_init_result iq151cart_slot_device::call_load()
     get default card software
 -------------------------------------------------*/
 
-std::string iq151cart_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string iq151cart_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("basic6");
 }

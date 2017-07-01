@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_WANGPC_EMB_H
-#define MAME_BUS_WANGPC_EMB_H
-
 #pragma once
 
+#ifndef __WANGPC_EMB__
+#define __WANGPC_EMB__
+
+#include "emu.h"
 #include "wangpc.h"
 
 
@@ -50,4 +51,5 @@ private:
 // device type definition
 extern const device_type WANGPC_EMB;
 
-#endif // MAME_BUS_WANGPC_EMB_H
+
+#endif

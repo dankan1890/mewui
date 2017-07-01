@@ -11,9 +11,6 @@
 #include "includes/neogeo.h"
 #include "video/resnet.h"
 
-#define VERBOSE     (0)
-
-
 #define NUM_PENS    (0x1000)
 
 /*************************************

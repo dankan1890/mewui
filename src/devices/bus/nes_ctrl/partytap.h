@@ -6,13 +6,14 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NES_CTRL_PARTYTAP_H
-#define MAME_BUS_NES_CTRL_PARTYTAP_H
-
 #pragma once
 
-#include "ctrl.h"
+#ifndef __NES_PARTYTAP__
+#define __NES_PARTYTAP__
 
+
+#include "emu.h"
+#include "ctrl.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -43,6 +44,6 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_PARTYTAP, nes_partytap_device)
+extern const device_type NES_PARTYTAP;
 
-#endif // MAME_BUS_NES_CTRL_PARTYTAP_H
+#endif

@@ -6,11 +6,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_SVI3X8_SLOT_SV806_H
-#define MAME_BUS_SVI3X8_SLOT_SV806_H
-
 #pragma once
 
+#ifndef __SVI3X8_SLOT_SV806_H__
+#define __SVI3X8_SLOT_SV806_H__
+
+#include "emu.h"
 #include "slot.h"
 #include "video/mc6845.h"
 
@@ -32,14 +33,14 @@ public:
 	virtual DECLARE_READ8_MEMBER( iorq_r ) override;
 	virtual DECLARE_WRITE8_MEMBER( iorq_w ) override;
 
+	MC6845_UPDATE_ROW(crtc_update_row);
+
 protected:
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_start() override;
 
 private:
-	MC6845_UPDATE_ROW(crtc_update_row);
-
 	required_device<hd6845_device> m_crtc;
 	required_device<palette_device> m_palette;
 	required_memory_region m_gfx;
@@ -49,6 +50,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(SV806, sv806_device)
+extern const device_type SV806;
 
-#endif // MAME_BUS_SVI3X8_SLOT_SV806_H
+#endif // __SVI3X8_SLOT_SV806_H__

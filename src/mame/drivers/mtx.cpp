@@ -23,21 +23,17 @@
 
 #include "emu.h"
 #include "includes/mtx.h"
-
-#include "bus/centronics/ctronics.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
 #include "imagedev/cassette.h"
-#include "imagedev/snapquik.h"
 #include "machine/ram.h"
+#include "imagedev/snapquik.h"
+#include "bus/centronics/ctronics.h"
 #include "machine/z80ctc.h"
 #include "machine/z80dart.h"
-#include "sound/sn76496.h"
 #include "video/tms9928a.h"
-
+#include "sound/sn76496.h"
 #include "softlist.h"
-#include "speaker.h"
-
 
 /***************************************************************************
     MEMORY MAPS
@@ -282,10 +278,10 @@ WRITE_LINE_MEMBER(mtx_state::mtx_tms9929a_interrupt)
 ***************************************************************************/
 
 /*-------------------------------------------------
-    MACHINE_CONFIG_START( mtx512 )
+    MACHINE_CONFIG_START( mtx512, mtx_state )
 -------------------------------------------------*/
 
-static MACHINE_CONFIG_START( mtx512 )
+static MACHINE_CONFIG_START( mtx512, mtx_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_4MHz)
@@ -409,10 +405,10 @@ ROM_END
     SYSTEM DRIVERS
 ***************************************************************************/
 
-//    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT   STATE        INIT    COMPANY         FULLNAME   FLAGS
-COMP( 1983, mtx512,   0,        0,      mtx512,   mtx512, mtx_state,   0,      "Memotech Ltd", "MTX 512", 0 )
-COMP( 1983, mtx500,   mtx512,   0,      mtx500,   mtx512, mtx_state,   0,      "Memotech Ltd", "MTX 500", 0 )
-COMP( 1984, rs128,    mtx512,   0,      rs128,    mtx512, mtx_state,   0,      "Memotech Ltd", "RS 128",  0 )
+/*    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT     INIT    COMPANY          FULLNAME   FLAGS */
+COMP( 1983, mtx512,   0,        0,      mtx512,   mtx512, driver_device,   0,       "Memotech Ltd", "MTX 512", 0 )
+COMP( 1983, mtx500,   mtx512,   0,      mtx500,   mtx512, driver_device,   0,       "Memotech Ltd", "MTX 500", 0 )
+COMP( 1984, rs128,    mtx512,   0,      rs128,    mtx512, driver_device,   0,       "Memotech Ltd", "RS 128",  0 )
 
 
 /*

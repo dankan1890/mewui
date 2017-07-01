@@ -8,8 +8,6 @@
 #ifndef TWOBLUECUBES_CATCH_COMMON_H_INCLUDED
 #define TWOBLUECUBES_CATCH_COMMON_H_INCLUDED
 
-#include "catch_compiler_capabilities.h"
-
 #define INTERNAL_CATCH_UNIQUE_NAME_LINE2( name, line ) name##line
 #define INTERNAL_CATCH_UNIQUE_NAME_LINE( name, line ) INTERNAL_CATCH_UNIQUE_NAME_LINE2( name, line )
 #ifdef CATCH_CONFIG_COUNTER
@@ -79,10 +77,7 @@ namespace Catch {
     }
 
     bool startsWith( std::string const& s, std::string const& prefix );
-    bool startsWith( std::string const& s, char prefix );
     bool endsWith( std::string const& s, std::string const& suffix );
-    bool endsWith( std::string const& s, char suffix );
-    bool contains( std::string const& s, std::string const& infix );
     bool contains( std::string const& s, std::string const& infix );
     void toLowerInPlace( std::string& s );
     std::string toLower( std::string const& s );
@@ -102,8 +97,8 @@ namespace Catch {
 
         SourceLineInfo();
         SourceLineInfo( char const* _file, std::size_t _line );
+        SourceLineInfo( SourceLineInfo const& other );
 #  ifdef CATCH_CONFIG_CPP11_GENERATED_METHODS
-        SourceLineInfo(SourceLineInfo const& other)          = default;
         SourceLineInfo( SourceLineInfo && )                  = default;
         SourceLineInfo& operator = ( SourceLineInfo const& ) = default;
         SourceLineInfo& operator = ( SourceLineInfo && )     = default;
@@ -112,7 +107,7 @@ namespace Catch {
         bool operator == ( SourceLineInfo const& other ) const;
         bool operator < ( SourceLineInfo const& other ) const;
 
-        char const* file;
+        std::string file;
         std::size_t line;
     };
 

@@ -38,9 +38,7 @@ includedirs {
 
 files {
 	MAME_DIR .. "src/emu/emu.h",
-	MAME_DIR .. "src/emu/emufwd.h",
 	MAME_DIR .. "src/emu/main.h",
-	MAME_DIR .. "src/emu/main.cpp",
 	MAME_DIR .. "src/emu/gamedrv.h",
 	MAME_DIR .. "src/emu/hashfile.cpp",
 	MAME_DIR .. "src/emu/hashfile.h",
@@ -83,8 +81,6 @@ files {
 	MAME_DIR .. "src/emu/dinvram.h",
 	MAME_DIR .. "src/emu/dioutput.cpp",
 	MAME_DIR .. "src/emu/dioutput.h",
-	MAME_DIR .. "src/emu/dipalette.cpp",
-	MAME_DIR .. "src/emu/dipalette.h",
 	MAME_DIR .. "src/emu/dipty.cpp",
 	MAME_DIR .. "src/emu/dipty.h",
 	MAME_DIR .. "src/emu/dirom.cpp",
@@ -97,6 +93,8 @@ files {
 	MAME_DIR .. "src/emu/dislot.h",
 	MAME_DIR .. "src/emu/disound.cpp",
 	MAME_DIR .. "src/emu/disound.h",
+	MAME_DIR .. "src/emu/dispatch.cpp",
+	MAME_DIR .. "src/emu/dispatch.h",
 	MAME_DIR .. "src/emu/distate.cpp",
 	MAME_DIR .. "src/emu/distate.h",
 	MAME_DIR .. "src/emu/divideo.cpp",
@@ -122,8 +120,6 @@ files {
 	MAME_DIR .. "src/emu/emupal.h",
 	MAME_DIR .. "src/emu/fileio.cpp",
 	MAME_DIR .. "src/emu/fileio.h",
-	MAME_DIR .. "src/emu/http.h",
-	MAME_DIR .. "src/emu/http.cpp",
 	MAME_DIR .. "src/emu/image.cpp",
 	MAME_DIR .. "src/emu/image.h",
 	MAME_DIR .. "src/emu/input.cpp",
@@ -133,7 +129,6 @@ files {
 	MAME_DIR .. "src/emu/ioport.cpp",
 	MAME_DIR .. "src/emu/ioport.h",
 	MAME_DIR .. "src/emu/inpttype.h",
-	MAME_DIR .. "src/emu/logmacro.h",
 	MAME_DIR .. "src/emu/machine.cpp",
 	MAME_DIR .. "src/emu/machine.h",
 	MAME_DIR .. "src/emu/mconfig.cpp",
@@ -188,6 +183,7 @@ files {
 	MAME_DIR .. "src/emu/video.h",
 	MAME_DIR .. "src/emu/rendersw.hxx",
 	MAME_DIR .. "src/emu/ui/uimain.h",
+	MAME_DIR .. "src/emu/ui/cmdrender.h", -- TODO: remove
 	MAME_DIR .. "src/emu/ui/cmddata.h",   -- TODO: remove
 	MAME_DIR .. "src/emu/debug/debugcmd.cpp",
 	MAME_DIR .. "src/emu/debug/debugcmd.h",

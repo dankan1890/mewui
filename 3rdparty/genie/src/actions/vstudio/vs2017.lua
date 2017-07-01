@@ -58,7 +58,6 @@
 			targetFramework = "4.5.2",
 			toolsVersion    = "15.0",
 			windowsTargetPlatformVersion = "8.1",
-			supports64bitEditContinue    = true,
-			intDirAbsolute  = true,
+			supports64bitEditContinue = true,
 		}
 	}

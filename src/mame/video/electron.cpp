@@ -12,7 +12,6 @@
 
 #include "emu.h"
 #include "includes/electron.h"
-#include "screen.h"
 
 /*
   From the ElectrEm site:

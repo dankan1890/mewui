@@ -236,9 +236,8 @@ Hang Pilot (uses an unknown but similar video board)                12W         
 #include "video/k001006.h"
 #include "video/k001604.h"
 
-#include "rendlay.h"
-#include "speaker.h"
 
+#include "rendlay.h"
 
 class gticlub_state : public driver_device
 {
@@ -934,7 +933,7 @@ uint32_t gticlub_state::screen_update_hangplt(screen_device &screen, bitmap_rgb3
 
 	return 0;
 }
-static MACHINE_CONFIG_START( gticlub )
+static MACHINE_CONFIG_START( gticlub, gticlub_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", PPC403GA, XTAL_64MHz/2)   /* PowerPC 403GA 32MHz */
@@ -1004,7 +1003,7 @@ static MACHINE_CONFIG_START( gticlub )
 
 	MCFG_DEVICE_ADD("konppc", KONPPC, 0)
 	MCFG_KONPPC_CGBOARD_NUMBER(1)
-	MCFG_KONPPC_CGBOARD_TYPE(GTICLUB)
+	MCFG_KONPPC_CGBOARD_TYPE(CGBOARD_TYPE_GTICLUB)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( thunderh, gticlub )
@@ -1041,7 +1040,7 @@ MACHINE_RESET_MEMBER(gticlub_state,hangplt)
 	m_dsp2->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-static MACHINE_CONFIG_START( hangplt )
+static MACHINE_CONFIG_START( hangplt, gticlub_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", PPC403GA, XTAL_64MHz/2)   /* PowerPC 403GA 32MHz */
@@ -1131,7 +1130,7 @@ static MACHINE_CONFIG_START( hangplt )
 
 	MCFG_DEVICE_ADD("konppc", KONPPC, 0)
 	MCFG_KONPPC_CGBOARD_NUMBER(2)
-	MCFG_KONPPC_CGBOARD_TYPE(HANGPLT)
+	MCFG_KONPPC_CGBOARD_TYPE(CGBOARD_TYPE_HANGPLT)
 MACHINE_CONFIG_END
 
 /*************************************************************************/

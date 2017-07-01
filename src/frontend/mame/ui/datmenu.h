@@ -16,6 +16,7 @@
 
 #include "ui/menu.h"
 
+#include <string>
 #include <vector>
 
 
@@ -44,6 +45,7 @@ private:
 	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
+	int visible_items;
 	int m_actual;
 	const game_driver  *m_driver;
 	ui_software_info *m_swinfo;

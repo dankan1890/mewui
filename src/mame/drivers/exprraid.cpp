@@ -206,15 +206,12 @@ Stephh's notes (based on the games M6502 code and some tests) :
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/exprraid.h"
-
 #include "cpu/m6502/deco16.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/2203intf.h"
 #include "sound/3526intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/exprraid.h"
 
 
 /*****************************************************************************************/
@@ -499,7 +496,7 @@ void exprraid_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( exprraid )
+static MACHINE_CONFIG_START( exprraid, exprraid_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", DECO16, XTAL_12MHz / 8)
@@ -523,7 +520,7 @@ static MACHINE_CONFIG_START( exprraid )
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", exprraid)
-	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
+	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", 256)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")

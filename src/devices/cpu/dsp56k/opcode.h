@@ -3,6 +3,7 @@
 #ifndef __DSP56K_OPCODE_H__
 #define __DSP56K_OPCODE_H__
 
+#include "emu.h"
 #include "inst.h"
 #include "pmove.h"
 

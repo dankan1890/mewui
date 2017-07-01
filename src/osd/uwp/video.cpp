@@ -6,9 +6,9 @@
 //
 //============================================================
 
-#include <exception>
-
 // standard windows headers
+#include <exception>
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dxgi1_2.h>
 #include <wrl\client.h>

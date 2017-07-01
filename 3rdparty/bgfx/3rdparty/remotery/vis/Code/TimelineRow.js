@@ -356,9 +356,8 @@ TimelineRow = (function()
 			ctx.strokeRect(offset_x + 0.5, offset_y + 0.5, size_x - 1, size_y - 1);
 		}
 
-	    // Draw sample names clipped to the bounds of the sample
-	    // Also reject tiny samples with no space to render text
-		if (draw_text && size_x > 8)
+		// Draw sample names clipped to the bounds of the sample
+		if (draw_text)
 		{
 			ctx.save();
 			ctx.beginPath();

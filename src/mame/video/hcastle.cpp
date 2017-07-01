@@ -8,7 +8,6 @@
 
 #include "emu.h"
 #include "includes/hcastle.h"
-#include "screen.h"
 
 
 PALETTE_INIT_MEMBER(hcastle_state, hcastle)

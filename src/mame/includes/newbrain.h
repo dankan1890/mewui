@@ -6,6 +6,7 @@
 #define __NEWBRAIN__
 
 
+#include "emu.h"
 #include "bus/newbrain/exp.h"
 #include "bus/rs232/rs232.h"
 #include "cpu/z80/z80.h"
@@ -44,8 +45,8 @@ public:
 		m_userint(1),
 		m_clkint(1),
 		m_copint(1),
-		m_405_q(0),
-		m_403_q(0xf)
+		m_keylatch(0),
+		m_keydata(0xf)
 	{
 	}
 
@@ -56,7 +57,7 @@ public:
 	DECLARE_READ8_MEMBER( iorq_r );
 	DECLARE_WRITE8_MEMBER( iorq_w );
 
-	DECLARE_WRITE8_MEMBER( enrg_w );
+	DECLARE_WRITE8_MEMBER( enrg1_w );
 	DECLARE_WRITE8_MEMBER( tvtl_w );
 	DECLARE_READ8_MEMBER( ust_a_r );
 	DECLARE_READ8_MEMBER( ust_b_r );
@@ -69,6 +70,8 @@ public:
 	DECLARE_READ_LINE_MEMBER( tdi_r );
 	DECLARE_WRITE_LINE_MEMBER( k1_w );
 
+	INTERRUPT_GEN_MEMBER(newbrain_interrupt);
+
 protected:
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 	virtual void machine_start() override;
@@ -79,8 +82,7 @@ protected:
 	enum
 	{
 		TIMER_ID_RESET,
-		TIMER_ID_PWRUP,
-		TIMER_ID_CLKINT
+		TIMER_ID_PWRUP
 	};
 
 	void check_interrupt();
@@ -97,7 +99,7 @@ protected:
 	required_device<z80_device> m_maincpu;
 	required_device<cop400_cpu_device> m_cop;
 	required_device<palette_device> m_palette;
-	required_device<newbrain_expansion_slot_device> m_exp;
+	required_device<newbrain_expansion_slot_t> m_exp;
 	required_device<cassette_image_device> m_cassette1;
 	required_device<cassette_image_device> m_cassette2;
 	required_device<rs232_port_device> m_rs232_v24;
@@ -120,10 +122,9 @@ protected:
 	int m_cop_g3;
 	int m_cop_k6;
 
-	int m_405_q;
-	uint8_t m_403_q;
-	uint8_t m_403_d;
-	uint16_t m_402_q;
+	int m_keylatch;
+	int m_keydata;
+	uint16_t m_segment_data;
 
 	int m_rv;
 	int m_fs;
@@ -131,8 +132,6 @@ protected:
 	int m_ucr;
 	int m_80l;
 	uint16_t m_tvl;
-
-	emu_timer *m_clkint_timer;
 };
 
 

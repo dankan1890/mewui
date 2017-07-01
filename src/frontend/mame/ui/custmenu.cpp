@@ -77,8 +77,6 @@ void menu_custom_filter::handle()
 					changed = true;
 				}
 				break;
-			
-			default: break;
 		}
 
 		if ((uintptr_t)menu_event->itemref >= OTHER_FILTER && (uintptr_t)menu_event->itemref < OTHER_FILTER + MAX_CUST_FILTER)
@@ -170,7 +168,7 @@ void menu_custom_filter::populate(float &customtop, float &custombottom)
 		item_append(_("Other filter"), main_filters::text[custfltr::other[x]], arrow_flags, (void *)(uintptr_t)(OTHER_FILTER + x));
 
 		if (m_added)
-			selected = static_cast<int>(item.size()) - 2;
+			selected = item.size() - 2;
 
 		// add manufacturer subitem
 		if (custfltr::other[x] == FILTER_MANUFACTURER && c_mnfct::ui.size() > 0)
@@ -206,7 +204,7 @@ void menu_custom_filter::populate(float &customtop, float &custombottom)
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
-void menu_custom_filter::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
+void menu_custom_filter::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
 
@@ -239,7 +237,7 @@ void menu_custom_filter::custom_render(void *, float top, float, float origx1, f
 //  save custom filters info to file
 //-------------------------------------------------
 
-void menu_custom_filter::save_custom_filters() const
+void menu_custom_filter::save_custom_filters()
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
@@ -322,8 +320,6 @@ void menu_swcustom_filter::handle()
 					changed = true;
 				}
 				break;
-			
-			default: break;
 		}
 
 		if ((uintptr_t)menu_event->itemref >= OTHER_FILTER && (uintptr_t)menu_event->itemref < OTHER_FILTER + MAX_CUST_FILTER)
@@ -459,7 +455,7 @@ void menu_swcustom_filter::populate(float &customtop, float &custombottom)
 		item_append(_("Other filter"), sw_filters::text[sw_custfltr::other[x]], arrow_flags, (void *)(uintptr_t)(OTHER_FILTER + x));
 
 		if (m_added)
-			selected = static_cast<int>(item.size()) - 2;
+			selected = item.size() - 2;
 
 		// add publisher subitem
 		if (sw_custfltr::other[x] == UI_SW_PUBLISHERS && m_filter.publisher.ui.size() > 0)
@@ -523,7 +519,7 @@ void menu_swcustom_filter::populate(float &customtop, float &custombottom)
 //-------------------------------------------------
 //  perform our special rendering
 //-------------------------------------------------
-void menu_swcustom_filter::custom_render(void *, float top, float, float origx1, float origy1, float origx2, float)
+void menu_swcustom_filter::custom_render(void *selectedref, float top, float bottom, float origx1, float origy1, float origx2, float origy2)
 {
 	float width;
 
@@ -556,7 +552,7 @@ void menu_swcustom_filter::custom_render(void *, float top, float, float origx1,
 //  save custom filters info to file
 //-------------------------------------------------
 
-void menu_swcustom_filter::save_sw_custom_filters() const
+void menu_swcustom_filter::save_sw_custom_filters()
 {
 	// attempt to open the output file
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);

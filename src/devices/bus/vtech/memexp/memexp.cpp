@@ -8,7 +8,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "memexp.h"
 
 
@@ -16,7 +15,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VTECH_MEMEXP_SLOT, vtech_memexp_slot_device, "vtech_memexp_slot", "Laser/VZ Memory Expansion Slot")
+const device_type MEMEXP_SLOT = &device_creator<memexp_slot_device>;
 
 
 //**************************************************************************
@@ -24,11 +23,11 @@ DEFINE_DEVICE_TYPE(VTECH_MEMEXP_SLOT, vtech_memexp_slot_device, "vtech_memexp_sl
 //**************************************************************************
 
 //-------------------------------------------------
-//  vtech_memexp_slot_device - constructor
+//  memexp_slot_device - constructor
 //-------------------------------------------------
 
-vtech_memexp_slot_device::vtech_memexp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VTECH_MEMEXP_SLOT, tag, owner, clock),
+memexp_slot_device::memexp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, MEMEXP_SLOT, "Memory Expansion Slot", tag, owner, clock, "memexp_slot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_program(nullptr),
 	m_io(nullptr),
@@ -40,10 +39,10 @@ vtech_memexp_slot_device::vtech_memexp_slot_device(const machine_config &mconfig
 }
 
 //-------------------------------------------------
-//  vtech_memexp_slot_device - destructor
+//  memexp_slot_device - destructor
 //-------------------------------------------------
 
-vtech_memexp_slot_device::~vtech_memexp_slot_device()
+memexp_slot_device::~memexp_slot_device()
 {
 }
 
@@ -51,7 +50,7 @@ vtech_memexp_slot_device::~vtech_memexp_slot_device()
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void vtech_memexp_slot_device::device_start()
+void memexp_slot_device::device_start()
 {
 	// resolve callbacks
 	m_int_handler.resolve_safe();
@@ -63,7 +62,7 @@ void vtech_memexp_slot_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void vtech_memexp_slot_device::device_reset()
+void memexp_slot_device::device_reset()
 {
 }
 
@@ -71,7 +70,7 @@ void vtech_memexp_slot_device::device_reset()
 //  set_program_space - set address space we are attached to
 //-------------------------------------------------
 
-void vtech_memexp_slot_device::set_program_space(address_space *program)
+void memexp_slot_device::set_program_space(address_space *program)
 {
 	m_program = program;
 }
@@ -80,7 +79,7 @@ void vtech_memexp_slot_device::set_program_space(address_space *program)
 //  set_io_space - set address space we are attached to
 //-------------------------------------------------
 
-void vtech_memexp_slot_device::set_io_space(address_space *io)
+void memexp_slot_device::set_io_space(address_space *io)
 {
 	m_io = io;
 }
@@ -91,19 +90,19 @@ void vtech_memexp_slot_device::set_io_space(address_space *io)
 //**************************************************************************
 
 //-------------------------------------------------
-//  device_vtech_memexp_interface - constructor
+//  device_memexp_interface - constructor
 //-------------------------------------------------
 
-device_vtech_memexp_interface::device_vtech_memexp_interface(const machine_config &mconfig, device_t &device) :
+device_memexp_interface::device_memexp_interface(const machine_config &mconfig, device_t &device) :
 	device_slot_card_interface(mconfig, device)
 {
-	m_slot = dynamic_cast<vtech_memexp_slot_device *>(device.owner());
+	m_slot = dynamic_cast<memexp_slot_device *>(device.owner());
 }
 
 //-------------------------------------------------
-//  ~device_vtech_memexp_interface - destructor
+//  ~device_memexp_interface - destructor
 //-------------------------------------------------
 
-device_vtech_memexp_interface::~device_vtech_memexp_interface()
+device_memexp_interface::~device_memexp_interface()
 {
 }

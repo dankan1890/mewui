@@ -56,7 +56,7 @@ public:
 	DECLARE_READ8_MEMBER(port01_r);
 	DECLARE_READ8_MEMBER(port04_r);
 	DECLARE_WRITE8_MEMBER(port08_w);
-	void kbd_put(u8 data);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	uint8_t m_term_data;
 	uint8_t m_val;
 	virtual void machine_reset() override;
@@ -117,7 +117,7 @@ static INPUT_PORTS_START( sacstate )
 	PORT_CONFSETTING(    0x08, "B")
 INPUT_PORTS_END
 
-void sacstate_state::kbd_put(u8 data)
+WRITE8_MEMBER( sacstate_state::kbd_put )
 {
 	m_term_data = data;
 }
@@ -128,7 +128,7 @@ void sacstate_state::machine_reset()
 	m_val = ioport("CONFIG")->read();
 }
 
-static MACHINE_CONFIG_START( sacstate )
+static MACHINE_CONFIG_START( sacstate, sacstate_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",I8008, 800000)
 	MCFG_CPU_PROGRAM_MAP(sacstate_mem)
@@ -136,7 +136,7 @@ static MACHINE_CONFIG_START( sacstate )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(sacstate_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(sacstate_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -154,5 +154,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     CLASS           INIT  COMPANY     FULLNAME         FLAGS
-COMP( 1973, sacstate, 0,      0,      sacstate, sacstate, sacstate_state, 0,    "SacState", "SacState 8008", MACHINE_NO_SOUND_HW )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT     CLASS          INIT    COMPANY      FULLNAME       FLAGS */
+COMP( 1973, sacstate,  0,       0,   sacstate,  sacstate, driver_device,  0,  "SacState", "SacState 8008", MACHINE_NO_SOUND_HW)

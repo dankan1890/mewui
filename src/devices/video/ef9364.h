@@ -8,10 +8,16 @@
 
 *********************************************************************/
 
-#ifndef MAME_VIDEO_EF9364_H
-#define MAME_VIDEO_EF9364_H
-
 #pragma once
+
+#ifndef __EF9364_H__
+#define __EF9364_H__
+
+#define EF9364_NB_OF_COLUMNS 64
+#define EF9364_NB_OF_ROWS 16
+
+#define EF9364_TXTPLANE_MAX_SIZE ( EF9364_NB_OF_COLUMNS * EF9364_NB_OF_ROWS )
+#define EF9364_MAX_TXTPLANES  2
 
 #define MCFG_EF9364_PALETTE(_palette_tag) \
 	ef9364_device::static_set_palette_tag(*device, "^" _palette_tag);
@@ -33,12 +39,6 @@ class ef9364_device :   public device_t,
 						public device_video_interface
 {
 public:
-	static constexpr unsigned NB_OF_COLUMNS = 64;
-	static constexpr unsigned NB_OF_ROWS = 16;
-
-	static constexpr unsigned TXTPLANE_MAX_SIZE = NB_OF_COLUMNS * NB_OF_ROWS;
-	static constexpr unsigned MAX_TXTPLANES = 2;
-
 	// construction/destruction
 	ef9364_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -47,6 +47,7 @@ public:
 	static void static_set_nb_of_pages(device_t &device, int nb_bitplanes );
 
 	// device interface
+
 	void update_scanline(uint16_t scanline);
 	void set_color_entry( int index, uint8_t r, uint8_t g, uint8_t b );
 
@@ -97,6 +98,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(EF9364, ef9364_device)
+extern const device_type EF9364;
 
-#endif // MAME_VIDEO_EF9364_H
+#endif

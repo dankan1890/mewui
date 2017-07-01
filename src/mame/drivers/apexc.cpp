@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "cpu/apexc/apexc.h"
-#include "screen.h"
 
 
 class apexc_state : public driver_device
@@ -91,16 +90,17 @@ public:
 	virtual void call_unload() override;
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override { update_names(); }
 	virtual void device_start() override { }
 private:
 	int m_writable;
 };
 
-DEFINE_DEVICE_TYPE(APEXC_CYLINDER, apexc_cylinder_image_device, "apexc_cylinder_image", "APEXC Cylinder")
+const device_type APEXC_CYLINDER = &device_creator<apexc_cylinder_image_device>;
 
 apexc_cylinder_image_device::apexc_cylinder_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, APEXC_CYLINDER, tag, owner, clock)
-	, device_image_interface(mconfig, *this)
+	: device_t(mconfig, APEXC_CYLINDER, "APEXC Cylinder", tag, owner, clock, "apexc_cylinder_image", __FILE__),
+		device_image_interface(mconfig, *this)
 {
 }
 
@@ -214,14 +214,15 @@ public:
 	virtual const char *file_extensions() const override { return "tap"; }
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override { update_names(); }
 	virtual void device_start() override { }
 };
 
-DEFINE_DEVICE_TYPE(APEXC_TAPE_PUNCHER, apexc_tape_puncher_image_device, "apexc_tape_puncher_image", "APEXC Tape Puncher")
+const device_type APEXC_TAPE_PUNCHER = &device_creator<apexc_tape_puncher_image_device>;
 
 apexc_tape_puncher_image_device::apexc_tape_puncher_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, APEXC_TAPE_PUNCHER, tag, owner, clock)
-	, device_image_interface(mconfig, *this)
+	: device_t(mconfig, APEXC_TAPE_PUNCHER, "APEXC Tape Puncher", tag, owner, clock, "apexc_tape_puncher_image", __FILE__),
+		device_image_interface(mconfig, *this)
 {
 }
 
@@ -245,14 +246,15 @@ public:
 	virtual const char *file_extensions() const override { return "tap"; }
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override { update_names(); }
 	virtual void device_start() override { }
 };
 
-DEFINE_DEVICE_TYPE(APEXC_TAPE_READER, apexc_tape_reader_image_device, "apexc_tape_reader_image", "APEXC Tape Reader")
+const device_type APEXC_TAPE_READER = &device_creator<apexc_tape_reader_image_device>;
 
 apexc_tape_reader_image_device::apexc_tape_reader_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, APEXC_TAPE_READER, tag, owner, clock)
-	, device_image_interface(mconfig, *this)
+	: device_t(mconfig, APEXC_TAPE_READER, "APEXC Tape Reader", tag, owner, clock, "apexc_tape_reader_image", __FILE__),
+		device_image_interface(mconfig, *this)
 {
 }
 
@@ -858,7 +860,7 @@ static ADDRESS_MAP_START(apexc_io_map, AS_IO, 8, apexc_state )
 ADDRESS_MAP_END
 
 
-static MACHINE_CONFIG_START( apexc )
+static MACHINE_CONFIG_START( apexc, apexc_state )
 
 	/* basic machine hardware */
 	/* APEXC CPU @ 2.0 kHz (memory word clock frequency) */
@@ -897,6 +899,6 @@ ROM_START(apexc)
 		/* space filled with our font */
 ROM_END
 
-//     YEAR     NAME        PARENT    COMPAT  MACHINE     INPUT  STATE         INIT   COMPANY                FULLNAME */
+//     YEAR     NAME        PARENT    COMPAT  MACHINE     INPUT   INIT  COMPANY     FULLNAME */
 //COMP(  1951,    apexc53,    0,        0,      apexc53,    apexc, apexc_state,  apexc, "Andrew Donald Booth", "All Purpose Electronic X-ray Computer (as described in 1953)" , MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW)
 COMP(  1955,    apexc,      0,        0,      apexc,      apexc, apexc_state,  apexc, "Andrew Donald Booth", "All Purpose Electronic X-ray Computer (as described in 1957)" , MACHINE_NO_SOUND_HW)

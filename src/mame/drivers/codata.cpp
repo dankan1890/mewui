@@ -30,8 +30,7 @@ public:
 
 	DECLARE_READ16_MEMBER(keyin_r);
 	DECLARE_READ16_MEMBER(status_r);
-	void kbd_put(u8 data);
-
+	DECLARE_WRITE8_MEMBER(kbd_put);
 private:
 	uint8_t m_term_data;
 	virtual void machine_reset() override;
@@ -71,7 +70,7 @@ READ16_MEMBER( codata_state::status_r )
 	return (m_term_data) ? 0x500 : 0x400;
 }
 
-void codata_state::kbd_put(u8 data)
+WRITE8_MEMBER( codata_state::kbd_put )
 {
 	m_term_data = data;
 }
@@ -84,14 +83,14 @@ void codata_state::machine_reset()
 	m_maincpu->reset();
 }
 
-static MACHINE_CONFIG_START( codata )
+static MACHINE_CONFIG_START( codata, codata_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M68000, XTAL_16MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(codata_mem)
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(codata_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(codata_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -110,5 +109,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT   STATE         INIT  COMPANY                      FULLNAME  FLAGS
-COMP( 1982, codata, 0,      0,      codata,  codata, codata_state, 0,    "Contel Codata Corporation", "Codata", MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT     COMPANY   FULLNAME       FLAGS */
+COMP( 1982, codata,  0,     0,       codata,    codata, driver_device,   0,   "Contel Codata Corporation", "Codata", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

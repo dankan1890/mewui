@@ -2,7 +2,6 @@
 // copyright-holders:Bryan McPhail, David Graves
 #include "emu.h"
 #include "includes/gunbustr.h"
-#include "screen.h"
 
 /************************************************************/
 

@@ -31,14 +31,15 @@
     - 1-21 Vectored exception requests on the Host Interface!
 ***************************************************************************/
 
-#include "emu.h"
-#include "dsp56k.h"
-
 #include "opcode.h"
 
+#include "emu.h"
 #include "debugger.h"
+#include "dsp56k.h"
 
 #include "dsp56def.h"
+
+using namespace DSP56K;
 
 /***************************************************************************
     COMPONENT FUNCTIONALITY
@@ -58,11 +59,6 @@
 /* 4-8 Memory handlers for on-chip peripheral memory. */
 #include "dsp56mem.h"
 
-
-DEFINE_DEVICE_TYPE_NS(DSP56156, DSP56K, dsp56k_device, "dsp56156", "DSP56156")
-
-
-namespace DSP56K {
 
 enum
 {
@@ -105,6 +101,9 @@ enum
 };
 
 
+const device_type DSP56156 = &device_creator<dsp56k_device>;
+
+
 /****************************************************************************
  *  Internal Memory Maps
  ****************************************************************************/
@@ -120,7 +119,7 @@ ADDRESS_MAP_END
 
 
 dsp56k_device::dsp56k_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, DSP56156, tag, owner, clock)
+	: cpu_device(mconfig, DSP56156, "DSP56156", tag, owner, clock, "dsp56156", __FILE__)
 	, m_program_config("program", ENDIANNESS_LITTLE, 16, 16, -1, ADDRESS_MAP_NAME(dsp56156_program_map))
 	, m_data_config("data", ENDIANNESS_LITTLE, 16, 16, -1, ADDRESS_MAP_NAME(dsp56156_x_data_map))
 	, m_program_ram(*this, "dsk56k_program_ram")
@@ -497,7 +496,6 @@ void dsp56k_device::execute_run()
 
 offs_t dsp56k_device::disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
 {
+	extern CPU_DISASSEMBLE( dsp56k );
 	return CPU_DISASSEMBLE_NAME(dsp56k)(this, stream, pc, oprom, opram, options);
 }
-
-} // namespace DSP56K

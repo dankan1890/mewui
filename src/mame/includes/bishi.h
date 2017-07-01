@@ -11,7 +11,6 @@
 #include "video/k055555.h"
 #include "video/k054338.h"
 #include "video/konami_helper.h"
-#include "screen.h"
 
 #define CPU_CLOCK       (XTAL_24MHz / 2)        /* 68000 clock */
 #define SOUND_CLOCK     XTAL_16_9344MHz     /* YMZ280 clock */

@@ -8,10 +8,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_CPU_M6809_HD6309_H
-#define MAME_CPU_M6809_HD6309_H
-
 #pragma once
+
+#ifndef __HD6309_H__
+#define __HD6309_H__
 
 #include "m6809.h"
 
@@ -21,7 +21,7 @@
 //**************************************************************************
 
 // device type definition
-DECLARE_DEVICE_TYPE(HD6309, hd6309_device)
+extern const device_type HD6309;
 
 // ======================> hd6309_device
 
@@ -143,4 +143,4 @@ enum
 #define HD6309_IRQ_LINE  M6809_IRQ_LINE   /* 0 - IRQ line number */
 #define HD6309_FIRQ_LINE M6809_FIRQ_LINE  /* 1 - FIRQ line number */
 
-#endif // MAME_CPU_M6809_HD6309_H
+#endif // __HD6309_H__

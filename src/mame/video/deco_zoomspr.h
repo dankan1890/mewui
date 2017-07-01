@@ -1,9 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail,David Haywood
-#ifndef MAME_VIDEO_DECO_ZOOMSPR_H
-#define MAME_VIDEO_DECO_ZOOMSPR_H
-
-#pragma once
 
 
 class deco_zoomspr_device : public device_t
@@ -33,9 +29,7 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(DECO_ZOOMSPR, deco_zoomspr_device)
+extern const device_type DECO_ZOOMSPR;
 
 #define MCFG_DECO_ZOOMSPR_GFXDECODE(_gfxtag) \
 	deco_zoomspr_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
-
-#endif // MAME_VIDEO_DECO_ZOOMSPR_H

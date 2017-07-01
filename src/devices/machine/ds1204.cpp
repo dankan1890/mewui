@@ -7,11 +7,9 @@
  *
  */
 
+#include <stdio.h>
 #include "emu.h"
 #include "ds1204.h"
-
-#include <stdio.h>
-
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -29,10 +27,10 @@ inline void ATTR_PRINTF( 3, 4 ) ds1204_device::verboselog( int n_level, const ch
 }
 
 // device type definition
-DEFINE_DEVICE_TYPE(DS1204, ds1204_device, "ds1204", "DS1204")
+const device_type DS1204 = &device_creator<ds1204_device>;
 
 ds1204_device::ds1204_device( const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock )
-	: device_t(mconfig, DS1204, tag, owner, clock),
+	: device_t( mconfig, DS1204, "DS1204", tag, owner, clock, "ds1204", __FILE__ ),
 	device_nvram_interface(mconfig, *this),
 	m_region(*this, DEVICE_SELF),
 	m_rst( 0 ),

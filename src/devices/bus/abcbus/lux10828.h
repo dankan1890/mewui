@@ -6,11 +6,12 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_ABCBUS_LUXOR10828_H
-#define MAME_BUS_ABCBUS_LUXOR10828_H
-
 #pragma once
 
+#ifndef __LUXOR_55_10828__
+#define __LUXOR_55_10828__
+
+#include "emu.h"
 #include "abcbus.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
@@ -60,25 +61,6 @@ public:
 	DECLARE_READ8_MEMBER( fdc_r );
 	DECLARE_WRITE8_MEMBER( fdc_w );
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
-
-	// device_abcbus_interface overrides
-	virtual void abcbus_cs(uint8_t data) override;
-	virtual uint8_t abcbus_inp() override;
-	virtual void abcbus_out(uint8_t data) override;
-	virtual uint8_t abcbus_stat() override;
-	virtual void abcbus_c1(uint8_t data) override;
-	virtual void abcbus_c3(uint8_t data) override;
-
-private:
 	DECLARE_READ8_MEMBER( pio_pa_r );
 	DECLARE_WRITE8_MEMBER( pio_pa_w );
 	DECLARE_READ8_MEMBER( pio_pb_r );
@@ -89,9 +71,28 @@ private:
 
 	DECLARE_FLOPPY_FORMATS( floppy_formats );
 
+	// optional information overrides
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+
+	// device_abcbus_interface overrides
+	virtual void abcbus_cs(uint8_t data) override;
+	virtual uint8_t abcbus_inp() override;
+	virtual void abcbus_out(uint8_t data) override;
+	virtual uint8_t abcbus_stat() override;
+	virtual void abcbus_c1(uint8_t data) override;
+	virtual void abcbus_c3(uint8_t data) override;
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_device<z80pio_device> m_pio;
-	required_device<mb8876_device> m_fdc;
+	required_device<mb8876_t> m_fdc;
 	required_device<floppy_connector> m_floppy0;
 	required_device<floppy_connector> m_floppy1;
 	required_ioport m_sw1;
@@ -109,6 +110,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(LUXOR_55_10828, luxor_55_10828_device)
+extern const device_type LUXOR_55_10828;
 
-#endif // MAME_BUS_ABCBUS_LUXOR10828_H
+#endif

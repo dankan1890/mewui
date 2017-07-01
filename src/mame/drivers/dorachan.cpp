@@ -12,7 +12,6 @@ Todo:
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "screen.h"
 
 
 class dorachan_state : public driver_device
@@ -200,7 +199,7 @@ void dorachan_state::machine_reset()
 	m_flip_screen = 0;
 }
 
-static MACHINE_CONFIG_START( dorachan )
+static MACHINE_CONFIG_START( dorachan, dorachan_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, 2000000)
@@ -254,4 +253,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1980, dorachan, 0, dorachan, dorachan, dorachan_state, 0, ROT270, "Alpha Denshi Co. / Craul Denshi", "Dora-chan (Japan)", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1980, dorachan, 0, dorachan, dorachan, driver_device, 0, ROT270, "Alpha Denshi Co. / Craul Denshi", "Dora-chan (Japan)", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE )

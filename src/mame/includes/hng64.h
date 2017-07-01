@@ -5,8 +5,6 @@
 #include "cpu/nec/v53.h"
 #include "sound/l7a1045_l6028_dsp_a.h"
 #include "video/poly.h"
-#include "cpu/tlcs870/tlcs870.h"
-#include "screen.h"
 
 enum
 {
@@ -311,7 +309,7 @@ public:
 	virtual void machine_reset() override;
 	virtual void video_start() override;
 	uint32_t screen_update_hng64(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_hng64);
+	void screen_eof_hng64(screen_device &screen, bool state);
 	TIMER_DEVICE_CALLBACK_MEMBER(hng64_irq);
 	void do_dma(address_space &space);
 
@@ -340,7 +338,6 @@ public:
 	std::unique_ptr<hng64_poly_renderer> m_poly_renderer;
 
 	TIMER_CALLBACK_MEMBER(hng64_3dfifo_processed);
-	emu_timer *m_3dfifo_timer;
 
 	uint8_t *m_texturerom;
 	uint16_t* m_vertsrom;

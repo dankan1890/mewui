@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SAT_CTRL_JOY_H
-#define MAME_BUS_SAT_CTRL_JOY_H
-
 #pragma once
 
+#ifndef __SATURN_JOY__
+#define __SATURN_JOY__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -47,6 +48,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SATURN_JOY, saturn_joy_device)
+extern const device_type SATURN_JOY;
 
-#endif // MAME_BUS_SAT_CTRL_JOY_H
+
+#endif

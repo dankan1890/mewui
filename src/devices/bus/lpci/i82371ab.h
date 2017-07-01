@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_LPCI_I82371AB_H
-#define MAME_BUS_LPCI_I82371AB_H
-
-#pragma once
+#ifndef __I82371AB_H__
+#define __I82371AB_H__
 
 #include "pci.h"
 #include "southbridge.h"
@@ -50,6 +48,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(I82371AB, i82371ab_device)
+extern const device_type I82371AB;
 
-#endif // MAME_BUS_LPCI_I82371AB_H
+#endif /* __I82371AB_H__ */

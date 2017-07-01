@@ -6,10 +6,6 @@
  * Copyright Eric Smith
  *
  */
-#ifndef MAME_MACHINE_MATHBOX_H
-#define MAME_MACHINE_MATHBOX_H
-
-#pragma once
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -32,6 +28,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -45,6 +42,4 @@ protected:
 	int16_t m_result;
 };
 
-DECLARE_DEVICE_TYPE(MATHBOX, mathbox_device)
-
-#endif // MAME_MACHINE_MATHBOX_H
+extern const device_type MATHBOX;

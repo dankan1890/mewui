@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_ROSS_H
-#define MAME_BUS_C64_ROSS_H
-
 #pragma once
 
+#ifndef __ROSS__
+#define __ROSS__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -44,7 +45,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_ROSS, c64_ross_cartridge_device)
+extern const device_type C64_ROSS;
 
 
-#endif // MAME_BUS_C64_ROSS_H
+
+#endif

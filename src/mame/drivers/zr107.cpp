@@ -181,7 +181,6 @@ Check gticlub.c for details on the bottom board.
 #include "video/k001006.h"
 #include "video/k054156_k054157_k056832.h"
 #include "video/konami_helper.h"
-#include "speaker.h"
 
 
 class zr107_state : public driver_device
@@ -756,7 +755,7 @@ void zr107_state::machine_reset()
 	m_dsp->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-static MACHINE_CONFIG_START( zr107 )
+static MACHINE_CONFIG_START( zr107, zr107_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", PPC403GA, XTAL_64MHz/2)   /* PowerPC 403GA 32MHz */
@@ -823,11 +822,11 @@ static MACHINE_CONFIG_START( zr107 )
 
 	MCFG_DEVICE_ADD("konppc", KONPPC, 0)
 	MCFG_KONPPC_CGBOARD_NUMBER(1)
-	MCFG_KONPPC_CGBOARD_TYPE(ZR107)
+	MCFG_KONPPC_CGBOARD_TYPE(CGBOARD_TYPE_ZR107)
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( jetwave )
+static MACHINE_CONFIG_START( jetwave, zr107_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", PPC403GA, XTAL_64MHz/2)   /* PowerPC 403GA 32MHz */
@@ -902,7 +901,7 @@ static MACHINE_CONFIG_START( jetwave )
 
 	MCFG_DEVICE_ADD("konppc", KONPPC, 0)
 	MCFG_KONPPC_CGBOARD_NUMBER(1)
-	MCFG_KONPPC_CGBOARD_TYPE(GTICLUB)
+	MCFG_KONPPC_CGBOARD_TYPE(CGBOARD_TYPE_GTICLUB)
 MACHINE_CONFIG_END
 
 /*****************************************************************************/

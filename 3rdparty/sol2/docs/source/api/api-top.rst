@@ -32,7 +32,6 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    optional
    this_state
    variadic_args
-   as_args
    overload
    property
    var

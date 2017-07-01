@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_ER2055_H
-#define MAME_MACHINE_ER2055_H
-
 #pragma once
+
+#ifndef __ER2055_H__
+#define __ER2055_H__
 
 
 
@@ -79,6 +79,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ER2055, er2055_device)
+extern const device_type ER2055;
 
-#endif // MAME_MACHINE_ER2055_H
+
+#endif

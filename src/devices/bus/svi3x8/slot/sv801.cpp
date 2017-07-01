@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "sv801.h"
 #include "softlist.h"
 #include "formats/svi_dsk.h"
@@ -16,7 +15,12 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SV801, sv801_device, "sv801", "SV-801 Disk Controller")
+const device_type SV801 = &device_creator<sv801_device>;
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
 
 FLOPPY_FORMATS_MEMBER( sv801_device::floppy_formats )
 	FLOPPY_SVI_FORMAT
@@ -26,11 +30,7 @@ static SLOT_INTERFACE_START( svi_floppies )
 	SLOT_INTERFACE("dd", FLOPPY_525_DD)
 SLOT_INTERFACE_END
 
-//-------------------------------------------------
-//  device_add_mconfig - add device configuration
-//-------------------------------------------------
-
-MACHINE_CONFIG_MEMBER( sv801_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( sv801 )
 	MCFG_FD1793_ADD("fdc", XTAL_8MHz / 8)
 	MCFG_WD_FDC_INTRQ_CALLBACK(WRITELINE(sv801_device, intrq_w))
 	MCFG_WD_FDC_DRQ_CALLBACK(WRITELINE(sv801_device, drq_w))
@@ -40,6 +40,11 @@ MACHINE_CONFIG_MEMBER( sv801_device::device_add_mconfig )
 
 	MCFG_SOFTWARE_LIST_ADD("disk_list", "svi318_flop")
 MACHINE_CONFIG_END
+
+machine_config_constructor sv801_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( sv801 );
+}
 
 
 //**************************************************************************
@@ -51,7 +56,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 sv801_device::sv801_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SV801, tag, owner, clock),
+	device_t(mconfig, SV801, "SV-801 Disk Controller", tag, owner, clock, "sv801", __FILE__),
 	device_svi_slot_interface(mconfig, *this),
 	m_fdc(*this, "fdc"),
 	m_floppy0(*this, "fdc:0"),

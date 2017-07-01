@@ -4,9 +4,8 @@
 /* Ramtek - Star Cruiser */
 
 #include "emu.h"
-#include "includes/starcrus.h"
 #include "sound/samples.h"
-#include "screen.h"
+#include "includes/starcrus.h"
 
 /* The collision detection techniques use in this driver
    are well explained in the comments in the sprint2 driver */

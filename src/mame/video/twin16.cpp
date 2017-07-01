@@ -544,7 +544,7 @@ uint32_t twin16_state::screen_update_twin16(screen_device &screen, bitmap_ind16 
 	return 0;
 }
 
-WRITE_LINE_MEMBER(twin16_state::screen_vblank_twin16)
+void twin16_state::screen_eof_twin16(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

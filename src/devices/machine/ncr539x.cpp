@@ -13,14 +13,8 @@
 #include "emu.h"
 #include "ncr539x.h"
 
-#define LOG_GENERAL (1U << 0)
-#define LOG_READS   (1U << 1)
-
-//#define VERBOSE (LOG_GENERAL | LOG_READS)
-//#define LOG_OUTPUT_FUNC printf
-#include "logmacro.h"
-
-#define LOGREADS(...) LOGMASKED(LOG_READS, __VA_ARGS__)
+#define VERBOSE         (0)
+#define VERBOSE_READS   (0)
 
 enum
 {
@@ -56,6 +50,8 @@ enum
 #define CR2_GENERATE_REGISTER_PARITY    0x02
 #define CR2_GENERATE_DATA_PARITY    0x01
 
+#if VERBOSE
+#if VERBOSE_READS
 static const char *rdregs[16] = {
 	"Transfer count LSB",   // 0
 	"Transfer count MSB",   // 1
@@ -74,6 +70,7 @@ static const char *rdregs[16] = {
 	"Transfer count HSB/Chip ID",
 	"0xF"
 };
+#endif
 
 static const char *wrregs[16] = {
 	"Start Transfer count LSB",
@@ -93,6 +90,7 @@ static const char *wrregs[16] = {
 	"Start Transfer count HSB",
 	"Data Alignment"
 };
+#endif
 
 // get the length of a SCSI command based on its command byte type
 static int get_cmd_len(int cbyte)
@@ -112,14 +110,14 @@ static int get_cmd_len(int cbyte)
 //  LIVE DEVICE
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(NCR539X, ncr539x_device, "ncr539x", "NCR/AMD 5394/5396 SCSI")
+const device_type NCR539X = &device_creator<ncr539x_device>;
 
 //-------------------------------------------------
 //  ncr539x_device - constructor/destructor
 //-------------------------------------------------
 
 ncr539x_device::ncr539x_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	legacy_scsi_host_adapter(mconfig, NCR539X, tag, owner, clock),
+	legacy_scsi_host_adapter(mconfig, NCR539X, "539x SCSI", tag, owner, clock, "ncr539x", __FILE__),
 	m_out_irq_cb(*this),
 	m_out_drq_cb(*this)
 {
@@ -201,7 +199,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 						m_fifo_ptr = 0;
 						m_selected = true;
 
-						LOG("Selecting w/o ATN, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#if VERBOSE
+						printf("Selecting w/o ATN, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#endif
 
 						// if DMA is not enabled, there should already be a command loaded into the FIFO
 						if (!(m_command & 0x80))
@@ -212,7 +212,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 					}
 					else
 					{
-						LOG("Select failed, no device @ ID %d!\n", m_last_id);
+						#if VERBOSE
+						printf("Select failed, no device @ ID %d!\n", m_last_id);
+						#endif
 						m_status |= MAIN_STATUS_INTERRUPT;
 						m_irq_status |= IRQ_STATUS_DISCONNECTED;
 					}
@@ -228,7 +230,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 						m_status |= MAIN_STATUS_INTERRUPT | SCSI_PHASE_COMMAND;
 						m_fifo_ptr = 0;
 						m_selected = true;
-						LOG("Selecting with ATN, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#if VERBOSE
+						printf("Selecting with ATN, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#endif
 
 						// if DMA is not enabled, there should already be a command loaded into the FIFO
 						if (!(m_command & 0x80))
@@ -239,7 +243,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 					}
 					else
 					{
-						LOG("Select failed, no device @ ID %d!\n", m_last_id);
+						#if VERBOSE
+						printf("Select failed, no device @ ID %d!\n", m_last_id);
+						#endif
 						m_status |= MAIN_STATUS_INTERRUPT;
 						m_irq_status |= IRQ_STATUS_DISCONNECTED;
 					}
@@ -247,7 +253,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 					break;
 
 				case 0x11:  // initiator command complete
-					LOG("Initiator command complete\n");
+					#if VERBOSE
+					printf("Initiator command complete\n");
+					#endif
 					m_irq_status = IRQ_STATUS_SERVICE_REQUEST;
 					m_status &= ~7; // clear phase bits
 					m_status |= MAIN_STATUS_INTERRUPT | SCSI_PHASE_DATAIN;  // go to data in phase (?)
@@ -264,7 +272,9 @@ void ncr539x_device::device_timer(emu_timer &timer, device_timer_id tid, int par
 					break;
 
 				case 0x12:  // message accepted
-					LOG("Message accepted\n");
+					#if VERBOSE
+					printf("Message accepted\n");
+					#endif
 					m_irq_status = IRQ_STATUS_SERVICE_REQUEST;
 					m_status |= MAIN_STATUS_INTERRUPT;
 					m_out_irq_cb(ASSERT_LINE);
@@ -284,7 +294,11 @@ READ8_MEMBER( ncr539x_device::read )
 {
 	uint8_t rv = 0;
 
-	LOGREADS("539x: Read @ %s (%02x) (%s) (status %02x irq_status %02x)\n", rdregs[offset], offset, machine().describe_context(), m_status, m_irq_status);
+	#if VERBOSE
+	#if VERBOSE_READS
+	printf("539x: Read @ %s (%02x) (PC=%x) (status %02x irq_status %02x)\n", rdregs[offset], offset, space.device().safe_pc(), m_status, m_irq_status);
+	#endif
+	#endif
 
 	switch (offset)
 	{
@@ -313,7 +327,9 @@ READ8_MEMBER( ncr539x_device::read )
 					m_xfer_count--;
 					update_fifo_internal_state(fifo_bytes);
 
-					LOG("Read %02x from FIFO[%d], FIFO now contains %d bytes (%s) (m_buffer_remaining %x)\n", rv, m_fifo_read_ptr-1, fifo_bytes, machine().describe_context(), m_buffer_remaining);
+					#if VERBOSE
+					printf("Read %02x from FIFO[%d], FIFO now contains %d bytes (PC=%x, m_buffer_remaining %x)\n", rv, m_fifo_read_ptr-1, fifo_bytes, space.device().safe_pc(), m_buffer_remaining);
+					#endif
 
 					if (fifo_bytes == 0)
 					{
@@ -332,11 +348,15 @@ READ8_MEMBER( ncr539x_device::read )
 							m_buffer_remaining -= fifo_fill_size;
 							m_fifo_ptr = 0;
 							update_fifo_internal_state(fifo_fill_size);
-							LOG("Refreshing FIFO (%x remaining from transfer, %x in buffer, %x in total)\n", m_xfer_count, m_buffer_remaining, m_total_data);
+							#if VERBOSE
+							printf("Refreshing FIFO (%x remaining from transfer, %x in buffer, %x in total)\n", m_xfer_count, m_buffer_remaining, m_total_data);
+							#endif
 						}
 						else
 						{
-							LOG("FIFO empty, asserting service request (buffer_remaining %x)\n", m_buffer_remaining);
+							#if VERBOSE
+							printf("FIFO empty, asserting service request (buffer_remaining %x)\n", m_buffer_remaining);
+							#endif
 							m_irq_status = IRQ_STATUS_SERVICE_REQUEST;
 							m_status &= 0x7;    // clear everything but the phase bits
 							m_status |= MAIN_STATUS_INTERRUPT | MAIN_STATUS_COUNT_TO_ZERO;
@@ -345,7 +365,9 @@ READ8_MEMBER( ncr539x_device::read )
 							// if no data at all, drop the phase
 							if ((m_buffer_remaining + m_total_data) == 0)
 							{
-								LOG("Out of data, setting phase STATUS\n");
+								#if VERBOSE
+								printf("Out of data, setting phase STATUS\n");
+								#endif
 								m_status &= ~0x7;
 								m_status |= SCSI_PHASE_STATUS;
 							}
@@ -414,8 +436,10 @@ READ8_MEMBER( ncr539x_device::read )
 
 WRITE8_MEMBER( ncr539x_device::write )
 {
+	#if VERBOSE
 	//if (offset != 2)
-		LOG("539x: Write %02x @ %s (%02x) (%s)\n", data, wrregs[offset], offset, machine().describe_context());
+	printf("539x: Write %02x @ %s (%02x) (PC=%x)\n", data, wrregs[offset], offset, space.device().safe_pc());
+	#endif
 
 	switch (offset)
 	{
@@ -485,7 +509,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 					int phase;
 					phase = get_phase();
 
-					LOG("Information transfer: phase %d buffer remaining %x\n", phase, m_buffer_remaining);
+					#if VERBOSE
+					printf("Information transfer: phase %d buffer remaining %x\n", phase, m_buffer_remaining);
+					#endif
 
 					if (phase == SCSI_PHASE_DATAIN) // target -> initiator transfer
 					{
@@ -499,7 +525,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 								amtToGet = m_total_data;
 							}
 
-							LOG("amtToGet = %x\n", amtToGet);
+							#if VERBOSE
+							printf("amtToGet = %x\n", amtToGet);
+							#endif
 
 							if (amtToGet > 0)
 							{
@@ -526,7 +554,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 								fifo_fill_size = m_dma_size;
 							}
 
-							LOG("filling FIFO from buffer[%x] for %x bytes\n", m_buffer_offset, fifo_fill_size);
+							#if VERBOSE
+							printf("filling FIFO from buffer[%x] for %x bytes\n", m_buffer_offset, fifo_fill_size);
+							#endif
 
 							memcpy(m_fifo, &m_buffer[m_buffer_offset], fifo_fill_size);
 							m_buffer_offset += fifo_fill_size;
@@ -540,7 +570,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 
 						m_status |= MAIN_STATUS_COUNT_TO_ZERO;
 
-						LOG("Information transfer: put %02x bytes into FIFO (dma size %x) (buffer remaining %x)\n", m_fifo_internal_state & 0x1f, m_dma_size, m_buffer_remaining);
+						#if VERBOSE
+						printf("Information transfer: put %02x bytes into FIFO (dma size %x) (buffer remaining %x)\n", m_fifo_internal_state & 0x1f, m_dma_size, m_buffer_remaining);
+						#endif
 					}
 					else if (phase == SCSI_PHASE_DATAOUT)
 					{
@@ -549,7 +581,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 						{
 							m_xfer_count = 0x10000;
 						}
-						LOG("dma_size %x, xfer_count %x\n", m_dma_size, m_xfer_count);
+						#if VERBOSE
+						printf("dma_size %x, xfer_count %x\n", m_dma_size, m_xfer_count);
+						#endif
 						m_status &= ~MAIN_STATUS_COUNT_TO_ZERO;
 						m_fifo_ptr = 0;
 						m_buffer_offset = 0;
@@ -559,7 +593,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 					break;
 
 				case 0x24:  // Terminate steps
-					LOG("Terminate steps\n");
+					#if VERBOSE
+					printf("Terminate steps\n");
+					#endif
 					m_irq_status = IRQ_STATUS_SUCCESS | IRQ_STATUS_DISCONNECTED;
 					m_status |= MAIN_STATUS_INTERRUPT;
 					m_out_irq_cb(ASSERT_LINE);
@@ -568,14 +604,18 @@ WRITE8_MEMBER( ncr539x_device::write )
 					break;
 
 				case 0x27:  // Disconnect
-					LOG("Disconnect\n");
+					#if VERBOSE
+					printf("Disconnect\n");
+					#endif
 					m_irq_status = IRQ_STATUS_SUCCESS;
 					m_status |= MAIN_STATUS_INTERRUPT;
 					m_out_irq_cb(ASSERT_LINE);
 					break;
 
 				case 0x44:  // Enable selection/reselection
-					LOG("Enable selection/reselection\n");
+					#if VERBOSE
+					printf("Enable selection/reselection\n");
+					#endif
 					m_irq_status = IRQ_STATUS_SUCCESS;
 					m_status |= MAIN_STATUS_INTERRUPT;
 					m_out_irq_cb(ASSERT_LINE);
@@ -590,7 +630,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 						m_status |= MAIN_STATUS_INTERRUPT | SCSI_PHASE_COMMAND;
 						m_fifo_ptr = 0;
 						m_selected = true;
-						LOG("Reselecting with ATN3, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#if VERBOSE
+						printf("Reselecting with ATN3, irq_status = %02x, status = %02x!\n", m_irq_status, m_status);
+						#endif
 
 						// if DMA is not enabled, there should already be a command loaded into the FIFO
 						if (!(m_command & 0x80))
@@ -601,7 +643,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 					}
 					else
 					{
-						LOG("Reselect with ATN3 failed, no device @ ID %d!\n", m_last_id);
+						#if VERBOSE
+						printf("Reselect with ATN3 failed, no device @ ID %d!\n", m_last_id);
+						#endif
 						m_status |= MAIN_STATUS_INTERRUPT;
 						m_irq_status |= IRQ_STATUS_DISCONNECTED;
 					}
@@ -609,7 +653,9 @@ WRITE8_MEMBER( ncr539x_device::write )
 					break;
 
 				default:    // other commands are not instantaneous
-					LOG("Setting timer for command %02x\n", data);
+					#if VERBOSE
+					printf("Setting timer for command %02x\n", data);
+					#endif
 					// 1x commands happen much faster
 					if ((m_command & 0x70) == 0x10)
 					{
@@ -687,7 +733,9 @@ void ncr539x_device::exec_fifo()
 	length = get_length();
 	phase = get_phase();
 
-	LOG("Command executed (id %d), new phase %d, length %x\n", m_last_id, phase, length);
+	#if VERBOSE
+	printf("Command executed (id %d), new phase %d, length %x\n", m_last_id, phase, length);
+	#endif
 
 	m_buffer_offset = m_buffer_size;
 	m_buffer_remaining = 0;
@@ -711,7 +759,9 @@ void ncr539x_device::fifo_write(uint8_t data)
 
 	if (phase != SCSI_PHASE_DATAOUT)
 	{
-		LOG("539x: Write %02x @ FIFO[%x]\n", data, m_fifo_ptr);
+		#if VERBOSE
+		printf("539x: Write %02x @ FIFO[%x]\n", data, m_fifo_ptr);
+		#endif
 		m_fifo[m_fifo_ptr++] = data;
 		update_fifo_internal_state(m_fifo_ptr);
 
@@ -725,7 +775,9 @@ void ncr539x_device::fifo_write(uint8_t data)
 		m_buffer[m_buffer_offset++] = data;
 		m_xfer_count--;
 		m_total_data--;
-		LOG("539x: Write %02x @ buffer[%x], xfer_count %x, total %x\n", data, m_buffer_offset-1, m_xfer_count, m_total_data);
+		#if VERBOSE
+		printf("539x: Write %02x @ buffer[%x], xfer_count %x, total %x\n", data, m_buffer_offset-1, m_xfer_count, m_total_data);
+		#endif
 
 		// default to flushing our entire buffer
 		int flush_size = m_buffer_size;
@@ -738,7 +790,9 @@ void ncr539x_device::fifo_write(uint8_t data)
 
 		if ((m_buffer_offset == flush_size) || (m_xfer_count == 0))
 		{
-			LOG("Flushing buffer to device, %x bytes left in buffer (%x total)\n", m_xfer_count, m_total_data);
+			#if VERBOSE
+			printf("Flushing buffer to device, %x bytes left in buffer (%x total)\n", m_xfer_count, m_total_data);
+			#endif
 			write_data(m_buffer, flush_size);
 			m_buffer_offset = 0;
 
@@ -751,7 +805,9 @@ void ncr539x_device::fifo_write(uint8_t data)
 
 		if ((m_xfer_count == 0) && (m_total_data == 0))
 		{
-			LOG("End of write, asserting service request\n");
+			#if VERBOSE
+			printf("End of write, asserting service request\n");
+			#endif
 
 			m_buffer_offset = 0;
 			m_irq_status = IRQ_STATUS_SERVICE_REQUEST;

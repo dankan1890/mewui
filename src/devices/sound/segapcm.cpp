@@ -9,7 +9,7 @@
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(SEGAPCM, segapcm_device, "segapcm", "Sega PCM")
+const device_type SEGAPCM = &device_creator<segapcm_device>;
 
 
 //-------------------------------------------------
@@ -17,7 +17,7 @@ DEFINE_DEVICE_TYPE(SEGAPCM, segapcm_device, "segapcm", "Sega PCM")
 //-------------------------------------------------
 
 segapcm_device::segapcm_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SEGAPCM, tag, owner, clock),
+	: device_t(mconfig, SEGAPCM, "Sega PCM", tag, owner, clock, "segapcm", __FILE__),
 		device_sound_interface(mconfig, *this),
 		device_rom_interface(mconfig, *this, 21),
 		m_ram(nullptr),

@@ -14,11 +14,11 @@
  *****************************************************************************/
 
 #include "emu.h"
-#include "cp1610.h"
 #include "debugger.h"
+#include "cp1610.h"
 
 
-DEFINE_DEVICE_TYPE(CP1610, cp1610_cpu_device, "cp1610", "GI CP1610")
+const device_type CP1610 = &device_creator<cp1610_cpu_device>;
 
 
 #define S  0x80
@@ -3395,7 +3395,7 @@ void cp1610_cpu_device::execute_set_input(int irqline, int state)
 
 
 cp1610_cpu_device::cp1610_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, CP1610, tag, owner, clock)
+	: cpu_device(mconfig, CP1610, "CP1610", tag, owner, clock, "cp1610", __FILE__)
 	, m_program_config("program", ENDIANNESS_BIG, 16, 16, -1)
 	, m_read_bext(*this)
 {

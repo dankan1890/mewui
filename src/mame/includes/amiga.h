@@ -9,10 +9,8 @@ Ernesto Corvi & Mariusz Wojcieszek
 
 ***************************************************************************/
 
-#ifndef MAME_INCLUDES_AMIGA_H
-#define MAME_INCLUDES_AMIGA_H
-
-#pragma once
+#ifndef __AMIGA_H__
+#define __AMIGA_H__
 
 #include "cpu/m68000/m68000.h"
 #include "machine/bankdev.h"
@@ -23,9 +21,8 @@ Ernesto Corvi & Mariusz Wojcieszek
 #include "machine/msm6242.h"
 #include "machine/akiko.h"
 #include "machine/i2cmem.h"
-#include "machine/8364_paula.h"
+#include "sound/amiga.h"
 #include "video/amigaaga.h"
-#include "screen.h"
 
 
 /*************************************
@@ -339,7 +336,7 @@ public:
 	m_cia_1(*this, "cia_1"),
 	m_rs232(*this, "rs232"),
 	m_centronics(*this, "centronics"),
-	m_paula(*this, "amiga"),
+	m_sound(*this, "amiga"),
 	m_fdc(*this, "fdc"),
 	m_screen(*this, "screen"),
 	m_palette(*this, "palette"),
@@ -381,22 +378,10 @@ public:
 	{
 		return EXPECTED(byteoffs < m_chip_ram.bytes()) ? m_chip_ram.read(byteoffs >> 1) : 0xffff;
 	}
-
 	void chip_ram_w(offs_t byteoffs, uint16_t data)
 	{
 		if (EXPECTED(byteoffs < m_chip_ram.bytes()))
 			m_chip_ram.write(byteoffs >> 1, data);
-	}
-
-	DECLARE_READ16_MEMBER(chip_ram_r)
-	{
-		return chip_ram_r(offset & ~1) & mem_mask;
-	}
-
-	DECLARE_WRITE16_MEMBER(chip_ram_w)
-	{
-		uint16_t val = chip_ram_r(offset & ~1) & ~mem_mask;
-		chip_ram_w(offset & ~1, val | data);
 	}
 
 	/* sprite states */
@@ -481,8 +466,6 @@ public:
 
 	DECLARE_READ16_MEMBER( custom_chip_r );
 	DECLARE_WRITE16_MEMBER( custom_chip_w );
-
-	DECLARE_WRITE_LINE_MEMBER( paula_int_w );
 
 	DECLARE_READ16_MEMBER( rom_mirror_r );
 	DECLARE_READ32_MEMBER( rom_mirror32_r );
@@ -580,8 +563,8 @@ protected:
 	required_device<mos8520_device> m_cia_1;
 	optional_device<rs232_port_device> m_rs232;
 	optional_device<centronics_device> m_centronics;
-	required_device<paula_8364_device> m_paula;
-	optional_device<amiga_fdc_device> m_fdc;
+	required_device<amiga_sound_device> m_sound;
+	optional_device<amiga_fdc> m_fdc;
 	required_device<screen_device> m_screen;
 	optional_device<palette_device> m_palette;
 	required_device<address_map_bank_device> m_overlay;
@@ -653,7 +636,6 @@ private:
 
 	emu_timer *m_irq_timer;
 	emu_timer *m_serial_timer;
-	emu_timer *m_scanline_timer;
 
 	bool m_gayle_reset;
 
@@ -705,4 +687,4 @@ void amiga_sprite_enable_comparitor(running_machine &machine, int which, int ena
 MACHINE_CONFIG_EXTERN( pal_video );
 MACHINE_CONFIG_EXTERN( ntsc_video );
 
-#endif // MAME_INCLUDES_AMIGA_H
+#endif /* __AMIGA_H__ */

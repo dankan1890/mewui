@@ -4,10 +4,10 @@
     ZOOM ZSG-2 custom wavetable synthesizer
 */
 
-#ifndef MAME_SOUND_ZSG2_H
-#define MAME_SOUND_ZSG2_H
-
 #pragma once
+
+#ifndef __ZSG2_H__
+#define __ZSG2_H__
 
 
 //**************************************************************************
@@ -30,9 +30,10 @@ class zsg2_device : public device_t,
 {
 public:
 	zsg2_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~zsg2_device() { }
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_ext_read_handler(device_t &device, Object &&cb) { return downcast<zsg2_device &>(device).m_ext_read_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_ext_read_handler(device_t &device, _Object object) { return downcast<zsg2_device &>(device).m_ext_read_handler.set_callback(object); }
 
 	DECLARE_READ16_MEMBER(read);
 	DECLARE_WRITE16_MEMBER(write);
@@ -85,6 +86,7 @@ private:
 	int16_t *prepare_samples(uint32_t offset);
 };
 
-DECLARE_DEVICE_TYPE(ZSG2, zsg2_device)
+extern const device_type ZSG2;
 
-#endif // MAME_SOUND_ZSG2_H
+
+#endif  /* __ZSG2_H__ */

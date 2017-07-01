@@ -120,7 +120,6 @@ Notes:
 
 */
 
-#include "emu.h"
 #include "lux10828.h"
 
 
@@ -139,7 +138,7 @@ Notes:
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(LUXOR_55_10828, luxor_55_10828_device, "lux10828", "Luxor 55 10828")
+const device_type LUXOR_55_10828 = &device_creator<luxor_55_10828_device>;
 
 
 //-------------------------------------------------
@@ -323,10 +322,10 @@ WRITE_LINE_MEMBER( luxor_55_10828_device::fdc_drq_w )
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_DRIVER( luxor_55_10828 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( luxor_55_10828_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( luxor_55_10828 )
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_4MHz/2)
 	MCFG_CPU_PROGRAM_MAP(luxor_55_10828_mem)
 	MCFG_CPU_IO_MAP(luxor_55_10828_io)
@@ -346,6 +345,17 @@ MACHINE_CONFIG_MEMBER( luxor_55_10828_device::device_add_mconfig )
 	MCFG_FLOPPY_DRIVE_ADD(MB8876_TAG":0", abc_floppies, "525dd", luxor_55_10828_device::floppy_formats)
 	MCFG_FLOPPY_DRIVE_ADD(MB8876_TAG":1", abc_floppies, "525dd", luxor_55_10828_device::floppy_formats)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor luxor_55_10828_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( luxor_55_10828 );
+}
 
 
 //-------------------------------------------------
@@ -394,7 +404,7 @@ ioport_constructor luxor_55_10828_device::device_input_ports() const
 //-------------------------------------------------
 
 luxor_55_10828_device::luxor_55_10828_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, LUXOR_55_10828, tag, owner, clock),
+	: device_t(mconfig, LUXOR_55_10828, "Luxor 55 10828", tag, owner, clock, "lux10828", __FILE__),
 		device_abcbus_card_interface(mconfig, *this),
 		m_maincpu(*this, Z80_TAG),
 		m_pio(*this, Z80PIO_TAG),

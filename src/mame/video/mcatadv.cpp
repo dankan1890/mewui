@@ -12,7 +12,6 @@ ToDo: Fix Sprites & Rowscroll/Select for Cocktail
 
 #include "emu.h"
 #include "includes/mcatadv.h"
-#include "screen.h"
 
 TILE_GET_INFO_MEMBER(mcatadv_state::get_mcatadv_tile_info1)
 {
@@ -282,7 +281,7 @@ void mcatadv_state::video_start()
 	save_pointer(NAME(m_vidregs_old.get()), (0x0f + 1) / 2);
 }
 
-WRITE_LINE_MEMBER(mcatadv_state::screen_vblank_mcatadv)
+void mcatadv_state::screen_eof_mcatadv(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

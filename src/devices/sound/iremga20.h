@@ -5,10 +5,10 @@
     Irem GA20 PCM Sound Chip
 
 *********************************************************/
-#ifndef MAME_SOUND_IREMGA20_H
-#define MAME_SOUND_IREMGA20_H
-
 #pragma once
+
+#ifndef __IREMGA20_H__
+#define __IREMGA20_H__
 
 
 //**************************************************************************
@@ -25,6 +25,20 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
+struct IremGA20_channel_def
+{
+	uint32_t rate;
+	uint32_t size;
+	uint32_t start;
+	uint32_t pos;
+	uint32_t frac;
+	uint32_t end;
+	uint32_t volume;
+	uint32_t pan;
+	uint32_t effect;
+	uint32_t play;
+};
+
 
 // ======================> iremga20_device
 
@@ -33,9 +47,7 @@ class iremga20_device : public device_t,
 {
 public:
 	iremga20_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	DECLARE_WRITE8_MEMBER( irem_ga20_w );
-	DECLARE_READ8_MEMBER( irem_ga20_r );
+	~iremga20_device() { }
 
 protected:
 	// device-level overrides
@@ -45,29 +57,21 @@ protected:
 	// sound stream update overrides
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
 
-private:
-	struct channel_def
-	{
-		uint32_t rate;
-		uint32_t size;
-		uint32_t start;
-		uint32_t pos;
-		uint32_t frac;
-		uint32_t end;
-		uint32_t volume;
-		uint32_t pan;
-		uint32_t effect;
-		uint32_t play;
-	};
+public:
+	DECLARE_WRITE8_MEMBER( irem_ga20_w );
+	DECLARE_READ8_MEMBER( irem_ga20_r );
 
+private:
 	void iremga20_reset();
 
+private:
 	required_region_ptr<uint8_t> m_rom;
 	sound_stream *m_stream;
 	uint16_t m_regs[0x40];
-	channel_def m_channel[4];
+	IremGA20_channel_def m_channel[4];
 };
 
-DECLARE_DEVICE_TYPE(IREMGA20, iremga20_device)
+extern const device_type IREMGA20;
 
-#endif // MAME_SOUND_IREMGA20_H
+
+#endif /* __IREMGA20_H__ */

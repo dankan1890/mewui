@@ -6,14 +6,13 @@
 
  ***********************************************************************************************************/
 
-#include "emu.h"
 #include "slot.h"
 
 //**************************************************************************
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(NEOGEO_CART_SLOT, neogeo_cart_slot_device, "neogeo_cart_slot", "Neo Geo Cartridge Slot")
+const device_type NEOGEO_CART_SLOT = &device_creator<neogeo_cart_slot_device>;
 
 
 //-------------------------------------------------
@@ -98,10 +97,10 @@ void device_neogeo_cart_interface::optimize_sprites(uint8_t* region_sprites, uin
 //  neogeo_cart_slot_device - constructor
 //-------------------------------------------------
 neogeo_cart_slot_device::neogeo_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint16_t clock) :
-	device_t(mconfig, NEOGEO_CART_SLOT, tag, owner, clock),
-	device_image_interface(mconfig, *this),
-	device_slot_interface(mconfig, *this),
-	m_cart(nullptr)
+						device_t(mconfig, NEOGEO_CART_SLOT, "Neo Geo Cartridge Slot", tag, owner, clock, "neogeo_cart_slot", __FILE__),
+						device_image_interface(mconfig, *this),
+						device_slot_interface(mconfig, *this),
+						m_cart(nullptr)
 {
 }
 
@@ -121,6 +120,18 @@ neogeo_cart_slot_device::~neogeo_cart_slot_device()
 void neogeo_cart_slot_device::device_start()
 {
 	m_cart = dynamic_cast<device_neogeo_cart_interface *>(get_card_device());
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void neogeo_cart_slot_device::device_config_complete()
+{
+	// set brief and instance name
+	update_names();
 }
 
 
@@ -227,7 +238,7 @@ image_init_result neogeo_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
-		if (loaded_through_softlist())
+		if (software_entry() != nullptr)
 		{
 			uint16_t *ROM16;
 			uint8_t *ROM8;
@@ -323,7 +334,7 @@ void neogeo_cart_slot_device::call_unload()
  get default card software
  -------------------------------------------------*/
 
-std::string neogeo_cart_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string neogeo_cart_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("rom");
 }

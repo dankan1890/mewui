@@ -83,9 +83,6 @@ Bprom dump by f205v
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 class stuntair_state : public driver_device
 {
@@ -508,7 +505,7 @@ void stuntair_state::machine_reset()
 {
 }
 
-static MACHINE_CONFIG_START( stuntair )
+static MACHINE_CONFIG_START( stuntair, stuntair_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,  XTAL_18_432MHz/6)         /* 3 MHz? */
@@ -585,4 +582,4 @@ ROM_START( stuntair )
 ROM_END
 
 
-GAME( 1983, stuntair,  0,    stuntair, stuntair, stuntair_state,  0, ROT90, "Nuova Videotron", "Stunt Air",  MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND )
+GAME( 1983, stuntair,  0,    stuntair, stuntair, driver_device,  0, ROT90, "Nuova Videotron", "Stunt Air",  MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND )

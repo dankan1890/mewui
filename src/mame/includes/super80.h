@@ -1,23 +1,19 @@
 // license:BSD-3-Clause
 // copyright-holders:Robbbert
-#ifndef MAME_INCLUDES_SUPER80_H
-#define MAME_INCLUDES_SUPER80_H
-
-#pragma once
-
-#include "bus/centronics/ctronics.h"
+#include "emu.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
-#include "imagedev/cassette.h"
-#include "imagedev/snapquik.h"
-#include "machine/buffer.h"
-#include "machine/wd_fdc.h"
-#include "machine/z80dma.h"
-#include "machine/z80pio.h"
-#include "sound/samples.h"
-#include "sound/spkrdev.h"
 #include "sound/wave.h"
+#include "imagedev/snapquik.h"
+#include "imagedev/cassette.h"
+#include "sound/speaker.h"
+#include "sound/samples.h"
+#include "machine/buffer.h"
+#include "bus/centronics/ctronics.h"
 #include "video/mc6845.h"
+#include "machine/z80pio.h"
+#include "machine/z80dma.h"
+#include "machine/wd_fdc.h"
 
 
 /* Bits in m_portf0 variable:
@@ -33,10 +29,6 @@ public:
 		: driver_device(mconfig, type, tag)
 		, m_palette(*this, "palette")
 		, m_maincpu(*this, "maincpu")
-		, m_p_ram(*this, "maincpu")
-		, m_p_chargen(*this, "chargen")
-		, m_p_colorram(*this, "colorram")
-		, m_p_videoram(*this, "videoram")
 		, m_pio(*this, "z80pio")
 		, m_cassette(*this, "cassette")
 		, m_wave(*this, WAVE_TAG)
@@ -79,6 +71,7 @@ public:
 	DECLARE_MACHINE_RESET(super80);
 	DECLARE_MACHINE_RESET(super80r);
 	DECLARE_VIDEO_START(super80);
+	DECLARE_VIDEO_START(super80v);
 	DECLARE_PALETTE_INIT(super80m);
 	DECLARE_QUICKLOAD_LOAD_MEMBER(super80);
 	MC6845_UPDATE_ROW(crtc_update_row);
@@ -87,16 +80,20 @@ public:
 	uint32_t screen_update_super80d(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_super80e(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_super80m(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_super80m);
+	void screen_eof_super80m(screen_device &screen, bool state);
 	TIMER_CALLBACK_MEMBER(super80_reset);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_h);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_k);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_p);
-private:
 	uint8_t m_s_options;
 	uint8_t m_portf0;
+	uint8_t *m_p_videoram;
+	uint8_t *m_p_colorram;
+	uint8_t *m_p_pcgram;
 	uint8_t m_mc6845_cursor[16];
 	uint8_t m_palette_index;
+	required_device<palette_device> m_palette;
+private:
 	uint8_t m_keylatch;
 	uint8_t m_cass_data[4];
 	uint8_t m_int_sw;
@@ -104,16 +101,13 @@ private:
 	uint8_t m_key_pressed;
 	uint16_t m_vidpg;
 	uint8_t m_current_charset;
+	const uint8_t *m_p_chargen;
 	uint8_t m_mc6845_reg[32];
 	uint8_t m_mc6845_ind;
+	uint8_t *m_p_ram;
 	void mc6845_cursor_configure();
 	void super80_cassette_motor(bool data);
-	required_device<palette_device> m_palette;
 	required_device<cpu_device> m_maincpu;
-	required_region_ptr<u8> m_p_ram;
-	optional_region_ptr<u8> m_p_chargen;
-	optional_region_ptr<u8> m_p_colorram;
-	optional_region_ptr<u8> m_p_videoram;
 	required_device<z80pio_device> m_pio;
 	required_device<cassette_image_device> m_cassette;
 	required_device<wave_device> m_wave;
@@ -126,9 +120,7 @@ private:
 	required_ioport_array<8> m_io_keyboard;
 	optional_device<mc6845_device> m_crtc;
 	optional_device<z80dma_device> m_dma;
-	optional_device<wd2793_device> m_fdc;
+	optional_device<wd2793_t> m_fdc;
 	optional_device<floppy_connector> m_floppy0;
 	optional_device<floppy_connector> m_floppy1;
 };
-
-#endif // MAME_INCLUDES_SUPER80_H

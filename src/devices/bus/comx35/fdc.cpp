@@ -41,7 +41,6 @@ Notes:
 
 */
 
-#include "emu.h"
 #include "fdc.h"
 
 
@@ -58,7 +57,7 @@ Notes:
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(COMX_FD, comx_fd_device, "comx_fd", "COMX FD")
+const device_type COMX_FD = &device_creator<comx_fd_device>;
 
 
 //-------------------------------------------------
@@ -92,15 +91,26 @@ SLOT_INTERFACE_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( comx_fd )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( comx_fd_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( comx_fd )
 	MCFG_WD1770_ADD(WD1770_TAG, XTAL_8MHz)
 
 	MCFG_FLOPPY_DRIVE_ADD(WD1770_TAG":0", comx_fd_floppies, "525sd35t", comx_fd_device::floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD(WD1770_TAG":1", comx_fd_floppies, nullptr, comx_fd_device::floppy_formats)
+	MCFG_FLOPPY_DRIVE_ADD(WD1770_TAG":1", comx_fd_floppies, nullptr,       comx_fd_device::floppy_formats)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor comx_fd_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( comx_fd );
+}
 
 
 
@@ -113,7 +123,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 comx_fd_device::comx_fd_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, COMX_FD, tag, owner, clock),
+	device_t(mconfig, COMX_FD, "COMX FD", tag, owner, clock, "comx_fd", __FILE__),
 	device_comx_expansion_card_interface(mconfig, *this),
 	m_fdc(*this, WD1770_TAG),
 	m_floppy0(*this, WD1770_TAG":0"),

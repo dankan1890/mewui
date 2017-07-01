@@ -11,6 +11,7 @@
 #ifndef __RIOT6532_H__
 #define __RIOT6532_H__
 
+#include "emu.h"
 
 
 //**************************************************************************
@@ -121,6 +122,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(RIOT6532, riot6532_device)
+extern const device_type RIOT6532;
 
 #endif

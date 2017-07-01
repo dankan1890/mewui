@@ -2,25 +2,27 @@
 // copyright-holders:Fabio Priuli
 /**********************************************************************
 
-    SNK Neo Geo Irritating Maze Trackball Controller emulation
+    SNK Neo Geo Dial controller emulation
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NEOGEO_CTRL_IRRMAZE_H
-#define MAME_BUS_NEOGEO_CTRL_IRRMAZE_H
-
 #pragma once
 
+#ifndef __NEOGEO_IRRMAZE__
+#define __NEOGEO_IRRMAZE__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> neogeo_irrmaze_device
+// ======================> neogeo_dial_device
 
-class neogeo_irrmaze_device : public device_t, public device_neogeo_ctrl_edge_interface
+class neogeo_irrmaze_device : public device_t,
+						public device_neogeo_ctrl_edge_interface
 {
 public:
 	// construction/destruction
@@ -47,8 +49,9 @@ private:
 };
 
 
+
 // device type definition
-DECLARE_DEVICE_TYPE(NEOGEO_IRRMAZE, neogeo_irrmaze_device)
+extern const device_type NEOGEO_IRRMAZE;
 
 
-#endif // MAME_BUS_NEOGEO_CTRL_IRRMAZE_H
+#endif

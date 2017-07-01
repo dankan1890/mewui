@@ -1,14 +1,6 @@
 local sql = require("lsqlite3")
 local datfile = {}
-local db
-do
-	local dbpath = lfs.env_replace(mame_manager:ui():options().entries.historypath:value():match("([^;]+)"))
-	db = sql.open(dbpath .. "/history.db")
-	if not db then
-		lfs.mkdir(dbpath)
-		db = sql.open(dbpath .. "/history.db")
-	end
-end
+local db = sql.open(lfs.env_replace(mame_manager:ui():options().entries.historypath:value():match("([^;]+)")) .. "/history.db")
 if db then
 	local found = false
 	db:exec("select * from sqllite_master where name = version", function() found = true return 0 end)
@@ -46,6 +38,7 @@ function datfile.open(file, vertag, fixupcb)
 		if fh then
 			break
 		end
+		return
 	end
 	-- remove unsafe chars from file for use in sql statement
 	file = file:gsub("[^%w%._]", "")
@@ -57,12 +50,7 @@ function datfile.open(file, vertag, fixupcb)
 	end
 	stmt:finalize()
 
-	if not fh and dbver then
-		-- data in database but missing file, just use what we have
-		return read, dbver
-	elseif not fh then
-		return nil
-	elseif not dbver then
+	if not dbver then
 		db:exec("CREATE TABLE \"" .. file .. [[_idx" (
 				type VARCHAR NOT NULL,
 				val VARCHAR NOT NULL,
@@ -70,6 +58,11 @@ function datfile.open(file, vertag, fixupcb)
 				data INTEGER NOT NULL)]])
 		db:exec("CREATE TABLE \"" .. file .. "\" (data CLOB NOT NULL)")
 		db:exec("CREATE INDEX \"typeval_" .. file .. "\" ON \"" .. file .. "_idx\"(type, val)")
+	elseif not fh then
+		-- data in database but missing file, just use what we have
+		return read, dbver
+	elseif not fh and not dbver then
+		return nil
 	end
 
 	if vertag then

@@ -4,11 +4,6 @@
 
     ACT Apricot Keyboard (HLE)
 
-    TODO:
-    - MicroScreen emulation
-    - Mouse emulation
-    - LEDs
-
     Keyboard to System:
     - 01-60: Key make codes
     - 70-7f: Mouse codes
@@ -49,7 +44,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "hle.h"
 #include "machine/keyboard.ipp"
 
@@ -58,7 +52,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(APRICOT_KEYBOARD_HLE, apricot_keyboard_hle_device, "apricotkb_hle", "Apricot Keyboard (HLE)")
+const device_type APRICOT_KEYBOARD_HLE = &device_creator<apricot_keyboard_hle_device>;
 
 
 //-------------------------------------------------
@@ -195,9 +189,14 @@ ioport_constructor apricot_keyboard_hle_device::device_input_ports() const
 	return INPUT_PORTS_NAME( keyboard );
 }
 
-MACHINE_CONFIG_MEMBER( apricot_keyboard_hle_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( keyboard_components )
 	MCFG_MSM5832_ADD("rtc", XTAL_32_768kHz)
 MACHINE_CONFIG_END
+
+machine_config_constructor apricot_keyboard_hle_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( keyboard_components );
+}
 
 
 //**************************************************************************
@@ -209,7 +208,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 apricot_keyboard_hle_device::apricot_keyboard_hle_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, APRICOT_KEYBOARD_HLE, tag, owner, clock),
+	device_t(mconfig, APRICOT_KEYBOARD_HLE, "Apricot Keyboard (HLE)", tag, owner, clock, "apricotkb_hle", __FILE__),
 	device_apricot_keyboard_interface(mconfig, *this),
 	device_buffered_serial_interface(mconfig, *this),
 	device_matrix_keyboard_interface(mconfig, *this, "row_0", "row_1", "row_2", "row_3", "row_4", "row_5", "row_6", "row_7", "row_8", "row_9", "row_a", "row_b", "row_c"),
@@ -307,11 +306,6 @@ void apricot_keyboard_hle_device::received_byte(uint8_t byte)
 			// make rtc chip ready
 			m_rtc->cs_w(1);
 
-			break;
-
-		case CMD_KEYBOARD_RESET:
-			logerror("System requests keyboard reset\n");
-			transmit_byte(ACK_DIAGNOSTICS);
 			break;
 
 		default:

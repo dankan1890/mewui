@@ -9,13 +9,14 @@
 #include "emu.h"
 #include "mos7360.h"
 
-#include "screen.h"
-
 
 
 //**************************************************************************
 //  MACROS / CONSTANTS
 //**************************************************************************
+
+#define LOG 0
+
 
 #define VERBOSE_LEVEL 0
 #define DBG_LOG(N,M,A) \
@@ -79,8 +80,8 @@
 #define FRAMECOLOR      (m_reg[0x19] & 0x7f)
 
 #define TED7360_CLOCK        (m_clock / 4)
-#define TED7360_VRETRACERATE ((m_clock == TED7360PAL_CLOCK) ? PAL_VRETRACERATE : NTSC_VRETRACERATE)
-#define TED7360_LINES        ((m_clock == TED7360PAL_CLOCK) ? PAL_LINES : NTSC_LINES)
+#define TED7360_VRETRACERATE ((m_clock == TED7360PAL_CLOCK) ? TED7360PAL_VRETRACERATE : TED7360NTSC_VRETRACERATE)
+#define TED7360_LINES        ((m_clock == TED7360PAL_CLOCK) ? TED7360PAL_LINES : TED7360NTSC_LINES)
 
 static const rgb_t PALETTE_MOS[] =
 {
@@ -156,17 +157,8 @@ static const rgb_t PALETTE_MOS[] =
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-constexpr unsigned mos7360_device::NTSC_VRETRACERATE;
-constexpr unsigned mos7360_device::PAL_VRETRACERATE;
-constexpr unsigned mos7360_device::HRETRACERATE;
-constexpr unsigned mos7360_device::HSIZE;
-constexpr unsigned mos7360_device::VSIZE;
-constexpr unsigned mos7360_device::NTSC_LINES;
-constexpr unsigned mos7360_device::PAL_LINES;
-
-
 // device type definition
-DEFINE_DEVICE_TYPE(MOS7360, mos7360_device, "mos7360", "MOS 7360 TED")
+const device_type MOS7360 = &device_creator<mos7360_device>;
 
 
 // default address maps
@@ -262,7 +254,7 @@ inline uint8_t mos7360_device::read_rom(offs_t offset)
 //-------------------------------------------------
 
 mos7360_device::mos7360_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MOS7360, tag, owner, clock),
+	: device_t(mconfig, MOS7360, "MOS7360", tag, owner, clock, "mos7360", __FILE__),
 		device_memory_interface(mconfig, *this),
 		device_sound_interface(mconfig, *this),
 		device_video_interface(mconfig, *this),
@@ -633,7 +625,7 @@ void mos7360_device::drawlines(int first, int last)
 		{
 			for (int x = 0; x < m_bitmap.width(); x++)
 			{
-				m_bitmap.pix32(line, x) = PALETTE_MOS[FRAMECOLOR];
+				m_bitmap.pix32(line, x) = PALETTE_MOS[0];
 			}
 		}
 		return;

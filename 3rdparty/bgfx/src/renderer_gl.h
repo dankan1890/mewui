@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -1308,9 +1308,8 @@ namespace bgfx { namespace gl
 			: m_swapChain(NULL)
 			, m_denseIdx(UINT16_MAX)
 			, m_num(0)
-			, m_needPresent(false)
 		{
-			bx::memSet(m_fbo, 0, sizeof(m_fbo) );
+			memset(m_fbo, 0, sizeof(m_fbo) );
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
@@ -1327,7 +1326,6 @@ namespace bgfx { namespace gl
 		uint16_t m_denseIdx;
 		uint8_t  m_num;
 		uint8_t  m_numTh;
-		bool     m_needPresent;
 		Attachment m_attachment[BGFX_CONFIG_MAX_FRAME_BUFFER_ATTACHMENTS];
 	};
 
@@ -1343,27 +1341,8 @@ namespace bgfx { namespace gl
 		void create(const ShaderGL& _vsh, const ShaderGL& _fsh);
 		void destroy();
 		void init();
+		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0) const;
 		void bindInstanceData(uint32_t _stride, uint32_t _baseVertex = 0) const;
-
-		void bindAttributesBegin()
-		{
-			bx::memCopy(m_unboundUsedAttrib, m_used, sizeof(m_unboundUsedAttrib) );
-		}
-
-		void bindAttributes(const VertexDecl& _vertexDecl, uint32_t _baseVertex = 0);
-
-		void bindAttributesEnd()
-		{
-			for (uint32_t ii = 0, iiEnd = m_usedCount; ii < iiEnd; ++ii)
-			{
-				if (Attrib::Count != m_unboundUsedAttrib[ii])
-				{
-					Attrib::Enum attr = Attrib::Enum(m_unboundUsedAttrib[ii]);
-					GLint loc = m_attributes[attr];
-					GL_CHECK(glDisableVertexAttribArray(loc) );
-				}
-			}
-		}
 
 		void add(uint32_t _hash)
 		{
@@ -1372,10 +1351,8 @@ namespace bgfx { namespace gl
 
 		GLuint m_id;
 
-		uint8_t m_unboundUsedAttrib[Attrib::Count]; // For tracking unbound used attributes between begin()/end().
-		uint8_t m_usedCount;
-		uint8_t m_used[Attrib::Count]; // Dense.
-		GLint m_attributes[Attrib::Count]; // Sparse.
+		uint8_t m_used[Attrib::Count+1]; // dense
+		GLint m_attributes[Attrib::Count]; // sparse
 		GLint m_instanceData[BGFX_CONFIG_MAX_INSTANCE_DATA_COUNT+1];
 
 		GLint m_sampler[BGFX_CONFIG_MAX_TEXTURE_SAMPLERS];
@@ -1505,7 +1482,6 @@ namespace bgfx { namespace gl
 		void begin(Frame* _render, OcclusionQueryHandle _handle);
 		void end();
 		void resolve(Frame* _render, bool _wait = false);
-		void invalidate(OcclusionQueryHandle _handle);
 
 		struct Query
 		{
@@ -1513,7 +1489,7 @@ namespace bgfx { namespace gl
 			OcclusionQueryHandle m_handle;
 		};
 
-		Query m_query[BGFX_CONFIG_MAX_OCCLUSION_QUERIES];
+		Query m_query[BGFX_CONFIG_MAX_OCCUSION_QUERIES];
 		bx::RingBufferControl m_control;
 	};
 

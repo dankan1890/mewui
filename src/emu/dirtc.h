@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_EMU_DIRTC_H
-#define MAME_EMU_DIRTC_H
-
 #pragma once
+
+#ifndef __DIRTC_H__
+#define __DIRTC_H__
 
 
 
@@ -78,4 +78,4 @@ protected:
 typedef device_interface_iterator<device_rtc_interface> rtc_interface_iterator;
 
 
-#endif // MAME_EMU_DIRTC_H
+#endif  /* __DIRTC_H__ */

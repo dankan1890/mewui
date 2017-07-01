@@ -64,7 +64,6 @@
 
 #include "emu.h"
 #include "includes/exterm.h"
-
 #include "cpu/m6502/m6502.h"
 #include "machine/nvram.h"
 #include "machine/watchdog.h"
@@ -72,8 +71,6 @@
 #include "sound/volt_reg.h"
 #include "sound/ym2151.h"
 
-#include "screen.h"
-#include "speaker.h"
 
 
 /*************************************
@@ -397,7 +394,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( exterm )
+static MACHINE_CONFIG_START( exterm, exterm_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", TMS34010, 40000000)
@@ -501,4 +498,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1989, exterm, 0, exterm, exterm, exterm_state, 0, ROT0, "Gottlieb / Premier Technology", "Exterminator", 0 )
+GAME( 1989, exterm, 0, exterm, exterm, driver_device, 0, ROT0, "Gottlieb / Premier Technology", "Exterminator", 0 )

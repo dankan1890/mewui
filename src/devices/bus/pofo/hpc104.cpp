@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "hpc104.h"
 
 
@@ -23,22 +22,33 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(POFO_HPC104,   pofo_hpc104_device,   "pofo_hpc104",   "Atari Portfolio HPC-104")
-DEFINE_DEVICE_TYPE(POFO_HPC104_2, pofo_hpc104_2_device, "pofo_hpc104_2", "Atari Portfolio HPC-104 (Unit 2)")
+const device_type HPC104 = &device_creator<hpc104_t>;
+const device_type HPC104_2 = &device_creator<hpc104_2_t>;
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( hpc104 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( pofo_hpc104_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( hpc104 )
 	MCFG_PORTFOLIO_MEMORY_CARD_SLOT_ADD(PORTFOLIO_MEMORY_CARD_SLOT_B_TAG, portfolio_memory_cards, nullptr)
 
 	MCFG_PORTFOLIO_EXPANSION_SLOT_ADD(PORTFOLIO_EXPANSION_SLOT_TAG, XTAL_4_9152MHz, portfolio_expansion_cards, nullptr)
-	MCFG_PORTFOLIO_EXPANSION_SLOT_EINT_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_device, eint_w))
-	MCFG_PORTFOLIO_EXPANSION_SLOT_NMIO_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_device, nmio_w))
-	MCFG_PORTFOLIO_EXPANSION_SLOT_WAKE_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_device, wake_w))
+	MCFG_PORTFOLIO_EXPANSION_SLOT_EINT_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_t, eint_w))
+	MCFG_PORTFOLIO_EXPANSION_SLOT_NMIO_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_t, nmio_w))
+	MCFG_PORTFOLIO_EXPANSION_SLOT_WAKE_CALLBACK(DEVWRITELINE(DEVICE_SELF_OWNER, portfolio_expansion_slot_t, wake_w))
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor hpc104_t::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( hpc104 );
+}
 
 
 //-------------------------------------------------
@@ -57,7 +67,7 @@ INPUT_PORTS_END
 //  input_ports - device-specific input ports
 //-------------------------------------------------
 
-ioport_constructor pofo_hpc104_device::device_input_ports() const
+ioport_constructor hpc104_t::device_input_ports() const
 {
 	return INPUT_PORTS_NAME( hpc104 );
 }
@@ -79,7 +89,7 @@ INPUT_PORTS_END
 //  input_ports - device-specific input ports
 //-------------------------------------------------
 
-ioport_constructor pofo_hpc104_2_device::device_input_ports() const
+ioport_constructor hpc104_2_t::device_input_ports() const
 {
 	return INPUT_PORTS_NAME( hpc104_2 );
 }
@@ -91,11 +101,11 @@ ioport_constructor pofo_hpc104_2_device::device_input_ports() const
 //**************************************************************************
 
 //-------------------------------------------------
-//  pofo_hpc104_device - constructor
+//  hpc104_t - constructor
 //-------------------------------------------------
 
-pofo_hpc104_device::pofo_hpc104_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
+hpc104_t::hpc104_t(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 	device_portfolio_expansion_slot_interface(mconfig, *this),
 	device_nvram_interface(mconfig, *this),
 	m_ccm(*this, PORTFOLIO_MEMORY_CARD_SLOT_B_TAG),
@@ -105,27 +115,31 @@ pofo_hpc104_device::pofo_hpc104_device(const machine_config &mconfig, device_typ
 {
 }
 
-pofo_hpc104_device::pofo_hpc104_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	pofo_hpc104_device(mconfig, POFO_HPC104, tag, owner, clock)
+hpc104_t::hpc104_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, HPC104, "Atari Portfolio HPC-104", tag, owner, clock, "hpc104", __FILE__),
+	device_portfolio_expansion_slot_interface(mconfig, *this),
+	device_nvram_interface(mconfig, *this),
+	m_ccm(*this, PORTFOLIO_MEMORY_CARD_SLOT_B_TAG),
+	m_exp(*this, PORTFOLIO_EXPANSION_SLOT_TAG),
+	m_nvram(*this, "nvram"),
+	m_io_sw1(*this, "SW1")
 {
 }
 
 
 //-------------------------------------------------
-//  pofo_hpc104_2_device - constructor
+//  hpc104_2_t - constructor
 //-------------------------------------------------
 
-pofo_hpc104_2_device::pofo_hpc104_2_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	pofo_hpc104_device(mconfig, POFO_HPC104_2, tag, owner, clock)
-{
-}
+hpc104_2_t::hpc104_2_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	hpc104_t(mconfig, HPC104_2, "Atari Portfolio HPC-104 (Unit 2)", tag, owner, clock, "hpc104_2", __FILE__) { }
 
 
 //-------------------------------------------------
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void pofo_hpc104_device::device_start()
+void hpc104_t::device_start()
 {
 	// allocate memory
 	m_nvram.allocate(0x40000);
@@ -136,7 +150,7 @@ void pofo_hpc104_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void pofo_hpc104_device::device_reset()
+void hpc104_t::device_reset()
 {
 	m_sw1 = BIT(m_io_sw1->read(), 0);
 }
@@ -146,7 +160,7 @@ void pofo_hpc104_device::device_reset()
 //  nrdi_r - read
 //-------------------------------------------------
 
-uint8_t pofo_hpc104_device::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+uint8_t hpc104_t::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	data = m_exp->nrdi_r(space, offset, data, iom, bcom, m_ncc1_out || ncc1);
 
@@ -183,7 +197,7 @@ uint8_t pofo_hpc104_device::nrdi_r(address_space &space, offs_t offset, uint8_t 
 //  nwri_w - write
 //-------------------------------------------------
 
-void pofo_hpc104_device::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+void hpc104_t::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	m_exp->nwri_w(space, offset, data, iom, bcom, m_ncc1_out || ncc1);
 

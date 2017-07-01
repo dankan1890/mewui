@@ -30,9 +30,8 @@ needs more color combination to render its graphics.
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/rallyx.h"
 #include "video/resnet.h"
-#include "screen.h"
+#include "includes/rallyx.h"
 
 #define STARS_COLOR_BASE    (0x104)
 

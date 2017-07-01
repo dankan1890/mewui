@@ -2,7 +2,6 @@
 // copyright-holders:Takahiro Nogi
 
 #include "includes/nb1413m3.h"
-#include "screen.h"
 
 class nbmj8891_state : public driver_device
 {

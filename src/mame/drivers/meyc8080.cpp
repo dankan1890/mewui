@@ -60,8 +60,6 @@
 #include "machine/nvram.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "screen.h"
-#include "speaker.h"
 
 #include "wldarrow.lh"
 #include "mdrawpkr.lh"
@@ -72,13 +70,12 @@ class meyc8080_state : public driver_device
 {
 public:
 	meyc8080_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_videoram_0(*this, "vram0")
-		, m_videoram_1(*this, "vram1")
-		, m_videoram_2(*this, "vram2")
-		, m_maincpu(*this, "maincpu")
-		, m_dac(*this, "dac")
-	{ }
+		: driver_device(mconfig, type, tag),
+		m_videoram_0(*this, "vram0"),
+		m_videoram_1(*this, "vram1"),
+		m_videoram_2(*this, "vram2"),
+		m_maincpu(*this, "maincpu"),
+		m_dac(*this, "dac") { }
 
 	required_shared_ptr<uint8_t> m_videoram_0;
 	required_shared_ptr<uint8_t> m_videoram_1;
@@ -579,7 +576,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( meyc8080 )
+static MACHINE_CONFIG_START( meyc8080, meyc8080_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8080, XTAL_20MHz / 10) // divider guessed
@@ -732,8 +729,8 @@ ROM_END
  *
  *************************************/
 
-//    YEAR  NAME       PARENT    MACHINE   INPUT      STATE           INIT  ROT   COMPANY              FULLNAME                                     FLAGS                                            LAYOUT
-GAMEL(1982, wldarrow,  0,        meyc8080, wldarrow,  meyc8080_state, 0,    ROT0, "Meyco Games, Inc.", "Wild Arrow (color, Standard V4.8)",         MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_wldarrow ) // B&W version not dumped yet
-GAMEL(1984, mdrawpkr,  0,        meyc8080, mdrawpkr,  meyc8080_state, 0,    ROT0, "Meyco Games, Inc.", "Draw Poker - Joker's Wild (Standard)",      MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_mdrawpkr ) // year not shown, but it is in mdrawpkra
-GAMEL(1984, mdrawpkra, mdrawpkr, meyc8080, mdrawpkra, meyc8080_state, 0,    ROT0, "Meyco Games, Inc.", "Draw Poker - Joker's Wild (02-11)",         MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_mdrawpkr )
-GAMEL(1983, casbjack,  0,        meyc8080, casbjack,  meyc8080_state, 0,    ROT0, "Meyco Games, Inc.", "Casino Black Jack (color, Standard 00-05)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_meybjack ) // B&W version not dumped yet
+/*    YEAR  NAME       PARENT    MACHINE   INPUT      INIT  ROT    COMPANY              FULLNAME                                    FLAGS                                      LAYOUT  */
+GAMEL(1982, wldarrow,  0,        meyc8080, wldarrow, driver_device,  0,    ROT0, "Meyco Games, Inc.", "Wild Arrow (color, Standard V4.8)",         MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_wldarrow ) // B&W version not dumped yet
+GAMEL(1984, mdrawpkr,  0,        meyc8080, mdrawpkr, driver_device,  0,    ROT0, "Meyco Games, Inc.", "Draw Poker - Joker's Wild (Standard)",      MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_mdrawpkr ) // year not shown, but it is in mdrawpkra
+GAMEL(1984, mdrawpkra, mdrawpkr, meyc8080, mdrawpkra, driver_device, 0,    ROT0, "Meyco Games, Inc.", "Draw Poker - Joker's Wild (02-11)",         MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_mdrawpkr )
+GAMEL(1983, casbjack,  0,        meyc8080, casbjack, driver_device,  0,    ROT0, "Meyco Games, Inc.", "Casino Black Jack (color, Standard 00-05)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE, layout_meybjack ) // B&W version not dumped yet

@@ -38,13 +38,11 @@ Manuals for both games define the controls as 4 push buttons:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/galspnbl.h"
-
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
-#include "speaker.h"
+#include "includes/galspnbl.h"
 
 
 WRITE16_MEMBER(galspnbl_state::soundcommand_w)
@@ -212,7 +210,7 @@ void galspnbl_state::machine_start()
 {
 }
 
-static MACHINE_CONFIG_START( galspnbl )
+static MACHINE_CONFIG_START( galspnbl, galspnbl_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, XTAL_12MHz) /* 12 MHz ??? - Use value from Tecmo's Super Pinball Action - NEEDS VERIFICATION!! */
@@ -254,7 +252,7 @@ static MACHINE_CONFIG_START( galspnbl )
 	MCFG_YM3812_IRQ_HANDLER(INPUTLINE("audiocpu", 0))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MCFG_OKIM6295_ADD("oki", XTAL_4MHz/4, PIN7_HIGH) /* Use value from Super Pinball Action - clock frequency & pin 7 not verified */
+	MCFG_OKIM6295_ADD("oki", XTAL_4MHz/4, OKIM6295_PIN7_HIGH) /* Use value from Super Pinball Action - clock frequency & pin 7 not verified */
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_CONFIG_END
 
@@ -319,5 +317,5 @@ ROM_START( hotpinbl )
 ROM_END
 
 
-GAME( 1995, hotpinbl, 0, galspnbl, hotpinbl, galspnbl_state, 0, ROT90, "Comad & New Japan System", "Hot Pinball", MACHINE_SUPPORTS_SAVE )
-GAME( 1996, galspnbl, 0, galspnbl, galspnbl, galspnbl_state, 0, ROT90, "Comad", "Gals Pinball", MACHINE_SUPPORTS_SAVE )
+GAME( 1995, hotpinbl, 0, galspnbl, hotpinbl, driver_device, 0, ROT90, "Comad & New Japan System", "Hot Pinball", MACHINE_SUPPORTS_SAVE )
+GAME( 1996, galspnbl, 0, galspnbl, galspnbl, driver_device, 0, ROT90, "Comad", "Gals Pinball", MACHINE_SUPPORTS_SAVE )

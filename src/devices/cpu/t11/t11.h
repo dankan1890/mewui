@@ -2,10 +2,10 @@
 // copyright-holders:Aaron Giles
 /*** T-11: Portable DEC T-11 emulator ******************************************/
 
-#ifndef MAME_CPU_T11_T11_H
-#define MAME_CPU_T11_T11_H
-
 #pragma once
+
+#ifndef __T11_H__
+#define __T11_H__
 
 
 enum
@@ -32,21 +32,20 @@ enum
 	t11_device::set_initial_mode(*device, _mode);
 
 #define MCFG_T11_RESET(_devcb) \
-	devcb = &t11_device::set_out_reset_func(*device, DEVCB_##_devcb);
+	t11_device::set_out_reset_func(*device, DEVCB_##_devcb);
 
 class t11_device :  public cpu_device
 {
 public:
 	// construction/destruction
 	t11_device(const machine_config &mconfig, const char *_tag, device_t *_owner, uint32_t _clock);
+	t11_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// static configuration helpers
 	static void set_initial_mode(device_t &device, const uint16_t mode) { downcast<t11_device &>(device).c_initial_mode = mode; }
-	template <class Object> static devcb_base &set_out_reset_func(device_t &device, Object &&cb) { return downcast<t11_device &>(device).m_out_reset_func.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_reset_func(device_t &device, _Object object) { return downcast<t11_device &>(device).m_out_reset_func.set_callback(object); }
 
 protected:
-	t11_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -70,6 +69,7 @@ protected:
 	virtual uint32_t disasm_max_opcode_bytes() const override { return 6; }
 	virtual offs_t disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options) override;
 
+protected:
 	address_space_config m_program_config;
 
 	uint16_t c_initial_mode;
@@ -1153,7 +1153,8 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(T11,      t11_device)
-DECLARE_DEVICE_TYPE(K1801VM2, k1801vm2_device)
+extern const device_type T11;
+extern const device_type K1801VM2;
 
-#endif // MAME_CPU_T11_T11_H
+
+#endif /* __T11_H__ */

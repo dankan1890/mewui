@@ -21,11 +21,24 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_I8212_H
-#define MAME_MACHINE_I8212_H
-
 #pragma once
 
+#ifndef __I8212__
+#define __I8212__
+
+#include "emu.h"
+
+
+
+///*************************************************************************
+//  MACROS / CONSTANTS
+///*************************************************************************
+
+enum
+{
+	I8212_MODE_INPUT = 0,
+	I8212_MODE_OUTPUT
+};
 
 
 
@@ -50,15 +63,15 @@
 
 // ======================> i8212_device
 
-class i8212_device : public device_t
+class i8212_device :    public device_t
 {
 public:
 	// construction/destruction
 	i8212_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_irq_wr_callback(device_t &device, Object &&cb) { return downcast<i8212_device &>(device).m_write_irq.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_di_rd_callback(device_t &device, Object &&cb) { return downcast<i8212_device &>(device).m_read_di.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_do_wr_callback(device_t &device, Object &&cb) { return downcast<i8212_device &>(device).m_write_do.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_wr_callback(device_t &device, _Object object) { return downcast<i8212_device &>(device).m_write_irq.set_callback(object); }
+	template<class _Object> static devcb_base &set_di_rd_callback(device_t &device, _Object object) { return downcast<i8212_device &>(device).m_read_di.set_callback(object); }
+	template<class _Object> static devcb_base &set_do_wr_callback(device_t &device, _Object object) { return downcast<i8212_device &>(device).m_write_do.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
@@ -72,12 +85,6 @@ protected:
 	virtual void device_reset() override;
 
 private:
-	enum
-	{
-		MODE_INPUT = 0,
-		MODE_OUTPUT
-	};
-
 	devcb_write_line   m_write_irq;
 	devcb_read8        m_read_di;
 	devcb_write8       m_write_do;
@@ -89,6 +96,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(I8212, i8212_device)
+extern const device_type I8212;
 
-#endif // MAME_MACHINE_I8212_H
+
+
+#endif

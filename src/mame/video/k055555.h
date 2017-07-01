@@ -1,11 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:David Haywood
 /* */
-#ifndef MAME_MACHINE_K055555_H
-#define MAME_MACHINE_K055555_H
 
 #pragma once
-
+#ifndef __K055555_H__
+#define __K055555_H__
 
 #define MCFG_K055555_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, K055555, 0)
@@ -94,6 +93,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -101,7 +101,7 @@ private:
 	uint8_t   m_regs[128];
 };
 
-DECLARE_DEVICE_TYPE(K055555, k055555_device)
+extern const device_type K055555;
 
 
-#endif // MAME_MACHINE_K055555_H
+#endif

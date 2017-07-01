@@ -11,9 +11,9 @@
 #define NL_CONVERT_H_
 
 #include <memory>
-#include "../plib/pstring.h"
-#include "../plib/plists.h"
-#include "../plib/pparser.h"
+#include "plib/pstring.h"
+#include "plib/plists.h"
+#include "plib/pparser.h"
 
 /*-------------------------------------------------
     convert - convert a spice netlist
@@ -23,14 +23,19 @@ class nl_convert_base_t
 {
 public:
 
-	virtual ~nl_convert_base_t();
+	nl_convert_base_t() : out(m_buf), m_numberchars("0123456789-+e.") {}
+	virtual ~nl_convert_base_t()
+	{
+		m_nets.clear();
+		m_devs.clear();
+		m_pins.clear();
+	}
 
-	const pstring &result() { return m_buf.str(); }
+	const pstringbuffer &result() { return m_buf.str(); }
 
 	virtual void convert(const pstring &contents) = 0;
 
 protected:
-	nl_convert_base_t();
 
 	void add_pin_alias(const pstring &devname, const pstring &name, const pstring &alias);
 
@@ -49,24 +54,24 @@ protected:
 
 	double get_sp_val(const pstring &sin);
 
-	plib::putf8_fmt_writer out;
+	plib::pstream_fmt_writer_t out;
 private:
 
 	struct net_t
 	{
 	public:
-		explicit net_t(const pstring &aname)
+		net_t(const pstring &aname)
 		: m_name(aname), m_no_export(false) {}
 
 		const pstring &name() { return m_name;}
-		std::vector<pstring> &terminals() { return m_terminals; }
+		plib::pstring_vector_t &terminals() { return m_terminals; }
 		void set_no_export() { m_no_export = true; }
 		bool is_no_export() { return m_no_export; }
 
 	private:
 		pstring m_name;
 		bool m_no_export;
-		std::vector<pstring> m_terminals;
+		plib::pstring_vector_t m_terminals;
 	};
 
 	struct dev_t
@@ -101,8 +106,8 @@ private:
 	};
 
 	struct unit_t {
-		const char *m_unit;
-		const char *m_func;
+		pstring m_unit;
+		pstring m_func;
 		double m_mult;
 	};
 
@@ -140,7 +145,7 @@ class nl_convert_spice_t : public nl_convert_base_t
 public:
 
 	nl_convert_spice_t() : nl_convert_base_t() {}
-	virtual ~nl_convert_spice_t() override
+	~nl_convert_spice_t()
 	{
 	}
 
@@ -159,14 +164,36 @@ class nl_convert_eagle_t : public nl_convert_base_t
 public:
 
 	nl_convert_eagle_t() : nl_convert_base_t() {}
-	virtual ~nl_convert_eagle_t() override
+	~nl_convert_eagle_t()
 	{
 	}
 
-	class tokenizer : public plib::ptokenizer
+	class eagle_tokenizer : public plib::ptokenizer
 	{
 	public:
-		tokenizer(nl_convert_eagle_t &convert, plib::putf8_reader &strm);
+		eagle_tokenizer(nl_convert_eagle_t &convert, plib::pistream &strm)
+		: plib::ptokenizer(strm), m_convert(convert)
+		{
+			set_identifier_chars("abcdefghijklmnopqrstuvwvxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.-");
+			set_number_chars(".0123456789", "0123456789eE-."); //FIXME: processing of numbers
+			char ws[5];
+			ws[0] = ' ';
+			ws[1] = 9;
+			ws[2] = 10;
+			ws[3] = 13;
+			ws[4] = 0;
+			set_whitespace(ws);
+			/* FIXME: gnetlist doesn't print comments */
+			set_comment("/*", "*/", "//");
+			set_string_char('\'');
+			m_tok_ADD = register_token("ADD");
+			m_tok_VALUE = register_token("VALUE");
+			m_tok_SIGNAL = register_token("SIGNAL");
+			m_tok_SEMICOLON = register_token(";");
+			/* currently not used, but required for parsing */
+			register_token(")");
+			register_token("(");
+		}
 
 		token_id_t m_tok_ADD;
 		token_id_t m_tok_VALUE;
@@ -175,7 +202,11 @@ public:
 
 	protected:
 
-		virtual void verror(const pstring &msg, int line_num, const pstring &line) override;
+		void verror(const pstring &msg, int line_num, const pstring &line) override
+		{
+			m_convert.out("{} (line {}): {}\n", msg.cstr(), line_num, line.cstr());
+		}
+
 
 	private:
 		nl_convert_eagle_t &m_convert;
@@ -195,14 +226,38 @@ class nl_convert_rinf_t : public nl_convert_base_t
 public:
 
 	nl_convert_rinf_t() : nl_convert_base_t() {}
-	virtual ~nl_convert_rinf_t() override
+	~nl_convert_rinf_t()
 	{
 	}
 
 	class tokenizer : public plib::ptokenizer
 	{
 	public:
-		tokenizer(nl_convert_rinf_t &convert, plib::putf8_reader &strm);
+		tokenizer(nl_convert_rinf_t &convert, plib::pistream &strm)
+		: plib::ptokenizer(strm), m_convert(convert)
+		{
+			set_identifier_chars(".abcdefghijklmnopqrstuvwvxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_-");
+			set_number_chars("0123456789", "0123456789eE-."); //FIXME: processing of numbers
+			char ws[5];
+			ws[0] = ' ';
+			ws[1] = 9;
+			ws[2] = 10;
+			ws[3] = 13;
+			ws[4] = 0;
+			set_whitespace(ws);
+			/* FIXME: gnetlist doesn't print comments */
+			set_comment("","","//"); // FIXME:needs to be confirmed
+			set_string_char('"');
+			m_tok_HEA = register_token(".HEA");
+			m_tok_APP = register_token(".APP");
+			m_tok_TIM = register_token(".TIM");
+			m_tok_TYP = register_token(".TYP");
+			m_tok_ADDC = register_token(".ADD_COM");
+			m_tok_ATTC = register_token(".ATT_COM");
+			m_tok_NET = register_token(".ADD_TER");
+			m_tok_TER = register_token(".TER");
+			m_tok_END = register_token(".END");
+		}
 
 		token_id_t m_tok_HEA;
 		token_id_t m_tok_APP;
@@ -216,7 +271,11 @@ public:
 
 	protected:
 
-		virtual void verror(const pstring &msg, int line_num, const pstring &line) override;
+		void verror(const pstring &msg, int line_num, const pstring &line) override
+		{
+			m_convert.out("{} (line {}): {}\n", msg.cstr(), line_num, line.cstr());
+		}
+
 
 	private:
 		nl_convert_rinf_t &m_convert;

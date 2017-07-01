@@ -6,10 +6,10 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_AUDIO_TVC_H
-#define MAME_AUDIO_TVC_H
-
 #pragma once
+
+#ifndef _TVC_SND_H_
+#define _TVC_SND_H_
 
 #define MCFG_TVC_SOUND_SNDINT_CALLBACK(_write) \
 	devcb = &tvc_sound_device::set_sndint_wr_callback(*device, DEVCB_##_write);
@@ -20,13 +20,14 @@
 
 // ======================> tvc_sound_device
 
-class tvc_sound_device : public device_t, public device_sound_interface
+class tvc_sound_device : public device_t,
+							public device_sound_interface
 {
 public:
 	// construction/destruction
 	tvc_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_sndint_wr_callback(device_t &device, Object &&cb) { return downcast<tvc_sound_device &>(device).m_write_sndint.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_sndint_wr_callback(device_t &device, _Object object) { return downcast<tvc_sound_device &>(device).m_write_sndint.set_callback(object); }
 
 	DECLARE_WRITE8_MEMBER(write);
 	void reset_divider();
@@ -54,6 +55,5 @@ private:
 
 // device type definition
 extern const device_type TVC_SOUND;
-DECLARE_DEVICE_TYPE(TVC_SOUND, tvc_sound_device)
 
-#endif // MAME_AUDIO_TVC_H
+#endif

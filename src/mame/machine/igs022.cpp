@@ -13,7 +13,15 @@
 
 
 igs022_device::igs022_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, IGS022, tag, owner, clock)
+	: device_t(mconfig, IGS022, "IGS022", tag, owner, clock, "igs022", __FILE__)
+{
+}
+
+void igs022_device::device_config_complete()
+{
+}
+
+void igs022_device::device_validity_check(validity_checker &valid) const
 {
 }
 
@@ -273,4 +281,4 @@ void igs022_device::IGS022_handle_command()
 }
 
 
-DEFINE_DEVICE_TYPE(IGS022, igs022_device, "igs022", "IGS022")
+const device_type IGS022 = &device_creator<igs022_device>;

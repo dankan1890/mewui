@@ -6,11 +6,11 @@
  * Secure SerialFlash
  *
  */
-#ifndef MAME_MACHINE_ZS01_H
-#define MAME_MACHINE_ZS01_H
 
 #pragma once
 
+#ifndef __ZS01_H__
+#define __ZS01_H__
 
 #include "machine/ds2401.h"
 
@@ -97,6 +97,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ZS01, zs01_device)
+extern const device_type ZS01;
 
-#endif // MAME_MACHINE_ZS01_H
+#endif

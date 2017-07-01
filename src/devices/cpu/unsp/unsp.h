@@ -8,10 +8,10 @@
 *
 \**************************/
 
-#ifndef MAME_CPU_UNSP_UNSP_H
-#define MAME_CPU_UNSP_UNSP_H
-
 #pragma once
+
+#ifndef __UNSP_H__
+#define __UNSP_H__
 
 enum
 {
@@ -107,6 +107,7 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(UNSP, unsp_device)
+extern const device_type UNSP;
 
-#endif // MAME_CPU_UNSP_UNSP_H
+
+#endif /* __UNSP_H__ */

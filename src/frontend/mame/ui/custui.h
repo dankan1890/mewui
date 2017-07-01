@@ -41,7 +41,8 @@ private:
 	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
-	std::vector<std::string>    m_hide_status;
+	static const char *const    HIDE_STATUS[];
+
 	std::vector<std::string>    m_lang;
 	std::uint16_t               m_currlang;
 };
@@ -98,7 +99,7 @@ protected:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
 private:
-	enum muicolors
+	enum
 	{
 		MUI_BACKGROUND_COLOR = 1,
 		MUI_BORDER_COLOR,
@@ -126,14 +127,6 @@ private:
 	};
 
 	virtual void populate(float &customtop, float &custombottom) override;
-	struct sampletext
-	{
-		const char * text;
-		muicolors    fgcolor;
-		muicolors    bgcolor;
-		bool         highlight;
-	};
-
 	virtual void handle() override;
 
 	s_color_table m_color_table[MUI_RESTORE];
@@ -195,7 +188,7 @@ private:
 	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
-	std::vector<std::pair<const char *, const char *>> m_palette;
+	static std::pair<const char *, const char *> const s_palette[];
 	rgb_t &m_original;
 };
 

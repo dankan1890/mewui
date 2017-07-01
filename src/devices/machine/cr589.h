@@ -8,12 +8,13 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_CR589_H
-#define MAME_MACHINE_CR589_H
-
 #pragma once
 
+#ifndef __CR589_H__
+#define __CR589_H__
+
 #include "atapicdr.h"
+#include "t10mmc.h"
 
 class matsushita_cr589_device : public atapi_cdrom_device,
 	public device_nvram_interface
@@ -44,6 +45,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(CR589, matsushita_cr589_device)
+extern const device_type CR589;
 
-#endif // MAME_MACHINE_CR589_H
+#endif

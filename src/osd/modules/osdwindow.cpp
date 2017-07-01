@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "osdwindow.h"
 
 #include "render/drawnone.h"

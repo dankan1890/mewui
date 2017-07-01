@@ -34,7 +34,7 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "audio/tiamc1.h"
+#include "includes/tiamc1.h"
 
 #define CLOCK_DIVIDER 16
 #define BUF_LEN 100000
@@ -46,7 +46,7 @@
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(TIAMC1, tiamc1_sound_device, "tiamc1_sound", "TIA-MC1 Audio Custom")
+const device_type TIAMC1 = &device_creator<tiamc1_sound_device>;
 
 
 //**************************************************************************
@@ -58,7 +58,7 @@ DEFINE_DEVICE_TYPE(TIAMC1, tiamc1_sound_device, "tiamc1_sound", "TIA-MC1 Audio C
 //-------------------------------------------------
 
 tiamc1_sound_device::tiamc1_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TIAMC1, tag, owner, clock),
+	: device_t(mconfig, TIAMC1, "TIA-MC1 Audio Custom", tag, owner, clock, "tiamc1_sound", __FILE__),
 		device_sound_interface(mconfig, *this),
 		m_channel(nullptr),
 		m_timer1_divider(0)

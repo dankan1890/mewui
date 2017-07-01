@@ -3,7 +3,6 @@
 // Peripheral code from rmnimbus driver by Phill Harvey-Smith which is
 // based on the Leland sound driver by Aaron Giles and Paul Leaman
 
-#include "emu.h"
 #include "i186.h"
 #include "debugger.h"
 #include "i86inline.h"
@@ -118,11 +117,11 @@ const uint8_t i80186_cpu_device::m_i80186_timing[] =
 	33,             /* (80186) BOUND */
 };
 
-DEFINE_DEVICE_TYPE(I80186, i80186_cpu_device, "i80186", "I80186")
-DEFINE_DEVICE_TYPE(I80188, i80188_cpu_device, "i80188", "I80188")
+const device_type I80186 = &device_creator<i80186_cpu_device>;
+const device_type I80188 = &device_creator<i80188_cpu_device>;
 
 i80188_cpu_device::i80188_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: i80186_cpu_device(mconfig, I80188, tag, owner, clock, 8)
+	: i80186_cpu_device(mconfig, I80188, "I80188", tag, owner, clock, "i80188", __FILE__, 8)
 {
 	memcpy(m_timing, m_i80186_timing, sizeof(m_i80186_timing));
 	m_fetch_xor = 0;
@@ -130,17 +129,22 @@ i80188_cpu_device::i80188_cpu_device(const machine_config &mconfig, const char *
 }
 
 i80186_cpu_device::i80186_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: i80186_cpu_device(mconfig, I80186, tag, owner, clock, 16)
+	: i8086_common_cpu_device(mconfig, I80186, "I80186", tag, owner, clock, "i80186", __FILE__)
+	, m_program_config("program", ENDIANNESS_LITTLE, 16, 20, 0)
+	, m_io_config("io", ENDIANNESS_LITTLE, 16, 16, 0)
+	, m_read_slave_ack_func(*this)
+	, m_out_chip_select_func(*this)
+	, m_out_tmrout0_func(*this)
+	, m_out_tmrout1_func(*this)
 {
 	memcpy(m_timing, m_i80186_timing, sizeof(m_i80186_timing));
 	m_fetch_xor = BYTE_XOR_LE(0);
 	static_set_irq_acknowledge_callback(*this, device_irq_acknowledge_delegate(FUNC(i80186_cpu_device::int_callback), this));
 }
 
-i80186_cpu_device::i80186_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int data_bus_size)
-	: i8086_common_cpu_device(mconfig, type, tag, owner, clock)
+i80186_cpu_device::i80186_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, int data_bus_size)
+	: i8086_common_cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
 	, m_program_config("program", ENDIANNESS_LITTLE, data_bus_size, 20, 0)
-	, m_opcodes_config("opcodes", ENDIANNESS_LITTLE, data_bus_size, 20, 0)
 	, m_io_config("io", ENDIANNESS_LITTLE, data_bus_size, 16, 0)
 	, m_read_slave_ack_func(*this)
 	, m_out_chip_select_func(*this)
@@ -149,28 +153,16 @@ i80186_cpu_device::i80186_cpu_device(const machine_config &mconfig, device_type 
 {
 }
 
-
-const address_space_config *i80186_cpu_device::memory_space_config(address_spacenum spacenum) const
-{
-	switch(spacenum)
-	{
-	case AS_PROGRAM:           return &m_program_config;
-	case AS_IO:                return &m_io_config;
-	case AS_DECRYPTED_OPCODES: return has_configured_map(AS_DECRYPTED_OPCODES) ? &m_opcodes_config : nullptr;
-	default:                   return nullptr;
-	}
-}
-
 uint8_t i80186_cpu_device::fetch_op()
 {
-	uint8_t data = m_direct_opcodes->read_byte(pc(), m_fetch_xor);
+	uint8_t data = m_direct->read_byte(pc(), m_fetch_xor);
 	m_ip++;
 	return data;
 }
 
 uint8_t i80186_cpu_device::fetch()
 {
-	uint8_t data = m_direct_opcodes->read_byte(pc(), m_fetch_xor);
+	uint8_t data = m_direct->read_byte(pc(), m_fetch_xor);
 	m_ip++;
 	return data;
 }
@@ -278,7 +270,7 @@ void i80186_cpu_device::execute_run()
 					if (tmp<low || tmp>high)
 						interrupt(5);
 					CLK(BOUND);
-					logerror("%06x: bound %04x high %04x low %04x tmp\n", pc(), high, low, tmp);
+					logerror("%s: %06x: bound %04x high %04x low %04x tmp\n", tag(), pc(), high, low, tmp);
 				}
 				break;
 
@@ -349,7 +341,7 @@ void i80186_cpu_device::execute_run()
 					m_sregs[DS] = m_src;
 					break;
 				default:
-					logerror("%06x: Mov Sreg - Invalid register\n", pc());
+					logerror("%s: %06x: Mov Sreg - Invalid register\n", tag(), pc());
 					m_ip = m_prev_ip;
 					interrupt(6);
 					break;
@@ -545,7 +537,7 @@ void i80186_cpu_device::execute_run()
 				if(!common_op(op))
 				{
 					m_icount -= 10; // UD fault timing?
-					logerror("%06x: Invalid Opcode %02x\n", pc(), op);
+					logerror("%s: %06x: Invalid Opcode %02x\n", tag(), pc(), op);
 					m_ip = m_prev_ip;
 					interrupt(6); // 80186 has #UD
 					break;
@@ -1032,23 +1024,14 @@ void i80186_cpu_device::device_timer(emu_timer &timer, device_timer_id id, int p
 				}
 			}
 
-			/* if we're continuous or altcounting, reset */
-			if((t->control & 1) || ((t->control & 2) && (which != 2) && !t->active_count))
+			/* if we're continuous, reset */
+			if (t->control & 0x0001)
 			{
 				int count;
 				if((t->control & 2) && (which != 2))
 				{
 					count = t->active_count ? t->maxA : t->maxB;
-					if(!t->active_count)
-					{
-						t->active_count = 1;
-						t->control |= 0x1000;
-					}
-					else
-					{
-						t->active_count = 0;
-						t->control &= ~0x1000;
-					}
+					t->active_count = !t->active_count;
 				}
 				else
 					count = t->maxA;
@@ -1061,7 +1044,7 @@ void i80186_cpu_device::device_timer(emu_timer &timer, device_timer_id id, int p
 			else
 			{
 				t->int_timer->adjust(attotime::never, which);
-				t->control &= ~0x9000;
+				t->control &= ~0x8000;
 			}
 			t->count = 0;
 			break;
@@ -1201,7 +1184,6 @@ void i80186_cpu_device::internal_timer_update(int which, int new_count, int new_
 	if (update_int_timer)
 	{
 		t->active_count = 0;
-		t->control &= ~0x1000;
 		if ((t->control & 0x8000) && !(t->control & 4))
 		{
 			int diff = t->maxA - t->count;
@@ -1547,7 +1529,7 @@ WRITE16_MEMBER(i80186_cpu_device::internal_port_w)
 
 		case 0x17:
 			if (LOG_PORTS) logerror("%05X:80186 interrupt request = %04X\n", pc(), data);
-			m_intr.request = (m_intr.request & ~0x000c) | (data & 0x000c);
+			m_intr.request = (m_intr.request & ~0x00c0) | (data & 0x00c0);
 			update_interrupt_state();
 			break;
 
@@ -1714,7 +1696,7 @@ WRITE16_MEMBER(i80186_cpu_device::internal_port_w)
 			{
 				uint32_t newmap = (data & 0xfff) << 8;
 				uint32_t oldmap = (m_reloc & 0xfff) << 8;
-				if (m_reloc & 0x1000)
+				if (!(data & 0x1000) || ((data & 0x1000) && (m_reloc & 0x1000)))
 					m_program->unmap_readwrite(oldmap, oldmap + 0xff);
 				if (data & 0x1000) // TODO: make work with 80188 if needed
 					m_program->install_readwrite_handler(newmap, newmap + 0xff, read16_delegate(FUNC(i80186_cpu_device::internal_port_r), this), write16_delegate(FUNC(i80186_cpu_device::internal_port_w), this));

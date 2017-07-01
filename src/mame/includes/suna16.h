@@ -2,7 +2,6 @@
 // copyright-holders:Luca Elia
 
 #include "machine/gen_latch.h"
-#include "screen.h"
 
 class suna16_state : public driver_device
 {

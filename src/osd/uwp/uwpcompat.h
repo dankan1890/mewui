@@ -13,9 +13,7 @@
 extern "C" {
 #endif
 
-#ifndef NOGDI
-#define NOGDI
-#endif
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
 
@@ -68,38 +66,6 @@ int _pclose(
 	FILE *stream);
 
 _Ret_maybenull_
-HMODULE WINAPI LoadLibraryA(
-	_In_ LPCSTR lpFileName
-);
-
-_Ret_maybenull_
-HMODULE WINAPI LoadLibraryW(
-	_In_ LPCWSTR lpFileName
-);
-
-#ifdef UNICODE
-#define LoadLibrary  LoadLibraryW
-#else
-#define LoadLibrary  LoadLibraryA
-#endif // !UNICODE
-
-_Ret_maybenull_
-HMODULE WINAPI GetModuleHandleA(
-	_In_ LPCSTR lpModuleName
-);
-
-_Ret_maybenull_
-HMODULE WINAPI GetModuleHandleW(
-	_In_ LPCWSTR lpModuleName
-);
-
-#ifdef UNICODE
-#define GetModuleHandle  GetModuleHandleW
-#else
-#define GetModuleHandle  GetModuleHandleA
-#endif // !UNICODE
-
-_Ret_maybenull_
 HMODULE
 WINAPI
 LoadLibraryExA(
@@ -117,18 +83,18 @@ LoadLibraryExW(
 	_In_ DWORD dwFlags
 );
 
-#ifdef UNICODE
-#define LoadLibraryEx  LoadLibraryExW
-#else
-#define LoadLibraryEx  LoadLibraryExA
-#endif // !UNICODE
-
 DWORD
 WINAPI
 GetFileSize(
 	_In_ HANDLE hFile,
 	_Out_opt_ LPDWORD lpFileSizeHigh
 );
+
+#ifdef UNICODE
+#define LoadLibraryEx  LoadLibraryExW
+#else
+#define LoadLibraryEx  LoadLibraryExA
+#endif // !UNICODE
 
 #ifdef __cplusplus
 }

@@ -9,16 +9,13 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/parodius.h"
-#include "includes/konamipt.h"
-
-#include "cpu/m6809/konami.h" /* for the callback and the firq irq definition */
 #include "cpu/z80/z80.h"
+#include "cpu/m6809/konami.h" /* for the callback and the firq irq definition */
 #include "machine/watchdog.h"
 #include "sound/ym2151.h"
 #include "sound/k053260.h"
-#include "speaker.h"
-
+#include "includes/konamipt.h"
+#include "includes/parodius.h"
 
 INTERRUPT_GEN_MEMBER(parodius_state::parodius_interrupt)
 {
@@ -224,7 +221,7 @@ WRITE8_MEMBER( parodius_state::banking_callback )
 	membank("bank1")->set_entry((data & 0x0f) ^ 0x0f);
 }
 
-static MACHINE_CONFIG_START( parodius )
+static MACHINE_CONFIG_START( parodius, parodius_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", KONAMI, 3000000)        /* 053248 */
@@ -379,7 +376,7 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1990, parodius,  0,        parodius, parodius, parodius_state, 0, ROT0, "Konami", "Parodius DA! (World, set 1)", MACHINE_SUPPORTS_SAVE )
-GAME( 1990, parodiuse, parodius, parodius, parodius, parodius_state, 0, ROT0, "Konami", "Parodius DA! (World, set 2)", MACHINE_SUPPORTS_SAVE )
-GAME( 1990, parodiusj, parodius, parodius, parodius, parodius_state, 0, ROT0, "Konami", "Parodius DA! (Japan)",        MACHINE_SUPPORTS_SAVE )
-GAME( 1990, parodiusa, parodius, parodius, parodius, parodius_state, 0, ROT0, "Konami", "Parodius DA! (Asia)",         MACHINE_SUPPORTS_SAVE )
+GAME( 1990, parodius,  0,        parodius, parodius, driver_device, 0, ROT0, "Konami", "Parodius DA! (World, set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, parodiuse, parodius, parodius, parodius, driver_device, 0, ROT0, "Konami", "Parodius DA! (World, set 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, parodiusj, parodius, parodius, parodius, driver_device, 0, ROT0, "Konami", "Parodius DA! (Japan)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, parodiusa, parodius, parodius, parodius, driver_device, 0, ROT0, "Konami", "Parodius DA! (Asia)", MACHINE_SUPPORTS_SAVE )

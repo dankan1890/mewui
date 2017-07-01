@@ -20,11 +20,9 @@ Verified Dip locations and recommended settings with manual
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/skyfox.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/2203intf.h"
-#include "speaker.h"
+#include "includes/skyfox.h"
 
 
 /***************************************************************************
@@ -220,7 +218,7 @@ void skyfox_state::machine_reset()
 	m_bg_ctrl = 0;
 }
 
-static MACHINE_CONFIG_START( skyfox )
+static MACHINE_CONFIG_START( skyfox, skyfox_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_8MHz/2) /* Verified at 4MHz */

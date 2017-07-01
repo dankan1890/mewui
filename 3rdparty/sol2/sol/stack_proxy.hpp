@@ -43,11 +43,7 @@ namespace sol {
 		}
 
 		int push() const {
-			return push(L);
-		}
-
-		int push(lua_State* Ls) const {
-			lua_pushvalue(Ls, index);
+			lua_pushvalue(L, index);
 			return 1;
 		}
 

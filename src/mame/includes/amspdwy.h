@@ -8,7 +8,6 @@
 
 #include "machine/gen_latch.h"
 #include "sound/ym2151.h"
-#include "screen.h"
 
 class amspdwy_state : public driver_device
 {

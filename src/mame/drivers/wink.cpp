@@ -14,11 +14,9 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
 #include "machine/gen_latch.h"
 #include "machine/nvram.h"
-#include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class wink_state : public driver_device
@@ -354,7 +352,7 @@ void wink_state::machine_reset()
 	m_sound_flag = 0;
 }
 
-static MACHINE_CONFIG_START( wink )
+static MACHINE_CONFIG_START( wink, wink_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, 12000000 / 4)
 	MCFG_CPU_PROGRAM_MAP(wink_map)

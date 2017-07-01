@@ -1,9 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:David Haywood
-#ifndef MAME_VIDEO_K001006_H
-#define MAME_VIDEO_K001006_H
-
 #pragma once
+#ifndef __K001006_H__
+#define __K001006_H__
 
 
 
@@ -25,6 +24,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -50,7 +50,6 @@ private:
 
 
 extern const device_type K001006;
-DECLARE_DEVICE_TYPE(K001006, k001006_device)
 
 
 #define MCFG_K001006_GFX_REGION(_tag) \
@@ -59,4 +58,4 @@ DECLARE_DEVICE_TYPE(K001006, k001006_device)
 #define MCFG_K001006_TEX_LAYOUT(x) \
 	k001006_device::set_tex_layout(*device, x);
 
-#endif // MAME_VIDEO_K001006_H
+#endif

@@ -65,8 +65,6 @@ L056-6    9A          "      "      VLI-8-4 7A         "
 #include "sound/tms5220.h"
 #include "sound/volt_reg.h"
 #include "video/resnet.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 /*************************************
@@ -621,7 +619,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( looping )
+static MACHINE_CONFIG_START( looping, looping_state )
 
 	// CPU TMS9995, standard variant; no line connections
 	MCFG_TMS99xx_ADD("maincpu", TMS9995, MAIN_CPU_CLOCK, looping_map, looping_io_map)

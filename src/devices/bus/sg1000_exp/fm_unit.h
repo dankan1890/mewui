@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SG1000_EXP_FM_UNIT_H
-#define MAME_BUS_SG1000_EXP_FM_UNIT_H
-
 #pragma once
 
+#ifndef __SEGA_FM_UNIT__
+#define __SEGA_FM_UNIT__
 
+
+#include "emu.h"
 #include "sound/ym2413.h"
 #include "sound/sn76496.h"
 #include "sg1000exp.h"
@@ -35,7 +36,7 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	// device_sg1000_expansion_slot_interface overrides
 	virtual DECLARE_READ8_MEMBER(peripheral_r) override;
@@ -52,6 +53,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SEGA_FM_UNIT, sega_fm_unit_device)
+extern const device_type SEGA_FM_UNIT;
 
-#endif // MAME_BUS_SG1000_EXP_FM_UNIT_H
+
+#endif

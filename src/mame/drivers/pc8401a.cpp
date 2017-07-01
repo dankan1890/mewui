@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Curt Coder
-#include "emu.h"
 #include "includes/pc8401a.h"
 
 /*
@@ -568,7 +567,7 @@ WRITE8_MEMBER( pc8401a_state::ppi_pc_w )
 
 /* Machine Drivers */
 
-static MACHINE_CONFIG_START( pc8401a )
+static MACHINE_CONFIG_START( pc8401a, pc8401a_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(Z80_TAG, Z80, 4000000) // NEC uPD70008C
 	MCFG_CPU_PROGRAM_MAP(pc8401a_mem)
@@ -610,7 +609,7 @@ static MACHINE_CONFIG_START( pc8401a )
 	MCFG_RAM_EXTRA_OPTIONS("96K")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( pc8500 )
+static MACHINE_CONFIG_START( pc8500, pc8500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(Z80_TAG, Z80, 4000000) // NEC uPD70008C
 	MCFG_CPU_PROGRAM_MAP(pc8401a_mem)
@@ -673,6 +672,6 @@ ROM_END
 /* System Drivers */
 
 /*    YEAR  NAME        PARENT  COMPAT  MACHINE     INPUT       INIT    COMPANY FULLNAME */
-COMP( 1984, pc8401a,    0,      0,      pc8401a,    pc8401a, pc8401a_state, 0,      "NEC",    "PC-8401A-LS", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
-//COMP( 1984, pc8401bd,   pc8401a,0,      pc8401a,    pc8401a, pc8401a_state, 0,      "NEC",    "PC-8401BD", MACHINE_NOT_WORKING)
-COMP( 1985, pc8500,     0,      0,      pc8500,     pc8401a, pc8500_state,  0,      "NEC",    "PC-8500", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+COMP( 1984, pc8401a,    0,      0,      pc8401a,    pc8401a, driver_device, 0,      "Nippon Electronic Company",    "PC-8401A-LS", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+//COMP( 1984, pc8401bd,   pc8401a,0,      pc8401a,    pc8401a, driver_device, 0,      "Nippon Electronic Company",    "PC-8401BD", MACHINE_NOT_WORKING)
+COMP( 1985, pc8500,     0,      0,      pc8500,     pc8401a, driver_device, 0,      "Nippon Electronic Company",    "PC-8500", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

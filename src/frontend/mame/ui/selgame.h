@@ -27,7 +27,7 @@ public:
 	static void force_game_select(mame_ui_manager &mui, render_container &container);
 
 protected:
-	virtual bool menu_has_search_active() override { return !m_search.empty(); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 private:
 	enum
@@ -43,10 +43,10 @@ private:
 	static int m_isabios;
 	int highlight;
 
-	static vptr_game m_sortedlist;
-	vptr_game m_availsortedlist;
-	vptr_game m_unavailsortedlist;
-	vptr_game m_displaylist;
+	static std::vector<const game_driver *> m_sortedlist;
+	std::vector<const game_driver *> m_availsortedlist;
+	std::vector<const game_driver *> m_unavailsortedlist;
+	std::vector<const game_driver *> m_displaylist;
 
 	const game_driver *m_searchlist[VISIBLE_GAMES_IN_SEARCH + 1];
 
@@ -68,27 +68,27 @@ private:
 	void build_custom();
 	void build_category();
 	void build_available_list();
-	void build_list(const char * = nullptr, int = 0, bool = false, vptr_game = {});
+	void build_list(const char *filter_text = nullptr, int filter = 0, bool bioscheck = false, std::vector<const game_driver *> vec = {});
 
 	bool isfavorite() const;
 	void populate_search();
-	void init_sorted_list() const;
+	void init_sorted_list();
 	bool load_available_machines();
-	void load_custom_filters() const;
+	void load_custom_filters();
 
 	void *get_selection_ptr() const
 	{
-		const auto selected_ref(get_selection_ref());
+		void *const selected_ref(get_selection_ref());
 		return (uintptr_t(selected_ref) > skip_main_items) ? selected_ref : m_prev_selected;
 	}
 
 	// General info
-	virtual void general_info(const game_driver *, std::string &) override;
+	virtual void general_info(const game_driver *driver, std::string &buffer) override;
 
 	// handlers
-	void inkey_select(const event *);
-	void inkey_select_favorite(const event *);
-	void inkey_special(const event *);
+	void inkey_select(const event *menu_event);
+	void inkey_select_favorite(const event *menu_event);
+	void inkey_special(const event *menu_event);
 	void inkey_export();
 };
 

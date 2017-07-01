@@ -28,6 +28,8 @@ namespace nana
 				: public widget_geometrics
 			{
 				color_proxy text_fgcolor{ colors::black };
+				color_proxy text_highlight{ colors::black };
+				color_proxy text_selected{ colors::black };
 				color_proxy body_highlight{ static_cast<color_rgb>(0xc0ddfc) };
 				color_proxy body_selected{ colors::white };
 				color_proxy border_selected{ colors::dark_border };
@@ -48,7 +50,7 @@ namespace nana
 
 				item_renderer(window, graph_reference);
 				virtual void background(const point&, const ::nana::size&, state);
-				virtual void caption(const point&, const native_string_type&);
+				virtual void caption(const point&, const native_string_type&, const nana::color&);
 				scheme *scheme_ptr() const { return scheme_ptr_; };
 			private:
 				window	handle_;

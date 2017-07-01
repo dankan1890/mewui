@@ -10,9 +10,17 @@
 #include "emu.h"
 #include "dmadac.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
 
+
+/*************************************
+ *
+ *  Debugging
+ *
+ *************************************/
+
+#define VERBOSE     0
+
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
 
 /*************************************
@@ -111,8 +119,7 @@ void dmadac_sound_device::transfer(int channel, offs_t channel_spacing, offs_t f
 			logerror("dmadac_transfer: buffer overrun (short %d frames)\n", total_frames - j);
 	}
 
-	// FIXME: this line has rotted and can no longer compile - it should be fixed and uncommented or removed
-	//LOG("dmadac_transfer - %d samples, %d effective, %d in buffer\n", total_frames, int(total_frames * double(DEFAULT_SAMPLE_RATE) / dmadac[first_channel].frequency), dmadac[first_channel].curinpos - dmadac[first_channel].curoutpos);
+	//LOG(("dmadac_transfer - %d samples, %d effective, %d in buffer\n", total_frames, (int)(total_frames * (double)DEFAULT_SAMPLE_RATE / dmadac[first_channel].frequency), dmadac[first_channel].curinpos - dmadac[first_channel].curoutpos));
 }
 
 
@@ -130,8 +137,7 @@ void dmadac_enable(dmadac_sound_device **devlist, uint8_t num_channels, uint8_t 
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
-		if (devlist[i])
-			devlist[i]->enable(enable);
+		devlist[i]->enable(enable);
 	}
 }
 
@@ -190,10 +196,10 @@ void dmadac_sound_device::set_volume(uint16_t volume)
 	m_volume = volume;
 }
 
-DEFINE_DEVICE_TYPE(DMADAC, dmadac_sound_device, "dmadac", "DMA-driven DAC")
+const device_type DMADAC = &device_creator<dmadac_sound_device>;
 
 dmadac_sound_device::dmadac_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, DMADAC, tag, owner, clock),
+	: device_t(mconfig, DMADAC, "DMA-driven DAC", tag, owner, clock, "dmadac", __FILE__),
 		device_sound_interface(mconfig, *this),
 		m_buffer(nullptr),
 		m_bufin(0),

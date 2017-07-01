@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "midi_siel.h"
 #include "machine/clock.h"
 #include "bus/midi/midi.h"
@@ -25,7 +24,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_MIDI_SIEL, c64_siel_midi_cartridge_device, "c64_midisiel", "C64 Siel MIDI")
+const device_type C64_MIDI_SIEL = &device_creator<c64_siel_midi_cartridge_device>;
 
 
 WRITE_LINE_MEMBER( c64_siel_midi_cartridge_device::acia_irq_w )
@@ -41,10 +40,10 @@ WRITE_LINE_MEMBER( c64_siel_midi_cartridge_device::write_acia_clock )
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( c64_siel_midi )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( c64_siel_midi_cartridge_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( c64_siel_midi )
 	MCFG_DEVICE_ADD(MC6850_TAG, ACIA6850, 0)
 	MCFG_ACIA6850_TXD_HANDLER(DEVWRITELINE("mdout", midi_port_device, write_txd))
 	MCFG_ACIA6850_IRQ_HANDLER(WRITELINE(c64_siel_midi_cartridge_device, acia_irq_w))
@@ -59,6 +58,17 @@ MACHINE_CONFIG_MEMBER( c64_siel_midi_cartridge_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor c64_siel_midi_cartridge_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( c64_siel_midi );
+}
+
+
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -69,7 +79,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 c64_siel_midi_cartridge_device::c64_siel_midi_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_MIDI_SIEL, tag, owner, clock),
+	device_t(mconfig, C64_MIDI_SIEL, "C64 Siel MIDI", tag, owner, clock, "c64_midisiel", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this),
 	m_acia(*this, MC6850_TAG)
 {

@@ -12,7 +12,6 @@
 
 #include "emu.h"
 #include "cpu/powerpc/ppc.h"
-#include "screen.h"
 
 class tvcapcom_state : public driver_device
 {
@@ -48,7 +47,7 @@ uint32_t tvcapcom_state::screen_update_tvcapcom(screen_device &screen, bitmap_rg
 static INPUT_PORTS_START( tvcapcom )
 INPUT_PORTS_END
 
-static MACHINE_CONFIG_START( tvcapcom )
+static MACHINE_CONFIG_START( tvcapcom, tvcapcom_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", PPC603, 72900000) // IBM PowerPC Broadway CPU @ 729 MHz  ?
@@ -82,4 +81,4 @@ ROM_START( tvcapcom )
 
 ROM_END
 
-GAME( 2008, tvcapcom,  0, tvcapcom,    tvcapcom, tvcapcom_state, 0, ROT0, "Capcom",            "Tatsunoko Vs Capcom : Cross Generation of Heroes", MACHINE_IS_SKELETON )
+GAME( 2008, tvcapcom,  0, tvcapcom,    tvcapcom, driver_device, 0, ROT0, "Capcom",            "Tatsunoko Vs Capcom : Cross Generation of Heroes", MACHINE_IS_SKELETON )

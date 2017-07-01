@@ -57,8 +57,8 @@ const uint32_t VIRTUAL_LEAD_OUT_TRACKS = LEAD_OUT_MIN_SIZE_IN_UM * 1000 / NOMINA
 //  laserdisc_device - constructor
 //-------------------------------------------------
 
-laserdisc_device::laserdisc_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock),
+laserdisc_device::laserdisc_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 		device_sound_interface(mconfig, *this),
 		device_video_interface(mconfig, *this),
 		m_overwidth(0),
@@ -212,9 +212,9 @@ uint32_t laserdisc_device::screen_update(screen_device &screen, bitmap_rgb32 &bi
 //  delegate
 //-------------------------------------------------
 
-void laserdisc_device::static_set_get_disc(device_t &device, get_disc_delegate &&callback)
+void laserdisc_device::static_set_get_disc(device_t &device, laserdisc_get_disc_delegate callback)
 {
-	downcast<laserdisc_device &>(device).m_getdisc_callback = std::move(callback);
+	downcast<laserdisc_device &>(device).m_getdisc_callback = callback;
 }
 
 
@@ -223,9 +223,9 @@ void laserdisc_device::static_set_get_disc(device_t &device, get_disc_delegate &
 //  delegate
 //-------------------------------------------------
 
-void laserdisc_device::static_set_audio(device_t &device, audio_delegate &&callback)
+void laserdisc_device::static_set_audio(device_t &device, laserdisc_audio_delegate callback)
 {
-	downcast<laserdisc_device &>(device).m_audio_callback = std::move(callback);
+	downcast<laserdisc_device &>(device).m_audio_callback = callback;
 }
 
 
@@ -233,24 +233,24 @@ void laserdisc_device::static_set_audio(device_t &device, audio_delegate &&callb
 //  static_set_overlay - set the overlay parameters
 //-------------------------------------------------
 
-void laserdisc_device::static_set_overlay(device_t &device, uint32_t width, uint32_t height, screen_update_ind16_delegate &&update)
+void laserdisc_device::static_set_overlay(device_t &device, uint32_t width, uint32_t height, screen_update_ind16_delegate update)
 {
 	laserdisc_device &ld = downcast<laserdisc_device &>(device);
 	ld.m_overwidth = width;
 	ld.m_overheight = height;
 	ld.m_overclip.set(0, width - 1, 0, height - 1);
-	ld.m_overupdate_ind16 = std::move(update);
+	ld.m_overupdate_ind16 = update;
 	ld.m_overupdate_rgb32 = screen_update_rgb32_delegate();
 }
 
-void laserdisc_device::static_set_overlay(device_t &device, uint32_t width, uint32_t height, screen_update_rgb32_delegate &&update)
+void laserdisc_device::static_set_overlay(device_t &device, uint32_t width, uint32_t height, screen_update_rgb32_delegate update)
 {
 	laserdisc_device &ld = downcast<laserdisc_device &>(device);
 	ld.m_overwidth = width;
 	ld.m_overheight = height;
 	ld.m_overclip.set(0, width - 1, 0, height - 1);
 	ld.m_overupdate_ind16 = screen_update_ind16_delegate();
-	ld.m_overupdate_rgb32 = std::move(update);
+	ld.m_overupdate_rgb32 = update;
 }
 
 
@@ -321,7 +321,7 @@ void laserdisc_device::device_start()
 	init_audio();
 
 	// register callbacks
-	machine().configuration().config_register("laserdisc", config_load_delegate(&laserdisc_device::config_load, this), config_save_delegate(&laserdisc_device::config_save, this));
+	machine().configuration().config_register("laserdisc", config_saveload_delegate(&laserdisc_device::config_load, this), config_saveload_delegate(&laserdisc_device::config_save, this));
 }
 
 
@@ -1142,10 +1142,10 @@ void laserdisc_device::process_track_data()
 //  configuration file
 //-------------------------------------------------
 
-void laserdisc_device::config_load(config_type cfg_type, util::xml::data_node const *parentnode)
+void laserdisc_device::config_load(config_type cfg_type, xml_data_node *parentnode)
 {
 	// we only care about game files
-	if (cfg_type != config_type::GAME)
+	if (cfg_type != config_type::CONFIG_TYPE_GAME)
 		return;
 
 	// might not have any data
@@ -1153,13 +1153,13 @@ void laserdisc_device::config_load(config_type cfg_type, util::xml::data_node co
 		return;
 
 	// iterate over overlay nodes
-	for (util::xml::data_node const *ldnode = parentnode->get_child("device"); ldnode != nullptr; ldnode = ldnode->get_next_sibling("device"))
+	for (xml_data_node const *ldnode = parentnode->get_child("device"); ldnode != nullptr; ldnode = ldnode->get_next_sibling("device"))
 	{
 		const char *devtag = ldnode->get_attribute_string("tag", "");
 		if (strcmp(devtag, tag()) == 0)
 		{
 			// handle the overlay node
-			util::xml::data_node const *const overnode = ldnode->get_child("overlay");
+			xml_data_node const *const overnode = ldnode->get_child("overlay");
 			if (overnode != nullptr)
 			{
 				// fetch positioning controls
@@ -1178,21 +1178,21 @@ void laserdisc_device::config_load(config_type cfg_type, util::xml::data_node co
 //  file
 //-------------------------------------------------
 
-void laserdisc_device::config_save(config_type cfg_type, util::xml::data_node *parentnode)
+void laserdisc_device::config_save(config_type cfg_type, xml_data_node *parentnode)
 {
 	// we only care about game files
-	if (cfg_type != config_type::GAME)
+	if (cfg_type != config_type::CONFIG_TYPE_GAME)
 		return;
 
 	// create a node
-	util::xml::data_node *const ldnode = parentnode->add_child("device", nullptr);
+	xml_data_node *const ldnode = parentnode->add_child("device", nullptr);
 	if (ldnode != nullptr)
 	{
 		// output the basics
 		ldnode->set_attribute("tag", tag());
 
 		// add an overlay node
-		util::xml::data_node *const overnode = ldnode->add_child("overlay", nullptr);
+		xml_data_node *const overnode = ldnode->add_child("overlay", nullptr);
 		bool changed = false;
 		if (overnode != nullptr)
 		{

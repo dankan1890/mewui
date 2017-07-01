@@ -14,7 +14,7 @@
 		</part>
 	</software>
 
-	<software name="avcdemo">
+	<software name="avc-demo">
 		<description>AVC Demo Disk</description>
 		<year>1982</year>
 		<publisher>Lucas Logic</publisher>
@@ -47,7 +47,7 @@
 		</part>
 	</software>
 
-	<software name="nassem">
+	<software name="nas-sem">
 		<description>NAS-Sembler 1.5</description>
 		<year>1982</year>
 		<publisher>Lucas Logic</publisher>

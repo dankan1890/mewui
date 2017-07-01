@@ -13,23 +13,22 @@
 
 
 //-------------------------------------------------
-//  neogeo_kof10th_cart_device - constructor
+//  neogeo_kof10th_cart - constructor
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(NEOGEO_KOF10TH_CART, neogeo_kof10th_cart_device, "neocart_kof10th", "Neo Geo KoF 10th Ann. Bootleg Cart")
+const device_type NEOGEO_KOF10TH_CART = &device_creator<neogeo_kof10th_cart>;
 
 
-neogeo_kof10th_cart_device::neogeo_kof10th_cart_device(const machine_config &mconfig, const char *tag, device_t *owner, uint16_t clock) :
-	neogeo_bootleg_cart_device(mconfig, NEOGEO_KOF10TH_CART, tag, owner, clock)
-{
-}
+neogeo_kof10th_cart::neogeo_kof10th_cart(const machine_config &mconfig, const char *tag, device_t *owner, uint16_t clock) :
+	neogeo_bootleg_cart(mconfig, NEOGEO_KOF10TH_CART, "Neo Geo KOF 10th Ann Bootleg Cart", tag, owner, clock, "neocart_kof10th", __FILE__)
+{}
 
 
 //-------------------------------------------------
 //  mapper specific start/reset
 //-------------------------------------------------
 
-void neogeo_kof10th_cart_device::device_start()
+void neogeo_kof10th_cart::device_start()
 {
 	save_pointer(NAME(m_fixed), 0x40000);
 	save_item(NAME(m_special_bank));
@@ -37,7 +36,7 @@ void neogeo_kof10th_cart_device::device_start()
 	save_item(NAME(m_cart_ram2));
 }
 
-void neogeo_kof10th_cart_device::device_reset()
+void neogeo_kof10th_cart::device_reset()
 {
 	m_special_bank = 0;
 	memset(m_cart_ram, 0x00, 0x2000);
@@ -49,12 +48,17 @@ void neogeo_kof10th_cart_device::device_reset()
  mapper specific handlers
  -------------------------------------------------*/
 
-MACHINE_CONFIG_MEMBER( neogeo_kof10th_cart_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( kof10th_cart )
 	MCFG_NEOBOOT_PROT_ADD("bootleg_prot")
 MACHINE_CONFIG_END
 
+machine_config_constructor neogeo_kof10th_cart::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( kof10th_cart );
+}
 
-void neogeo_kof10th_cart_device::decrypt_all(DECRYPT_ALL_PARAMS)
+
+void neogeo_kof10th_cart::decrypt_all(DECRYPT_ALL_PARAMS)
 {
 	m_prot->kof10th_decrypt(cpuregion, cpuregion_size);
 	memcpy(m_cart_ram2, (uint8_t *)cpuregion + 0xe0000, 0x20000);
@@ -66,7 +70,7 @@ void neogeo_kof10th_cart_device::decrypt_all(DECRYPT_ALL_PARAMS)
  is incomplete, at the moment the S data is copied from the program rom on
  start-up instead */
 
-uint32_t neogeo_kof10th_cart_device::get_bank_base(uint16_t sel)
+uint32_t neogeo_kof10th_cart::get_bank_base(uint16_t sel)
 {
 	uint32_t bank = 0x100000 + ((sel & 7) << 20);
 	if (bank >= 0x700000)
@@ -74,28 +78,28 @@ uint32_t neogeo_kof10th_cart_device::get_bank_base(uint16_t sel)
 	return bank;
 }
 
-uint16_t neogeo_kof10th_cart_device::get_helper()
+uint16_t neogeo_kof10th_cart::get_helper()
 {
 	return m_cart_ram[0xffc];
 }
 
-uint32_t neogeo_kof10th_cart_device::get_special_bank()
+uint32_t neogeo_kof10th_cart::get_special_bank()
 {
 	return m_special_bank;
 }
 
-READ16_MEMBER(neogeo_kof10th_cart_device::protection_r)
+READ16_MEMBER(neogeo_kof10th_cart::protection_r)
 {
 	return m_cart_ram[offset];
 }
 
-READ16_MEMBER(neogeo_kof10th_cart_device::addon_r)
+READ16_MEMBER(neogeo_kof10th_cart::addon_r)
 {
 	//  printf("kof10th_RAM2_r\n");
 	return m_cart_ram2[offset];
 }
 
-WRITE16_MEMBER(neogeo_kof10th_cart_device::protection_w)
+WRITE16_MEMBER(neogeo_kof10th_cart::protection_w)
 {
 	if (offset < 0x40000/2)
 	{

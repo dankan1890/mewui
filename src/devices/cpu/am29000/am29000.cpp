@@ -19,7 +19,7 @@
 #include "am29000.h"
 
 
-DEFINE_DEVICE_TYPE(AM29000, am29000_cpu_device, "am29000", "AMC Am29000")
+const device_type AM29000 = &device_creator<am29000_cpu_device>;
 
 
 /***************************************************************************
@@ -79,7 +79,7 @@ DEFINE_DEVICE_TYPE(AM29000, am29000_cpu_device, "am29000", "AMC Am29000")
 ***************************************************************************/
 
 am29000_cpu_device::am29000_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, AM29000, tag, owner, clock)
+	: cpu_device(mconfig, AM29000, "AMD Am29000", tag, owner, clock, "am29000", __FILE__)
 	, m_program_config("program", ENDIANNESS_BIG, 32, 32, 0)
 	, m_io_config("io", ENDIANNESS_BIG, 32, 32, 0)
 	, m_data_config("data", ENDIANNESS_BIG, 32, 32, 0)

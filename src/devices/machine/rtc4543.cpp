@@ -14,16 +14,13 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "rtc4543.h"
-
-//#define VERBOSE 1
-#include "logmacro.h"
-
 
 //**************************************************************************
 //  MACROS / CONSTANTS
 //**************************************************************************
+
+#define VERBOSE 0
 
 const char *rtc4543_device::s_reg_names[7] =
 {
@@ -42,7 +39,7 @@ const char *rtc4543_device::s_reg_names[7] =
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(RTC4543, rtc4543_device, "rtc4543", "Epson R4543 RTC")
+const device_type RTC4543 = &device_creator<rtc4543_device>;
 
 
 //-------------------------------------------------
@@ -50,16 +47,16 @@ DEFINE_DEVICE_TYPE(RTC4543, rtc4543_device, "rtc4543", "Epson R4543 RTC")
 //-------------------------------------------------
 
 rtc4543_device::rtc4543_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: rtc4543_device(mconfig, RTC4543, tag, owner, clock)
+	: device_t(mconfig, RTC4543, "R4543 RTC", tag, owner, clock, "rtc4543", __FILE__),
+		device_rtc_interface(mconfig, *this),
+		data_cb(*this), m_ce(0), m_clk(0), m_wr(0), m_data(0), m_curbit(0), m_clock_timer(nullptr)
 {
 }
 
-rtc4543_device::rtc4543_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock)
-	, device_rtc_interface(mconfig, *this)
-	, data_cb(*this)
-	, m_ce(0), m_clk(0), m_wr(0), m_data(0), m_curbit(0)
-	, m_clock_timer(nullptr)
+rtc4543_device::rtc4543_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *filename)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, filename),
+		device_rtc_interface(mconfig, *this),
+		data_cb(*this), m_ce(0), m_clk(0), m_wr(0), m_data(0), m_curbit(0), m_clock_timer(nullptr)
 {
 }
 
@@ -136,12 +133,12 @@ WRITE_LINE_MEMBER( rtc4543_device::ce_w )
 {
 	if (!state && m_ce) // complete transfer
 	{
-		LOG("CE falling edge\n");
+		if (VERBOSE) logerror("CE falling edge\n", state);
 		ce_falling();
 	}
 	else if (state && !m_ce) // start new data transfer
 	{
-		LOG("CE rising edge\n");
+		if (VERBOSE) logerror("CE rising edge\n", state);
 		ce_rising();
 	}
 
@@ -177,8 +174,8 @@ void rtc4543_device::ce_falling()
 
 WRITE_LINE_MEMBER( rtc4543_device::wr_w )
 {
-	if (state != m_wr)
-		LOG("WR: %u\n", state);
+	if (VERBOSE && (state != m_wr))
+		logerror("WR: %u\n", state);
 
 	m_wr = state;
 }
@@ -196,12 +193,12 @@ WRITE_LINE_MEMBER( rtc4543_device::clk_w )
 		if (!m_clk && state)
 		{
 			clk_rising();
-			LOG("CLK rising edge (I/O: %u, bit %d)\n", m_data, bit);
+			if (VERBOSE) logerror("CLK rising edge (I/O: %u, bit %d)\n", m_data, bit);
 		}
 		else if (m_clk && !state)
 		{
 			clk_falling();
-			LOG("CLK falling edge (I/O: %u, bit %d)\n", m_data, bit);
+			if (VERBOSE) logerror("CLK falling edge (I/O: %u, bit %d)\n", m_data, bit);
 		}
 	}
 
@@ -272,10 +269,13 @@ void rtc4543_device::load_bit(int reg)
 	int bit = m_curbit & 7;
 
 	// reload data?
-	if (bit == 0)
-		LOG("RTC sending low digit of %s: %x\n", s_reg_names[reg], m_regs[reg] & 0xf);
-	else if (bit == 4)
-		LOG("RTC sending high digit of %s: %x\n", s_reg_names[reg], (m_regs[reg] >> 4) & 0xf);
+	if (VERBOSE)
+	{
+		if (bit == 0)
+			logerror("RTC sending low digit of %s: %x\n", s_reg_names[reg], m_regs[reg] & 0xf);
+		else if (bit == 4)
+			logerror("RTC sending high digit of %s: %x\n", s_reg_names[reg], (m_regs[reg] >> 4) & 0xf);
+	}
 
 	// shift data bit
 	m_data = (m_regs[reg] >> bit) & 1;
@@ -295,10 +295,13 @@ void rtc4543_device::store_bit(int reg)
 	m_regs[reg] &= ~(1 << bit);
 	m_regs[reg] |= m_data << bit;
 
-	if (bit == 7)
-		LOG("RTC received high digit of %s: %X\n", s_reg_names[reg], (m_regs[reg] >> 4) & 0xf);
-	else if (bit == 3)
-		LOG("RTC received low digit of %s: %X\n", s_reg_names[reg], m_regs[reg] & 0xf);
+	if (VERBOSE)
+	{
+		if (bit == 7)
+			logerror("RTC received high digit of %s: %X\n", s_reg_names[reg], (m_regs[reg] >> 4) & 0xf);
+		else if (bit == 3)
+			logerror("RTC received low digit of %s: %X\n", s_reg_names[reg], m_regs[reg] & 0xf);
+	}
 }
 
 
@@ -325,16 +328,16 @@ void rtc4543_device::advance_bit()
 
 void rtc4543_device::update_effective()
 {
-	LOG("RTC updated: %02x.%02x.%02x (%01x) %02x:%02x:%02x\n", m_regs[6], m_regs[5], m_regs[4], m_regs[3], m_regs[2], m_regs[1], m_regs[0]);
-	set_time(
-			false,
-			bcd_to_integer(m_regs[6]),      // year
-			bcd_to_integer(m_regs[5]),      // month
-			bcd_to_integer(m_regs[4]),      // day
-			(m_regs[3] % 7) + 1,            // day of week
-			bcd_to_integer(m_regs[2]),      // hour
-			bcd_to_integer(m_regs[1]),      // minute
-			bcd_to_integer(m_regs[0]));     // second
+	if (VERBOSE)
+		logerror("RTC updated: %02x.%02x.%02x (%01x) %02x:%02x:%02x\n", m_regs[6], m_regs[5], m_regs[4], m_regs[3], m_regs[2], m_regs[1], m_regs[0]);
+	set_time(false,
+		bcd_to_integer(m_regs[6]),      // year
+		bcd_to_integer(m_regs[5]),      // month
+		bcd_to_integer(m_regs[4]),      // day
+		(m_regs[3] % 7) + 1,            // day of week
+		bcd_to_integer(m_regs[2]),      // hour
+		bcd_to_integer(m_regs[1]),      // minute
+		bcd_to_integer(m_regs[0]));     // second
 }
 
 
@@ -343,7 +346,7 @@ void rtc4543_device::update_effective()
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(JRC6355E, jrc6355e_device, "jrc6355e", "JRC 6355E RTC")
+const device_type JRC6355E = &device_creator<jrc6355e_device>;
 
 
 //-------------------------------------------------
@@ -351,7 +354,7 @@ DEFINE_DEVICE_TYPE(JRC6355E, jrc6355e_device, "jrc6355e", "JRC 6355E RTC")
 //-------------------------------------------------
 
 jrc6355e_device::jrc6355e_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: rtc4543_device(mconfig, JRC6355E, tag, owner, clock)
+	: rtc4543_device(mconfig, JRC6355E, "JRC 6355E RTC", tag, owner, clock, "jrc6355e", __FILE__)
 {
 }
 

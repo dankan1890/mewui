@@ -80,13 +80,11 @@
 
 
 #include "emu.h"
-#include "includes/gridlee.h"
-
 #include "cpu/m6809/m6809.h"
 #include "sound/samples.h"
 #include "machine/nvram.h"
 #include "machine/watchdog.h"
-#include "speaker.h"
+#include "includes/gridlee.h"
 
 
 /* constants */
@@ -410,7 +408,7 @@ static const char *const sample_names[] =
  *
  *************************************/
 
-static MACHINE_CONFIG_START( gridlee )
+static MACHINE_CONFIG_START( gridlee, gridlee_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, GRIDLEE_CPU_CLOCK)
@@ -478,4 +476,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, gridlee, 0, gridlee, gridlee, gridlee_state, 0, ROT0, "Videa", "Gridlee", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_SOUND )
+GAME( 1983, gridlee, 0,        gridlee, gridlee, driver_device, 0,     ROT0, "Videa", "Gridlee", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_SOUND )

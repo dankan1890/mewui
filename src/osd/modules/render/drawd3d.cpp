@@ -20,6 +20,8 @@
 #include "drawd3d.h"
 #include "modules/render/d3d/d3dhlsl.h"
 #include "modules/monitor/monitor_module.h"
+#undef min
+#undef max
 #include <utility>
 
 //============================================================

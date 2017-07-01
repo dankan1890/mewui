@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_C128_PARTNER_H
-#define MAME_BUS_C64_C128_PARTNER_H
-
 #pragma once
 
+#ifndef __C128_PARTNER__
+#define __C128_PARTNER__
+
+#include "emu.h"
 #include "bus/c64/exp.h"
 #include "bus/vcs_ctrl/ctrl.h"
 
@@ -20,15 +21,15 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> c128_partner_cartridge_device
+// ======================> partner128_t
 
-class c128_partner_cartridge_device : public device_t,
+class partner128_t : public device_t,
 						public device_c64_expansion_card_interface
 						//public device_vcs_control_port_interface
 {
 public:
 	// construction/destruction
-	c128_partner_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	partner128_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// optional information overrides
 	virtual ioport_constructor device_input_ports() const override;
@@ -61,7 +62,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C128_PARTNER, c128_partner_cartridge_device)
+extern const device_type C128_PARTNER;
 
 
-#endif // MAME_BUS_C64_C128_PARTNER_H
+#endif

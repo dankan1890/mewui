@@ -152,9 +152,8 @@ Notes:
 *********************************************************************/
 
 #include "emu.h"
-#include "cpu/e132xs/e132xs.h"
 #include "machine/nvram.h"
-#include "screen.h"
+#include "cpu/e132xs/e132xs.h"
 
 
 class dgpix_state : public driver_device
@@ -422,7 +421,7 @@ void dgpix_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( dgpix )
+static MACHINE_CONFIG_START( dgpix, dgpix_state )
 	MCFG_CPU_ADD("maincpu", E132XT, 20000000*4) /* 4x internal multiplier */
 	MCFG_CPU_PROGRAM_MAP(cpu_map)
 	MCFG_CPU_IO_MAP(io_map)

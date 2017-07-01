@@ -53,7 +53,6 @@ Device Control (out)        14              7
 
 
 
-#include "emu.h"
 #include "xtide.h"
 
 
@@ -122,6 +121,12 @@ WRITE_LINE_MEMBER(xtide_device::ide_interrupt)
 	}
 }
 
+static MACHINE_CONFIG_FRAGMENT( xtide_config )
+	MCFG_ATA_INTERFACE_ADD("ata", ata_devices, "hdd", nullptr, false)
+	MCFG_ATA_INTERFACE_IRQ_HANDLER(WRITELINE(xtide_device, ide_interrupt))
+
+	MCFG_EEPROM_2864_ADD("eeprom")
+MACHINE_CONFIG_END
 
 static INPUT_PORTS_START( xtide_port )
 	PORT_START("BIOS_BASE")
@@ -256,18 +261,17 @@ ROM_END
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ISA8_XTIDE, xtide_device, "xtide", "XT-IDE Fixed Drive Adapter")
+const device_type ISA8_XTIDE = &device_creator<xtide_device>;
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( xtide_device::device_add_mconfig )
-	MCFG_ATA_INTERFACE_ADD("ata", ata_devices, "hdd", nullptr, false)
-	MCFG_ATA_INTERFACE_IRQ_HANDLER(WRITELINE(xtide_device, ide_interrupt))
-
-	MCFG_EEPROM_2864_ADD("eeprom")
-MACHINE_CONFIG_END
+machine_config_constructor xtide_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( xtide_config );
+}
 
 //-------------------------------------------------
 //  input_ports - device-specific input ports
@@ -296,7 +300,7 @@ const tiny_rom_entry *xtide_device::device_rom_region() const
 //-------------------------------------------------
 
 xtide_device::xtide_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, ISA8_XTIDE, tag, owner, clock),
+	: device_t(mconfig, ISA8_XTIDE, "XT-IDE Fixed Drive Adapter", tag, owner, clock, "isa8_xtide", __FILE__),
 	device_isa8_card_interface( mconfig, *this ),
 	m_ata(*this, "ata"),
 	m_eeprom(*this, "eeprom"), m_irq_number(0), m_d8_d15_latch(0)

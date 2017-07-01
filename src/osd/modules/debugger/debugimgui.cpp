@@ -1000,7 +1000,6 @@ void debug_imgui::refresh_filelist()
 	util::zippath_directory* dir = nullptr;
 	const char *volume_name;
 	const osd::directory::entry *dirent;
-	uint8_t first = 0;
 
 	// todo
 	m_filelist.clear();
@@ -1020,7 +1019,6 @@ void debug_imgui::refresh_filelist()
 			m_filelist.emplace_back(std::move(temp));
 			x++;
 		}
-		first = m_filelist.size();
 		while((dirent = util::zippath_readdir(dir)) != nullptr)
 		{
 			file_entry temp;
@@ -1042,9 +1040,6 @@ void debug_imgui::refresh_filelist()
 	}
 	if (dir != nullptr)
 		util::zippath_closedir(dir);
-
-	// sort file list, as it is not guaranteed to be in any particular order
-	std::sort(m_filelist.begin()+first,m_filelist.end(),[](file_entry x, file_entry y) { return x.basename < y.basename; } );
 }
 
 void debug_imgui::refresh_typelist()
@@ -1530,7 +1525,7 @@ void debug_imgui::wait_for_debugger(device_t &device, bool firststop)
 
 void debug_imgui::debugger_update()
 {
-	if (m_machine && (m_machine->phase() == machine_phase::RUNNING) && !m_machine->debugger().cpu().is_stopped() && !m_hide)
+	if (m_machine && (m_machine->phase() == MACHINE_PHASE_RUNNING) && !m_machine->debugger().cpu().is_stopped() && !m_hide)
 	{
 		uint32_t width = m_machine->render().ui_target().width();
 		uint32_t height = m_machine->render().ui_target().height();

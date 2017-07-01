@@ -8,7 +8,6 @@
 
 #include "emu.h"
 #include "includes/samcoupe.h"
-#include "screen.h"
 
 /***************************************************************************
     CONSTANTS

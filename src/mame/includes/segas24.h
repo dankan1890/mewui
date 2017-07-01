@@ -7,7 +7,6 @@
 
 #include "video/segaic24.h"
 #include "sound/dac.h"
-#include "screen.h"
 
 class segas24_state : public driver_device
 {
@@ -25,8 +24,12 @@ public:
 		, m_p1(*this, "P1")
 		, m_p2(*this, "P2")
 		, m_p3(*this, "P3")
+		, m_service(*this, "SERVICE")
+		, m_coinage(*this, "COINAGE")
+		, m_dsw(*this, "DSW")
 		, m_paddle(*this, "PADDLE")
 		, m_dials(*this, {"DIAL1", "DIAL2", "DIAL3", "DIAL4"})
+		, m_pedals(*this, {"PEDAL1", "PEDAL2", "PEDAL3", "PEDAL4"})
 		, m_mj_inputs(*this, {"MJ0", "MJ1", "MJ2", "MJ3", "MJ4", "MJ5", "P1", "P2"})
 	{
 	}
@@ -59,6 +62,9 @@ public:
 	uint8_t *fdc_pt;
 	int track_size;
 	int cur_input_line;
+	uint8_t hotrod_ctrl_cur;
+	uint8_t resetcontrol;
+	uint8_t prev_resetcontrol;
 	uint8_t curbank;
 	uint8_t mlatch;
 	const uint8_t *mlatch_table;
@@ -77,14 +83,14 @@ public:
 	timer_device *frc_cnt_timer;
 	uint8_t frc_mode;
 
-	bool m_cnt1;
-	bool m_cnt2;
-
 	uint16_t *shared_ram;
+	uint8_t (segas24_state::*io_r)(uint8_t port);
+	void (segas24_state::*io_w)(uint8_t port, uint8_t data);
+	uint8_t io_cnt, io_dir;
 
-	segas24_tile_device *vtile;
-	segas24_sprite_device *vsprite;
-	segas24_mixer_device *vmixer;
+	segas24_tile *vtile;
+	segas24_sprite *vsprite;
+	segas24_mixer *vmixer;
 
 	DECLARE_WRITE_LINE_MEMBER(irq_ym);
 	DECLARE_READ16_MEMBER(  sys16_paletteram_r );
@@ -103,17 +109,19 @@ public:
 	DECLARE_WRITE8_MEMBER( frc_w );
 	DECLARE_READ16_MEMBER(  mlatch_r );
 	DECLARE_WRITE16_MEMBER( mlatch_w );
-	DECLARE_READ8_MEMBER(   dials_r );
+	DECLARE_READ16_MEMBER(  hotrod3_ctrl_r );
+	DECLARE_WRITE16_MEMBER( hotrod3_ctrl_w );
 	DECLARE_READ16_MEMBER(  iod_r );
 	DECLARE_WRITE16_MEMBER( iod_w );
+	DECLARE_READ16_MEMBER ( sys16_io_r );
+	DECLARE_WRITE16_MEMBER( sys16_io_w );
 
-	READ8_MEMBER(dcclub_p1_r);
-	READ8_MEMBER(dcclub_p3_r);
-	READ8_MEMBER(mahmajn_input_line_r);
-	READ8_MEMBER(mahmajn_inputs_r);
+	uint8_t hotrod_io_r(uint8_t port);
+	uint8_t dcclub_io_r(uint8_t port);
+	uint8_t mahmajn_io_r(uint8_t port);
 
-	WRITE8_MEMBER(mahmajn_mux_w);
-	WRITE8_MEMBER(hotrod_lamps_w);
+	void hotrod_io_w(uint8_t port, uint8_t data);
+	void mahmajn_io_w(uint8_t port, uint8_t data);
 
 	void fdc_init();
 	void reset_reset();
@@ -121,8 +129,7 @@ public:
 	void irq_init();
 	void irq_timer_sync();
 	void irq_timer_start(int old_tmode);
-	WRITE_LINE_MEMBER(cnt1);
-	WRITE_LINE_MEMBER(cnt2);
+	void reset_control_w(uint8_t data);
 	DECLARE_DRIVER_INIT(crkdown);
 	DECLARE_DRIVER_INIT(quizmeku);
 	DECLARE_DRIVER_INIT(qrouka);
@@ -152,8 +159,12 @@ public:
 	emu_timer *m_gground_hack_timer;
 	required_ioport m_p1;
 	required_ioport m_p2;
-	required_ioport m_p3;
+	optional_ioport m_p3;
+	required_ioport m_service;
+	required_ioport m_coinage;
+	required_ioport m_dsw;
 	optional_ioport m_paddle;
 	optional_ioport_array<4> m_dials;
+	optional_ioport_array<4> m_pedals;
 	optional_ioport_array<8> m_mj_inputs;
 };

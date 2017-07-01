@@ -1,32 +1,28 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol
 #include "emu.h"
-
 #include "cpu/i86/i86.h"
-#include "imagedev/cassette.h"
-#include "machine/i8255.h"
+#include "sound/sn76496.h"
+#include "sound/speaker.h"
+#include "video/pc_t1t.h"
 #include "machine/ins8250.h"
-#include "machine/pc_fdc.h"
-#include "machine/pc_lpt.h"
-#include "machine/pckeybrd.h"
+#include "machine/i8255.h"
 #include "machine/pic8259.h"
 #include "machine/pit8253.h"
 #include "machine/ram.h"
-#include "sound/sn76496.h"
-#include "sound/spkrdev.h"
-#include "video/pc_t1t.h"
-
-#include "bus/generic/carts.h"
-#include "bus/generic/slot.h"
-#include "bus/isa/fdc.h"
-#include "bus/pc_joy/pc_joy.h"
+#include "machine/pckeybrd.h"
+#include "machine/pc_lpt.h"
+#include "machine/pc_fdc.h"
 #include "bus/rs232/rs232.h"
 #include "bus/rs232/ser_mouse.h"
+#include "bus/pc_joy/pc_joy.h"
+#include "bus/isa/fdc.h"
+#include "imagedev/cassette.h"
 
-#include "screen.h"
+#include "bus/generic/slot.h"
+#include "bus/generic/carts.h"
+
 #include "softlist.h"
-#include "speaker.h"
-
 
 class pcjr_state : public driver_device
 {
@@ -445,7 +441,7 @@ image_init_result pcjr_state::load_cart(device_image_interface &image, generic_s
 	uint32_t size = slot->common_get_size("rom");
 	bool imagic_hack = false;
 
-	if (!image.loaded_through_softlist())
+	if (image.software_entry() == nullptr)
 	{
 		int header_size = 0;
 
@@ -575,7 +571,7 @@ static ADDRESS_MAP_START(ibmpcjx_io, AS_IO, 8, pcjr_state)
 	AM_IMPORT_FROM( ibmpcjr_io )
 ADDRESS_MAP_END
 
-static MACHINE_CONFIG_START( ibmpcjr )
+static MACHINE_CONFIG_START( ibmpcjr, pcjr_state)
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8088, 4900000)
 	MCFG_CPU_PROGRAM_MAP(ibmpcjr_map)
@@ -661,7 +657,6 @@ static MACHINE_CONFIG_START( ibmpcjr )
 	/* Software lists */
 	MCFG_SOFTWARE_LIST_ADD("cart_list","ibmpcjr_cart")
 	MCFG_SOFTWARE_LIST_ADD("flop_list","ibmpcjr_flop")
-	MCFG_SOFTWARE_LIST_COMPATIBLE_ADD("pc_list","ibm5150")
 MACHINE_CONFIG_END
 
 static GFXDECODE_START( ibmpcjx )
@@ -685,7 +680,7 @@ static MACHINE_CONFIG_DERIVED( ibmpcjx, ibmpcjr )
 	MCFG_DEVICE_MODIFY(RAM_TAG)
 	MCFG_RAM_DEFAULT_SIZE("512K")
 	MCFG_RAM_EXTRA_OPTIONS("") // only boots with 512k currently
-MACHINE_CONFIG_END
+	MACHINE_CONFIG_END
 
 
 
@@ -713,7 +708,7 @@ ROM_START( ibmpcjx )
 	ROM_LOAD("kanji.rom",     0x00000, 0x38000, BAD_DUMP CRC(eaa6e3c3) SHA1(35554587d02d947fae8446964b1886fff5c9d67f)) // hand-made rom
 ROM_END
 
-//    YEAR  NAME        PARENT      COMPAT      MACHINE     INPUT    STATE          INIT        COMPANY                            FULLNAME     FLAGS
+/*    YEAR  NAME        PARENT      COMPAT      MACHINE     INPUT       INIT        COMPANY            FULLNAME */
 // pcjr
 COMP( 1983, ibmpcjr,    ibm5150,    0,          ibmpcjr,    ibmpcjr, pcjr_state,    pcjr,       "International Business Machines", "IBM PC Jr", MACHINE_IMPERFECT_COLORS )
 COMP( 1985, ibmpcjx,    ibm5150,    0,          ibmpcjx,    ibmpcjr, pcjr_state,    pcjr,       "International Business Machines", "IBM PC JX", MACHINE_IMPERFECT_COLORS | MACHINE_NOT_WORKING)

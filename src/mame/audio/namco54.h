@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#ifndef MAME_AUDIO_NAMCO54_H
-#define MAME_AUDIO_NAMCO54_H
+#ifndef NAMCO54_H
+#define NAMCO54_H
 
 #include "sound/discrete.h"
 #include "cpu/mb88xx/mb88xx.h"
@@ -35,7 +35,7 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	TIMER_CALLBACK_MEMBER( latch_callback );
 	TIMER_CALLBACK_MEMBER( irq_clear );
@@ -48,7 +48,7 @@ private:
 	uint8_t m_latched_cmd;
 };
 
-DECLARE_DEVICE_TYPE(NAMCO_54XX, namco_54xx_device)
+extern const device_type NAMCO_54XX;
 
 
 
@@ -59,4 +59,4 @@ DECLARE_DEVICE_TYPE(NAMCO_54XX, namco_54xx_device)
 #define NAMCO_54XX_P_DATA(base)     (NODE_RELATIVE(base, 3))
 
 
-#endif // MAME_AUDIO_NAMCO54_H
+#endif  /* NAMCO54_H */

@@ -4,13 +4,12 @@
 #include "emu.h"
 #include "prot_cthd.h"
 
-DEFINE_DEVICE_TYPE(NG_CTHD_PROT, cthd_prot_device, "ng_cthd_prot", "Neo Goe CTHD Protection (bootleg)")
+extern const device_type CTHD_PROT = &device_creator<cthd_prot_device>;
 
 
 cthd_prot_device::cthd_prot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, NG_CTHD_PROT, tag, owner, clock)
-{
-}
+	device_t(mconfig, CTHD_PROT, "Neo Geo CTHD Protection (Bootleg)", tag, owner, clock, "cthd_prot", __FILE__)
+{}
 
 
 void cthd_prot_device::device_start()

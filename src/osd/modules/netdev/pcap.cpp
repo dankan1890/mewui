@@ -10,6 +10,7 @@
 #include "modules/lib/osdlib.h"
 
 #if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef interface
 #define LIB_NAME    "wpcap.dll"

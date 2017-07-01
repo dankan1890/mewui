@@ -1,21 +1,22 @@
 // license:BSD-3-Clause
-// copyright-holders:Fabio Priuli, Acho A. Tang, R. Belmont
-#ifndef MAME_VIDEO_K053251_H
-#define MAME_VIDEO_K053251_H
+// copyright-holders:Fabio Priuli,Acho A. Tang, R. Belmont
+#ifndef __K053251_H__
+#define __K053251_H__
+
+	enum
+	{
+		K053251_CI0 = 0,
+		K053251_CI1,
+		K053251_CI2,
+		K053251_CI3,
+		K053251_CI4
+	};
 
 class k053251_device : public device_t
 {
 public:
-	enum
-	{
-		CI0 = 0,
-		CI1,
-		CI2,
-		CI3,
-		CI4
-	};
-
 	k053251_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~k053251_device() {}
 
 	/*
 	Note: k053251_w() automatically does a ALL_TILEMAPS->mark_all_dirty()
@@ -36,9 +37,9 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
 private:
 	// internal state
 	int      m_dirty_tmap[5];
@@ -51,9 +52,8 @@ private:
 };
 
 extern const device_type K053251;
-DECLARE_DEVICE_TYPE(K053251, k053251_device)
 
 #define MCFG_K053251_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, K053251, 0)
 
-#endif // MAME_VIDEO_K053251_H
+#endif

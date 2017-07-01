@@ -21,13 +21,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_USER_H
-#define MAME_BUS_C64_USER_H
-
 #pragma once
+
+#ifndef __C64_USER_PORT__
+#define __C64_USER_PORT__
 
 #include "bus/pet/user.h"
 
 SLOT_INTERFACE_EXTERN( c64_user_port_cards );
 
-#endif // MAME_BUS_C64_USER_H
+#endif

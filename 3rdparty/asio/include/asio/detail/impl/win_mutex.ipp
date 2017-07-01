@@ -44,8 +44,7 @@ int win_mutex::do_init()
 # if defined(UNDER_CE)
   ::InitializeCriticalSection(&crit_section_);
 # elif defined(ASIO_WINDOWS_APP)
-  if (!::InitializeCriticalSectionEx(&crit_section_, 0xFFFFFF, 0))
-    return ::GetLastError();
+  ::InitializeCriticalSectionEx(&crit_section_, 0x80000000, 0);
 # else
   if (!::InitializeCriticalSectionAndSpinCount(&crit_section_, 0x80000000))
     return ::GetLastError();
@@ -57,8 +56,7 @@ int win_mutex::do_init()
 # if defined(UNDER_CE)
     ::InitializeCriticalSection(&crit_section_);
 # elif defined(ASIO_WINDOWS_APP)
-    if (!::InitializeCriticalSectionEx(&crit_section_, 0xFFFFFF, 0))
-	  return ::GetLastError();
+    ::InitializeCriticalSectionEx(&crit_section_, 0x80000000, 0);
 # else
     if (!::InitializeCriticalSectionAndSpinCount(&crit_section_, 0x80000000))
       return ::GetLastError();

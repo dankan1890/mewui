@@ -1,7 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#include "screen.h"
-
 class tp84_state : public driver_device
 {
 public:

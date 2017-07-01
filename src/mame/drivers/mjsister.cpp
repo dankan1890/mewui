@@ -13,9 +13,6 @@
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 #define MCLK 12000000
 
@@ -83,8 +80,6 @@ public:
 
 protected:
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-
-	emu_timer *m_dac_timer;
 };
 
 
@@ -206,7 +201,7 @@ TIMER_CALLBACK_MEMBER(mjsister_state::dac_callback)
 	m_dac->write(DACROM[(m_dac_bank * 0x10000 + m_dac_adr++) & 0x1ffff]);
 
 	if (((m_dac_adr & 0xff00 ) >> 8) !=  m_dac_adr_e)
-		m_dac_timer->adjust(attotime::from_hz(MCLK) * 1024);
+		timer_set(attotime::from_hz(MCLK) * 1024, TIMER_DAC);
 	else
 		m_dac_busy = 0;
 }
@@ -446,8 +441,6 @@ void mjsister_state::machine_start()
 
 	membank("bank1")->configure_entries(0, 4, &ROM[0x10000], 0x8000);
 
-	m_dac_timer = timer_alloc(TIMER_DAC);
-
 	save_item(NAME(m_dac_busy));
 	save_item(NAME(m_flip_screen));
 	save_item(NAME(m_video_enable));
@@ -483,7 +476,7 @@ void mjsister_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( mjsister )
+static MACHINE_CONFIG_START( mjsister, mjsister_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, MCLK/2) /* 6.000 MHz */
@@ -501,7 +494,7 @@ static MACHINE_CONFIG_START( mjsister )
 	MCFG_SCREEN_UPDATE_DRIVER(mjsister_state, screen_update)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
+	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", 256)
 
 
 	/* sound hardware */
@@ -547,4 +540,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1986, mjsister, 0, mjsister, mjsister, mjsister_state, 0, ROT0, "Toaplan", "Mahjong Sisters (Japan)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, mjsister, 0, mjsister, mjsister, driver_device, 0, ROT0, "Toaplan", "Mahjong Sisters (Japan)", MACHINE_SUPPORTS_SAVE )

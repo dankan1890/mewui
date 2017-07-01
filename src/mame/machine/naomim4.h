@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert,Andreas Naive
-#ifndef MAME_MACHINE_NAOMIM4_H
-#define MAME_MACHINE_NAOMIM4_H
+#ifndef _NAOMIM4_H_
+#define _NAOMIM4_H_
 
 #include "naomibd.h"
 
@@ -52,6 +52,6 @@ private:
 	uint16_t decrypt_one_round(uint16_t word, uint16_t subkey);
 };
 
-DECLARE_DEVICE_TYPE(NAOMI_M4_BOARD, naomi_m4_board)
+extern const device_type NAOMI_M4_BOARD;
 
-#endif // MAME_MACHINE_NAOMIM4_H
+#endif

@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "superpet.h"
 #include "bus/rs232/rs232.h"
 #include "cpu/m6809/m6809.h"
@@ -28,7 +27,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SUPERPET, superpet_device, "pet_superpet", "Commodore SuperPET")
+const device_type SUPERPET = &device_creator<superpet_device>;
 
 
 //-------------------------------------------------
@@ -66,10 +65,10 @@ ADDRESS_MAP_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( superpet )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( superpet_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( superpet )
 	MCFG_CPU_ADD(M6809_TAG, M6809, XTAL_16MHz/16)
 	MCFG_CPU_PROGRAM_MAP(superpet_mem)
 
@@ -86,6 +85,17 @@ MACHINE_CONFIG_MEMBER( superpet_device::device_add_mconfig )
 	MCFG_RS232_DSR_HANDLER(DEVWRITELINE(MOS6551_TAG, mos6551_device, write_dsr))
 	MCFG_RS232_CTS_HANDLER(DEVWRITELINE(MOS6551_TAG, mos6551_device, write_cts))
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor superpet_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( superpet );
+}
 
 
 //-------------------------------------------------
@@ -165,7 +175,7 @@ inline bool superpet_device::is_ram_writable()
 //-------------------------------------------------
 
 superpet_device::superpet_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SUPERPET, tag, owner, clock),
+	device_t(mconfig, SUPERPET, "SuperPET", tag, owner, clock, "pet_superpet", __FILE__),
 	device_pet_expansion_card_interface(mconfig, *this),
 	m_maincpu(*this, M6809_TAG),
 	m_acia(*this, MOS6551_TAG),

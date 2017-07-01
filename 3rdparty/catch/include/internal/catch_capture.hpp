@@ -37,11 +37,10 @@
             ( __catchResult <= expr ).endExpression(); \
         } \
         catch( ... ) { \
-            __catchResult.useActiveException( resultDisposition ); \
+            __catchResult.useActiveException( Catch::ResultDisposition::Normal ); \
         } \
         INTERNAL_CATCH_REACT( __catchResult ) \
-    } while( Catch::isTrue( false && static_cast<bool>( !!(expr) ) ) ) // expr here is never evaluated at runtime but it forces the compiler to give it a look
-    // The double negation silences MSVC's C4800 warning, the static_cast forces short-circuit evaluation if the type has overloaded &&.
+    } while( Catch::isTrue( false && !!(expr) ) ) // expr here is never evaluated at runtime but it forces the compiler to give it a look
 
 ///////////////////////////////////////////////////////////////////////////////
 #define INTERNAL_CATCH_IF( expr, resultDisposition, macroName ) \
@@ -58,7 +57,7 @@
     do { \
         Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition ); \
         try { \
-            static_cast<void>(expr); \
+            expr; \
             __catchResult.captureResult( Catch::ResultWas::Ok ); \
         } \
         catch( ... ) { \
@@ -73,7 +72,7 @@
         Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition, #matcher ); \
         if( __catchResult.allowThrows() ) \
             try { \
-                static_cast<void>(expr); \
+                expr; \
                 __catchResult.captureResult( Catch::ResultWas::DidntThrowException ); \
             } \
             catch( ... ) { \
@@ -90,7 +89,7 @@
         Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #expr, resultDisposition ); \
         if( __catchResult.allowThrows() ) \
             try { \
-                static_cast<void>(expr); \
+                expr; \
                 __catchResult.captureResult( Catch::ResultWas::DidntThrowException ); \
             } \
             catch( exceptionType ) { \
@@ -133,7 +132,13 @@
     do { \
         Catch::ResultBuilder __catchResult( macroName, CATCH_INTERNAL_LINEINFO, #arg ", " #matcher, resultDisposition ); \
         try { \
-            __catchResult.captureMatch( arg, matcher, #matcher ); \
+            std::string matcherAsString = (matcher).toString(); \
+            __catchResult \
+                .setLhs( Catch::toString( arg ) ) \
+                .setRhs( matcherAsString == Catch::Detail::unprintableString ? #matcher : matcherAsString ) \
+                .setOp( "matches" ) \
+                .setResultType( (matcher).match( arg ) ); \
+            __catchResult.captureExpression(); \
         } catch( ... ) { \
             __catchResult.useActiveException( resultDisposition | Catch::ResultDisposition::ContinueOnFailure ); \
         } \

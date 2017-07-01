@@ -1,20 +1,19 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_AMIGAFDC_H
-#define MAME_MACHINE_AMIGAFDC_H
+#ifndef AMIGAFDC_H
+#define AMIGAFDC_H
 
-#pragma once
-
+#include "emu.h"
 #include "imagedev/floppy.h"
 
 #define MCFG_AMIGA_FDC_INDEX_CALLBACK(_write) \
-	devcb = &amiga_fdc_device::set_index_wr_callback(*device, DEVCB_##_write);
+	devcb = &amiga_fdc::set_index_wr_callback(*device, DEVCB_##_write);
 
-class amiga_fdc_device : public device_t {
+class amiga_fdc : public device_t {
 public:
-	amiga_fdc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	amiga_fdc(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_index_wr_callback(device_t &device, Object &&cb) { return downcast<amiga_fdc_device &>(device).m_write_index.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_index_wr_callback(device_t &device, _Object object) { return downcast<amiga_fdc &>(device).m_write_index.set_callback(object); }
 
 	DECLARE_WRITE8_MEMBER(ciaaprb_w);
 
@@ -117,6 +116,6 @@ private:
 	void live_run(const attotime &limit = attotime::never);
 };
 
-DECLARE_DEVICE_TYPE(AMIGA_FDC, amiga_fdc_device)
+extern const device_type AMIGA_FDC;
 
-#endif // MAME_MACHINE_AMIGAFDC_H
+#endif /* AMIGAFDC_H */

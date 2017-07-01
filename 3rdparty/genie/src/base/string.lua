@@ -30,16 +30,12 @@
 
 	function string.findlast(s, pattern, plain)
 		local curr = 0
-		local term = nil
 		repeat
-			local next, nextterm = s:find(pattern, curr + 1, plain)
-			if (next) then
-				curr = next
-				term = nextterm
-			end
+			local next = s:find(pattern, curr + 1, plain)
+			if (next) then curr = next end
 		until (not next)
 		if (curr > 0) then
-			return curr, term
+			return curr
 		end
 	end
 

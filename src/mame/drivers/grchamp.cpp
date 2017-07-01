@@ -44,11 +44,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/grchamp.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
-#include "speaker.h"
+#include "includes/grchamp.h"
 
 #include "grchamp.lh"
 
@@ -644,7 +642,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( grchamp )
+static MACHINE_CONFIG_START( grchamp, grchamp_state )
 
 	/* basic machine hardware */
 	/* CPU BOARD */
@@ -765,4 +763,4 @@ ROM_END
  *
  *************************************/
 
-GAMEL( 1981, grchamp, 0, grchamp, grchamp, grchamp_state, 0, ROT270, "Taito", "Grand Champion", MACHINE_IMPERFECT_SOUND | MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE, layout_grchamp )
+GAMEL( 1981, grchamp, 0, grchamp, grchamp, driver_device, 0, ROT270, "Taito", "Grand Champion", MACHINE_IMPERFECT_SOUND | MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE, layout_grchamp )

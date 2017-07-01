@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_NAOMIBD_H
-#define MAME_MACHINE_NAOMIBD_H
-
-#pragma once
+#ifndef _NAOMIBD_H_
+#define _NAOMIBD_H_
 
 #include "machine/naomig1.h"
 #include "machine/x76f100.h"
@@ -15,6 +13,8 @@
 class naomi_board : public naomi_g1_device
 {
 public:
+	naomi_board(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
 	static void static_set_eeprom_tag(device_t &device, const char *_eeprom_tag);
 
 	// Can be patched in the underlying class
@@ -34,8 +34,6 @@ public:
 	DECLARE_READ16_MEMBER( default_r);
 
 protected:
-	naomi_board(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -60,4 +58,4 @@ private:
 	x76f100_device *eeprom;
 };
 
-#endif // MAME_MACHINE_NAOMIBD_H
+#endif

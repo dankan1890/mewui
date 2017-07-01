@@ -845,7 +845,7 @@ uint32_t psikyo_state::screen_update_psikyo_bootleg(screen_device &screen, bitma
 }
 
 
-WRITE_LINE_MEMBER(psikyo_state::screen_vblank_psikyo)
+void psikyo_state::screen_eof_psikyo(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

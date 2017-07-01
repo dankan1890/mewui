@@ -6,13 +6,14 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NES_CTRL_4SCORE_H
-#define MAME_BUS_NES_CTRL_4SCORE_H
-
 #pragma once
 
-#include "ctrl.h"
+#ifndef __NES_FOURSCORE__
+#define __NES_FOURSCORE__
 
+
+#include "emu.h"
+#include "ctrl.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -23,16 +24,18 @@
 class nes_4score_device : public device_t,
 							public device_nes_control_port_interface
 {
-protected:
+public:
 	// construction/destruction
-	nes_4score_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	nes_4score_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
+protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
 	virtual uint8_t read_bit0() override;
 
+protected:
 	uint32_t m_latch;
 };
 
@@ -74,8 +77,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_4SCORE_P1P3, nes_4score_p1p3_device)
-DECLARE_DEVICE_TYPE(NES_4SCORE_P2P4, nes_4score_p2p4_device)
+extern const device_type NES_4SCORE_P1P3;
+extern const device_type NES_4SCORE_P2P4;
 
 
-#endif // MAME_BUS_NES_CTRL_4SCORE_H
+#endif

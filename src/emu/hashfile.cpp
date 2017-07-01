@@ -8,7 +8,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "hashfile.h"
 #include "pool.h"
 #include "emuopts.h"
@@ -21,10 +20,10 @@
     hashfile_lookup
 -------------------------------------------------*/
 
-static bool read_hash_config(const char *hash_path, const util::hash_collection &hashes, const char *sysname, std::string &result)
+bool read_hash_config(device_image_interface &image, const char *sysname, std::string &result)
 {
 	/* open a file */
-	emu_file file(hash_path, OPEN_FLAG_READ);
+	emu_file file(image.device().mconfig().options().hash_path(), OPEN_FLAG_READ);
 	if (file.open(sysname, ".hsi") != osd_file::error::NONE)
 	{
 		return false;
@@ -37,8 +36,8 @@ static bool read_hash_config(const char *hash_path, const util::hash_collection 
 	{
 		// Do search by CRC32 and SHA1
 		std::string query = "/hashfile/hash[";
-		auto crc = hashes.internal_string().substr(1,8);
-		auto sha1 = hashes.internal_string().substr(10, 40);
+		auto crc = image.hash().internal_string().substr(1,8);
+		auto sha1 = image.hash().internal_string().substr(10, 40);
 		query += "@crc32='" + crc + "' and @sha1='" + sha1 + "']/extrainfo";
 		pugi::xpath_node_set tools = doc.select_nodes(query.c_str());
 		for (pugi::xpath_node_set::const_iterator it = tools.begin(); it != tools.end(); ++it)
@@ -61,16 +60,16 @@ static bool read_hash_config(const char *hash_path, const util::hash_collection 
 	return false;
 }
 
-
-bool hashfile_extrainfo(const char *hash_path, const game_driver &driver, const util::hash_collection &hashes, std::string &result)
+bool hashfile_extrainfo(device_image_interface &image, std::string &result)
 {
 	/* now read the hash file */
-	int drv = driver_list::find(driver);
+	image.crc();
+	int drv = driver_list::find(image.device().mconfig().gamedrv());
 	int compat, open = drv;
 	bool hashfound;
 	do
 	{
-		hashfound = read_hash_config(hash_path, hashes, driver_list::driver(open).name, result);
+		hashfound = read_hash_config(image, driver_list::driver(open).name, result);
 		// first check if there are compatible systems
 		compat = driver_list::compatible_with(open);
 		// if so, try to open its hashfile
@@ -87,16 +86,3 @@ bool hashfile_extrainfo(const char *hash_path, const game_driver &driver, const 
 	while (!hashfound && open != -1);
 	return hashfound;
 }
-
-
-
-bool hashfile_extrainfo(device_image_interface &image, std::string &result)
-{
-	return hashfile_extrainfo(
-		image.device().mconfig().options().hash_path(),
-		image.device().mconfig().gamedrv(),
-		image.hash(),
-		result);
-}
-
-

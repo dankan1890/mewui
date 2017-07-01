@@ -11,11 +11,10 @@
 #ifndef MAME_EMU_ROMENTRY_H
 #define MAME_EMU_ROMENTRY_H
 
-#include "emucore.h"
-#include "osdcomm.h"
-
 #include <string>
 
+#include "emucore.h"
+#include "osdcomm.h"
 
 /***************************************************************************
 CONSTANTS

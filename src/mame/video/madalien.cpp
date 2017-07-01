@@ -9,9 +9,8 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/madalien.h"
 #include "video/mc6845.h"
-#include "screen.h"
+#include "includes/madalien.h"
 
 
 #define PIXEL_CLOCK (MADALIEN_MAIN_CLOCK / 2)
@@ -368,7 +367,7 @@ static GFXDECODE_START( madalien )
 GFXDECODE_END
 
 
-MACHINE_CONFIG_START( madalien_video )
+MACHINE_CONFIG_FRAGMENT( madalien_video )
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_RAW_PARAMS(PIXEL_CLOCK, 336, 0, 256, 288, 0, 256)
 	MCFG_SCREEN_UPDATE_DRIVER(madalien_state, screen_update_madalien)

@@ -6,15 +6,14 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_SEGAIC16_H
-#define MAME_MACHINE_SEGAIC16_H
-
 #pragma once
+
+#ifndef __SEGAIC16_H__
+#define __SEGAIC16_H__
 
 #include "cpu/m68000/m68000.h"
 #include "machine/fd1089.h"
 #include "machine/fd1094.h"
-#include "screen.h"
 
 
 //**************************************************************************
@@ -51,6 +50,9 @@
 class sega_16bit_common_base : public driver_device
 {
 public:
+	// construction/destruction
+	sega_16bit_common_base(const machine_config &mconfig, device_type type, const char *tag);
+
 	// open bus read helpers
 	DECLARE_READ16_MEMBER( open_bus_r );
 
@@ -59,9 +61,6 @@ public:
 	DECLARE_WRITE16_MEMBER( philko_paletteram_w );
 
 protected:
-	// construction/destruction
-	sega_16bit_common_base(const machine_config &mconfig, device_type type, const char *tag);
-
 	// internal helpers
 	void palette_init();
 
@@ -269,10 +268,10 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SEGA_315_5195_MEM_MAPPER,    sega_315_5195_mapper_device)
-DECLARE_DEVICE_TYPE(SEGA_315_5248_MULTIPLIER,    sega_315_5248_multiplier_device)
-DECLARE_DEVICE_TYPE(SEGA_315_5249_DIVIDER,       sega_315_5249_divider_device)
-DECLARE_DEVICE_TYPE(SEGA_315_5250_COMPARE_TIMER, sega_315_5250_compare_timer_device)
+extern const device_type SEGA_315_5195_MEM_MAPPER;
+extern const device_type SEGA_315_5248_MULTIPLIER;
+extern const device_type SEGA_315_5249_DIVIDER;
+extern const device_type SEGA_315_5250_COMPARE_TIMER;
 
 
-#endif // MAME_MACHINE_SEGAIC16_H
+#endif

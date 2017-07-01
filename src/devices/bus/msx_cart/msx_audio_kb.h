@@ -1,12 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol
-#ifndef MAME_BUS_MSX_CART_MSX_AUDIO_KB_H
-#define MAME_BUS_MSX_CART_MSX_AUDIO_KB_H
-
-#pragma once
+#ifndef __MSX_AUDIO_KB_H__
+#define __MSX_AUDIO_KB_H__
 
 
-DECLARE_DEVICE_TYPE(MSX_AUDIO_KBDC_PORT, msx_audio_kbdc_port_device)
+extern const device_type MSX_AUDIO_KBDC_PORT;
 
 
 #define MCFG_MSX_AUDIO_KBDC_PORT_ADD(_tag, _slot_intf, _def_slot) \
@@ -17,17 +15,18 @@ DECLARE_DEVICE_TYPE(MSX_AUDIO_KBDC_PORT, msx_audio_kbdc_port_device)
 class msx_audio_kb_port_interface : public device_slot_card_interface
 {
 public:
-
-	virtual DECLARE_READ8_MEMBER(read) { return 0xff; }
-	virtual DECLARE_WRITE8_MEMBER(write) { }
-
-protected:
 	// construction/destruction
-	using device_slot_card_interface::device_slot_card_interface;
+	msx_audio_kb_port_interface(const machine_config &mconfig, device_t &device)
+		: device_slot_card_interface(mconfig, device)
+	{ };
+
+	virtual DECLARE_READ8_MEMBER(read) { return 0xff; };
+	virtual DECLARE_WRITE8_MEMBER(write) { };
 };
 
 
-class msx_audio_kbdc_port_device : public device_t, public device_slot_interface
+class msx_audio_kbdc_port_device : public device_t,
+							public device_slot_interface
 {
 public:
 	// construction/destruction
@@ -40,8 +39,6 @@ public:
 	DECLARE_WRITE8_MEMBER(write);
 	DECLARE_READ8_MEMBER(read);
 
-
-protected:
 	msx_audio_kb_port_interface *m_keyboard;
 };
 
@@ -49,4 +46,4 @@ protected:
 SLOT_INTERFACE_EXTERN( msx_audio_keyboards );
 
 
-#endif // MAME_BUS_MSX_CART_MSX_AUDIO_KB_H
+#endif

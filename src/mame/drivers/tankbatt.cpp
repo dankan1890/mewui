@@ -59,12 +59,9 @@ Known issues:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/tankbatt.h"
-
 #include "cpu/m6502/m6502.h"
 #include "sound/samples.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/tankbatt.h"
 
 
 void tankbatt_state::machine_start()
@@ -282,7 +279,7 @@ static const char *const tankbatt_sample_names[] =
 };
 
 
-static MACHINE_CONFIG_START( tankbatt )
+static MACHINE_CONFIG_START( tankbatt, tankbatt_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6502, 1000000) /* 1 MHz ???? */
@@ -348,5 +345,5 @@ ROM_START( tankbattb ) /* board with "NAMCO" removed from gfx1 rom, otherwise id
 	ROM_LOAD( "bct1-1.l3", 0x0000, 0x0100, CRC(d17518bc) SHA1(f3b0deffa586808bc59e9a24ec1699c54ebe84cc) ) // dm74s287n.3l
 ROM_END
 
-GAME( 1980, tankbatt,  0,        tankbatt, tankbatt, tankbatt_state, 0, ROT90, "Namco",   "Tank Battalion", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
-GAME( 1980, tankbattb, tankbatt, tankbatt, tankbatt, tankbatt_state, 0, ROT90, "bootleg", "Tank Battalion (bootleg)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1980, tankbatt,  0,        tankbatt, tankbatt, driver_device, 0, ROT90, "Namco",   "Tank Battalion", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1980, tankbattb, tankbatt, tankbatt, tankbatt, driver_device, 0, ROT90, "bootleg", "Tank Battalion (bootleg)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )

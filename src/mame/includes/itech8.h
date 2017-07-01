@@ -10,7 +10,6 @@
 #include "machine/ticket.h"
 #include "video/tlc34076.h"
 #include "video/tms34061.h"
-#include "screen.h"
 
 #define YBUFFER_COUNT   15
 

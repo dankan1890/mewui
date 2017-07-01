@@ -15,6 +15,7 @@
 
 #include "ui/menu.h"
 
+#include <string>
 #include <vector>
 
 namespace ui {
@@ -99,7 +100,7 @@ public:
 protected:
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
 
-	virtual bool menu_has_search_active() override { return !m_search.empty(); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 private:
 	virtual void populate(float &customtop, float &custombottom) override;

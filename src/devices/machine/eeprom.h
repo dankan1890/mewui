@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_EEPROM_H
-#define MAME_MACHINE_EEPROM_H
-
 #pragma once
+
+#ifndef __EEPROM_H__
+#define __EEPROM_H__
 
 
 
@@ -46,6 +46,10 @@
 class eeprom_base_device :  public device_t,
 							public device_nvram_interface
 {
+protected:
+	// construction/destruction
+	eeprom_base_device(const machine_config &mconfig, device_type devtype, const char *name, const char *tag, device_t *owner, const char *shortname, const char *file);
+
 public:
 	// timing constants
 	enum timing_type
@@ -79,9 +83,6 @@ public:
 	void internal_write(offs_t address, uint32_t data);
 
 protected:
-	// construction/destruction
-	eeprom_base_device(const machine_config &mconfig, device_type devtype, const char *tag, device_t *owner);
-
 	// device-level overrides
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override;
@@ -110,4 +111,5 @@ protected:
 	attotime                m_completion_time;
 };
 
-#endif // MAME_MACHINE_EEPROM_H
+
+#endif

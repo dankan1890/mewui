@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "includes/crbaloon.h"
-#include "speaker.h"
 
 
 /* timing sources */
@@ -138,7 +137,7 @@ static DISCRETE_SOUND_START(crbaloon)
 DISCRETE_SOUND_END
 
 
-MACHINE_CONFIG_START( crbaloon_audio )
+MACHINE_CONFIG_FRAGMENT( crbaloon_audio )
 
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 

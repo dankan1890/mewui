@@ -1,10 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:David Haywood
-#ifndef MAME_MACHINE_DECOCPU7_H
-#define MAME_MACHINE_DECOCPU7_H
 
-#pragma once
-
+#include "emu.h"
 #include "cpu/m6502/m6502.h"
 
 class deco_cpu7_device : public m6502_device {
@@ -26,6 +23,4 @@ protected:
 
 };
 
-DECLARE_DEVICE_TYPE(DECO_CPU7, deco_cpu7_device)
-
-#endif // MAME_MACHINE_DECOCPU7_H
+static const device_type DECO_CPU7 = &device_creator<deco_cpu7_device>;

@@ -16,14 +16,11 @@ Notes:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/skykid.h"
-
 #include "cpu/m6809/m6809.h"
-#include "cpu/m6800/m6801.h"
+#include "cpu/m6800/m6800.h"
 #include "machine/watchdog.h"
 #include "sound/namco.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/skykid.h"
 
 
 WRITE8_MEMBER(skykid_state::inputport_select_w)
@@ -435,7 +432,7 @@ INTERRUPT_GEN_MEMBER(skykid_state::mcu_vblank_irq)
 }
 
 
-static MACHINE_CONFIG_START( skykid )
+static MACHINE_CONFIG_START( skykid, skykid_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809,49152000/32)

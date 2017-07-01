@@ -8,11 +8,10 @@
     the serial keyboard which may not be desirable.
 */
 
-#include "emu.h"
 #include "ngen_kb.h"
 
 ngen_keyboard_device::ngen_keyboard_device(const machine_config& mconfig, const char* tag, device_t* owner, uint32_t clock)
-	: serial_keyboard_device(mconfig, NGEN_KEYBOARD, tag, owner, 0)
+	: serial_keyboard_device(mconfig, NGEN_KEYBOARD, "NGEN Keyboard", tag, owner, 0, "ngen_keyboard", __FILE__)
 	, m_keys_down(0U)
 	, m_last_reset(0U)
 {
@@ -106,4 +105,4 @@ void ngen_keyboard_device::key_break(uint8_t row, uint8_t column)
 	}
 }
 
-DEFINE_DEVICE_TYPE(NGEN_KEYBOARD, ngen_keyboard_device, "ngen_kb", "NGEN Keyboard")
+const device_type NGEN_KEYBOARD = &device_creator<ngen_keyboard_device>;

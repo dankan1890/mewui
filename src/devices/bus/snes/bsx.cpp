@@ -18,52 +18,59 @@
 //  sns_rom_bsx_device - constructor
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(SNS_ROM_BSX,   sns_rom_bsx_device,      "sns_rom_bsx",   "SNES BS-X Cart")
-DEFINE_DEVICE_TYPE(SNS_LOROM_BSX, sns_rom_bsxlo_device,    "sns_rom_bsxlo", "SNES Cart (LoROM) + BS-X slot")
-DEFINE_DEVICE_TYPE(SNS_HIROM_BSX, sns_rom_bsxhi_device,    "sns_rom_bsxhi", "SNES Cart (HiROM) + BS-X slot")
-DEFINE_DEVICE_TYPE(SNS_BSMEMPAK,  sns_rom_bsmempak_device, "sns_bsmempak",  "SNES BS-X Memory packs")
+const device_type SNS_ROM_BSX = &device_creator<sns_rom_bsx_device>;
+const device_type SNS_LOROM_BSX = &device_creator<sns_rom_bsxlo_device>;
+const device_type SNS_HIROM_BSX = &device_creator<sns_rom_bsxhi_device>;
+const device_type SNS_BSMEMPAK = &device_creator<sns_rom_bsmempak_device>;
 
 
-sns_rom_bsx_device::sns_rom_bsx_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: sns_rom_device(mconfig, type, tag, owner, clock)
-	, m_base_unit(nullptr)
-	, access_00_1f(0)
-	, access_80_9f(0)
-	, access_40_4f(0)
-	, access_50_5f(0)
-	, access_60_6f(0)
-	, rom_access(0)
-	, m_slot(*this, "bs_slot")
+sns_rom_bsx_device::sns_rom_bsx_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+					: sns_rom_device(mconfig, type, name, tag, owner, clock, shortname, source),
+	m_base_unit(nullptr),
+	access_00_1f(0),
+	access_80_9f(0),
+	access_40_4f(0),
+	access_50_5f(0),
+	access_60_6f(0),
+	rom_access(0),
+	m_slot(*this, "bs_slot")
 {
 }
 
 sns_rom_bsx_device::sns_rom_bsx_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: sns_rom_bsx_device(mconfig, SNS_ROM_BSX, tag, owner, clock)
+					: sns_rom_device(mconfig, SNS_ROM_BSX, "SNES BS-X Cart", tag, owner, clock, "sns_rom_bsx", __FILE__),
+	m_base_unit(nullptr),
+	access_00_1f(0),
+	access_80_9f(0),
+	access_40_4f(0),
+	access_50_5f(0),
+	access_60_6f(0),
+	rom_access(0),
+						m_slot(*this, "bs_slot")
 {
 }
 
 sns_rom_bsxlo_device::sns_rom_bsxlo_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: sns_rom_device(mconfig, SNS_LOROM_BSX, tag, owner, clock)
-	, m_slot(*this, "bs_slot")
+					: sns_rom_device(mconfig, SNS_LOROM_BSX, "SNES Cart (LoROM) +  BS-X slot", tag, owner, clock, "sns_rom_bsxlo", __FILE__),
+						m_slot(*this, "bs_slot")
 {
 }
 
 sns_rom_bsxhi_device::sns_rom_bsxhi_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: sns_rom21_device(mconfig, SNS_HIROM_BSX, tag, owner, clock)
-	, m_slot(*this, "bs_slot")
+					: sns_rom21_device(mconfig, SNS_HIROM_BSX, "SNES Cart (HiROM) +  BS-X slot", tag, owner, clock, "sns_rom_bsxhi", __FILE__),
+						m_slot(*this, "bs_slot")
 {
 }
 
 sns_rom_bsmempak_device::sns_rom_bsmempak_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: sns_rom_device(mconfig, SNS_BSMEMPAK, tag, owner, clock)
-	, m_command(0), m_write_old(0), m_write_new(0), m_flash_enable(0), m_read_enable(0), m_write_enable(0)
-{
+					: sns_rom_device(mconfig, SNS_BSMEMPAK, "SNES BS-X Memory packs", tag, owner, clock, "sns_bsmempak", __FILE__), m_command(0), m_write_old(0), m_write_new(0), m_flash_enable(0), m_read_enable(0), m_write_enable(0)
+				{
 }
 
 
 void sns_rom_bsx_device::device_start()
 {
-	m_base_unit = std::make_unique<bsx_base>(machine());
+	m_base_unit = std::make_unique<BSX_base>(machine());
 	m_base_unit->init();
 
 	memset(m_cart_regs, 0x00, sizeof(m_cart_regs));
@@ -119,8 +126,8 @@ void sns_rom_bsmempak_device::device_reset()
 
 // BS-X Base Unit emulation, to be device-fied ?
 
-sns_rom_bsx_device::bsx_base::bsx_base(running_machine &machine)
-	: r2192_minute(0), m_machine(machine)
+BSX_base::BSX_base(running_machine &machine)
+			: r2192_minute(0), m_machine(machine)
 {
 	m_machine.save().save_item(regs, "SNES_BSX/regs");
 	m_machine.save().save_item(r2192_counter, "SNES_BSX/r2192_counter");
@@ -128,9 +135,9 @@ sns_rom_bsx_device::bsx_base::bsx_base(running_machine &machine)
 	m_machine.save().save_item(r2192_second, "SNES_BSX/r2192_second");
 }
 
-void sns_rom_bsx_device::bsx_base::init()
+void BSX_base::init()
 {
-	std::fill(std::begin(regs), std::end(regs), 0);
+	memset(regs, 0x00, sizeof(regs));
 	r2192_counter = 0;
 	r2192_hour = 0;
 	r2192_minute = 0;
@@ -138,7 +145,7 @@ void sns_rom_bsx_device::bsx_base::init()
 }
 
 
-uint8_t sns_rom_bsx_device::bsx_base::read(uint32_t offset)
+uint8_t BSX_base::read(uint32_t offset)
 {
 	offset &= 0xffff;
 	if (offset < 0x2188 || offset >= 0x21a0)
@@ -200,7 +207,7 @@ uint8_t sns_rom_bsx_device::bsx_base::read(uint32_t offset)
 }
 
 
-void sns_rom_bsx_device::bsx_base::write(uint32_t offset, uint8_t data)
+void BSX_base::write(uint32_t offset, uint8_t data)
 {
 	offset &= 0xffff;
 	if (offset < 0x2188 || offset >= 0x21a0)
@@ -233,28 +240,38 @@ void sns_rom_bsx_device::bsx_base::write(uint32_t offset, uint8_t data)
 	}
 }
 
+//-------------------------------------------------
+//  MACHINE_CONFIG_FRAGMENT( bs_slot )
+//-------------------------------------------------
 
 static SLOT_INTERFACE_START(bsx_cart)
 	SLOT_INTERFACE_INTERNAL("bsmempak",  SNS_BSMEMPAK)
 SLOT_INTERFACE_END
 
+static MACHINE_CONFIG_FRAGMENT( bs_slot )
+	MCFG_SNS_BSX_CARTRIDGE_ADD("bs_slot", bsx_cart, nullptr)
+MACHINE_CONFIG_END
+
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( sns_rom_bsx_device::device_add_mconfig )
-	MCFG_SNS_BSX_CARTRIDGE_ADD("bs_slot", bsx_cart, nullptr)
-MACHINE_CONFIG_END
+machine_config_constructor sns_rom_bsx_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( bs_slot );
+}
 
-MACHINE_CONFIG_MEMBER( sns_rom_bsxlo_device::device_add_mconfig )
-	MCFG_SNS_BSX_CARTRIDGE_ADD("bs_slot", bsx_cart, nullptr)
-MACHINE_CONFIG_END
+machine_config_constructor sns_rom_bsxlo_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( bs_slot );
+}
 
-MACHINE_CONFIG_MEMBER( sns_rom_bsxhi_device::device_add_mconfig )
-	MCFG_SNS_BSX_CARTRIDGE_ADD("bs_slot", bsx_cart, nullptr)
-MACHINE_CONFIG_END
-
+machine_config_constructor sns_rom_bsxhi_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( bs_slot );
+}
 
 /*-------------------------------------------------
  mapper specific handlers

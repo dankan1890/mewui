@@ -10,23 +10,33 @@
 
 
 #include "emu.h"
-#include "includes/ondra.h"
-
 #include "cpu/z80/z80.h"
+#include "includes/ondra.h"
 
 
 READ8_MEMBER(ondra_state::ondra_keyboard_r)
 {
 	uint8_t retVal = 0x00;
+	double valcas = m_cassette->input();
 
-	double const valcas = m_cassette->input();
-	if (valcas < 0.00)
-		retVal |= 0x80;
+	if ( valcas < 0.00) {
+		retVal = 0x80;
+	}
 
-	if ((offset & 0x0f) < m_lines.size())
-		retVal |= m_lines[offset & 0x0f]->read();
-	else
-		retVal |= 0x1f;
+	switch ( offset & 0x0f )
+	{
+		case 0: retVal |= m_line0->read(); break;
+		case 1: retVal |= m_line1->read(); break;
+		case 2: retVal |= m_line2->read(); break;
+		case 3: retVal |= m_line3->read(); break;
+		case 4: retVal |= m_line4->read(); break;
+		case 5: retVal |= m_line5->read(); break;
+		case 6: retVal |= m_line6->read(); break;
+		case 7: retVal |= m_line7->read(); break;
+		case 8: retVal |= m_line8->read(); break;
+		case 9: retVal |= m_line9->read(); break;
+		default: retVal |= 0x1f; break;
+	}
 
 	return retVal;
 }
@@ -87,6 +97,5 @@ void ondra_state::machine_reset()
 
 void ondra_state::machine_start()
 {
-	m_nmi_check_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(ondra_state::nmi_check_callback), this));
-	m_nmi_check_timer->adjust(attotime::from_hz(10), 0, attotime::from_hz(10));
+	machine().scheduler().timer_pulse(attotime::from_hz(10), timer_expired_delegate(FUNC(ondra_state::nmi_check_callback),this));
 }

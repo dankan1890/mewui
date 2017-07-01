@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_VCS_CTRL_KEYPAD_H
-#define MAME_BUS_VCS_CTRL_KEYPAD_H
-
 #pragma once
 
+#ifndef __VCS_KEYPAD__
+#define __VCS_KEYPAD__
+
+#include "emu.h"
 #include "ctrl.h"
 
 
@@ -52,6 +53,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(VCS_KEYPAD, vcs_keypad_device)
+extern const device_type VCS_KEYPAD;
 
-#endif // MAME_BUS_VCS_CTRL_KEYPAD_H
+
+#endif

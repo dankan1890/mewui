@@ -6,13 +6,17 @@
 #include "segaic16_road.h"
 #include "video/resnet.h"
 
-DEFINE_DEVICE_TYPE(SEGAIC16_ROAD, segaic16_road_device, "segaic16_road", "Sega 16-bit Road Generator")
+const device_type SEGAIC16_ROAD = &device_creator<segaic16_road_device>;
 
 segaic16_road_device::segaic16_road_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SEGAIC16_ROAD, tag, owner, clock)
+	: device_t(mconfig, SEGAIC16_ROAD, "Sega 16-bit Road Generator", tag, owner, clock, "segaic16_road", __FILE__)
 {
 }
 
+
+void segaic16_road_device::device_config_complete()
+{
+}
 
 void segaic16_road_device::device_start()
 {
@@ -69,7 +73,7 @@ void segaic16_road_device::device_reset()
 
 
 
-void segaic16_road_device::segaic16_road_hangon_decode(running_machine &machine, road_info *info)
+void segaic16_road_device::segaic16_road_hangon_decode(running_machine &machine, struct road_info *info)
 {
 	int x, y;
 	const uint8_t *gfx = memregion("^gfx3")->base();
@@ -91,7 +95,7 @@ void segaic16_road_device::segaic16_road_hangon_decode(running_machine &machine,
 }
 
 
-static void segaic16_road_hangon_draw(segaic16_road_device::road_info *info, bitmap_ind16 &bitmap, const rectangle &cliprect, int priority)
+static void segaic16_road_hangon_draw(struct road_info *info, bitmap_ind16 &bitmap, const rectangle &cliprect, int priority)
 {
 	uint16_t *roadram = info->roadram;
 	int x, y;
@@ -111,8 +115,8 @@ static void segaic16_road_hangon_draw(segaic16_road_device::road_info *info, bit
 		plycont = (control >> 10) & 3;
 
 		/* skip layers we aren't supposed to be drawing */
-		if ((plycont == 0 && priority != segaic16_road_device::ROAD_BACKGROUND) ||
-			(plycont != 0 && priority != segaic16_road_device::ROAD_FOREGROUND))
+		if ((plycont == 0 && priority != SEGAIC16_ROAD_BACKGROUND) ||
+			(plycont != 0 && priority != SEGAIC16_ROAD_FOREGROUND))
 			continue;
 
 		/* compute the offset of the road graphics for this line */
@@ -153,7 +157,7 @@ static void segaic16_road_hangon_draw(segaic16_road_device::road_info *info, bit
 
 			/* for the Hang On/Super Hang On case only: if the control word bit 9 is clear, we will forcibly */
 			/* set the flip-flip at 9J (upper half) */
-			if (info->type == segaic16_road_device::ROAD_HANGON && !(control & 0x200))
+			if (info->type == SEGAIC16_ROAD_HANGON && !(control & 0x200))
 				ff9j2 = 1;
 
 			/* ---- now process the pixel ---- */
@@ -161,7 +165,7 @@ static void segaic16_road_hangon_draw(segaic16_road_device::road_info *info, bit
 
 			/* the Space Harrier/Enduro Racer hardware has a tweak that maps the control word bit 9 to the */
 			/* /CE line on the road ROM; use this to effectively disable the road data */
-			if (info->type != segaic16_road_device::ROAD_SHARRIER || !(control & 0x200))
+			if (info->type != SEGAIC16_ROAD_SHARRIER || !(control & 0x200))
 
 				/* the /OE line on the road ROM is linked to the AND of bits 2 & 3 of the counter at 9N */
 				if ((ctr9n9p & 0xc0) == 0xc0)
@@ -330,7 +334,7 @@ static void segaic16_road_hangon_draw(segaic16_road_device::road_info *info, bit
  *
  *******************************************************************************************/
 
-void segaic16_road_device::segaic16_road_outrun_decode(running_machine &machine, road_info *info)
+void segaic16_road_device::segaic16_road_outrun_decode(running_machine &machine, struct road_info *info)
 {
 	int x, y;
 	const uint8_t *gfx = memregion("^gfx3")->base();
@@ -361,7 +365,7 @@ void segaic16_road_device::segaic16_road_outrun_decode(running_machine &machine,
 }
 
 
-static void segaic16_road_outrun_draw(segaic16_road_device::road_info *info, bitmap_ind16 &bitmap, const rectangle &cliprect, int priority)
+static void segaic16_road_outrun_draw(struct road_info *info, bitmap_ind16 &bitmap, const rectangle &cliprect, int priority)
 {
 	uint16_t *roadram = info->buffer.get();
 	int x, y;
@@ -383,7 +387,7 @@ static void segaic16_road_outrun_draw(segaic16_road_device::road_info *info, bit
 		int data1 = roadram[0x100 + y];
 
 		/* background case: look for solid fill scanlines */
-		if (priority == segaic16_road_device::ROAD_BACKGROUND)
+		if (priority == SEGAIC16_ROAD_BACKGROUND)
 		{
 			int color = -1;
 
@@ -536,7 +540,7 @@ static void segaic16_road_outrun_draw(segaic16_road_device::road_info *info, bit
 
 void segaic16_road_device::segaic16_road_init(running_machine &machine, int which, int type, int colorbase1, int colorbase2, int colorbase3, int xoffs)
 {
-	road_info *info = &segaic16_road[which];
+	struct road_info *info = &segaic16_road[which];
 
 	/* reset the tilemap info */
 	memset(info, 0, sizeof(*info));
@@ -561,14 +565,14 @@ void segaic16_road_device::segaic16_road_init(running_machine &machine, int whic
 	/* determine the parameters of the road */
 	switch (type)
 	{
-		case ROAD_HANGON:
-		case ROAD_SHARRIER:
+		case SEGAIC16_ROAD_HANGON:
+		case SEGAIC16_ROAD_SHARRIER:
 			info->draw = segaic16_road_hangon_draw;
 			segaic16_road_hangon_decode(machine, info);
 			break;
 
-		case ROAD_OUTRUN:
-		case ROAD_XBOARD:
+		case SEGAIC16_ROAD_OUTRUN:
+		case SEGAIC16_ROAD_XBOARD:
 			info->buffer = std::make_unique<uint16_t[]>(0x1000/2);
 			info->draw = segaic16_road_outrun_draw;
 			segaic16_road_outrun_decode(machine, info);
@@ -589,7 +593,7 @@ void segaic16_road_device::segaic16_road_init(running_machine &machine, int whic
 
 void segaic16_road_device::segaic16_road_draw(int which, bitmap_ind16 &bitmap, const rectangle &cliprect, int priority)
 {
-	road_info *info = &segaic16_road[which];
+	struct road_info *info = &segaic16_road[which];
 	(*info->draw)(info, bitmap, cliprect, priority);
 }
 
@@ -603,7 +607,7 @@ void segaic16_road_device::segaic16_road_draw(int which, bitmap_ind16 &bitmap, c
 
 READ16_MEMBER( segaic16_road_device::segaic16_road_control_0_r )
 {
-	road_info *info = &segaic16_road[0];
+	struct road_info *info = &segaic16_road[0];
 
 	if (info->buffer)
 	{
@@ -626,10 +630,10 @@ READ16_MEMBER( segaic16_road_device::segaic16_road_control_0_r )
 
 WRITE16_MEMBER( segaic16_road_device::segaic16_road_control_0_w )
 {
-	road_info *info = &segaic16_road[0];
+	struct road_info *info = &segaic16_road[0];
 
 	if (ACCESSING_BITS_0_7)
 	{
-		info->control = data & ((info->type == ROAD_OUTRUN) ? 3 : 7);
+		info->control = data & ((info->type == SEGAIC16_ROAD_OUTRUN) ? 3 : 7);
 	}
 }

@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_BUS_RS232_PRINTER_H
-#define MAME_BUS_RS232_PRINTER_H
+#ifndef __RS232_PRINTER_H__
+#define __RS232_PRINTER_H__
 
 #pragma once
 
@@ -18,9 +18,10 @@ public:
 	virtual DECLARE_WRITE_LINE_MEMBER( input_txd ) override { device_serial_interface::rx_w(state); }
 
 	DECLARE_WRITE_LINE_MEMBER(update_serial);
+	DECLARE_WRITE_LINE_MEMBER(printer_online);
 
 protected:
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual ioport_constructor device_input_ports() const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -29,8 +30,6 @@ protected:
 	virtual void rcv_complete() override;
 
 private:
-	DECLARE_WRITE_LINE_MEMBER(printer_online);
-
 	required_device<printer_image_device> m_printer;
 
 	required_ioport m_rs232_rxbaud;
@@ -40,6 +39,6 @@ private:
 	required_ioport m_rs232_stopbits;
 };
 
-DECLARE_DEVICE_TYPE(SERIAL_PRINTER, serial_printer_device)
+extern const device_type SERIAL_PRINTER;
 
-#endif // MAME_BUS_RS232_PRINTER_H
+#endif

@@ -1,25 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_INCLUDES_MODEL1_H
-#define MAME_INCLUDES_MODEL1_H
-
-#pragma once
-
-#include "audio/dsbz80.h"
-#include "audio/segam1audio.h"
-
-#include "cpu/mb86233/mb86233.h"
-#include "cpu/v60/v60.h"
-#include "machine/i8251.h"
-#include "machine/m1comm.h"
-#include "video/segaic24.h"
-
-#include "screen.h"
+#include <functional>
 
 #include <glm/glm/vec3.hpp>
 
-#include <functional>
-
+#include "audio/dsbz80.h"
+#include "audio/segam1audio.h"
+#include "cpu/v60/v60.h"
+#include "machine/m1comm.h"
+#include "video/segaic24.h"
 
 #define DECLARE_TGP_FUNCTION(name) void name()
 
@@ -33,12 +22,10 @@ public:
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
 		, m_m1audio(*this, "m1audio")
-		, m_m1uart(*this, "m1uart")
 		, m_m1comm(*this, "m1comm")
 		, m_dsbz80(*this, DSBZ80_TAG)
 		, m_tgp(*this, "tgp")
 		, m_screen(*this, "screen")
-		, m_io_timer(*this, "iotimer")
 		, m_mr2(*this, "mr2")
 		, m_mr(*this, "mr")
 		, m_display_list0(*this, "display_list0")
@@ -59,7 +46,6 @@ public:
 
 	DECLARE_READ16_MEMBER(network_ctl_r);
 	DECLARE_WRITE16_MEMBER(network_ctl_w);
-	TIMER_DEVICE_CALLBACK_MEMBER(io_command_acknowledge);
 
 	DECLARE_READ16_MEMBER(io_r);
 	DECLARE_WRITE16_MEMBER(io_w);
@@ -68,6 +54,10 @@ public:
 
 	TIMER_DEVICE_CALLBACK_MEMBER(model1_interrupt);
 	IRQ_CALLBACK_MEMBER(irq_callback);
+
+	// Sound
+	DECLARE_READ16_MEMBER(snd_68k_ready_r);
+	DECLARE_WRITE16_MEMBER(snd_latch_to_68k_w);
 
 	// TGP
 	DECLARE_READ16_MEMBER(fifoin_status_r);
@@ -96,18 +86,13 @@ public:
 	DECLARE_READ32_MEMBER(copro_fifoin_pop);
 	DECLARE_WRITE32_MEMBER(copro_fifoout_push);
 
-	uint16_t m_r360_state;
-	DECLARE_DRIVER_INIT(wingwar360);
-	DECLARE_READ16_MEMBER(r360_r);
-	DECLARE_WRITE16_MEMBER(r360_w);
-
 	// Rendering
 	DECLARE_VIDEO_START(model1);
 	DECLARE_READ16_MEMBER(model1_listctl_r);
 	DECLARE_WRITE16_MEMBER(model1_listctl_w);
 
 	uint32_t screen_update_model1(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_model1);
+	void screen_eof_model1(screen_device &screen, bool state);
 
 	struct spoint_t
 	{
@@ -190,17 +175,13 @@ private:
 	bool m_dump;
 	bool m_swa;
 
-	uint8_t m_io_command;
-
 	// Devices
 	required_device<v60_device> m_maincpu;          // V60
 	required_device<segam1audio_device> m_m1audio;  // Model 1 standard sound board
-	required_device<i8251_device> m_m1uart;
 	optional_device<m1comm_device> m_m1comm;        // Model 1 communication board
 	optional_device<dsbz80_device> m_dsbz80;        // Digital Sound Board
 	optional_device<mb86233_cpu_device> m_tgp;
 	required_device<screen_device> m_screen;
-	required_device<timer_device> m_io_timer;
 
 	required_shared_ptr<uint16_t> m_mr2;
 	required_shared_ptr<uint16_t> m_mr;
@@ -210,6 +191,8 @@ private:
 
 	// Sound
 	int m_sound_irq;
+	uint8_t m_last_snd_cmd;
+	int m_snd_cmd_state;
 
 	// TGP FIFO
 	uint32_t  fifoout_pop();
@@ -475,7 +458,7 @@ private:
 
 	optional_shared_ptr<uint16_t> m_paletteram16;
 	required_device<palette_device> m_palette;
-	required_device<segas24_tile_device> m_tiles;
+	required_device<segas24_tile> m_tiles;
 
 	// I/O related
 	uint16_t  m_lamp_state;
@@ -488,5 +471,3 @@ private:
 /*----------- defined in machine/model1.c -----------*/
 
 ADDRESS_MAP_EXTERN( model1_vr_tgp_map, 32 );
-
-#endif // MAME_INCLUDES_MODEL1_H

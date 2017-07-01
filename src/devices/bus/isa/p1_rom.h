@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_ISA_P1_ROM_H
-#define MAME_BUS_ISA_P1_ROM_H
-
 #pragma once
 
+#ifndef __P1_ROM__
+#define __P1_ROM__
+
+#include "emu.h"
 #include "isa.h"
 
 //**************************************************************************
@@ -38,4 +39,4 @@ protected:
 extern const device_type P1_ROM;
 
 
-#endif // MAME_BUS_ISA_P1_ROM_H
+#endif

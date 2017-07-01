@@ -15,10 +15,8 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/crbaloon.h"
-
 #include "cpu/z80/z80.h"
-#include "screen.h"
+#include "includes/crbaloon.h"
 
 
 /*************************************
@@ -359,7 +357,7 @@ INTERRUPT_GEN_MEMBER(crbaloon_state::vblank_irq)
 }
 
 
-static MACHINE_CONFIG_START( crbaloon )
+static MACHINE_CONFIG_START( crbaloon, crbaloon_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, CRBALOON_MASTER_XTAL / 3)
@@ -436,5 +434,5 @@ ROM_END
  *
  *************************************/
 
-GAME( 1980, crbaloon, 0,        crbaloon, crbaloon, crbaloon_state, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
-GAME( 1980, crbaloon2,crbaloon, crbaloon, crbaloon, crbaloon_state, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1980, crbaloon, 0,        crbaloon, crbaloon, driver_device, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1980, crbaloon2,crbaloon, crbaloon, crbaloon, driver_device, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )

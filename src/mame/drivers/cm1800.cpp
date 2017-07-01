@@ -43,22 +43,19 @@ class cm1800_state : public driver_device
 {
 public:
 	cm1800_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_terminal(*this, TERMINAL_TAG)
-		, m_maincpu(*this, "maincpu")
+		: driver_device(mconfig, type, tag),
+		m_terminal(*this, TERMINAL_TAG) ,
+		m_maincpu(*this, "maincpu")
 	{
 	}
 
 	DECLARE_READ8_MEMBER( term_status_r );
 	DECLARE_READ8_MEMBER( term_r );
-	void kbd_put(u8 data);
-
-protected:
-	virtual void machine_reset() override;
-
+	DECLARE_WRITE8_MEMBER( kbd_put );
 	uint8_t m_term_data;
 
 	required_device<generic_terminal_device> m_terminal;
+	virtual void machine_reset() override;
 	required_device<cpu_device> m_maincpu;
 };
 
@@ -74,7 +71,7 @@ READ8_MEMBER( cm1800_state::term_r )
 	return ret;
 }
 
-void cm1800_state::kbd_put(u8 data)
+WRITE8_MEMBER( cm1800_state::kbd_put )
 {
 	m_term_data = data;
 }
@@ -100,7 +97,7 @@ void cm1800_state::machine_reset()
 {
 }
 
-static MACHINE_CONFIG_START( cm1800 )
+static MACHINE_CONFIG_START( cm1800, cm1800_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",I8080, XTAL_2MHz)
 	MCFG_CPU_PROGRAM_MAP(cm1800_mem)
@@ -109,7 +106,7 @@ static MACHINE_CONFIG_START( cm1800 )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(cm1800_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(cm1800_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -120,5 +117,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME     PARENT  COMPAT   MACHINE    INPUT   STATE          INIT  COMPANY      FULLNAME   FLAGS */
-COMP( 1981, cm1800,  0,      0,       cm1800,    cm1800, cm1800_state,  0,    "<unknown>", "CM-1800", MACHINE_NO_SOUND_HW)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY   FULLNAME       FLAGS */
+COMP( 1981, cm1800,  0,       0,    cm1800,    cm1800, driver_device,     0,  "<unknown>", "CM-1800", MACHINE_NO_SOUND_HW)

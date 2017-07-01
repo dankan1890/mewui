@@ -38,16 +38,14 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "imagedev/cassette.h"
-#include "machine/clock.h"
+#include "video/mc6845.h"
 #include "machine/i8251.h"
-#include "machine/ram.h"
+#include "machine/clock.h"
+#include "imagedev/cassette.h"
 #include "sound/beep.h"
 #include "sound/wave.h"
-#include "video/mc6845.h"
-#include "screen.h"
+#include "machine/ram.h"
 #include "softlist.h"
-#include "speaker.h"
 
 #define MAIN_CLOCK XTAL_4MHz
 
@@ -63,14 +61,13 @@ public:
 	alphatro_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_p_videoram(*this, "videoram")
-		, m_p_chargen(*this, "chargen")
 		, m_maincpu(*this, "maincpu")
 		, m_crtc(*this, "crtc")
 		, m_usart(*this, "usart")
 		, m_cass(*this, "cassette")
 		, m_beep(*this, "beeper")
-		, m_p_ram(*this, "main_ram")
-		, m_palette(*this, "palette")
+		, m_p_ram(*this, "main_ram"),
+		m_palette(*this, "palette")
 	{ }
 
 	DECLARE_READ8_MEMBER(port10_r);
@@ -82,25 +79,27 @@ public:
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_c);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_p);
 	MC6845_UPDATE_ROW(crtc_update_row);
+	required_shared_ptr<uint8_t> m_p_videoram;
+	uint8_t *m_p_chargen;
+	uint8_t m_flashcnt;
 
 private:
-	required_shared_ptr<u8> m_p_videoram;
-	u8 m_flashcnt;
-	u8 m_timer_bit;
-	u8 m_cass_data[4];
+	uint8_t m_timer_bit;
+	uint8_t m_cass_data[4];
 	bool m_cass_state;
 	bool m_cassold;
 	emu_timer* m_sys_timer;
+	virtual void video_start() override;
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-	required_region_ptr<u8> m_p_chargen;
 	required_device<cpu_device> m_maincpu;
 	required_device<mc6845_device> m_crtc;
 	required_device<i8251_device> m_usart;
 	required_device<cassette_image_device> m_cass;
 	required_device<beep_device> m_beep;
-	required_shared_ptr<u8> m_p_ram;
+	required_shared_ptr<uint8_t> m_p_ram;
+public:
 	required_device<palette_device> m_palette;
 };
 
@@ -152,15 +151,20 @@ WRITE_LINE_MEMBER( alphatro_state::write_usart_clock )
 	m_usart->write_rxc(state);
 }
 
+void alphatro_state::video_start()
+{
+	m_p_chargen = memregion("chargen")->base();
+}
+
 MC6845_UPDATE_ROW( alphatro_state::crtc_update_row )
 {
 	const rgb_t *pens = m_palette->palette()->entry_list_raw();
 	bool palette = BIT(ioport("CONFIG")->read(), 5);
 	if (y==0) m_flashcnt++;
 	bool inv;
-	u8 chr,gfx,attr,bg,fg;
-	u16 mem,x;
-	u32 *p = &bitmap.pix32(y);
+	uint8_t chr,gfx,attr,bg,fg;
+	uint16_t mem,x;
+	uint32_t *p = &bitmap.pix32(y);
 
 	for (x = 0; x < x_count; x++)
 	{
@@ -187,7 +191,7 @@ MC6845_UPDATE_ROW( alphatro_state::crtc_update_row )
 
 		if (inv)
 		{
-			u8 t = bg;
+			uint8_t t = bg;
 			bg = fg;
 			fg = t;
 		}
@@ -377,7 +381,7 @@ void alphatro_state::machine_start()
 void alphatro_state::machine_reset()
 {
 	// do what the IPL does
-	u8* ROM = memregion("roms")->base();
+	uint8_t* ROM = memregion("roms")->base();
 	m_maincpu->set_pc(0xe000);
 	// If BASIC is missing then it boots into the Monitor
 	memcpy(m_p_ram, ROM, 0x6000); // Copy BASIC to RAM
@@ -430,7 +434,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(alphatro_state::timer_p)
 {
 	/* cassette - turn 1200/2400Hz to a bit */
 	m_cass_data[1]++;
-	u8 cass_ws = (m_cass->input() > +0.03) ? 1 : 0;
+	uint8_t cass_ws = (m_cass->input() > +0.03) ? 1 : 0;
 
 	if (cass_ws != m_cass_data[0])
 	{
@@ -440,7 +444,7 @@ TIMER_DEVICE_CALLBACK_MEMBER(alphatro_state::timer_p)
 	}
 }
 
-static MACHINE_CONFIG_START( alphatro )
+static MACHINE_CONFIG_START( alphatro, alphatro_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80,MAIN_CLOCK)
@@ -510,4 +514,4 @@ ROM_START( alphatro )
 	ROM_LOAD( "2732.ic-1067",   0x0000, 0x1000, CRC(61f38814) SHA1(35ba31c58a10d5bd1bdb202717792ca021dbe1a8) )
 ROM_END
 
-COMP( 1983, alphatro,   0,       0,    alphatro,   alphatro, alphatro_state,  0,  "Triumph-Adler", "Alphatronic PC", MACHINE_NOT_WORKING )
+COMP( 1983, alphatro,   0,       0,    alphatro,   alphatro, driver_device,  0,  "Triumph-Adler", "Alphatronic PC", MACHINE_NOT_WORKING )

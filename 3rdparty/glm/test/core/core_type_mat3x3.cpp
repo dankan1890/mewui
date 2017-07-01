@@ -169,20 +169,6 @@ namespace cast
 	}
 }//namespace cast
 
-int test_size()
-{
-	int Error = 0;
-
-	Error += 36 == sizeof(glm::mat3x3) ? 0 : 1;
-	Error += 72 == sizeof(glm::dmat3x3) ? 0 : 1;
-	Error += glm::mat3x3().length() == 3 ? 0 : 1;
-	Error += glm::dmat3x3().length() == 3 ? 0 : 1;
-	Error += glm::mat3x3::length() == 3 ? 0 : 1;
-	Error += glm::dmat3x3::length() == 3 ? 0 : 1;
-
-	return Error;
-}
-
 int main()
 {
 	int Error = 0;
@@ -192,7 +178,6 @@ int main()
 	Error += test_mat3x3();
 	Error += test_operators();
 	Error += test_inverse();
-	Error += test_size();
 
 	return Error;
 }

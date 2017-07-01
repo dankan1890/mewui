@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_NAOMIM2_H
-#define MAME_MACHINE_NAOMIM2_H
-
-#pragma once
+#ifndef _NAOMIM2_H_
+#define _NAOMIM2_H_
 
 #include "naomibd.h"
 #include "315-5881_crypt.h"
@@ -20,10 +18,12 @@ public:
 	static const int RAM_SIZE = 65536;
 	std::unique_ptr<uint8_t[]> ram;
 
+	uint16_t read_callback(uint32_t addr);
+
 protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	virtual void board_setup_address(uint32_t address, bool is_dma) override;
 	virtual void board_get_buffer(uint8_t *&base, uint32_t &limit) override;
@@ -33,10 +33,8 @@ protected:
 private:
 	required_device<sega_315_5881_crypt_device> m_cryptdevice;
 	required_memory_region m_region;
-
-	uint16_t read_callback(uint32_t addr);
 };
 
-DECLARE_DEVICE_TYPE(NAOMI_M2_BOARD, naomi_m2_board)
+extern const device_type NAOMI_M2_BOARD;
 
-#endif // MAME_MACHINE_NAOMIM2_H
+#endif

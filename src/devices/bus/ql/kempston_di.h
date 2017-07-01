@@ -6,10 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_QQL_KEMPSTON_DI_H
-#define MAME_BUS_QQL_KEMPSTON_DI_H
-
 #pragma once
+
+#ifndef __KEMPSTON_DISK_INTERFACE__
+#define __KEMPSTON_DISK_INTERFACE__
 
 #include "exp.h"
 
@@ -19,13 +19,14 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> kempston_disk_interface_device
+// ======================> kempston_disk_interface_t
 
-class kempston_disk_interface_device : public device_t, public device_ql_expansion_card_interface
+class kempston_disk_interface_t : public device_t,
+									public device_ql_expansion_card_interface
 {
 public:
 	// construction/destruction
-	kempston_disk_interface_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	kempston_disk_interface_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// optional information overrides
 	virtual const tiny_rom_entry *device_rom_region() const override;
@@ -40,8 +41,10 @@ protected:
 };
 
 
+
 // device type definition
-DECLARE_DEVICE_TYPE(KEMPSTON_DISK_INTERFACE, kempston_disk_interface_device)
+extern const device_type KEMPSTON_DISK_INTERFACE;
 
 
-#endif // MAME_BUS_QQL_KEMPSTON_DI_H
+
+#endif

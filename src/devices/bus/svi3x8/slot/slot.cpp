@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "slot.h"
 
 
@@ -14,14 +13,14 @@
 //  SLOT BUS DEVICE
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SVI_SLOT_BUS, svi_slot_bus_device, "svislotbus", "SVI Slot Bus")
+const device_type SVI_SLOT_BUS = &device_creator<svi_slot_bus_device>;
 
 //-------------------------------------------------
 //  svi_slot_bus_device - constructor
 //-------------------------------------------------
 
 svi_slot_bus_device::svi_slot_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SVI_SLOT_BUS, tag, owner, clock),
+	device_t(mconfig, SVI_SLOT_BUS, "SVI Slot Bus", tag, owner, clock, "svislotbus", __FILE__),
 	m_int_handler(*this),
 	m_romdis_handler(*this),
 	m_ramdis_handler(*this)
@@ -198,14 +197,14 @@ WRITE_LINE_MEMBER( svi_slot_bus_device::bk32_w )
 //  SVI SLOT DEVICE
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SVI_SLOT, svi_slot_device, "svislot", "SVI Slot")
+const device_type SVI_SLOT = &device_creator<svi_slot_device>;
 
 //-------------------------------------------------
 //  svi_slot_device - constructor
 //-------------------------------------------------
 
 svi_slot_device::svi_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SVI_SLOT, tag, owner, clock),
+	device_t(mconfig, SVI_SLOT, "SVI Slot", tag, owner, clock, "svislot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_bus_tag(nullptr)
 {
@@ -256,8 +255,8 @@ void svi_slot_device::device_reset()
 
 device_svi_slot_interface::device_svi_slot_interface(const machine_config &mconfig, device_t &device) :
 	device_slot_card_interface(mconfig, device),
-	m_bus(nullptr),
-	m_next(nullptr)
+	m_next(nullptr),
+	m_bus(nullptr)
 {
 }
 

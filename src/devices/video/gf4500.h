@@ -8,16 +8,15 @@
 
 */
 
-#ifndef MAME_VIDEO_GF4500_H
-#define MAME_VIDEO_GF4500_H
-
-#pragma once
+#ifndef __GF4500_H__
+#define __GF4500_H__
 
 
 class gf4500_device : public device_t
 {
 public:
 	gf4500_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~gf4500_device() {}
 
 
 	DECLARE_READ32_MEMBER( read );
@@ -27,6 +26,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -50,6 +50,7 @@ private:
 	MCFG_DEVICE_ADD(_tag, GF4500, 0)
 
 
-DECLARE_DEVICE_TYPE(GF4500, gf4500_device)
+extern const device_type GF4500;
 
-#endif // MAME_VIDEO_GF4500_H
+
+#endif /* __GF4500_H__ */

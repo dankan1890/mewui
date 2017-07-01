@@ -10,12 +10,11 @@
 #include "cedar_magnet_sprite.h"
 
 
-DEFINE_DEVICE_TYPE(CEDAR_MAGNET_SPRITE, cedar_magnet_sprite_device, "cedmag_sprite", "Cedar Sprite")
+extern const device_type CEDAR_MAGNET_SPRITE = &device_creator<cedar_magnet_sprite_device>;
 
 
 cedar_magnet_sprite_device::cedar_magnet_sprite_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, CEDAR_MAGNET_SPRITE, tag, owner, clock),
-	cedar_magnet_board_interface(mconfig, *this, "spritecpu", "ram"),
+	: cedar_magnet_board_device(mconfig, CEDAR_MAGNET_SPRITE, "Cedar Sprite", tag, owner, clock, "cedmag_sprite", __FILE__),
 	m_sprite_ram_bankdev(*this, "sp_sub_ram"),
 	m_pio0(*this, "z80pio0"),
 	m_pio1(*this, "z80pio1"),
@@ -117,7 +116,7 @@ void cedar_magnet_sprite_device::do_blit()
 			uint8_t data = m_ram[source + ((m_uppersprite & 0x3) * 0x10000)];
 
 			if (!(pio0_pb_data & 0x02))
-				data = machine().rand();
+				data = rand();
 
 			source++;
 
@@ -199,10 +198,11 @@ WRITE8_MEMBER(cedar_magnet_sprite_device::sprite_port9c_w)
 //  printf("%s:sprite_port9c_w %02x\n", machine().describe_context(), data);
 }
 
-MACHINE_CONFIG_MEMBER( cedar_magnet_sprite_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( cedar_magnet_sprite )
 	MCFG_CPU_ADD("spritecpu", Z80,4000000)
 	MCFG_CPU_PROGRAM_MAP(cedar_magnet_sprite_map)
 	MCFG_CPU_IO_MAP(cedar_magnet_sprite_io)
+	MCFG_CPU_VBLANK_INT_DRIVER(":screen", cedar_magnet_board_device,  irq)
 
 	MCFG_DEVICE_ADD("z80pio0", Z80PIO, 4000000/2)
 //  MCFG_Z80PIO_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
@@ -286,9 +286,17 @@ WRITE8_MEMBER(cedar_magnet_sprite_device::pio2_pb_w)
 }
 
 
+machine_config_constructor cedar_magnet_sprite_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( cedar_magnet_sprite );
+}
+
 void cedar_magnet_sprite_device::device_start()
 {
+	m_cpu = subdevice<z80_device>("spritecpu");
+	m_ram = (uint8_t*)memshare("ram")->ptr();
 }
+
 
 
 void cedar_magnet_sprite_device::device_reset()

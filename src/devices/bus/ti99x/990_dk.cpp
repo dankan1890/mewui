@@ -40,10 +40,10 @@ enum
 	status_unit_shift   = 13
 };
 
-DEFINE_DEVICE_TYPE(TI99X_FD800, fd800_legacy_device, "ti99x_fd800", "TI FD800 Diablo floppy disk controller")
+const device_type FD800 = &device_creator<fd800_legacy_device>;
 
 fd800_legacy_device::fd800_legacy_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TI99X_FD800, tag, owner, clock),
+	: device_t(mconfig, FD800, "TI FD800 Diablo floppy disk controller", tag, owner, clock, "fd800", __FILE__),
 	m_recv_buf(0), m_stat_reg(0), m_xmit_buf(0), m_cmd_reg(0), m_interrupt_f_f(0),
 	m_int_line(*this), m_buf_pos(0), m_buf_mode(), m_unit(0), m_sector(0)
 {
@@ -58,40 +58,39 @@ void fd800_legacy_device::set_interrupt_line()
 }
 
 
-#if 0
-void fd800_legacy_device::unload_proc(device_image_interface &image)
+/* void fd800_legacy_device::unload_proc(device_image_interface &image)
 {
-	int unit = floppy_get_drive(&image.device());
+    int unit = floppy_get_drive(&image.device());
 
-	m_drv[unit].log_cylinder[0] = m_drv[unit].log_cylinder[1] = -1;
+    m_drv[unit].log_cylinder[0] = m_drv[unit].log_cylinder[1] = -1;
 }
 
 
 void fd800_machine_init(void (*interrupt_callback)(running_machine &machine, int state))
 {
-	int i;
+    int i;
 
-	m_machine = &machine;
-	m_interrupt_callback = interrupt_callback;
+    m_machine = &machine;
+    m_interrupt_callback = interrupt_callback;
 
-	m_stat_reg = 0;
-	m_interrupt_f_f = 1;
+    m_stat_reg = 0;
+    m_interrupt_f_f = 1;
 
-	m_buf_pos = 0;
-	m_buf_mode = bm_off;
+    m_buf_pos = 0;
+    m_buf_mode = bm_off;
 
-	for (i=0; i<MAX_FLOPPIES; i++)
-	{
-		m_drv[i].img = dynamic_cast<device_image_interface *>(floppy_get_device(machine, i));
-		m_drv[i].phys_cylinder = -1;
-		m_drv[i].log_cylinder[0] = m_drv[i].log_cylinder[1] = -1;
-		m_drv[i].seclen = 64;
-		floppy_install_unload_proc(&m_drv[i].img->device(), unload_proc);
-	}
+    for (i=0; i<MAX_FLOPPIES; i++)
+    {
+        m_drv[i].img = dynamic_cast<device_image_interface *>(floppy_get_device(machine, i));
+        m_drv[i].phys_cylinder = -1;
+        m_drv[i].log_cylinder[0] = m_drv[i].log_cylinder[1] = -1;
+        m_drv[i].seclen = 64;
+        floppy_install_unload_proc(&m_drv[i].img->device(), unload_proc);
+    }
 
-	set_interrupt_line();
+    set_interrupt_line();
 }
-#endif
+*/
 
 /*
     Read the first id field that can be found on the floppy disk.
@@ -266,7 +265,7 @@ int fd800_legacy_device::do_restore(int unit)
 /*
     Perform a read operation for one sector
 */
-void fd800_legacy_device::do_read()
+void fd800_legacy_device::do_read(void)
 {
 /*  int data_id;
 
@@ -295,7 +294,7 @@ void fd800_legacy_device::do_read()
 /*
     Perform a write operation for one sector
 */
-void fd800_legacy_device::do_write()
+void fd800_legacy_device::do_write(void)
 {
 /*  int data_id;
 
@@ -320,7 +319,7 @@ void fd800_legacy_device::do_write()
 /*
     Execute a fdc command
 */
-void fd800_legacy_device::do_cmd()
+void fd800_legacy_device::do_cmd(void)
 {
 /*
     int unit;
@@ -870,7 +869,7 @@ LEGACY_FLOPPY_OPTIONS_START(fd800)
 LEGACY_FLOPPY_OPTIONS_END
 #endif
 
-void fd800_legacy_device::device_start()
+void fd800_legacy_device::device_start(void)
 {
 	logerror("fd800: start\n");
 	m_int_line.resolve();
@@ -884,7 +883,7 @@ void fd800_legacy_device::device_start()
 	}
 }
 
-void fd800_legacy_device::device_reset()
+void fd800_legacy_device::device_reset(void)
 {
 	logerror("fd800: reset\n");
 	m_stat_reg = 0;

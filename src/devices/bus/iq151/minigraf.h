@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Sandro Ronco
-#ifndef MAME_BUS_IQ151_MINIGRAF_H
-#define MAME_BUS_IQ151_MINIGRAF_H
-
 #pragma once
 
+#ifndef __IQ151_MINIGRAF_H__
+#define __IQ151_MINIGRAF_H__
+
+#include "emu.h"
 #include "iq151.h"
 
 //**************************************************************************
@@ -50,6 +51,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(IQ151_MINIGRAF, iq151_minigraf_device)
+extern const device_type IQ151_MINIGRAF;
 
-#endif // MAME_BUS_IQ151_MINIGRAF_H
+#endif  /* __IQ151_MINIGRAF_H__ */

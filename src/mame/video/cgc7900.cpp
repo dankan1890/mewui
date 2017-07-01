@@ -2,7 +2,6 @@
 // copyright-holders:Curt Coder
 #include "emu.h"
 #include "includes/cgc7900.h"
-#include "screen.h"
 
 /***************************************************************************
     PARAMETERS
@@ -222,7 +221,7 @@ GFXDECODE_END
     MACHINE_DRIVER( cgc7900_video )
 -------------------------------------------------*/
 
-MACHINE_CONFIG_START( cgc7900_video )
+MACHINE_CONFIG_FRAGMENT( cgc7900_video )
 	MCFG_SCREEN_ADD(SCREEN_TAG, RASTER)
 	MCFG_SCREEN_REFRESH_RATE(60)
 	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */

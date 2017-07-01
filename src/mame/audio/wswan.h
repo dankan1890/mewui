@@ -6,11 +6,12 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_AUDIO_WSWAN_H
-#define MAME_AUDIO_WSWAN_H
-
 #pragma once
 
+#ifndef _WSWAN_SND_H_
+#define _WSWAN_SND_H_
+
+#include "emu.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -85,6 +86,6 @@ private:
 	uint8_t   m_master_volume;      /* Master volume */
 };
 
-DECLARE_DEVICE_TYPE(WSWAN_SND, wswan_sound_device)
+extern const device_type WSWAN_SND;
 
-#endif // MAME_AUDIO_WSWAN_H
+#endif

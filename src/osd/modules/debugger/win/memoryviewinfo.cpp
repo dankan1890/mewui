@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "memoryviewinfo.h"
 
 #include "debug/dvmemory.h"
@@ -47,7 +46,7 @@ bool memoryview_info::physical() const
 }
 
 
-void memoryview_info::set_expression(const std::string &string)
+void memoryview_info::set_expression(char const *string)
 {
 	view<debug_view_memory>()->set_expression(string);
 }

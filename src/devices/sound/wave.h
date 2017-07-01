@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Nathan Woods
-#ifndef MAME_SOUND_WAVE_H
-#define MAME_SOUND_WAVE_H
-
 #pragma once
+
+#ifndef __WAVE_H__
+#define __WAVE_H__
 
 #include "imagedev/cassette.h"
 
@@ -12,7 +12,8 @@
  *  CassetteWave interface
  *****************************************************************************/
 
-class wave_device : public device_t, public device_sound_interface
+class wave_device : public device_t,
+									public device_sound_interface
 {
 public:
 	wave_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -21,6 +22,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 
 	// sound stream update overrides
@@ -31,7 +33,7 @@ private:
 	cassette_image_device *m_cass;
 };
 
-DECLARE_DEVICE_TYPE(WAVE, wave_device)
+extern const device_type WAVE;
 
 
 #define WAVE_TAG        "wave"
@@ -42,4 +44,4 @@ DECLARE_DEVICE_TYPE(WAVE, wave_device)
 	MCFG_SOUND_ADD( _tag, WAVE, 0 ) \
 	wave_device::static_set_cassette_tag(*device, _cass_tag);
 
-#endif // MAME_SOUND_WAVE_H
+#endif /* __WAVE_H__ */

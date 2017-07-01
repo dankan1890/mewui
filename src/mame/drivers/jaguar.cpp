@@ -334,7 +334,6 @@ Notes:
 
 #include "emu.h"
 #include "includes/jaguar.h"
-
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
 #include "cpu/m68000/m68000.h"
@@ -343,14 +342,12 @@ Notes:
 #include "imagedev/chd_cd.h"
 #include "imagedev/snapquik.h"
 #include "machine/eepromser.h"
-#include "machine/idehd.h"
 #include "machine/watchdog.h"
 #include "machine/vt83c461.h"
 #include "sound/cdda.h"
 #include "sound/volt_reg.h"
 #include "cdrom.h"
 #include "softlist.h"
-#include "speaker.h"
 
 #define COJAG_CLOCK         XTAL_52MHz
 #define R3000_CLOCK         XTAL_40MHz
@@ -372,13 +369,15 @@ IRQ_CALLBACK_MEMBER(jaguar_state::jaguar_irq_callback)
 /// HACK: Maximum force requests data but doesn't transfer it all before issuing another command.
 /// According to the ATA specification this is not allowed, more investigation is required.
 
-DECLARE_DEVICE_TYPE(COJAG_HARDDISK, cojag_hdd)
+#include "machine/idehd.h"
+
+extern const device_type COJAG_HARDDISK;
 
 class cojag_hdd : public ide_hdd_device
 {
 public:
 	cojag_hdd(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-		: ide_hdd_device(mconfig, COJAG_HARDDISK, tag, owner, clock)
+		: ide_hdd_device(mconfig, COJAG_HARDDISK, "HDD CoJag", tag, owner, clock, "cojag_hdd", __FILE__)
 	{
 	}
 
@@ -394,7 +393,7 @@ public:
 	}
 };
 
-DEFINE_DEVICE_TYPE(COJAG_HARDDISK, cojag_hdd, "cojag_hdd", "HDD CoJag")
+const device_type COJAG_HARDDISK = &device_creator<cojag_hdd>;
 
 SLOT_INTERFACE_START(cojag_devices)
 	SLOT_INTERFACE("hdd", COJAG_HARDDISK)
@@ -1801,7 +1800,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( cojagr3k )
+static MACHINE_CONFIG_START( cojagr3k, jaguar_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", R3041, R3000_CLOCK)
@@ -1851,7 +1850,7 @@ static MACHINE_CONFIG_DERIVED( cojag68k, cojagr3k )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( jaguar )
+static MACHINE_CONFIG_START( jaguar, jaguar_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, JAGUAR_CLOCK/2)
@@ -2058,7 +2057,7 @@ DEVICE_IMAGE_LOAD_MEMBER( jaguar_state, jaguar_cart )
 {
 	uint32_t size, load_offset = 0;
 
-	if (!image.loaded_through_softlist())
+	if (image.software_entry() == nullptr)
 	{
 		size = image.length();
 

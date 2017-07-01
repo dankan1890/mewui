@@ -6,11 +6,16 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_SVI3X8_EXPANDER_MODULES_H
-#define MAME_BUS_SVI3X8_EXPANDER_MODULES_H
-
 #pragma once
+
+#ifndef __SVI_EXPANDER_MODULES_H__
+#define __SVI_EXPANDER_MODULES_H__
+
+#include "emu.h"
+#include "sv601.h"
+#include "sv602.h"
+#include "sv603.h"
 
 SLOT_INTERFACE_EXTERN( svi_expander_modules );
 
-#endif // MAME_BUS_SVI3X8_EXPANDER_MODULES_H
+#endif // __SVI_EXPANDER_MODULES_H__

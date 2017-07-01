@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "shark.h"
 #include "bus/rs232/rs232.h"
 #include "cpu/i8085/i8085.h"
@@ -27,7 +26,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(MSHARK, mshark_device, "mshark", "Mator SHARK")
+const device_type SHARK = &device_creator<mshark_device>;
 
 
 //-------------------------------------------------
@@ -75,10 +74,10 @@ ADDRESS_MAP_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( mshark )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( mshark_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( mshark )
 	// basic machine hardware
 	MCFG_CPU_ADD(I8085_TAG, I8085A, 1000000)
 	MCFG_CPU_PROGRAM_MAP(mshark_mem)
@@ -88,6 +87,17 @@ MACHINE_CONFIG_MEMBER( mshark_device::device_add_mconfig )
 	MCFG_HARDDISK_ADD("harddisk1")
 	MCFG_RS232_PORT_ADD(RS232_TAG, default_rs232_devices, nullptr)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor mshark_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( mshark );
+}
 
 
 //-------------------------------------------------
@@ -118,9 +128,9 @@ ioport_constructor mshark_device::device_input_ports() const
 //-------------------------------------------------
 
 mshark_device::mshark_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MSHARK, tag, owner, clock)
-	, device_ieee488_interface(mconfig, *this)
-	, m_maincpu(*this, I8085_TAG)
+	: device_t(mconfig, SHARK, "Mator SHARK", tag, owner, clock, "mshark", __FILE__),
+		device_ieee488_interface(mconfig, *this),
+		m_maincpu(*this, I8085_TAG)
 {
 }
 

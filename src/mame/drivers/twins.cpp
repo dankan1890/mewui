@@ -65,22 +65,19 @@ this requires the -joystick_contradictory switch on the commandline.
 #include "sound/ay8910.h"
 #include "machine/i2cmem.h"
 #include "video/ramdac.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 class twins_state : public driver_device
 {
 public:
 	twins_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_maincpu(*this, "maincpu")
-		, m_paletteram(*this, "paletteram")
-		, m_palette(*this, "palette")
-		, m_i2cmem(*this, "i2cmem")
-		, m_spritesinit(0)
-		, m_videorambank(0)
-	{ }
+		: driver_device(mconfig, type, tag),
+		m_maincpu(*this, "maincpu"),
+		m_paletteram(*this, "paletteram"),
+		m_palette(*this, "palette"),
+		m_i2cmem(*this, "i2cmem"),
+		m_spritesinit(0),
+		m_videorambank(0)
+		{ }
 
 	required_device<cpu_device> m_maincpu;
 	optional_shared_ptr<uint16_t> m_paletteram;
@@ -379,7 +376,7 @@ static INPUT_PORTS_START(twins)
 INPUT_PORTS_END
 
 
-static MACHINE_CONFIG_START( twins )
+static MACHINE_CONFIG_START( twins, twins_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V30, 8000000)
 	MCFG_CPU_PROGRAM_MAP(twins_map)
@@ -427,7 +424,7 @@ static ADDRESS_MAP_START( ramdac_map, AS_0, 8, twins_state )
 ADDRESS_MAP_END
 
 
-static MACHINE_CONFIG_START( twinsa )
+static MACHINE_CONFIG_START( twinsa, twins_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V30, XTAL_16MHz/2) /* verified on pcb */
 	MCFG_CPU_PROGRAM_MAP(twins_map)
@@ -556,7 +553,7 @@ ADDRESS_MAP_END
 
 
 
-static MACHINE_CONFIG_START( spider )
+static MACHINE_CONFIG_START( spider, twins_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V30, 8000000)
 	MCFG_CPU_PROGRAM_MAP(twins_map)
@@ -623,7 +620,7 @@ ROM_START( spider )
 	ROM_LOAD16_BYTE( "21.bin", 0x000000, 0x080000, CRC(ff224206) SHA1(d8d45850983542e811facc917d016841fc56a97f) )
 ROM_END
 
-GAME( 1994, twins,  0,     twins,  twins, twins_state, 0, ROT0, "Electronic Devices", "Twins (set 1)", MACHINE_SUPPORTS_SAVE )
-GAME( 1994, twinsa, twins, twinsa, twins, twins_state, 0, ROT0, "Electronic Devices", "Twins (set 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1994, twins,  0,     twins,  twins, driver_device, 0, ROT0, "Electronic Devices", "Twins (set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 1994, twinsa, twins, twinsa, twins, driver_device, 0, ROT0, "Electronic Devices", "Twins (set 2)", MACHINE_SUPPORTS_SAVE )
 
-GAME( 1994, spider, 0,     spider, twins, twins_state, 0, ROT0, "Buena Vision",       "Spider",        MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE )
+GAME( 1994, spider,  0,     spider,  twins, driver_device, 0, ROT0, "Buena Vision", "Spider", MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE )

@@ -1,5 +1,5 @@
 // license:GPL-2.0+
-// copyright-holders:Dirk Best, Vas Crabb
+// copyright-holders:Dirk Best
 /*****************************************************************************
  *
  *  DL1416
@@ -11,101 +11,68 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_VIDEO_DL1416_H
-#define MAME_VIDEO_DL1416_H
-
-#pragma once
-
-
-/***************************************************************************
-    DEVICE TYPES
-***************************************************************************/
-
-extern device_type const DL1414T;
-extern device_type const DL1416B;
-extern device_type const DL1416T;
+#ifndef DL1416_H_
+#define DL1416_H_
 
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
 ***************************************************************************/
 
-#define MCFG_DL1414_UPDATE_HANDLER(_devcb) \
-	devcb = &dl1414_device::set_update_handler(*device, DEVCB_##_devcb);
-
 #define MCFG_DL1416_UPDATE_HANDLER(_devcb) \
 	devcb = &dl1416_device::set_update_handler(*device, DEVCB_##_devcb);
 
 
 /***************************************************************************
-    TYPE DECLARATIONS
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
-class dl1414_device : public device_t
+/* device get info callback */
+class dl1416_device : public device_t
 {
 public:
-	template <typename Object> static devcb_base &set_update_handler(device_t &device, Object &&cb)
-	{ return downcast<dl1414_device &>(device).m_update_cb.set_callback(std::forward<Object>(cb)); }
+	dl1416_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+	~dl1416_device() {}
 
-	// signal-level interface
-	DECLARE_WRITE_LINE_MEMBER(wr_w); // write strobe (rising edge)
-	DECLARE_WRITE_LINE_MEMBER(ce_w); // chip enable (active low)
-	void addr_w(uint8_t state);
-	void data_w(uint8_t state);
+	template<class _Object> static devcb_base &set_update_handler(device_t &device, _Object object) { return downcast<dl1416_device &>(device).m_update.set_callback(object); }
 
-	// bus interface - still requires cu_w to set cursor enable state
-	virtual DECLARE_WRITE8_MEMBER(bus_w);
+	/* inputs */
+	DECLARE_WRITE_LINE_MEMBER( wr_w ); /* write enable */
+	DECLARE_WRITE_LINE_MEMBER( ce_w ); /* chip enable */
+	DECLARE_WRITE_LINE_MEMBER( cu_w ); /* cursor enable */
+	DECLARE_WRITE8_MEMBER( data_w );
 
 protected:
-	dl1414_device(
-			machine_config const &mconfig,
-			device_type type,
-			char const *tag,
-			device_t *owner,
-			uint32_t clock);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
-	void set_cursor_state(offs_t offset, bool state);
-	virtual uint16_t translate(u8 digit, bool cursor) const = 0;
-
 private:
-	devcb_write16 m_update_cb;
-
 	// internal state
-	uint8_t m_digit_ram[4]; // holds the digit code for each position
-	bool m_cursor_state[4]; // holds the cursor state for each position
+	int m_write_enable;
+	int m_chip_enable;
+	int m_cursor_enable;
+	devcb_write16 m_update;
 
-	// input line state
-	bool m_wr_in;
-	bool m_ce_in, m_ce_latch;
-	uint8_t m_addr_in, m_addr_latch;
-	uint8_t m_data_in;
+	uint16_t m_digit_ram[4]; // holds the digit code for each position
+	uint8_t m_cursor_state[4]; // holds the cursor state for each position, 0=off, 1=on
 };
 
-class dl1416_device : public dl1414_device
+class dl1416b_device : public dl1416_device
 {
 public:
-	DECLARE_WRITE_LINE_MEMBER(cu_w); // cursor enable (active low)
-
-protected:
-	dl1416_device(
-			machine_config const &mconfig,
-			device_type type,
-			char const *tag,
-			device_t *owner,
-			uint32_t clock);
-
-	// device-level overrides
-	virtual void device_start() override;
-
-	bool cu_in() const { return m_cu_in; }
-
-private:
-	// input line state
-	bool m_cu_in;
+	dl1416b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 };
 
-#endif // MAME_VIDEO_DL1416_H
+extern const device_type DL1416B;
+
+class dl1416t_device : public dl1416_device
+{
+public:
+	dl1416t_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+};
+
+extern const device_type DL1416T;
+
+
+#endif /* DL1416_H_ */

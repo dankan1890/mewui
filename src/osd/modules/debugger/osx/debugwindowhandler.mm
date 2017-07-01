@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #import "debugwindowhandler.h"
 
 #import "debugconsole.h"

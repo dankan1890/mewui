@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_LPCI_PCI_H
-#define MAME_BUS_LPCI_PCI_H
-
-#pragma once
+#ifndef PCI_H
+#define PCI_H
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -24,21 +22,19 @@ class pci_device_interface :  public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	pci_device_interface(const machine_config &mconfig, device_t &device);
 	virtual ~pci_device_interface();
 
 	virtual uint32_t pci_read(pci_bus_device *pcibus, int function, int offset, uint32_t mem_mask) = 0;
 	virtual void pci_write(pci_bus_device *pcibus, int function, int offset, uint32_t data, uint32_t mem_mask) = 0;
-
-protected:
-	pci_device_interface(const machine_config &mconfig, device_t &device);
 };
 
-class pci_connector_device : public device_t,
+class pci_connector: public device_t,
 						public device_slot_interface
 {
 public:
-	pci_connector_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	virtual ~pci_connector_device();
+	pci_connector(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual ~pci_connector();
 
 	pci_device_interface *get_device();
 
@@ -46,7 +42,7 @@ protected:
 	virtual void device_start() override;
 };
 
-DECLARE_DEVICE_TYPE(PCI_CONNECTOR, pci_connector_device)
+extern const device_type PCI_CONNECTOR;
 
 // ======================> pci_bus_device
 
@@ -94,7 +90,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(PCI_BUS, pci_bus_device)
+extern const device_type PCI_BUS;
 
 
 /***************************************************************************
@@ -112,4 +108,4 @@ DECLARE_DEVICE_TYPE(PCI_BUS, pci_bus_device)
 	downcast<pci_bus_device *>(device)->set_father(_father_tag);
 
 
-#endif // MAME_BUS_LPCI_PCI_H
+#endif /* PCI_H */

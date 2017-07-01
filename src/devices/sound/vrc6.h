@@ -7,10 +7,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_SOUND_VRC6_H
-#define MAME_SOUND_VRC6_H
-
 #pragma once
+
+#ifndef __VRC6_H__
+#define __VRC6_H__
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
@@ -57,4 +57,5 @@ private:
 // device type definition
 extern const device_type VRC6;
 
-#endif // MAME_SOUND_VRC6_H
+
+#endif /* __VRC6_H__ */

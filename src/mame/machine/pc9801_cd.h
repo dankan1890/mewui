@@ -1,8 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
 
-#ifndef MAME_MACHINE_PC9801_CD_H
-#define MAME_MACHINE_PC9801_CD_H
+#ifndef __PC9801_CD_H__
+#define __PC9801_CD_H__
 
 #include "machine/atapicdr.h"
 
@@ -18,6 +18,6 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(PC9801_CD, pc9801_cd_device)
+extern const device_type PC9801_CD;
 
-#endif // MAME_MACHINE_PC9801_CD_H
+#endif

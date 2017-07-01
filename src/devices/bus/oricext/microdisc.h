@@ -1,13 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_BUS_ORICEXT_MICRODISC_H
-#define MAME_BUS_ORICEXT_MICRODISC_H
+#ifndef __MICRODISC_H__
+#define __MICRODISC_H__
 
 #include "oricext.h"
 #include "imagedev/floppy.h"
 #include "machine/wd_fdc.h"
 
-DECLARE_DEVICE_TYPE(MICRODISC, microdisc_device)
+extern const device_type MICRODISC;
 
 class microdisc_device : public oricext_device
 {
@@ -15,10 +15,15 @@ public:
 	microdisc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~microdisc_device();
 
+	DECLARE_FLOPPY_FORMATS(floppy_formats);
 	DECLARE_ADDRESS_MAP(map, 8);
 	DECLARE_WRITE8_MEMBER(port_314_w);
 	DECLARE_READ8_MEMBER(port_314_r);
 	DECLARE_READ8_MEMBER(port_318_r);
+
+	DECLARE_WRITE_LINE_MEMBER(fdc_irq_w);
+	DECLARE_WRITE_LINE_MEMBER(fdc_drq_w);
+	DECLARE_WRITE_LINE_MEMBER(fdc_hld_w);
 
 protected:
 	enum {
@@ -31,7 +36,7 @@ protected:
 		P_EPROM  = 0x80
 	};
 
-	required_device<fd1793_device> fdc;
+	required_device<fd1793_t> fdc;
 
 	uint8_t *microdisc_rom;
 	floppy_image_device *floppies[4];
@@ -41,16 +46,9 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	machine_config_constructor device_mconfig_additions() const override;
 
 	void remap();
-
-private:
-	DECLARE_WRITE_LINE_MEMBER(fdc_irq_w);
-	DECLARE_WRITE_LINE_MEMBER(fdc_drq_w);
-	DECLARE_WRITE_LINE_MEMBER(fdc_hld_w);
-
-	DECLARE_FLOPPY_FORMATS(floppy_formats);
 };
 
-#endif // MAME_BUS_ORICEXT_MICRODISC_H
+#endif

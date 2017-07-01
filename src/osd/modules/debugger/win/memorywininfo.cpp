@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "memorywininfo.h"
 
 #include "debugviewinfo.h"
@@ -283,7 +282,7 @@ void memorywin_info::draw_contents(HDC dc)
 }
 
 
-void memorywin_info::process_string(const std::string &string)
+void memorywin_info::process_string(char const *string)
 {
 	// set the string to the memory view
 	downcast<memoryview_info *>(m_views[0].get())->set_expression(string);

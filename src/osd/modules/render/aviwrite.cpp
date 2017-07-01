@@ -6,12 +6,8 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "aviwrite.h"
-
 #include "modules/lib/osdobj_common.h"
-#include "screen.h"
-
 
 avi_write::avi_write(running_machine& machine, uint32_t width, uint32_t height)
 	: m_machine(machine)

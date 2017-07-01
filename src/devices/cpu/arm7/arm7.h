@@ -18,10 +18,10 @@
 
  ******************************************************************************/
 
-#ifndef MAME_CPU_ARM7_ARM7_H
-#define MAME_CPU_ARM7_ARM7_H
-
 #pragma once
+
+#ifndef __ARM7_H__
+#define __ARM7_H__
 
 #include "cpu/drcfe.h"
 #include "cpu/drcuml.h"
@@ -51,10 +51,9 @@ class arm7_cpu_device : public cpu_device
 public:
 	// construction/destruction
 	arm7_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	arm7_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, uint8_t archRev, uint8_t archFlags, endianness_t endianness = ENDIANNESS_LITTLE);
 
 protected:
-	arm7_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, uint8_t archRev, uint8_t archFlags, endianness_t endianness);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -127,7 +126,7 @@ protected:
 	void HandleCoProcDO(uint32_t insn);
 	void HandleCoProcRT(uint32_t insn);
 	void HandleCoProcDT(uint32_t insn);
-	void HandleBranch(uint32_t insn, bool h_bit);
+	void HandleBranch(uint32_t insn);
 	void HandleMemSingle(uint32_t insn);
 	void HandleHalfWordDT(uint32_t insn);
 	void HandleSwap(uint32_t insn);
@@ -137,7 +136,6 @@ protected:
 	void HandleSMulLong(uint32_t insn);
 	void HandleUMulLong(uint32_t insn);
 	void HandleMemBlock(uint32_t insn);
-
 	void arm7ops_0123(uint32_t insn);
 	void arm7ops_4567(uint32_t insn);
 	void arm7ops_89(uint32_t insn);
@@ -145,15 +143,6 @@ protected:
 	void arm7ops_cd(uint32_t insn);
 	void arm7ops_e(uint32_t insn);
 	void arm7ops_f(uint32_t insn);
-
-	void arm9ops_undef(uint32_t insn);
-	void arm9ops_1(uint32_t insn);
-	void arm9ops_57(uint32_t insn);
-	void arm9ops_89(uint32_t insn);
-	void arm9ops_ab(uint32_t insn);
-	void arm9ops_c(uint32_t insn);
-	void arm9ops_e(uint32_t insn);
-
 	void set_cpsr(uint32_t val);
 	bool arm7_tlb_translate(offs_t &addr, int flags);
 	uint32_t arm7_tlb_get_second_level_descriptor( uint32_t granularity, uint32_t first_desc, uint32_t vaddr );
@@ -279,7 +268,7 @@ protected:
 	static const arm7thumb_ophandler thumb_handler[0x40*0x10];
 
 	typedef void ( arm7_cpu_device::*arm7ops_ophandler )(uint32_t);
-	static const arm7ops_ophandler ops_handler[0x20];
+	static const arm7ops_ophandler ops_handler[0x10];
 
 	//
 	// DRC
@@ -507,6 +496,7 @@ class arm7_be_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	arm7_be_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
@@ -515,6 +505,7 @@ class arm7500_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	arm7500_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
@@ -523,6 +514,7 @@ class arm9_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	arm9_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
@@ -531,6 +523,7 @@ class arm920t_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	arm920t_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
@@ -539,6 +532,7 @@ class pxa255_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	pxa255_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
@@ -547,15 +541,16 @@ class sa1110_cpu_device : public arm7_cpu_device
 public:
 	// construction/destruction
 	sa1110_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
 };
 
 
-DECLARE_DEVICE_TYPE(ARM7,    arm7_cpu_device)
-DECLARE_DEVICE_TYPE(ARM7_BE, arm7_be_cpu_device)
-DECLARE_DEVICE_TYPE(ARM7500, arm7500_cpu_device)
-DECLARE_DEVICE_TYPE(ARM9,    arm9_cpu_device)
-DECLARE_DEVICE_TYPE(ARM920T, arm920t_cpu_device)
-DECLARE_DEVICE_TYPE(PXA255,  pxa255_cpu_device)
-DECLARE_DEVICE_TYPE(SA1110,  sa1110_cpu_device)
+extern const device_type ARM7;
+extern const device_type ARM7_BE;
+extern const device_type ARM7500;
+extern const device_type ARM9;
+extern const device_type ARM920T;
+extern const device_type PXA255;
+extern const device_type SA1110;
 
-#endif // MAME_CPU_ARM7_ARM7_H
+#endif /* __ARM7_H__ */

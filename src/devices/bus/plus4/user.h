@@ -21,13 +21,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PLUS4_USER_H
-#define MAME_BUS_PLUS4_USER_H
-
 #pragma once
+
+#ifndef __PLUS4_USER_PORT__
+#define __PLUS4_USER_PORT__
 
 #include "bus/vic20/user.h"
 
 SLOT_INTERFACE_EXTERN( plus4_user_port_cards );
 
-#endif // MAME_BUS_PLUS4_USER_H
+#endif

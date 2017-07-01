@@ -6,23 +6,18 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_AQUARIUS_H
-#define MAME_INCLUDES_AQUARIUS_H
+#ifndef __AQUARIUS__
+#define __AQUARIUS__
 
-#pragma once
-
+#include "emu.h"
 #include "cpu/z80/z80.h"
+#include "video/tea1002.h"
 #include "imagedev/cassette.h"
 #include "machine/ram.h"
 #include "sound/ay8910.h"
-#include "sound/spkrdev.h"
-#include "video/tea1002.h"
-
+#include "sound/speaker.h"
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
-
-#include "screen.h"
-
 
 class aquarius_state : public driver_device
 {
@@ -91,4 +86,4 @@ public:
 	uint32_t screen_update_aquarius(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	DECLARE_INPUT_CHANGED_MEMBER(aquarius_reset);
 };
-#endif // MAME_INCLUDES_AQUARIUS_H
+#endif /* AQUARIUS_H_ */

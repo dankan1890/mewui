@@ -51,7 +51,6 @@ Notes:
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "screen.h"
 
 class shtzone_state : public driver_device
 {
@@ -93,7 +92,7 @@ uint32_t shtzone_state::screen_update_shtzone(screen_device &screen, bitmap_ind1
 }
 
 
-static MACHINE_CONFIG_START( shtzone )
+static MACHINE_CONFIG_START( shtzone, shtzone_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("timercpu", Z80,10738000/4)
@@ -121,4 +120,4 @@ ROM_START( shtzone )
 	ROM_LOAD( "epr10894a.20", 0x00000, 0x04000, CRC(ea8901d9) SHA1(43fd8bfc395e3b2e3fbe9645d692a5eb04783d9c) )
 ROM_END
 
-GAME( 1987, shtzone,  0,    shtzone, shtzone, shtzone_state,  0, ROT0, "Sega", "Shooting Zone System BIOS", MACHINE_IS_SKELETON | MACHINE_NO_SOUND | MACHINE_NOT_WORKING | MACHINE_IS_BIOS_ROOT )
+GAME( 1987, shtzone,  0,    shtzone, shtzone, driver_device,  0, ROT0, "Sega", "Shooting Zone System BIOS", MACHINE_IS_SKELETON | MACHINE_NO_SOUND | MACHINE_NOT_WORKING | MACHINE_IS_BIOS_ROOT )

@@ -8,11 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_AM29000_AM29000_H
-#define MAME_CPU_AM29000_AM29000_H
-
 #pragma once
 
+#ifndef __AM29000_H__
+#define __AM29000_H__
 
 
 /***************************************************************************
@@ -432,7 +431,7 @@ enum
 #define AM29000_INTR3       3
 
 
-class am29000_cpu_device : public cpu_device
+class am29000_cpu_device :  public cpu_device
 {
 public:
 	// construction/destruction
@@ -656,6 +655,7 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(AM29000, am29000_cpu_device)
+extern const device_type AM29000;
 
-#endif // MAME_CPU_AM29000_AM29000_H
+
+#endif /* __AM29000_H__ */

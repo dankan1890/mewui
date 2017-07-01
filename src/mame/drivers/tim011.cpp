@@ -11,7 +11,6 @@
 #include "emu.h"
 #include "cpu/z180/z180.h"
 #include "machine/upd765.h"
-#include "screen.h"
 
 #define FDC9266_TAG "u43"
 
@@ -121,7 +120,7 @@ static const floppy_format_type tim011_floppy_formats[] = {
 	nullptr
 };
 
-static MACHINE_CONFIG_START( tim011 )
+static MACHINE_CONFIG_START( tim011,tim011_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z180, XTAL_12_288MHz / 2) // location U17 HD64180
 	MCFG_CPU_PROGRAM_MAP(tim011_mem)
@@ -162,5 +161,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE          INIT  COMPANY                    FULLNAME   FLAGS */
-COMP( 1987, tim011, 0,      0,       tim011,    tim011, tim011_state,  0,    "Mihajlo Pupin Institute", "TIM-011", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY                FULLNAME       FLAGS */
+COMP( 1987, tim011, 0,      0,       tim011,    tim011, driver_device,  0, "Mihajlo Pupin Institute", "TIM-011", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

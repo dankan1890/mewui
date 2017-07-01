@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "includes/rbisland.h"
-#include "screen.h"
 
 /***************************************************************************/
 

@@ -6,14 +6,13 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "logwininfo.h"
 
 #include "debugviewinfo.h"
 
 
 logwin_info::logwin_info(debugger_windows_interface &debugger) :
-	debugwin_info(debugger, false, std::string("Errorlog: ").append(debugger.machine().system().type.fullname()).append(" [").append(debugger.machine().system().name).append("]").c_str(), nullptr)
+	debugwin_info(debugger, false, std::string("Errorlog: ").append(debugger.machine().system().description).append(" [").append(debugger.machine().system().name).append("]").c_str(), nullptr)
 {
 	if (!window())
 		return;

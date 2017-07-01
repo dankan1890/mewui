@@ -82,15 +82,12 @@ There's a separate sound board also, but it wasn't available so is not documente
 **************************************************************************/
 
 #include "emu.h"
+#include "cpu/tms34010/tms34010.h"
+#include "cpu/adsp2100/adsp2100.h"
+#include "audio/dcs.h"
+#include "machine/nvram.h"
 #include "includes/midtunit.h"
 #include "includes/midxunit.h"
-#include "audio/dcs.h"
-
-#include "cpu/adsp2100/adsp2100.h"
-#include "cpu/tms34010/tms34010.h"
-#include "machine/nvram.h"
-
-#include "screen.h"
 
 
 #define PIXEL_CLOCK     (8000000)
@@ -241,7 +238,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( midxunit )
+static MACHINE_CONFIG_START( midxunit, midxunit_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", TMS34020, 40000000)

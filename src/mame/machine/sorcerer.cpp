@@ -6,7 +6,6 @@
 
 *******************************************************************************/
 
-#include "emu.h"
 #include "includes/sorcerer.h"
 #include "machine/z80bin.h"
 

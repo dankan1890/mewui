@@ -22,31 +22,18 @@ namespace plib {
 	{
 	}
 
-	option_group::~option_group()
-	{
-	}
-
-	option_example::~option_example()
-	{
-	}
-
 	option::option(options &parent, pstring ashort, pstring along, pstring help, bool has_argument)
-	: option_base(parent, help), m_short(ashort), m_long(along),
-	  m_has_argument(has_argument), m_specified(false)
+	: option_base(parent, help), m_short(ashort), m_long(along),  m_has_argument(has_argument)
 	{
 	}
 
-	option::~option()
-	{
-	}
-
-	int option_str::parse(const pstring &argument)
+	int option_str::parse(pstring argument)
 	{
 		m_val = argument;
 		return 0;
 	}
 
-	int option_str_limit::parse(const pstring &argument)
+	int option_str_limit::parse(pstring argument)
 	{
 		if (plib::container::contains(m_limit, argument))
 		{
@@ -57,27 +44,20 @@ namespace plib {
 			return 1;
 	}
 
-	int option_bool::parse(const pstring &argument)
+	int option_bool::parse(ATTR_UNUSED pstring argument)
 	{
 		m_val = true;
 		return 0;
 	}
 
-	int option_double::parse(const pstring &argument)
+	int option_double::parse(pstring argument)
 	{
 		bool err = false;
 		m_val = argument.as_double(&err);
 		return (err ? 1 : 0);
 	}
 
-	int option_long::parse(const pstring &argument)
-	{
-		bool err = false;
-		m_val = argument.as_long(&err);
-		return (err ? 1 : 0);
-	}
-
-	int option_vec::parse(const pstring &argument)
+	int option_vec::parse(pstring argument)
 	{
 		bool err = false;
 		m_val.push_back(argument);
@@ -110,18 +90,18 @@ namespace plib {
 
 	int options::parse(int argc, char *argv[])
 	{
-		m_app = pstring(argv[0], pstring::UTF8);
+		m_app = argv[0];
 
 		for (int i=1; i<argc; )
 		{
-			pstring arg(argv[i], pstring::UTF8);
+			pstring arg(argv[i]);
 			option *opt = nullptr;
 			pstring opt_arg;
 			bool has_equal_arg = false;
 
 			if (arg.startsWith("--"))
 			{
-				auto v = psplit(arg.substr(2),"=");
+				auto v = pstring_vector_t(arg.substr(2),"=");
 				opt = getopt_long(v[0]);
 				has_equal_arg = (v.size() > 1);
 				if (has_equal_arg)
@@ -133,32 +113,30 @@ namespace plib {
 			}
 			else if (arg.startsWith("-"))
 			{
-				std::size_t p = 1;
-				opt = getopt_short(arg.substr(p, 1));
+				auto p = arg.begin() + 1;
+				opt = getopt_short(arg.substr(p,p + 1));
 				++p;
-				if (p < arg.length())
+				if (p != arg.end())
 				{
 					has_equal_arg = true;
 					opt_arg = arg.substr(p);
 				}
 			}
 			else
-			{
 				return i;
-			}
 			if (opt == nullptr)
 				return i;
 			if (opt->has_argument())
 			{
 				if (has_equal_arg)
 				{
-					if (opt->do_parse(opt_arg) != 0)
+					if (opt->parse(opt_arg) != 0)
 						return i;
 				}
 				else
 				{
 					i++; // FIXME: are there more arguments?
-					if (opt->do_parse(pstring(argv[i], pstring::UTF8)) != 0)
+					if (opt->parse(argv[i]) != 0)
 						return i - 1;
 				}
 			}
@@ -166,7 +144,7 @@ namespace plib {
 			{
 				if (has_equal_arg)
 					return i;
-				opt->do_parse("");
+				opt->parse("");
 			}
 			i++;
 		}
@@ -176,15 +154,15 @@ namespace plib {
 	pstring options::split_paragraphs(pstring text, unsigned width, unsigned indent,
 			unsigned firstline_indent)
 	{
-		auto paragraphs = psplit(text,"\n");
+		auto paragraphs = pstring_vector_t(text,"\n");
 		pstring ret("");
 
 		for (auto &p : paragraphs)
 		{
 			pstring line = pstring("").rpad(" ", firstline_indent);
-			for (auto &s : psplit(p, " "))
+			for (auto &s : pstring_vector_t(p, " "))
 			{
-				if (line.length() + s.length() > width)
+				if (line.len() + s.len() > width)
 				{
 					ret += line + "\n";
 					line = pstring("").rpad(" ", indent);
@@ -228,14 +206,14 @@ namespace plib {
 							{
 								line += v + "|";
 							}
-							line = line.left(line.length() - 1);
+							line = line.left(line.begin() + (line.len() - 1));
 						}
 						else
 							line += "Value";
 					}
 				}
 				line = line.rpad(" ", indent - 2) + "  ";
-				if (line.length() > indent)
+				if (line.len() > indent)
 				{
 					//ret += "TestGroup abc\n  def gef\nxyz\n\n" ;
 					ret += line + "\n";
@@ -259,7 +237,7 @@ namespace plib {
 				ex += split_paragraphs(example->help(), width, 4, 4) + "\n";
 			}
 		}
-		if (ex.length() > 0)
+		if (ex.len() > 0)
 		{
 			ret += "\n\nExamples:\n\n" + ex;
 		}
@@ -288,4 +266,3 @@ namespace plib {
 	}
 
 } // namespace plib
-

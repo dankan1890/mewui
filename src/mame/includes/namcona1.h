@@ -8,7 +8,6 @@
 
 #include "machine/eeprompar.h"
 #include "sound/c140.h"
-#include "screen.h"
 
 enum
 {

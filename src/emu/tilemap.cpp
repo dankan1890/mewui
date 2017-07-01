@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "screen.h"
 
 
 //**************************************************************************
@@ -1457,16 +1456,12 @@ void tilemap_t::draw_roz_core(screen_device &screen, _BitmapClass &destbitmap, c
 //  rowscroll and with fixed parameters
 //-------------------------------------------------
 
-void tilemap_t::draw_debug(screen_device &screen, bitmap_rgb32 &dest, u32 scrollx, u32 scrolly, u32 flags)
+void tilemap_t::draw_debug(screen_device &screen, bitmap_rgb32 &dest, u32 scrollx, u32 scrolly)
 {
 	// set up for the blit, using hard-coded parameters (no priority, etc)
 	blit_parameters blit;
 	bitmap_ind8 dummy_priority;
-
-	// draw everything
-	flags |= TILEMAP_DRAW_OPAQUE;
-
-	configure_blit_parameters(blit, dummy_priority, dest.cliprect(), flags, 0, 0xff);
+	configure_blit_parameters(blit, dummy_priority, dest.cliprect(), TILEMAP_DRAW_OPAQUE | TILEMAP_DRAW_ALL_CATEGORIES, 0, 0xff);
 
 	// compute the effective scroll positions
 	scrollx = m_width  - scrollx % m_width;
@@ -1604,14 +1599,14 @@ void tilemap_manager::mark_all_dirty()
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(TILEMAP, tilemap_device, "tilemap", "Tilemap")
+const device_type TILEMAP = &device_creator<tilemap_device>;
 
 //-------------------------------------------------
 //  tilemap_device - constructor
 //-------------------------------------------------
 
 tilemap_device::tilemap_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: device_t(mconfig, TILEMAP, tag, owner, clock),
+	: device_t(mconfig, TILEMAP, "Tilemap", tag, owner, clock, "tilemap", __FILE__),
 		m_gfxdecode(*this, finder_base::DUMMY_TAG),
 		m_standard_mapper(TILEMAP_STANDARD_COUNT),
 		m_bytes_per_entry(0),

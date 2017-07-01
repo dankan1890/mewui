@@ -7,7 +7,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "ggext.h"
 // slot devices
 #include "smsctrladp.h"
@@ -18,7 +17,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(GG_EXT_PORT, gg_ext_port_device, "gg_ext_port", "Game Gear EXT Port")
+const device_type GG_EXT_PORT = &device_creator<gg_ext_port_device>;
 
 
 
@@ -56,11 +55,10 @@ device_gg_ext_port_interface::~device_gg_ext_port_interface()
 //-------------------------------------------------
 
 gg_ext_port_device::gg_ext_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, GG_EXT_PORT, tag, owner, clock),
-	device_slot_interface(mconfig, *this),
-	m_device(nullptr),
-	m_th_pin_handler(*this),
-	m_pixel_handler(*this)
+						device_t(mconfig, GG_EXT_PORT, "EXT Port", tag, owner, clock, "gg_ext_port", __FILE__),
+						device_slot_interface(mconfig, *this), m_device(nullptr),
+						m_th_pin_handler(*this),
+						m_pixel_handler(*this)
 {
 }
 

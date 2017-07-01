@@ -316,18 +316,14 @@ Stephh's notes (based on the game M68000 code and some tests) :
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/taito_x.h"
+#include "cpu/z80/z80.h"
+#include "cpu/m68000/m68000.h"
 #include "includes/taitoipt.h"
 #include "audio/taitosnd.h"
-
-#include "cpu/m68000/m68000.h"
-#include "cpu/z80/z80.h"
+#include "includes/taito_x.h"
 #include "machine/cchip.h"
 #include "sound/2610intf.h"
 #include "sound/ym2151.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 READ16_MEMBER(taitox_state::superman_dsw_input_r)
 {
@@ -793,7 +789,7 @@ MACHINE_START_MEMBER(taitox_state,superman)
 
 /**************************************************************************/
 
-static MACHINE_CONFIG_START( superman )
+static MACHINE_CONFIG_START( superman, taitox_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, XTAL_16MHz/2)   /* verified on pcb */
@@ -840,7 +836,7 @@ static MACHINE_CONFIG_START( superman )
 	MCFG_TC0140SYT_SLAVE_CPU("audiocpu")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( daisenpu )
+static MACHINE_CONFIG_START( daisenpu, taitox_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, XTAL_16MHz/2)   /* verified on pcb */
@@ -885,7 +881,7 @@ static MACHINE_CONFIG_START( daisenpu )
 	MCFG_TC0140SYT_SLAVE_CPU("audiocpu")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( gigandes )
+static MACHINE_CONFIG_START( gigandes, taitox_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 8000000)    /* 8 MHz? */
@@ -932,7 +928,7 @@ static MACHINE_CONFIG_START( gigandes )
 	MCFG_TC0140SYT_SLAVE_CPU("audiocpu")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( ballbros )
+static MACHINE_CONFIG_START( ballbros, taitox_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 8000000)    /* 8 MHz? */
@@ -1251,13 +1247,13 @@ DRIVER_INIT_MEMBER(taitox_state,kyustrkr)
 }
 
 
-GAME( 1988, superman,  0,        superman, superman,  taitox_state, 0,        ROT0,   "Taito Corporation",         "Superman (World)", 0 )
-GAME( 1988, supermanu, superman, superman, supermanu, taitox_state, 0,        ROT0,   "Taito Corporation",         "Superman (US)", 0 )
-GAME( 1988, supermanj, superman, superman, supermanj, taitox_state, 0,        ROT0,   "Taito Corporation",         "Superman (Japan)", 0 )
-GAME( 1989, twinhawk,  0,        daisenpu, twinhawk,  taitox_state, 0,        ROT270, "Taito Corporation Japan",   "Twin Hawk (World)", 0 )
-GAME( 1989, twinhawku, twinhawk, daisenpu, twinhawku, taitox_state, 0,        ROT270, "Taito America Corporation", "Twin Hawk (US)", 0 )
-GAME( 1989, daisenpu,  twinhawk, daisenpu, daisenpu,  taitox_state, 0,        ROT270, "Taito Corporation",         "Daisenpu (Japan)", 0 )
-GAME( 1989, gigandes,  0,        gigandes, gigandes,  taitox_state, 0,        ROT0,   "East Technology",           "Gigandes", 0 )
-GAME( 1989, gigandesa, gigandes, gigandes, gigandes,  taitox_state, 0,        ROT0,   "East Technology",           "Gigandes (earlier)", 0 )
-GAME( 1989, kyustrkr,  0,        ballbros, kyustrkr,  taitox_state, kyustrkr, ROT180, "East Technology",           "Last Striker / Kyuukyoku no Striker", 0 )
-GAME( 1992, ballbros,  0,        ballbros, ballbros,  taitox_state, 0,        ROT0,   "East Technology",           "Balloon Brothers", 0 )
+GAME( 1988, superman,  0,        superman, superman,  driver_device, 0,        ROT0,   "Taito Corporation",         "Superman (World)", 0 )
+GAME( 1988, supermanu, superman, superman, supermanu, driver_device, 0,        ROT0,   "Taito Corporation",         "Superman (US)", 0 )
+GAME( 1988, supermanj, superman, superman, supermanj, driver_device, 0,        ROT0,   "Taito Corporation",         "Superman (Japan)", 0 )
+GAME( 1989, twinhawk,  0,        daisenpu, twinhawk,  driver_device, 0,        ROT270, "Taito Corporation Japan",   "Twin Hawk (World)", 0 )
+GAME( 1989, twinhawku, twinhawk, daisenpu, twinhawku, driver_device, 0,        ROT270, "Taito America Corporation", "Twin Hawk (US)", 0 )
+GAME( 1989, daisenpu,  twinhawk, daisenpu, daisenpu,  driver_device, 0,        ROT270, "Taito Corporation",         "Daisenpu (Japan)", 0 )
+GAME( 1989, gigandes,  0,        gigandes, gigandes,  driver_device, 0,        ROT0,   "East Technology",           "Gigandes", 0 )
+GAME( 1989, gigandesa, gigandes, gigandes, gigandes,  driver_device, 0,        ROT0,   "East Technology",           "Gigandes (earlier)", 0 )
+GAME( 1989, kyustrkr,  0,        ballbros, kyustrkr,  taitox_state,  kyustrkr, ROT180, "East Technology",           "Last Striker / Kyuukyoku no Striker", 0 )
+GAME( 1992, ballbros,  0,        ballbros, ballbros,  driver_device, 0,        ROT0,   "East Technology",           "Balloon Brothers", 0 )

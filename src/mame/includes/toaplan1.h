@@ -7,7 +7,6 @@
 
 #include "cpu/m68000/m68000.h"
 #include "video/toaplan_scu.h"
-#include "screen.h"
 
 class toaplan1_state : public driver_device
 {
@@ -39,6 +38,10 @@ public:
 	int m_dsp_execute;
 	uint32_t m_dsp_addr_w;
 	uint32_t m_main_ram_seg;
+
+	uint8_t m_vimana_coins[2];
+	uint8_t m_vimana_credits;
+	uint8_t m_vimana_latch;
 
 	std::unique_ptr<uint16_t[]> m_pf4_tilevram16;   /*  ||  Drawn in this order */
 	std::unique_ptr<uint16_t[]> m_pf3_tilevram16;   /*  ||  */
@@ -81,8 +84,6 @@ public:
 	tilemap_t *m_pf3_tilemap;
 	tilemap_t *m_pf4_tilemap;
 
-
-
 	DECLARE_WRITE16_MEMBER(toaplan1_intenable_w);
 	DECLARE_WRITE16_MEMBER(demonwld_dsp_addrsel_w);
 	DECLARE_READ16_MEMBER(demonwld_dsp_r);
@@ -91,6 +92,9 @@ public:
 	DECLARE_READ_LINE_MEMBER(demonwld_BIO_r);
 	DECLARE_WRITE16_MEMBER(demonwld_dsp_ctrl_w);
 	DECLARE_READ16_MEMBER(samesame_port_6_word_r);
+	DECLARE_READ16_MEMBER(vimana_system_port_r);
+	DECLARE_READ16_MEMBER(vimana_mcu_r);
+	DECLARE_WRITE16_MEMBER(vimana_mcu_w);
 	DECLARE_READ16_MEMBER(toaplan1_shared_r);
 	DECLARE_WRITE16_MEMBER(toaplan1_shared_w);
 	DECLARE_WRITE16_MEMBER(toaplan1_reset_sound_w);
@@ -117,19 +121,9 @@ public:
 	DECLARE_READ16_MEMBER(toaplan1_scroll_regs_r);
 	DECLARE_WRITE16_MEMBER(toaplan1_scroll_regs_w);
 
-	// Fire Shark sound
-	uint8_t m_to_mcu;
-	uint8_t m_cmdavailable;
-
-	DECLARE_READ8_MEMBER(vimana_dswb_invert_r);
-	DECLARE_READ8_MEMBER(vimana_tjump_invert_r);
-	DECLARE_WRITE16_MEMBER(samesame_mcu_w);
-	DECLARE_READ8_MEMBER(samesame_soundlatch_r);
-	DECLARE_WRITE8_MEMBER(samesame_sound_done_w);
-	DECLARE_READ8_MEMBER(samesame_cmdavailable_r);
-
 	DECLARE_DRIVER_INIT(toaplan1);
 	DECLARE_DRIVER_INIT(demonwld);
+	DECLARE_DRIVER_INIT(vimana);
 	TILE_GET_INFO_MEMBER(get_pf1_tile_info);
 	TILE_GET_INFO_MEMBER(get_pf2_tile_info);
 	TILE_GET_INFO_MEMBER(get_pf3_tile_info);
@@ -141,8 +135,8 @@ public:
 	DECLARE_MACHINE_RESET(vimana);
 	uint32_t screen_update_toaplan1(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_toaplan1);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_samesame);
+	void screen_eof_toaplan1(screen_device &screen, bool state);
+	void screen_eof_samesame(screen_device &screen, bool state);
 	INTERRUPT_GEN_MEMBER(toaplan1_interrupt);
 
 	void demonwld_restore_dsp();
@@ -157,6 +151,7 @@ public:
 	void toaplan1_reset_sound();
 	void toaplan1_driver_savestate();
 	void demonwld_driver_savestate();
+	void vimana_driver_savestate();
 	DECLARE_WRITE_LINE_MEMBER(toaplan1_reset_callback);
 	required_device<m68000_device> m_maincpu;
 	required_device<cpu_device> m_audiocpu;
@@ -179,7 +174,7 @@ public:
 	DECLARE_READ16_MEMBER(rallybik_tileram16_r);
 	DECLARE_VIDEO_START(rallybik);
 	uint32_t screen_update_rallybik(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_rallybik);
+	void screen_eof_rallybik(screen_device &screen, bool state);
 
 	required_device<toaplan_scu_device> m_spritegen;
 };

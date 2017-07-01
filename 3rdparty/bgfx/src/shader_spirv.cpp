@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -990,11 +990,7 @@ namespace bgfx
 			break;
 
 		default:
-			for (
-				;  size/4 != _instruction.length
-				&& _err->isOk()
-				&& currOp < BX_COUNTOF(_instruction.operand)
-				; ++currOp)
+			for (;size/4 != _instruction.length && _err->isOk(); ++currOp)
 			{
 				_instruction.operand[currOp].type = info.operands[currOp];
 				size += read(_reader, _instruction.operand[currOp], _err);

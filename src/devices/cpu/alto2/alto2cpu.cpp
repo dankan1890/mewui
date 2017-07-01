@@ -5,7 +5,6 @@
  *   Xerox AltoII CPU core
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 #include "a2roms.h"
 
@@ -16,7 +15,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ALTO2, alto2_cpu_device, "alto2_cpu", "Xerox Alto-II")
+const device_type ALTO2 = &device_creator<alto2_cpu_device>;
 
 //**************************************************************************
 //  LOGGING AND DEBUGGING
@@ -122,7 +121,7 @@ ADDRESS_MAP_END
 //-------------------------------------------------
 
 alto2_cpu_device::alto2_cpu_device(const machine_config& mconfig, const char* tag, device_t* owner, uint32_t clock) :
-	cpu_device(mconfig, ALTO2, tag, owner, clock),
+	cpu_device(mconfig, ALTO2, "Xerox Alto-II", tag, owner, clock, "alto2_cpu", __FILE__),
 	m_ucode_config("ucode", ENDIANNESS_BIG, 32, 12, -2 ),
 	m_const_config("const", ENDIANNESS_BIG, 16,  8, -1 ),
 	m_iomem_config("iomem", ENDIANNESS_BIG, 16, 17, -1 ),

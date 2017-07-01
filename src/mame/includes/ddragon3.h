@@ -10,7 +10,6 @@
 #include "machine/gen_latch.h"
 #include "sound/okim6295.h"
 #include "video/bufsprite.h"
-#include "screen.h"
 
 
 class ddragon3_state : public driver_device

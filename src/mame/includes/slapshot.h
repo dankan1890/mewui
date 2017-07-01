@@ -73,7 +73,6 @@ public:
 	DECLARE_WRITE8_MEMBER(sound_bankswitch_w);
 	DECLARE_WRITE16_MEMBER(msb_sound_w);
 	DECLARE_READ16_MEMBER(msb_sound_r);
-	DECLARE_WRITE8_MEMBER(coin_control_w);
 
 	// opwolf specific
 	DECLARE_READ16_MEMBER(opwolf3_adc_r);
@@ -84,7 +83,7 @@ public:
 	virtual void video_start() override;
 
 	uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_taito_no_buffer);
+	void screen_eof_taito_no_buffer(screen_device &screen, bool state);
 	void draw_sprites( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int *primasks, int y_offset );
 	void taito_handle_sprite_buffering(  );
 	void taito_update_sprites_active_area(  );

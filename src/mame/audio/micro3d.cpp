@@ -9,7 +9,7 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "audio/micro3d.h"
+#include "includes/micro3d.h"
 
 
 #define MM5837_CLOCK        100000
@@ -22,23 +22,23 @@
  *************************************/
 
 /* Borrowed from segasnd.c */
-inline void micro3d_sound_device::m3d_filter_state::configure(double r, double c)
+static inline void configure_filter(m3d_filter_state *state, double r, double c)
 {
-	capval = 0;
-	exponent = 1.0 - exp(-1.0 / (r * c * 2000000/8));
+	state->capval = 0;
+	state->exponent = 1.0 - exp(-1.0 / (r * c * 2000000/8));
 }
 
 #if 0
-inline double micro3d_sound_device::m3d_filter_state::step_rc_filter(double input)
+static inline double step_rc_filter(m3d_filter_state *state, double input)
 {
-	capval += (input - capval) * exponent;
-	return capval;
+	state->capval += (input - state->capval) * state->exponent;
+	return state->capval;
 }
 
-inline double micro3d_sound_device::m3d_filter_state::step_cr_filter(double input)
+static inline double step_cr_filter(m3d_filter_state *state, double input)
 {
-	double const result = input - capval;
-	capval += result * exponent;
+	double result = (input - state->capval);
+	state->capval += (input - state->capval) * state->exponent;
 	return result;
 }
 #endif
@@ -50,27 +50,27 @@ inline double micro3d_sound_device::m3d_filter_state::step_cr_filter(double inpu
  *
  *************************************/
 
-void micro3d_sound_device::lp_filter::init(double fsval)
+static void filter_init(running_machine &machine, lp_filter *iir, double fs)
 {
 	/* Section 1 */
-	proto_coef[0].a0 = 1.0;
-	proto_coef[0].a1 = 0;
-	proto_coef[0].a2 = 0;
-	proto_coef[0].b0 = 1.0;
-	proto_coef[0].b1 = 0.765367;
-	proto_coef[0].b2 = 1.0;
+	iir->ProtoCoef[0].a0 = 1.0;
+	iir->ProtoCoef[0].a1 = 0;
+	iir->ProtoCoef[0].a2 = 0;
+	iir->ProtoCoef[0].b0 = 1.0;
+	iir->ProtoCoef[0].b1 = 0.765367;
+	iir->ProtoCoef[0].b2 = 1.0;
 
 	/* Section 2 */
-	proto_coef[1].a0 = 1.0;
-	proto_coef[1].a1 = 0;
-	proto_coef[1].a2 = 0;
-	proto_coef[1].b0 = 1.0;
-	proto_coef[1].b1 = 1.847759;
-	proto_coef[1].b2 = 1.0;
+	iir->ProtoCoef[1].a0 = 1.0;
+	iir->ProtoCoef[1].a1 = 0;
+	iir->ProtoCoef[1].a2 = 0;
+	iir->ProtoCoef[1].b0 = 1.0;
+	iir->ProtoCoef[1].b1 = 1.847759;
+	iir->ProtoCoef[1].b2 = 1.0;
 
-	coef = make_unique_clear<float[]>(4 * 2 + 1);
-	fs = fsval;
-	history = make_unique_clear<float[]>(2 * 2);
+	iir->coef = make_unique_clear<float[]>(4 * 2 + 1);
+	iir->fs = fs;
+	iir->history = make_unique_clear<float[]>(2 * 2);
 }
 
 static void prewarp(double *a0, double *a1, double *a2,double fc, double fs)
@@ -102,42 +102,47 @@ static void bilinear(double a0, double a1, double a2,
 	*coef = (4. * a2 * fs * fs - 2. * a1 * fs + a0) / ad;
 }
 
-void micro3d_sound_device::lp_filter::recompute(double k, double q, double fc)
+static void recompute_filter(lp_filter *iir, double k, double q, double fc)
 {
-	float *c = coef.get() + 1;
+	int nInd;
+	double a0, a1, a2, b0, b1, b2;
 
-	for (int nInd = 0; nInd < 2; nInd++)
+	float *coef = iir->coef.get() + 1;
+
+	for (nInd = 0; nInd < 2; nInd++)
 	{
-		double a0 = proto_coef[nInd].a0;
-		double a1 = proto_coef[nInd].a1;
-		double a2 = proto_coef[nInd].a2;
+		a0 = iir->ProtoCoef[nInd].a0;
+		a1 = iir->ProtoCoef[nInd].a1;
+		a2 = iir->ProtoCoef[nInd].a2;
 
-		double b0 = proto_coef[nInd].b0;
-		double b1 = proto_coef[nInd].b1 / q;
-		double b2 = proto_coef[nInd].b2;
+		b0 = iir->ProtoCoef[nInd].b0;
+		b1 = iir->ProtoCoef[nInd].b1 / q;
+		b2 = iir->ProtoCoef[nInd].b2;
 
-		prewarp(&a0, &a1, &a2, fc, fs);
-		prewarp(&b0, &b1, &b2, fc, fs);
-		bilinear(a0, a1, a2, b0, b1, b2, &k, fs, c);
+		prewarp(&a0, &a1, &a2, fc, iir->fs);
+		prewarp(&b0, &b1, &b2, fc, iir->fs);
+		bilinear(a0, a1, a2, b0, b1, b2, &k, iir->fs, coef);
 
-		c += 4;
+		coef += 4;
 	}
 
-	coef[0] = k;
+	iir->coef[0] = k;
 }
 
-void micro3d_sound_device::noise_sh_w(u8 data)
+void micro3d_sound_device::noise_sh_w(uint8_t data)
 {
+	micro3d_state *state = machine().driver_data<micro3d_state>();
+
 	if (~data & 8)
 	{
-		if (m_dac_data != m_dac[data & 3])
+		if (state->m_dac_data != m_dac[data & 3])
 		{
 			double q;
 			double fc;
 
 			m_stream->update();
 
-			m_dac[data & 3] = m_dac_data;
+			m_dac[data & 3] = state->m_dac_data;
 
 			if (m_dac[VCA] == 255)
 				m_gain = 0;
@@ -147,7 +152,7 @@ void micro3d_sound_device::noise_sh_w(u8 data)
 			q = 0.75/255 * (255 - m_dac[VCQ]) + 0.1;
 			fc = 4500.0/255 * (255 - m_dac[VCF]) + 100;
 
-			m_filter.recompute(m_gain, q, fc);
+			recompute_filter(&m_filter, m_gain, q, fc);
 		}
 	}
 }
@@ -160,10 +165,10 @@ void micro3d_sound_device::noise_sh_w(u8 data)
  *************************************/
 
 
-DEFINE_DEVICE_TYPE(MICRO3D, micro3d_sound_device, "micro3d_sound", "Microprose Audio Custom")
+const device_type MICRO3D = &device_creator<micro3d_sound_device>;
 
-micro3d_sound_device::micro3d_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: device_t(mconfig, MICRO3D, tag, owner, clock),
+micro3d_sound_device::micro3d_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, MICRO3D, "Microprose Audio Custom", tag, owner, clock, "micro3d_sound", __FILE__),
 		device_sound_interface(mconfig, *this),
 		m_gain(0),
 		m_noise_shift(0),
@@ -172,7 +177,17 @@ micro3d_sound_device::micro3d_sound_device(const machine_config &mconfig, const 
 		m_stream(nullptr)
 
 {
-		memset(m_dac, 0, sizeof(u8)*4);
+		memset(m_dac, 0, sizeof(uint8_t)*4);
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void micro3d_sound_device::device_config_complete()
+{
 }
 
 //-------------------------------------------------
@@ -183,13 +198,13 @@ void micro3d_sound_device::device_start()
 {
 	/* Allocate the stream */
 	m_stream = machine().sound().stream_alloc(*this, 0, 2, machine().sample_rate());
-	m_filter.init(machine().sample_rate());
+	filter_init(machine(), &m_filter, machine().sample_rate());
 
-	m_noise_filters[0].configure(2.7e3 + 2.7e3, 1.0e-6);
-	m_noise_filters[1].configure(2.7e3 + 1e3, 0.30e-6);
-	m_noise_filters[2].configure(2.7e3 + 270, 0.15e-6);
-	m_noise_filters[3].configure(2.7e3 + 0, 0.082e-6);
-//  m_noise_filters[4].configure(33e3, 0.1e-6);
+	configure_filter(&m_noise_filters[0], 2.7e3 + 2.7e3, 1.0e-6);
+	configure_filter(&m_noise_filters[1], 2.7e3 + 1e3, 0.30e-6);
+	configure_filter(&m_noise_filters[2], 2.7e3 + 270, 0.15e-6);
+	configure_filter(&m_noise_filters[3], 2.7e3 + 0, 0.082e-6);
+//  configure_filter(&m_noise_filters[4], 33e3, 0.1e-6);
 }
 
 //-------------------------------------------------
@@ -290,4 +305,70 @@ void micro3d_sound_device::sound_stream_update(sound_stream &stream, stream_samp
 		*fl++ = output * pan_l;
 		*fr++ = output * pan_r;
 	}
+}
+
+/***************************************************************************
+
+    8031 port mappings:
+
+    Port 1                          Port 2
+    =======                         ======
+    0: S/H sel A     (O)            0:
+    1: S/H sel B     (O)            1:
+    2: S/H sel C     (O)            2: uPD bank select (O)
+    3: S/H en        (O)            3: /uPD busy       (I)
+    4: DS1267 data   (O)            4: /uPD reset      (O)
+    5: DS1267 clock  (O)            5: Watchdog reset  (O)
+    6: /DS1267 reset (O)            6:
+    7: Test SW       (I)            7:
+
+***************************************************************************/
+
+
+WRITE8_MEMBER(micro3d_state::micro3d_snd_dac_a)
+{
+	m_dac_data = data;
+}
+
+WRITE8_MEMBER(micro3d_state::micro3d_snd_dac_b)
+{
+	/* TODO: This controls upd7759 volume */
+}
+
+WRITE8_MEMBER(micro3d_state::micro3d_sound_io_w)
+{
+	m_sound_port_latch[offset] = data;
+
+	switch (offset)
+	{
+		case 0x01:
+		{
+			micro3d_sound_device *noise = (data & 4) ? m_noise_2 : m_noise_1;
+			noise->noise_sh_w(data);
+			break;
+		}
+		case 0x03:
+		{
+			m_upd7759->set_bank_base((data & 0x4) ? 0x20000 : 0);
+			m_upd7759->reset_w((data & 0x10) ? 0 : 1);
+			break;
+		}
+	}
+}
+
+READ8_MEMBER(micro3d_state::micro3d_sound_io_r)
+{
+	switch (offset)
+	{
+		case 0x01:  return (m_sound_port_latch[offset] & 0x7f) | m_sound_sw->read();
+		case 0x03:  return (m_sound_port_latch[offset] & 0xf7) | (m_upd7759->busy_r() ? 0x08 : 0);
+		default:    return 0;
+	}
+}
+
+WRITE8_MEMBER(micro3d_state::micro3d_upd7759_w)
+{
+	m_upd7759->port_w(space, 0, data);
+	m_upd7759->start_w(0);
+	m_upd7759->start_w(1);
 }

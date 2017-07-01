@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PLUS4_STD_H
-#define MAME_BUS_PLUS4_STD_H
-
 #pragma once
 
+#ifndef __PLUS4_STANDARD_CARTRIDGE__
+#define __PLUS4_STANDARD_CARTRIDGE__
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -34,10 +35,13 @@ protected:
 
 	// device_plus4_expansion_card_interface overrides
 	virtual uint8_t plus4_cd_r(address_space &space, offs_t offset, uint8_t data, int ba, int cs0, int c1l, int c2l, int cs1, int c1h, int c2h) override;
+
+
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PLUS4_STD, plus4_standard_cartridge_device)
+extern const device_type PLUS4_STD;
 
-#endif // MAME_BUS_PLUS4_STD_H
+
+#endif

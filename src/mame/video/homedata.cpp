@@ -1,11 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Phil Stroffolino, Nicola Salmoria
 #include "emu.h"
-#include "includes/homedata.h"
-
 #include "cpu/m6809/m6809.h"
-#include "screen.h"
-
+#include "includes/homedata.h"
 
 /*
     video control registers:
@@ -1022,7 +1019,7 @@ uint32_t homedata_state::screen_update_mirderby(screen_device &screen, bitmap_in
 }
 
 
-WRITE_LINE_MEMBER(homedata_state::screen_vblank_homedata)
+void homedata_state::screen_eof_homedata(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

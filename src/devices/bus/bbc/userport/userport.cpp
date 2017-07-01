@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "userport.h"
 
 
@@ -14,7 +13,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(BBC_USERPORT_SLOT, bbc_userport_device, "bbc_userport_slot", "BBC Micro User port")
+const device_type BBC_USERPORT_SLOT = &device_creator<bbc_userport_device>;
 
 
 
@@ -52,8 +51,8 @@ device_bbc_userport_interface::~device_bbc_userport_interface()
 //-------------------------------------------------
 
 bbc_userport_device::bbc_userport_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, BBC_USERPORT_SLOT, tag, owner, clock),
-	device_slot_interface(mconfig, *this), m_device(nullptr)
+		device_t(mconfig, BBC_USERPORT_SLOT, "BBC Micro User port", tag, owner, clock, "bbc_userport_slot", __FILE__),
+		device_slot_interface(mconfig, *this), m_device(nullptr)
 {
 }
 

@@ -179,7 +179,7 @@ uint32_t goal92_state::screen_update_goal92(screen_device &screen, bitmap_ind16 
 	return 0;
 }
 
-WRITE_LINE_MEMBER(goal92_state::screen_vblank_goal92)
+void goal92_state::screen_eof_goal92(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

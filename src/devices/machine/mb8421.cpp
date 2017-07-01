@@ -11,18 +11,17 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "machine/mb8421.h"
 
 
-DEFINE_DEVICE_TYPE(MB8421, mb8421_device, "mb8421", "MB8421 DPSRAM")
+const device_type MB8421 = &device_creator<mb8421_device>;
 
 //-------------------------------------------------
 //  mb8421_device - constructor
 //-------------------------------------------------
 
 mb8421_device::mb8421_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MB8421, tag, owner, clock),
+	: device_t(mconfig, MB8421, "MB8421 DPSRAM", tag, owner, clock, "mb8421", __FILE__),
 		m_intl_handler(*this),
 		m_intr_handler(*this)
 {
@@ -69,7 +68,7 @@ READ8_MEMBER(mb8421_device::left_r)
 {
 	offset &= 0x7ff;
 
-	if (offset == 0x7fe && !machine().side_effect_disabled())
+	if (offset == 0x7fe && !space.debugger_access())
 		m_intl_handler(0);
 
 	return m_ram[offset];
@@ -88,7 +87,7 @@ READ8_MEMBER(mb8421_device::right_r)
 {
 	offset &= 0x7ff;
 
-	if (offset == 0x7ff && !machine().side_effect_disabled())
+	if (offset == 0x7ff && !space.debugger_access())
 		m_intr_handler(0);
 
 	return m_ram[offset];

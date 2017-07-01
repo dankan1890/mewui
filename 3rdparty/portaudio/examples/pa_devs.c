@@ -7,7 +7,7 @@
         ASIO support.
 */
 /*
- * $Id$
+ * $Id: pa_devs.c 1953 2015-04-10 04:00:09Z philburk $
  *
  * This program uses the PortAudio Portable Audio Library.
  * For more information see: http://www.portaudio.com

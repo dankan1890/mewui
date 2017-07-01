@@ -44,6 +44,7 @@ Ports:
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
+#include "formats/ace_tap.h"
 #include "imagedev/cassette.h"
 #include "imagedev/snapquik.h"
 #include "bus/centronics/ctronics.h"
@@ -52,15 +53,9 @@ Ports:
 #include "machine/z80pio.h"
 #include "sound/ay8910.h"
 #include "sound/sp0256.h"
-#include "sound/spkrdev.h"
+#include "sound/speaker.h"
 #include "sound/wave.h"
-
-#include "screen.h"
 #include "softlist.h"
-#include "speaker.h"
-
-#include "formats/ace_tap.h"
-
 
 #define Z80_TAG         "z0"
 #define AY8910_TAG      "ay8910"
@@ -745,7 +740,7 @@ void ace_state::machine_start()
 //  MACHINE_CONFIG( ace )
 //-------------------------------------------------
 
-static MACHINE_CONFIG_START( ace )
+static MACHINE_CONFIG_START( ace, ace_state )
 	// basic machine hardware
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_6_5MHz/2)
 	MCFG_CPU_PROGRAM_MAP(ace_mem)
@@ -835,5 +830,5 @@ ROM_END
 //  SYSTEM DRIVERS
 //**************************************************************************
 
-//    YEAR  NAME     PARENT    COMPAT  MACHINE    INPUT  STATE      INIT  COMPANY           FULLNAME       FLAGS
-COMP( 1981, jupace,  0,        0,      ace,       ace,   ace_state, 0,    "Jupiter Cantab", "Jupiter Ace", 0 )
+//    YEAR  NAME     PARENT    COMPAT  MACHINE    INPUT     INIT     COMPANY         FULLNAME      FLAGS
+COMP( 1981, jupace,     0,        0,      ace,       ace, driver_device,      0,   "Jupiter Cantab", "Jupiter Ace" , 0 )

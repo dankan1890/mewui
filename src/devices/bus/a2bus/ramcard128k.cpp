@@ -8,7 +8,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "ramcard128k.h"
 
 /***************************************************************************
@@ -19,7 +18,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2BUS_RAMCARD128K, a2bus_ssramcard_device, "ssram128", "Saturn Systems 128K Extended Language Card")
+const device_type A2BUS_RAMCARD128K = &device_creator<a2bus_ssramcard_device>;
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -29,14 +28,15 @@ DEFINE_DEVICE_TYPE(A2BUS_RAMCARD128K, a2bus_ssramcard_device, "ssram128", "Satur
 //  LIVE DEVICE
 //**************************************************************************
 
-a2bus_ssramcard_device::a2bus_ssramcard_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock), device_a2bus_card_interface(mconfig, *this),
-	m_inh_state(0), m_last_offset(0), m_dxxx_bank(0), m_main_bank(0)
+a2bus_ssramcard_device::a2bus_ssramcard_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
+	device_a2bus_card_interface(mconfig, *this), m_inh_state(0), m_last_offset(0), m_dxxx_bank(0), m_main_bank(0)
 {
 }
 
 a2bus_ssramcard_device::a2bus_ssramcard_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	a2bus_ssramcard_device(mconfig, A2BUS_RAMCARD128K, tag, owner, clock)
+	device_t(mconfig, A2BUS_RAMCARD128K, "Saturn Systems 128K Extended Language Card", tag, owner, clock, "ssram128", __FILE__),
+	device_a2bus_card_interface(mconfig, *this), m_inh_state(0), m_last_offset(0), m_dxxx_bank(0), m_main_bank(0)
 {
 }
 

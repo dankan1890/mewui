@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -23,7 +22,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VIDEOBRAIN_EXPANSION_SLOT, videobrain_expansion_slot_device, "videobrain_expansion_slot", "VideoBrain expansion port")
+const device_type VIDEOBRAIN_EXPANSION_SLOT = &device_creator<videobrain_expansion_slot_device>;
 
 
 
@@ -88,7 +87,7 @@ uint8_t* device_videobrain_expansion_card_interface::videobrain_ram_pointer(runn
 //-------------------------------------------------
 
 videobrain_expansion_slot_device::videobrain_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VIDEOBRAIN_EXPANSION_SLOT, tag, owner, clock),
+	device_t(mconfig, VIDEOBRAIN_EXPANSION_SLOT, "VideoBrain expansion port", tag, owner, clock, "videobrain_expansion_slot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	device_image_interface(mconfig, *this),
 	m_write_extres(*this), m_cart(nullptr)
@@ -119,7 +118,7 @@ image_init_result videobrain_expansion_slot_device::call_load()
 	{
 		size_t size;
 
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			size = length();
 
@@ -143,7 +142,7 @@ image_init_result videobrain_expansion_slot_device::call_load()
 //  get_default_card_software -
 //-------------------------------------------------
 
-std::string videobrain_expansion_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string videobrain_expansion_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("standard");
 }

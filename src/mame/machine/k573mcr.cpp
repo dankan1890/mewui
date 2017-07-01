@@ -5,7 +5,6 @@
  *
  */
 
-#include "emu.h"
 #include "k573mcr.h"
 
 /*
@@ -13,7 +12,7 @@
 */
 
 k573mcr_device::k573mcr_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, KONAMI_573_MEMORY_CARD_READER, tag, owner, clock)
+	device_t(mconfig, KONAMI_573_MEMORY_CARD_READER, "Konami 573 Memory Card Reader", tag, owner, clock, "k573mcr", __FILE__)
 {
 }
 
@@ -31,4 +30,4 @@ const tiny_rom_entry *k573mcr_device::device_rom_region() const
 	return ROM_NAME( k573mcr );
 }
 
-DEFINE_DEVICE_TYPE(KONAMI_573_MEMORY_CARD_READER, k573mcr_device, "k573mcr", "Konami 573 Memory Card Reader")
+const device_type KONAMI_573_MEMORY_CARD_READER = &device_creator<k573mcr_device>;

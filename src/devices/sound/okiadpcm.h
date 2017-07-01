@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_SOUND_OKIADPCM_H
-#define MAME_SOUND_OKIADPCM_H
-
 #pragma once
+
+#ifndef __OKIADPCM_H__
+#define __OKIADPCM_H__
 
 
 // ======================> oki_adpcm_state
@@ -61,4 +61,4 @@ private:
 };
 
 
-#endif // MAME_SOUND_OKIADPCM_H
+#endif // __OKIADPCM_H__

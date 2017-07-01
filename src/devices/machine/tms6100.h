@@ -6,11 +6,10 @@
 
 ***********************************************************************************************/
 
-#ifndef MAME_MACHINE_TMS6100_H
-#define MAME_MACHINE_TMS6100_H
+#ifndef __TMS6100_H__
+#define __TMS6100_H__
 
-#pragma once
-
+#include "emu.h"
 
 
 //**************************************************************************
@@ -21,7 +20,7 @@
 // note: in 4-bit mode, use data_r, otherwise use data_line_r
 
 #define MCFG_TMS6100_4BIT_MODE() \
-		tms6100_device::enable_4bit_mode(*device);
+	tms6100_device::enable_4bit_mode(*device);
 
 
 // pinout reference
@@ -95,7 +94,8 @@
 class tms6100_device : public device_t
 {
 public:
-	tms6100_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+	tms6100_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	tms6100_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	static void enable_4bit_mode(device_t &device) { downcast<tms6100_device &>(device).m_4bit_mode = true; }
 
@@ -110,39 +110,37 @@ public:
 	DECLARE_READ_LINE_MEMBER(data_line_r);
 
 protected:
-	tms6100_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
-
 	// device-level overrides
 	virtual void device_start() override;
 
-	void handle_command(u8 cmd);
+	void handle_command(uint8_t cmd);
 
 	// internal state
-	required_region_ptr<u8> m_rom;
+	required_region_ptr<uint8_t> m_rom;
 	bool m_reverse_bits;
 	bool m_4bit_mode;
 
-	u32 m_rommask;
-	u32 m_address; // internal address + chipselect
-	u8 m_sa;       // romdata shift register
-	u8 m_count;    // TB/LA counter (-> PLA)
-	u8 m_prev_cmd; // previous handled command
-	u8 m_prev_m;   // previous valid m0/m1 state
+	uint32_t m_rommask;
+	uint32_t m_address;   // internal address + chipselect
+	uint8_t m_sa;         // romdata shift register
+	uint8_t m_count;      // TB/LA counter (-> PLA)
+	uint8_t m_prev_cmd;   // previous handled command
+	uint8_t m_prev_m;     // previous valid m0/m1 state
 
-	u8 m_add;      // ADD/DATA pins input
-	u8 m_data;     // ADD/DATA pins output
+	uint8_t m_add;        // ADD/DATA pins input
+	uint8_t m_data;       // ADD/DATA pins output
 	int m_m0;
 	int m_m1;
-	int m_cs;      // chipselect pin
-	int m_clk;     // CLK pin
-	int m_rck;     // RCK pin (mask/gate to CLK?)
+	int m_cs;           // chipselect pin
+	int m_clk;          // CLK pin
+	int m_rck;          // RCK pin (mask/gate to CLK?)
 };
 
 
 class m58819_device : public tms6100_device
 {
 public:
-	m58819_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+	m58819_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 protected:
 	// device-level overrides
@@ -150,7 +148,8 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(TMS6100, tms6100_device)
-DECLARE_DEVICE_TYPE(M58819,  m58819_device)
+extern const device_type TMS6100;
+extern const device_type M58819;
 
-#endif // MAME_MACHINE_TMS6100_H
+
+#endif /* __TMS6100_H__ */

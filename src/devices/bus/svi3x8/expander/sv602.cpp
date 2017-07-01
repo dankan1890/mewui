@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "sv602.h"
 
 
@@ -14,19 +13,25 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SV602, sv602_device, "sv602", "SV-602 Single Slot Expander")
+const device_type SV602 = &device_creator<sv602_device>;
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( sv602_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( sv602 )
 	MCFG_SVI_SLOT_BUS_ADD
 	MCFG_SVI_SLOT_INT_HANDLER(WRITELINE(sv602_device, int_w))
 	MCFG_SVI_SLOT_ROMDIS_HANDLER(WRITELINE(sv602_device, romdis_w))
 	MCFG_SVI_SLOT_RAMDIS_HANDLER(WRITELINE(sv602_device, ramdis_w))
 	MCFG_SVI_SLOT_ADD("0", sv602_slot_cards, nullptr)
 MACHINE_CONFIG_END
+
+machine_config_constructor sv602_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( sv602 );
+}
 
 
 //**************************************************************************
@@ -38,7 +43,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 sv602_device::sv602_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SV602, tag, owner, clock),
+	device_t(mconfig, SV602, "SV-602 Single Slot Expander", tag, owner, clock, "sv602", __FILE__),
 	device_svi_expander_interface(mconfig, *this),
 	m_slotbus(*this, "slotbus")
 {

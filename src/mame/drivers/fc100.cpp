@@ -32,22 +32,18 @@ TODO:
 
 
 #include "emu.h"
-
-#include "bus/centronics/ctronics.h"
-#include "bus/generic/carts.h"
-#include "bus/generic/slot.h"
 #include "cpu/z80/z80.h"
-#include "imagedev/cassette.h"
-#include "machine/buffer.h"
-#include "machine/clock.h"
-#include "machine/i8251.h"
-#include "sound/ay8910.h"
-#include "sound/wave.h"
 #include "video/mc6847.h"
-
-#include "speaker.h"
-
+#include "machine/i8251.h"
+#include "machine/clock.h"
+#include "sound/ay8910.h"
+#include "imagedev/cassette.h"
+#include "sound/wave.h"
 #include "formats/fc100_cas.h"
+#include "machine/buffer.h"
+#include "bus/centronics/ctronics.h"
+#include "bus/generic/slot.h"
+#include "bus/generic/carts.h"
 
 
 class fc100_state : public driver_device
@@ -58,7 +54,6 @@ public:
 		, m_maincpu(*this, "maincpu")
 		, m_vdg(*this, "vdg")
 		, m_p_videoram(*this, "videoram")
-		, m_p_chargen(*this, "chargen")
 		, m_cass(*this, "cassette")
 		, m_cart(*this, "cartslot")
 		, m_uart(*this, "uart")
@@ -79,6 +74,8 @@ public:
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_c);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_p);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_k);
+
+	uint8_t *m_p_chargen;
 
 	MC6847_GET_CHARROM_MEMBER(get_char_rom)
 	{
@@ -106,7 +103,6 @@ private:
 	required_device<cpu_device> m_maincpu;
 	required_device<mc6847_base_device> m_vdg;
 	required_shared_ptr<uint8_t> m_p_videoram;
-	required_region_ptr<u8> m_p_chargen;
 	required_device<cassette_image_device> m_cass;
 	required_device<generic_slot_device> m_cart;
 	required_device<i8251_device> m_uart;
@@ -483,6 +479,7 @@ void fc100_state::machine_start()
 
 void fc100_state::machine_reset()
 {
+	m_p_chargen = memregion("chargen")->base();
 	m_cass_data[0] = m_cass_data[1] = m_cass_data[2] = m_cass_data[3] = 0;
 	m_cass_state = 0;
 	m_cassold = 0;
@@ -512,7 +509,7 @@ DRIVER_INIT_MEMBER( fc100_state, fc100 )
 	membank("bankr")->configure_entry(1, &ram[0]);
 }
 
-static MACHINE_CONFIG_START( fc100 )
+static MACHINE_CONFIG_START( fc100, fc100_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_7_15909MHz/2)
 	MCFG_CPU_PROGRAM_MAP(fc100_mem)
@@ -522,7 +519,7 @@ static MACHINE_CONFIG_START( fc100 )
 	MCFG_DEVICE_ADD("vdg", M5C6847P1, XTAL_7_15909MHz/3)  // Clock not verified
 	MCFG_MC6847_INPUT_CALLBACK(READ8(fc100_state, mc6847_videoram_r))
 	MCFG_MC6847_CHARROM_CALLBACK(fc100_state, get_char_rom)
-	MCFG_MC6847_FIXED_MODE(m5c6847p1_device::MODE_INTEXT)
+	MCFG_MC6847_FIXED_MODE(MC6847_MODE_INTEXT)
 	// other lines not connected
 
 	MCFG_SCREEN_MC6847_NTSC_ADD("screen", "vdg")
@@ -577,5 +574,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE  INPUT   CLASS        INIT    COMPANY     FULLNAME  FLAGS
-CONS( 1982, fc100,  0,      0,       fc100,   fc100,  fc100_state, fc100,  "Goldstar", "FC-100", MACHINE_NOT_WORKING )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE  INPUT   CLASS          INIT    COMPANY    FULLNAME  FLAGS */
+CONS( 1982, fc100,  0,      0,       fc100,   fc100,  fc100_state, fc100,   "Goldstar", "FC-100", MACHINE_NOT_WORKING )

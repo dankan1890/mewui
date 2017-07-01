@@ -15,7 +15,6 @@
 
 #include "drivenum.h"
 #include "softlist.h"
-#include "emuopts.h"
 
 namespace ui {
 //-------------------------------------------------
@@ -31,7 +30,6 @@ machine_info::machine_info(running_machine &machine)
 	m_has_dips = false;
 	m_has_bioses = false;
 	m_has_keyboard = false;
-	m_has_test_switch = false;
 
 	// scan the input port array to see what options we need to enable
 	for (auto &port : machine.ioport().ports())
@@ -45,8 +43,6 @@ machine_info::machine_info(running_machine &machine)
 				m_has_analog = true;
 			if (field.type() == IPT_KEYBOARD)
 				m_has_keyboard = true;
-			if (field.type() == IPT_SERVICE)
-				m_has_test_switch = true;
 		}
 
 	for (device_t &device : device_iterator(machine.root_device()))
@@ -204,10 +200,10 @@ std::string machine_info::game_info_string()
 
 	// print description, manufacturer, and CPU:
 	util::stream_format(buf, _("%1$s\n%2$s %3$s\nDriver: %4$s\n\nCPU:\n"),
-			m_machine.system().type.fullname(),
+			m_machine.system().description,
 			m_machine.system().year,
 			m_machine.system().manufacturer,
-			core_filename_extract_base(m_machine.system().type.source()));
+			core_filename_extract_base(m_machine.system().source_file));
 
 	// loop over all CPUs
 	execute_interface_iterator execiter(m_machine.root_device());
@@ -319,22 +315,12 @@ std::string machine_info::game_info_string()
 std::string machine_info::mandatory_images()
 {
 	std::ostringstream buf;
-	bool is_first = true;
 
 	// make sure that any required image has a mounted file
 	for (device_image_interface &image : image_interface_iterator(m_machine.root_device()))
 	{
-		if (image.must_be_loaded())
-		{
-			if (m_machine.options().image_option(image.instance_name()).value().empty())
-			{
-				if (is_first)
-					is_first = false;
-				else
-					buf << ", ";
-				buf << "\"" << image.instance_name() << "\"";
-			}
-		}
+		if (image.filename() == nullptr && image.must_be_loaded())
+			buf << "\"" << image.instance_name() << "\", ";
 	}
 	return buf.str();
 }
@@ -395,7 +381,7 @@ menu_image_info::~menu_image_info()
 
 void menu_image_info::populate(float &customtop, float &custombottom)
 {
-	item_append(machine().system().type.fullname(), "", FLAG_DISABLE, nullptr);
+	item_append(machine().system().description, "", FLAG_DISABLE, nullptr);
 	item_append("", "", FLAG_DISABLE, nullptr);
 
 	for (device_image_interface &image : image_interface_iterator(machine().root_device()))
@@ -422,7 +408,7 @@ void menu_image_info::image_info(device_image_interface *image)
 		item_append(image->brief_instance_name(), image->basename(), 0, nullptr);
 
 		// if image has been loaded through softlist, let's add some more info
-		if (image->loaded_through_softlist())
+		if (image->software_entry())
 		{
 			// display long filename
 			item_append(image->longname(), "", FLAG_DISABLE, nullptr);

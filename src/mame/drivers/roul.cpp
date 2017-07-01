@@ -65,12 +65,9 @@ Stephh's notes (based on the game Z80 code and some tests) :
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
-#include "machine/nvram.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
-
 #include "roul.lh"
+#include "machine/nvram.h"
 
 
 class roul_state : public driver_device
@@ -294,7 +291,7 @@ static INPUT_PORTS_START( roul )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static MACHINE_CONFIG_START( roul )
+static MACHINE_CONFIG_START( roul, roul_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, 4000000)
 	MCFG_CPU_PROGRAM_MAP(roul_map)
@@ -341,4 +338,4 @@ ROM_START(roul)
 	ROM_LOAD( "roul.u38",   0x0020, 0x0020, CRC(23ae22c1) SHA1(bf0383462976ec6341ffa8a173264ce820bc654a) )
 ROM_END
 
-GAMEL( 1990, roul,  0,   roul, roul, roul_state, 0, ROT0, "bootleg", "Super Lucky Roulette", MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE, layout_roul )
+GAMEL( 1990, roul,  0,   roul, roul, driver_device, 0, ROT0, "bootleg", "Super Lucky Roulette", MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE, layout_roul )

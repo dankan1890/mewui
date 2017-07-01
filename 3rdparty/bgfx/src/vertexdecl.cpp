@@ -1,12 +1,13 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
+#include <string.h>
 #include <bx/debug.h>
 #include <bx/hash.h>
 #include <bx/readerwriter.h>
-#include <bx/sort.h>
+#include <bx/radixsort.h>
 #include <bx/string.h>
 #include <bx/uint32_t.h>
 
@@ -15,7 +16,7 @@
 
 namespace bgfx
 {
-	static const uint8_t s_attribTypeSizeD3D9[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeDx9[AttribType::Count][4] =
 	{
 		{  4,  4,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
@@ -24,7 +25,7 @@ namespace bgfx
 		{  4,  8, 12, 16 }, // Float
 	};
 
-	static const uint8_t s_attribTypeSizeD3D1x[AttribType::Count][4] =
+	static const uint8_t s_attribTypeSizeDx1x[AttribType::Count][4] =
 	{
 		{  1,  2,  4,  4 }, // Uint8
 		{  4,  4,  4,  4 }, // Uint10
@@ -44,16 +45,16 @@ namespace bgfx
 
 	static const uint8_t (*s_attribTypeSize[])[AttribType::Count][4] =
 	{
-		&s_attribTypeSizeD3D9,  // Noop
-		&s_attribTypeSizeD3D9,  // Direct3D9
-		&s_attribTypeSizeD3D1x, // Direct3D11
-		&s_attribTypeSizeD3D1x, // Direct3D12
-		&s_attribTypeSizeD3D1x, // Gnm
-		&s_attribTypeSizeGl,    // Metal
-		&s_attribTypeSizeGl,    // OpenGLES
-		&s_attribTypeSizeGl,    // OpenGL
-		&s_attribTypeSizeD3D1x, // Vulkan
-		&s_attribTypeSizeD3D9,  // Count
+		&s_attribTypeSizeDx9,  // Null
+		&s_attribTypeSizeDx9,  // Direct3D9
+		&s_attribTypeSizeDx1x, // Direct3D11
+		&s_attribTypeSizeDx1x, // Direct3D12
+		&s_attribTypeSizeGl,   // Gnm
+		&s_attribTypeSizeGl,   // Metal
+		&s_attribTypeSizeGl,   // OpenGLES
+		&s_attribTypeSizeGl,   // OpenGL
+		&s_attribTypeSizeGl,   // Vulkan
+		&s_attribTypeSizeDx9,  // Count
 	};
 	BX_STATIC_ASSERT(BX_COUNTOF(s_attribTypeSize) == RendererType::Count+1);
 
@@ -61,6 +62,28 @@ namespace bgfx
 	{
 		s_attribTypeSize[0]                   = s_attribTypeSize[_type];
 		s_attribTypeSize[RendererType::Count] = s_attribTypeSize[_type];
+	}
+
+	void dbgPrintfVargs(const char* _format, va_list _argList)
+	{
+		char temp[8192];
+		char* out = temp;
+		int32_t len = bx::vsnprintf(out, sizeof(temp), _format, _argList);
+		if ( (int32_t)sizeof(temp) < len)
+		{
+			out = (char*)alloca(len+1);
+			len = bx::vsnprintf(out, len, _format, _argList);
+		}
+		out[len] = '\0';
+		bx::debugOutput(out);
+	}
+
+	void dbgPrintf(const char* _format, ...)
+	{
+		va_list argList;
+		va_start(argList, _format);
+		dbgPrintfVargs(_format, argList);
+		va_end(argList);
 	}
 
 	VertexDecl::VertexDecl()
@@ -73,8 +96,8 @@ namespace bgfx
 	{
 		m_hash = _renderer; // use hash to store renderer type while building VertexDecl.
 		m_stride = 0;
-		bx::memSet(m_attributes, 0xff, sizeof(m_attributes) );
-		bx::memSet(m_offset, 0, sizeof(m_offset) );
+		memset(m_attributes, 0xff, sizeof(m_attributes) );
+		memset(m_offset, 0, sizeof(m_offset) );
 
 		return *this;
 	}
@@ -149,7 +172,7 @@ namespace bgfx
 	{
 		if (BX_ENABLED(BGFX_CONFIG_DEBUG) )
 		{
-			bx::debugPrintf("vertexdecl %08x (%08x), stride %d\n"
+			dbgPrintf("vertexdecl %08x (%08x), stride %d\n"
 				, _decl.m_hash
 				, bx::hashMurmur2A(_decl.m_attributes)
 				, _decl.m_stride
@@ -165,7 +188,7 @@ namespace bgfx
 					bool asInt;
 					_decl.decode(Attrib::Enum(attr), num, type, normalized, asInt);
 
-					bx::debugPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
+					dbgPrintf("\tattr %d - %s, num %d, type %d, norm %d, asint %d, offset %d\n"
 						, attr
 						, getAttribName(Attrib::Enum(attr) )
 						, num
@@ -512,7 +535,7 @@ namespace bgfx
 			break;
 
 		case AttribType::Float:
-			bx::memCopy(data, _input, num*sizeof(float) );
+			memcpy(data, _input, num*sizeof(float) );
 			break;
 		}
 	}
@@ -521,7 +544,7 @@ namespace bgfx
 	{
 		if (!_decl.has(_attr) )
 		{
-			bx::memSet(_output, 0, 4*sizeof(float) );
+			memset(_output, 0, 4*sizeof(float) );
 			return;
 		}
 
@@ -629,7 +652,7 @@ namespace bgfx
 			break;
 
 		case AttribType::Float:
-			bx::memCopy(_output, data, num*sizeof(float) );
+			memcpy(_output, data, num*sizeof(float) );
 			_output += num;
 			break;
 		}
@@ -647,7 +670,7 @@ namespace bgfx
 	{
 		if (_destDecl.m_hash == _srcDecl.m_hash)
 		{
-			bx::memCopy(_destData, _srcData, _srcDecl.getSize(_num) );
+			memcpy(_destData, _srcData, _srcDecl.getSize(_num) );
 			return;
 		}
 
@@ -720,11 +743,11 @@ namespace bgfx
 					switch (cop.op)
 					{
 					case ConvertOp::Set:
-						bx::memSet(dest + cop.dest, 0, cop.size);
+						memset(dest + cop.dest, 0, cop.size);
 						break;
 
 					case ConvertOp::Copy:
-						bx::memCopy(dest + cop.dest, src + cop.src, cop.size);
+						memcpy(dest + cop.dest, src + cop.src, cop.size);
 						break;
 
 					case ConvertOp::Convert:
@@ -754,7 +777,7 @@ namespace bgfx
 		const float epsilonSq = _epsilon*_epsilon;
 
 		uint32_t numVertices = 0;
-		bx::memSet(_output, 0xff, _num*sizeof(uint16_t) );
+		memset(_output, 0xff, _num*sizeof(uint16_t) );
 
 		for (uint32_t ii = 0; ii < _num; ++ii)
 		{
@@ -799,7 +822,7 @@ namespace bgfx
 
 		const uint32_t size = sizeof(uint16_t)*(hashSize + _num);
 		uint16_t* hashTable = (uint16_t*)alloca(size);
-		bx::memSet(hashTable, 0xff, size);
+		memset(hashTable, 0xff, size);
 
 		uint16_t* next = hashTable + hashSize;
 

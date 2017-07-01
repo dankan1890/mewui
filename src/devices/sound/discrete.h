@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:K.Wilkins,Couriersud,Derrick Renaud,Frank Palazzolo
-#ifndef MAME_SOUND_DISCRETE_H
-#define MAME_SOUND_DISCRETE_H
-
 #pragma once
+
+#ifndef __DISCRETE_H__
+#define __DISCRETE_H__
 
 #include "machine/rescap.h"
 
@@ -4282,7 +4282,7 @@ class discrete_device : public device_t
 
 protected:
 	// construction/destruction
-	discrete_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	discrete_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock);
 
 public:
 	// inline configuration helpers
@@ -4291,12 +4291,6 @@ public:
 	DECLARE_READ8_MEMBER(read);
 	DECLARE_WRITE8_MEMBER(write);
 	virtual ~discrete_device(void);
-
-	template<int DiscreteInput>
-	DECLARE_WRITE_LINE_MEMBER(write_line)
-	{
-		write(machine().dummy_space(), DiscreteInput, state ? 1 : 0);
-	}
 
 	/* --------------------------------- */
 
@@ -4405,7 +4399,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DISCRETE, discrete_sound_device)
+extern const device_type DISCRETE;
 
 /*************************************
  *
@@ -4731,4 +4725,4 @@ discrete_base_node *discrete_create_node(discrete_device * pdev, const discrete_
 
 
 
-#endif // MAME_SOUND_DISCRETE_H
+#endif /* __DISCRETE_H__ */

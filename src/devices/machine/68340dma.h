@@ -1,15 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:David Haywood
-#ifndef MAME_MACHINE_68340DMA_H
-#define MAME_MACHINE_68340DMA_H
 
-#pragma once
-
+#include "cpu/m68000/m68000.h"
 
 class m68340_dma
 {
-public:
-	void reset();
+	public:
+	void reset(void);
 };
-
-#endif // MAME_MACHINE_68340DMA_H

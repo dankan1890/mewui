@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_VIDEO_GF7600GS_H
-#define MAME_VIDEO_GF7600GS_H
-
-#pragma once
+#ifndef GF7600GS_H
+#define GF7600GS_H
 
 #include "machine/pci.h"
 
@@ -24,6 +22,6 @@ private:
 	DECLARE_ADDRESS_MAP(map3, 32);
 };
 
-DECLARE_DEVICE_TYPE(GEFORCE_7600GS, geforce_7600gs_device)
+extern const device_type GEFORCE_7600GS;
 
-#endif // MAME_VIDEO_GF7600GS_H
+#endif

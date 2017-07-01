@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Carl
-#include "emu.h"
 #include "i286.h"
 #include "debugger.h"
 #include "i86inline.h"
@@ -165,12 +164,11 @@ const uint8_t i80286_cpu_device::m_i80286_timing[] =
 	13,             /* (80186) BOUND */
 };
 
-DEFINE_DEVICE_TYPE(I80286, i80286_cpu_device, "i80286", "I80286")
+const device_type I80286 = &device_creator<i80286_cpu_device>;
 
 i80286_cpu_device::i80286_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: i8086_common_cpu_device(mconfig, I80286, tag, owner, clock)
+	: i8086_common_cpu_device(mconfig, I80286, "I80286", tag, owner, clock, "i80286", __FILE__)
 	, m_program_config("program", ENDIANNESS_LITTLE, 16, 24, 0)
-	, m_opcodes_config("opcodes", ENDIANNESS_LITTLE, 16, 24, 0)
 	, m_io_config("io", ENDIANNESS_LITTLE, 16, 16, 0)
 	, m_out_shutdown_func(*this)
 {
@@ -280,17 +278,6 @@ void i80286_cpu_device::device_start()
 	state_add( I8086_HALT, "HALT", m_halt ).mask(1);
 
 	m_out_shutdown_func.resolve_safe();
-}
-
-const address_space_config *i80286_cpu_device::memory_space_config(address_spacenum spacenum) const
-{
-	switch(spacenum)
-	{
-	case AS_PROGRAM:           return &m_program_config;
-	case AS_IO:                return &m_io_config;
-	case AS_DECRYPTED_OPCODES: return has_configured_map(AS_DECRYPTED_OPCODES) ? &m_opcodes_config : nullptr;
-	default:                   return nullptr;
-	}
 }
 
 
@@ -1022,7 +1009,7 @@ uint8_t i80286_cpu_device::fetch_op()
 	if(m_ip > m_limit[CS])
 		throw TRAP(FAULT_GP, 0);
 
-	data = m_direct_opcodes->read_byte( pc() & m_amask, m_fetch_xor );
+	data = m_direct->read_byte( pc() & m_amask, m_fetch_xor );
 	m_ip++;
 	return data;
 }
@@ -1033,7 +1020,7 @@ uint8_t i80286_cpu_device::fetch()
 	if(m_ip > m_limit[CS])
 		throw TRAP(FAULT_GP, 0);
 
-	data = m_direct_opcodes->read_byte( pc() & m_amask, m_fetch_xor );
+	data = m_direct->read_byte( pc() & m_amask, m_fetch_xor );
 	m_ip++;
 	return data;
 }
@@ -1424,7 +1411,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 					if (tmp<low || tmp>high)
 						interrupt(5);
 					CLK(BOUND);
-					logerror("%06x: bound %04x high %04x low %04x tmp\n", pc(), high, low, tmp);
+					logerror("%s: %06x: bound %04x high %04x low %04x tmp\n", tag(), pc(), high, low, tmp);
 				}
 				break;
 
@@ -1501,7 +1488,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 					m_modrm = fetch();
 					if((m_modrm & 0x38) > 0x18)
 					{
-						logerror("%06x: Mov Sreg - Invalid register\n", pc());
+						logerror("%s: %06x: Mov Sreg - Invalid register\n", tag(), pc());
 						throw TRAP(FAULT_UD, (uint16_t)-1);
 					}
 					PutRMWord(m_sregs[(m_modrm & 0x38) >> 3]);
@@ -1525,7 +1512,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 							data_descriptor(DS, m_src);
 							break;
 						default:
-							logerror("%06x: Mov Sreg - Invalid register\n", pc());
+							logerror("%s: %06x: Mov Sreg - Invalid register\n", tag(), pc());
 							throw TRAP(FAULT_UD, (uint16_t)-1);
 					}
 					break;
@@ -1788,7 +1775,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 				case 0xf0: // i_lock
 					if(PM && (CPL > m_IOPL))
 						throw TRAP(FAULT_GP, 0);
-					logerror("%06x: Warning - BUSLOCK\n", pc());
+					logerror("%s: %06x: Warning - BUSLOCK\n", tag(), pc());
 					m_no_interrupt = 1;
 					CLK(NOP);
 					break;
@@ -1865,7 +1852,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 							CLKM(PUSH_R16,PUSH_M16);
 							break;
 						default:
-							logerror("%06x: FF Pre with unimplemented mod\n", pc());
+							logerror("%s: %06x: FF Pre with unimplemented mod\n", tag(), pc());
 							throw TRAP(FAULT_UD,(uint16_t)-1);
 						}
 					}
@@ -1901,7 +1888,7 @@ reg.base = BASE(desc); (void)(r); reg.limit = LIMIT(desc); }
 					if(!common_op(op))
 					{
 						m_icount -= 10; // UD fault timing?
-						logerror("%06x: Invalid Opcode %02x\n", pc(), op);
+						logerror("%s: %06x: Invalid Opcode %02x\n", tag(), pc(), op);
 						m_ip = m_prev_ip;
 						throw TRAP(FAULT_UD, (uint16_t)-1);
 					}

@@ -1,8 +1,4 @@
-/*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
- * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
- */
-
+#include <bx/bx.h>
 #include <bx/timer.h>
 #include <bx/handlealloc.h>
 #include <bx/maputil.h>
@@ -32,13 +28,13 @@ int main()
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				tinystl::pair<TinyStlUnorderedMap::iterator, bool> ok = map.insert(tinystl::make_pair(uint64_t(jj), uint16_t(jj) ) );
-				assert(ok.second); BX_UNUSED(ok);
+				assert(ok.second);
 			}
 
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				bool ok = bx::mapRemove(map, uint64_t(jj) );
-				assert(ok); BX_UNUSED(ok);
+				assert(ok);
 			}
 
 			assert(map.size() == 0);
@@ -56,17 +52,17 @@ int main()
 		{
 			typedef std::unordered_map<uint64_t, uint16_t> StdUnorderedMap;
 			StdUnorderedMap map;
-			map.reserve(numElements);
+//			map.reserve(numElements);
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				std::pair<StdUnorderedMap::iterator, bool> ok = map.insert(std::make_pair(uint64_t(jj), uint16_t(jj) ) );
-				assert(ok.second); BX_UNUSED(ok);
+				assert(ok.second);
 			}
 
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				bool ok = bx::mapRemove(map, uint64_t(jj) );
-				assert(ok); BX_UNUSED(ok);
+				assert(ok);
 			}
 
 			assert(map.size() == 0);
@@ -87,13 +83,13 @@ int main()
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				bool ok = map.insert(jj, uint16_t(jj) );
-				assert(ok); BX_UNUSED(ok);
+				assert(ok);
 			}
 
 			for (uint32_t jj = 0; jj < numElements; ++jj)
 			{
 				bool ok = map.removeByKey(uint64_t(jj) );
-				assert(ok); BX_UNUSED(ok);
+				assert(ok);
 			}
 
 			assert(map.getNumElements() == 0);
@@ -102,9 +98,6 @@ int main()
 		elapsed += bx::getHPCounter();
 		printf("HandleHashMap: %15f\n", double(elapsed) );
 	}
-
-	extern void simd_bench();
-	simd_bench();
 
 	return EXIT_SUCCESS;
 }

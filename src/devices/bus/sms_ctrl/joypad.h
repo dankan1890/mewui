@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SMS_CTRL_JOYPAD_H
-#define MAME_BUS_SMS_CTRL_JOYPAD_H
-
 #pragma once
 
+#ifndef __SMS_JOYPAD__
+#define __SMS_JOYPAD__
 
+
+#include "emu.h"
 #include "smsctrl.h"
 
 
@@ -45,7 +46,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SMS_JOYPAD, sms_joypad_device)
+extern const device_type SMS_JOYPAD;
 
 
-#endif // MAME_BUS_SMS_CTRL_JOYPAD_H
+#endif

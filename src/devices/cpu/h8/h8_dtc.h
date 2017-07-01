@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_H8_H8_DTC_H
-#define MAME_CPU_H8_H8_DTC_H
-
-#pragma once
+#ifndef __H8_DTC_H__
+#define __H8_DTC_H__
 
 #include "h8_intc.h"
 
@@ -71,6 +69,6 @@ protected:
 	void queue(int vector);
 };
 
-DECLARE_DEVICE_TYPE(H8_DTC, h8_dtc_device)
+extern const device_type H8_DTC;
 
-#endif // MAME_CPU_H8_H8_DTC_H
+#endif

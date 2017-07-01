@@ -7,8 +7,7 @@
 
 #include "nl_parser.h"
 #include "nl_factory.h"
-#include "nl_errstr.h"
-#include "nl_base.h"
+#include "devices/nld_truthtable.h"
 
 namespace netlist
 {
@@ -25,11 +24,17 @@ void parser_t::verror(const pstring &msg, int line_num, const pstring &line)
 }
 
 
-bool parser_t::parse(const pstring &nlname)
+bool parser_t::parse(const pstring nlname)
 {
 	set_identifier_chars("abcdefghijklmnopqrstuvwvxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.-");
 	set_number_chars(".0123456789", "0123456789eE-."); //FIXME: processing of numbers
-	set_whitespace(pstring("").cat(' ').cat(9).cat(10).cat(13));
+	char ws[5];
+	ws[0] = ' ';
+	ws[1] = 9;
+	ws[2] = 10;
+	ws[3] = 13;
+	ws[4] = 0;
+	set_whitespace(ws);
 	set_comment("/*", "*/", "//");
 	m_tok_param_left = register_token("(");
 	m_tok_param_right = register_token(")");
@@ -59,16 +64,18 @@ bool parser_t::parse(const pstring &nlname)
 	while (true)
 	{
 		token_t token = get_token();
+
 		if (token.is_type(ENDOFFILE))
 		{
 			return false;
+			//error("EOF while searching for <{1}>", nlname);
 		}
 
 		if (token.is(m_tok_NETLIST_END))
 		{
 			require_token(m_tok_param_left);
 			if (!in_nl)
-				error (MF_0_UNEXPECTED_NETLIST_END);
+				error("Unexpected NETLIST_END");
 			else
 			{
 				in_nl = false;
@@ -78,7 +85,7 @@ bool parser_t::parse(const pstring &nlname)
 		else if (token.is(m_tok_NETLIST_START))
 		{
 			if (in_nl)
-				error (MF_0_UNEXPECTED_NETLIST_START);
+				error("Unexpected NETLIST_START");
 			require_token(m_tok_param_left);
 			token_t name = get_token();
 			require_token(m_tok_param_right);
@@ -92,7 +99,7 @@ bool parser_t::parse(const pstring &nlname)
 	}
 }
 
-void parser_t::parse_netlist(const pstring &nlname)
+void parser_t::parse_netlist(ATTR_UNUSED const pstring &nlname)
 {
 	while (true)
 	{
@@ -125,10 +132,10 @@ void parser_t::parse_netlist(const pstring &nlname)
 		else if (token.is(m_tok_LOCAL_SOURCE))
 			net_local_source();
 		else if (token.is(m_tok_TRUTHTABLE_START))
-			net_truthtable_start(nlname);
+			net_truthtable_start();
 		else if (token.is(m_tok_LOCAL_LIB_ENTRY))
 		{
-			m_setup.register_lib_entry(get_identifier(), "parser: " + nlname);
+			m_setup.register_lib_entry(get_identifier());
 			require_token(m_tok_param_right);
 		}
 		else if (token.is(m_tok_NETLIST_END))
@@ -141,7 +148,7 @@ void parser_t::parse_netlist(const pstring &nlname)
 	}
 }
 
-void parser_t::net_truthtable_start(const pstring &nlname)
+void parser_t::net_truthtable_start()
 {
 	pstring name = get_identifier();
 	require_token(m_tok_comma);
@@ -187,7 +194,7 @@ void parser_t::net_truthtable_start(const pstring &nlname)
 			require_token(token, m_tok_TRUTHTABLE_END);
 			require_token(m_tok_param_left);
 			require_token(m_tok_param_right);
-			m_setup.tt_factory_create(desc, nlname);
+			netlist::devices::tt_factory_create(m_setup, desc);
 			return;
 		}
 	}
@@ -293,7 +300,7 @@ void parser_t::net_c()
 
 void parser_t::dippins()
 {
-	std::vector<pstring> pins;
+	plib::pstring_vector_t pins;
 
 	pins.push_back(get_identifier());
 	require_token(m_tok_comma);
@@ -309,7 +316,7 @@ void parser_t::dippins()
 			error(plib::pfmt("expected a comma, found <{1}>")(n.str()) );
 	}
 	if ((pins.size() % 2) == 1)
-		error(plib::pfmt("You must pass an equal number of pins to DIPPINS, first pin is {}")(pins[0]));
+		error("You must pass an equal number of pins to DIPPINS");
 	std::size_t n = pins.size();
 	for (std::size_t i = 0; i < n / 2; i++)
 	{
@@ -349,29 +356,35 @@ void parser_t::netdev_hint()
 
 void parser_t::device(const pstring &dev_type)
 {
-	factory::element_t *f = m_setup.factory().factory_by_name(dev_type);
-	auto paramlist = plib::psplit(f->param_desc(), ",");
-
-	pstring devname = get_identifier();
-
-	m_setup.register_dev(dev_type, devname);
-	m_setup.log().debug("Parser: IC: {1}\n", devname);
-
-	for (pstring tp : paramlist)
+	if (m_setup.is_library_item(dev_type))
 	{
-		require_token(m_tok_comma);
-		if (tp.startsWith("+"))
-		{
-			pstring output_name = get_identifier();
-			m_setup.log().debug("Link: {1} {2}\n", tp, output_name);
+		pstring devname = get_identifier();
+		m_setup.namespace_push(devname);
+		m_setup.include(dev_type);
+		m_setup.namespace_pop();
+		require_token(m_tok_param_right);
+	}
+	else
+	{
+		base_factory_t *f = m_setup.factory().factory_by_name(dev_type);
+		plib::pstring_vector_t termlist = f->term_param_list();
+		plib::pstring_vector_t def_params = f->def_params();
 
-			m_setup.register_link(devname + "." + tp.substr(1), output_name);
-		}
-		else
+		std::size_t cnt;
+
+		pstring devname = get_identifier();
+
+		m_setup.register_dev(dev_type, m_setup.build_fqn(devname));
+
+		m_setup.log().debug("Parser: IC: {1}\n", devname);
+
+		cnt = 0;
+		while (cnt < def_params.size())
 		{
-			pstring paramfq = devname + "." + tp;
+			pstring paramfq = devname + "." + def_params[cnt];
 
 			m_setup.log().debug("Defparam: {1}\n", paramfq);
+			require_token(m_tok_comma);
 			token_t tok = get_token();
 			if (tok.is_type(STRING))
 			{
@@ -382,11 +395,24 @@ void parser_t::device(const pstring &dev_type)
 				nl_double val = eval_param(tok);
 				m_setup.register_param(paramfq, val);
 			}
+			cnt++;
 		}
-	}
 
-	// error(plib::pfmt("Input count mismatch for {1} - expected {2} found {3}")(devname)(termlist.size())(cnt));
-	require_token(m_tok_param_right);
+		token_t tok = get_token();
+		cnt = 0;
+		while (tok.is(m_tok_comma) && cnt < termlist.size())
+		{
+			pstring output_name = get_identifier();
+
+			m_setup.register_link(devname + "." + termlist[cnt], output_name);
+
+			cnt++;
+			tok = get_token();
+		}
+		if (cnt != termlist.size())
+			error(plib::pfmt("Input count mismatch for {1} - expected {2} found {3}")(devname)(termlist.size())(cnt));
+		require_token(tok, m_tok_param_right);
+	}
 }
 
 
@@ -397,7 +423,7 @@ void parser_t::device(const pstring &dev_type)
 
 nl_double parser_t::eval_param(const token_t tok)
 {
-	static pstring macs[6] = {"", "RES_K", "RES_M", "CAP_U", "CAP_N", "CAP_P"};
+	static const char *macs[6] = {"", "RES_K", "RES_M", "CAP_U", "CAP_N", "CAP_P"};
 	static nl_double facs[6] = {1, 1e3, 1e6, 1e-6, 1e-9, 1e-12};
 	int i;
 	int f=0;
@@ -408,6 +434,7 @@ nl_double parser_t::eval_param(const token_t tok)
 	for (i=1; i<6;i++)
 		if (tok.str().equals(macs[i]))
 			f = i;
+#if 1
 	if (f>0)
 	{
 		require_token(m_tok_param_left);
@@ -423,6 +450,22 @@ nl_double parser_t::eval_param(const token_t tok)
 	}
 	return ret * facs[f];
 
-}
+#else
+	if (f>0)
+	{
+		require_token(m_tok_param_left);
+		val = get_identifier();
+	}
+	else
+		val = tok.str();
 
+	ret = val.as_double(&e);
+
+	if (e)
+		fatal("Error with parameter ...\n");
+	if (f>0)
+		require_token(m_tok_param_right);
+	return ret * facs[f];
+#endif
+}
 }

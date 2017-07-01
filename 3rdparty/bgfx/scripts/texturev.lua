@@ -11,6 +11,7 @@ project ("texturev")
 		path.join(BGFX_DIR, "examples/common"),
 		path.join(MODULE_DIR, "include"),
 		path.join(MODULE_DIR, "3rdparty"),
+		path.join(MODULE_DIR, "src"),
 	}
 
 	files {
@@ -20,7 +21,6 @@ project ("texturev")
 	links {
 		"example-common",
 		"bgfx",
-		"bx",
 	}
 
 	if _OPTIONS["with-sdl"] then

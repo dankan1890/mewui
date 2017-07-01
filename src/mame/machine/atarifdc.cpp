@@ -10,16 +10,15 @@
 
 ***************************************************************************/
 
-#include "emu.h"
-#include "atarifdc.h"
-
-#include "machine/6821pia.h"
-#include "sound/pokey.h"
-
-#include "formats/atari_dsk.h"
-
 #include <ctype.h>
 
+#include "emu.h"
+#include "cpu/m6502/m6502.h"
+#include "includes/atari400.h"
+#include "atarifdc.h"
+#include "sound/pokey.h"
+#include "machine/6821pia.h"
+#include "formats/atari_dsk.h"
 
 #define VERBOSE_SERIAL  0
 #define VERBOSE_CHKSUM  0
@@ -145,7 +144,7 @@ void atari_fdc_device::atari_load_proc(device_image_interface &image, bool is_cr
 	//m_drv[id].image = (uint8_t*)image.image_realloc(m_drv[id].image, size);
 
 	// hack alert, this means we can only load ATR via the softlist at the moment, image.filetype returns "" :/
-	bool is_softlist_entry = image.loaded_through_softlist();
+	bool is_softlist_entry = image.software_entry() != nullptr;
 
 	/* no extension: assume XFD format (no header) */
 	if (image.is_filetype("") && !is_softlist_entry)
@@ -735,6 +734,10 @@ static const floppy_interface atari_floppy_interface =
 	"floppy_5_25"
 };
 
+static MACHINE_CONFIG_FRAGMENT( atari_fdc )
+	MCFG_LEGACY_FLOPPY_4_DRIVES_ADD(atari_floppy_interface)
+MACHINE_CONFIG_END
+
 legacy_floppy_image_device *atari_fdc_device::atari_floppy_get_device_child(int drive)
 {
 	switch(drive) {
@@ -746,10 +749,10 @@ legacy_floppy_image_device *atari_fdc_device::atari_floppy_get_device_child(int 
 	return nullptr;
 }
 
-DEFINE_DEVICE_TYPE(ATARI_FDC, atari_fdc_device, "atari_fdc", "Atari FDC")
+const device_type ATARI_FDC = &device_creator<atari_fdc_device>;
 
 atari_fdc_device::atari_fdc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, ATARI_FDC, tag, owner, clock),
+	: device_t(mconfig, ATARI_FDC, "Atari FDC", tag, owner, clock, "atari_fdc", __FILE__),
 	m_serout_count(0),
 	m_serout_offs(0),
 	m_serout_chksum(0),
@@ -780,9 +783,11 @@ void atari_fdc_device::device_start()
 }
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  device_mconfig_additions - return a pointer to
+//  the device's machine fragment
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( atari_fdc_device::device_add_mconfig )
-	MCFG_LEGACY_FLOPPY_4_DRIVES_ADD(atari_floppy_interface)
-MACHINE_CONFIG_END
+machine_config_constructor atari_fdc_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( atari_fdc  );
+}

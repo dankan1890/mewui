@@ -24,17 +24,12 @@
 
 
 #include "emu.h"
-
 #include "cpu/z80/z80.h"
-#include "sound/ay8910.h"
 #include "video/tms9928a.h"
-
+#include "sound/ay8910.h"
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
-
 #include "softlist.h"
-#include "speaker.h"
-
 
 class myvision_state : public driver_device
 {
@@ -207,7 +202,7 @@ WRITE8_MEMBER( myvision_state::ay_port_b_w )
 	m_column = data;
 }
 
-static MACHINE_CONFIG_START( myvision )
+static MACHINE_CONFIG_START( myvision, myvision_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_10_738635MHz/3)  /* Not verified */
 	MCFG_CPU_PROGRAM_MAP(myvision_mem)
@@ -245,5 +240,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT   MACHINE    INPUT     STATE           INIT  COMPANY       FULLN AME              FLAGS
-CONS( 1983, myvision, 0,      0,       myvision,  myvision, myvision_state, 0,    "Nichibutsu", "My Vision (KH-1000)", 0 )
+/*    YEAR  NAME      PARENT  COMPAT   MACHINE    INPUT     INIT                  COMPANY        FULLNAME              FLAGS */
+CONS( 1983, myvision, 0,      0,       myvision,  myvision, driver_device,   0,   "Nichibutsu", "My Vision (KH-1000)", 0 )

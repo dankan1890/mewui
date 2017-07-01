@@ -27,7 +27,7 @@ ROM_END
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(SONY_LDP1000, sony_ldp1000_device, "ldp1000", "Sony LDP-1000")
+const device_type SONY_LDP1000 = &device_creator<sony_ldp1000_device>;
 
 
 //**************************************************************************
@@ -35,11 +35,11 @@ DEFINE_DEVICE_TYPE(SONY_LDP1000, sony_ldp1000_device, "ldp1000", "Sony LDP-1000"
 //**************************************************************************
 
 //-------------------------------------------------
-//  sony_ldp1000_device - constructor
+//  ldp1000_device - constructor
 //-------------------------------------------------
 
 sony_ldp1000_device::sony_ldp1000_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: laserdisc_device(mconfig, SONY_LDP1000, tag, owner, clock)
+	: laserdisc_device(mconfig, SONY_LDP1000, "Sony LDP-1000", tag, owner, clock, "ldp1000", __FILE__)
 {
 }
 

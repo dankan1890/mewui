@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SNES_CTRL_PACHINKO_H
-#define MAME_BUS_SNES_CTRL_PACHINKO_H
-
 #pragma once
 
+#ifndef __SNES_PACHINKO__
+#define __SNES_PACHINKO__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -49,6 +50,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SNES_PACHINKO, snes_pachinko_device)
+extern const device_type SNES_PACHINKO;
 
-#endif // MAME_BUS_SNES_CTRL_PACHINKO_H
+
+#endif

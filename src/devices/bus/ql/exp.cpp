@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(QL_EXPANSION_SLOT, ql_expansion_slot_device, "ql_expansion_slot", "QL expansion port")
+const device_type QL_EXPANSION_SLOT = &device_creator<ql_expansion_slot_t>;
 
 
 
@@ -31,7 +30,7 @@ device_ql_expansion_card_interface::device_ql_expansion_card_interface(const mac
 	device_slot_card_interface(mconfig, device),
 	m_romoeh(0)
 {
-	m_slot = dynamic_cast<ql_expansion_slot_device *>(device.owner());
+	m_slot = dynamic_cast<ql_expansion_slot_t *>(device.owner());
 }
 
 
@@ -41,11 +40,11 @@ device_ql_expansion_card_interface::device_ql_expansion_card_interface(const mac
 //**************************************************************************
 
 //-------------------------------------------------
-//  ql_expansion_slot_device - constructor
+//  ql_expansion_slot_t - constructor
 //-------------------------------------------------
 
-ql_expansion_slot_device::ql_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, QL_EXPANSION_SLOT, tag, owner, clock),
+ql_expansion_slot_t::ql_expansion_slot_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, QL_EXPANSION_SLOT, "QL expansion port", tag, owner, clock, "ql_expansion_slot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_write_ipl0l(*this),
 	m_write_ipl1l(*this),
@@ -59,7 +58,7 @@ ql_expansion_slot_device::ql_expansion_slot_device(const machine_config &mconfig
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void ql_expansion_slot_device::device_start()
+void ql_expansion_slot_t::device_start()
 {
 	m_card = dynamic_cast<device_ql_expansion_card_interface *>(get_card_device());
 

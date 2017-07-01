@@ -33,11 +33,9 @@ Test Paste:
 
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
-#include "imagedev/cassette.h"
 #include "machine/6821pia.h"
+#include "imagedev/cassette.h"
 #include "sound/wave.h"
-#include "speaker.h"
-
 #include "mkit09.lh"
 
 
@@ -189,7 +187,7 @@ WRITE8_MEMBER( mkit09_state::pb_w )
 }
 
 
-static MACHINE_CONFIG_START( mkit09 )
+static MACHINE_CONFIG_START( mkit09, mkit09_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M6809E, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(mkit09_mem)
@@ -215,7 +213,7 @@ static MACHINE_CONFIG_START( mkit09 )
 	MCFG_CASSETTE_ADD( "cassette" )
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( mkit09a )
+static MACHINE_CONFIG_START( mkit09a, mkit09_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M6809E, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(mkit09a_mem)
@@ -254,6 +252,6 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME     PARENT  COMPAT   MACHINE     INPUT   CLASS          INIT  COMPANY       FULLNAME                    FLAGS
-COMP( 1983, mkit09,  0,      0,       mkit09,     mkit09, mkit09_state,  0,    "Multitech",  "Microkit09",               MACHINE_NO_SOUND_HW )
-COMP( 1983, mkit09a, mkit09, 0,       mkit09a,    mkit09, mkit09_state,  0,    "Multitech",  "Microkit09 (Alt version)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+/*    YEAR  NAME     PARENT  COMPAT   MACHINE     INPUT   CLASS          INIT    COMPANY         FULLNAME   FLAGS */
+COMP( 1983, mkit09,  0,      0,       mkit09,     mkit09, driver_device,   0,   "Multitech",  "Microkit09", MACHINE_NO_SOUND_HW )
+COMP( 1983, mkit09a, mkit09, 0,       mkit09a,    mkit09, driver_device,   0,   "Multitech",  "Microkit09 (Alt version)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )

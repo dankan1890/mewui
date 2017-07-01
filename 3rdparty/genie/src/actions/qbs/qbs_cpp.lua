@@ -254,7 +254,7 @@ function qbs.generate_project(prj)
 					_p(indent, 'excludeFiles: [')
 					table.sort(prj.excludes)
 					for _, file in ipairs(prj.excludes) do
-						if path.issourcefile(file) then
+						if path.isSourceFile(file) then
 							_p(indent+1, '"%s",', file)
 						end
 					end

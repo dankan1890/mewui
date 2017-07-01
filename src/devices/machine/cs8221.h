@@ -15,11 +15,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_CS8221_H
-#define MAME_MACHINE_CS8221_H
-
 #pragma once
 
+#ifndef __CS8221_H__
+#define __CS8221_H__
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -82,6 +83,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(CS8221, cs8221_device)
+extern const device_type CS8221;
 
-#endif // MAME_MACHINE_CS8221_H
+
+#endif  /* __CS8221_H__ */

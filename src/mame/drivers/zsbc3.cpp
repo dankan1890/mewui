@@ -52,8 +52,7 @@ public:
 
 	DECLARE_READ8_MEMBER(zsbc3_28_r);
 	DECLARE_READ8_MEMBER(zsbc3_2a_r);
-	void kbd_put(u8 data);
-
+	DECLARE_WRITE8_MEMBER(kbd_put);
 private:
 	uint8_t m_term_data;
 	virtual void machine_reset() override;
@@ -96,13 +95,13 @@ void zsbc3_state::machine_reset()
 {
 }
 
-void zsbc3_state::kbd_put(u8 data)
+WRITE8_MEMBER( zsbc3_state::kbd_put )
 {
 	m_term_data = data;
 }
 
 
-static MACHINE_CONFIG_START( zsbc3 )
+static MACHINE_CONFIG_START( zsbc3, zsbc3_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_16MHz /4)
 	MCFG_CPU_PROGRAM_MAP(zsbc3_mem)
@@ -110,7 +109,7 @@ static MACHINE_CONFIG_START( zsbc3 )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(zsbc3_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(zsbc3_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -124,5 +123,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY                  FULLNAME  FLAGS */
-COMP( 1980, zsbc3,  0,      0,       zsbc3,     zsbc3,  zsbc3_state,  0,    "Digital Microsystems",  "ZSBC-3", MACHINE_NO_SOUND_HW)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT     COMPANY               FULLNAME       FLAGS */
+COMP( 1980, zsbc3,  0,      0,       zsbc3,     zsbc3, driver_device,   0,   "Digital Microsystems",   "ZSBC-3", MACHINE_NO_SOUND_HW)

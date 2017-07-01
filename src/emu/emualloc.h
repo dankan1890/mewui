@@ -8,18 +8,15 @@
 
 ***************************************************************************/
 
+#pragma once
+
 #ifndef MAME_EMU_EMUALLOC_H
 #define MAME_EMU_EMUALLOC_H
 
-#pragma once
-
+#include <new>
+#include <mutex>
 #include "osdcore.h"
 #include "coretmpl.h"
-
-#include <memory>
-#include <mutex>
-#include <new>
-
 
 //**************************************************************************
 //  MACROS
@@ -42,18 +39,17 @@
 class resource_pool_item
 {
 private:
-	resource_pool_item(const resource_pool_item &) = delete;
-	resource_pool_item &operator=(const resource_pool_item &) = delete;
+	resource_pool_item(const resource_pool_item &);
+	resource_pool_item &operator=(const resource_pool_item &);
 
 public:
 	resource_pool_item(void *ptr, size_t size)
-		: m_next(nullptr)
-		, m_ordered_next(nullptr)
-		, m_ordered_prev(nullptr)
-		, m_ptr(ptr)
-		, m_size(size)
-		, m_id(~osd::u64(0))
-	{ }
+		: m_next(nullptr),
+			m_ordered_next(nullptr),
+			m_ordered_prev(nullptr),
+			m_ptr(ptr),
+			m_size(size),
+			m_id(~osd::u64(0)) { }
 	virtual ~resource_pool_item() { }
 
 	resource_pool_item *    m_next;
@@ -66,47 +62,42 @@ public:
 
 
 // a resource_pool_object is a simple object wrapper for the templatized type
-template <class ObjectClass>
+template<class _ObjectClass>
 class resource_pool_object : public resource_pool_item
 {
 private:
-	resource_pool_object(const resource_pool_object<ObjectClass> &) = delete;
-	resource_pool_object &operator=(const resource_pool_object<ObjectClass> &) = delete;
+	resource_pool_object<_ObjectClass>(const resource_pool_object<_ObjectClass> &);
+	resource_pool_object<_ObjectClass> &operator=(const resource_pool_object<_ObjectClass> &);
 
 public:
-	resource_pool_object(ObjectClass *object)
-		: resource_pool_item(reinterpret_cast<void *>(object), sizeof(ObjectClass))
-		, m_object(object)
-	{ }
-	resource_pool_object(std::unique_ptr<ObjectClass> &&object)
-		: resource_pool_object(object.release())
-	{ }
+	resource_pool_object(_ObjectClass *object)
+		: resource_pool_item(reinterpret_cast<void *>(object), sizeof(_ObjectClass)),
+			m_object(object) { }
 	virtual ~resource_pool_object() { delete m_object; }
 
 private:
-	ObjectClass *const      m_object;
+	_ObjectClass *          m_object;
 };
 
 
 // a resource_pool_array is a simple object wrapper for an allocated array of
 // the templatized type
-template <class ObjectClass> class resource_pool_array : public resource_pool_item
+template<class _ObjectClass> class resource_pool_array : public resource_pool_item
 {
 private:
-	resource_pool_array(const resource_pool_array<ObjectClass> &) = delete;
-	resource_pool_array &operator=(const resource_pool_array<ObjectClass> &) = delete;
+	resource_pool_array<_ObjectClass>(const resource_pool_array<_ObjectClass> &);
+	resource_pool_array<_ObjectClass> &operator=(const resource_pool_array<_ObjectClass> &);
 
 public:
-	resource_pool_array(ObjectClass *array, int count)
-		: resource_pool_item(reinterpret_cast<void *>(array), sizeof(ObjectClass) * count)
-		, m_array(array)
-		, m_count(count)
-	{ }
+	resource_pool_array(_ObjectClass *array, int count)
+		: resource_pool_item(reinterpret_cast<void *>(array), sizeof(_ObjectClass) * count),
+			m_array(array),
+			m_count(count) { }
 	virtual ~resource_pool_array() { delete[] m_array; }
 
 private:
-	ObjectClass *const      m_array;
-	int const               m_count;
+	_ObjectClass *          m_array;
+	int                     m_count;
 };
 
 
@@ -114,8 +105,8 @@ private:
 class resource_pool
 {
 private:
-	resource_pool(const resource_pool &) = delete;
-	resource_pool &operator=(const resource_pool &) = delete;
+	resource_pool(const resource_pool &);
+	resource_pool &operator=(const resource_pool &);
 
 public:
 	resource_pool(int hash_size = 193);
@@ -129,9 +120,8 @@ public:
 	bool contains(void *ptrstart, void *ptrend);
 	void clear();
 
-	template <class ObjectClass> ObjectClass *add_object(ObjectClass *object) { add(*new resource_pool_object<ObjectClass>(object), sizeof(ObjectClass), typeid(ObjectClass).name()); return object; }
-	template <class ObjectClass> ObjectClass *add_object(std::unique_ptr<ObjectClass> &&object) { return add_object(object.release()); }
-	template <class ObjectClass> ObjectClass *add_array(ObjectClass *array, int count) { add(*new resource_pool_array<ObjectClass>(array, count), sizeof(ObjectClass), typeid(ObjectClass).name()); return array; }
+	template<class _ObjectClass> _ObjectClass *add_object(_ObjectClass* object) { add(*new resource_pool_object<_ObjectClass>(object), sizeof(_ObjectClass), typeid(_ObjectClass).name()); return object; }
+	template<class _ObjectClass> _ObjectClass *add_array(_ObjectClass* array, int count) { add(*new resource_pool_array<_ObjectClass>(array, count), sizeof(_ObjectClass), typeid(_ObjectClass).name()); return array; }
 
 private:
 	int                     m_hash_size;
@@ -143,4 +133,4 @@ private:
 };
 
 
-#endif // MAME_EMU_EMUALLOC_H
+#endif  /* MAME_EMU_EMUALLOC_H */

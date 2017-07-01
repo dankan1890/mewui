@@ -30,9 +30,6 @@
 #include "eminline.h"
 #include "profiler.h"
 
-// http interface helpers
-#include "http.h"
-
 // commonly-referenced utilities imported from lib/util
 #include "palette.h"
 #include "unicode.h"
@@ -57,7 +54,8 @@
 
 // define machine_config_constructor here due to circular dependency
 // between devices and the machine config
-typedef void (*machine_config_constructor)(machine_config &config, device_t *owner, device_t *device);
+class machine_config;
+typedef device_t * (*machine_config_constructor)(machine_config &config, device_t *owner, device_t *device);
 
 // I/O
 #include "input.h"
@@ -72,9 +70,9 @@ typedef void (*machine_config_constructor)(machine_config &config, device_t *own
 #include "dirom.h"
 #include "diexec.h"
 #include "opresolv.h"
-#include "dipalette.h"
 #include "digfx.h"
 #include "diimage.h"
+#include "dioutput.h"
 #include "diserial.h"
 #include "dislot.h"
 #include "disound.h"
@@ -84,6 +82,7 @@ typedef void (*machine_config_constructor)(machine_config &config, device_t *own
 #include "schedule.h"
 #include "timer.h"
 #include "dinetwork.h"
+#include "dipty.h"
 
 // machine and driver configuration
 #include "mconfig.h"
@@ -102,21 +101,21 @@ typedef void (*machine_config_constructor)(machine_config &config, device_t *own
 #include "drawgfx.h"
 #include "emupal.h"
 #include "tilemap.h"
+#include "screen.h"
 #include "video.h"
 
 // sound-related
 #include "sound.h"
+#include "speaker.h"
 
 // generic helpers
 #include "devcb.h"
+#include "dispatch.h"
 #include "drivers/xtal.h"
 #include "bookkeeping.h"
 #include "video/generic.h"
 
 // member templates that don't like incomplete types
 #include "device.ipp"
-
-template <class DriverClass> void game_driver::driver_init_helper_impl<DriverClass>::invoke(driver_init_helper const &helper, running_machine &machine)
-{ (machine.driver_data<DriverClass>()->*static_cast<driver_init_helper_impl<DriverClass> const &>(helper).m_method)(); }
 
 #endif  /* __EMU_H__ */

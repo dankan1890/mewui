@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol
-#ifndef MAME_BUS_ISA_CGA_H
-#define MAME_BUS_ISA_CGA_H
-
 #pragma once
 
+#ifndef __ISA_CGA_H__
+#define __ISA_CGA_H__
+
+#include "emu.h"
 #include "isa.h"
 #include "video/mc6845.h"
-#include "screen.h"
-
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -28,6 +27,7 @@ class isa8_cga_device :
 public:
 	// construction/destruction
 	isa8_cga_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	isa8_cga_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual MC6845_UPDATE_ROW( crtc_update_row );
 	MC6845_UPDATE_ROW( cga_text_inten_update_row );
@@ -41,29 +41,27 @@ public:
 	MC6845_UPDATE_ROW( cga_gfx_2bpp_update_row );
 	MC6845_UPDATE_ROW( cga_gfx_1bpp_update_row );
 
-protected:
-	isa8_cga_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 
+protected:
 	required_ioport m_cga_config;
 
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
-
-	virtual uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
-
 public:
 	void mode_control_w(uint8_t data);
 	void set_palette_luts();
 	void plantronics_w(uint8_t data);
 	virtual DECLARE_READ8_MEMBER( io_read );
 	virtual DECLARE_WRITE8_MEMBER( io_write );
-
+	DECLARE_WRITE_LINE_MEMBER( hsync_changed );
+	DECLARE_WRITE_LINE_MEMBER( vsync_changed );
+	virtual uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+	MC6845_RECONFIGURE(reconfigure);
 public:
 	int     m_framecnt;
 
@@ -86,15 +84,10 @@ public:
 	offs_t  m_start_offset;
 	required_device<palette_device> m_palette;
 	required_device<screen_device> m_screen;
-
-private:
-	DECLARE_WRITE_LINE_MEMBER( hsync_changed );
-	DECLARE_WRITE_LINE_MEMBER( vsync_changed );
-	MC6845_RECONFIGURE(reconfigure);
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA, isa8_cga_device)
+extern const device_type ISA8_CGA;
 
 
 // ======================> isa8_cga_superimpose_device
@@ -105,12 +98,11 @@ class isa8_cga_superimpose_device :
 public:
 	// construction/destruction
 	isa8_cga_superimpose_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-protected:
-	isa8_cga_superimpose_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	isa8_cga_superimpose_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_SUPERIMPOSE, isa8_cga_superimpose_device)
+extern const device_type ISA8_CGA_SUPERIMPOSE;
 
 
 // ======================> isa8_poisk2_device
@@ -126,7 +118,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_POISK2, isa8_cga_poisk2_device)
+extern const device_type ISA8_CGA_POISK2;
 
 
 // ======================> isa8_pc1512_device
@@ -169,7 +161,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_PC1512, isa8_cga_pc1512_device)
+extern const device_type ISA8_CGA_PC1512;
 
 // ======================> isa8_wyse700_device
 
@@ -199,7 +191,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_WYSE700, isa8_wyse700_device)
+extern const device_type ISA8_WYSE700;
 
 // ======================> isa8_ec1841_0002_device
 
@@ -225,7 +217,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_EC1841_0002, isa8_ec1841_0002_device)
+extern const device_type ISA8_EC1841_0002;
 
 // ======================> isa8_cga_iskr1031_device
 
@@ -239,7 +231,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_ISKR1030M, isa8_cga_iskr1030m_device)
+extern const device_type ISA8_CGA_ISKR1030M;
 
 // ======================> isa8_cga_iskr1031_device
 
@@ -253,7 +245,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_ISKR1031, isa8_cga_iskr1031_device)
+extern const device_type ISA8_CGA_ISKR1031;
 
 // ======================> isa8_cga_mc1502_device
 
@@ -268,7 +260,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_MC1502, isa8_cga_mc1502_device)
+extern const device_type ISA8_CGA_MC1502;
 
 
 class isa8_cga_m24_device :
@@ -277,22 +269,21 @@ class isa8_cga_m24_device :
 public:
 	// construction/destruction
 	isa8_cga_m24_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	// optional information overrides
+	//virtual const rom_entry *device_rom_region() const;
 	virtual DECLARE_READ8_MEMBER( io_read ) override;
 	virtual DECLARE_WRITE8_MEMBER( io_write ) override;
 	virtual MC6845_UPDATE_ROW( crtc_update_row ) override;
 	MC6845_UPDATE_ROW( m24_gfx_1bpp_m24_update_row );
 	MC6845_RECONFIGURE(reconfigure);
-
 protected:
 	virtual void device_reset() override;
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-
 private:
 	uint8_t m_mode2, m_index;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_CGA_M24, isa8_cga_m24_device)
+extern const device_type ISA8_CGA_M24;
 
-#endif  // MAME_BUS_ISA_CGA_H
+#endif  /* __ISA_CGA_H__ */

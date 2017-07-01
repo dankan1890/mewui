@@ -6,10 +6,10 @@ Mitsubishi M50458 OSD chip
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_M50458_H
-#define MAME_VIDEO_M50458_H
-
 #pragma once
+
+#ifndef __M50458DEV_H__
+#define __M50458DEV_H__
 
 
 
@@ -25,6 +25,12 @@ Mitsubishi M50458 OSD chip
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
+
+enum m50458_state_t
+{
+	OSD_SET_ADDRESS = 0,
+	OSD_SET_DATA
+};
 
 // ======================> m50458_device
 
@@ -53,17 +59,11 @@ public:
 	virtual const tiny_rom_entry *device_rom_region() const override;
 
 protected:
-	enum m50458_state_t
-	{
-		OSD_SET_ADDRESS = 0,
-		OSD_SET_DATA
-	};
-
 	// device-level overrides
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual const address_space_config *memory_space_config(address_spacenum spacenum) const override;
+	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override;
 
 	int m_latch;
 	int m_reset_line;
@@ -92,6 +92,14 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(M50458, m50458_device)
+extern const device_type M50458;
 
-#endif // MAME_VIDEO_M50458_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

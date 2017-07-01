@@ -15,7 +15,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(EA2001_CART_SLOT, arcadia_cart_slot_device, "arcadia_cart_slot", "Emerson Arcadia Cartridge Slot")
+const device_type EA2001_CART_SLOT = &device_creator<arcadia_cart_slot_device>;
 
 //**************************************************************************
 //    ARCADIA Cartridges Interface
@@ -63,10 +63,10 @@ void device_arcadia_cart_interface::rom_alloc(uint32_t size, const char *tag)
 //  arcadia_cart_slot_device - constructor
 //-------------------------------------------------
 arcadia_cart_slot_device::arcadia_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, EA2001_CART_SLOT, tag, owner, clock),
-	device_image_interface(mconfig, *this),
-	device_slot_interface(mconfig, *this),
-	m_type(ARCADIA_STD), m_cart(nullptr)
+						device_t(mconfig, EA2001_CART_SLOT, "Emerson Arcadia Cartridge Slot", tag, owner, clock, "arcadia_cart_slot", __FILE__),
+						device_image_interface(mconfig, *this),
+						device_slot_interface(mconfig, *this),
+						m_type(ARCADIA_STD), m_cart(nullptr)
 {
 }
 
@@ -86,6 +86,18 @@ arcadia_cart_slot_device::~arcadia_cart_slot_device()
 void arcadia_cart_slot_device::device_start()
 {
 	m_cart = dynamic_cast<device_arcadia_cart_interface *>(get_card_device());
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void arcadia_cart_slot_device::device_config_complete()
+{
+	// set brief and instance name
+	update_names();
 }
 
 
@@ -138,16 +150,16 @@ image_init_result arcadia_cart_slot_device::call_load()
 {
 	if (m_cart)
 	{
-		uint32_t len = !loaded_through_softlist() ? length() : get_software_region_length("rom");
+		uint32_t len = (software_entry() == nullptr) ? length() : get_software_region_length("rom");
 
 		m_cart->rom_alloc(len, tag());
 
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 			fread(m_cart->get_rom_base(), len);
 		else
 			memcpy(m_cart->get_rom_base(), get_software_region("rom"), len);
 
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			// we need to identify Golf!
 			m_type = ARCADIA_STD;
@@ -206,7 +218,7 @@ image_init_result arcadia_cart_slot_device::call_load()
  get default card software
  -------------------------------------------------*/
 
-std::string arcadia_cart_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string arcadia_cart_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("std");
 }

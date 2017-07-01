@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_STRUCTURED_BASIC_H
-#define MAME_BUS_C64_STRUCTURED_BASIC_H
-
 #pragma once
 
+#ifndef __STRUCTURED_BASIC__
+#define __STRUCTURED_BASIC__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -44,7 +45,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_STRUCTURED_BASIC, c64_structured_basic_cartridge_device)
+extern const device_type C64_STRUCTURED_BASIC;
 
 
-#endif // MAME_BUS_C64_STRUCTURED_BASIC_H
+
+#endif

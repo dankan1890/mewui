@@ -70,21 +70,6 @@
 
 *******************************************************************************/
 
-#include "emu.h"
-#include "cpu/i86/i86.h"
-#include "machine/i8155.h"
-#include "machine/i8255.h"
-#include "machine/msm5832.h"
-#include "machine/pic8259.h"
-#include "machine/pit8253.h"
-#include "machine/ticket.h"
-#include "sound/sn76496.h"
-#include "video/mc6845.h"
-#include "screen.h"
-#include "speaker.h"
-
-#include "amusco.lh"
-
 
 #define MASTER_CLOCK        XTAL_22_1184MHz     /* confirmed */
 #define SECOND_CLOCK        XTAL_15MHz          /* confirmed */
@@ -97,6 +82,17 @@
 
 #define COIN_IMPULSE        3
 
+#include "emu.h"
+#include "cpu/i86/i86.h"
+#include "video/mc6845.h"
+#include "machine/i8155.h"
+#include "machine/i8255.h"
+#include "sound/sn76496.h"
+#include "machine/pic8259.h"
+#include "machine/pit8253.h"
+#include "machine/msm5832.h"
+#include "amusco.lh"
+
 
 class amusco_state : public driver_device
 {
@@ -106,12 +102,10 @@ public:
 		m_videoram(*this, "videoram"),
 		m_maincpu(*this, "maincpu"),
 		m_gfxdecode(*this, "gfxdecode"),
-		m_pit(*this, "pit8253"),
 		m_pic(*this, "pic8259"),
 		m_rtc(*this, "rtc"),
 		m_crtc(*this, "crtc"),
-		m_screen(*this, "screen"),
-		m_hopper(*this, "hopper")
+		m_screen(*this, "screen")
 		{ }
 
 	required_shared_ptr<uint8_t> m_videoram;
@@ -134,15 +128,12 @@ public:
 
 	required_device<cpu_device> m_maincpu;
 	required_device<gfxdecode_device> m_gfxdecode;
-	required_device<pit8253_device> m_pit;
 	required_device<pic8259_device> m_pic;
 	required_device<msm5832_device> m_rtc;
 	required_device<mc6845_device> m_crtc;
 	required_device<screen_device> m_screen;
-	required_device<ticket_dispenser_device> m_hopper;
 	uint8_t m_mc6845_address;
 	uint16_t m_video_update_address;
-	bool m_blink_state;
 };
 
 
@@ -161,7 +152,8 @@ TILE_GET_INFO_MEMBER(amusco_state::get_bg_tile_info)
 	int code = m_videoram[tile_index * 2] | (m_videoram[tile_index * 2 + 1] << 8);
 	int color = (code & 0x7000) >> 12;
 
-	if (BIT(code, 15) && !m_blink_state)
+	// 6845 cursor is only used for its blink state
+	if (BIT(code, 15) && !m_crtc->cursor_state_r())
 		code = 0;
 
 	SET_TILE_INFO_MEMBER(
@@ -175,7 +167,6 @@ TILE_GET_INFO_MEMBER(amusco_state::get_bg_tile_info)
 void amusco_state::video_start()
 {
 	m_bg_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(amusco_state::get_bg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 10, 74, 24);
-	m_blink_state = false;
 }
 
 void amusco_state::machine_start()
@@ -249,39 +240,22 @@ WRITE8_MEMBER(amusco_state::output_b_w)
   7654 3210
   ---- --x-  Unknown lamp (lits when all holds/disc are ON. Could be a Cancel lamp in an inverted Hold system).
   ---- -x--  Start/Draw lamp.
-  ---- x--x  Unknown.
-  ---x ----  Special: low when sound data queued.
-  --x- ----  Special: set by NMI routine (trigger shutdown?)
-  -x-- ----  Special: cleared in NMI routine (safe to shutdown?)
-  x--- ----  Special: NMI enable (cleared and set along with CPU interrupt flag).
+  ---x ----  Low when sound data queued.
+  --x- ----  Safe to shutdown?
+  -x-- ----  Allow NMI?
+  x--- x--x  Unknown.
 
 */
 	output().set_lamp_value(6, (data >> 2) & 1);    // Lamp 6 (Start/Draw)
 	output().set_lamp_value(7, (data >> 1) & 1);    // Lamp 7 (Unknown)
 
-	m_pit->write_gate0(!BIT(data, 4));
+	//machine().bookkeeping().coin_counter_w(0, ~data & 0x10); // Probably not coin-related
 
 //  logerror("Writing %02Xh to PPI output B\n", data);
 }
 
 WRITE8_MEMBER(amusco_state::output_c_w)
 {
-/* Lamps and counters from port C
-
-  7654 3210
-  ---- ---x  Unknown (used by Draw 88 Poker only?)
-  ---- --x-  Coin counter (bills not included).
-  ---- -x--  Unknown counter (points won?)
-  ---- x---  Unknown counter (points played?)
-  ---x ----  Coin out pulse.
-  xxx- ----  Unused.
-*/
-	if (!data)
-		return;
-
-	machine().bookkeeping().coin_counter_w(0, !BIT(data, 1));
-	m_hopper->motor_w(BIT(data, 4));
-
 //  logerror("Writing %02Xh to PPI output C\n", data);
 }
 
@@ -454,14 +428,8 @@ MC6845_ON_UPDATE_ADDR_CHANGED(amusco_state::crtc_addr)
 
 MC6845_UPDATE_ROW(amusco_state::update_row)
 {
-	// Latch blink state at start of first line, where cursor is always positioned
-	if (y == 0 && ma == 0 && m_blink_state != (cursor_x == 0))
-	{
-		m_blink_state = (cursor_x == 0);
-		m_bg_tilemap->mark_all_dirty();
-	}
-
 	const rectangle rowrect(0, 8 * x_count - 1, y, y);
+	m_bg_tilemap->mark_all_dirty();
 	m_bg_tilemap->draw(*m_screen, bitmap, rowrect, 0, 0);
 }
 
@@ -469,7 +437,7 @@ MC6845_UPDATE_ROW(amusco_state::update_row)
 *    Machine Drivers     *
 *************************/
 
-static MACHINE_CONFIG_START( amusco )
+static MACHINE_CONFIG_START( amusco, amusco_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8088, CPU_CLOCK)        // 5 MHz ?
@@ -506,8 +474,6 @@ static MACHINE_CONFIG_START( amusco )
 	MCFG_I8155_OUT_PORTA_CB(WRITE8(amusco_state, rtc_control_w))
 	MCFG_I8155_IN_PORTC_CB(DEVREAD8("rtc", msm5832_device, data_r))
 	MCFG_I8155_OUT_PORTC_CB(DEVWRITE8("rtc", msm5832_device, data_w))
-
-	MCFG_TICKET_DISPENSER_ADD("hopper", attotime::from_msec(30), TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -586,6 +552,6 @@ ROM_END
 *      Game Drivers      *
 *************************/
 
-/*     YEAR  NAME        PARENT  MACHINE   INPUT      STATE         INIT  ROT   COMPANY      FULLNAME                       FLAGS                                                LAYOUT    */
-GAMEL( 1987, amusco,     0,      amusco,   amusco,    amusco_state, 0,    ROT0, "Amusco",    "American Music Poker (V1.4)", MACHINE_IMPERFECT_COLORS | MACHINE_NODEVICE_PRINTER, layout_amusco ) // palette totally wrong
-GAMEL( 1988, draw88pkr,  0,      draw88pkr,draw88pkr, amusco_state, 0,    ROT0, "BTE, Inc.", "Draw 88 Poker (V2.0)",        MACHINE_IMPERFECT_COLORS | MACHINE_NODEVICE_PRINTER, layout_amusco ) // palette totally wrong
+/*     YEAR  NAME        PARENT  MACHINE   INPUT     STATE          INIT  ROT    COMPANY      FULLNAME                      FLAGS                                                    LAYOUT    */
+GAMEL( 1987, amusco,     0,      amusco,   amusco,   driver_device, 0,    ROT0, "Amusco",    "American Music Poker (V1.4)", MACHINE_IMPERFECT_COLORS | MACHINE_NODEVICE_PRINTER,     layout_amusco ) // palette totally wrong
+GAMEL( 1988, draw88pkr,  0,      draw88pkr,draw88pkr,driver_device, 0,    ROT0, "BTE, Inc.", "Draw 88 Poker (V2.0)",        MACHINE_IMPERFECT_COLORS | MACHINE_NODEVICE_PRINTER, layout_amusco ) // palette totally wrong

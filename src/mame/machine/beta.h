@@ -9,10 +9,8 @@
     04/05/2008 Created by Miodrag Milanovic
 
 *********************************************************************/
-#ifndef MAME_MACHINE_BETA_H
-#define MAME_MACHINE_BETA_H
-
-#pragma once
+#ifndef __BETA_H__
+#define __BETA_H__
 
 #include "machine/wd_fdc.h"
 
@@ -23,6 +21,7 @@ class beta_disk_device : public device_t
 {
 public:
 	beta_disk_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~beta_disk_device() {}
 
 	DECLARE_READ8_MEMBER(status_r);
 	DECLARE_READ8_MEMBER(track_r);
@@ -35,31 +34,30 @@ public:
 	DECLARE_WRITE8_MEMBER(track_w);
 	DECLARE_WRITE8_MEMBER(sector_w);
 	DECLARE_WRITE8_MEMBER(data_w);
+	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
 	int is_active();
 	void enable();
 	void disable();
+
+	uint8_t m_betadisk_active;
 
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 private:
-	uint8_t m_betadisk_active;
-
-	required_device<kr1818vg93_device> m_wd179x;
+	required_device<kr1818vg93_t> m_wd179x;
 	required_device<floppy_connector> m_floppy0;
 	required_device<floppy_connector> m_floppy1;
 	required_device<floppy_connector> m_floppy2;
 	required_device<floppy_connector> m_floppy3;
-
-	DECLARE_FLOPPY_FORMATS(floppy_formats);
 };
 
-DECLARE_DEVICE_TYPE(BETA_DISK, beta_disk_device)
+extern const device_type BETA_DISK;
 
 
 #define MCFG_BETA_DISK_ADD(_tag) \
@@ -68,4 +66,4 @@ DECLARE_DEVICE_TYPE(BETA_DISK, beta_disk_device)
 #define MCFG_BETA_DISK_REMOVE(_tag)     \
 	MCFG_DEVICE_REMOVE(_tag)
 
-#endif // MAME_MACHINE_BETA_H
+#endif /* __BETA_H__ */

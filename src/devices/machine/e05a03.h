@@ -6,10 +6,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_E05A03_H
-#define MAME_MACHINE_E05A03_H
-
-#pragma once
+#ifndef __E05A03_H__
+#define __E05A03_H__
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -39,12 +37,13 @@ class e05a03_device : public device_t
 {
 public:
 	e05a03_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~e05a03_device() {}
 
-	template <class Object> static devcb_base &set_nlq_lp_wr_callback(device_t &device, Object &&cb) { return downcast<e05a03_device &>(device).m_write_nlq_lp.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_pe_lp_wr_callback(device_t &device, Object &&cb) { return downcast<e05a03_device &>(device).m_write_pe_lp.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_reso_wr_callback(device_t &device, Object &&cb) { return downcast<e05a03_device &>(device).m_write_reso.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_pe_wr_callback(device_t &device, Object &&cb) { return downcast<e05a03_device &>(device).m_write_pe.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_data_rd_callback(device_t &device, Object &&cb) { return downcast<e05a03_device &>(device).m_read_data.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_nlq_lp_wr_callback(device_t &device, _Object object) { return downcast<e05a03_device &>(device).m_write_nlq_lp.set_callback(object); }
+	template<class _Object> static devcb_base &set_pe_lp_wr_callback(device_t &device, _Object object) { return downcast<e05a03_device &>(device).m_write_pe_lp.set_callback(object); }
+	template<class _Object> static devcb_base &set_reso_wr_callback(device_t &device, _Object object) { return downcast<e05a03_device &>(device).m_write_reso.set_callback(object); }
+	template<class _Object> static devcb_base &set_pe_wr_callback(device_t &device, _Object object) { return downcast<e05a03_device &>(device).m_write_pe.set_callback(object); }
+	template<class _Object> static devcb_base &set_data_rd_callback(device_t &device, _Object object) { return downcast<e05a03_device &>(device).m_read_data.set_callback(object); }
 
 	DECLARE_WRITE8_MEMBER( write );
 	DECLARE_READ8_MEMBER( read );
@@ -94,6 +93,7 @@ private:
 	uint8_t m_cr_motor;
 };
 
-DECLARE_DEVICE_TYPE(E05A03, e05a03_device)
+extern const device_type E05A03;
 
-#endif // MAME_MACHINE_E05A03_H
+
+#endif /* __E05A03_H__ */

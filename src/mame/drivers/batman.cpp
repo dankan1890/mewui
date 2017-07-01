@@ -20,11 +20,10 @@
 
 
 #include "emu.h"
-#include "includes/batman.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/watchdog.h"
 #include "video/atarimo.h"
-#include "speaker.h"
+#include "includes/batman.h"
 
 
 
@@ -196,7 +195,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( batman )
+static MACHINE_CONFIG_START( batman, batman_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, ATARI_CLOCK_14MHz)
@@ -309,4 +308,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1991, batman, 0, batman, batman, batman_state, 0, ROT0, "Atari Games", "Batman", MACHINE_SUPPORTS_SAVE )
+GAME( 1991, batman, 0, batman, batman, driver_device, 0, ROT0, "Atari Games", "Batman", MACHINE_SUPPORTS_SAVE )

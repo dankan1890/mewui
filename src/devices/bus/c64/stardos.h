@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C4_STARDOS_H
-#define MAME_BUS_C4_STARDOS_H
-
 #pragma once
 
+#ifndef __STARDOS__
+#define __STARDOS__
 
+
+#include "emu.h"
 #include "exp.h"
 #include "machine/6821pia.h"
 
@@ -53,7 +54,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_STARDOS, c64_stardos_cartridge_device)
+extern const device_type C64_STARDOS;
 
 
-#endif // MAME_BUS_C4_STARDOS_H
+#endif

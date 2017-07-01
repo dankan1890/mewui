@@ -114,20 +114,6 @@ namespace cast
 	}
 }//namespace cast
 
-int test_size()
-{
-	int Error = 0;
-
-	Error += 32 == sizeof(glm::mat4x2) ? 0 : 1;
-	Error += 64 == sizeof(glm::dmat4x2) ? 0 : 1;
-	Error += glm::mat4x2().length() == 4 ? 0 : 1;
-	Error += glm::dmat4x2().length() == 4 ? 0 : 1;
-	Error += glm::mat4x2::length() == 4 ? 0 : 1;
-	Error += glm::dmat4x2::length() == 4 ? 0 : 1;
-
-	return Error;
-}
-
 int main()
 {
 	int Error = 0;
@@ -135,7 +121,6 @@ int main()
 	Error += cast::test();
 	Error += test_ctr();
 	Error += test_operators();
-	Error += test_size();
 
 	return Error;
 }

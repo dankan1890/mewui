@@ -23,6 +23,6 @@ private:
 	required_ioport m_modifiers;
 };
 
-DECLARE_DEVICE_TYPE(M20_KEYBOARD, m20_keyboard_device)
+extern const device_type M20_KEYBOARD;
 
 #endif // MAME_MACHINE_M20KBD_H

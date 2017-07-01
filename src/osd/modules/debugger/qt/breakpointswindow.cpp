@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Andrew Gardner
-#include "emu.h"
 #include <QtWidgets/QActionGroup>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QMenu>
@@ -123,14 +122,14 @@ void BreakpointsWindowQtConfig::applyToQWidget(QWidget* widget)
 }
 
 
-void BreakpointsWindowQtConfig::addToXmlDataNode(util::xml::data_node &node) const
+void BreakpointsWindowQtConfig::addToXmlDataNode(xml_data_node &node) const
 {
 	WindowQtConfig::addToXmlDataNode(node);
 	node.set_attribute_int("bwtype", m_bwType);
 }
 
 
-void BreakpointsWindowQtConfig::recoverFromXmlNode(util::xml::data_node const &node)
+void BreakpointsWindowQtConfig::recoverFromXmlNode(xml_data_node const &node)
 {
 	WindowQtConfig::recoverFromXmlNode(node);
 	m_bwType = node.get_attribute_int("bwtype", m_bwType);

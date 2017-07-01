@@ -8,7 +8,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "a2232.h"
 
 
@@ -24,10 +23,11 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2232, a2232_device, "a2232", "CBM A2232 Serial Card")
+const device_type A2232 = &device_creator<a2232_device>;
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
 static ADDRESS_MAP_START( iocpu_map, AS_PROGRAM, 8, a2232_device)
@@ -45,7 +45,7 @@ static ADDRESS_MAP_START( iocpu_map, AS_PROGRAM, 8, a2232_device)
 	AM_RANGE(0xc000, 0xffff) AM_RAM AM_SHARE("shared")
 ADDRESS_MAP_END
 
-MACHINE_CONFIG_MEMBER( a2232_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( a2232 )
 	// main cpu
 	MCFG_CPU_ADD("iocpu", M65CE02, XTAL_28_37516MHz / 8) // should run at Amiga clock 7M / 2
 	MCFG_CPU_PROGRAM_MAP(iocpu_map)
@@ -137,6 +137,11 @@ MACHINE_CONFIG_MEMBER( a2232_device::device_add_mconfig )
 	MCFG_RS232_CTS_HANDLER(WRITELINE(a2232_device, rs232_7_cts_w))
 MACHINE_CONFIG_END
 
+machine_config_constructor a2232_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( a2232 );
+}
+
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -147,7 +152,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 a2232_device::a2232_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, A2232, tag, owner, clock),
+	device_t(mconfig, A2232, "CBM A2232 Serial Card", tag, owner, clock, "a2232", __FILE__),
 	device_zorro2_card_interface(mconfig, *this),
 	m_iocpu(*this, "iocpu"),
 	m_acia_0(*this, "acia_0"),

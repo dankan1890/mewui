@@ -5,7 +5,6 @@
  *   Xerox AltoII PROM loading and decoding
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 #include "a2roms.h"
 

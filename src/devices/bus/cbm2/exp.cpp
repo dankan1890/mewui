@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -23,7 +22,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(CBM2_EXPANSION_SLOT, cbm2_expansion_slot_device, "cbm2_expansion_slot", "CBM-II expansion port")
+const device_type CBM2_EXPANSION_SLOT = &device_creator<cbm2_expansion_slot_device>;
 
 
 
@@ -64,10 +63,9 @@ device_cbm2_expansion_card_interface::~device_cbm2_expansion_card_interface()
 //-------------------------------------------------
 
 cbm2_expansion_slot_device::cbm2_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, CBM2_EXPANSION_SLOT, tag, owner, clock),
-	device_slot_interface(mconfig, *this),
-	device_image_interface(mconfig, *this),
-	m_card(nullptr)
+		device_t(mconfig, CBM2_EXPANSION_SLOT, "CBM-II expansion port", tag, owner, clock, "cbm2_expansion_slot", __FILE__),
+		device_slot_interface(mconfig, *this),
+		device_image_interface(mconfig, *this), m_card(nullptr)
 {
 }
 
@@ -109,7 +107,7 @@ image_init_result cbm2_expansion_slot_device::call_load()
 
 	if (m_card)
 	{
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			size = length();
 
@@ -145,7 +143,7 @@ image_init_result cbm2_expansion_slot_device::call_load()
 //  get_default_card_software -
 //-------------------------------------------------
 
-std::string cbm2_expansion_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string cbm2_expansion_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("standard");
 }

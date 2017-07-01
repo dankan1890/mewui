@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "sound/tc8830f.h"
-#include "screen.h"
 
 class timeplt_state : public driver_device
 {

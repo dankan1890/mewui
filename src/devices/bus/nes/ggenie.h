@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_NES_GGENIE_H
-#define MAME_BUS_NES_GGENIE_H
-
-#pragma once
+#ifndef __NES_GGENIE_H
+#define __NES_GGENIE_H
 
 #include "nxrom.h"
 
@@ -16,6 +14,8 @@ public:
 	// construction/destruction
 	nes_ggenie_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_READ8_MEMBER(read_l) override;
 	virtual DECLARE_READ8_MEMBER(read_m) override;
 	virtual DECLARE_READ8_MEMBER(read_h) override;
@@ -32,14 +32,10 @@ public:
 	void scanline_irq(int scanline, int vblank, int blanked) override { if (m_gg_bypass && m_ggslot->m_cart) m_ggslot->m_cart->scanline_irq(scanline, vblank, blanked); }
 	void ppu_latch(offs_t offset) override { if (m_gg_bypass && m_ggslot->m_cart) m_ggslot->m_cart->ppu_latch(offset); }
 
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 	virtual void pcb_reset() override;
 	virtual void pcb_start(running_machine &machine, uint8_t *ciram_ptr, bool cart_mounted) override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-
-	virtual void device_add_mconfig(machine_config &config) override;
 
 private:
 	// emulate the Game Genie!
@@ -55,7 +51,8 @@ private:
 };
 
 
-// device type definition
-DECLARE_DEVICE_TYPE(NES_GGENIE, nes_ggenie_device)
 
-#endif // MAME_BUS_NES_GGENIE_H
+// device type definition
+extern const device_type NES_GGENIE;
+
+#endif

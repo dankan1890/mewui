@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "multitap.h"
 #include "joypad.h"
 #include "twintap.h"
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SNES_MULTITAP, snes_multitap_device, "snes_multitap", "Nintendo SNES / SFC Multitap Adapter")
+const device_type SNES_MULTITAP = &device_creator<snes_multitap_device>;
 
 
 static INPUT_PORTS_START( snes_multitap )
@@ -41,17 +40,23 @@ static SLOT_INTERFACE_START( snes_multitap )
 	SLOT_INTERFACE("twintap", SNES_TWINTAP)
 SLOT_INTERFACE_END
 
-
-//-------------------------------------------------
-//  device_add_mconfig - add device configuration
-//-------------------------------------------------
-
-MACHINE_CONFIG_MEMBER( snes_multitap_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( multi5p )
 	MCFG_SNES_CONTROL_PORT_ADD("port1", snes_multitap, "joypad")
 	MCFG_SNES_CONTROL_PORT_ADD("port2", snes_multitap, "joypad")
 	MCFG_SNES_CONTROL_PORT_ADD("port3", snes_multitap, "joypad")
 	MCFG_SNES_CONTROL_PORT_ADD("port4", snes_multitap, "joypad")
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor snes_multitap_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( multi5p );
+}
 
 
 //**************************************************************************
@@ -63,7 +68,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 snes_multitap_device::snes_multitap_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SNES_MULTITAP, tag, owner, clock),
+	device_t(mconfig, SNES_MULTITAP, "Nintendo SNES / SFC Multitap Adapter", tag, owner, clock, "snes_multitap", __FILE__),
 	device_snes_control_port_interface(mconfig, *this),
 	m_port1(*this, "port1"),
 	m_port2(*this, "port2"),

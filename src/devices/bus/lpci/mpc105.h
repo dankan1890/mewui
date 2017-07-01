@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_LPCI_MPC105_H
-#define MAME_BUS_LPCI_MPC105_H
-
-#pragma once
+#ifndef MPC105_H
+#define MPC105_H
 
 #include "pci.h"
 
@@ -57,6 +55,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(MPC105, mpc105_device)
+extern const device_type MPC105;
 
-#endif // MAME_BUS_LPCI_MPC105_H
+#endif /* MPC105_H */

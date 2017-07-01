@@ -6,11 +6,15 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "mos8706.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
+
+
+//**************************************************************************
+//  MACROS / CONSTANTS
+//**************************************************************************
+
+#define LOG 0
 
 
 
@@ -19,7 +23,7 @@
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(MOS8706, mos8706_device, "mos8706", "MOS 8706")
+const device_type MOS8706 = &device_creator<mos8706_device>;
 
 
 
@@ -32,7 +36,7 @@ DEFINE_DEVICE_TYPE(MOS8706, mos8706_device, "mos8706", "MOS 8706")
 //-------------------------------------------------
 
 mos8706_device::mos8706_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MOS8706, tag, owner, clock)
+	: device_t(mconfig, MOS8706, "MOS8706", tag, owner, clock, "mos8706", __FILE__)
 {
 }
 

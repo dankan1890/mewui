@@ -73,19 +73,19 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(PCI_CIRRUS_SVGA, pci_cirrus_svga_device, "pci_cirrus_svga", "Cirrus SVGA (PCI)")
+const device_type CIRRUS = &device_creator<cirrus_device>;
 
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 //-------------------------------------------------
-//  pci_cirrus_svga_device - constructor
+//  cirrus_device - constructor
 //-------------------------------------------------
 
-pci_cirrus_svga_device::pci_cirrus_svga_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, PCI_CIRRUS_SVGA, tag, owner, clock)
-	, pci_device_interface( mconfig, *this )
+cirrus_device::cirrus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+		: device_t(mconfig, CIRRUS, "CIRRUS", tag, owner, clock, "cirrus", __FILE__),
+		pci_device_interface( mconfig, *this )
 {
 }
 
@@ -93,7 +93,7 @@ pci_cirrus_svga_device::pci_cirrus_svga_device(const machine_config &mconfig, co
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void pci_cirrus_svga_device::device_start()
+void cirrus_device::device_start()
 {
 }
 
@@ -101,7 +101,7 @@ void pci_cirrus_svga_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void pci_cirrus_svga_device::device_reset()
+void cirrus_device::device_reset()
 {
 }
 
@@ -109,7 +109,7 @@ void pci_cirrus_svga_device::device_reset()
 //  pci_read - implementation of PCI read
 //-------------------------------------------------
 
-uint32_t pci_cirrus_svga_device::pci_read(pci_bus_device *pcibus, int function, int offset, uint32_t mem_mask)
+uint32_t cirrus_device::pci_read(pci_bus_device *pcibus, int function, int offset, uint32_t mem_mask)
 {
 	uint32_t result = 0;
 
@@ -145,7 +145,7 @@ uint32_t pci_cirrus_svga_device::pci_read(pci_bus_device *pcibus, int function, 
 //  pci_write - implementation of PCI write
 //-------------------------------------------------
 
-void pci_cirrus_svga_device::pci_write(pci_bus_device *pcibus, int function, int offset, uint32_t data, uint32_t mem_mask)
+void cirrus_device::pci_write(pci_bus_device *pcibus, int function, int offset, uint32_t data, uint32_t mem_mask)
 {
 	if (LOG_PCIACCESS)
 		logerror("cirrus5430_pci_write(): function=%d offset=0x%02X data=0x%04X\n", function, offset, data);
@@ -157,7 +157,7 @@ void pci_cirrus_svga_device::pci_write(pci_bus_device *pcibus, int function, int
  *
  *************************************/
 
-WRITE8_MEMBER( pci_cirrus_svga_device::cirrus_42E8_w )
+WRITE8_MEMBER( cirrus_device::cirrus_42E8_w )
 {
 	if (data & 0x80)
 		machine().device("vga")->reset();

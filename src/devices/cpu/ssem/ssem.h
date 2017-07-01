@@ -6,10 +6,10 @@
     Written by Ryan Holtz
 */
 
-#ifndef MAME_CPU_SSEM_SSEM_H
-#define MAME_CPU_SSEM_SSEM_H
-
 #pragma once
+
+#ifndef __SSEM_H__
+#define __SSEM_H__
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -24,7 +24,6 @@ public:
 	// construction/destruction
 	ssem_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -69,7 +68,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(SSEMCPU, ssem_device)
+extern const device_type SSEMCPU;
 
 /***************************************************************************
     REGISTER ENUMERATION
@@ -84,4 +83,4 @@ enum
 
 CPU_DISASSEMBLE( ssem );
 
-#endif // MAME_CPU_SSEM_SSEM_H
+#endif /* __SSEM_H__ */

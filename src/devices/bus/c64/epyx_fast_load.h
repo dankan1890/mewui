@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_EPYX_FAST_LOAD_H
-#define MAME_BUS_C64_EPYX_FAST_LOAD_H
-
 #pragma once
 
+#ifndef __EPYX_FAST_LOAD__
+#define __EPYX_FAST_LOAD__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -45,7 +46,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_EPYX_FAST_LOAD, c64_epyx_fast_load_cartridge_device)
+extern const device_type C64_EPYX_FAST_LOAD;
 
 
-#endif // MAME_BUS_C64_EPYX_FAST_LOAD_H
+#endif

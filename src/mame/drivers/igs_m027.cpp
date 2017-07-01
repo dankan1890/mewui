@@ -27,7 +27,6 @@
 #include "machine/nvram.h"
 #include "machine/pgmcrypt.h"
 #include "video/igs017_igs031.h"
-#include "screen.h"
 
 class igs_m027_state : public driver_device
 {
@@ -333,7 +332,7 @@ INTERRUPT_GEN_MEMBER(igs_m027_state::igs_majhong_interrupt)
 }
 
 
-static MACHINE_CONFIG_START( igs_majhong )
+static MACHINE_CONFIG_START( igs_majhong, igs_m027_state )
 	MCFG_CPU_ADD("maincpu",ARM7, 20000000)
 
 	MCFG_CPU_PROGRAM_MAP(igs_majhong_map)
@@ -367,7 +366,7 @@ MACHINE_CONFIG_END
 
 
 
-static MACHINE_CONFIG_START( amazonia )
+static MACHINE_CONFIG_START( amazonia, igs_m027_state )
 	MCFG_CPU_ADD("maincpu",ARM7, 20000000)
 
 	MCFG_CPU_PROGRAM_MAP(igs_majhong_map)

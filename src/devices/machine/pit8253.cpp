@@ -43,17 +43,22 @@ enum
 #define LOG2(msg)       do { if (VERBOSE >= 2) logerror msg; } while (0)
 
 
-DEFINE_DEVICE_TYPE(PIT8253, pit8253_device, "pit8253", "Intel 8253 PIT")
-DEFINE_DEVICE_TYPE(PIT8254, pit8254_device, "pit8254", "Intel 8254 PIT")
+const device_type PIT8253 = &device_creator<pit8253_device>;
 
 
 pit8253_device::pit8253_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	pit8253_device(mconfig, PIT8253, tag, owner, clock)
+	device_t(mconfig, PIT8253, "8253 PIT", tag, owner, clock, "pit8253", __FILE__),
+	m_clk0(0),
+	m_clk1(0),
+	m_clk2(0),
+	m_out0_handler(*this),
+	m_out1_handler(*this),
+	m_out2_handler(*this)
 {
 }
 
-pit8253_device::pit8253_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
+pit8253_device::pit8253_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 	m_clk0(0),
 	m_clk1(0),
 	m_clk2(0),
@@ -64,8 +69,10 @@ pit8253_device::pit8253_device(const machine_config &mconfig, device_type type, 
 }
 
 
+const device_type PIT8254 = &device_creator<pit8254_device>;
+
 pit8254_device::pit8254_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: pit8253_device(mconfig, PIT8254, tag, owner, clock)
+	: pit8253_device(mconfig, PIT8254, "8254 PIT", tag, owner, clock, "pit8254", __FILE__)
 {
 }
 
@@ -717,7 +724,7 @@ void pit8253_device::update(pit8253_timer *timer)
 	attotime elapsed_time = now - timer->last_updated;
 	int64_t elapsed_cycles = elapsed_time.as_double() * timer->clockin;
 
-	LOG2(("update(): timer %d, %d elapsed_cycles\n", timer->index, elapsed_cycles));
+	LOG1(("update(): timer %d, %d elapsed_cycles\n", timer->index, elapsed_cycles));
 
 	if (timer->clockin)
 		timer->last_updated += elapsed_cycles * attotime::from_hz(timer->clockin);
@@ -802,15 +809,7 @@ READ8_MEMBER( pit8253_device::read )
 
 				case 3:
 					/* read bits 0-7 first, then 8-15 */
-
-					// reading back the current count while in the middle of a
-					// 16-bit write returns a xor'ed version of the value written
-					// (apricot diagnostic timer test tests this)
-					if (timer->wmsb)
-						data = ~timer->lowcount;
-					else
-						data = value >> (timer->rmsb ? 8 : 0);
-
+					data = (value >> (timer->rmsb ? 8 : 0)) & 0xff;
 					timer->rmsb = 1 - timer->rmsb;
 					break;
 				}

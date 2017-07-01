@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #import "memoryview.h"
 
 #include "debug/debugcpu.h"

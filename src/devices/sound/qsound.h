@@ -6,10 +6,10 @@
 
 *********************************************************/
 
-#ifndef MAME_SOUND_QSOUND_H
-#define MAME_SOUND_QSOUND_H
-
 #pragma once
+
+#ifndef __QSOUND_H__
+#define __QSOUND_H__
 
 #include "cpu/dsp16/dsp16.h"
 
@@ -28,10 +28,12 @@
 
 // ======================> qsound_device
 
-class qsound_device : public device_t, public device_sound_interface
+class qsound_device : public device_t,
+						public device_sound_interface
 {
 public:
 	qsound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~qsound_device() { }
 
 	DECLARE_WRITE8_MEMBER(qsound_w);
 	DECLARE_READ8_MEMBER(qsound_r);
@@ -39,7 +41,7 @@ public:
 protected:
 	// device-level overrides
 	const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_start() override;
 
 	// sound stream update overrides
@@ -73,6 +75,7 @@ private:
 	void write_data(uint8_t address, uint16_t data);
 };
 
-DECLARE_DEVICE_TYPE(QSOUND, qsound_device)
+extern const device_type QSOUND;
 
-#endif // MAME_SOUND_QSOUND_H
+
+#endif /* __QSOUND_H__ */

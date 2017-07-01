@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_PAGEFOX_H
-#define MAME_BUS_C64_PAGEFOX_H
-
 #pragma once
 
+#ifndef __PAGEFOX__
+#define __PAGEFOX__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -46,7 +47,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_PAGEFOX, c64_pagefox_cartridge_device)
+extern const device_type C64_PAGEFOX;
 
 
-#endif // MAME_BUS_C64_PAGEFOX_H
+#endif

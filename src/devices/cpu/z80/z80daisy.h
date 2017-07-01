@@ -97,7 +97,7 @@ protected:
 
 	// callbacks
 	int daisy_update_irq_state();
-	device_z80daisy_interface *daisy_get_irq_device();
+	int daisy_call_ack_device();
 	void daisy_call_reti_device();
 
 private:

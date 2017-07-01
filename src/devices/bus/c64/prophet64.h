@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_PROPHET64_H
-#define MAME_BUS_C64_PROPHET64_H
-
 #pragma once
 
+#ifndef __PROPHET64__
+#define __PROPHET64__
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -43,6 +44,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_PROPHET64, c64_prophet64_cartridge_device)
+extern const device_type C64_PROPHET64;
 
-#endif // MAME_BUS_C64_PROPHET64_H
+
+
+#endif

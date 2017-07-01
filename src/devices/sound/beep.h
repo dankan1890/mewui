@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Kevin Thacker
-#ifndef MAME_SOUND_BEEP_H
-#define MAME_SOUND_BEEP_H
-
 #pragma once
+
+#ifndef __BEEP_H__
+#define __BEEP_H__
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -16,6 +16,7 @@ class beep_device : public device_t,
 {
 public:
 	beep_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~beep_device() { }
 
 protected:
 	// device-level overrides
@@ -36,6 +37,7 @@ private:
 	int16_t m_signal;           /* current signal */
 };
 
-DECLARE_DEVICE_TYPE(BEEP, beep_device)
+extern const device_type BEEP;
 
-#endif // MAME_SOUND_BEEP_H
+
+#endif /* __BEEP_H__ */

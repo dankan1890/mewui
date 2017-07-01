@@ -1,20 +1,21 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_MACHINE_ATAFLASH_H
-#define MAME_MACHINE_ATAFLASH_H
-
 #pragma once
+
+#ifndef __ATAFLASH_H__
+#define __ATAFLASH_H__
 
 #include "pccard.h"
 #include "machine/idehd.h"
 
 extern const device_type ATA_FLASH_PCCARD;
-DECLARE_DEVICE_TYPE(ATA_FLASH_PCCARD, ata_flash_pccard_device)
 
-class ata_flash_pccard_device : public ide_hdd_device, public pccard_interface
+class ata_flash_pccard_device : public ide_hdd_device,
+	public pccard_interface
 {
 public:
 	ata_flash_pccard_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	ata_flash_pccard_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual DECLARE_READ16_MEMBER(read_memory) override;
 	virtual DECLARE_WRITE16_MEMBER(write_memory) override;
@@ -22,8 +23,6 @@ public:
 	virtual DECLARE_WRITE16_MEMBER(write_reg) override;
 
 protected:
-	ata_flash_pccard_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void device_reset() override;
 
@@ -36,7 +35,7 @@ private:
 	uint8_t m_pin_replacement;
 };
 
-DECLARE_DEVICE_TYPE(TAITO_PCCARD1, taito_pccard1_device)
+extern const device_type TAITO_PCCARD1;
 
 class taito_pccard1_device : public ata_flash_pccard_device
 {
@@ -57,7 +56,7 @@ private:
 	uint16_t m_locked;
 };
 
-DECLARE_DEVICE_TYPE(TAITO_PCCARD2, taito_pccard2_device)
+extern const device_type TAITO_PCCARD2;
 
 class taito_pccard2_device : public ata_flash_pccard_device
 {
@@ -79,7 +78,7 @@ private:
 	bool m_locked;
 };
 
-DECLARE_DEVICE_TYPE(TAITO_COMPACT_FLASH, taito_compact_flash_device)
+extern const device_type TAITO_COMPACT_FLASH;
 
 class taito_compact_flash_device : public ata_flash_pccard_device
 {
@@ -92,11 +91,11 @@ protected:
 	virtual void process_command() override;
 	virtual bool is_ready() override;
 
-	static constexpr int IDE_COMMAND_TAITO_COMPACT_FLASH_UNLOCK = 0x0f;
+	static const int IDE_COMMAND_TAITO_COMPACT_FLASH_UNLOCK = 0x0f;
 
 private:
 	uint8_t m_key[5];
 	bool m_locked;
 };
 
-#endif // MAME_MACHINE_ATAFLASH_H
+#endif

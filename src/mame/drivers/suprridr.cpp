@@ -84,13 +84,10 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/suprridr.h"
-
 #include "cpu/z80/z80.h"
+#include "includes/suprridr.h"
 #include "machine/watchdog.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 void suprridr_state::machine_start()
@@ -345,7 +342,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( suprridr )
+static MACHINE_CONFIG_START( suprridr, suprridr_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_49_152MHz/16)     /* 3 MHz */
@@ -435,4 +432,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, suprridr, 0, suprridr, suprridr, suprridr_state, 0, ROT90, "Taito Corporation (Venture Line license)", "Super Rider", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )
+GAME( 1983, suprridr, 0, suprridr, suprridr, driver_device, 0, ROT90, "Taito Corporation (Venture Line license)", "Super Rider", MACHINE_IMPERFECT_SOUND | MACHINE_SUPPORTS_SAVE )

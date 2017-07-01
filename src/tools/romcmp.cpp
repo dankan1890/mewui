@@ -11,7 +11,6 @@
 #include "unzip.h"
 #include "osdcore.h"
 #include "osdcomm.h"
-#include "hash.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -115,44 +114,30 @@ static fileinfo files[2][MAX_FILES];
 static float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES][TOTAL_MODES];
 
 
-static bool is_ascii_char(int ch)
+static void checkintegrity(const fileinfo *file,int side)
 {
-	return (ch >= 0x20 && ch < 0x7f) || (ch == '\n') || (ch == '\r') || (ch == '\t');
-}
+	int i;
+	int mask0,mask1;
+	int addrbit;
 
-static void checkintegrity(const fileinfo *file, int side)
-{
 	if (file->buf == nullptr) return;
 
 	/* check for bad data lines */
-	unsigned mask0 = 0x0000;
-	unsigned mask1 = 0xffff;
+	mask0 = 0x0000;
+	mask1 = 0xffff;
 
-	bool is_ascii = true;
-	for (unsigned i = 0; i < file->size; i += 2)
+	for (i = 0;i < file->size;i+=2)
 	{
-		is_ascii = is_ascii && is_ascii_char(file->buf[i]);
-		mask0 |= file->buf[i] << 8;
-		mask1 &= (file->buf[i] << 8) | 0x00ff;
-		if (i < file->size - 1)
-		{
-			is_ascii = is_ascii && is_ascii_char(file->buf[i+1]);
-			mask0 |= file->buf[i+1];
-			mask1 &= file->buf[i+1] | 0xff00;
-		}
+		mask0 |= ((file->buf[i] << 8) | file->buf[i+1]);
+		mask1 &= ((file->buf[i] << 8) | file->buf[i+1]);
 		if (mask0 == 0xffff && mask1 == 0x0000) break;
-	}
-
-	if (is_ascii && mask0 == 0x7f7f && mask1 == 0)
-	{
-		printf("%-23s %-23s ASCII TEXT FILE\n", side ? "" : file->name, side ? file->name : "");
-		return;
 	}
 
 	if (mask0 != 0xffff || mask1 != 0x0000)
 	{
 		int fixedmask;
 		int bits;
+
 
 		fixedmask = (~mask0 | mask1) & 0xffff;
 
@@ -161,7 +146,7 @@ static void checkintegrity(const fileinfo *file, int side)
 		else bits = 16;
 
 		printf("%-23s %-23s FIXED BITS (",side ? "" : file->name,side ? file->name : "");
-		for (int i = 0; i < bits; i++)
+		for (i = 0;i < bits;i++)
 		{
 			if (~mask0 & 0x8000) printf("0");
 			else if (mask1 & 0x8000) printf("1");
@@ -178,68 +163,57 @@ static void checkintegrity(const fileinfo *file, int side)
 			return;
 	}
 
-	unsigned addrbit = 1;
-	unsigned addrmirror = 0;
+
+	addrbit = 1;
+	mask0 = 0;
 	while (addrbit <= file->size/2)
 	{
-		unsigned i = 0;
-		for (i = 0; i < file->size; i++)
+		for (i = 0;i < file->size;i++)
 		{
-			if ((i ^ addrbit) < file->size && file->buf[i] != file->buf[i ^ addrbit]) break;
+			if (file->buf[i] != file->buf[i ^ addrbit]) break;
 		}
 
 		if (i == file->size)
-			addrmirror |= addrbit;
+			mask0 |= addrbit;
 
 		addrbit <<= 1;
 	}
 
-	if (addrmirror != 0)
+	if (mask0)
 	{
-		if (addrmirror == file->size/2)
-		{
-			printf("%-23s %-23s 1ST AND 2ND HALF IDENTICAL\n", side ? "" : file->name, side ? file->name : "");
-			util::hash_collection hash;
-			hash.begin();
-			hash.buffer(file->buf, file->size / 2);
-			hash.end();
-			printf("%-23s %-23s                  %s\n", side ? "" : file->name, side ? file->name : "", hash.attribute_string().c_str());
-		}
+		if (mask0 == file->size/2)
+			printf("%-23s %-23s 1ST AND 2ND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "");
 		else
 		{
 			printf("%-23s %-23s BADADDR",side ? "" : file->name,side ? file->name : "");
-			for (int i = 0; i < 24; i++)
+			for (i = 0;i < 24;i++)
 			{
 				if (file->size <= (1<<(23-i))) printf(" ");
-				else if (addrmirror & 0x800000) printf("-");
+				else if (mask0 & 0x800000) printf("-");
 				else printf("x");
-				addrmirror <<= 1;
+				mask0 <<= 1;
 			}
 			printf("\n");
 		}
 		return;
 	}
 
-	unsigned sizemask = 1;
-	while (sizemask < file->size - 1)
-		sizemask = (sizemask << 1) | 1;
-
 	mask0 = 0x000000;
-	mask1 = sizemask;
-	for (unsigned i = 0; i < file->size; i++)
+	mask1 = file->size-1;
+	for (i = 0;i < file->size;i++)
 	{
 		if (file->buf[i] != 0xff)
 		{
 			mask0 |= i;
 			mask1 &= i;
-			if (mask0 == sizemask && mask1 == 0x00) break;
+			if (mask0 == file->size-1 && mask1 == 0x00) break;
 		}
 	}
 
-	if (mask0 != sizemask || mask1 != 0x00)
+	if (mask0 != file->size-1 || mask1 != 0x00)
 	{
 		printf("%-23s %-23s ",side ? "" : file->name,side ? file->name : "");
-		for (int i = 0; i < 24; i++)
+		for (i = 0;i < 24;i++)
 		{
 			if (file->size <= (1<<(23-i))) printf(" ");
 			else if (~mask0 & 0x800000) printf("1");
@@ -255,21 +229,21 @@ static void checkintegrity(const fileinfo *file, int side)
 
 
 	mask0 = 0x000000;
-	mask1 = sizemask;
-	for (unsigned i = 0; i < file->size; i++)
+	mask1 = file->size-1;
+	for (i = 0;i < file->size;i++)
 	{
 		if (file->buf[i] != 0x00)
 		{
 			mask0 |= i;
 			mask1 &= i;
-			if (mask0 == sizemask && mask1 == 0x00) break;
+			if (mask0 == file->size-1 && mask1 == 0x00) break;
 		}
 	}
 
-	if (mask0 != sizemask || mask1 != 0x00)
+	if (mask0 != file->size-1 || mask1 != 0x00)
 	{
 		printf("%-23s %-23s ",side ? "" : file->name,side ? file->name : "");
-		for (int i = 0; i < 24; i++)
+		for (i = 0;i < 24;i++)
 		{
 			if (file->size <= (1<<(23-i))) printf(" ");
 			else if ((mask0 & 0x800000) == 0) printf("1");
@@ -283,8 +257,9 @@ static void checkintegrity(const fileinfo *file, int side)
 		return;
 	}
 
+
 	mask0 = 0xff;
-	for (unsigned i = 0; i < file->size/4 && mask0 != 0x00; i++)
+	for (i = 0;i < file->size/4 && mask0;i++)
 	{
 		if (file->buf[               2*i  ] != 0x00) mask0 &= ~0x01;
 		if (file->buf[               2*i  ] != 0xff) mask0 &= ~0x02;

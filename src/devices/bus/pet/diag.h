@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PET_DIAG_H
-#define MAME_BUS_PET_DIAG_H
-
 #pragma once
 
+#ifndef __PET_USER_DIAG__
+#define __PET_USER_DIAG__
+
+#include "emu.h"
 #include "user.h"
 
 
@@ -19,13 +20,14 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> pet_userport_diagnostic_connector_device
+// ======================> pet_userport_diagnostic_connector_t
 
-class pet_userport_diagnostic_connector_device : public device_t, public device_pet_user_port_interface
+class pet_userport_diagnostic_connector_t : public device_t,
+											public device_pet_user_port_interface
 {
 public:
 	// construction/destruction
-	pet_userport_diagnostic_connector_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	pet_userport_diagnostic_connector_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// device_pet_user_port_interface overrides
 	virtual DECLARE_WRITE_LINE_MEMBER( input_2 ) override { output_b(state); }
@@ -49,6 +51,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PET_USERPORT_DIAGNOSTIC_CONNECTOR, pet_userport_diagnostic_connector_device)
+extern const device_type PET_USERPORT_DIAGNOSTIC_CONNECTOR;
 
-#endif // MAME_BUS_PET_DIAG_H
+
+#endif

@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "dela_ep7x8.h"
 
 
@@ -15,14 +14,14 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_DELA_EP7X8, c64_dela_ep7x8_cartridge_device, "c64_dela_ep7x8", "C64 Dela 7x8KB EPROM cartridge")
+const device_type C64_DELA_EP7X8 = &device_creator<c64_dela_ep7x8_cartridge_device>;
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( c64_dela_ep7x8 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( c64_dela_ep7x8_cartridge_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( c64_dela_ep7x8 )
 	MCFG_GENERIC_SOCKET_ADD("rom1", generic_linear_slot, nullptr)
 	MCFG_GENERIC_EXTENSIONS("bin,rom")
 	MCFG_GENERIC_SOCKET_ADD("rom2", generic_linear_slot, nullptr)
@@ -40,6 +39,17 @@ MACHINE_CONFIG_MEMBER( c64_dela_ep7x8_cartridge_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor c64_dela_ep7x8_cartridge_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( c64_dela_ep7x8 );
+}
+
+
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
@@ -49,7 +59,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 c64_dela_ep7x8_cartridge_device::c64_dela_ep7x8_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_DELA_EP7X8, tag, owner, clock),
+	device_t(mconfig, C64_DELA_EP7X8, "C64 Dela 7x8KB EPROM cartridge", tag, owner, clock, "ep7x8", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this),
 	m_eprom1(*this, "rom1"),
 	m_eprom2(*this, "rom2"),

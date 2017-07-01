@@ -11,11 +11,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_VIDEO_WSWAN_H
-#define MAME_VIDEO_WSWAN_H
+#ifndef __WSWAN_VIDEO__
+#define __WSWAN_VIDEO__
 
-#pragma once
-
+#include "emu.h"
 
 enum
 {
@@ -144,7 +143,7 @@ protected:
 	static const uint8_t WSWAN_VIDEO_IFLAG_HBLTMR = 0x80;
 };
 
-DECLARE_DEVICE_TYPE(WSWAN_VIDEO, wswan_video_device)
+extern const device_type WSWAN_VIDEO;
 
 
-#endif // MAME_VIDEO_WSWAN_H
+#endif

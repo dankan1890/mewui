@@ -8,19 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_SOUND_SAMPLES_H
-#define MAME_SOUND_SAMPLES_H
-
 #pragma once
 
-
-//**************************************************************************
-//  GLOBAL VARIABLES
-//**************************************************************************
-
-// device type definition
-DECLARE_DEVICE_TYPE(SAMPLES, samples_device)
-
+#ifndef __SAMPLES_H__
+#define __SAMPLES_H__
 
 
 //**************************************************************************
@@ -33,10 +24,12 @@ DECLARE_DEVICE_TYPE(SAMPLES, samples_device)
 #define MCFG_SAMPLES_NAMES(_names) \
 	samples_device::static_set_samples_names(*device, _names);
 
+typedef device_delegate<void ()> samples_start_cb_delegate;
+
 #define SAMPLES_START_CB_MEMBER(_name) void _name()
 
 #define MCFG_SAMPLES_START_CB(_class, _method) \
-	samples_device::set_samples_start_callback(*device, samples_device::start_cb_delegate(&_class::_method, #_class "::" #_method, downcast<_class *>(owner)));
+	samples_device::set_samples_start_callback(*device, samples_start_cb_delegate(&_class::_method, #_class "::" #_method, downcast<_class *>(owner)));
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -48,15 +41,13 @@ class samples_device :  public device_t,
 						public device_sound_interface
 {
 public:
-	typedef device_delegate<void ()> start_cb_delegate;
-
 	// construction/destruction
 	samples_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
 	static void static_set_channels(device_t &device, uint8_t channels) { downcast<samples_device &>(device).m_channels = channels; }
 	static void static_set_samples_names(device_t &device, const char *const *names) { downcast<samples_device &>(device).m_names = names; }
-	static void set_samples_start_callback(device_t &device, start_cb_delegate &&cb) { downcast<samples_device &>(device).m_samples_start_cb = std::move(cb); }
+	static void set_samples_start_callback(device_t &device, samples_start_cb_delegate callback) { downcast<samples_device &>(device).m_samples_start_cb = callback; }
 
 	// getters
 	bool playing(uint8_t channel) const;
@@ -87,10 +78,11 @@ public:
 	// interface
 	uint8_t       m_channels;         // number of discrete audio channels needed
 	const char *const *m_names;     // array of sample names
+	samples_start_cb_delegate m_samples_start_cb; // optional callback
 
 protected:
 	// subclasses can do it this way
-	samples_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	samples_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// device-level overrides
 	virtual void device_start() override;
@@ -120,20 +112,18 @@ protected:
 	static bool read_flac_sample(emu_file &file, sample_t &sample);
 	bool load_samples();
 
-	start_cb_delegate m_samples_start_cb; // optional callback
-
 	// internal state
 	std::vector<channel_t>    m_channel;
 	std::vector<sample_t>     m_sample;
 
 	// internal constants
-	static constexpr uint8_t FRAC_BITS = 24;
-	static constexpr uint32_t FRAC_ONE = 1 << FRAC_BITS;
-	static constexpr uint32_t FRAC_MASK = FRAC_ONE - 1;
+	static const uint8_t FRAC_BITS = 24;
+	static const uint32_t FRAC_ONE = 1 << FRAC_BITS;
+	static const uint32_t FRAC_MASK = FRAC_ONE - 1;
 };
 
 // iterator, since lots of people are interested in these devices
-typedef device_type_iterator<samples_device> samples_device_iterator;
+typedef device_type_iterator<&device_creator<samples_device>, samples_device> samples_device_iterator;
 
 
 // ======================> samples_iterator
@@ -143,18 +133,16 @@ class samples_iterator
 public:
 	// construction/destruction
 	samples_iterator(samples_device &device)
-		: m_samples(device)
-		, m_current(-1)
-	{
-	}
+		: m_samples(device),
+			m_current(-1) { }
 
 	// getters
-	const char *altbasename() const { return (m_samples.m_names && m_samples.m_names[0] && m_samples.m_names[0][0] == '*') ? &m_samples.m_names[0][1] : nullptr; }
+	const char *altbasename() const { return (m_samples.m_names != nullptr && m_samples.m_names[0] != nullptr && m_samples.m_names[0][0] == '*') ? &m_samples.m_names[0][1] : nullptr; }
 
 	// iteration
 	const char *first()
 	{
-		if (!m_samples.m_names || !m_samples.m_names[0])
+		if (m_samples.m_names == nullptr || m_samples.m_names[0] == nullptr)
 			return nullptr;
 		m_current = 0;
 		if (m_samples.m_names[0][0] == '*')
@@ -164,7 +152,7 @@ public:
 
 	const char *next()
 	{
-		if (m_current == -1 || !m_samples.m_names[m_current])
+		if (m_current == -1 || m_samples.m_names[m_current] == nullptr)
 			return nullptr;
 		return m_samples.m_names[m_current++];
 	}
@@ -172,9 +160,9 @@ public:
 	// counting
 	int count()
 	{
-		int const save = m_current;
+		int save = m_current;
 		int result = 0;
-		for (const char *scan = first(); scan; scan = next())
+		for (const char *scan = first(); scan != nullptr; scan = next())
 			result++;
 		m_current = save;
 		return result;
@@ -186,4 +174,14 @@ private:
 	int                     m_current;
 };
 
-#endif // MAME_SOUND_SAMPLES_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+// device type definition
+extern const device_type SAMPLES;
+
+
+#endif

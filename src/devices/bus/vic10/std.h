@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_VIC10_STD_H
-#define MAME_BUS_VIC10_STD_H
-
 #pragma once
 
+#ifndef __VIC10_STD__
+#define __VIC10_STD__
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -40,6 +41,7 @@ protected:
 
 // device type definition
 extern const device_type VIC10_STD;
-DECLARE_DEVICE_TYPE(VIC10_STD, vic10_standard_cartridge_device)
 
-#endif // MAME_BUS_VIC10_STD_H
+
+
+#endif

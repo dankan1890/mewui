@@ -109,8 +109,6 @@ if _OPTIONS["targetos"]=="windows" then
 			"_UNICODE",
 			"main=utf8_main",
 			"_WIN32_WINNT=0x0501",
-			"WIN32_LEAN_AND_MEAN",
-			"NOMINMAX",
 		}
 
 	configuration { }

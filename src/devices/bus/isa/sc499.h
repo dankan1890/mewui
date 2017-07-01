@@ -8,11 +8,12 @@
  *
  */
 
-#ifndef MAME_BUS_ISA_SC499_H
-#define MAME_BUS_ISA_SC499_H
-
 #pragma once
 
+#ifndef SC499_H_
+#define SC499_H_
+
+#include "emu.h"
 #include "bus/isa/isa.h"
 #include "softlist_dev.h"
 
@@ -43,8 +44,6 @@ public:
 	virtual bool support_command_line_image_creation() const override { return 1; }
 	virtual const char *image_interface() const override { return "sc499_cass"; }
 	virtual const char *file_extensions() const override { return "act,ct"; }
-	virtual const char *custom_instance_name() const override { return "ctape"; }
-	virtual const char *custom_brief_instance_name() const override { return "ct"; }
 
 	uint8_t *read_block(int block_num);
 	void write_block(int block_num, uint8_t *ptr);
@@ -52,7 +51,8 @@ public:
 
 protected:
 	// device-level overrides
-	virtual void device_start() override { }
+	virtual void device_config_complete() override;
+	virtual void device_start() override { };
 
 	std::vector<uint8_t> m_ctape_data;
 };
@@ -65,7 +65,6 @@ public:
 	// construction/destruction
 	sc499_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	required_ioport m_iobase;
 	required_ioport m_irqdrq;
 
@@ -74,7 +73,7 @@ private:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual ioport_constructor device_input_ports() const override;
 
 	// ISA overrides
@@ -155,6 +154,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_SC499, sc499_device)
+extern const device_type ISA8_SC499;
 
-#endif // MAME_BUS_ISA_SC499_H
+#endif /* SC499_H_ */

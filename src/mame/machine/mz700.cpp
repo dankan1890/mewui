@@ -9,11 +9,14 @@
 
 #include "emu.h"
 #include "includes/mz700.h"
-
 #include "cpu/z80/z80.h"
+#include "machine/pit8253.h"
+#include "machine/i8255.h"
+#include "machine/z80pio.h"
 #include "machine/74145.h"
-#include "screen.h"
-
+#include "sound/speaker.h"
+#include "imagedev/cassette.h"
+#include "machine/ram.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1

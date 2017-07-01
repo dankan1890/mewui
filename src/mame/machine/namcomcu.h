@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Alex W. Jackson
-#ifndef MAME_MACHINE_NAMCOMCU_H
-#define MAME_MACHINE_NAMCOMCU_H
-
 #pragma once
+
+#ifndef __NAMCOMCU_H__
+#define __NAMCOMCU_H__
 
 #include "cpu/m37710/m37710.h"
 
@@ -53,11 +53,11 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(NAMCO_C69, namco_c69_device)
-DECLARE_DEVICE_TYPE(NAMCO_C70, namco_c70_device)
-DECLARE_DEVICE_TYPE(NAMCO_C74, namco_c74_device)
-DECLARE_DEVICE_TYPE(NAMCO_C75, namco_c75_device)
-DECLARE_DEVICE_TYPE(NAMCO_C76, namco_c76_device)
+extern const device_type NAMCO_C69;
+extern const device_type NAMCO_C70;
+extern const device_type NAMCO_C74;
+extern const device_type NAMCO_C75;
+extern const device_type NAMCO_C76;
 
 
-#endif // MAME_MACHINE_NAMCOMCU_H
+#endif

@@ -5,11 +5,10 @@
  *
  */
 
-#ifndef MAME_MACHINE_SPCHROM_H
-#define MAME_MACHINE_SPCHROM_H
+#ifndef __SPCHROMS_H
+#define __SPCHROMS_H
 
-#pragma once
-
+#include "emu.h"
 
 class speechrom_device : public device_t
 {
@@ -23,7 +22,6 @@ public:
 	void read_and_branch();
 	void set_reverse_bit_order(bool reverse) { m_reverse = reverse; }
 
-protected:
 	// device-level overrides
 	virtual void device_start() override;
 
@@ -38,6 +36,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SPEECHROM, speechrom_device)
+extern const device_type SPEECHROM;
 
-#endif // MAME_MACHINE_SPCHROM_H
+#endif

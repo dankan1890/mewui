@@ -11,14 +11,11 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/surpratk.h"
-#include "includes/konamipt.h"
-
 #include "cpu/m6809/konami.h" /* for the callback and the firq irq definition */
 #include "machine/watchdog.h"
 #include "sound/ym2151.h"
-#include "speaker.h"
-
+#include "includes/konamipt.h"
+#include "includes/surpratk.h"
 
 INTERRUPT_GEN_MEMBER(surpratk_state::surpratk_interrupt)
 {
@@ -166,7 +163,7 @@ WRITE8_MEMBER( surpratk_state::banking_callback )
 	membank("bank1")->set_entry(data & 0x1f);
 }
 
-static MACHINE_CONFIG_START( surpratk )
+static MACHINE_CONFIG_START( surpratk, surpratk_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", KONAMI, XTAL_24MHz/2/4) /* 053248, the clock input is 12MHz, and internal CPU divider of 4 */
@@ -271,6 +268,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1990, suratk,  0,      surpratk, surpratk, surpratk_state, 0, ROT0, "Konami", "Surprise Attack (World ver. K)", MACHINE_SUPPORTS_SAVE )
-GAME( 1990, suratka, suratk, surpratk, surpratk, surpratk_state, 0, ROT0, "Konami", "Surprise Attack (Asia ver. L)",  MACHINE_SUPPORTS_SAVE )
-GAME( 1990, suratkj, suratk, surpratk, surpratk, surpratk_state, 0, ROT0, "Konami", "Surprise Attack (Japan ver. M)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, suratk,  0,      surpratk, surpratk, driver_device, 0, ROT0, "Konami", "Surprise Attack (World ver. K)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, suratka, suratk, surpratk, surpratk, driver_device, 0, ROT0, "Konami", "Surprise Attack (Asia ver. L)", MACHINE_SUPPORTS_SAVE )
+GAME( 1990, suratkj, suratk, surpratk, surpratk, driver_device, 0, ROT0, "Konami", "Surprise Attack (Japan ver. M)", MACHINE_SUPPORTS_SAVE )

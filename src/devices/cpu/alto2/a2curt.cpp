@@ -5,7 +5,6 @@
  *   Xerox AltoII cursor task
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 
 /**

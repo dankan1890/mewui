@@ -18,23 +18,19 @@ class tricep_state : public driver_device
 {
 public:
 	tricep_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_maincpu(*this, "maincpu")
-		, m_terminal(*this, TERMINAL_TAG)
-		, m_p_ram(*this, "p_ram")
-	{
-	}
-
-	DECLARE_READ16_MEMBER(tricep_terminal_r);
-	DECLARE_WRITE16_MEMBER(tricep_terminal_w);
-	void kbd_put(u8 data);
-
-protected:
-	virtual void machine_reset() override;
+		: driver_device(mconfig, type, tag),
+	m_maincpu(*this, "maincpu"),
+	m_terminal(*this, TERMINAL_TAG)
+	,
+		m_p_ram(*this, "p_ram"){ }
 
 	required_device<cpu_device> m_maincpu;
 	required_device<generic_terminal_device> m_terminal;
+	DECLARE_READ16_MEMBER(tricep_terminal_r);
+	DECLARE_WRITE16_MEMBER(tricep_terminal_w);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	required_shared_ptr<uint16_t> m_p_ram;
+	virtual void machine_reset() override;
 };
 
 
@@ -70,18 +66,19 @@ void tricep_state::machine_reset()
 	m_maincpu->reset();
 }
 
-void tricep_state::kbd_put(u8 data)
+WRITE8_MEMBER( tricep_state::kbd_put )
 {
 }
 
-static MACHINE_CONFIG_START( tricep )
+static MACHINE_CONFIG_START( tricep, tricep_state )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", M68000, XTAL_8MHz)
+	MCFG_CPU_ADD("maincpu",M68000, XTAL_8MHz)
 	MCFG_CPU_PROGRAM_MAP(tricep_mem)
+
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(tricep_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(tricep_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -93,5 +90,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY           FULLNAME  FLAGS
-COMP( 1985, tricep, 0,      0,       tricep,    tricep, tricep_state, 0,    "Morrow Designs", "Tricep", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY       FULLNAME       FLAGS */
+COMP( 1985, tricep, 0,      0,       tricep,    tricep, driver_device,  0,  "Morrow Designs", "Tricep", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

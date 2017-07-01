@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_VIDEO_MGA2064W_H
-#define MAME_VIDEO_MGA2064W_H
-
-#pragma once
+#ifndef MGA2064W_H
+#define MGA2064W_H
 
 #include "machine/pci.h"
 
@@ -17,8 +15,10 @@ public:
 protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
+
+private:
 };
 
-DECLARE_DEVICE_TYPE(MGA2064W, mga2064w_device);
+extern const device_type MGA2064W;
 
-#endif // MAME_VIDEO_MGA2064W_H
+#endif

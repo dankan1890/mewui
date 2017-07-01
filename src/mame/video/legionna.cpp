@@ -20,7 +20,6 @@
 
 #include "emu.h"
 #include "includes/legionna.h"
-#include "screen.h"
 
 
 /******************************************************************************/

@@ -34,11 +34,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NEWBRAIN_EXP_H
-#define MAME_BUS_NEWBRAIN_EXP_H
-
 #pragma once
 
+#ifndef __NEWBRAIN_EXPANSION_SLOT__
+#define __NEWBRAIN_EXPANSION_SLOT__
+
+#include "emu.h"
 
 
 
@@ -64,16 +65,17 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> newbrain_expansion_slot_device
+// ======================> newbrain_expansion_slot_t
 
 class device_newbrain_expansion_slot_interface;
 
-class newbrain_expansion_slot_device : public device_t,
+class newbrain_expansion_slot_t : public device_t,
 									public device_slot_interface
 {
 public:
 	// construction/destruction
-	newbrain_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	newbrain_expansion_slot_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual ~newbrain_expansion_slot_t() { }
 
 	// computer interface
 	uint8_t mreq_r(address_space &space, offs_t offset, uint8_t data, bool &romov, int &exrm, bool &raminh);
@@ -97,28 +99,29 @@ protected:
 class device_newbrain_expansion_slot_interface : public device_slot_card_interface
 {
 public:
-	// memory access
-	virtual uint8_t mreq_r(address_space &space, offs_t offset, uint8_t data, bool &romov, int &exrm, bool &raminh) { return data; }
-	virtual void mreq_w(address_space &space, offs_t offset, uint8_t data, bool &romov, int &exrm, bool &raminh) { }
-
-	// I/O access
-	virtual uint8_t iorq_r(address_space &space, offs_t offset, uint8_t data, bool &prtov) { return data; }
-	virtual void iorq_w(address_space &space, offs_t offset, uint8_t data, bool &prtov) { }
-
-protected:
 	// construction/destruction
 	device_newbrain_expansion_slot_interface(const machine_config &mconfig, device_t &device);
+	virtual ~device_newbrain_expansion_slot_interface() { }
 
-	newbrain_expansion_slot_device *m_slot;
+	// memory access
+	virtual uint8_t mreq_r(address_space &space, offs_t offset, uint8_t data, bool &romov, int &exrm, bool &raminh) { return data; };
+	virtual void mreq_w(address_space &space, offs_t offset, uint8_t data, bool &romov, int &exrm, bool &raminh) { };
+
+	// I/O access
+	virtual uint8_t iorq_r(address_space &space, offs_t offset, uint8_t data, bool &prtov) { return data; };
+	virtual void iorq_w(address_space &space, offs_t offset, uint8_t data, bool &prtov) { };
+
+protected:
+	newbrain_expansion_slot_t *m_slot;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NEWBRAIN_EXPANSION_SLOT, newbrain_expansion_slot_device)
+extern const device_type NEWBRAIN_EXPANSION_SLOT;
 
 
 SLOT_INTERFACE_EXTERN( newbrain_expansion_cards );
 
 
 
-#endif // MAME_BUS_NEWBRAIN_EXP_H
+#endif

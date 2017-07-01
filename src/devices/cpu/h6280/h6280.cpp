@@ -7,7 +7,7 @@
     Copyright Bryan McPhail, mish@tendril.co.uk
 
     This source code is based (with permission!) on the 6502 emulator by
-    Juergen Buchmueller.  It is released as part of the MAME emulator project.
+    Juergen Buchmueller.  It is released as part of the Mame emulator project.
     Let me know if you intend to use this code in any other project.
 
 
@@ -110,7 +110,6 @@
 
 ******************************************************************************/
 
-#include "emu.h"
 #include "h6280.h"
 #include "debugger.h"
 
@@ -153,16 +152,16 @@ enum
 //  DEVICE INTERFACE
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(H6280, h6280_device, "h6280", "HuC6280")
+const device_type H6280 = &device_creator<h6280_device>;
 
 //-------------------------------------------------
 //  h6280_device - constructor
 //-------------------------------------------------
 
 h6280_device::h6280_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, H6280, tag, owner, clock)
-	, m_program_config("program", ENDIANNESS_LITTLE, 8, 21)
-	, m_io_config("io", ENDIANNESS_LITTLE, 8, 2)
+	: cpu_device(mconfig, H6280, "H6280", tag, owner, clock, "h6280", __FILE__),
+	m_program_config("program", ENDIANNESS_LITTLE, 8, 21),
+	m_io_config("io", ENDIANNESS_LITTLE, 8, 2)
 {
 	// build the opcode table
 	for (int op = 0; op < 256; op++)
@@ -255,7 +254,7 @@ void h6280_device::device_start()
 	save_item(NAME(m_irq_state[2]));
 	save_item(NAME(m_irq_pending));
 
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	save_item(NAME(m_nz));
 #endif
 	save_item(NAME(m_io_buffer));
@@ -287,7 +286,7 @@ void h6280_device::device_reset()
 	m_irq_mask = 0;
 	m_timer_ack = 0;
 	m_timer_value = 0;
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	m_nz = 0;
 #endif
 	m_io_buffer = 0;
@@ -333,7 +332,7 @@ inline void h6280_device::h6280_cycles(int cyc)
 	m_timer_value -= ((cyc) * m_clocks_per_cycle);
 }
 
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 
 #define NZ  m_NZ
 inline void h6280_device::set_nz(uint8_t n)
@@ -709,7 +708,7 @@ inline void h6280_device::wb_eaz(uint8_t tmp)
  * including N and Z and set any
  * SET and clear any CLR bits also
  ***************************************************************/
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 
 inline void h6280_device::compose_p(uint8_t SET, uint8_t CLR)
 {
@@ -880,7 +879,7 @@ inline void h6280_device::bcs()
  ***************************************************************/
 inline void h6280_device::beq()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	bra(!(NZ & 0xff));
 #else
 	bra(P & _fZ);
@@ -903,7 +902,7 @@ inline void h6280_device::bit(uint8_t tmp)
  ***************************************************************/
 inline void h6280_device::bmi()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	bra(NZ & 0x8000);
 #else
 	bra(P & _fN);
@@ -915,7 +914,7 @@ inline void h6280_device::bmi()
  ***************************************************************/
 inline void h6280_device::bne()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	bra(NZ & 0xff);
 #else
 	bra(!(P & _fZ));
@@ -927,7 +926,7 @@ inline void h6280_device::bne()
  ***************************************************************/
 inline void h6280_device::bpl()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	bra(!(NZ & 0x8000));
 #else
 	bra(!(P & _fN));
@@ -1319,7 +1318,7 @@ inline void h6280_device::pla()
  ***************************************************************/
 inline void h6280_device::plp()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	pull(P);
 	P |= _fB;
 	NZ = ((P & _fN) << 8) |
@@ -1396,7 +1395,7 @@ inline uint8_t h6280_device::ror(uint8_t tmp)
  ***************************************************************/
 inline void h6280_device::rti()
 {
-#if H6280_LAZY_FLAGS
+#if LAZY_FLAGS
 	pull(P);
 	P |= _fB;
 	NZ = ((P & _fN) << 8) |

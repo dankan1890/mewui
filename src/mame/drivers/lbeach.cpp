@@ -26,7 +26,6 @@ TODO:
 #include "emu.h"
 #include "cpu/m6800/m6800.h"
 #include "machine/nvram.h"
-#include "screen.h"
 
 #include "lbeach.lh"
 
@@ -324,7 +323,7 @@ void lbeach_state::machine_reset()
 {
 }
 
-static MACHINE_CONFIG_START( lbeach )
+static MACHINE_CONFIG_START( lbeach, lbeach_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6800, XTAL_16MHz / 32) // Motorola MC6800P, 500kHz
@@ -376,4 +375,4 @@ ROM_START( lbeach )
 ROM_END
 
 
-GAMEL(1979, lbeach, 0, lbeach, lbeach, lbeach_state, 0, ROT0, "Olympia / Seletron", "Long Beach", MACHINE_IMPERFECT_COLORS | MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_lbeach )
+GAMEL(1979, lbeach, 0, lbeach, lbeach, driver_device, 0, ROT0, "Olympia / Seletron", "Long Beach", MACHINE_IMPERFECT_COLORS | MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_lbeach )

@@ -12,6 +12,7 @@
 #if defined(OSD_WINDOWS) || defined(OSD_UWP)
 
 // standard windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #include <wrl/client.h>
@@ -20,6 +21,8 @@
 #include <xaudio2.h>
 
 #undef interface
+#undef min
+#undef max
 
 // stdlib includes
 #include <mutex>

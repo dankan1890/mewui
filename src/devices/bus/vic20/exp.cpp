@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VIC20_EXPANSION_SLOT, vic20_expansion_slot_device, "vic20_expansion_slot", "VIC-20 expansion port")
+const device_type VIC20_EXPANSION_SLOT = &device_creator<vic20_expansion_slot_device>;
 
 
 
@@ -58,13 +57,12 @@ device_vic20_expansion_card_interface::~device_vic20_expansion_card_interface()
 //-------------------------------------------------
 
 vic20_expansion_slot_device::vic20_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VIC20_EXPANSION_SLOT, tag, owner, clock),
-	device_slot_interface(mconfig, *this),
-	device_image_interface(mconfig, *this),
-	m_write_irq(*this),
-	m_write_nmi(*this),
-	m_write_res(*this),
-	m_card(nullptr)
+		device_t(mconfig, VIC20_EXPANSION_SLOT, "VIC-20 expansion port", tag, owner, clock, "vic20_expansion_slot", __FILE__),
+		device_slot_interface(mconfig, *this),
+		device_image_interface(mconfig, *this),
+		m_write_irq(*this),
+		m_write_nmi(*this),
+		m_write_res(*this), m_card(nullptr)
 {
 }
 
@@ -113,7 +111,7 @@ image_init_result vic20_expansion_slot_device::call_load()
 {
 	if (m_card)
 	{
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			if (is_filetype("20")) fread(m_card->m_blk1, 0x2000);
 			else if (is_filetype("40")) fread(m_card->m_blk2, 0x2000);
@@ -157,7 +155,7 @@ image_init_result vic20_expansion_slot_device::call_load()
 //  get_default_card_software -
 //-------------------------------------------------
 
-std::string vic20_expansion_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string vic20_expansion_slot_device::get_default_card_software()
 {
 	return software_get_default_slot("standard");
 }
@@ -204,8 +202,6 @@ void vic20_expansion_slot_device::cd_w(address_space &space, offs_t offset, uint
 #include "vic1111.h"
 #include "vic1112.h"
 #include "vic1210.h"
-#include "videopak.h"
-#include "speakeasy.h"
 
 SLOT_INTERFACE_START( vic20_expansion_cards )
 	SLOT_INTERFACE("exp", VIC1010)
@@ -213,8 +209,6 @@ SLOT_INTERFACE_START( vic20_expansion_cards )
 	SLOT_INTERFACE("8k", VIC1110)
 	SLOT_INTERFACE("16k", VIC1111)
 	SLOT_INTERFACE("fe3", VIC20_FE3)
-	SLOT_INTERFACE("speakez", VIC20_SPEAKEASY)
-	SLOT_INTERFACE("videopak", VIC20_VIDEO_PAK)
 
 	// the following need ROMs from the software list
 	SLOT_INTERFACE_INTERNAL("standard", VIC20_STD)

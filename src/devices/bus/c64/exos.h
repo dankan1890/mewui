@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_EXOS_H
-#define MAME_BUS_C64_EXOS_H
-
 #pragma once
 
+#ifndef __EXOS__
+#define __EXOS__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -40,7 +41,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_EXOS, c64_exos_cartridge_device)
+extern const device_type C64_EXOS;
 
 
-#endif // MAME_BUS_C64_EXOS_H
+#endif

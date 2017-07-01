@@ -10,7 +10,6 @@
 #include "sound/upd7759.h"
 #include "sound/msm5205.h"
 #include "video/k007121.h"
-#include "screen.h"
 
 class combatsc_state : public driver_device
 {
@@ -47,7 +46,6 @@ public:
 	int  m_vreg;
 	int  m_bank_select; /* 0x00..0x1f */
 	int  m_video_circuit; /* 0 or 1 */
-	bool m_textflip;
 	uint8_t *m_page[2];
 
 	/* misc */

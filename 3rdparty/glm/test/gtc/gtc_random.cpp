@@ -4,8 +4,6 @@
 #	include <array>
 #endif
 
-std::size_t const TestSamples = 10000;
-
 int test_linearRand()
 {
 	int Error = 0;
@@ -17,7 +15,7 @@ int test_linearRand()
 		glm::u8vec2 AMin(std::numeric_limits<glm::u8>::max());
 		glm::u8vec2 AMax(std::numeric_limits<glm::u8>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::u8vec2 A = glm::linearRand(glm::u8vec2(Min), glm::u8vec2(Max));
 				AMin = glm::min(AMin, A);
@@ -38,7 +36,7 @@ int test_linearRand()
 		glm::u16vec2 BMin(std::numeric_limits<glm::u16>::max());
 		glm::u16vec2 BMax(std::numeric_limits<glm::u16>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::u16vec2 B = glm::linearRand(glm::u16vec2(Min), glm::u16vec2(Max));
 				BMin = glm::min(BMin, B);
@@ -59,7 +57,7 @@ int test_linearRand()
 		glm::u32vec2 CMin(std::numeric_limits<glm::u32>::max());
 		glm::u32vec2 CMax(std::numeric_limits<glm::u32>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::u32vec2 C = glm::linearRand(glm::u32vec2(Min), glm::u32vec2(Max));
 				CMin = glm::min(CMin, C);
@@ -80,7 +78,7 @@ int test_linearRand()
 		glm::u64vec2 DMin(std::numeric_limits<glm::u64>::max());
 		glm::u64vec2 DMax(std::numeric_limits<glm::u64>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::u64vec2 D = glm::linearRand(glm::u64vec2(Min), glm::u64vec2(Max));
 				DMin = glm::min(DMin, D);
@@ -103,7 +101,7 @@ int test_linearRand()
 		glm::i8vec2 AMin(std::numeric_limits<glm::i8>::max());
 		glm::i8vec2 AMax(std::numeric_limits<glm::i8>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::i8vec2 A = glm::linearRand(glm::i8vec2(Min), glm::i8vec2(Max));
 				AMin = glm::min(AMin, A);
@@ -124,7 +122,7 @@ int test_linearRand()
 		glm::i16vec2 BMin(std::numeric_limits<glm::i16>::max());
 		glm::i16vec2 BMax(std::numeric_limits<glm::i16>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::i16vec2 B = glm::linearRand(glm::i16vec2(Min), glm::i16vec2(Max));
 				BMin = glm::min(BMin, B);
@@ -145,7 +143,7 @@ int test_linearRand()
 		glm::i32vec2 CMin(std::numeric_limits<glm::i32>::max());
 		glm::i32vec2 CMax(std::numeric_limits<glm::i32>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::i32vec2 C = glm::linearRand(glm::i32vec2(Min), glm::i32vec2(Max));
 				CMin = glm::min(CMin, C);
@@ -166,7 +164,7 @@ int test_linearRand()
 		glm::i64vec2 DMin(std::numeric_limits<glm::i64>::max());
 		glm::i64vec2 DMax(std::numeric_limits<glm::i64>::min());
 		{
-			for(std::size_t i = 0; i < TestSamples; ++i)
+			for(std::size_t i = 0; i < 100000; ++i)
 			{
 				glm::i64vec2 D = glm::linearRand(glm::i64vec2(Min), glm::i64vec2(Max));
 				DMin = glm::min(DMin, D);
@@ -185,7 +183,7 @@ int test_linearRand()
 		}
 	}
 
-	for(std::size_t i = 0; i < TestSamples; ++i)
+	for(std::size_t i = 0; i < 100000; ++i)
 	{
 		glm::f32vec2 const A(glm::linearRand(glm::f32vec2(static_cast<float>(Min)), glm::f32vec2(static_cast<float>(Max))));
 		if(!glm::all(glm::lessThanEqual(A, glm::f32vec2(static_cast<float>(Max)))))
@@ -204,7 +202,7 @@ int test_linearRand()
 	{
 		float ResultFloat = 0.0f;
 		double ResultDouble = 0.0f;
-		for(std::size_t i = 0; i < TestSamples; ++i)
+		for(std::size_t i = 0; i < 100000; ++i)
 		{
 			ResultFloat += glm::linearRand(-1.0f, 1.0f);
 			ResultDouble += glm::linearRand(-1.0, 1.0);
@@ -223,7 +221,7 @@ int test_circularRand()
 	int Error = 0;
 
 	{
-		std::size_t Max = TestSamples;
+		std::size_t Max = 100000;
 		float ResultFloat = 0.0f;
 		double ResultDouble = 0.0f;
 		double Radius = 2.0f;
@@ -247,7 +245,7 @@ int test_sphericalRand()
 	int Error = 0;
 
 	{
-		std::size_t Max = TestSamples;
+		std::size_t Max = 100000;
 		float ResultFloatA = 0.0f;
 		float ResultFloatB = 0.0f;
 		float ResultFloatC = 0.0f;
@@ -285,14 +283,14 @@ int test_diskRand()
 		float ResultFloat = 0.0f;
 		double ResultDouble = 0.0f;
 
-		for(std::size_t i = 0; i < TestSamples; ++i)
+		for(std::size_t i = 0; i < 100000; ++i)
 		{
 			ResultFloat += glm::length(glm::diskRand(2.0f));
 			ResultDouble += glm::length(glm::diskRand(2.0));
 		}
 
-		Error += ResultFloat < float(TestSamples) * 2.f ? 0 : 1;
-		Error += ResultDouble < double(TestSamples) * 2.0 ? 0 : 1;
+		Error += ResultFloat < 200000.f ? 0 : 1;
+		Error += ResultDouble < 200000.0 ? 0 : 1;
 		assert(!Error);
 	}
 
@@ -307,14 +305,14 @@ int test_ballRand()
 		float ResultFloat = 0.0f;
 		double ResultDouble = 0.0f;
 
-		for(std::size_t i = 0; i < TestSamples; ++i)
+		for(std::size_t i = 0; i < 100000; ++i)
 		{
 			ResultFloat += glm::length(glm::ballRand(2.0f));
 			ResultDouble += glm::length(glm::ballRand(2.0));
 		}
 
-		Error += ResultFloat < float(TestSamples) * 2.f ? 0 : 1;
-		Error += ResultDouble < double(TestSamples) * 2.0 ? 0 : 1;
+		Error += ResultFloat < 200000.f ? 0 : 1;
+		Error += ResultDouble < 200000.0 ? 0 : 1;
 		assert(!Error);
 	}
 

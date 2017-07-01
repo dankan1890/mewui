@@ -37,9 +37,6 @@ Notes:
 #include "machine/gen_latch.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 class go2000_state : public driver_device
 {
@@ -333,7 +330,7 @@ void go2000_state::machine_start()
 
 }
 
-static MACHINE_CONFIG_START( go2000 )
+static MACHINE_CONFIG_START( go2000, go2000_state )
 
 	MCFG_CPU_ADD("maincpu", M68000, 10000000)
 	MCFG_CPU_PROGRAM_MAP(go2000_map)
@@ -380,4 +377,4 @@ ROM_START( go2000 )
 ROM_END
 
 
-GAME( 2000, go2000,    0, go2000,    go2000, go2000_state,    0, ROT0,  "SunA?", "Go 2000", MACHINE_SUPPORTS_SAVE )
+GAME( 2000, go2000,    0, go2000,    go2000, driver_device,    0, ROT0,  "SunA?", "Go 2000", MACHINE_SUPPORTS_SAVE )

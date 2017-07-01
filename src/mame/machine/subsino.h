@@ -3,6 +3,7 @@
 #ifndef __MACHINE_SUBSINO__
 #define __MACHINE_SUBSINO__
 
+#include "emu.h"
 
 extern const uint8_t crsbingo_xors[8];
 extern const uint8_t sharkpy_xors [8];

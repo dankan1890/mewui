@@ -9,10 +9,21 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_TLC34076_H
-#define MAME_VIDEO_TLC34076_H
-
 #pragma once
+
+#ifndef __TLC34076_H__
+#define __TLC34076_H__
+
+
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+enum tlc34076_bits
+{
+	TLC34076_6_BIT = 6,
+	TLC34076_8_BIT = 8
+};
 
 
 /***************************************************************************
@@ -22,12 +33,6 @@
 class tlc34076_device : public device_t
 {
 public:
-	enum tlc34076_bits
-	{
-		TLC34076_6_BIT = 6,
-		TLC34076_8_BIT = 8
-	};
-
 	// construction/destruction
 	tlc34076_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -60,11 +65,12 @@ private:
     DEVICE CONFIGURATION MACROS
 ***************************************************************************/
 
-#define MCFG_TLC34076_ADD(tag, bits) \
-	MCFG_DEVICE_ADD((tag), TLC34076, 0) \
-	tlc34076_device::static_set_bits(*device, (tlc34076_device::bits));
+#define MCFG_TLC34076_ADD(_tag, _bits) \
+	MCFG_DEVICE_ADD(_tag, TLC34076, 0) \
+	tlc34076_device::static_set_bits(*device, _bits);
 
 
-DECLARE_DEVICE_TYPE(TLC34076, tlc34076_device)
+extern const device_type TLC34076;
 
-#endif // MAME_VIDEO_TLC34076_H
+
+#endif /* __TLC34076_H__ */

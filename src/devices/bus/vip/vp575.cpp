@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "vp575.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VP575, vp575_device, "vp575", "VP-575 System Expansion")
+const device_type VP575 = &device_creator<vp575_device>;
 
 
 //-------------------------------------------------
@@ -42,10 +41,10 @@ void vp575_device::update_interrupts()
 
 
 //-------------------------------------------------
-//  MACHINE_CONFIG_START( vp575 )
+//  MACHINE_CONFIG_FRAGMENT( vp575 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( vp575_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( vp575 )
 	MCFG_VIP_EXPANSION_SLOT_ADD("exp1", XTAL_3_52128MHz/2, vip_expansion_cards, nullptr)
 	MCFG_VIP_EXPANSION_SLOT_INT_CALLBACK(WRITELINE(vp575_device, exp1_int_w))
 	MCFG_VIP_EXPANSION_SLOT_DMA_OUT_CALLBACK(WRITELINE(vp575_device, exp1_dma_out_w))
@@ -73,6 +72,17 @@ MACHINE_CONFIG_MEMBER( vp575_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor vp575_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( vp575 );
+}
+
+
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -83,9 +93,8 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 vp575_device::vp575_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VP575, tag, owner, clock),
-	device_vip_expansion_card_interface(mconfig, *this),
-	m_expansion_slot(*this, "exp%u", 1)
+	device_t(mconfig, VP575, "VP575", tag, owner, clock, "vp575", __FILE__),
+	device_vip_expansion_card_interface(mconfig, *this)
 {
 	for (int i = 0; i < MAX_SLOTS; i++)
 	{
@@ -102,6 +111,12 @@ vp575_device::vp575_device(const machine_config &mconfig, const char *tag, devic
 
 void vp575_device::device_start()
 {
+	// find devices
+	m_expansion_slot[0] = dynamic_cast<vip_expansion_slot_device *>(subdevice("exp1"));
+	m_expansion_slot[1] = dynamic_cast<vip_expansion_slot_device *>(subdevice("exp2"));
+	m_expansion_slot[2] = dynamic_cast<vip_expansion_slot_device *>(subdevice("exp3"));
+	m_expansion_slot[3] = dynamic_cast<vip_expansion_slot_device *>(subdevice("exp4"));
+	m_expansion_slot[4] = dynamic_cast<vip_expansion_slot_device *>(subdevice("exp5"));
 }
 
 

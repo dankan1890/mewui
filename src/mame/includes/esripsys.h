@@ -14,7 +14,6 @@
 #include "cpu/esrip/esrip.h"
 #include "sound/dac.h"
 #include "sound/tms5220.h"
-#include "screen.h"
 
 /* TODO */
 #define ESRIPSYS_PIXEL_CLOCK    (XTAL_25MHz / 2)

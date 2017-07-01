@@ -1,7 +1,7 @@
 #ifndef PA_HOSTAPI_H
 #define PA_HOSTAPI_H
 /*
- * $Id$
+ * $Id: pa_hostapi.h 1880 2012-12-04 18:39:48Z rbencina $
  * Portable Audio I/O Library
  * host api representation
  *

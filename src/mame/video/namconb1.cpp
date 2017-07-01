@@ -4,8 +4,7 @@
 
 #include "emu.h"
 #include "includes/namconb1.h"
-
-#include "machine/namcoic.h"
+#include "includes/namcoic.h"
 
 
 /* nth_word32 is a general-purpose utility function, which allows us to
@@ -41,21 +40,24 @@ nth_byte32( const uint32_t *pSource, int which )
 	}
 } /* nth_byte32 */
 
-void namconb1_state::NB1TilemapCB(uint16_t code, int *tile, int *mask)
+static void
+NB1TilemapCB(running_machine &machine, uint16_t code, int *tile, int *mask )
 {
 	*tile = code;
 	*mask = code;
 } /* NB1TilemapCB */
 
-void namconb1_state::NB2TilemapCB(uint16_t code, int *tile, int *mask )
+static void
+NB2TilemapCB(running_machine &machine, uint16_t code, int *tile, int *mask )
 {
+	namconb1_state *state = machine.driver_data<namconb1_state>();
 	int mangle;
 
-	if( m_gametype == NAMCONB2_MACH_BREAKERS )
+	if( state->m_gametype == NAMCONB2_MACH_BREAKERS )
 	{
 		/*  00010203 04050607 00010203 04050607 (normal) */
 		/*  00010718 191a1b07 00010708 090a0b07 (alt bank) */
-		int bank = nth_byte32( m_tilebank32, (code>>13)+8 );
+		int bank = nth_byte32( state->m_tilebank32, (code>>13)+8 );
 		mangle = (code&0x1fff) + bank*0x2000;
 		*tile = mangle;
 		*mask = mangle;
@@ -82,7 +84,7 @@ void namconb1_state::video_update_common(screen_device &screen, bitmap_ind16 &bi
 			c169_roz_draw(screen, bitmap, cliprect, pri);
 			if( (pri&1)==0 )
 			{
-				c123_tilemap_draw( screen, bitmap, cliprect, pri/2 );
+				namco_tilemap_draw( screen, bitmap, cliprect, pri/2 );
 			}
 			c355_obj_draw(screen, bitmap, cliprect, pri );
 		}
@@ -91,7 +93,7 @@ void namconb1_state::video_update_common(screen_device &screen, bitmap_ind16 &bi
 	{
 		for( pri=0; pri<8; pri++ )
 		{
-			c123_tilemap_draw( screen, bitmap, cliprect, pri );
+			namco_tilemap_draw( screen, bitmap, cliprect, pri );
 			c355_obj_draw(screen, bitmap, cliprect, pri );
 		}
 	}
@@ -126,7 +128,7 @@ int namconb1_state::NB1objcode2tile( int code )
 
 VIDEO_START_MEMBER(namconb1_state,namconb1)
 {
-	c123_tilemap_init(NAMCONB1_TILEGFX, memregion(NAMCONB1_TILEMASKREGION)->base(), namcos2_shared_state::c123_tilemap_delegate(&namconb1_state::NB1TilemapCB, this));
+	namco_tilemap_init(NAMCONB1_TILEGFX, memregion(NAMCONB1_TILEMASKREGION)->base(), NB1TilemapCB );
 	c355_obj_init(NAMCONB1_SPRITEGFX,0x0,namcos2_shared_state::c355_obj_code2tile_delegate(&namconb1_state::NB1objcode2tile, this));
 
 	save_item(NAME(m_tilemap_tile_bank));
@@ -150,7 +152,7 @@ uint32_t namconb1_state::screen_update_namconb2(screen_device &screen, bitmap_in
 
 	if( memcmp(m_tilemap_tile_bank,m_tilebank32,sizeof(m_tilemap_tile_bank))!=0 )
 	{
-		c123_tilemap_invalidate();
+		namco_tilemap_invalidate();
 		memcpy(m_tilemap_tile_bank,m_tilebank32,sizeof(m_tilemap_tile_bank));
 	}
 	video_update_common( screen, bitmap, clip, 1 );
@@ -184,7 +186,7 @@ int namconb1_state::NB2objcode2tile( int code )
 
 VIDEO_START_MEMBER(namconb1_state,namconb2)
 {
-	c123_tilemap_init(NAMCONB1_TILEGFX, memregion(NAMCONB1_TILEMASKREGION)->base(), namcos2_shared_state::c123_tilemap_delegate(&namconb1_state::NB2TilemapCB, this));
+	namco_tilemap_init(NAMCONB1_TILEGFX, memregion(NAMCONB1_TILEMASKREGION)->base(), NB2TilemapCB );
 	c355_obj_init(NAMCONB1_SPRITEGFX,0x0,namcos2_shared_state::c355_obj_code2tile_delegate(&namconb1_state::NB2objcode2tile, this));
 	c169_roz_init(NAMCONB1_ROTGFX,NAMCONB1_ROTMASKREGION);
 

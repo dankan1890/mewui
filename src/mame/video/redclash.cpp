@@ -335,7 +335,7 @@ void redclash_state::redclash_set_stars_enable(uint8_t on)
 }
 
 /* This sets up which starfield to draw and the offset, */
-/* To be called from screen_vblank_*() */
+/* To be called from screen_eof_*() */
 
 void redclash_state::redclash_update_stars_state()
 {
@@ -435,7 +435,7 @@ void redclash_state::redclash_draw_stars(bitmap_ind16 &bitmap, const rectangle &
 	}
 }
 
-WRITE_LINE_MEMBER(redclash_state::screen_vblank_redclash)
+void redclash_state::screen_eof_redclash(screen_device &screen, bool state)
 {
 	// falling edge
 	if (!state)
@@ -491,7 +491,7 @@ VIDEO_START_MEMBER(redclash_state,sraider)
 	m_bg_tilemap->set_transparent_pen(0);
 }
 
-WRITE_LINE_MEMBER(redclash_state::screen_vblank_sraider)/* update starfield position */
+void redclash_state::screen_eof_sraider(screen_device &screen, bool state)/* update starfield position */
 {
 	// falling edge
 	if (!state)

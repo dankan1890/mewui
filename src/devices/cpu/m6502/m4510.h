@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_M6502_M4510_H
-#define MAME_CPU_M6502_M4510_H
-
-#pragma once
+#ifndef __M4510_H__
+#define __M4510_H__
 
 #include "m65ce02.h"
 
@@ -79,6 +77,6 @@ enum {
 	M4510_NMI_LINE = m6502_device::NMI_LINE
 };
 
-DECLARE_DEVICE_TYPE(M4510, m4510_device)
+extern const device_type M4510;
 
-#endif // MAME_CPU_M6502_M4510_H
+#endif

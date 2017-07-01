@@ -5,7 +5,6 @@
     Ikki
 
 *************************************************************************/
-#include "screen.h"
 
 class ikki_state : public driver_device
 {

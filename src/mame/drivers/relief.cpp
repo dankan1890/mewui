@@ -20,14 +20,12 @@
 
 
 #include "emu.h"
-#include "includes/relief.h"
-
 #include "cpu/m68000/m68000.h"
 #include "machine/watchdog.h"
 #include "machine/atarigen.h"
 #include "sound/okim6295.h"
 #include "sound/ym2413.h"
-#include "speaker.h"
+#include "includes/relief.h"
 
 
 /*************************************
@@ -267,7 +265,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( relief )
+static MACHINE_CONFIG_START( relief, relief_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, ATARI_CLOCK_14MHz/2)
@@ -302,7 +300,7 @@ static MACHINE_CONFIG_START( relief )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_OKIM6295_ADD("oki", ATARI_CLOCK_14MHz/4/3, PIN7_LOW)
+	MCFG_OKIM6295_ADD("oki", ATARI_CLOCK_14MHz/4/3, OKIM6295_PIN7_LOW)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 	MCFG_DEVICE_ADDRESS_MAP(AS_0, oki_map)
 

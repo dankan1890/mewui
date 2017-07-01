@@ -80,11 +80,10 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "includes/irobot.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/pokey.h"
 #include "machine/nvram.h"
-#include "speaker.h"
+#include "includes/irobot.h"
 
 #define MAIN_CLOCK      XTAL_12_096MHz
 #define VIDEO_CLOCK     XTAL_20MHz
@@ -298,7 +297,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( irobot )
+static MACHINE_CONFIG_START( irobot, irobot_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, MAIN_CLOCK/8)

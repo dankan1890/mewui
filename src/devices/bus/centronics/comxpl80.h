@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_CENTRONICS_COMXPL80_H
-#define MAME_BUS_CENTRONICS_COMXPL80_H
-
 #pragma once
 
+#ifndef __COMX_PL80__
+#define __COMX_PL80__
+
+#include "emu.h"
 #include "cpu/m6805/m6805.h"
 #include "bus/centronics/ctronics.h"
 
@@ -29,6 +30,11 @@ public:
 	// construction/destruction
 	comx_pl80_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual ioport_constructor device_input_ports() const override;
+
 	// not really public
 	DECLARE_WRITE8_MEMBER( pa_w );
 	DECLARE_WRITE8_MEMBER( pb_w );
@@ -39,11 +45,6 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual ioport_constructor device_input_ports() const override;
 
 	virtual DECLARE_WRITE_LINE_MEMBER( input_data0 ) override { if (state) m_data |= 0x01; else m_data &= ~0x01; }
 	virtual DECLARE_WRITE_LINE_MEMBER( input_data1 ) override { if (state) m_data |= 0x02; else m_data &= ~0x02; }
@@ -73,8 +74,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(COMX_PL80, comx_pl80_device)
+extern const device_type COMX_PL80;
 
 
 
-#endif // MAME_BUS_CENTRONICS_COMXPL80_H
+#endif

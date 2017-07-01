@@ -6,10 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_COLECO_STD_H
-#define MAME_BUS_COLECO_STD_H
-
 #pragma once
+
+#ifndef __COLECOVISION_STANDARD_CARTRIDGE__
+#define __COLECOVISION_STANDARD_CARTRIDGE__
 
 #include "exp.h"
 
@@ -38,7 +38,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(COLECOVISION_STANDARD, colecovision_standard_cartridge_device)
+extern const device_type COLECOVISION_STANDARD;
 
 
-#endif // MAME_BUS_COLECO_STD_H
+#endif

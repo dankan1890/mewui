@@ -88,8 +88,6 @@
 
 /* LOCAL GLOBAL VARIABLE DEFINITIONS */
 
-namespace {
-
 struct tia
 {
 	/* structures to hold the 6 tia sound control bytes */
@@ -140,10 +138,8 @@ struct tia
 /* has a 13:18 ratio (of course, 13+18 = 31).  This could also be */
 /* implemented by using counters. */
 
-constexpr uint8_t Div31[POLY5_SIZE] =
+static const uint8_t Div31[POLY5_SIZE] =
 	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-} // anonymous namespace
 
 
 /*****************************************************************************/

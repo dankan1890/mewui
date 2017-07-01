@@ -7,13 +7,14 @@
 TODO:
 - Ugly text flickering in various places, namely the text when you finish level 1.
   This is due of completely busted sprite limit hook-up. (check k007121.cpp and MT #00185)
-- understand how the trackball really works for clone sets.
 - it seems that to get correct target colors in firing range III we have to
   use the WRONG lookup table (the one for tiles instead of the one for
   sprites).
 - in combatscb, wrong sprite/char priority (see cpu head at beginning of arm
   wrestling, and heads in intermission after firing range III)
-- improve sound hook up in bootleg.
+- hook up sound in bootleg (the current sound is a hack, making use of the
+  Konami ROMset)
+- understand how the trackball really works
 - YM2203 pitch is wrong. Fixing it screws up the tempo.
 
   Update: 3MHz(24MHz/8) is the more appropriate clock speed for the 2203.
@@ -121,13 +122,11 @@ Dip location and recommended settings verified with the US manual
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/combatsc.h"
-
 #include "cpu/m6809/hd6309.h"
 #include "cpu/z80/z80.h"
 #include "machine/watchdog.h"
 #include "sound/2203intf.h"
-#include "speaker.h"
+#include "includes/combatsc.h"
 
 
 /*************************************
@@ -697,7 +696,7 @@ void combatsc_state::machine_reset()
 }
 
 /* combat school (original) */
-static MACHINE_CONFIG_START( combatsc )
+static MACHINE_CONFIG_START( combatsc, combatsc_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", HD6309, 3000000*4)  /* 3 MHz? */
@@ -751,7 +750,7 @@ MACHINE_CONFIG_END
 
 
 /* combat school (bootleg on different hardware) */
-static MACHINE_CONFIG_START( combatscb )
+static MACHINE_CONFIG_START( combatscb, combatsc_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", HD6309, 3000000*4)  /* 3 MHz? */
@@ -791,7 +790,7 @@ static MACHINE_CONFIG_START( combatscb )
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 	MCFG_SOUND_ADD("msm5205", MSM5205, 384000)
-	MCFG_MSM5205_PRESCALER_SELECTOR(SEX_4B)  /* 8KHz playback ?    */
+	MCFG_MSM5205_PRESCALER_SELECTOR(MSM5205_SEX_4B)  /* 8KHz playback ?    */
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_CONFIG_END
 
@@ -1004,9 +1003,9 @@ DRIVER_INIT_MEMBER(combatsc_state,combatsc)
  *
  *************************************/
 
-GAME( 1988, combatsc,  0,        combatsc,  combatsc,  combatsc_state, combatsc,  ROT0, "Konami",  "Combat School (joystick)",        0 )
-GAME( 1987, combatsct, combatsc, combatsc,  combatsct, combatsc_state, 0,         ROT0, "Konami",  "Combat School (trackball)",       MACHINE_NOT_WORKING )
-GAME( 1987, combatscj, combatsc, combatsc,  combatsct, combatsc_state, 0,         ROT0, "Konami",  "Combat School (Japan trackball)", MACHINE_NOT_WORKING )
-GAME( 1987, bootcamp,  combatsc, combatsc,  combatsct, combatsc_state, 0,         ROT0, "Konami",  "Boot Camp (set 1)",               MACHINE_NOT_WORKING )
-GAME( 1987, bootcampa, combatsc, combatsc,  combatsct, combatsc_state, 0,         ROT0, "Konami",  "Boot Camp (set 2)",               MACHINE_NOT_WORKING )
-GAME( 1988, combatscb, combatsc, combatscb, combatscb, combatsc_state, 0,         ROT0, "bootleg", "Combat School (bootleg)",         MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_SOUND )
+GAME( 1988, combatsc,  0,        combatsc,  combatsc, combatsc_state,  combatsc,  ROT0, "Konami",  "Combat School (joystick)", 0 )
+GAME( 1987, combatsct, combatsc, combatsc,  combatsct, driver_device, 0,         ROT0, "Konami",  "Combat School (trackball)", 0 )
+GAME( 1987, combatscj, combatsc, combatsc,  combatsct, driver_device, 0,         ROT0, "Konami",  "Combat School (Japan trackball)", 0 )
+GAME( 1987, bootcamp,  combatsc, combatsc,  combatsct, driver_device, 0,         ROT0, "Konami",  "Boot Camp (set 1)", 0 )
+GAME( 1987, bootcampa, combatsc, combatsc,  combatsct, driver_device, 0,         ROT0, "Konami",  "Boot Camp (set 2)", 0 )
+GAME( 1988, combatscb, combatsc, combatscb, combatscb, driver_device, 0,         ROT0, "bootleg", "Combat School (bootleg)", MACHINE_IMPERFECT_COLORS | MACHINE_IMPERFECT_SOUND )

@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_SED1520_H
-#define MAME_VIDEO_SED1520_H
-
 #pragma once
+
+#ifndef __SED1520_H__
+#define __SED1520_H__
 
 
 #define MCFG_SED1520_ADD( _tag, _cb ) \
@@ -20,6 +20,7 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
+typedef uint32_t (*sed1520_screen_update_func)(device_t &device, bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *vram, int start_line, int adc);
 #define SED1520_UPDATE_CB(name) uint32_t name(device_t &device, bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *vram, int start_line, int adc)
 
 
@@ -28,13 +29,11 @@
 class sed1520_device :  public device_t
 {
 public:
-	typedef uint32_t (*screen_update_func)(device_t &device, bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t *vram, int start_line, int adc);
-
 	// construction/destruction
 	sed1520_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	static void static_set_screen_update_cb(device_t &device, screen_update_func _cb) { downcast<sed1520_device &>(device).m_screen_update_func = _cb; }
+	static void static_set_screen_update_cb(device_t &device, sed1520_screen_update_func _cb) { downcast<sed1520_device &>(device).m_screen_update_func = _cb; }
 
 	// device interface
 	virtual DECLARE_WRITE8_MEMBER(write);
@@ -61,13 +60,13 @@ private:
 	uint8_t       m_adc;
 	uint8_t       m_static_drive;
 	bool        m_modify_write;
-	screen_update_func m_screen_update_func;
+	sed1520_screen_update_func m_screen_update_func;
 
 	uint8_t       m_vram[0x140];
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SED1520, sed1520_device)
+extern const device_type SED1520;
 
-#endif // MAME_VIDEO_SED1520_H
+#endif

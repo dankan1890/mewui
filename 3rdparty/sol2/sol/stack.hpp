@@ -123,7 +123,7 @@ namespace sol {
 			}
 			int last = index + count;
 			for (int i = index; i < last; ++i) {
-				lua_remove(L, index);
+				lua_remove(L, i);
 			}
 		}
 

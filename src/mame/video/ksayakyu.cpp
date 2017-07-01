@@ -56,8 +56,7 @@ TILE_GET_INFO_MEMBER(ksayakyu_state::get_ksayakyu_tile_info)
 }
 
 /*
-x--- ---- flip bits
--y-- ---- unknown, used when runner slides (NOT flip Y!)
+xy-- ---- flip bits
 --cc cc-- color
 ---- --bb bank select
 */
@@ -65,7 +64,7 @@ TILE_GET_INFO_MEMBER(ksayakyu_state::get_text_tile_info)
 {
 	int code = m_videoram[tile_index * 2 + 1];
 	int attr = m_videoram[tile_index * 2];
-	int flags = ((attr & 0x80) ? TILE_FLIPX : 0);// | ((attr & 0x40) ? TILE_FLIPY : 0);
+	int flags = ((attr & 0x80) ? TILE_FLIPX : 0) | ((attr & 0x40) ? TILE_FLIPY : 0);
 	int color = (attr & 0x3c) >> 2;
 
 	code |= (attr & 3) << 8;

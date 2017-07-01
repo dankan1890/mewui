@@ -10,9 +10,8 @@ Atari Starship 1 driver
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/starshp1.h"
 #include "cpu/m6502/m6502.h"
-#include "speaker.h"
+#include "includes/starshp1.h"
 
 
 
@@ -197,10 +196,7 @@ static INPUT_PORTS_START( starshp1 )
 	PORT_DIPNAME( 0x20, 0x20, "Extended Play" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
-	// IPT_BUTTON3 is the Speed lever (Throttle)
-	// This is _not_ IPT_TOGGLE, even though it looks like one.
-	// It returns to SLOW unless you hold it down (FAST)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_TOGGLE
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START("VBLANK")
@@ -297,7 +293,7 @@ static GFXDECODE_START( starshp1 )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( starshp1 )
+static MACHINE_CONFIG_START( starshp1, starshp1_state )
 
 	/* basic machine hardware */
 
@@ -311,7 +307,7 @@ static MACHINE_CONFIG_START( starshp1 )
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_RAW_PARAMS(STARSHP1_PIXEL_CLOCK, STARSHP1_HTOTAL, STARSHP1_HBEND, STARSHP1_HBSTART, STARSHP1_VTOTAL, STARSHP1_VBEND, STARSHP1_VBSTART)
 	MCFG_SCREEN_UPDATE_DRIVER(starshp1_state, screen_update_starshp1)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(starshp1_state, screen_vblank_starshp1))
+	MCFG_SCREEN_VBLANK_DRIVER(starshp1_state, screen_eof_starshp1)
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", starshp1)
@@ -397,5 +393,5 @@ ROM_START( starshpp )
 ROM_END
 
 
-GAME( 1977, starshp1, 0,        starshp1, starshp1, starshp1_state, 0, ORIENTATION_FLIP_X, "Atari", "Starship 1",              MACHINE_IMPERFECT_SOUND )
-GAME( 1977, starshpp, starshp1, starshp1, starshp1, starshp1_state, 0, ORIENTATION_FLIP_X, "Atari", "Starship 1 (prototype?)", MACHINE_IMPERFECT_SOUND )
+GAME( 1977, starshp1, 0,        starshp1, starshp1, driver_device, 0, ORIENTATION_FLIP_X, "Atari", "Starship 1",              MACHINE_IMPERFECT_SOUND )
+GAME( 1977, starshpp, starshp1, starshp1, starshp1, driver_device, 0, ORIENTATION_FLIP_X, "Atari", "Starship 1 (prototype?)", MACHINE_IMPERFECT_SOUND )

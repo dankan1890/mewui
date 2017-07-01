@@ -1,9 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia, David Haywood
-#ifndef MAME_VIDEO_KANEKO_SPR_H
-#define MAME_VIDEO_KANEKO_SPR_H
-
-#pragma once
 
 /* Kaneko Sprites */
 
@@ -31,9 +27,12 @@ struct kan_tempsprite
 
 
 
-class kaneko16_sprite_device : public device_t, public device_video_interface
+class kaneko16_sprite_device : public device_t,
+								public device_video_interface
 {
 public:
+	kaneko16_sprite_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock,  device_type type);
+
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
 	static void set_fliptype(device_t &device, int fliptype);
@@ -57,13 +56,6 @@ public:
 	DECLARE_WRITE16_MEMBER(kaneko16_sprites_regs_w);
 
 protected:
-	kaneko16_sprite_device(
-			const machine_config &mconfig,
-			device_type type,
-			const char *tag,
-			device_t *owner,
-			uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -126,7 +118,7 @@ public:
 	int get_sprite_type(void) override{ return 0; };
 };
 
-DECLARE_DEVICE_TYPE(KANEKO_VU002_SPRITE, kaneko_vu002_sprite_device)
+extern const device_type KANEKO_VU002_SPRITE;
 
 class kaneko_kc002_sprite_device : public kaneko16_sprite_device
 {
@@ -136,6 +128,4 @@ public:
 	int get_sprite_type(void) override{ return 1; };
 };
 
-DECLARE_DEVICE_TYPE(KANEKO_KC002_SPRITE, kaneko_kc002_sprite_device)
-
-#endif // MAME_VIDEO_KANEKO_SPR_H
+extern const device_type KANEKO_KC002_SPRITE;

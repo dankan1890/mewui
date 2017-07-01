@@ -6,20 +6,17 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_SPECTRUM_H
-#define MAME_INCLUDES_SPECTRUM_H
+#ifndef __SPECTRUM_H__
+#define __SPECTRUM_H__
 
-#pragma once
-
-#include "machine/spec_snqk.h"
-
-#include "bus/generic/carts.h"
-#include "bus/generic/slot.h"
-#include "imagedev/cassette.h"
-#include "imagedev/snapquik.h"
-#include "machine/ram.h"
 #include "machine/upd765.h"
-#include "sound/spkrdev.h"
+#include "sound/speaker.h"
+#include "machine/ram.h"
+#include "imagedev/snapquik.h"
+#include "imagedev/cassette.h"
+#include "bus/generic/slot.h"
+#include "bus/generic/carts.h"
+#include "machine/spec_snqk.h"
 
 /* Spectrum crystals */
 
@@ -158,8 +155,8 @@ public:
 	uint32_t screen_update_spectrum(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_tc2048(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_ts2068(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_spectrum);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_timex);
+	void screen_eof_spectrum(screen_device &screen, bool state);
+	void screen_eof_timex(screen_device &screen, bool state);
 	INTERRUPT_GEN_MEMBER(spec_interrupt);
 	DECLARE_DEVICE_IMAGE_LOAD_MEMBER( spectrum_cart );
 
@@ -257,4 +254,4 @@ INPUT_PORTS_EXTERN( spec_plus );
 
 MACHINE_CONFIG_EXTERN( spectrum );
 
-#endif // MAME_INCLUDES_SPECTRUM_H
+#endif /* __SPECTRUM_H__ */

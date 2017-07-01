@@ -6,13 +6,14 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NES_CTRL_FTRAINER_H
-#define MAME_BUS_NES_CTRL_FTRAINER_H
-
 #pragma once
 
-#include "ctrl.h"
+#ifndef __NES_FTRAINER__
+#define __NES_FTRAINER__
 
+
+#include "emu.h"
+#include "ctrl.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -44,7 +45,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_FTRAINER, nes_ftrainer_device)
+extern const device_type NES_FTRAINER;
 
 
-#endif // MAME_BUS_NES_CTRL_FTRAINER_H
+#endif

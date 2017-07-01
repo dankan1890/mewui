@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PLUS4_DIAG264_LB_USER_H
-#define MAME_BUS_PLUS4_DIAG264_LB_USER_H
-
 #pragma once
 
+#ifndef __DIAG264_USER_PORT_LOOPBACK__
+#define __DIAG264_USER_PORT_LOOPBACK__
+
+#include "emu.h"
 #include "user.h"
 
 
@@ -21,7 +22,8 @@
 
 // ======================> diag264_user_port_loopback_device
 
-class diag264_user_port_loopback_device : public device_t, public device_pet_user_port_interface
+class diag264_user_port_loopback_device :  public device_t,
+	public device_pet_user_port_interface
 {
 public:
 	// construction/destruction
@@ -52,6 +54,6 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DIAG264_USER_PORT_LOOPBACK, diag264_user_port_loopback_device)
+extern const device_type DIAG264_USER_PORT_LOOPBACK;
 
-#endif // MAME_BUS_PLUS4_DIAG264_LB_USER_H
+#endif

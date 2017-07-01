@@ -47,11 +47,9 @@ starfira has one less rom in total than starfire but everything passes as
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/starfire.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/samples.h"
-#include "speaker.h"
+#include "includes/starfire.h"
 
 
 /*************************************
@@ -327,7 +325,7 @@ INTERRUPT_GEN_MEMBER(starfire_state::vblank_int)
 }
 
 
-static MACHINE_CONFIG_START( fireone )
+static MACHINE_CONFIG_START( fireone, starfire_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, STARFIRE_CPU_CLOCK)

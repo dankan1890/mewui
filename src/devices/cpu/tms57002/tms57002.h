@@ -7,10 +7,10 @@
     TMS57002 "DASP" emulator.
 
 ***************************************************************************/
-#ifndef MAME_CPU_TMS57002_TMS57002_H
-#define MAME_CPU_TMS57002_TMS57002_H
-
 #pragma once
+
+#ifndef __TMS57002_H__
+#define __TMS57002_H__
 
 class tms57002_device : public cpu_device, public device_sound_interface {
 public:
@@ -212,6 +212,6 @@ enum {
 	TMS57002_XWR
 };
 
-DECLARE_DEVICE_TYPE(TMS57002, tms57002_device)
+extern const device_type TMS57002;
 
-#endif // MAME_CPU_TMS57002_TMS57002_H
+#endif

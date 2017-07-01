@@ -1,18 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:ElSemi, Deunan Knute, R. Belmont
-#ifndef MAME_SOUND_AICADSP_H
-#define MAME_SOUND_AICADSP_H
-
 #pragma once
+
+#ifndef __AICADSP_H__
+#define __AICADSP_H__
 
 //the DSP Context
 struct AICADSP
 {
-	void init();
-	void setsample(int32_t sample, int32_t SEL, int32_t MXL);
-	void step();
-	void start();
-
 //Config
 	uint16_t *AICARAM;
 	uint32_t AICARAM_LENGTH;
@@ -39,4 +34,9 @@ struct AICADSP
 	int LastStep;
 };
 
-#endif // MAME_SOUND_AICADSP_H
+void aica_dsp_init(AICADSP *DSP);
+void aica_dsp_setsample(AICADSP *DSP, int32_t sample, int32_t SEL, int32_t MXL);
+void aica_dsp_step(AICADSP *DSP);
+void aica_dsp_start(AICADSP *DSP);
+
+#endif /* __AICADSP_H__ */

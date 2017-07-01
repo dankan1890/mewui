@@ -1,7 +1,6 @@
 // license:GPL-2.0+
 // copyright-holders:Peter Trauner, Manfred Schneider, Robbbert
 // thanks-to:Manfred Schneider
-#include "emu.h"
 #include "includes/vc4000.h"
 
 
@@ -218,7 +217,6 @@ READ8_MEMBER( vc4000_state::vc4000_video_r )
 				case 0x20:
 					m_joy2_x+=5;
 					if (m_joy2_x > STICKHIGH) m_joy2_x=STICKHIGH;
-					break;
 				case 0x00:
 					m_joy2_x = vc4000_joystick_return_to_centre(m_joy2_x);
 					break;
@@ -350,9 +348,9 @@ WRITE8_MEMBER( vc4000_state::vc4000_video_w )
 }
 
 
-READ_LINE_MEMBER(vc4000_state::vc4000_vsync_r)
+READ8_MEMBER( vc4000_state::vc4000_vsync_r )
 {
-	return m_video.line >= VC4000_END_LINE ? ASSERT_LINE : CLEAR_LINE;
+	return m_video.line >= VC4000_END_LINE ? 0x80 : 0;
 }
 
 static const char led[20][12+1] =

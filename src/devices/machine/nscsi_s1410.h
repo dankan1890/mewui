@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_NSCSI_S1410_H
-#define MAME_MACHINE_NSCSI_S1410_H
-
-#pragma once
+#ifndef __NSCSI_S1410_H__
+#define __NSCSI_S1410_H__
 
 #include "machine/nscsi_bus.h"
 #include "machine/nscsi_hd.h"
@@ -73,6 +71,6 @@ protected:
 	uint8_t params[8];
 };
 
-DECLARE_DEVICE_TYPE(NSCSI_S1410, nscsi_s1410_device)
+extern const device_type NSCSI_S1410;
 
-#endif // MAME_MACHINE_NSCSI_S1410_H
+#endif

@@ -6,9 +6,8 @@
 
 *************************************************************************/
 
-#include "audio/atarijsa.h"
 #include "machine/atarigen.h"
-#include "video/atarirle.h"
+#include "audio/atarijsa.h"
 #include "cpu/m68000/m68000.h"
 
 class atarig1_state : public atarigen_state

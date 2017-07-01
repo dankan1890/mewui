@@ -4,12 +4,10 @@
 // /home/ms/source/sidplay/libsidplay/emu/RCS/envelope.h,v
 //
 
-#ifndef MAME_SOUND_SIDENVEL_H
-#define MAME_SOUND_SIDENVEL_H
-
 #pragma once
 
-#include "sidvoice.h"
+#ifndef __SIDENVEL_H__
+#define __SIDENVEL_H__
 
 
 extern void enveEmuInit(uint32_t updateFreq, int measuredValues);
@@ -38,4 +36,4 @@ enum
 };
 
 
-#endif // MAME_SOUND_SIDENVEL_H
+#endif /* __SIDENVEL_H__ */

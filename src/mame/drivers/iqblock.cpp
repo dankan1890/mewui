@@ -52,14 +52,11 @@ Grndtour:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/iqblock.h"
-
 #include "cpu/z80/z80.h"
 #include "cpu/z180/z180.h"
 #include "machine/i8255.h"
+#include "includes/iqblock.h"
 #include "sound/ym2413.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 WRITE8_MEMBER(iqblock_state::iqblock_prot_w)
@@ -339,7 +336,7 @@ GFXDECODE_END
 
 
 
-static MACHINE_CONFIG_START( iqblock )
+static MACHINE_CONFIG_START( iqblock, iqblock_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,12000000/2) /* 6 MHz */

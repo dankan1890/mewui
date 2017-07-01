@@ -61,10 +61,9 @@ memory map:
 #include "k051960.h"
 
 #define VERBOSE 0
-#include "logmacro.h"
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
-
-DEFINE_DEVICE_TYPE(K051960, k051960_device, "k051960", "K051960 Sprite Generator")
+const device_type K051960 = &device_creator<k051960_device>;
 
 const gfx_layout k051960_device::spritelayout =
 {
@@ -127,7 +126,7 @@ GFXDECODE_END
 
 
 k051960_device::k051960_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, K051960, tag, owner, clock)
+	: device_t(mconfig, K051960, "K051960 Sprite Generator", tag, owner, clock, "k051960", __FILE__)
 	, device_gfx_interface(mconfig, *this, gfxinfo)
 	, m_ram(nullptr)
 	, m_sprite_rom(*this, DEVICE_SELF)
@@ -184,8 +183,6 @@ void k051960_device::device_start()
 {
 	// make sure our screen is started
 	if (!m_screen->started())
-		throw device_missing_dependencies();
-	if (!palette().device().started())
 		throw device_missing_dependencies();
 
 	// allocate scanline timer and start at first scanline

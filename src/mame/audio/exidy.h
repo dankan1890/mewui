@@ -1,10 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#ifndef MAME_AUDIO_EXIDY_H
-#define MAME_AUDIO_EXIDY_H
-
-#pragma once
-
 #include "machine/6532riot.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
@@ -43,6 +38,7 @@ class exidy_sound_device : public device_t,
 {
 public:
 	exidy_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	exidy_sound_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 	~exidy_sound_device() {}
 
 	DECLARE_READ8_MEMBER( sh6840_r );
@@ -61,9 +57,8 @@ public:
 	DECLARE_READ8_MEMBER( sh8253_r );
 
 protected:
-	exidy_sound_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -117,7 +112,7 @@ private:
 	inline int sh6840_update_noise(int clocks);
 };
 
-DECLARE_DEVICE_TYPE(EXIDY, exidy_sound_device)
+extern const device_type EXIDY;
 
 class venture_sound_device : public exidy_sound_device
 {
@@ -131,6 +126,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -138,7 +134,7 @@ protected:
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
 };
 
-DECLARE_DEVICE_TYPE(EXIDY_VENTURE, venture_sound_device)
+extern const device_type EXIDY_VENTURE;
 
 class victory_sound_device : public exidy_sound_device
 {
@@ -153,6 +149,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -169,12 +166,10 @@ private:
 	int m_pia1_cb1;
 };
 
-DECLARE_DEVICE_TYPE(EXIDY_VICTORY, victory_sound_device)
+extern const device_type EXIDY_VICTORY;
 
 MACHINE_CONFIG_EXTERN( venture_audio );
 
 MACHINE_CONFIG_EXTERN( mtrap_cvsd_audio );
 
 MACHINE_CONFIG_EXTERN( victory_audio );
-
-#endif // MAME_AUDIO_EXIDY_H

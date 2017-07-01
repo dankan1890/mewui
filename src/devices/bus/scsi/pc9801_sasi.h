@@ -1,11 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_BUS_SCSI_PC9801_SASI_H
-#define MAME_BUS_SCSI_PC9801_SASI_H
+#ifndef PC9801_SASI_H_
+#define PC9801_SASI_H_
 
 #include "scsihd.h"
 
-class pc9801_sasi_device : public scsihd_device
+class pc9801_sasi_device  : public scsihd_device
 {
 public:
 	// construction/destruction
@@ -15,6 +15,6 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(PC9801_SASI, pc9801_sasi_device)
+extern const device_type PC9801_SASI;
 
-#endif // MAME_BUS_SCSI_PC9801_SASI_H
+#endif /* PC9801_SASI_H_ */

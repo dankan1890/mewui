@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_S100_NSMDSAD_H
-#define MAME_BUS_S100_NSMDSAD_H
-
 #pragma once
 
+#ifndef __S100_MDS_AD__
+#define __S100_MDS_AD__
+
+#include "emu.h"
 #include "s100.h"
 #include "imagedev/floppy.h"
 
@@ -29,14 +30,14 @@ public:
 	// construction/destruction
 	s100_mds_ad_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	// device_s100_card_interface overrides
 	virtual uint8_t s100_smemr_r(address_space &space, offs_t offset) override;
@@ -51,6 +52,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(S100_MDS_AD, s100_mds_ad_device)
+extern const device_type S100_MDS_AD;
 
-#endif // MAME_BUS_S100_NSMDSAD_H
+
+
+#endif

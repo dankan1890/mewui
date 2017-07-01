@@ -21,11 +21,10 @@ TODO:
 
 *******************************************************************************/
 
-#ifndef MAME_MACHINE_CDI070_H
-#define MAME_MACHINE_CDI070_H
+#ifndef _MACHINE_CDI68070_H_
+#define _MACHINE_CDI68070_H_
 
-#pragma once
-
+#include "emu.h"
 
 #define ISR_MST     0x80    // Master
 #define ISR_TRX     0x40    // Transmitter
@@ -299,6 +298,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(MACHINE_CDI68070, cdi68070_device)
+extern const device_type MACHINE_CDI68070;
 
-#endif // MAME_MACHINE_CDI070_H
+#endif // _MACHINE_CDI68070_H_

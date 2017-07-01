@@ -8,11 +8,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_NUBUS_NUBUS_H
-#define MAME_BUS_NUBUS_NUBUS_H
-
 #pragma once
 
+#ifndef __NUBUS_H__
+#define __NUBUS_H__
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -58,26 +59,26 @@
 
 class nubus_device;
 
-class nubus_slot_device : public device_t, public device_slot_interface
+class nubus_slot_device : public device_t,
+							public device_slot_interface
 {
 public:
 	// construction/destruction
 	nubus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	// inline configuration
-	static void static_set_nubus_slot(device_t &device, const char *tag, const char *slottag);
-protected:
-	nubus_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	nubus_slot_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// device-level overrides
 	virtual void device_start() override;
 
+	// inline configuration
+	static void static_set_nubus_slot(device_t &device, const char *tag, const char *slottag);
+protected:
 	// configuration
 	const char *m_nubus_tag, *m_nubus_slottag;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(NUBUS_SLOT, nubus_slot_device)
+extern const device_type NUBUS_SLOT;
 
 
 class device_nubus_card_interface;
@@ -87,16 +88,17 @@ class nubus_device : public device_t
 public:
 	// construction/destruction
 	nubus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	nubus_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 	~nubus_device() { m_device_list.detach_all(); }
 
 	// inline configuration
 	static void static_set_cputag(device_t &device, const char *tag);
-	template <class Object> static devcb_base &set_out_irq9_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irq9_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_irqa_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irqa_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_irqb_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irqb_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_irqc_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irqc_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_irqd_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irqd_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_irqe_callback(device_t &device, Object &&cb) { return downcast<nubus_device &>(device).m_out_irqe_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_irq9_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irq9_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_irqa_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irqa_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_irqb_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irqb_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_irqc_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irqc_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_irqd_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irqd_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_irqe_callback(device_t &device, _Object object) { return downcast<nubus_device &>(device).m_out_irqe_cb.set_callback(object); }
 
 	void add_nubus_card(device_nubus_card_interface *card);
 	void install_device(offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler, uint32_t mask=0xffffffff);
@@ -115,8 +117,6 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( irqe_w );
 
 protected:
-	nubus_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -137,7 +137,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NUBUS, nubus_device)
+extern const device_type NUBUS;
 
 // ======================> device_nubus_card_interface
 
@@ -145,9 +145,9 @@ DECLARE_DEVICE_TYPE(NUBUS, nubus_device)
 class device_nubus_card_interface : public device_slot_card_interface
 {
 	friend class nubus_device;
-	template <class ElementType> friend class simple_list;
 public:
 	// construction/destruction
+	device_nubus_card_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_nubus_card_interface();
 
 	device_nubus_card_interface *next() const { return m_next; }
@@ -166,17 +166,12 @@ public:
 
 	// inline configuration
 	static void static_set_nubus_tag(device_t &device, const char *tag, const char *slottag);
-
-protected:
-	device_nubus_card_interface(const machine_config &mconfig, device_t &device);
-
+public:
 	nubus_device  *m_nubus;
 	const char *m_nubus_tag, *m_nubus_slottag;
 	int m_slot;
-	std::vector<uint8_t> m_declaration_rom;
-
-private:
 	device_nubus_card_interface *m_next;
+	std::vector<uint8_t> m_declaration_rom;
 };
 
-#endif  // MAME_BUS_NUBUS_NUBUS_H
+#endif  /* __NUBUS_H__ */

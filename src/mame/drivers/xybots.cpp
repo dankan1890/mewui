@@ -20,12 +20,10 @@
 
 
 #include "emu.h"
-#include "includes/xybots.h"
-
 #include "cpu/m68000/m68000.h"
 #include "machine/watchdog.h"
 #include "machine/atarigen.h"
-#include "speaker.h"
+#include "includes/xybots.h"
 
 
 
@@ -180,7 +178,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( xybots )
+static MACHINE_CONFIG_START( xybots, xybots_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, ATARI_CLOCK_14MHz/2)

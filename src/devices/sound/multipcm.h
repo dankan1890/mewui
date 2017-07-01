@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Miguel Angel Horna
-#ifndef MAME_SOUND_MULTIPCM_H
-#define MAME_SOUND_MULTIPCM_H
-
 #pragma once
+
+#ifndef __MULTIPCM_H__
+#define __MULTIPCM_H__
 
 class multipcm_device : public device_t,
 						public device_sound_interface,
@@ -11,6 +11,7 @@ class multipcm_device : public device_t,
 {
 public:
 	multipcm_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~multipcm_device() {}
 
 	DECLARE_WRITE8_MEMBER( write );
 	DECLARE_READ8_MEMBER( read );
@@ -19,6 +20,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 
 	// sound stream update overrides
@@ -133,19 +135,20 @@ private:
 
 	int16_t clamp_to_int16(int32_t value);
 
-	static constexpr uint32_t TL_SHIFT = 12;
+	static const uint32_t TL_SHIFT;
 
 	static const int32_t VALUE_TO_CHANNEL[32];
 
-	static constexpr uint32_t EG_SHIFT = 16;
+	static const uint32_t EG_SHIFT;
 	static const double BASE_TIMES[64];
 
-	static constexpr uint32_t LFO_SHIFT = 8;
+	static const uint32_t LFO_SHIFT;
 	static const float LFO_FREQ[8];
 	static const float PHASE_SCALE_LIMIT[8];
 	static const float AMPLITUDE_SCALE_LIMIT[8];
 };
 
-DECLARE_DEVICE_TYPE(MULTIPCM, multipcm_device)
+extern const device_type MULTIPCM;
 
-#endif // MAME_SOUND_MULTIPCM_H
+
+#endif /* __MULTIPCM_H__ */

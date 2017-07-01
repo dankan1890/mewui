@@ -28,16 +28,15 @@
 /* core includes */
 #include "emu.h"
 #include "includes/samcoupe.h"
-
+#
+/* components */
 #include "cpu/z80/z80.h"
 #include "sound/saa1099.h"
 
-#include "screen.h"
-#include "softlist.h"
-#include "speaker.h"
-
+/* devices */
 #include "formats/tzx_cas.h"
 #include "formats/coupedsk.h"
+#include "softlist.h"
 
 /***************************************************************************
     CONSTANTS
@@ -517,7 +516,7 @@ static SLOT_INTERFACE_START( samcoupe_floppies )
 SLOT_INTERFACE_END
 
 
-static MACHINE_CONFIG_START( samcoupe )
+static MACHINE_CONFIG_START( samcoupe, samcoupe_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SAMCOUPE_XTAL_X1 / 4) /* 6 MHz */
 	MCFG_CPU_PROGRAM_MAP(samcoupe_mem)
@@ -618,5 +617,5 @@ ROM_END
     GAME DRIVERS
 ***************************************************************************/
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     STATE           INIT  COMPANY                        FULLNAME     FLAGS
-COMP( 1989, samcoupe, 0,      0,      samcoupe, samcoupe, samcoupe_state, 0,    "Miles Gordon Technology plc", "SAM Coupe", 0 )
+/*    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     INIT  COMPANY                        FULLNAME     FLAGS */
+COMP( 1989, samcoupe, 0,      0,      samcoupe, samcoupe, driver_device, 0,    "Miles Gordon Technology plc", "SAM Coupe", 0 )

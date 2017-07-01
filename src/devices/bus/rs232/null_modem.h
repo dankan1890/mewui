@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:smf,Carl
-#ifndef MAME_BUS_RS232_NULL_MODEM_H
-#define MAME_BUS_RS232_NULL_MODEM_H
+#ifndef NULL_MODEM_H_
+#define NULL_MODEM_H_
 
 #include "rs232.h"
 #include "imagedev/bitbngr.h"
@@ -12,6 +12,7 @@ class null_modem_device : public device_t,
 {
 public:
 	null_modem_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	virtual WRITE_LINE_MEMBER( input_txd ) override { device_serial_interface::rx_w(state); }
 	virtual WRITE_LINE_MEMBER( input_rts ) override { m_rts = state; }
@@ -23,16 +24,15 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	virtual void tra_callback() override;
 	virtual void tra_complete() override;
 	virtual void rcv_complete() override;
 
 private:
-	static constexpr int TIMER_POLL = 1;
-
 	void queue();
+
+	static const int TIMER_POLL = 1;
 
 	required_device<bitbanger_device> m_stream;
 
@@ -51,6 +51,6 @@ private:
 	int m_rts;
 };
 
-DECLARE_DEVICE_TYPE(NULL_MODEM, null_modem_device)
+extern const device_type NULL_MODEM;
 
-#endif // MAME_BUS_RS232_NULL_MODEM_H
+#endif

@@ -6,17 +6,14 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "sv806.h"
-
-#include "screen.h"
 
 
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SV806, sv806_device, "sv806", "SV-806 80 Column Cartridge")
+const device_type SV806 = &device_creator<sv806_device>;
 
 //-------------------------------------------------
 //  rom_region - device-specific ROM region
@@ -36,10 +33,11 @@ const tiny_rom_entry *sv806_device::device_rom_region() const
 }
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( sv806_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( sv806 )
 	MCFG_SCREEN_ADD_MONOCHROME("80col", RASTER, rgb_t::green())
 	MCFG_SCREEN_RAW_PARAMS((XTAL_12MHz / 6) * 8, 864, 0, 640, 317, 0, 192)
 	MCFG_SCREEN_UPDATE_DEVICE("crtc", hd6845_device, screen_update)
@@ -52,6 +50,11 @@ MACHINE_CONFIG_MEMBER( sv806_device::device_add_mconfig )
 	MCFG_MC6845_UPDATE_ROW_CB(sv806_device, crtc_update_row)
 MACHINE_CONFIG_END
 
+machine_config_constructor sv806_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( sv806 );
+}
+
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -62,7 +65,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 sv806_device::sv806_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SV806, tag, owner, clock),
+	device_t(mconfig, SV806, "SV-806 80 Column Cartridge", tag, owner, clock, "sv806", __FILE__),
 	device_svi_slot_interface(mconfig, *this),
 	m_crtc(*this, "crtc"),
 	m_palette(*this, "palette"),

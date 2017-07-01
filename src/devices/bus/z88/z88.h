@@ -51,10 +51,8 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_Z88_Z88_H
-#define MAME_BUS_Z88_Z88_H
-
-#pragma once
+#ifndef __Z88CART_H__
+#define __Z88CART_H__
 
 #include "softlist_dev.h"
 
@@ -69,6 +67,7 @@ class device_z88cart_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_z88cart_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_z88cart_interface();
 
 	// reading and writing
@@ -76,9 +75,6 @@ public:
 	virtual DECLARE_WRITE8_MEMBER(write) { }
 	virtual uint8_t* get_cart_base() { return nullptr; }
 	virtual uint32_t get_cart_size() { return 0; }
-
-protected:
-	device_z88cart_interface(const machine_config &mconfig, device_t &device);
 };
 
 
@@ -93,7 +89,12 @@ public:
 	z88cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~z88cart_slot_device();
 
-	template <class Object> static devcb_base &set_out_flp_callback(device_t &device, Object &&cb) { return downcast<z88cart_slot_device &>(device).m_out_flp_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_flp_callback(device_t &device, _Object object) { return downcast<z88cart_slot_device &>(device).m_out_flp_cb.set_callback(object); }
+
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_config_complete() override;
+	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 
 	// image-level overrides
 	virtual image_init_result call_load() override;
@@ -110,20 +111,14 @@ public:
 	virtual const char *file_extensions() const override { return "epr,bin"; }
 
 	// slot interface overrides
-	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
+	virtual std::string get_default_card_software() override;
 
 	// reading and writing
 	virtual DECLARE_READ8_MEMBER(read);
 	virtual DECLARE_WRITE8_MEMBER(write);
-	virtual uint8_t* get_cart_base();
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 
 private:
-	static constexpr device_timer_id TIMER_FLP_CLEAR = 0;
+	static const device_timer_id TIMER_FLP_CLEAR = 0;
 
 	devcb_write_line               m_out_flp_cb;
 	device_z88cart_interface*       m_cart;
@@ -132,7 +127,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(Z88CART_SLOT, z88cart_slot_device)
+extern const device_type Z88CART_SLOT;
 
 
 /***************************************************************************
@@ -142,4 +137,4 @@ DECLARE_DEVICE_TYPE(Z88CART_SLOT, z88cart_slot_device)
 #define MCFG_Z88CART_SLOT_OUT_FLP_CB(_devcb) \
 		devcb = &z88cart_slot_device::set_out_flp_callback(*device, DEVCB_##_devcb);
 
-#endif // MAME_BUS_Z88_Z88_H
+#endif /* __Z88CART_H__ */

@@ -8,9 +8,9 @@
 
 #include "uwpcompat.h"
 
-#include <windows.h>
 #include <errno.h>
-
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #undef interface
 
 #include "emu.h"

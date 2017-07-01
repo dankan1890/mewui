@@ -11,10 +11,10 @@ Known cassette players:
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_A800_CASSETTE_H
-#define MAME_BUS_A800_CASSETTE_H
-
 #pragma once
+
+#ifndef __A8SIO_CASSETTE_H_
+#define __A8SIO_CASSETTE_H_
 
 
 #include "a8sio.h"
@@ -28,16 +28,17 @@ class a8sio_cassette_device
 public:
 	// construction/destruction
 	a8sio_cassette_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	a8sio_cassette_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	virtual DECLARE_WRITE_LINE_MEMBER( motor_w ) override;
 
 protected:
-	a8sio_cassette_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	required_device<cassette_image_device> m_cassette;
 	emu_timer *m_read_timer;
@@ -47,7 +48,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(A8SIO_CASSETTE, a8sio_cassette_device)
+extern const device_type A8SIO_CASSETTE;
 
 
-#endif // MAME_BUS_A800_CASSETTE_H
+#endif

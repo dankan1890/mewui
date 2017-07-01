@@ -77,9 +77,7 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "pc_xporter.h"
-#include "speaker.h"
 
 /***************************************************************************
     PARAMETERS
@@ -89,7 +87,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2BUS_PCXPORTER, a2bus_pcxporter_device, "a2pcxport", "Applied Engineering PC Transporter")
+const device_type A2BUS_PCXPORTER = &device_creator<a2bus_pcxporter_device>;
 
 static ADDRESS_MAP_START( pc_map, AS_PROGRAM, 16, a2bus_pcxporter_device )
 	ADDRESS_MAP_UNMAP_HIGH
@@ -105,15 +103,7 @@ static ADDRESS_MAP_START(pc_io, AS_IO, 16, a2bus_pcxporter_device )
 	AM_RANGE(0x00a0, 0x00a1) AM_WRITE8(nmi_enable_w, 0xffff)
 ADDRESS_MAP_END
 
-/***************************************************************************
-    FUNCTION PROTOTYPES
-***************************************************************************/
-
-//-------------------------------------------------
-//  device_add_mconfig - add device configuration
-//-------------------------------------------------
-
-MACHINE_CONFIG_MEMBER( a2bus_pcxporter_device::device_add_mconfig )
+MACHINE_CONFIG_FRAGMENT( pcxporter )
 	MCFG_CPU_ADD("v30", V30, XTAL_14_31818MHz/2)    // 7.16 MHz as per manual
 	MCFG_CPU_PROGRAM_MAP(pc_map)
 	MCFG_CPU_IO_MAP(pc_io)
@@ -121,11 +111,11 @@ MACHINE_CONFIG_MEMBER( a2bus_pcxporter_device::device_add_mconfig )
 	MCFG_DEVICE_DISABLE()
 
 	MCFG_DEVICE_ADD("pit8253", PIT8253, 0)
-	MCFG_PIT8253_CLK0(XTAL_14_31818MHz/12.0) // heartbeat IRQ
+	MCFG_PIT8253_CLK0(XTAL_14_31818MHz/12) /* heartbeat IRQ */
 	MCFG_PIT8253_OUT0_HANDLER(DEVWRITELINE("pic8259", pic8259_device, ir0_w))
-	MCFG_PIT8253_CLK1(XTAL_14_31818MHz/12.0) // dram refresh
+	MCFG_PIT8253_CLK1(XTAL_14_31818MHz/12) /* dram refresh */
 	MCFG_PIT8253_OUT1_HANDLER(WRITELINE(a2bus_pcxporter_device, pc_pit8253_out1_changed))
-	MCFG_PIT8253_CLK2(XTAL_14_31818MHz/12.0) // pio port c pin 4, and speaker polling enough
+	MCFG_PIT8253_CLK2(XTAL_14_31818MHz/12) /* pio port c pin 4, and speaker polling enough */
 	MCFG_PIT8253_OUT2_HANDLER(WRITELINE(a2bus_pcxporter_device, pc_pit8253_out2_changed))
 
 	MCFG_DEVICE_ADD( "dma8237", PCXPORT_DMAC, XTAL_14_31818MHz/2 )
@@ -173,12 +163,26 @@ MACHINE_CONFIG_MEMBER( a2bus_pcxporter_device::device_add_mconfig )
 	MCFG_ISA8_SLOT_ADD("isa", "isa2", pc_isa8_cards, "fdc_xt", true)
 MACHINE_CONFIG_END
 
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor a2bus_pcxporter_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( pcxporter );
+}
+
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
-a2bus_pcxporter_device::a2bus_pcxporter_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
+a2bus_pcxporter_device::a2bus_pcxporter_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 	device_a2bus_card_interface(mconfig, *this),
 	m_v30(*this, "v30"),
 	m_pic8259(*this, "pic8259"),
@@ -191,7 +195,15 @@ a2bus_pcxporter_device::a2bus_pcxporter_device(const machine_config &mconfig, de
 }
 
 a2bus_pcxporter_device::a2bus_pcxporter_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	a2bus_pcxporter_device(mconfig, A2BUS_PCXPORTER, tag, owner, clock)
+	device_t(mconfig, A2BUS_PCXPORTER, "Applied Engineering PC Transporter", tag, owner, clock, "a2pcxport", __FILE__),
+	device_a2bus_card_interface(mconfig, *this),
+	m_v30(*this, "v30"),
+	m_pic8259(*this, "pic8259"),
+	m_dma8237(*this, "dma8237"),
+	m_pit8253(*this, "pit8253"),
+	m_speaker(*this, "speaker"),
+	m_isabus(*this, "isa"),
+	m_pc_kbdc(*this, "pc_kbdc")
 {
 }
 
@@ -303,7 +315,7 @@ uint8_t a2bus_pcxporter_device::read_c800(address_space &space, uint16_t offset)
 			case 0x703: // read with increment
 				rv = m_ram[m_offset];
 				// don't increment if the debugger's reading
-				if (!machine().side_effect_disabled())
+				if (!space.debugger_access())
 				{
 					m_offset++;
 				}

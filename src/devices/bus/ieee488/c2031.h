@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_IEEE488_C2031_H
-#define MAME_BUS_IEEE488_C2031_H
-
 #pragma once
 
+#ifndef __C2031__
+#define __C2031__
+
+#include "emu.h"
 #include "ieee488.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/64h156.h"
@@ -31,22 +32,10 @@ public:
 	// construction/destruction
 	c2031_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-
 	// optional information overrides
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual ioport_constructor device_input_ports() const override;
-
-	// device_ieee488_interface overrides
-	virtual void ieee488_atn(int state) override;
-	virtual void ieee488_ifc(int state) override;
-
-private:
-	inline int get_device_number();
 
 	DECLARE_WRITE_LINE_MEMBER( via0_irq_w );
 	DECLARE_READ8_MEMBER( via0_pa_r );
@@ -59,6 +48,17 @@ private:
 	DECLARE_WRITE_LINE_MEMBER( byte_w );
 
 	DECLARE_FLOPPY_FORMATS( floppy_formats );
+
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+
+	// device_ieee488_interface overrides
+	virtual void ieee488_atn(int state) override;
+	virtual void ieee488_ifc(int state) override;
+
+	inline int get_device_number();
 
 	required_device<cpu_device> m_maincpu;
 	required_device<via6522_device> m_via0;
@@ -80,7 +80,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C2031, c2031_device)
+extern const device_type C2031;
 
 
-#endif // MAME_BUS_IEEE488_C2031_H
+
+#endif

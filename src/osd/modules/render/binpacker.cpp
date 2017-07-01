@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "binpacker.h"
 #include <algorithm>
 

@@ -5,10 +5,9 @@
  **********************************************************/
 
 #include "emu.h"
-#include "diablo.h"
-
 #include "emuopts.h"
 #include "harddisk.h"
+#include "diablo.h"
 
 
 OPTION_GUIDE_START(dsk_option_guide)
@@ -24,14 +23,14 @@ static const char *dsk_option_spec =
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(DIABLO, diablo_image_device, "diablo_image", "Diablo")
+const device_type DIABLO = &device_creator<diablo_image_device>;
 
 //-------------------------------------------------
 //  diablo_image_device - constructor
 //-------------------------------------------------
 
 diablo_image_device::diablo_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, DIABLO, tag, owner, clock),
+	: device_t(mconfig, DIABLO, "Diablo", tag, owner, clock, "diablo_image", __FILE__),
 		device_image_interface(mconfig, *this),
 		m_chd(nullptr),
 		m_hard_disk_handle(nullptr),
@@ -58,6 +57,9 @@ diablo_image_device::~diablo_image_device()
 void diablo_image_device::device_config_complete()
 {
 	add_format("chd", "CHD Hard drive", "chd,dsk", dsk_option_spec);
+
+	// set brief and instance name
+	update_names();
 }
 
 const util::option_guide &diablo_image_device::create_option_guide() const
@@ -212,7 +214,7 @@ image_init_result diablo_image_device::internal_load_dsk()
 		hard_disk_close(m_hard_disk_handle);
 
 	/* open the CHD file */
-	if (loaded_through_softlist())
+	if (software_entry() != nullptr)
 	{
 		m_chd = device().machine().rom_load().get_disk_handle(device().subtag("harddriv").c_str());
 	}

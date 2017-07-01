@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol, Miodrag Milanovic
-#ifndef MAME_BUS_ISA_MDA_H
-#define MAME_BUS_ISA_MDA_H
-
 #pragma once
 
+#ifndef __ISA_MDA_H__
+#define __ISA_MDA_H__
+
+#include "emu.h"
 #include "isa.h"
 #include "video/mc6845.h"
 
@@ -22,34 +23,29 @@ public:
 
 	// construction/destruction
 	isa8_mda_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	isa8_mda_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
+
+	DECLARE_WRITE_LINE_MEMBER(hsync_changed);
+	DECLARE_WRITE_LINE_MEMBER(vsync_changed);
 	virtual DECLARE_READ8_MEMBER(io_read);
 	virtual DECLARE_WRITE8_MEMBER(io_write);
 	virtual DECLARE_READ8_MEMBER(status_r);
 	virtual DECLARE_WRITE8_MEMBER(mode_control_w);
 
-	DECLARE_WRITE_LINE_MEMBER(hsync_changed);
-	DECLARE_WRITE_LINE_MEMBER(vsync_changed);
-
-	virtual MC6845_UPDATE_ROW( crtc_update_row );
-
-protected:
-	isa8_mda_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
-
-private:
 	WRITE_LINE_MEMBER(pc_cpu_line);
 
+	virtual MC6845_UPDATE_ROW( crtc_update_row );
 	MC6845_UPDATE_ROW( mda_text_inten_update_row );
 	MC6845_UPDATE_ROW( mda_text_blink_update_row );
 
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
 public:
 	int m_framecnt;
 
@@ -66,7 +62,7 @@ public:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_MDA, isa8_mda_device)
+extern const device_type ISA8_MDA;
 
 // ======================> isa8_hercules_device
 
@@ -76,31 +72,30 @@ class isa8_hercules_device :
 public:
 	// construction/destruction
 	isa8_hercules_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
 
 	virtual DECLARE_READ8_MEMBER(io_read) override;
 	virtual DECLARE_WRITE8_MEMBER(io_write) override;
 	virtual DECLARE_READ8_MEMBER(status_r) override;
 	virtual DECLARE_WRITE8_MEMBER(mode_control_w) override;
 
+	virtual MC6845_UPDATE_ROW( crtc_update_row ) override;
+	MC6845_UPDATE_ROW( hercules_gfx_update_row );
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
-
-private:
-	virtual MC6845_UPDATE_ROW( crtc_update_row ) override;
-	MC6845_UPDATE_ROW( hercules_gfx_update_row );
-
+public:
 	uint8_t m_configuration_switch; //hercules
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_HERCULES, isa8_hercules_device)
+extern const device_type ISA8_HERCULES;
 
 // ======================> isa8_ec1840_0002_device
 
@@ -110,26 +105,26 @@ class isa8_ec1840_0002_device :
 public:
 	// construction/destruction
 	isa8_ec1840_0002_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
-private:
 	virtual DECLARE_WRITE8_MEMBER(mode_control_w) override;
 
 	virtual MC6845_UPDATE_ROW( crtc_update_row ) override;
 	MC6845_UPDATE_ROW( mda_lowres_text_inten_update_row );
 	MC6845_UPDATE_ROW( mda_lowres_text_blink_update_row );
 
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+
+public:
 	std::unique_ptr<uint8_t[]>   m_soft_chr_gen;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA8_EC1840_0002, isa8_ec1840_0002_device)
+extern const device_type ISA8_EC1840_0002;
 
-#endif // MAME_BUS_ISA_MDA_H
+#endif  /* __ISA_MDA_H__ */

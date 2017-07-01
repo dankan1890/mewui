@@ -9,30 +9,24 @@
 #include "cpu/i86/i186.h"
 #include "machine/cdp1879.h"
 #include "sound/beep.h"
-#include "rendlay.h"
-#include "screen.h"
-#include "speaker.h"
 
 class magnum_state : public driver_device
 {
 public:
-	magnum_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_palette(*this, "palette")
-		, m_cgrom(*this, "cgrom")
-		, m_beep(*this, "beep")
-	{
-	}
+	magnum_state(const machine_config &mconfig, device_type type, const char *tag) :
+	driver_device(mconfig, type, tag),
+	m_palette(*this, "palette"),
+	m_cgrom(*this, "cgrom"),
+	m_beep(*this, "beep")
+	{}
 
 	DECLARE_READ8_MEMBER(lcd_r);
 	DECLARE_WRITE8_MEMBER(lcd_w);
 	DECLARE_WRITE8_MEMBER(beep_w);
 	u32 screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
-
 protected:
 	virtual void machine_reset() override;
 	virtual void machine_start() override;
-
 private:
 	required_device<palette_device> m_palette;
 	required_memory_region m_cgrom;
@@ -143,7 +137,7 @@ static ADDRESS_MAP_START( magnum_io, AS_IO, 16, magnum_state )
 	AM_RANGE(0x0080, 0x008f) AM_DEVREADWRITE8("rtc", cdp1879_device, read, write, 0x00ff)
 ADDRESS_MAP_END
 
-static MACHINE_CONFIG_START( magnum )
+static MACHINE_CONFIG_START( magnum, magnum_state )
 	MCFG_CPU_ADD("maincpu", I80186, XTAL_12MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(magnum_map)
 	MCFG_CPU_IO_MAP(magnum_io)
@@ -156,8 +150,6 @@ static MACHINE_CONFIG_START( magnum )
 	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
 	MCFG_SCREEN_SIZE(6*80, 9*16)
 	MCFG_SCREEN_VISIBLE_AREA(0, 6*80-1, 0, 9*16-1)
-
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 
@@ -184,4 +176,4 @@ ROM_START( magnum )
 	ROM_LOAD("hd44780_a00.bin", 0x0000, 0x1000,  BAD_DUMP CRC(01d108e2) SHA1(bc0cdf0c9ba895f22e183c7bd35a3f655f2ca96f))
 ROM_END
 
-COMP( 1983, magnum, 0, 0, magnum, 0, magnum_state, 0, "Dulmont", "Magnum", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND)
+COMP( 1983, magnum, 0, 0, magnum, 0, driver_device, 0, "Dulmont", "Magnum", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND)

@@ -39,17 +39,14 @@ public:
 	{
 	}
 
+	required_device<cpu_device> m_maincpu;
+	required_device<generic_terminal_device> m_terminal;
 	DECLARE_READ8_MEMBER(terminal_status_r);
 	DECLARE_READ8_MEMBER(terminal_r);
 	DECLARE_READ8_MEMBER(status_check_r);
-	void kbd_put(u8 data);
-
-protected:
-	virtual void machine_reset() override;
-
-	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	uint8_t m_term_data;
+	virtual void machine_reset() override;
 };
 
 READ8_MEMBER( mits680b_state::status_check_r )
@@ -90,19 +87,19 @@ void mits680b_state::machine_reset()
 	m_term_data = 0;
 }
 
-void mits680b_state::kbd_put(u8 data)
+WRITE8_MEMBER( mits680b_state::kbd_put )
 {
 	m_term_data = data;
 }
 
-static MACHINE_CONFIG_START( mits680b )
+static MACHINE_CONFIG_START( mits680b, mits680b_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M6800, XTAL_1MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(mits680b_mem)
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(mits680b_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(mits680b_state, kbd_put))
 
 	/* acia */
 	//MCFG_ACIA6551_ADD("acia")
@@ -116,5 +113,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE    INPUT     STATE           INIT  COMPANY  FULLNAME       FLAGS
-COMP( 1976, mits680b, 0,      0,      mits680b,  mits680b, mits680b_state, 0,    "MITS",  "Altair 680b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY   FULLNAME       FLAGS */
+COMP( 1976, mits680b,  0,     0,     mits680b,  mits680b, driver_device,  0,  "MITS", "Altair 680b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

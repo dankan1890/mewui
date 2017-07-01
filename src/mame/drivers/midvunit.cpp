@@ -48,8 +48,6 @@ Known to exist but not dumped:
 
 void midvunit_state::machine_start()
 {
-	m_adc_ready_timer = timer_alloc(TIMER_ADC_READY);
-
 	save_item(NAME(m_cmos_protected));
 	save_item(NAME(m_control_data));
 	save_item(NAME(m_adc_data));
@@ -147,7 +145,7 @@ WRITE32_MEMBER(midvunit_state::midvunit_adc_w)
 			logerror("adc_w: unexpected which = %02X\n", which + 4);
 		else
 			m_adc_data = m_adc_ports[which].read_safe(0);
-		m_adc_ready_timer->adjust(attotime::from_msec(1));
+		timer_set(attotime::from_msec(1), TIMER_ADC_READY);
 	}
 	else
 		logerror("adc_w without enabling writes!\n");
@@ -1122,7 +1120,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( midvcommon )
+static MACHINE_CONFIG_START( midvcommon, midvunit_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", TMS32031, CPU_CLOCK)

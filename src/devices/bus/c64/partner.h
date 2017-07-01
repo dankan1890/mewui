@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_PARTNER_H
-#define MAME_BUS_C64_PARTNER_H
-
 #pragma once
 
+#ifndef __PARTNER__
+#define __PARTNER__
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -53,7 +54,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_PARTNER, c64_partner_cartridge_device)
+extern const device_type C64_PARTNER;
 
 
-#endif // MAME_BUS_C64_PARTNER_H
+#endif

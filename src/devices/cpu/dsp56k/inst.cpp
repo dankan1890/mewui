@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Andrew Gardner
-#include "emu.h"
 #include "inst.h"
 #include "emu.h"
 

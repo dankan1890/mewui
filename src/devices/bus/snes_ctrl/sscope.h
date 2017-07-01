@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SNES_CTRL_SUPERSCOPE_H
-#define MAME_BUS_SNES_CTRL_SUPERSCOPE_H
-
 #pragma once
 
+#ifndef __SNES_SUPERSCOPE__
+#define __SNES_SUPERSCOPE__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -53,6 +54,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SNES_SUPERSCOPE, snes_sscope_device)
+extern const device_type SNES_SUPERSCOPE;
 
-#endif // MAME_BUS_SNES_CTRL_SUPERSCOPE_H
+
+#endif

@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Ville Linde
-#ifndef MAME_CPU_TMS32082_TMS32082_H
-#define MAME_CPU_TMS32082_TMS32082_H
-
 #pragma once
+
+#ifndef __TMS32082_H__
+#define __TMS32082_H__
 
 // Master Processor class
 class tms32082_mp_device : public cpu_device
@@ -211,8 +211,8 @@ protected:
 };
 
 
-DECLARE_DEVICE_TYPE(TMS32082_MP, tms32082_mp_device)
-DECLARE_DEVICE_TYPE(TMS32082_PP, tms32082_pp_device)
+extern const device_type TMS32082_MP;
+extern const device_type TMS32082_PP;
 
 
-#endif // MAME_CPU_TMS32082_TMS32082_H
+#endif /* __TMS32082_H__ */

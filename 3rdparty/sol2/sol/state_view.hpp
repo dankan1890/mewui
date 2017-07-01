@@ -45,13 +45,6 @@ namespace sol {
 		count
 	};
 
-	inline std::size_t total_memory_used(lua_State* L) {
-		std::size_t kb = lua_gc(L, LUA_GCCOUNT, 0);
-		kb *= 1024;
-		kb += lua_gc(L, LUA_GCCOUNTB, 0);
-		return kb;
-	}
-
 	class state_view {
 	private:
 		lua_State* L;
@@ -115,14 +108,14 @@ namespace sol {
 		typedef global_table::iterator iterator;
 		typedef global_table::const_iterator const_iterator;
 
-		state_view(lua_State* Ls) :
-			L(Ls),
-			reg(Ls, LUA_REGISTRYINDEX),
-			global(Ls, detail::global_) {
+		state_view(lua_State* L) :
+			L(L),
+			reg(L, LUA_REGISTRYINDEX),
+			global(L, detail::global_) {
 
 		}
 
-		state_view(this_state Ls) : state_view(Ls.L){
+		state_view(this_state L) : state_view(L.L){
 
 		}
 
@@ -160,7 +153,7 @@ namespace sol {
 					lua_pop(L, 1);
 #endif // Lua 5.2+ only
 					break;
-#endif // Not LuaJIT - comes builtin
+#endif // Not LuaJIT
 				case lib::string:
 					luaL_requiref(L, "string", luaopen_string, 1);
 					lua_pop(L, 1);
@@ -177,11 +170,11 @@ namespace sol {
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "bit32", luaopen_bit, 1);
 					lua_pop(L, 1);
-#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB)  || defined(LUA_COMPAT_5_2)
+#elif SOL_LUA_VERSION == 502
 					luaL_requiref(L, "bit32", luaopen_bit32, 1);
 					lua_pop(L, 1);
 #else
-#endif // Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
+#endif // Lua 5.2 only (deprecated in 5.3 (503))
 					break;
 				case lib::io:
 					luaL_requiref(L, "io", luaopen_io, 1);
@@ -205,13 +198,13 @@ namespace sol {
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "ffi", luaopen_ffi, 1);
 					lua_pop(L, 1);
-#endif // LuaJIT only
+#endif
 					break;
 				case lib::jit:
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "jit", luaopen_jit, 1);
 					lua_pop(L, 1);
-#endif // LuaJIT Only
+#endif
 					break;
 				case lib::count:
 				default:
@@ -296,14 +289,6 @@ namespace sol {
 
 		table registry() const {
 			return reg;
-		}
-
-		std::size_t memory_used() const {
-			return total_memory_used(lua_state());
-		}
-
-		void collect_garbage() {
-			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}
 
 		operator lua_State* () const {

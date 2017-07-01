@@ -22,15 +22,13 @@ TODO:
 *******************************************************************************/
 
 #include "emu.h"
+#include "cpu/m68000/m68000.h"
 #include "machine/cdislave.h"
 #include "machine/cdi070.h"
 #include "includes/cdi.h"
 
-#include "cpu/m68000/m68000.h"
-
-
 // device type definition
-DEFINE_DEVICE_TYPE(MACHINE_CDISLAVE, cdislave_device, "cdislave", "CDISLAVE")
+const device_type MACHINE_CDISLAVE = &device_creator<cdislave_device>;
 
 
 #if ENABLE_VERBOSE_LOG
@@ -421,7 +419,7 @@ WRITE16_MEMBER( cdislave_device::slave_w )
 //-------------------------------------------------
 
 cdislave_device::cdislave_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MACHINE_CDISLAVE, tag, owner, clock)
+	: device_t(mconfig, MACHINE_CDISLAVE, "CDISLAVE", tag, owner, clock, "cdislave", __FILE__)
 {
 }
 

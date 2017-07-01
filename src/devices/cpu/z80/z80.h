@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Juergen Buchmueller
-#ifndef MAME_CPU_Z80_Z80_H
-#define MAME_CPU_Z80_Z80_H
-
 #pragma once
+
+#ifndef __Z80_H__
+#define __Z80_H__
 
 #include "z80daisy.h"
 
@@ -43,7 +43,7 @@ public:
 	template<class _Object> static devcb_base &set_refresh_cb(device_t &device, _Object object) { return downcast<z80_device &>(device).m_refresh_cb.set_callback(object); }
 
 protected:
-	z80_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	z80_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// device-level overrides
 	virtual void device_start() override;
@@ -276,6 +276,7 @@ protected:
 	uint8_t           m_after_ei;           /* are we in the EI shadow? */
 	uint8_t           m_after_ldair;        /* same, but for LD A,I or LD A,R */
 	uint32_t          m_ea;
+	device_irq_acknowledge_delegate m_irq_callback;
 
 	int             m_icount;
 	uint8_t           m_rtemp;
@@ -287,7 +288,7 @@ protected:
 	const uint8_t *   m_cc_ex;
 };
 
-DECLARE_DEVICE_TYPE(Z80, z80_device)
+extern const device_type Z80;
 
 class nsc800_device : public z80_device
 {
@@ -308,7 +309,7 @@ protected:
 	uint8_t m_nsc800_irq_state[4]; /* state of NSC800 restart interrupts A, B, C */
 };
 
-DECLARE_DEVICE_TYPE(NSC800, nsc800_device)
+extern const device_type NSC800;
 
 
-#endif // MAME_CPU_Z80_Z80_H
+#endif /* __Z80_H__ */

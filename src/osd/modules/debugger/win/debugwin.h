@@ -10,6 +10,7 @@
 #define __DEBUG_WIN_DEBUG_WIN_H__
 
 // standard windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 #include <tchar.h>
@@ -17,7 +18,10 @@
 #ifdef _MSC_VER
 #include <zmouse.h>
 #endif
+#undef min
+#undef max
 
+#include "emu.h"
 
 
 class debugview_info;

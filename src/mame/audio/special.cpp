@@ -9,12 +9,11 @@
 
 ****************************************************************************/
 
-#include "emu.h"
 #include "special.h"
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(SPECIMX_SND, specimx_sound_device, "specimx_sound", "Specialist MX Audio Custom")
+const device_type SPECIMX_SND = &device_creator<specimx_sound_device>;
 
 
 //**************************************************************************
@@ -26,11 +25,11 @@ DEFINE_DEVICE_TYPE(SPECIMX_SND, specimx_sound_device, "specimx_sound", "Speciali
 //-------------------------------------------------
 
 specimx_sound_device::specimx_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, SPECIMX_SND, tag, owner, clock)
-	, device_sound_interface(mconfig, *this)
-	, m_mixer_channel(nullptr)
-	, m_specimx_input{ 0, 0, 0 }
+	: device_t(mconfig, SPECIMX_SND, "Specialist MX Audio Custom", tag, owner, clock, "specimx_sound", __FILE__),
+		device_sound_interface(mconfig, *this),
+		m_mixer_channel(nullptr)
 {
+	memset(m_specimx_input, 0, sizeof(int)*3);
 }
 
 

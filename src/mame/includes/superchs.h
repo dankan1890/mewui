@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail, David Graves
 #include "machine/eepromser.h"
+#include "machine/watchdog.h"
 #include "video/tc0480scp.h"
 
 
@@ -26,9 +27,11 @@ public:
 		m_subcpu(*this, "sub"),
 		m_tc0480scp(*this, "tc0480scp"),
 		m_eeprom(*this, "eeprom"),
+		m_watchdog(*this, "watchdog"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette") { }
 
+	uint16_t m_coin_word;
 	required_shared_ptr<uint32_t> m_ram;
 	required_shared_ptr<uint32_t> m_spriteram;
 	required_shared_ptr<uint32_t> m_shared_ram;
@@ -39,7 +42,8 @@ public:
 	DECLARE_READ16_MEMBER(shared_ram_r);
 	DECLARE_WRITE16_MEMBER(shared_ram_w);
 	DECLARE_WRITE32_MEMBER(cpua_ctrl_w);
-	DECLARE_WRITE8_MEMBER(coin_word_w);
+	DECLARE_READ32_MEMBER(superchs_input_r);
+	DECLARE_WRITE32_MEMBER(superchs_input_w);
 	DECLARE_READ32_MEMBER(superchs_stick_r);
 	DECLARE_WRITE32_MEMBER(superchs_stick_w);
 	DECLARE_READ32_MEMBER(main_cycle_r);
@@ -52,6 +56,7 @@ public:
 	required_device<cpu_device> m_subcpu;
 	required_device<tc0480scp_device> m_tc0480scp;
 	required_device<eeprom_serial_93cxx_device> m_eeprom;
+	required_device<watchdog_timer_device> m_watchdog;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
 };

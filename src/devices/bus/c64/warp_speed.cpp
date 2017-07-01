@@ -28,7 +28,6 @@
 
 */
 
-#include "emu.h"
 #include "warp_speed.h"
 
 
@@ -49,7 +48,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_WARP_SPEED, c64_warp_speed_cartridge_device, "c64_warp_speed", "C64 Warp Speed cartridge")
+const device_type C64_WARP_SPEED = &device_creator<c64_warp_speed_cartridge_device>;
 
 
 //-------------------------------------------------
@@ -87,7 +86,7 @@ ioport_constructor c64_warp_speed_cartridge_device::device_input_ports() const
 //-------------------------------------------------
 
 c64_warp_speed_cartridge_device::c64_warp_speed_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_WARP_SPEED, tag, owner, clock),
+	device_t(mconfig, C64_WARP_SPEED, "C64 Warp Speed cartridge", tag, owner, clock, "c64_warp_speed", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this)
 {
 }

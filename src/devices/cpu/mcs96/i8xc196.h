@@ -8,14 +8,14 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_MCS96_I8XC196_H
-#define MAME_CPU_MCS96_I8XC196_H
+#ifndef __I8XC196_H__
+#define __I8XC196_H__
 
 #include "mcs96.h"
 
 class i8xc196_device : public mcs96_device {
-protected:
-	i8xc196_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+public:
+	i8xc196_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	static const disasm_entry disasm_entries[0x100];
 
@@ -43,4 +43,4 @@ protected:
 #undef O
 };
 
-#endif // MAME_CPU_MCS96_I8XC196_H
+#endif

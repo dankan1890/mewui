@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_MACHINE_CLOCK_H
-#define MAME_MACHINE_CLOCK_H
+#ifndef __CLOCK_H__
+#define __CLOCK_H__
 
 #pragma once
 
+#include "emu.h"
 
 #define MCFG_CLOCK_ADD(_tag, _clock) \
 	MCFG_DEVICE_ADD(_tag, CLOCK, _clock)
@@ -17,7 +18,7 @@ class clock_device : public device_t
 public:
 	clock_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_signal_handler(device_t &device, Object &&cb) { return downcast<clock_device &>(device).m_signal_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_signal_handler(device_t &device, _Object object) { return downcast<clock_device &>(device).m_signal_handler.set_callback(object); }
 
 protected:
 	virtual void device_start() override;
@@ -34,6 +35,6 @@ private:
 	devcb_write_line m_signal_handler;
 };
 
-DECLARE_DEVICE_TYPE(CLOCK, clock_device)
+extern const device_type CLOCK;
 
-#endif // MAME_MACHINE_CLOCK_H
+#endif

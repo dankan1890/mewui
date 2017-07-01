@@ -1,27 +1,25 @@
 // license:BSD-3-Clause
 // copyright-holders:Ville Linde
-#ifndef MAME_MACHINE_KONPPC_H
-#define MAME_MACHINE_KONPPC_H
+#ifndef _KONPPC_H
+#define _KONPPC_H
 
-#pragma once
+#define CGBOARD_TYPE_ZR107      0
+#define CGBOARD_TYPE_GTICLUB    1
+#define CGBOARD_TYPE_NWKTR      2
+#define CGBOARD_TYPE_HORNET     3
+#define CGBOARD_TYPE_HANGPLT    4
+
+#define MAX_CG_BOARDS   2
 
 #define MCFG_KONPPC_CGBOARD_NUMBER(_num) \
 	konppc_device::static_set_num_boards(*device, _num);
 
 #define MCFG_KONPPC_CGBOARD_TYPE(_cgtype) \
-	konppc_device::static_set_cbboard_type(*device, konppc_device::CGBOARD_TYPE_##_cgtype);
+	konppc_device::static_set_cbboard_type(*device, _cgtype);
 
 class konppc_device :  public device_t
 {
 public:
-	static constexpr int CGBOARD_TYPE_ZR107   = 0;
-	static constexpr int CGBOARD_TYPE_GTICLUB = 1;
-	static constexpr int CGBOARD_TYPE_NWKTR   = 2;
-	static constexpr int CGBOARD_TYPE_HORNET  = 3;
-	static constexpr int CGBOARD_TYPE_HANGPLT = 4;
-
-	static constexpr int MAX_CG_BOARDS        = 2;
-
 	// construction/destruction
 	konppc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -100,9 +98,9 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(KONPPC, konppc_device)
+extern const device_type KONPPC;
 
 
 void draw_7segment_led(bitmap_rgb32 &bitmap, int x, int y, uint8_t value);
 
-#endif // MAME_MACHINE_KONPPC_H
+#endif

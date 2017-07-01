@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:K.Wilkins,Couriersud,Derrick Renaud,Frank Palazzolo
-#ifndef MAME_SOUND_DISC_CLS_H
-#define MAME_SOUND_DISC_CLS_H
-
 #pragma once
+
+#ifndef __DISC_CLS_H__
+#define __DISC_CLS_H__
 
 /***********************************************************************
  *
@@ -255,4 +255,4 @@ public:
 #include "disc_flt.h"
 #include "disc_dev.h"
 
-#endif // MAME_SOUND_DISC_CLS_H
+#endif /* __DISCRETE_H__ */

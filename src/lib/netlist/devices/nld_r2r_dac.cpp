@@ -5,13 +5,12 @@
  *
  */
 
-#include "../nl_base.h"
-#include "../nl_factory.h"
-#include "../analog/nlid_twoterm.h"
+#include "nld_r2r_dac.h"
+#include "analog/nld_twoterm.h"
 
 namespace netlist
 {
-	namespace analog
+	namespace devices
 	{
 	NETLIB_OBJECT_DERIVED(r2r_dac, twoterm)
 	{
@@ -46,10 +45,8 @@ namespace netlist
 
 		this->set(1.0 / m_R(), V, 0.0);
 	}
-	} //namespace analog
 
-	namespace devices {
-		NETLIB_DEVICE_IMPL_NS(analog, r2r_dac)
-	}
+	NETLIB_DEVICE_IMPL(r2r_dac)
 
+	} //namespace devices
 } // namespace netlist

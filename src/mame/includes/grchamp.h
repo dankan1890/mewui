@@ -9,7 +9,6 @@
 #include "machine/gen_latch.h"
 #include "machine/watchdog.h"
 #include "sound/discrete.h"
-#include "screen.h"
 
 class grchamp_state : public driver_device
 {

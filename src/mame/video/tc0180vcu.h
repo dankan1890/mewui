@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
-#ifndef MAME_VIDEO_TC0180VCU_H
-#define MAME_VIDEO_TC0180VCU_H
-
-#pragma once
+#ifndef __TC0180VCU_H__
+#define __TC0180VCU_H__
 
 class tc0180vcu_device : public device_t
 {
 public:
 	tc0180vcu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~tc0180vcu_device() {}
 
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
@@ -58,7 +57,7 @@ private:
 	void video_control( uint8_t data );
 };
 
-DECLARE_DEVICE_TYPE(TC0180VCU, tc0180vcu_device)
+extern const device_type TC0180VCU;
 
 #define MCFG_TC0180VCU_BG_COLORBASE(_color) \
 	tc0180vcu_device::set_bg_colorbase(*device, _color);
@@ -72,4 +71,4 @@ DECLARE_DEVICE_TYPE(TC0180VCU, tc0180vcu_device)
 #define MCFG_TC0180VCU_GFXDECODE(_gfxtag) \
 	tc0180vcu_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
 
-#endif // MAME_VIDEO_TC0180VCU_H
+#endif

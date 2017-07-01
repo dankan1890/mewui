@@ -634,8 +634,6 @@ ioport_field::ioport_field(ioport_port &port, ioport_type type, ioport_value def
 				if (device().subtag(def->tag) == fulltag && def->mask == m_mask)
 					m_defvalue = def->defvalue & m_mask;
 		}
-
-		m_flags |= FIELD_FLAG_TOGGLE;
 	}
 }
 
@@ -705,24 +703,6 @@ const input_seq &ioport_field::defseq(input_seq_type seqtype) const
 
 	// otherwise, return the sequence as-is
 	return m_seq[seqtype];
-}
-
-
-//-------------------------------------------------
-//  set_defseq - dynamically alter the default
-//  input sequence for the given input field
-//-------------------------------------------------
-
-void ioport_field::set_defseq(input_seq_type seqtype, const input_seq &newseq)
-{
-	const bool was_changed = seq(seqtype) != defseq(seqtype);
-
-	// set the new sequence
-	m_seq[seqtype] = newseq;
-
-	// also update live state unless previously customized
-	if (m_live != nullptr && !was_changed)
-		m_live->seq[seqtype] = newseq;
 }
 
 
@@ -1388,9 +1368,9 @@ ioport_field_live::ioport_field_live(ioport_field &field, analog_field *analog)
 	if (field.type_class() == INPUT_CLASS_KEYBOARD && field.specific_name() == nullptr)
 	{
 		// loop through each character on the field
-		for (int which = 0; which < 4; which++)
+		for (int which = 0; ; which++)
 		{
-			char32_t const ch = field.keyboard_code(which);
+			char32_t ch = field.keyboard_code(which);
 			if (ch == 0)
 				break;
 			name.append(string_format("%-*s ", std::max(SPACE_COUNT - 1, 0), field.key_name(which)));
@@ -1767,7 +1747,7 @@ time_t ioport_manager::initialize()
 	m_natkeyboard = std::make_unique<natural_keyboard>(machine());
 
 	// register callbacks for when we load configurations
-	machine().configuration().config_register("input", config_load_delegate(&ioport_manager::load_config, this), config_save_delegate(&ioport_manager::save_config, this));
+	machine().configuration().config_register("input", config_saveload_delegate(&ioport_manager::load_config, this), config_saveload_delegate(&ioport_manager::save_config, this));
 
 	// open playback and record files if specified
 	time_t basetime = playback_init();
@@ -2100,10 +2080,10 @@ s32 ioport_manager::frame_interpolate(s32 oldval, s32 newval)
 //  data from the XML nodes
 //-------------------------------------------------
 
-void ioport_manager::load_config(config_type cfg_type, util::xml::data_node const *parentnode)
+void ioport_manager::load_config(config_type cfg_type, xml_data_node *parentnode)
 {
 	// in the completion phase, we finish the initialization with the final ports
-	if (cfg_type == config_type::FINAL)
+	if (cfg_type == config_type::CONFIG_TYPE_FINAL)
 	{
 		m_safe_to_read = true;
 		frame_update();
@@ -2114,14 +2094,14 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 		return;
 
 	// iterate over all the remap nodes for controller configs only
-	if (cfg_type == config_type::CONTROLLER)
+	if (cfg_type == config_type::CONFIG_TYPE_CONTROLLER)
 		load_remap_table(parentnode);
 
 	// load device map table for controller configs only
-	if (cfg_type == config_type::CONTROLLER)
+	if (cfg_type == config_type::CONFIG_TYPE_CONTROLLER)
 	{
 		std::unique_ptr<devicemap_table_type> devicemap_table = std::make_unique<devicemap_table_type>();
-		for (util::xml::data_node const *mapdevice_node = parentnode->get_child("mapdevice"); mapdevice_node != nullptr; mapdevice_node = mapdevice_node->get_next_sibling("mapdevice"))
+		for (xml_data_node const *mapdevice_node = parentnode->get_child("mapdevice"); mapdevice_node != nullptr; mapdevice_node = mapdevice_node->get_next_sibling("mapdevice"))
 		{
 			const char *devicename = mapdevice_node->get_attribute_string("device", nullptr);
 			const char *controllername = mapdevice_node->get_attribute_string("controller", nullptr);
@@ -2139,7 +2119,7 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 	}
 
 	// iterate over all the port nodes
-	for (util::xml::data_node const *portnode = parentnode->get_child("port"); portnode; portnode = portnode->get_next_sibling("port"))
+	for (xml_data_node const *portnode = parentnode->get_child("port"); portnode; portnode = portnode->get_next_sibling("port"))
 	{
 		// get the basic port info from the attributes
 		int player;
@@ -2151,7 +2131,7 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 			newseq[seqtype].set(INPUT_CODE_INVALID);
 
 		// loop over new sequences
-		for (util::xml::data_node const *seqnode = portnode->get_child("newseq"); seqnode; seqnode = seqnode->get_next_sibling("newseq"))
+		for (xml_data_node const *seqnode = portnode->get_child("newseq"); seqnode; seqnode = seqnode->get_next_sibling("newseq"))
 		{
 			// with a valid type, parse out the new sequence
 			input_seq_type seqtype = token_to_seq_type(seqnode->get_attribute_string("type", ""));
@@ -2165,7 +2145,7 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 		}
 
 		// if we're loading default ports, apply to the defaults
-		if (cfg_type != config_type::GAME)
+		if (cfg_type != config_type::CONFIG_TYPE_GAME)
 			load_default_config(portnode, type, player, newseq);
 		else
 			load_game_config(portnode, type, player, newseq);
@@ -2173,7 +2153,7 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 
 	// after applying the controller config, push that back into the backup, since that is
 	// what we will diff against
-	if (cfg_type == config_type::CONTROLLER)
+	if (cfg_type == config_type::CONFIG_TYPE_CONTROLLER)
 		for (input_type_entry &entry : m_typelist)
 			for (input_seq_type seqtype = SEQ_TYPE_STANDARD; seqtype < SEQ_TYPE_TOTAL; ++seqtype)
 				entry.defseq(seqtype) = entry.seq(seqtype);
@@ -2185,11 +2165,11 @@ void ioport_manager::load_config(config_type cfg_type, util::xml::data_node cons
 //  global remapping table
 //-------------------------------------------------
 
-void ioport_manager::load_remap_table(util::xml::data_node const *parentnode)
+void ioport_manager::load_remap_table(xml_data_node const *parentnode)
 {
 	// count items first so we can allocate
 	int count = 0;
-	for (util::xml::data_node const *remapnode = parentnode->get_child("remap"); remapnode != nullptr; remapnode = remapnode->get_next_sibling("remap"))
+	for (xml_data_node const *remapnode = parentnode->get_child("remap"); remapnode != nullptr; remapnode = remapnode->get_next_sibling("remap"))
 		count++;
 
 	// if we have some, deal with them
@@ -2201,7 +2181,7 @@ void ioport_manager::load_remap_table(util::xml::data_node const *parentnode)
 
 		// build up the remap table
 		count = 0;
-		for (util::xml::data_node const *remapnode = parentnode->get_child("remap"); remapnode != nullptr; remapnode = remapnode->get_next_sibling("remap"))
+		for (xml_data_node const *remapnode = parentnode->get_child("remap"); remapnode != nullptr; remapnode = remapnode->get_next_sibling("remap"))
 		{
 			input_code origcode = machine().input().code_from_token(remapnode->get_attribute_string("origcode", ""));
 			input_code newcode = machine().input().code_from_token(remapnode->get_attribute_string("newcode", ""));
@@ -2227,7 +2207,7 @@ void ioport_manager::load_remap_table(util::xml::data_node const *parentnode)
 //  data to the default mappings
 //-------------------------------------------------
 
-bool ioport_manager::load_default_config(util::xml::data_node const *portnode, int type, int player, const input_seq *newseq)
+bool ioport_manager::load_default_config(xml_data_node const *portnode, int type, int player, const input_seq *newseq)
 {
 	// find a matching port in the list
 	for (input_type_entry &entry : m_typelist)
@@ -2248,7 +2228,7 @@ bool ioport_manager::load_default_config(util::xml::data_node const *portnode, i
 //  data to the current set of input ports
 //-------------------------------------------------
 
-bool ioport_manager::load_game_config(util::xml::data_node const *portnode, int type, int player, const input_seq *newseq)
+bool ioport_manager::load_game_config(xml_data_node const *portnode, int type, int player, const input_seq *newseq)
 {
 	// read the mask, index, and defvalue attributes
 	const char *tag = portnode->get_attribute_string("tag", nullptr);
@@ -2312,17 +2292,17 @@ bool ioport_manager::load_game_config(util::xml::data_node const *portnode, int 
 //  port configuration
 //-------------------------------------------------
 
-void ioport_manager::save_config(config_type cfg_type, util::xml::data_node *parentnode)
+void ioport_manager::save_config(config_type cfg_type, xml_data_node *parentnode)
 {
 	// if no parentnode, ignore
 	if (parentnode == nullptr)
 		return;
 
 	// default ports save differently
-	if (cfg_type == config_type::DEFAULT)
-		save_default_inputs(*parentnode);
+	if (cfg_type == config_type::CONFIG_TYPE_DEFAULT)
+		save_default_inputs(parentnode);
 	else
-		save_game_inputs(*parentnode);
+		save_game_inputs(parentnode);
 }
 
 
@@ -2331,7 +2311,7 @@ void ioport_manager::save_config(config_type cfg_type, util::xml::data_node *par
 //  sequence
 //-------------------------------------------------
 
-void ioport_manager::save_sequence(util::xml::data_node &parentnode, input_seq_type type, ioport_type porttype, const input_seq &seq)
+void ioport_manager::save_sequence(xml_data_node *parentnode, input_seq_type type, ioport_type porttype, const input_seq &seq)
 {
 	// get the string for the sequence
 	std::string seqstring;
@@ -2341,7 +2321,7 @@ void ioport_manager::save_sequence(util::xml::data_node &parentnode, input_seq_t
 		seqstring = machine().input().seq_to_tokens(seq);
 
 	// add the new node
-	util::xml::data_node *const seqnode = parentnode.add_child("newseq", seqstring.c_str());
+	xml_data_node *const seqnode = parentnode->add_child("newseq", seqstring.c_str());
 	if (seqnode != nullptr)
 		seqnode->set_attribute("type", seqtypestrings[type]);
 }
@@ -2374,7 +2354,7 @@ bool ioport_manager::save_this_input_field_type(ioport_type type)
 //  mappings that have changed
 //-------------------------------------------------
 
-void ioport_manager::save_default_inputs(util::xml::data_node &parentnode)
+void ioport_manager::save_default_inputs(xml_data_node *parentnode)
 {
 	// iterate over ports
 	for (input_type_entry &entry : m_typelist)
@@ -2392,7 +2372,7 @@ void ioport_manager::save_default_inputs(util::xml::data_node &parentnode)
 			if (seqtype < SEQ_TYPE_TOTAL)
 			{
 				// add a new port node
-				util::xml::data_node *const portnode = parentnode.add_child("port", nullptr);
+				xml_data_node *const portnode = parentnode->add_child("port", nullptr);
 				if (portnode != nullptr)
 				{
 					// add the port information and attributes
@@ -2401,7 +2381,7 @@ void ioport_manager::save_default_inputs(util::xml::data_node &parentnode)
 					// add only the sequences that have changed from the defaults
 					for (input_seq_type type = SEQ_TYPE_STANDARD; type < SEQ_TYPE_TOTAL; ++type)
 						if (entry.seq(type) != entry.defseq(type))
-							save_sequence(*portnode, type, entry.type(), entry.seq(type));
+							save_sequence(portnode, type, entry.type(), entry.seq(type));
 				}
 			}
 		}
@@ -2414,7 +2394,7 @@ void ioport_manager::save_default_inputs(util::xml::data_node &parentnode)
 //  mappings that have changed
 //-------------------------------------------------
 
-void ioport_manager::save_game_inputs(util::xml::data_node &parentnode)
+void ioport_manager::save_game_inputs(xml_data_node *parentnode)
 {
 	// iterate over ports
 	for (auto &port : m_portlist)
@@ -2446,7 +2426,7 @@ void ioport_manager::save_game_inputs(util::xml::data_node &parentnode)
 				if (changed)
 				{
 					// add a new port node
-					util::xml::data_node *const portnode = parentnode.add_child("port", nullptr);
+					xml_data_node *portnode = parentnode->add_child("port", nullptr);
 					if (portnode != nullptr)
 					{
 						// add the identifying information and attributes
@@ -2458,7 +2438,7 @@ void ioport_manager::save_game_inputs(util::xml::data_node &parentnode)
 						// add sequences if changed
 						for (input_seq_type seqtype = SEQ_TYPE_STANDARD; seqtype < SEQ_TYPE_TOTAL; ++seqtype)
 							if (field.seq(seqtype) != field.defseq(seqtype))
-								save_sequence(*portnode, seqtype, field.type(), field.seq(seqtype));
+								save_sequence(portnode, seqtype, field.type(), field.seq(seqtype));
 
 						// write out non-analog changes
 						if (!field.is_analog())
@@ -3131,6 +3111,13 @@ ioport_configurer& ioport_configurer::onoff_alloc(const char *name, ioport_value
 {
 	// allocate a field normally
 	field_alloc(IPT_DIPSWITCH, defval, mask, name);
+
+	// special case service mode
+	if (name == DEF_STR(Service_Mode))
+	{
+		field_set_toggle();
+		m_curfield->m_seq[SEQ_TYPE_STANDARD].set(KEYCODE_F2);
+	}
 
 	// expand the diplocation
 	if (diplocation != nullptr)

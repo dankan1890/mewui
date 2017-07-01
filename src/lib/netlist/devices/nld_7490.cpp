@@ -6,7 +6,6 @@
  */
 
 #include "nld_7490.h"
-#include "../nl_base.h"
 
 namespace netlist
 {
@@ -78,7 +77,7 @@ namespace netlist
 		m_last_B = 0;
 	}
 
-	static C14CONSTEXPR const netlist_time delay[4] =
+	static const netlist_time delay[4] =
 	{
 			NLTIME_FROM_NS(18),
 			NLTIME_FROM_NS(36) - NLTIME_FROM_NS(18),

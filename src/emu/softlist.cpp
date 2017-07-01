@@ -8,13 +8,11 @@
 
 ***************************************************************************/
 
-#include "softlist.h"
-#include "hash.h"
-
-#include "expat.h"
-
 #include <regex>
 
+#include "softlist.h"
+#include "hash.h"
+#include "expat.h"
 
 
 //**************************************************************************
@@ -77,14 +75,11 @@ software_part::software_part(software_info &info, std::string &&name, std::strin
 const char *software_part::feature(const std::string &feature_name) const
 {
 	// scan the feature list for an entry matching feature_name and return the value
-	auto iter = std::find_if(
-		m_featurelist.begin(),
-		m_featurelist.end(),
-		[&feature_name](const feature_list_item &feature) { return feature.name() == feature_name; });
+	for (const feature_list_item &feature : m_featurelist)
+		if (feature.name() == feature_name)
+			return feature.value().c_str();
+	return nullptr;
 
-	return iter != m_featurelist.end()
-		? iter->value().c_str()
-		: nullptr;
 }
 
 

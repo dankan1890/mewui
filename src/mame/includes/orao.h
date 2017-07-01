@@ -6,10 +6,9 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_ORAO_H
-#define MAME_INCLUDES_ORAO_H
-
-#include "sound/spkrdev.h"
+#ifndef ORAO_H_
+#define ORAO_H_
+#include "sound/speaker.h"
 #include "imagedev/cassette.h"
 
 class orao_state : public driver_device
@@ -44,4 +43,4 @@ private:
 	uint8_t m_beep;
 };
 
-#endif // MAME_INCLUDES_ORAO_H
+#endif /* ORAO_H_ */

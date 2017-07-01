@@ -20,9 +20,6 @@
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
 #include "machine/eepromser.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 class pzletime_state : public driver_device
 {
@@ -328,7 +325,7 @@ void pzletime_state::machine_reset()
 	m_ticket = 0;
 }
 
-static MACHINE_CONFIG_START( pzletime )
+static MACHINE_CONFIG_START( pzletime, pzletime_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M68000,10000000)
@@ -355,7 +352,7 @@ static MACHINE_CONFIG_START( pzletime )
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_OKIM6295_ADD("oki", 937500, PIN7_HIGH) //freq & pin7 taken from stlforce
+	MCFG_OKIM6295_ADD("oki", 937500, OKIM6295_PIN7_HIGH) //freq & pin7 taken from stlforce
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 
@@ -402,4 +399,4 @@ ROM_START( pzletime )
 	ROM_LOAD( "pzletime.nv", 0x0000, 0x0080, CRC(e5ed3d40) SHA1(8c163a6e5839e5c82d52f046d3268202fdf9f4d1) )
 ROM_END
 
-GAME( 199?, pzletime, 0, pzletime,  pzletime, pzletime_state,  0, ROT0, "Elettronica Video-Games S.R.L.", "Puzzle Time (prototype)", MACHINE_SUPPORTS_SAVE )
+GAME( 199?, pzletime, 0, pzletime,  pzletime, driver_device,  0, ROT0, "Elettronica Video-Games S.R.L.", "Puzzle Time (prototype)", MACHINE_SUPPORTS_SAVE )

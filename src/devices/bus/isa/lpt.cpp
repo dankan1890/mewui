@@ -10,19 +10,24 @@
 #include "lpt.h"
 #include "machine/pc_lpt.h"
 
-DEFINE_DEVICE_TYPE(ISA8_LPT, isa8_lpt_device, "isa_lpt", "Printer Adapter")
+const device_type ISA8_LPT = &device_creator<isa8_lpt_device>;
 
 isa8_lpt_device::isa8_lpt_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ISA8_LPT, tag, owner, clock),
+	device_t(mconfig, ISA8_LPT, "Printer Adapter", tag, owner, clock, "isa_lpt", __FILE__),
 	device_isa8_card_interface(mconfig, *this),
 	m_is_primary(false)
 {
 }
 
-MACHINE_CONFIG_MEMBER( isa8_lpt_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( lpt_config )
 	MCFG_DEVICE_ADD("lpt", PC_LPT, 0)
 	MCFG_PC_LPT_IRQ_HANDLER(WRITELINE(isa8_lpt_device, pc_cpu_line))
 MACHINE_CONFIG_END
+
+machine_config_constructor isa8_lpt_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( lpt_config );
+}
 
 static INPUT_PORTS_START( lpt_dsw )
 	PORT_START("DSW")

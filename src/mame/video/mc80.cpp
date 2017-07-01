@@ -9,7 +9,6 @@
 
 ****************************************************************************/
 
-#include "emu.h"
 #include "includes/mc80.h"
 
 // This is not a content of U402 510

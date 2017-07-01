@@ -21,29 +21,26 @@
 #include <utility>
 
 
-// forward type declarations
-struct XML_ParserStruct;
-
-
-namespace util { namespace xml {
-
 /***************************************************************************
     CONSTANTS
 ***************************************************************************/
 
 enum
 {
-	PARSE_FLAG_WHITESPACE_SIGNIFICANT = 1
+	XML_PARSE_FLAG_WHITESPACE_SIGNIFICANT = 1
 };
-
 
 
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
 
+// forward type declarations
+struct XML_ParserStruct;
+
+
 /* extended error information from parsing */
-struct parse_error
+struct xml_parse_error
 {
 	const char *            error_message;
 	int                     error_line;
@@ -52,16 +49,16 @@ struct parse_error
 
 
 // parsing options
-struct parse_options
+struct xml_parse_options
 {
-	parse_error *       error;
-	void                (*init_parser)(XML_ParserStruct *parser);
-	uint32_t            flags;
+	xml_parse_error *       error;
+	void                    (*init_parser)(struct XML_ParserStruct *parser);
+	uint32_t                flags;
 };
 
 
 // a node representing a data item and its relationships
-class data_node
+class xml_data_node
 {
 public:
 	enum class int_format
@@ -77,13 +74,13 @@ public:
 	/* ----- XML file objects ----- */
 
 	// create a new empty xml file object
-	static data_node *file_create();
+	static xml_data_node *file_create();
 
 	// parse an XML file into its nodes */
-	static data_node *file_read(util::core_file &file, parse_options const *opts);
+	static xml_data_node *file_read(util::core_file &file, xml_parse_options const *opts);
 
 	/* parse an XML string into its nodes */
-	static data_node *string_read(const char *string, parse_options const *opts);
+	static xml_data_node *string_read(const char *string, xml_parse_options const *opts);
 
 	// write an XML tree to a file
 	void file_write(util::core_file &file) const;
@@ -101,41 +98,41 @@ public:
 	void append_value(char const *value, int length);
 	void trim_whitespace();
 
-	data_node *get_parent() { return m_parent; }
-	data_node const *get_parent() const { return m_parent; }
+	xml_data_node *get_parent() { return m_parent; }
+	xml_data_node const *get_parent() const { return m_parent; }
 
 	// count the number of child nodes
 	int count_children() const;
 
 	// get the first child
-	data_node *get_first_child() { return m_first_child; }
-	data_node const *get_first_child() const { return m_first_child; }
+	xml_data_node *get_first_child() { return m_first_child; }
+	xml_data_node const *get_first_child() const { return m_first_child; }
 
 	// find the first child with the given tag
-	data_node *get_child(const char *name);
-	data_node const *get_child(const char *name) const;
+	xml_data_node *get_child(const char *name);
+	xml_data_node const *get_child(const char *name) const;
 
 	// find the first child with the given tag and/or attribute/value pair
-	data_node *find_first_matching_child(const char *name, const char *attribute, const char *matchval);
-	data_node const *find_first_matching_child(const char *name, const char *attribute, const char *matchval) const;
+	xml_data_node *find_first_matching_child(const char *name, const char *attribute, const char *matchval);
+	xml_data_node const *find_first_matching_child(const char *name, const char *attribute, const char *matchval) const;
 
 	// get the next sibling
-	data_node *get_next_sibling() { return m_next; }
-	data_node const *get_next_sibling() const { return m_next; }
+	xml_data_node *get_next_sibling() { return m_next; }
+	xml_data_node const *get_next_sibling() const { return m_next; }
 
 	// find the next sibling with the given tag
-	data_node *get_next_sibling(const char *name);
-	data_node const *get_next_sibling(const char *name) const;
+	xml_data_node *get_next_sibling(const char *name);
+	xml_data_node const *get_next_sibling(const char *name) const;
 
 	// find the next sibling with the given tag and/or attribute/value pair
-	data_node *find_next_matching_sibling(const char *name, const char *attribute, const char *matchval);
-	data_node const *find_next_matching_sibling(const char *name, const char *attribute, const char *matchval) const;
+	xml_data_node *find_next_matching_sibling(const char *name, const char *attribute, const char *matchval);
+	xml_data_node const *find_next_matching_sibling(const char *name, const char *attribute, const char *matchval) const;
 
 	// add a new child node
-	data_node *add_child(const char *name, const char *value);
+	xml_data_node *add_child(const char *name, const char *value);
 
 	// either return an existing child node or create one if it doesn't exist
-	data_node *get_or_add_child(const char *name, const char *value);
+	xml_data_node *get_or_add_child(const char *name, const char *value);
 
 	// delete a node and its children
 	void delete_node();
@@ -187,19 +184,19 @@ private:
 	};
 
 
-	data_node();
-	data_node(data_node *parent, const char *name, const char *value);
-	~data_node();
+	xml_data_node();
+	xml_data_node(xml_data_node *parent, const char *name, const char *value);
+	~xml_data_node();
 
-	data_node(data_node const &) = delete;
-	data_node(data_node &&) = delete;
-	data_node &operator=(data_node &&) = delete;
-	data_node &operator=(data_node const &) = delete;
+	xml_data_node(xml_data_node const &) = delete;
+	xml_data_node(xml_data_node &&) = delete;
+	xml_data_node &operator=(xml_data_node &&) = delete;
+	xml_data_node &operator=(xml_data_node const &) = delete;
 
-	data_node *get_sibling(const char *name);
-	data_node const *get_sibling(const char *name) const;
-	data_node *find_matching_sibling(const char *name, const char *attribute, const char *matchval);
-	data_node const *find_matching_sibling(const char *name, const char *attribute, const char *matchval) const;
+	xml_data_node *get_sibling(const char *name);
+	xml_data_node const *get_sibling(const char *name) const;
+	xml_data_node *find_matching_sibling(const char *name, const char *attribute, const char *matchval);
+	xml_data_node const *find_matching_sibling(const char *name, const char *attribute, const char *matchval) const;
 
 	attribute_node *get_attribute(const char *attribute);
 	attribute_node const *get_attribute(const char *attribute) const;
@@ -207,11 +204,11 @@ private:
 	void write_recursive(int indent, util::core_file &file) const;
 
 
-	data_node *                 m_next;
-	data_node *                 m_first_child;
+	xml_data_node *             m_next;
+	xml_data_node *             m_first_child;
 	std::string                 m_name;
 	std::string                 m_value;
-	data_node *                 m_parent;
+	xml_data_node *             m_parent;
 	std::list<attribute_node>   m_attributes;
 };
 
@@ -224,8 +221,6 @@ private:
 /* ----- miscellaneous interfaces ----- */
 
 /* normalize a string into something that can be written to an XML file */
-const char *normalize_string(const char *string);
-
-} } // namespace util::xml
+const char *xml_normalize_string(const char *string);
 
 #endif  /* MAME_LIB_UTIL_XMLFILE_H */

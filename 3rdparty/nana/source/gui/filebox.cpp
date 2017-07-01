@@ -14,9 +14,9 @@
 #include <nana/gui/filebox.hpp>
 #include <nana/filesystem/filesystem_ext.hpp>
 
-#if defined(NANA_WINDOWS)
+#if defined(NANA_WINDOWS) && !defined(NANA_SAME_LEF)
 	#include <windows.h>
-#elif defined(NANA_POSIX)
+#elif defined(NANA_POSIX) || defined(NANA_SAME_LEF)
 	#include <nana/gui/widgets/label.hpp>
 	#include <nana/gui/widgets/button.hpp>
 	#include <nana/gui/widgets/listbox.hpp>
@@ -35,7 +35,7 @@ namespace fs_ext = nana::filesystem_ext;
 
 namespace nana
 {
-#if defined(NANA_POSIX)
+#if defined(NANA_POSIX) || defined(NANA_SAME_LEF)
 	class filebox_implement
 		: public form
 	{
@@ -145,7 +145,11 @@ namespace nana
 				auto path = path_.caption();
 				auto root = path.substr(0, path.find('/'));
 				if(root == "HOME")
+#if defined(NANA_WINDOWS)
+					path.replace(0, 4, fs_ext::path_user().generic_string());
+#else
 					path.replace(0, 4, fs_ext::path_user().native());
+#endif
 				else if(root == "FILESYSTEM")
 					path.erase(0, 10);
 				else
@@ -347,7 +351,11 @@ namespace nana
 			else
 				dir = saved_selected_path;
 
+#if defined(NANA_WINDOWS)
+			_m_load_cat_path(dir.size() ? dir : fs_ext::path_user().generic_string());
+#else
 			_m_load_cat_path(dir.size() ? dir : fs_ext::path_user().native());
+#endif
 
 			tb_file_.caption(file_with_path_removed);
 		}
@@ -431,7 +439,11 @@ namespace nana
 			nodes_.filesystem.value(kind::filesystem);
 
 			std::vector<std::string> paths;
+#if defined(NANA_WINDOWS)
+			paths.emplace_back(fs_ext::path_user().generic_string());
+#else
 			paths.emplace_back(fs_ext::path_user().native());
+#endif
 			paths.emplace_back("/");
 
 			fs::directory_iterator end;
@@ -439,7 +451,11 @@ namespace nana
 			{
 				for (fs::directory_iterator i(p); i != end; ++i)
 				{
+#if defined(NANA_WINDOWS)
+					auto name = i->path().filename().generic_string();
+#else
 					auto name = i->path().filename().native();
+#endif
 					if (!is_directory(i->status()) || (name.size() && name[0] == '.'))
 						continue;
 
@@ -475,7 +491,11 @@ namespace nana
 			{
 				auto begstr = path.substr(0, pos);
 				if(begstr == "FS.HOME")
+#if defined(NANA_WINDOWS)
+					path.replace(0, 7, fs_ext::path_user().generic_string());
+#else
 					path.replace(0, 7, fs_ext::path_user().native());
+#endif
 				else
 					path.erase(0, pos);
 				return begstr;
@@ -494,7 +514,11 @@ namespace nana
 			fs::directory_iterator end;
 			for(fs::directory_iterator i(path); i != end; ++i)
 			{
+#if defined(NANA_WINDOWS)
+				auto name = i->path().filename().generic_string();
+#else
 				auto name = i->path().filename().native();
+#endif
 				if(name.empty() || (name.front() == '.'))
 					continue;
 
@@ -535,7 +559,11 @@ namespace nana
 			while(!beg_node.empty() && (beg_node != nodes_.home) && (beg_node != nodes_.filesystem))
 				beg_node = beg_node.owner();
 			
+#if defined(NANA_WINDOWS)
+			auto head = fs_ext::path_user().generic_string();
+#else
 			auto head = fs_ext::path_user().native();
+#endif
 			if(path.size() >= head.size() && (path.substr(0, head.size()) == head))
 			{//This is HOME
 				path_.caption("HOME");
@@ -558,7 +586,11 @@ namespace nana
 			for(fs::directory_iterator i(head); i != end; ++i)
 			{
 				if(is_directory(*i))
+#if defined(NANA_WINDOWS)
+					path_.childset(i->path().filename().generic_string(), 0);
+#else
 					path_.childset(i->path().filename().native(), 0);
+#endif
 			}
 			auto cat_path = path_.caption();
 			if(cat_path.size() && cat_path[cat_path.size() - 1] != '/')
@@ -577,7 +609,11 @@ namespace nana
 				for(fs::directory_iterator i(head); i != end; ++i)
 				{
 					if (is_directory(*i))
+#if defined(NANA_WINDOWS)
+						path_.childset(i->path().filename().generic_string(), 0);
+#else
 						path_.childset(i->path().filename().native(), 0);
+#endif
 				}
 
 				if(pos == path.npos)
@@ -734,69 +770,73 @@ namespace nana
 
 		void _m_ok()
 		{
-			if(0 == selection_.target.size())
+			std::string tar = selection_.target;
+
+			if(selection_.target.empty())
 			{
 				auto file = tb_file_.caption();
 				if(file.size())
 				{
-					if(file[0] == L'.')
+					if(file[0] == '.')
 					{
 						msgbox mb(*this, caption());
 						mb.icon(msgbox::icon_warning);
-						mb<<file<<std::endl<<L"The filename is invalid.";
+						mb<<file<<std::endl<<"The filename is invalid.";
 						mb();
 						return;
 					}
-					std::string tar;
+					
 					if(file[0] == '/')
 						tar = file;
 					else
 						tar = addr_.filesystem + file;
 
-
-					bool good = true;
-
 					auto fattr = fs::status(tar);
-					if(fattr.type() == fs::file_type::not_found)
-					{
-						good = (_m_append_def_extension(tar) && (fs::status(tar).type() == fs::file_type::not_found));					
-					}
 
-					if(good && fs::is_directory(fattr))
+					//Check if the selected name is a directory
+					auto is_dir = fs::is_directory(fattr);
+
+					if(!is_dir && _m_append_def_extension(tar))
 					{
-						_m_load_cat_path(tar);
-						tb_file_.caption("");
-						return;
+						//Add the extension, then check if it is a directory again.
+						fattr = fs::status(tar);
+						is_dir = fs::is_directory(fattr);
 					}
 					
+					if(is_dir)
+					{
+						_m_load_cat_path(tar);
+						tb_file_.caption(std::string{});
+						return;
+					}
+
 					if(io_read_)
 					{
-						if(false == good)
+						if(fs::file_type::not_found == fattr.type())
 						{
 							msgbox mb(*this, caption());
 							mb.icon(msgbox::icon_information);
-							mb<<L"The file \""<<nana::charset(tar, nana::unicode::utf8)<<L"\"\n is not existing. Please check and retry.";
+							mb<<"The file \""<<tar<<"\"\n is not existing. Please check and retry.";
 							mb();
+
+							return;
 						}
-						else
-							_m_finish(kind::filesystem, tar);
 					}
 					else
 					{
-						if(good)
+						if(fs::file_type::not_found != fattr.type())
 						{
 							msgbox mb(*this, caption(), msgbox::yes_no);
 							mb.icon(msgbox::icon_question);
-							mb<<L"The input file is existing, do you want to overwrite it?";
+							mb<<"The input file is existing, do you want to overwrite it?";
 							if(msgbox::pick_no == mb())
 								return;
 						}
-						_m_finish(kind::filesystem, tar);
 					}
 				}
 			}
-			else
-				_m_finish(kind::filesystem, selection_.target);
+
+			_m_finish(kind::filesystem, tar);
 		}
 
 		void _m_tr_expand(item_proxy node, bool exp)
@@ -811,7 +851,11 @@ namespace nana
 				fs::directory_iterator end;
 				for (fs::directory_iterator i{path}; i != end; ++i)
 				{
+#if defined(NANA_WINDOWS)
+					auto name = i->path().filename().generic_string();
+#else
 					auto name = i->path().filename().native();
+#endif
 					if((!is_directory(*i)) || (name.size() && name[0] == '.'))
 						continue;
 
@@ -820,7 +864,11 @@ namespace nana
 					{
 						for(fs::directory_iterator u(i->path()); u != end; ++u)
 						{
+#if defined(NANA_WINDOWS)
+							auto uname = i->path().filename().generic_string();
+#else
 							auto uname = i->path().filename().native();
+#endif
 							if ((!is_directory(*i)) || (uname.size() && uname[0] == '.'))
 								continue;
 
@@ -900,7 +948,7 @@ namespace nana
 		{
 			impl_->owner = owner;
 			impl_->open_or_save = open;
-#if defined(NANA_WINDOWS)
+#if defined(NANA_WINDOWS) && !defined(NANA_SAME_LEF)
 			auto len = ::GetCurrentDirectory(0, nullptr);
 			if(len)
 			{
@@ -980,7 +1028,7 @@ namespace nana
 
 		bool filebox::show() const
 		{
-#if defined(NANA_WINDOWS)
+#if defined(NANA_WINDOWS) && !defined(NANA_SAME_LEF)
 			std::wstring wfile;
 			wfile.resize(520);
 
@@ -1053,7 +1101,7 @@ namespace nana
 
 			wfile.resize(std::wcslen(wfile.data()));
 			impl_->file = to_utf8(wfile);
-#elif defined(NANA_POSIX)
+#elif defined(NANA_POSIX) || defined(NANA_SAME_LEF)
 			filebox_implement fb(impl_->owner, impl_->open_or_save, impl_->title);
 			
 			if(impl_->filters.size())

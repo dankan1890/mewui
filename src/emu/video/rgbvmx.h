@@ -11,8 +11,6 @@
 #ifndef MAME_EMU_VIDEO_RGBVMX_H
 #define MAME_EMU_VIDEO_RGBVMX_H
 
-#pragma once
-
 #include <altivec.h>
 
 /***************************************************************************

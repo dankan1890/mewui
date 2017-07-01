@@ -5,6 +5,7 @@
 #ifndef __RECTPACKER_H__
 #define __RECTPACKER_H__
 
+#include "emu.h"
 
 #include <vector>
 

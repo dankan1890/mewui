@@ -13,28 +13,27 @@
 
 
 //-------------------------------------------------
-//  neogeo_fatfury2_cart_device - constructor
+//  neogeo_fatfury2_cart - constructor
 //-------------------------------------------------
 
-DEFINE_DEVICE_TYPE(NEOGEO_FATFURY2_CART, neogeo_fatfury2_cart_device, "neocart_fatfury2", "Neo Geo Fatal Furty 2 Cart")
+const device_type NEOGEO_FATFURY2_CART = &device_creator<neogeo_fatfury2_cart>;
 
 
-neogeo_fatfury2_cart_device::neogeo_fatfury2_cart_device(const machine_config &mconfig, const char *tag, device_t *owner, uint16_t clock) :
-	neogeo_rom_device(mconfig, NEOGEO_FATFURY2_CART, tag, owner, clock),
+neogeo_fatfury2_cart::neogeo_fatfury2_cart(const machine_config &mconfig, const char *tag, device_t *owner, uint16_t clock) :
+	neogeo_rom_device(mconfig, NEOGEO_FATFURY2_CART, "Neo Geo Fatal Fury 2 Cart", tag, owner, clock, "neocart_fatfury2", __FILE__),
 	m_prot(*this, "fatfury2_prot")
-{
-}
+{}
 
 
 //-------------------------------------------------
 //  mapper specific start/reset
 //-------------------------------------------------
 
-void neogeo_fatfury2_cart_device::device_start()
+void neogeo_fatfury2_cart::device_start()
 {
 }
 
-void neogeo_fatfury2_cart_device::device_reset()
+void neogeo_fatfury2_cart::device_reset()
 {
 }
 
@@ -43,6 +42,11 @@ void neogeo_fatfury2_cart_device::device_reset()
  mapper specific handlers
  -------------------------------------------------*/
 
-MACHINE_CONFIG_MEMBER( neogeo_fatfury2_cart_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( fatfury2_cart )
 	MCFG_FATFURY2_PROT_ADD("fatfury2_prot")
 MACHINE_CONFIG_END
+
+machine_config_constructor neogeo_fatfury2_cart::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( fatfury2_cart );
+}

@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_NES_TAITO_H
-#define MAME_BUS_NES_TAITO_H
-
-#pragma once
+#ifndef __NES_TAITO_H
+#define __NES_TAITO_H
 
 #include "nxrom.h"
 
@@ -14,18 +12,15 @@ class nes_tc0190fmc_device : public nes_nrom_device
 {
 public:
 	// construction/destruction
+	nes_tc0190fmc_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 	nes_tc0190fmc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_WRITE8_MEMBER(tc0190fmc_write);
 	virtual DECLARE_WRITE8_MEMBER(write_h) override { tc0190fmc_write(space, offset, data, mem_mask); }
 
 	virtual void pcb_reset() override;
-
-protected:
-	nes_tc0190fmc_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
-	// device-level overrides
-	virtual void device_start() override;
 };
 
 
@@ -37,14 +32,12 @@ public:
 	// construction/destruction
 	nes_tc0190fmc_pal16r4_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_WRITE8_MEMBER(write_h) override;
 
 	virtual void hblank_irq(int scanline, int vblank, int blanked) override;
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 
 private:
 	uint16_t     m_irq_count, m_irq_count_latch;
@@ -60,14 +53,12 @@ public:
 	// construction/destruction
 	nes_x1_005_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_READ8_MEMBER(read_m) override;
 	virtual DECLARE_WRITE8_MEMBER(write_m) override;
 
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 
 private:
 	uint8_t m_latch;
@@ -84,14 +75,12 @@ public:
 	// construction/destruction
 	nes_x1_017_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// device-level overrides
+	virtual void device_start() override;
 	virtual DECLARE_READ8_MEMBER(read_m) override;
 	virtual DECLARE_WRITE8_MEMBER(write_m) override;
 
 	virtual void pcb_reset() override;
-
-protected:
-	// device-level overrides
-	virtual void device_start() override;
 
 private:
 	void set_chr();
@@ -103,11 +92,13 @@ private:
 };
 
 
+
+
 // device type definition
-DECLARE_DEVICE_TYPE(NES_TC0190FMC,         nes_tc0190fmc_device)
-DECLARE_DEVICE_TYPE(NES_TC0190FMC_PAL16R4, nes_tc0190fmc_pal16r4_device)
-DECLARE_DEVICE_TYPE(NES_X1_005,            nes_x1_005_device)
-DECLARE_DEVICE_TYPE(NES_X1_017,            nes_x1_017_device)
+extern const device_type NES_TC0190FMC;
+extern const device_type NES_TC0190FMC_PAL16R4;
+extern const device_type NES_X1_005;
+extern const device_type NES_X1_017;
 
 
-#endif // MAME_BUS_NES_TAITO_H
+#endif

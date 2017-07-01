@@ -1,9 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Angelo Salese
-#ifndef MAME_MACHINE_M6M80011AP_H
-#define MAME_MACHINE_M6M80011AP_H
+/***************************************************************************
+
+Template for skeleton device
+
+***************************************************************************/
 
 #pragma once
+
+#ifndef __M6M80011APDEV_H__
+#define __M6M80011APDEV_H__
 
 
 
@@ -18,6 +24,17 @@
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
+
+enum eeprom_cmd_t
+{
+	EEPROM_GET_CMD = 0,
+	EEPROM_READ,
+	EEPROM_WRITE,
+	EEPROM_WRITE_ENABLE,
+	EEPROM_WRITE_DISABLE,
+	EEPROM_STATUS_OUTPUT
+};
+
 
 // ======================> m6m80011ap_device
 
@@ -46,16 +63,6 @@ protected:
 	virtual void nvram_write(emu_file &file) override;
 
 private:
-	enum eeprom_cmd_t
-	{
-		EEPROM_GET_CMD = 0,
-		EEPROM_READ,
-		EEPROM_WRITE,
-		EEPROM_WRITE_ENABLE,
-		EEPROM_WRITE_DISABLE,
-		EEPROM_STATUS_OUTPUT
-	};
-
 	uint8_t m_latch;
 	uint8_t m_reset_line;
 	uint8_t m_cmd_stream_pos;
@@ -66,10 +73,19 @@ private:
 
 	eeprom_cmd_t m_eeprom_state;
 	uint16_t m_eeprom_data[0x80];
+
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(M6M80011AP, m6m80011ap_device)
+extern const device_type M6M80011AP;
 
-#endif // MAME_MACHINE_M6M80011AP_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

@@ -338,11 +338,9 @@ PALETTE_INIT_MEMBER(tubep_state,tubep)
 }
 
 
-void tubep_state::video_start()
+VIDEO_START_MEMBER(tubep_state,tubep)
 {
 	m_spritemap = std::make_unique<uint8_t[]>(256*256*2);
-
-	m_sprite_timer = timer_alloc(TIMER_SPRITE);
 
 	/* Set up save state */
 	save_item(NAME(m_romD_addr));
@@ -369,7 +367,7 @@ void tubep_state::video_start()
 }
 
 
-void tubep_state::video_reset()
+VIDEO_RESET_MEMBER(tubep_state,tubep)
 {
 	memset(m_spritemap.get(),0,256*256*2);
 
@@ -555,7 +553,7 @@ WRITE8_MEMBER(tubep_state::tubep_sprite_control_w)
 			m_mcu->set_input_line(0, CLEAR_LINE);
 
 			/* 2.assert /SINT again after this time */
-			m_sprite_timer->adjust(attotime::from_hz(19968000/8) * ((m_XSize+1)*(m_YSize+1)));
+			timer_set( attotime::from_hz(19968000/8) * ((m_XSize+1)*(m_YSize+1)), TIMER_SPRITE);
 
 			/* 3.clear of /SINT starts sprite drawing circuit */
 			draw_sprite();

@@ -1,9 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Pierpaolo Prazzoli, Luca Elia
-#ifndef MAME_VIDEO_IGS017_IGS031_H
-#define MAME_VIDEO_IGS017_IGS031_H
-
-#pragma once
 
 #include "machine/i8255.h"
 
@@ -20,6 +16,9 @@ class igs017_igs031_device : public device_t,
 							public device_video_interface,
 							public device_memory_interface
 {
+	//static const gfx_layout tilelayout, spritelayout;
+	DECLARE_GFXDECODE_MEMBER(gfxinfo);
+
 public:
 	igs017_igs031_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -41,8 +40,24 @@ public:
 	DECLARE_READ8_MEMBER(read);
 	DECLARE_WRITE8_MEMBER(write);
 
+	// the gfx roms were often hooked up with the bits backwards, allow us to handle it here to save doing it in every driver.
+	int m_revbits;
+
+	int m_toggle;
+	int m_debug_addr;
+	int m_debug_width;
+	uint8_t m_video_disable;
+	tilemap_t *m_fg_tilemap;
+	tilemap_t *m_bg_tilemap;
+	std::unique_ptr<uint8_t[]> m_sprites_gfx;
+	int m_sprites_gfx_size;
+
 	int get_nmi_enable() { return m_nmi_enable; }
 	int get_irq_enable() { return m_irq_enable; }
+
+
+	int m_nmi_enable;
+	int m_irq_enable;
 
 
 	DECLARE_WRITE8_MEMBER(palram_w);
@@ -75,11 +90,9 @@ protected:
 
 	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override;
 
-	DECLARE_GFXDECODE_MEMBER(gfxinfo);
-
-private:
 	address_space_config        m_space_config;
 
+public:
 	required_shared_ptr<uint8_t> m_spriteram;
 	required_shared_ptr<uint8_t> m_fg_videoram;
 	required_shared_ptr<uint8_t> m_bg_videoram;
@@ -87,22 +100,7 @@ private:
 	optional_device<i8255_device> m_i8255;
 	required_device<palette_device> m_palette;
 
-	// the gfx roms were often hooked up with the bits backwards, allow us to handle it here to save doing it in every driver.
-	int m_revbits;
-
-	int m_toggle;
-	int m_debug_addr;
-	int m_debug_width;
-	uint8_t m_video_disable;
-	tilemap_t *m_fg_tilemap;
-	tilemap_t *m_bg_tilemap;
-	std::unique_ptr<uint8_t[]> m_sprites_gfx;
-	int m_sprites_gfx_size;
-
-	int m_nmi_enable;
-	int m_irq_enable;
+private:
 };
 
-DECLARE_DEVICE_TYPE(IGS017_IGS031, igs017_igs031_device)
-
-#endif // MAME_VIDEO_IGS017_IGS031_H
+extern const device_type IGS017_IGS031;

@@ -12,13 +12,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/battlane.h"
-
 #include "cpu/m6809/m6809.h"
 #include "sound/3526intf.h"
-#include "screen.h"
-#include "speaker.h"
-
+#include "includes/battlane.h"
 
 /*************************************
  *
@@ -270,7 +266,7 @@ void battlane_state::machine_reset()
 	m_cpu_control = 0;
 }
 
-static MACHINE_CONFIG_START( battlane )
+static MACHINE_CONFIG_START( battlane, battlane_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, 1500000)        /* 1.5 MHz ? */
@@ -402,6 +398,6 @@ ROM_END
  *
  *************************************/
 
-GAME( 1986, battlane,  0,        battlane, battlane, battlane_state, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 1)", MACHINE_SUPPORTS_SAVE )
-GAME( 1986, battlane2, battlane, battlane, battlane, battlane_state, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 2)", MACHINE_SUPPORTS_SAVE )
-GAME( 1986, battlane3, battlane, battlane, battlane, battlane_state, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 3)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, battlane,  0,        battlane, battlane, driver_device, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, battlane2, battlane, battlane, battlane, driver_device, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, battlane3, battlane, battlane, battlane, driver_device, 0, ROT90, "Technos Japan (Taito license)", "Battle Lane! Vol. 5 (set 3)", MACHINE_SUPPORTS_SAVE )

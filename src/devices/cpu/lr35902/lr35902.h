@@ -1,13 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Wilbert Pol
-#ifndef MAME_CPU_LR35902_LR35902_H
-#define MAME_CPU_LR35902_LR35902_H
-
 #pragma once
+
+#ifndef __LR35902_H__
+#define __LR35902_H__
 
 
 #define MCFG_LR35902_TIMER_CB(_devcb) \
-	devcb = &lr35902_cpu_device::set_timer_cb(*device, DEVCB_##_devcb);
+	lr35902_cpu_device::set_timer_cb(*device, DEVCB_##_devcb);
 
 // The first release of this CPU has a bug where the programcounter
 // is not incremented properly after an interrupt after the halt opcode.
@@ -19,7 +19,7 @@
 // a 16-bit register in the $fe** region.
 // note: oldval is in hiword, newval is in loword
 #define MCFG_LR35902_INCDEC16_CB(_devcb) \
-	devcb = &lr35902_cpu_device::set_incdec16_cb(*device, DEVCB_##_devcb);
+	lr35902_cpu_device::set_incdec16_cb(*device, DEVCB_##_devcb);
 
 
 enum
@@ -33,7 +33,7 @@ enum
 };
 
 
-class lr35902_cpu_device : public cpu_device
+class lr35902_cpu_device :  public cpu_device
 {
 public:
 	// construction/destruction
@@ -140,6 +140,6 @@ protected:
 	devcb_write32 m_incdec16_func;
 };
 
-DECLARE_DEVICE_TYPE(LR35902, lr35902_cpu_device)
+extern const device_type LR35902;
 
-#endif // MAME_CPU_LR35902_LR35902_H
+#endif /* __LR35902_H__ */

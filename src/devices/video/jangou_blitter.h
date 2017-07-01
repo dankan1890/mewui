@@ -1,10 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Angelo Salese
+/***************************************************************************
 
-#ifndef MAME_VIDEO_JANGOU_BLITTER_H
-#define MAME_VIDEO_JANGOU_BLITTER_H
+Template for skeleton device
+
+***************************************************************************/
 
 #pragma once
+
+#ifndef __JANGOU_BLITTERDEV_H__
+#define __JANGOU_BLITTERDEV_H__
 
 
 
@@ -34,7 +39,7 @@ public:
 	DECLARE_WRITE8_MEMBER( bltflip_w );
 	DECLARE_READ_LINE_MEMBER( status_r );
 
-	const uint8_t &blit_buffer(unsigned y, unsigned x) const { return m_blit_buffer[(256 * y) + x]; }
+	uint8_t        m_blit_buffer[256 * 256];
 
 protected:
 	// device-level overrides
@@ -42,8 +47,6 @@ protected:
 	virtual void device_reset() override;
 
 private:
-	uint8_t m_blit_buffer[256 * 256];
-
 	void plot_gfx_pixel( uint8_t pix, int x, int y );
 	uint8_t gfx_nibble( uint32_t niboffset );
 	uint8_t m_pen_data[0x10];
@@ -55,6 +58,14 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(JANGOU_BLITTER, jangou_blitter_device)
+extern const device_type JANGOU_BLITTER;
 
-#endif // MAME_VIDEO_JANGOU_BLITTER_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

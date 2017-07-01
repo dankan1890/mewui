@@ -16,11 +16,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/mystston.h"
-
 #include "cpu/m6502/m6502.h"
 #include "sound/ay8910.h"
-#include "speaker.h"
+#include "includes/mystston.h"
 
 
 
@@ -191,7 +189,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( mystston )
+static MACHINE_CONFIG_START( mystston, mystston_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6502, CPU_CLOCK)
@@ -320,6 +318,6 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, mystston,   0,        mystston, mystston, mystston_state, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. John's Adventure",              MACHINE_SUPPORTS_SAVE )
-GAME( 1984, myststono,  mystston, mystston, mystston, mystston_state, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. Kick in Adventure",             MACHINE_SUPPORTS_SAVE )
-GAME( 1984, myststonoi, mystston, mystston, mystston, mystston_state, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. Kick in Adventure (Itisa PCB)", MACHINE_SUPPORTS_SAVE )
+GAME( 1984, mystston, 0,        mystston, mystston, driver_device, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. John's Adventure", MACHINE_SUPPORTS_SAVE )
+GAME( 1984, myststono,mystston, mystston, mystston, driver_device, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. Kick in Adventure", MACHINE_SUPPORTS_SAVE )
+GAME( 1984, myststonoi,mystston, mystston, mystston, driver_device, 0, ROT270, "Technos Japan", "Mysterious Stones - Dr. Kick in Adventure (Itisa PCB)", MACHINE_SUPPORTS_SAVE )

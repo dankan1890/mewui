@@ -49,10 +49,8 @@
 
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/mc68681.h"
 #include "video/mc6845.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/mc68681.h"
 
 #define MAINCPU_TAG "maincpu"
 #define CRTC_TAG    "crtc"
@@ -397,7 +395,7 @@ uint32_t hp16500_state::screen_update_hp16500(screen_device &screen, bitmap_rgb3
 	return 0;
 }
 
-static MACHINE_CONFIG_START( hp1650 )
+static MACHINE_CONFIG_START( hp1650, hp16500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(MAINCPU_TAG, M68000, 10000000)
 	MCFG_CPU_PROGRAM_MAP(hp1650_map)
@@ -417,7 +415,7 @@ static MACHINE_CONFIG_START( hp1650 )
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( hp1651 )
+static MACHINE_CONFIG_START( hp1651, hp16500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(MAINCPU_TAG, M68000, 10000000)
 	MCFG_CPU_PROGRAM_MAP(hp1651_map)
@@ -437,7 +435,7 @@ static MACHINE_CONFIG_START( hp1651 )
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( hp16500a )
+static MACHINE_CONFIG_START( hp16500a, hp16500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(MAINCPU_TAG, M68000, 10000000)
 	MCFG_CPU_PROGRAM_MAP(hp16500a_map)
@@ -457,7 +455,7 @@ static MACHINE_CONFIG_START( hp16500a )
 	MCFG_SPEAKER_STANDARD_STEREO("lspeaker", "rspeaker")
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( hp16500 )
+static MACHINE_CONFIG_START( hp16500, hp16500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(MAINCPU_TAG, M68EC030, 25000000)
 	MCFG_CPU_PROGRAM_MAP(hp16500_map)
@@ -503,7 +501,7 @@ ROM_START( hp16500b )
 	ROM_LOAD32_BYTE( "16500-80017.bin", 0x000003, 0x008000, CRC(e0b1096b) SHA1(426bb9a4756d8087bded4f6b61365d733ffbb09a) )
 ROM_END
 
-COMP( 1989, hp1650b,  0, 0, hp1650,   hp16500, hp16500_state, 0, "Hewlett Packard", "HP 1650b",  MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
-COMP( 1989, hp1651b,  0, 0, hp1651,   hp16500, hp16500_state, 0, "Hewlett Packard", "HP 1651b",  MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
-COMP( 1991, hp165ka0, 0, 0, hp16500a, hp16500, hp16500_state, 0, "Hewlett Packard", "HP 16500a", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
-COMP( 1991, hp16500b, 0, 0, hp16500,  hp16500, hp16500_state, 0, "Hewlett Packard", "HP 16500b", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
+COMP( 1989, hp1650b,  0, 0, hp1650,  hp16500, driver_device, 0,  "Hewlett Packard", "HP 1650b", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
+COMP( 1989, hp1651b,  0, 0, hp1651,  hp16500, driver_device, 0,  "Hewlett Packard", "HP 1651b", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
+COMP( 1991, hp165ka0, 0, 0, hp16500a, hp16500, driver_device, 0, "Hewlett Packard", "HP 16500a", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)
+COMP( 1991, hp16500b, 0, 0, hp16500, hp16500, driver_device, 0,  "Hewlett Packard", "HP 16500b", MACHINE_NOT_WORKING|MACHINE_NO_SOUND)

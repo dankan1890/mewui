@@ -6,24 +6,23 @@
 
 *********************************************************/
 
-#ifndef MAME_SOUND_K053260_H
-#define MAME_SOUND_K053260_H
-
 #pragma once
+
+#ifndef __K053260_H__
+#define __K053260_H__
 
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_K053260_ADD(tag, clock) \
-		MCFG_DEVICE_ADD((tag), K053260, (clock))
+#define MCFG_K053260_ADD(_tag, _clock) \
+	MCFG_DEVICE_ADD(_tag, K053260, _clock)
+#define MCFG_K053260_REPLACE(_tag, _clock) \
+	MCFG_DEVICE_REPLACE(_tag, K053260, _clock)
 
-#define MCFG_K053260_REPLACE(tag, clock) \
-		MCFG_DEVICE_REPLACE((tag), K053260, (clock))
-
-#define MCFG_K053260_REGION(tag) \
-		k053260_device::set_region_tag(*device, ("^" tag));
+#define MCFG_K053260_REGION(_tag) \
+	k053260_device::set_region_tag(*device, "^" _tag);
 
 
 //**************************************************************************
@@ -38,6 +37,7 @@ class k053260_device : public device_t,
 {
 public:
 	k053260_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~k053260_device() { }
 
 	DECLARE_READ8_MEMBER( main_read );
 	DECLARE_WRITE8_MEMBER( main_write );
@@ -68,9 +68,11 @@ private:
 	class KDSC_Voice
 	{
 	public:
-		KDSC_Voice(k053260_device &device) : m_device(device), m_pan_volume{ 0, 0 } { }
+		KDSC_Voice() : m_device(nullptr), m_position(0), m_counter(0), m_output(0), m_playing(false), m_start(0), m_length(0), m_pitch(0), m_volume(0), m_pan(0), m_loop(false), m_kadpcm(false)
+		{
+		}
 
-		inline void voice_start(int index);
+		inline void voice_start(k053260_device &device, int index);
 		inline void voice_reset();
 		inline void set_register(offs_t offset, uint8_t data);
 		inline void set_loop_kadpcm(uint8_t data);
@@ -84,28 +86,30 @@ private:
 
 	private:
 		// pointer to owning device
-		k053260_device &m_device;
+		k053260_device *m_device;
 
 		// live state
-		uint32_t m_position = 0;
+		uint32_t m_position;
 		uint16_t m_pan_volume[2];
-		uint16_t m_counter = 0;
-		int8_t   m_output = 0;
-		bool   m_playing = false;
+		uint16_t m_counter;
+		int8_t   m_output;
+		bool   m_playing;
 
 		// per voice registers
-		uint32_t m_start = 0;
-		uint16_t m_length = 0;
-		uint16_t m_pitch = 0;
-		uint8_t  m_volume = 0;
+		uint32_t m_start;
+		uint16_t m_length;
+		uint16_t m_pitch;
+		uint8_t  m_volume;
 
 		// bit packed registers
-		uint8_t  m_pan = 0;
-		bool   m_loop = false;
-		bool   m_kadpcm = false;
+		uint8_t  m_pan;
+		bool   m_loop;
+		bool   m_kadpcm;
 	} m_voice[4];
+
+	friend class k053260_device::KDSC_Voice;
 };
 
-DECLARE_DEVICE_TYPE(K053260, k053260_device)
+extern const device_type K053260;
 
-#endif // MAME_SOUND_K053260_H
+#endif /* __K053260_H__ */

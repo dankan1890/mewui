@@ -8,7 +8,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include <math.h>
 #include "includes/thomson.h"
 
@@ -1022,7 +1021,7 @@ TIMER_CALLBACK_MEMBER( thomson_state::thom_set_init )
 }
 
 /* call this at the very beginning of each new frame */
-WRITE_LINE_MEMBER(thomson_state::thom_vblank)
+void thomson_state::thom_vblank( screen_device &screen, bool state )
 {
 	// rising edge
 	if (state)

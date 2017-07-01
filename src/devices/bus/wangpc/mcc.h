@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_WANGPC_MCC_H
-#define MAME_BUS_WANGPC_MCC_H
-
 #pragma once
 
+#ifndef __WANGPC_MCC__
+#define __WANGPC_MCC__
+
+#include "emu.h"
 #include "wangpc.h"
 #include "machine/z80dart.h"
 
@@ -29,11 +30,13 @@ public:
 	// construction/destruction
 	wangpc_mcc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	// device_wangpcbus_card_interface overrides
 	virtual uint16_t wangpcbus_iorc_r(address_space &space, offs_t offset, uint16_t mem_mask) override;
@@ -51,6 +54,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(WANGPC_MCC, wangpc_mcc_device)
+extern const device_type WANGPC_MCC;
 
-#endif // MAME_BUS_WANGPC_MCC_H
+
+#endif

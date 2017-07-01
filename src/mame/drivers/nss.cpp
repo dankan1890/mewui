@@ -294,15 +294,13 @@ Contra III   CONTRA_III_1   TC574000   CONTRA_III_0   TC574000    GAME1_NSSU    
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/snes.h"
-
 #include "cpu/z80/z80.h"
 #include "machine/m6m80011ap.h"
 #include "machine/s3520cf.h"
 #include "machine/rp5h01.h"
 #include "video/m50458.h"
+#include "includes/snes.h"
 #include "rendlay.h"
-#include "speaker.h"
 
 
 class nss_state : public snes_state
@@ -817,7 +815,7 @@ void nss_state::machine_reset()
 	m_joy_flag = 1;
 }
 
-static MACHINE_CONFIG_START( nss )
+static MACHINE_CONFIG_START( nss, nss_state )
 
 	/* base snes hardware */
 	MCFG_CPU_ADD("maincpu", _5A22, MCLK_NTSC)   /* 2.68Mhz, also 3.58Mhz */
@@ -1069,7 +1067,7 @@ DRIVER_INIT_MEMBER(nss_state,nss)
 	DRIVER_INIT_CALL(snes);
 }
 
-GAME( 199?, nss,       0,     nss,      snes, nss_state,    snes,   ROT0, "Nintendo",                    "Nintendo Super System BIOS", MACHINE_IS_BIOS_ROOT )
+GAME( 199?, nss,       0,     nss,      snes, snes_state,    snes,    ROT0, "Nintendo",                    "Nintendo Super System BIOS", MACHINE_IS_BIOS_ROOT )
 GAME( 1992, nss_actr,  nss,   nss,      snes, nss_state,    nss,    ROT0, "Enix",                        "Act Raiser (Nintendo Super System)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND )
 GAME( 1992, nss_adam,  nss,   nss,      snes, nss_state,    nss,    ROT0, "Ocean",                       "The Addams Family (Nintendo Super System)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND )
 GAME( 1992, nss_aten,  nss,   nss,      snes, nss_state,    nss,    ROT0, "Absolute Entertainment Inc.", "David Crane's Amazing Tennis (Nintendo Super System)", MACHINE_IMPERFECT_SOUND | MACHINE_NOT_WORKING )

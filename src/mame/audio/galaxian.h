@@ -1,18 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#ifndef MAME_AUDIO_GALAXIAN_H
-#define MAME_AUDIO_GALAXIAN_H
-
-#pragma once
-
 #include "sound/discrete.h"
 
 #define GAL_AUDIO   "discrete"
 
-class galaxian_sound_device : public device_t, public device_sound_interface
+class galaxian_sound_device : public device_t,
+									public device_sound_interface
 {
 public:
 	galaxian_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~galaxian_sound_device() {}
 
 	DECLARE_WRITE8_MEMBER( sound_w );
 	DECLARE_WRITE8_MEMBER( pitch_w );
@@ -24,6 +21,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 
 	// sound stream update overrides
@@ -35,9 +33,7 @@ private:
 	discrete_device *m_discrete;
 };
 
-DECLARE_DEVICE_TYPE(GALAXIAN, galaxian_sound_device)
+extern const device_type GALAXIAN;
 
 MACHINE_CONFIG_EXTERN( mooncrst_audio );
 MACHINE_CONFIG_EXTERN( galaxian_audio );
-
-#endif // MAME_AUDIO_GALAXIAN_H

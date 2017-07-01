@@ -10,7 +10,6 @@
 
 #include "emu.h"
 #include "includes/leland.h"
-#include "audio/leland.h"
 
 
 /* constants */
@@ -72,7 +71,7 @@ VIDEO_START_MEMBER(leland_state,leland)
 	save_item(NAME(m_gfxbank));
 	save_item(NAME(m_last_scanline));
 	for (uint8_t i = 0; i < 2; i++)
-	{
+	{	
 		save_item(NAME(m_vram_state[i].m_addr), i);
 		save_item(NAME(m_vram_state[i].m_latch), i);
 	}
@@ -91,7 +90,7 @@ VIDEO_START_MEMBER(leland_state,ataxx)
 	save_item(NAME(m_xscroll));
 	save_item(NAME(m_yscroll));
 	for (uint8_t i = 0; i < 2; i++)
-	{
+	{	
 		save_item(NAME(m_vram_state[i].m_addr), i);
 		save_item(NAME(m_vram_state[i].m_latch), i);
 	}
@@ -530,7 +529,7 @@ uint32_t leland_state::screen_update_ataxx(screen_device &screen, bitmap_ind16 &
  *
  *************************************/
 
-MACHINE_CONFIG_START( leland_video )
+MACHINE_CONFIG_FRAGMENT( leland_video )
 
 	MCFG_VIDEO_START_OVERRIDE(leland_state,leland)
 

@@ -53,10 +53,8 @@
                    +----------+
 *********************************************************************/
 
-#ifndef MAME_BUS_TVC_TVC_H
-#define MAME_BUS_TVC_TVC_H
-
-#pragma once
+#ifndef __TVCEXP_H__
+#define __TVCEXP_H__
 
 
 /***************************************************************************
@@ -69,6 +67,7 @@ class device_tvcexp_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_tvcexp_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_tvcexp_interface();
 
 	// reading and writing
@@ -76,12 +75,9 @@ public:
 	virtual void int_ack() { }
 	virtual uint8_t int_r() { return 1; }
 	virtual DECLARE_READ8_MEMBER(read) { return 0x00; }
-	virtual DECLARE_WRITE8_MEMBER(write) { }
+	virtual DECLARE_WRITE8_MEMBER(write) {}
 	virtual DECLARE_READ8_MEMBER(io_read) { return 0x00; }
-	virtual DECLARE_WRITE8_MEMBER(io_write) { }
-
-protected:
-	device_tvcexp_interface(const machine_config &mconfig, device_t &device);
+	virtual DECLARE_WRITE8_MEMBER(io_write) {}
 };
 
 // ======================> tvcexp_slot_device
@@ -94,8 +90,11 @@ public:
 	tvcexp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~tvcexp_slot_device();
 
-	template <class Object> static devcb_base &set_out_irq_callback(device_t &device, Object &&cb) { return downcast<tvcexp_slot_device &>(device).m_out_irq_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_nmi_callback(device_t &device, Object &&cb) { return downcast<tvcexp_slot_device &>(device).m_out_nmi_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_irq_callback(device_t &device, _Object object) { return downcast<tvcexp_slot_device &>(device).m_out_irq_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_nmi_callback(device_t &device, _Object object) { return downcast<tvcexp_slot_device &>(device).m_out_nmi_cb.set_callback(object); }
+
+	// device-level overrides
+	virtual void device_start() override;
 
 	// reading and writing
 	virtual uint8_t id_r();
@@ -106,18 +105,14 @@ public:
 	virtual DECLARE_READ8_MEMBER(io_read);
 	virtual DECLARE_WRITE8_MEMBER(io_write);
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-
-	devcb_write_line            m_out_irq_cb;
-	devcb_write_line            m_out_nmi_cb;
+	devcb_write_line                m_out_irq_cb;
+	devcb_write_line                m_out_nmi_cb;
 
 	device_tvcexp_interface*    m_cart;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(TVCEXP_SLOT, tvcexp_slot_device)
+extern const device_type TVCEXP_SLOT;
 
 
 /***************************************************************************
@@ -130,4 +125,4 @@ DECLARE_DEVICE_TYPE(TVCEXP_SLOT, tvcexp_slot_device)
 #define MCFG_TVCEXP_SLOT_OUT_NMI_CB(_devcb) \
 	devcb = &tvcexp_slot_device::set_out_nmi_callback(*device, DEVCB_##_devcb);
 
-#endif // MAME_BUS_TVC_TVC_H
+#endif /* __TVCEXP_H__ */

@@ -29,8 +29,8 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "dsp32.h"
 #include "debugger.h"
+#include "dsp32.h"
 
 
 //**************************************************************************
@@ -136,14 +136,14 @@
 //  DEVICE INTERFACE
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(DSP32C, dsp32c_device, "dsp32c", "DSP32C")
+const device_type DSP32C = &device_creator<dsp32c_device>;
 
 //-------------------------------------------------
 //  dsp32c_device - constructor
 //-------------------------------------------------
 
 dsp32c_device::dsp32c_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, DSP32C, tag, owner, clock),
+	: cpu_device(mconfig, DSP32C, "DSP32C", tag, owner, clock, "dsp32c", __FILE__),
 		m_program_config("program", ENDIANNESS_LITTLE, 32, 24),
 		m_pin(0),
 		m_pout(0),

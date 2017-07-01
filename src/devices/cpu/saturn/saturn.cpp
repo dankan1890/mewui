@@ -10,10 +10,9 @@
  *****************************************************************************/
 
 #include "emu.h"
-#include "saturn.h"
-
 #include "debugger.h"
 
+#include "saturn.h"
 
 #define R0 0
 #define R1 1
@@ -27,8 +26,9 @@
 #define I 9 // invalid
 
 
-//#define VERBOSE 1
-#include "logmacro.h"
+#define VERBOSE 0
+
+#define LOG(x)  do { if (VERBOSE) logerror x; } while (0)
 
 
 // Hardware status bits
@@ -39,11 +39,11 @@
 
 
 
-DEFINE_DEVICE_TYPE(SATURN, saturn_device, "saturn_cpu", "HP Saturn")
+const device_type SATURN = &device_creator<saturn_device>;
 
 
 saturn_device::saturn_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, SATURN, tag, owner, clock)
+	: cpu_device(mconfig, SATURN, "HP Saturn", tag, owner, clock, "saturn_cpu", __FILE__)
 	, m_program_config("program", ENDIANNESS_LITTLE, 8, 20, 0)
 	, m_out_func(*this)
 	, m_in_func(*this)
@@ -326,7 +326,7 @@ void saturn_device::saturn_take_irq()
 	saturn_push(m_pc);
 	m_pc=IRQ_ADDRESS;
 
-	LOG("SATURN takes IRQ ($%04x)\n", m_pc);
+	LOG(("Saturn '%s' takes IRQ ($%04x)\n", tag(), m_pc));
 
 	standard_irq_callback(SATURN_IRQ_LINE);
 }
@@ -367,7 +367,7 @@ void saturn_device::execute_set_input(int inputnum, int state)
 			m_nmi_state = state;
 			if ( state != CLEAR_LINE )
 			{
-				LOG("SATURN set_nmi_line(ASSERT)\n");
+				LOG(( "SATURN '%s' set_nmi_line(ASSERT)\n", tag()));
 				m_pending_irq = 1;
 			}
 			break;
@@ -377,7 +377,7 @@ void saturn_device::execute_set_input(int inputnum, int state)
 			m_irq_state = state;
 			if ( state != CLEAR_LINE && m_irq_enable )
 			{
-				LOG("SATURN set_irq_line(ASSERT)\n");
+				LOG(( "SATURN '%s' set_irq_line(ASSERT)\n", tag()));
 				m_pending_irq = 1;
 			}
 			break;
@@ -385,7 +385,7 @@ void saturn_device::execute_set_input(int inputnum, int state)
 		case SATURN_WAKEUP_LINE:
 			if (m_sleeping && state==1)
 			{
-				LOG("SATURN set_wakeup_line(ASSERT)\n");
+				LOG(( "SATURN '%s' set_wakeup_line(ASSERT)\n", tag()));
 				standard_irq_callback(SATURN_WAKEUP_LINE);
 				m_sleeping = 0;
 			}

@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles, Vas Crabb
 
+#define WIN32_LEAN_AND_MEAN
 
 #include "winrtfile.h"
 

@@ -65,7 +65,6 @@ public:
 	bool visible() const { return ((m_flags & DSF_NOSHOW) == 0); }
 	bool divider() const { return m_flags & DSF_DIVIDER; }
 	device_state_interface *parent_state() const {return m_device_state;}
-	const std::string &format_string() const { return m_format; }
 
 protected:
 	// device state flags

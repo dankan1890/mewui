@@ -5,7 +5,6 @@
  *
  */
 
-#include "emu.h"
 #include "k573msu.h"
 
 /*
@@ -73,7 +72,7 @@
 */
 
 k573msu_device::k573msu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, KONAMI_573_MULTI_SESSION_UNIT, tag, owner, clock)
+	device_t(mconfig, KONAMI_573_MULTI_SESSION_UNIT, "Konami 573 Multi Session Unit", tag, owner, clock, "k573msu", __FILE__)
 {
 }
 
@@ -94,4 +93,4 @@ const tiny_rom_entry *k573msu_device::device_rom_region() const
 	return ROM_NAME( k573msu );
 }
 
-DEFINE_DEVICE_TYPE(KONAMI_573_MULTI_SESSION_UNIT, k573msu_device, "k573msu", "Konami 573 Multi Session Unit")
+const device_type KONAMI_573_MULTI_SESSION_UNIT = &device_creator<k573msu_device>;

@@ -6,19 +6,18 @@
 
 *********************************************************/
 
-#ifndef MAME_SOUND_K056800_H
-#define MAME_SOUND_K056800_H
+#ifndef __K056800_H__
+#define __K056800_H__
 
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
 ***************************************************************************/
 
-#define MCFG_K056800_ADD(tag, clock) \
-		MCFG_DEVICE_ADD((tag), K056800, (clock))
-
-#define MCFG_K056800_INT_HANDLER(cb) \
-		devcb = &k056800_device::set_int_handler(*device, (DEVCB_##cb));
+#define MCFG_K056800_ADD(_tag, _clock) \
+	MCFG_DEVICE_ADD(_tag, K056800, _clock)
+#define MCFG_K056800_INT_HANDLER(_devcb) \
+	devcb = &k056800_device::set_int_handler(*device, DEVCB_##_devcb);
 
 
 
@@ -33,7 +32,7 @@ public:
 	k056800_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_int_handler(device_t &device, Object &&cb) { return downcast<k056800_device &>(device).m_int_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_int_handler(device_t &device, _Object object) { return downcast<k056800_device &>(device).m_int_handler.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( host_r );
 	DECLARE_WRITE8_MEMBER( host_w );
@@ -55,6 +54,8 @@ private:
 	devcb_write_line   m_int_handler;
 };
 
-DECLARE_DEVICE_TYPE(K056800, k056800_device)
+extern const device_type K056800;
 
-#endif // MAME_SOUND_K056800_H
+
+
+#endif /* __K056800_H__ */

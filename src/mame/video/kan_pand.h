@@ -8,10 +8,8 @@
 
 **************************************************************************/
 
-#ifndef MAME_VIDEO_KAN_PAND_H
-#define MAME_VIDEO_KAN_PAND_H
-
-#pragma once
+#ifndef __KAN_PAND_H__
+#define __KAN_PAND_H__
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -22,6 +20,7 @@ class kaneko_pandora_device : public device_t,
 {
 public:
 	kaneko_pandora_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~kaneko_pandora_device() {}
 
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
@@ -41,7 +40,6 @@ public:
 	void set_clear_bitmap( int clear );
 	void eof();
 	void set_bg_pen( int pen );
-	void flip_screen_set(bool flip) { m_flip_screen = flip; }
 
 protected:
 	// device-level overrides
@@ -59,11 +57,10 @@ private:
 	uint8_t           m_gfx_region;
 	int             m_xoffset;
 	int             m_yoffset;
-	bool            m_flip_screen;
 	required_device<gfxdecode_device> m_gfxdecode;
 };
 
-DECLARE_DEVICE_TYPE(KANEKO_PANDORA, kaneko_pandora_device)
+extern const device_type KANEKO_PANDORA;
 
 
 /***************************************************************************
@@ -79,4 +76,4 @@ DECLARE_DEVICE_TYPE(KANEKO_PANDORA, kaneko_pandora_device)
 #define MCFG_KANEKO_PANDORA_GFXDECODE(_gfxtag) \
 	kaneko_pandora_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
 
-#endif // MAME_VIDEO_KAN_PAND_H
+#endif /* __KAN_PAND_H__ */

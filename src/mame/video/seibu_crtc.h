@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_SEIBU_CRTC_H
-#define MAME_VIDEO_SEIBU_CRTC_H
-
 #pragma once
+
+#ifndef __SEIBU_CRTCDEV_H__
+#define __SEIBU_CRTCDEV_H__
 
 
 //**************************************************************************
@@ -46,11 +46,11 @@ public:
 	// construction/destruction
 	seibu_crtc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_decrypt_key_callback(device_t &device, Object &&cb) { return downcast<seibu_crtc_device &>(device).m_decrypt_key_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_layer_en_callback(device_t &device, Object &&cb) { return downcast<seibu_crtc_device &>(device).m_layer_en_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_layer_scroll_callback(device_t &device, Object &&cb) { return downcast<seibu_crtc_device &>(device).m_layer_scroll_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_reg_1a_callback(device_t &device, Object &&cb) { return downcast<seibu_crtc_device &>(device).m_reg_1a_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_layer_scroll_base_callback(device_t &device, Object &&cb) { return downcast<seibu_crtc_device &>(device).m_layer_scroll_base_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_decrypt_key_callback(device_t &device, _Object object) { return downcast<seibu_crtc_device &>(device).m_decrypt_key_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_layer_en_callback(device_t &device, _Object object) { return downcast<seibu_crtc_device &>(device).m_layer_en_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_layer_scroll_callback(device_t &device, _Object object) { return downcast<seibu_crtc_device &>(device).m_layer_scroll_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_reg_1a_callback(device_t &device, _Object object) { return downcast<seibu_crtc_device &>(device).m_reg_1a_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_layer_scroll_base_callback(device_t &device, _Object object) { return downcast<seibu_crtc_device &>(device).m_layer_scroll_base_cb.set_callback(object); }
 
 	// I/O operations
 	DECLARE_WRITE16_MEMBER( write );
@@ -88,6 +88,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SEIBU_CRTC, seibu_crtc_device)
+extern const device_type SEIBU_CRTC;
 
-#endif // MAME_VIDEO_SEIBU_CRTC_H
+#endif

@@ -87,12 +87,9 @@
  */
 
 #include "emu.h"
-#include "includes/fmtowns.h"
-
 #include "machine/pic8259.h"
 #include "machine/ram.h"
-#include "screen.h"
-
+#include "includes/fmtowns.h"
 
 //#define CRTC_REG_DISP 1
 //#define SPR_DEBUG 1

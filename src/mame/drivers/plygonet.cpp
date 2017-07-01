@@ -64,15 +64,12 @@
 */
 
 #include "emu.h"
-#include "includes/plygonet.h"
 
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
-#include "machine/watchdog.h"
 #include "sound/k054539.h"
-#include "screen.h"
-#include "speaker.h"
-
+#include "machine/watchdog.h"
+#include "includes/plygonet.h"
 
 enum { BANK_GROUP_A, BANK_GROUP_B, INVALID_BANK_GROUP };
 
@@ -319,7 +316,7 @@ READ16_MEMBER(polygonet_state::dsp56k_bootload_r)
 
 static uint8_t dsp56k_bank_group(device_t* cpu)
 {
-	uint16_t portC = downcast<dsp56k_device *>(cpu)->get_peripheral_memory(0xffe3);
+	uint16_t portC = ((dsp56k_device *)cpu)->get_peripheral_memory(0xffe3);
 
 	/* If bank group B is on, it overrides bank group A */
 	if (portC & 0x0002)
@@ -332,7 +329,7 @@ static uint8_t dsp56k_bank_group(device_t* cpu)
 
 static uint8_t dsp56k_bank_num(device_t* cpu, uint8_t bank_group)
 {
-	uint16_t portC = downcast<dsp56k_device *>(cpu)->get_peripheral_memory(0xffe3);
+	uint16_t portC = ((dsp56k_device *)cpu)->get_peripheral_memory(0xffe3);
 
 	if (bank_group == BANK_GROUP_A)
 	{
@@ -603,7 +600,7 @@ WRITE_LINE_MEMBER(polygonet_state::k054539_nmi_gen)
 	m_sound_intck = state;
 }
 
-static MACHINE_CONFIG_START( plygonet )
+static MACHINE_CONFIG_START( plygonet, polygonet_state )
 
 	MCFG_CPU_ADD("maincpu", M68EC020, XTAL_32MHz/2)
 	MCFG_CPU_PROGRAM_MAP(main_map)
@@ -778,6 +775,6 @@ ROM_START( polynetw )
 	ROM_LOAD( "polynetw.nv", 0x0000, 0x0080, CRC(8f39d644) SHA1(8733e1a288ba20c4b04b3aedde52801d05cebdf9) )
 ROM_END
 
-//    YEAR  NAME      PARENT   MACHINE   INPUT      STATE            INIT
+/*          ROM       parent   machine   inp        init */
 GAME( 1993, plygonet, 0,       plygonet, polygonet, polygonet_state, polygonet, ROT90, "Konami", "Polygonet Commanders (ver UAA)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
-GAME( 1993, polynetw, 0,       plygonet, polynetw,  polygonet_state, polygonet, ROT90, "Konami", "Poly-Net Warriors (ver JAA)",    MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+GAME( 1993, polynetw, 0,       plygonet, polynetw, polygonet_state,  polygonet, ROT90, "Konami", "Poly-Net Warriors (ver JAA)", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )

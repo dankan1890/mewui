@@ -61,11 +61,10 @@
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
-#include "machine/6840ptm.h"
 #include "machine/ram.h"
-#include "sound/spkrdev.h"
+#include "machine/6840ptm.h"
 #include "video/tms9928a.h"
-#include "speaker.h"
+#include "sound/speaker.h"
 
 #define SCREEN_TAG      "screen"
 #define M6809_TAG       "u3"
@@ -414,10 +413,10 @@ void arachnid_state::machine_start()
 ***************************************************************************/
 
 /*-------------------------------------------------
-    MACHINE_CONFIG_START( arachnid )
+    MACHINE_CONFIG_START( arachnid, arachnid_state )
 -------------------------------------------------*/
 
-static MACHINE_CONFIG_START( arachnid )
+static MACHINE_CONFIG_START( arachnid, arachnid_state )
 	// basic machine hardware
 	MCFG_CPU_ADD(M6809_TAG, M6809, XTAL_1MHz)
 	MCFG_CPU_PROGRAM_MAP(arachnid_map)
@@ -469,5 +468,5 @@ ROM_END
     SYSTEM DRIVERS
 ***************************************************************************/
 
-/*    YEAR  NAME        PARENT     MACHINE   INPUT     STATE              INIT         COMPANY             FULLNAME */
-GAME( 1990, arac6000,   0,         arachnid, arachnid, arachnid_state,    0,    ROT0,  "Arachnid",         "Super Six Plus II English Mark Darts", MACHINE_MECHANICAL | MACHINE_NOT_WORKING )
+/*    YEAR  NAME        PARENT      COMPAT  MACHINE     INPUT       INIT    COMPANY                   FULLNAME */
+GAME( 1990, arac6000,   0,         arachnid,        arachnid, driver_device,    0,    ROT0,  "Arachnid",         "Super Six Plus II English Mark Darts", MACHINE_MECHANICAL | MACHINE_NOT_WORKING )

@@ -8,11 +8,10 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_A2BUS_A2SWYFT_H
-#define MAME_BUS_A2BUS_A2SWYFT_H
+#ifndef __A2BUS_SWYFT__
+#define __A2BUS_SWYFT__
 
-#pragma once
-
+#include "emu.h"
 #include "a2bus.h"
 
 //**************************************************************************
@@ -26,12 +25,11 @@ class a2bus_swyft_device:
 public:
 	// construction/destruction
 	a2bus_swyft_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	a2bus_swyft_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	virtual const tiny_rom_entry *device_rom_region() const override;
 
 protected:
-	a2bus_swyft_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -49,6 +47,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(A2BUS_SWYFT, a2bus_swyft_device)
+extern const device_type A2BUS_SWYFT;
 
-#endif // MAME_BUS_A2BUS_A2SWYFT_H
+#endif  /* __A2BUS_SWYFT__ */

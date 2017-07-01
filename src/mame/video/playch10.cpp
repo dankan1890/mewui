@@ -1,10 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Ernesto Corvi,Brad Oliver
 #include "emu.h"
-#include "includes/playch10.h"
 #include "video/ppu2c0x.h"
+#include "includes/playch10.h"
 
-#include "screen.h"
 
 
 WRITE8_MEMBER(playch10_state::playch10_videoram_w)

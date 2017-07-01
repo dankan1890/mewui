@@ -154,6 +154,7 @@ public:
 	DECLARE_WRITE16_MEMBER(sharedram_68000_w);
 	DECLARE_WRITE16_MEMBER(sub_ctrl_w);
 	DECLARE_READ16_MEMBER(seta_dsw_r);
+	DECLARE_READ16_MEMBER(calibr50_ip_r);
 	DECLARE_WRITE16_MEMBER(calibr50_soundlatch_w);
 	DECLARE_READ16_MEMBER(usclssic_dsw_r);
 	DECLARE_READ16_MEMBER(usclssic_trackball_x_r);
@@ -245,14 +246,8 @@ public:
 	uint32_t screen_update_setaroul(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_inttoote(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_seta_layers(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_seta_buffer_sprites);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_setaroul);
-	DECLARE_READ16_MEMBER(ipl0_ack_r);
-	DECLARE_WRITE16_MEMBER(ipl0_ack_w);
-	DECLARE_READ16_MEMBER(ipl1_ack_r);
-	DECLARE_WRITE16_MEMBER(ipl1_ack_w);
-	DECLARE_READ16_MEMBER(ipl2_ack_r);
-	DECLARE_WRITE16_MEMBER(ipl2_ack_w);
+	void screen_eof_seta_buffer_sprites(screen_device &screen, bool state);
+	void screen_eof_setaroul(screen_device &screen, bool state);
 	void uPD71054_update_timer(device_t *cpu, int no);
 	INTERRUPT_GEN_MEMBER(wrofaero_interrupt);
 	TIMER_CALLBACK_MEMBER(uPD71054_timer_callback);

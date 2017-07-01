@@ -8,7 +8,6 @@
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "expander.h"
 
 
@@ -16,7 +15,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SVI_EXPANDER, svi_expander_device, "svi_expander", "SVI 318/328 Expander Bus")
+const device_type SVI_EXPANDER = &device_creator<svi_expander_device>;
 
 
 //**************************************************************************
@@ -28,7 +27,7 @@ DEFINE_DEVICE_TYPE(SVI_EXPANDER, svi_expander_device, "svi_expander", "SVI 318/3
 //-------------------------------------------------
 
 svi_expander_device::svi_expander_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SVI_EXPANDER, tag, owner, clock),
+	device_t(mconfig, SVI_EXPANDER, "SVI 318/328 Expander Bus", tag, owner, clock, "svi_expander", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_module(nullptr),
 	m_int_handler(*this),

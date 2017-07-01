@@ -222,23 +222,17 @@ TODO:
 */
 
 #include "emu.h"
-
-#include "bus/centronics/ctronics.h"
 #include "cpu/z80/z80.h"
-#include "imagedev/cassette.h"
-#include "machine/i8255.h"
 #include "machine/ram.h"
+#include "machine/i8255.h"
 #include "sound/ay8910.h"
 #include "sound/wave.h"
 #include "video/mc6845.h"
-
-#include "screen.h"
-#include "softlist.h"
-#include "speaker.h"
-
+#include "imagedev/cassette.h"
 #include "formats/spc1000_cas.h"
-
+#include "bus/centronics/ctronics.h"
 #define VDP_CLOCK  XTAL_42_9545MHz
+#include "softlist.h"
 
 class spc1500_state : public driver_device
 {
@@ -898,7 +892,7 @@ READ8_MEMBER( spc1500_state::porta_r )
 	return data;
 }
 
-static MACHINE_CONFIG_START( spc1500 )
+static MACHINE_CONFIG_START( spc1500, spc1500_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(spc1500_mem)
@@ -974,5 +968,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT   MACHINE    INPUT    CLASS          INIT  COMPANY    FULLNAME    FLAGS
-COMP( 1987, spc1500,  0,      0,       spc1500,   spc1500, spc1500_state, 0,    "Samsung", "SPC-1500", 0 )
+/*    YEAR  NAME      PARENT  COMPAT   MACHINE    INPUT    CLASS         INIT    COMPANY    FULLNAME       FLAGS */
+COMP( 1987, spc1500,  0,      0,       spc1500,   spc1500, driver_device,  0,   "Samsung", "SPC-1500", 0 )

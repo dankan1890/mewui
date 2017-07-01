@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_SOUND_MAS3507D_H
-#define MAME_SOUND_MAS3507D_H
-
 #pragma once
+
+#ifndef __MAS3507D_H__
+#define __MAS3507D_H__
 
 
 //**************************************************************************
@@ -63,6 +63,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(MAS3507D, mas3507d_device)
+extern const device_type MAS3507D;
 
-#endif // MAME_SOUND_MAS3507D_H
+#endif /* __MAS3507D_H__ */

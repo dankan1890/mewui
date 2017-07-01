@@ -11,8 +11,6 @@
  */
 
 #include <nana/gui/widgets/float_listbox.hpp>
-#include <nana/gui/widgets/scroll.hpp>
-
 #include <nana/gui/layout_utility.hpp>
 
 namespace nana

@@ -57,7 +57,6 @@ the main program is 9th October 1990.
 ******************************************************************************************/
 
 #include "emu.h"
-#include "bus/isa/cga.h"
 #include "cpu/i86/i86.h"
 #include "sound/hc55516.h"
 #include "machine/bankdev.h"
@@ -105,14 +104,14 @@ public:
 	virtual const tiny_rom_entry *device_rom_region() const override;
 };
 
-DEFINE_DEVICE_TYPE(ISA8_CGA_FILETTO, isa8_cga_filetto_device, "filetto_cga", "ISA8_CGA_FILETTO")
+const device_type ISA8_CGA_FILETTO = &device_creator<isa8_cga_filetto_device>;
 
 //-------------------------------------------------
 //  isa8_cga_filetto_device - constructor
 //-------------------------------------------------
 
 isa8_cga_filetto_device::isa8_cga_filetto_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	isa8_cga_device(mconfig, ISA8_CGA_FILETTO, tag, owner, clock)
+		isa8_cga_device( mconfig, ISA8_CGA_FILETTO, "ISA8_CGA_FILETTO", tag, owner, clock, "filetto_cga", __FILE__)
 {
 }
 
@@ -146,14 +145,14 @@ private:
 
 
 /* for superimposing CGA over a different source video (i.e. tetriskr) */
-DEFINE_DEVICE_TYPE(ISA8_CGA_TETRISKR, isa8_cga_tetriskr_device, "tetriskr_cga", "ISA8_CGA_TETRISKR")
+const device_type ISA8_CGA_TETRISKR = &device_creator<isa8_cga_tetriskr_device>;
 
 //-------------------------------------------------
 //  isa8_cga_tetriskr_device - constructor
 //-------------------------------------------------
 
 isa8_cga_tetriskr_device::isa8_cga_tetriskr_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	isa8_cga_superimpose_device(mconfig, ISA8_CGA_TETRISKR, tag, owner, clock)
+		isa8_cga_superimpose_device( mconfig, ISA8_CGA_TETRISKR, "ISA8_CGA_TETRISKR", tag, owner, clock, "tetriskr_cga", __FILE__)
 {
 }
 
@@ -480,7 +479,7 @@ static SLOT_INTERFACE_START( filetto_isa8_cards )
 SLOT_INTERFACE_END
 
 
-static MACHINE_CONFIG_START( filetto )
+static MACHINE_CONFIG_START( filetto, pcxt_state )
 	MCFG_CPU_ADD("maincpu", I8088, XTAL_14_31818MHz/3)
 	MCFG_CPU_PROGRAM_MAP(filetto_map)
 	MCFG_CPU_IO_MAP(filetto_io)
@@ -501,7 +500,7 @@ static MACHINE_CONFIG_START( filetto )
 	MCFG_ADDRESS_MAP_BANK_STRIDE(0x10000)
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( tetriskr )
+static MACHINE_CONFIG_START( tetriskr, pcxt_state )
 	MCFG_CPU_ADD("maincpu", I8088, XTAL_14_31818MHz/3)
 	MCFG_CPU_PROGRAM_MAP(tetriskr_map)
 	MCFG_CPU_IO_MAP(tetriskr_io)
@@ -540,5 +539,5 @@ ROM_START( tetriskr )
 	ROM_LOAD( "b-10.u10", 0x0000, 0x10000, CRC(efc2a0f6) SHA1(5f0f1e90237bee9b78184035a32055b059a91eb3) )
 ROM_END
 
-GAME( 1990, filetto,  0, filetto,  filetto,  pcxt_state,  0,  ROT0,  "Novarmatic", "Filetto (v1.05 901009)",                             MACHINE_IMPERFECT_SOUND )
-GAME( 1988?,tetriskr, 0, tetriskr, tetriskr, pcxt_state,  0,  ROT0,  "bootleg",    "Tetris (Korean bootleg of Mirrorsoft PC-XT Tetris)", MACHINE_IMPERFECT_SOUND )
+GAME( 1990, filetto,  0, filetto,  filetto, driver_device,  0,  ROT0,  "Novarmatic", "Filetto (v1.05 901009)",MACHINE_IMPERFECT_SOUND )
+GAME( 1988?,tetriskr, 0, tetriskr, tetriskr, driver_device,  0, ROT0,  "bootleg",    "Tetris (Korean bootleg of Mirrorsoft PC-XT Tetris)", MACHINE_IMPERFECT_SOUND )

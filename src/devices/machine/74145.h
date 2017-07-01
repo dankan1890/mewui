@@ -8,11 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_74145_H
-#define MAME_MACHINE_74145_H
-
-#pragma once
-
+#ifndef __TTL74145_H__
+#define __TTL74145_H__
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
@@ -59,20 +56,19 @@ public:
 	// construction/destruction
 	ttl74145_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_output_line_0_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_0_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_1_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_1_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_2_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_2_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_3_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_3_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_4_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_4_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_5_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_5_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_6_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_6_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_7_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_7_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_8_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_8_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_output_line_9_callback(device_t &device, Object &&cb) { return downcast<ttl74145_device &>(device).m_output_line_9_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_output_line_0_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_0_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_1_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_1_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_2_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_2_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_3_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_3_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_4_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_4_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_5_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_5_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_6_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_6_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_7_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_7_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_8_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_8_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_output_line_9_callback(device_t &device, _Object object) { return downcast<ttl74145_device &>(device).m_output_line_9_cb.set_callback(object); }
 
 	uint16_t read();
 	void write(uint8_t data);
-
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -95,6 +91,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(TTL74145, ttl74145_device)
+extern const device_type TTL74145;
 
-#endif // MAME_MACHINE_74145_H
+#endif /* TTL74145 */

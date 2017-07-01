@@ -1,16 +1,6 @@
 GLSL optimizer Change Log
 =========================
 
-
-2016 10
--------
-
-* Metal/GLES: Fixed bad optimization (all code removed) when framebuffer fetch extension is used, but
-  fragment shader does not actually read the incoming color value.
-* Fixed translation of texelSize().
-* Fixed translation of texelFetch().
-
-
 2016 09
 -------
 

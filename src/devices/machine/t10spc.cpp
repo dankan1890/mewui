@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#include "emu.h"
 #include "t10spc.h"
 
 void t10spc::t10_start(device_t &device)
@@ -65,12 +64,6 @@ void t10spc::ExecCommand()
 		{
 			m_transfer_length = command[ 4 ];
 		}
-		break;
-
-	case T10SPC_CMD_START_STOP_UNIT:
-		m_phase = SCSI_PHASE_STATUS;
-		m_status_code = SCSI_STATUS_CODE_GOOD;
-		m_transfer_length = 0;
 		break;
 
 	case T10SPC_CMD_SEND_DIAGNOSTIC:

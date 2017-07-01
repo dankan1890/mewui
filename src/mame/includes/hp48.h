@@ -7,13 +7,8 @@
    Hewlett Packard HP48 S/SX & G/GX and HP49 G
 
 **********************************************************************/
-#ifndef MAME_INCLUDES_HP84_H
-#define MAME_INCLUDES_HP84_H
-
-#pragma once
 
 #include "sound/dac.h"
-
 /* model */
 typedef enum {
 	HP48_S,
@@ -84,9 +79,6 @@ public:
 	uint8_t m_screens[ HP48_NB_SCREENS ][ 64 ][ 144 ];
 	int m_cur_screen;
 	uint8_t* m_rom;
-	emu_timer *m_1st_timer;
-	emu_timer *m_2nd_timer;
-	emu_timer *m_kbd_timer;
 
 	DECLARE_DRIVER_INIT(hp48);
 	virtual void machine_reset() override;
@@ -199,15 +191,13 @@ public:
 	virtual bool must_be_loaded() const override { return 0; }
 	virtual bool is_reset_on_load() const override { return 0; }
 	virtual const char *file_extensions() const override { return "crd"; }
-	virtual const char *custom_instance_name() const override { return "port"; }
-	virtual const char *custom_brief_instance_name() const override { return "p"; }
 
 	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
 	virtual image_init_result call_create(int format_type, util::option_resolution *format_options) override;
-
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 private:
 	void hp48_fill_port();
@@ -219,10 +209,8 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(HP48_PORT, hp48_port_image_device)
+extern const device_type HP48_PORT;
 
 #define MCFG_HP48_PORT_ADD(_tag, _port, _module, _max_size) \
 	MCFG_DEVICE_ADD(_tag, HP48_PORT, 0) \
 	hp48_port_image_device::set_port_config(*device, _port, _module, _max_size);
-
-#endif // MAME_INCLUDES_HP84_H

@@ -35,7 +35,7 @@
 #include "asc.h"
 
 // device type definition
-DEFINE_DEVICE_TYPE(ASC, asc_device, "asc", "ASC")
+const device_type ASC = &device_creator<asc_device>;
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -46,11 +46,10 @@ DEFINE_DEVICE_TYPE(ASC, asc_device, "asc", "ASC")
 //-------------------------------------------------
 
 asc_device::asc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, ASC, tag, owner, clock)
-	, device_sound_interface(mconfig, *this)
-	, write_irq(*this)
-	, m_chip_type(asc_type::ASC)
-	, m_timer(nullptr)
+	: device_t(mconfig, ASC, "ASC", tag, owner, clock, "asc", __FILE__),
+		device_sound_interface(mconfig, *this),
+		write_irq(*this),
+		m_chip_type(0)
 {
 }
 
@@ -60,7 +59,7 @@ asc_device::asc_device(const machine_config &mconfig, const char *tag, device_t 
 //  the chip type
 //-------------------------------------------------
 
-void asc_device::static_set_type(device_t &device, asc_type type)
+void asc_device::static_set_type(device_t &device, int type)
 {
 	asc_device &asc = downcast<asc_device &>(device);
 	asc.m_chip_type = type;
@@ -171,7 +170,7 @@ void asc_device::sound_stream_update(sound_stream &stream, stream_sample_t **inp
 
 				switch (m_chip_type)
 				{
-					case asc_type::SONORA:
+					case ASC_TYPE_SONORA:
 						if (m_fifo_cap_a < 0x200)
 						{
 							m_regs[R_FIFOSTAT-0x800] |= 0x4;    // fifo less than half full
@@ -273,16 +272,16 @@ READ8_MEMBER( asc_device::read )
 			case R_VERSION:
 				switch (m_chip_type)
 				{
-					case asc_type::ASC:
+					case ASC_TYPE_ASC:
 						return 0;
 
-					case asc_type::V8:
-					case asc_type::EAGLE:
-					case asc_type::SPICE:
-					case asc_type::VASP:
+					case ASC_TYPE_V8:
+					case ASC_TYPE_EAGLE:
+					case ASC_TYPE_SPICE:
+					case ASC_TYPE_VASP:
 						return 0xe8;
 
-					case asc_type::SONORA:
+					case ASC_TYPE_SONORA:
 						return 0xbc;
 
 					default:    // return the actual register value
@@ -293,10 +292,10 @@ READ8_MEMBER( asc_device::read )
 			case R_MODE:
 				switch (m_chip_type)
 				{
-					case asc_type::V8:
-					case asc_type::EAGLE:
-					case asc_type::SPICE:
-					case asc_type::VASP:
+					case ASC_TYPE_V8:
+					case ASC_TYPE_EAGLE:
+					case ASC_TYPE_SPICE:
+					case ASC_TYPE_VASP:
 						return 1;
 
 					default:
@@ -307,10 +306,10 @@ READ8_MEMBER( asc_device::read )
 			case R_CONTROL:
 				switch (m_chip_type)
 				{
-					case asc_type::V8:
-					case asc_type::EAGLE:
-					case asc_type::SPICE:
-					case asc_type::VASP:
+					case ASC_TYPE_V8:
+					case ASC_TYPE_EAGLE:
+					case ASC_TYPE_SPICE:
+					case ASC_TYPE_VASP:
 						return 1;
 
 					default:
@@ -319,7 +318,7 @@ READ8_MEMBER( asc_device::read )
 				break;
 
 			case R_FIFOSTAT:
-				if (m_chip_type == asc_type::V8)
+				if (m_chip_type == ASC_TYPE_V8)
 				{
 					rv = 3;
 				}

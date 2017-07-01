@@ -37,7 +37,6 @@ Notes:
 
 #include "emu.h"
 #include "includes/suna8.h"
-
 #include "cpu/z80/z80.h"
 #include "machine/watchdog.h"
 #include "sound/2203intf.h"
@@ -45,8 +44,6 @@ Notes:
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "speaker.h"
-
 
 #define SUNA8_MASTER_CLOCK      XTAL_24MHz
 
@@ -1867,7 +1864,7 @@ GFXDECODE_END
 /* 1 x 24 MHz crystal */
 
 
-static MACHINE_CONFIG_START( hardhead )
+static MACHINE_CONFIG_START( hardhead, suna8_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SUNA8_MASTER_CLOCK / 4)    /* verified on pcb */
@@ -1925,7 +1922,7 @@ MACHINE_CONFIG_END
 /* 1 x 24 MHz crystal */
 
 /* 2203 + 8910 */
-static MACHINE_CONFIG_START( rranger )
+static MACHINE_CONFIG_START( rranger, suna8_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SUNA8_MASTER_CLOCK / 4)                    /* ? */
@@ -1993,7 +1990,7 @@ MACHINE_RESET_MEMBER(suna8_state,brickzn)
 		m_bank1d->set_entry(0);
 }
 
-static MACHINE_CONFIG_START( brickzn11 )
+static MACHINE_CONFIG_START( brickzn11, suna8_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SUNA8_MASTER_CLOCK / 4)        /* SUNA PROTECTION BLOCK */
@@ -2106,7 +2103,7 @@ MACHINE_CONFIG_END
                                 Star Fighter
 ***************************************************************************/
 
-static MACHINE_CONFIG_START( starfigh )
+static MACHINE_CONFIG_START( starfigh, suna8_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SUNA8_MASTER_CLOCK / 4)                    /* ? */
@@ -2161,7 +2158,7 @@ MACHINE_CONFIG_END
                                 Spark Man
 ***************************************************************************/
 
-static MACHINE_CONFIG_START( sparkman )
+static MACHINE_CONFIG_START( sparkman, suna8_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, SUNA8_MASTER_CLOCK / 4)                    /* ? */
@@ -3065,7 +3062,7 @@ GAME( 1989, sparkmana, sparkman, sparkman, sparkman, suna8_state, sparkman,  ROT
 GAME( 1990, starfigh,  0,        starfigh, starfigh, suna8_state, starfigh,  ROT90, "SunA",                       "Star Fighter (v1)",           MACHINE_IMPERFECT_GRAPHICS )
 
 GAME( 1991, hardhea2,  0,        hardhea2, hardhea2, suna8_state, hardhea2,  ROT0,  "SunA",                       "Hard Head 2 (v2.0)",          0 )
-GAME( 1991, hardhea2b, hardhea2, hardhea2b,hardhea2, suna8_state, hardhea2b, ROT0,  "bootleg",                    "Hard Head 2 (v2.0, bootleg)", MACHINE_NOT_WORKING )
+GAME( 1991, hardhea2b, hardhea2, hardhea2b,hardhea2, suna8_state, hardhea2b, ROT0,  "bootleg",                    "Hard Head 2 (v2.0, bootleg)",       MACHINE_NOT_WORKING )
 
 GAME( 1992, brickzn,   0,        brickzn,  brickznv6,suna8_state, brickzn,   ROT90, "SunA",                       "Brick Zone (v6.0, Joystick)", 0 )
 GAME( 1992, brickznv5, brickzn,  brickzn,  brickzn,  suna8_state, brickznv5, ROT90, "SunA",                       "Brick Zone (v5.0, Joystick)", 0 )

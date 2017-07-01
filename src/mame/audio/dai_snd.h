@@ -6,13 +6,15 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_AUDIO_DAI_SND_H
-#define MAME_AUDIO_DAI_SND_H
+#ifndef DAI_SND_H_
+#define DAI_SND_H_
 
+#include "emu.h"
 
 // ======================> dai_sound_device
 
-class dai_sound_device : public device_t, public device_sound_interface
+class dai_sound_device : public device_t,
+							public device_sound_interface
 {
 public:
 	// construction/destruction
@@ -39,6 +41,6 @@ private:
 	static const uint16_t s_noise_volume_table[];
 };
 
-DECLARE_DEVICE_TYPE(DAI_SOUND, dai_sound_device)
+extern const device_type DAI_SOUND;
 
-#endif // MAME_AUDIO_DAI_SND_H
+#endif /* DAI_H_ */

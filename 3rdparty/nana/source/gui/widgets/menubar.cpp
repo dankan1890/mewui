@@ -121,9 +121,9 @@ namespace nana
 					graph_.rectangle(r.pare_off(1), true, body);
 				}
 
-				void item_renderer::caption(const point& pos, const native_string_type& text)
+				void item_renderer::caption(const point& pos, const native_string_type& text, const nana::color& fgcolor)
 				{
-					graph_.string(pos, text, scheme_ptr_->text_fgcolor);
+					graph_.string(pos, text, fgcolor);
 
 				}
 			//end class item_renderer
@@ -213,7 +213,14 @@ namespace nana
 
 						//Draw text, the text is transformed from orignal for hotkey character
 						int text_top_off = (item_s.height - text_s.height) / 2;
-						ird.caption({ item_pos.x + 8, item_pos.y + text_top_off }, to_nstring(text));
+						nana::color text_color;
+						switch (item_state)
+						{
+							case state::selected:		text_color = ird.scheme_ptr()->text_selected;	break;
+							case state::highlighted:	text_color = ird.scheme_ptr()->text_highlight;	break;
+							default:					text_color = ird.scheme_ptr()->text_fgcolor;	break;							
+						}
+						ird.caption({ item_pos.x + 8, item_pos.y + text_top_off }, to_nstring(text), text_color);
 
 						if (hotkey)
 						{
@@ -224,7 +231,7 @@ namespace nana
 							graph.text_metrics(ascent, descent, inleading);
 							int x = item_pos.x + 8 + off_w;
 							int y = item_pos.y + text_top_off + ascent + 1;
-							graph.line({ x, y }, { x + static_cast<int>(hotkey_size.width) - 1, y }, ird.scheme_ptr()->text_fgcolor);
+							graph.line({ x, y }, { x + static_cast<int>(hotkey_size.width) - 1, y }, text_color);
 						}
 
 						item_pos.x += i->size.width;

@@ -8,10 +8,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_UTIL_BITMAP_H
-#define MAME_UTIL_BITMAP_H
-
 #pragma once
+
+#ifndef __BITMAP_H__
+#define __BITMAP_H__
 
 #include "osdcore.h"
 #include "palette.h"
@@ -106,10 +106,10 @@ public:
 	void offsety(int32_t delta) { min_y += delta; max_y += delta; }
 
 	// internal state
-	int32_t         min_x;          // minimum X, or left coordinate
-	int32_t         max_x;          // maximum X, or right coordinate (inclusive)
-	int32_t         min_y;          // minimum Y, or top coordinate
-	int32_t         max_y;          // maximum Y, or bottom coordinate (inclusive)
+	int32_t           min_x;          // minimum X, or left coordinate
+	int32_t           max_x;          // maximum X, or right coordinate (inclusive)
+	int32_t           min_y;          // minimum Y, or top coordinate
+	int32_t           max_y;          // maximum Y, or bottom coordinate (inclusive)
 };
 
 
@@ -118,18 +118,17 @@ public:
 // bitmaps describe a rectangular array of pixels
 class bitmap_t
 {
+private:
+	// prevent implicit copying
+	bitmap_t(const bitmap_t &);
+	bitmap_t &operator=(const bitmap_t &);
+
 protected:
 	// construction/destruction -- subclasses only to ensure type correctness
-	bitmap_t(const bitmap_t &) = delete;
-	bitmap_t(bitmap_t &&that);
-	bitmap_t(bitmap_format format, uint8_t bpp, int width = 0, int height = 0, int xslop = 0, int yslop = 0);
-	bitmap_t(bitmap_format format, uint8_t bpp, void *base, int width, int height, int rowpixels);
-	bitmap_t(bitmap_format format, uint8_t bpp, bitmap_t &source, const rectangle &subrect);
+	bitmap_t(bitmap_format format, int bpp, int width = 0, int height = 0, int xslop = 0, int yslop = 0);
+	bitmap_t(bitmap_format format, int bpp, void *base, int width, int height, int rowpixels);
+	bitmap_t(bitmap_format format, int bpp, bitmap_t &source, const rectangle &subrect);
 	virtual ~bitmap_t();
-
-	// prevent implicit copying
-	bitmap_t &operator=(const bitmap_t &) = delete;
-	bitmap_t &operator=(bitmap_t &&that);
 
 public:
 	// allocation/deallocation
@@ -176,16 +175,16 @@ private:
 	void compute_base(int xslop, int yslop);
 
 	// internal state
-	std::unique_ptr<uint8_t []> m_alloc;        // pointer to allocated pixel memory
-	uint32_t                    m_allocbytes;   // size of our allocation
-	void *                      m_base;         // pointer to pixel (0,0) (adjusted for padding)
-	int32_t                     m_rowpixels;    // pixels per row (including padding)
-	int32_t                     m_width;        // width of the bitmap
-	int32_t                     m_height;       // height of the bitmap
-	bitmap_format               m_format;       // format of the bitmap
-	uint8_t                     m_bpp;          // bits per pixel
-	palette_t *                 m_palette;      // optional palette
-	rectangle                   m_cliprect;     // a clipping rectangle covering the full bitmap
+	uint8_t *         m_alloc;        // pointer to allocated pixel memory
+	uint32_t          m_allocbytes;   // size of our allocation
+	void *          m_base;         // pointer to pixel (0,0) (adjusted for padding)
+	int32_t           m_rowpixels;    // pixels per row (including padding)
+	int32_t           m_width;        // width of the bitmap
+	int32_t           m_height;       // height of the bitmap
+	bitmap_format   m_format;       // format of the bitmap
+	uint8_t           m_bpp;          // bits per pixel
+	palette_t *     m_palette;      // optional palette
+	rectangle       m_cliprect;     // a clipping rectangle covering the full bitmap
 };
 
 
@@ -200,12 +199,9 @@ private:
 
 protected:
 	// construction/destruction -- subclasses only
-	bitmap8_t(bitmap8_t &&) = default;
 	bitmap8_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, 8, width, height, xslop, yslop) { }
 	bitmap8_t(bitmap_format format, uint8_t *base, int width, int height, int rowpixels) : bitmap_t(format, 8, base, width, height, rowpixels) { assert(valid_format(format)); }
 	bitmap8_t(bitmap_format format, bitmap8_t &source, const rectangle &subrect) : bitmap_t(format, 8, source, subrect) { }
-
-	bitmap8_t &operator=(bitmap8_t &&) = default;
 
 public:
 	// getters
@@ -226,12 +222,9 @@ private:
 
 protected:
 	// construction/destruction -- subclasses only
-	bitmap16_t(bitmap16_t &&) = default;
 	bitmap16_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, 16, width, height, xslop, yslop) { assert(valid_format(format)); }
 	bitmap16_t(bitmap_format format, uint16_t *base, int width, int height, int rowpixels) : bitmap_t(format, 16, base, width, height, rowpixels) { assert(valid_format(format)); }
 	bitmap16_t(bitmap_format format, bitmap16_t &source, const rectangle &subrect) : bitmap_t(format, 16, source, subrect) { }
-
-	bitmap16_t &operator=(bitmap16_t &&) = default;
 
 public:
 	// getters
@@ -252,12 +245,9 @@ private:
 
 protected:
 	// construction/destruction -- subclasses only
-	bitmap32_t(bitmap32_t &&) = default;
 	bitmap32_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, 32, width, height, xslop, yslop) { assert(valid_format(format)); }
 	bitmap32_t(bitmap_format format, uint32_t *base, int width, int height, int rowpixels) : bitmap_t(format, 32, base, width, height, rowpixels) { assert(valid_format(format)); }
 	bitmap32_t(bitmap_format format, bitmap32_t &source, const rectangle &subrect) : bitmap_t(format, 32, source, subrect) { }
-
-	bitmap32_t &operator=(bitmap32_t &&) = default;
 
 public:
 	// getters
@@ -278,12 +268,9 @@ private:
 
 protected:
 	// construction/destruction -- subclasses only
-	bitmap64_t(bitmap64_t &&) = default;
 	bitmap64_t(bitmap_format format, int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap_t(format, 64, width, height, xslop, yslop) { assert(valid_format(format)); }
 	bitmap64_t(bitmap_format format, uint64_t *base, int width, int height, int rowpixels) : bitmap_t(format, 64, base, width, height, rowpixels) { assert(valid_format(format)); }
 	bitmap64_t(bitmap_format format, bitmap64_t &source, const rectangle &subrect) : bitmap_t(format, 64, source, subrect) { }
-
-	bitmap64_t &operator=(bitmap64_t &&) = default;
 
 public:
 	// getters
@@ -305,7 +292,6 @@ class bitmap_ind8 : public bitmap8_t
 
 public:
 	// construction/destruction
-	bitmap_ind8(bitmap_ind8 &&) = default;
 	bitmap_ind8(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap8_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_ind8(uint8_t *base, int width, int height, int rowpixels) : bitmap8_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_ind8(bitmap_ind8 &source, const rectangle &subrect) : bitmap8_t(k_bitmap_format, source, subrect) { }
@@ -314,8 +300,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_ind8 &operator=(bitmap_ind8 &&) = default;
 };
 
 // BITMAP_FORMAT_IND16 bitmaps
@@ -325,7 +309,6 @@ class bitmap_ind16 : public bitmap16_t
 
 public:
 	// construction/destruction
-	bitmap_ind16(bitmap_ind16 &&) = default;
 	bitmap_ind16(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap16_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_ind16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_ind16(bitmap_ind16 &source, const rectangle &subrect) : bitmap16_t(k_bitmap_format, source, subrect) { }
@@ -334,8 +317,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_ind16 &operator=(bitmap_ind16 &&) = default;
 };
 
 // BITMAP_FORMAT_IND32 bitmaps
@@ -345,7 +326,6 @@ class bitmap_ind32 : public bitmap32_t
 
 public:
 	// construction/destruction
-	bitmap_ind32(bitmap_ind32 &&) = default;
 	bitmap_ind32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap32_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_ind32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_ind32(bitmap_ind32 &source, const rectangle &subrect) : bitmap32_t(k_bitmap_format, source, subrect) { }
@@ -354,8 +334,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_ind32 &operator=(bitmap_ind32 &&) = default;
 };
 
 // BITMAP_FORMAT_IND64 bitmaps
@@ -365,7 +343,6 @@ class bitmap_ind64 : public bitmap64_t
 
 public:
 	// construction/destruction
-	bitmap_ind64(bitmap_ind64 &&) = default;
 	bitmap_ind64(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap64_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_ind64(uint64_t *base, int width, int height, int rowpixels) : bitmap64_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_ind64(bitmap_ind64 &source, const rectangle &subrect) : bitmap64_t(k_bitmap_format, source, subrect) { }
@@ -374,8 +351,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_ind64 &operator=(bitmap_ind64 &&) = default;
 };
 
 
@@ -388,7 +363,6 @@ class bitmap_yuy16 : public bitmap16_t
 
 public:
 	// construction/destruction
-	bitmap_yuy16(bitmap_yuy16 &&) = default;
 	bitmap_yuy16(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap16_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_yuy16(uint16_t *base, int width, int height, int rowpixels) : bitmap16_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_yuy16(bitmap_yuy16 &source, const rectangle &subrect) : bitmap16_t(k_bitmap_format, source, subrect) { }
@@ -397,8 +371,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_yuy16 &operator=(bitmap_yuy16 &&) = default;
 };
 
 // BITMAP_FORMAT_RGB32 bitmaps
@@ -408,7 +380,6 @@ class bitmap_rgb32 : public bitmap32_t
 
 public:
 	// construction/destruction
-	bitmap_rgb32(bitmap_rgb32 &&) = default;
 	bitmap_rgb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap32_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_rgb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_rgb32(bitmap_rgb32 &source, const rectangle &subrect) : bitmap32_t(k_bitmap_format, source, subrect) { }
@@ -417,8 +388,6 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_rgb32 &operator=(bitmap_rgb32 &&) = default;
 };
 
 // BITMAP_FORMAT_ARGB32 bitmaps
@@ -428,7 +397,6 @@ class bitmap_argb32 : public bitmap32_t
 
 public:
 	// construction/destruction
-	bitmap_argb32(bitmap_argb32 &&) = default;
 	bitmap_argb32(int width = 0, int height = 0, int xslop = 0, int yslop = 0) : bitmap32_t(k_bitmap_format, width, height, xslop, yslop) { }
 	bitmap_argb32(uint32_t *base, int width, int height, int rowpixels) : bitmap32_t(k_bitmap_format, base, width, height, rowpixels) { }
 	bitmap_argb32(bitmap_argb32 &source, const rectangle &subrect) : bitmap32_t(k_bitmap_format, source, subrect) { }
@@ -437,9 +405,7 @@ public:
 
 	// getters
 	bitmap_format format() const { return k_bitmap_format; }
-
-	bitmap_argb32 &operator=(bitmap_argb32 &&) = default;
 };
 
 
-#endif  // MAME_UTIL_BITMAP_H
+#endif  // __BITMAP_H__

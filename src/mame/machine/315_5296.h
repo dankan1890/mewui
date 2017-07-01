@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_315_5296_H
-#define MAME_MACHINE_315_5296_H
-
 #pragma once
 
+#ifndef _SEGA_315_5296_H
+#define _SEGA_315_5296_H
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -139,7 +140,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(SEGA_315_5296, sega_315_5296_device)
+extern const device_type SEGA_315_5296;
 
 
-#endif // MAME_MACHINE_315_5296_H
+#endif /* _SEGA_315_5296_H */

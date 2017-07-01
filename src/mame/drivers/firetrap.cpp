@@ -169,13 +169,10 @@ Stephh's notes (based on the games Z80 code and some tests) :
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/firetrap.h"
-
 #include "cpu/z80/z80.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/3526intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/firetrap.h"
 
 #define FIRETRAP_XTAL XTAL_12MHz
 
@@ -626,7 +623,7 @@ void firetrap_state::machine_reset()
 	m_coin_command_pending = 0;
 }
 
-static MACHINE_CONFIG_START( firetrap )
+static MACHINE_CONFIG_START( firetrap, firetrap_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, FIRETRAP_XTAL/2)       // 6 MHz
@@ -662,11 +659,11 @@ static MACHINE_CONFIG_START( firetrap )
 
 	MCFG_SOUND_ADD("msm", MSM5205, FIRETRAP_XTAL/32)    // 375 kHz
 	MCFG_MSM5205_VCLK_CB(WRITELINE(firetrap_state, firetrap_adpcm_int)) /* interrupt function */
-	MCFG_MSM5205_PRESCALER_SELECTOR(S48_4B)      /* 7.8125kHz          */
+	MCFG_MSM5205_PRESCALER_SELECTOR(MSM5205_S48_4B)      /* 7.8125kHz          */
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( firetrapbl )
+static MACHINE_CONFIG_START( firetrapbl, firetrap_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, FIRETRAP_XTAL/2)       // 6 MHz
@@ -702,7 +699,7 @@ static MACHINE_CONFIG_START( firetrapbl )
 
 	MCFG_SOUND_ADD("msm", MSM5205, FIRETRAP_XTAL/32)    // 375 kHz
 	MCFG_MSM5205_VCLK_CB(WRITELINE(firetrap_state, firetrap_adpcm_int)) /* interrupt function */
-	MCFG_MSM5205_PRESCALER_SELECTOR(S48_4B)      /* 7.8125kHz          */
+	MCFG_MSM5205_PRESCALER_SELECTOR(MSM5205_S48_4B)      /* 7.8125kHz          */
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_CONFIG_END
 
@@ -970,7 +967,7 @@ ROM_END
 
 
 
-GAME( 1986, firetrap,   0,        firetrap,   firetrap,   firetrap_state, 0, ROT90, "Wood Place Inc. (Data East USA license)", "Fire Trap (US, set 1)", MACHINE_SUPPORTS_SAVE )
-GAME( 1986, firetrapa,  firetrap, firetrap,   firetrap,   firetrap_state, 0, ROT90, "Wood Place Inc. (Data East USA license)", "Fire Trap (US, set 2)", MACHINE_SUPPORTS_SAVE )
-GAME( 1986, firetrapj,  firetrap, firetrap,   firetrapj,  firetrap_state, 0, ROT90, "Wood Place Inc.", "Fire Trap (Japan)", MACHINE_SUPPORTS_SAVE )
-GAME( 1986, firetrapbl, firetrap, firetrapbl, firetrapbl, firetrap_state, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, firetrap,   0,        firetrap,   firetrap, driver_device,   0, ROT90, "Wood Place Inc. (Data East USA license)", "Fire Trap (US, set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, firetrapa,  firetrap, firetrap,   firetrap, driver_device,   0, ROT90, "Wood Place Inc. (Data East USA license)", "Fire Trap (US, set 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, firetrapj,  firetrap, firetrap,   firetrapj, driver_device,  0, ROT90, "Wood Place Inc.", "Fire Trap (Japan)", MACHINE_SUPPORTS_SAVE )
+GAME( 1986, firetrapbl, firetrap, firetrapbl, firetrapbl, driver_device, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)", MACHINE_SUPPORTS_SAVE )

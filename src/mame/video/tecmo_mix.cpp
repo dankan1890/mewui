@@ -5,10 +5,10 @@
 #include "tecmo_mix.h"
 
 
-DEFINE_DEVICE_TYPE(TECMO_MIXER, tecmo_mix_device, "tecmo_mix", "Tecmo 16-bit Mixer")
+const device_type TECMO_MIXER = &device_creator<tecmo_mix_device>;
 
 tecmo_mix_device::tecmo_mix_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TECMO_MIXER, tag, owner, clock),
+	: device_t(mconfig, TECMO_MIXER, "Tecmo 16-bit Mixer", tag, owner, clock, "tecmo_mix", __FILE__),
 		device_video_interface(mconfig, *this),
 		m_sprpri_shift(0),
 		m_sprbln_shift(0),
@@ -89,28 +89,6 @@ void tecmo_mix_device::set_bgpen(device_t &device, int bgpen)
 	dev.m_bgpen = bgpen;
 }
 
-uint32_t tecmo_mix_device::sum_colors(const pen_t *pal, int c1_idx, int c2_idx)
-{
-	const pen_t c1 = pal[c1_idx];
-	const pen_t c2 = pal[c2_idx];
-
-	const int c1_a = (c1 >> 24) & 0xFF;
-	const int c1_r = (c1 >> 16) & 0xFF;
-	const int c1_g = (c1 >> 8)  & 0xFF;
-	const int c1_b = c1 & 0xFF;
-
-	const int c2_a = (c2 >> 24) & 0xFF;
-	const int c2_r = (c2 >> 16) & 0xFF;
-	const int c2_g = (c2 >> 8)  & 0xFF;
-	const int c2_b = c2 & 0xFF;
-
-	const uint8_t a = (std::min)(0xFF, c1_a + c2_a);
-	const uint8_t r = (std::min)(0xFF, c1_r + c2_r);
-	const uint8_t g = (std::min)(0xFF, c1_g + c2_g);
-	const uint8_t b = (std::min)(0xFF, c1_b + c2_b);
-
-	return ((a << 24) | (r << 16) | (g << 8) | b);
-}
 
 void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect, palette_device &palette, bitmap_ind16* bitmap_bg, bitmap_ind16* bitmap_fg, bitmap_ind16* bitmap_tx, bitmap_ind16* bitmap_sp)
 {
@@ -135,6 +113,7 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 			uint16_t m_sprbln = (sprpixel >> m_sprbln_shift) & 0x1;
 			uint16_t m_sprcol = (sprpixel >> m_sprcol_shift) & 0xf;
 
+
 			sprpixel = (sprpixel & 0xf) | (m_sprcol << 4);
 
 			//sprpixel &= 0xff;
@@ -154,7 +133,7 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 					{
 						if (fgbln)
 						{
-							dd[x] = machine().rand();
+							dd[x] = rand();
 						}
 						else
 						{
@@ -171,13 +150,14 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 					{
 						if (m_sprbln)
 						{ // sprite is blended with bgpen?
-							dd[x] = machine().rand();
+							dd[x] = rand();
 						}
 						else
 						{
 							// solid sprite
 							dd[x] = paldata[sprpixel + m_spregular_comp];
 						}
+
 					}
 				}
 				else  if (m_sprpri == (1 ^ m_revspritetile)) // above bg, behind tx, fg
@@ -191,12 +171,12 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 								// needs if bgpixel & 0xf check?
 
 								// fg is used and blended with sprite, sprite is used and blended with bg?  -- used on 'trail' of ball when ball is under the transparent area
-								dd[x] = sum_colors(paldata, bgpixel + m_bgblend_comp, sprpixel + m_spblend_source); // WRONG??
+								dd[x] = paldata[bgpixel + m_bgblend_comp] + paldata[sprpixel + m_spblend_source]; // WRONG??
 							}
 							else
 							{
 								// fg is used and blended with opaque sprite
-								dd[x] = sum_colors(paldata, fgpixel + m_fgblend_source, sprpixel + m_spblend_comp);
+								dd[x] = paldata[fgpixel + m_fgblend_source] + paldata[sprpixel + m_spblend_comp];
 							}
 						}
 						else
@@ -204,6 +184,7 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 							// fg is used and opaque
 							dd[x] = paldata[fgpixel + m_fgregular_comp];
 						}
+
 					}
 					else
 					{
@@ -212,7 +193,7 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 							// needs if bgpixel & 0xf check?
 
 							//fg isn't used, sprite is used and blended with bg? -- used on trail of ball / flippers (looks odd)  -- some ninja gaiden enemy deaths (when behind fg) (looks ok?)  (maybe we need to check for colour saturation?)
-							dd[x] = sum_colors(paldata, bgpixel + m_bgblend_comp, sprpixel + m_spblend_source);
+							dd[x] = paldata[bgpixel + m_bgblend_comp] + paldata[sprpixel + m_spblend_source];
 						}
 						else
 						{
@@ -220,6 +201,8 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 							dd[x] = paldata[sprpixel + m_spregular_comp];
 						}
 					}
+
+
 				}
 				else if (m_sprpri == (2 ^ m_revspritetile)) // above bg,fg, behind tx
 				{
@@ -230,25 +213,28 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 							if (fgbln)
 							{
 								// blended sprite over blended fg pixel?
-								dd[x] = machine().rand();
+								dd[x] =  rand();
 							}
 							else
 							{
 								// blended sprite over solid fgpixel?
-								dd[x] = sum_colors(paldata, fgpixel + m_fgblend_comp, sprpixel + m_spblend_source);
+								dd[x] = paldata[fgpixel + m_fgblend_comp] + paldata[sprpixel + m_spblend_source];
 							}
 						}
 						else // needs if bgpixel & 0xf check?
 						{
 							// blended sprite over solid bg pixel
-							dd[x] = sum_colors(paldata, bgpixel + m_bgblend_comp, sprpixel + m_spblend_source);
-							//  dd[x] = machine().rand();
+							dd[x] = paldata[bgpixel + m_bgblend_comp] + paldata[sprpixel + m_spblend_source];
+						//  dd[x] =  rand();
 						}
+
+
+
 					}
 					else
 					{
 						dd[x] = paldata[sprpixel + m_spregular_comp];
-						//dd[x] = machine().rand();
+						//dd[x] = rand();
 						// the bad tiles on the wildfang map (shown between levels) are drawn here.. why? looks like they should be transparent?
 						// most wildfang sprites use this and are fine, so what's going wrong?
 					}
@@ -259,7 +245,7 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 					if (m_sprbln)
 					{
 						// unusued by this game?
-						dd[x] = machine().rand();
+						dd[x] = rand();
 					}
 					else
 					{
@@ -275,13 +261,14 @@ void tecmo_mix_device::mix_bitmaps(screen_device &screen, bitmap_rgb32 &bitmap, 
 					if (fgbln)
 					{
 						// needs if bgpixel & 0xf check?
-						dd[x] = sum_colors(paldata, fgpixel + m_fgblend_source, bgpixel + m_bgblend_comp);
+						dd[x] = paldata[fgpixel + m_fgblend_source] + paldata[bgpixel + m_bgblend_comp];
 
 					}
 					else
 					{
 						dd[x] = paldata[fgpixel + m_fgregular_comp];
 					}
+
 				}
 				else if (bgpixel & 0x0f)
 				{

@@ -7,10 +7,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_MACRTC_H
-#define MAME_MACHINE_MACRTC_H
-
 #pragma once
+
+#ifndef __RTC3430042_H__
+#define __RTC3430042_H__
 
 #include "dirtc.h"
 
@@ -96,6 +96,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(RTC3430042, rtc3430042_device)
+extern const device_type RTC3430042;
 
-#endif // MAME_MACHINE_MACRTC_H
+#endif

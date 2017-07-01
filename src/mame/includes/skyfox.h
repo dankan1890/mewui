@@ -7,7 +7,6 @@
 *************************************************************************/
 
 #include "machine/gen_latch.h"
-#include "screen.h"
 
 class skyfox_state : public driver_device
 {

@@ -7,11 +7,10 @@
 **********************************************************************/
 
 
-#ifndef MAME_BUS__BBC_FDC_ACORN_H
-#define MAME_BUS__BBC_FDC_ACORN_H
+#ifndef __BBC_ACORN__
+#define __BBC_ACORN__
 
-#pragma once
-
+#include "emu.h"
 #include "fdc.h"
 #include "machine/i8271.h"
 #include "machine/wd_fdc.h"
@@ -31,22 +30,22 @@ public:
 	// construction/destruction
 	bbc_acorn8271_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
+	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
-
-private:
-	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
 	DECLARE_WRITE_LINE_MEMBER(fdc_intrq_w);
 	DECLARE_WRITE_LINE_MEMBER(motor_w);
 	DECLARE_WRITE_LINE_MEMBER(side_w);
 
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+
+private:
 	required_memory_region m_dfs_rom;
 	required_device<i8271_device> m_fdc;
 	required_device<floppy_connector> m_floppy0;
@@ -62,6 +61,14 @@ public:
 	// construction/destruction
 	bbc_acorn1770_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	DECLARE_FLOPPY_FORMATS(floppy_formats);
+
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
+
+	DECLARE_WRITE_LINE_MEMBER(fdc_intrq_w);
+	DECLARE_WRITE_LINE_MEMBER(fdc_drq_w);
 	DECLARE_READ8_MEMBER(wd1770l_read);
 	DECLARE_WRITE8_MEMBER(wd1770l_write);
 
@@ -70,18 +77,9 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
-
 private:
-	DECLARE_FLOPPY_FORMATS(floppy_formats);
-
-	DECLARE_WRITE_LINE_MEMBER(fdc_intrq_w);
-	DECLARE_WRITE_LINE_MEMBER(fdc_drq_w);
-
 	required_memory_region m_dfs_rom;
-	required_device<wd1770_device> m_fdc;
+	required_device<wd1770_t> m_fdc;
 	required_device<floppy_connector> m_floppy0;
 	optional_device<floppy_connector> m_floppy1;
 
@@ -90,8 +88,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(BBC_ACORN8271, bbc_acorn8271_device)
-DECLARE_DEVICE_TYPE(BBC_ACORN1770, bbc_acorn1770_device)
+extern const device_type BBC_ACORN8271;
+extern const device_type BBC_ACORN1770;
 
 
-#endif // MAME_BUS__BBC_FDC_ACORN_H
+#endif /* __BBC_ACORN__ */

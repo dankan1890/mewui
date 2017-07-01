@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_COMAL80_H
-#define MAME_BUS_C64_COMAL80_H
-
 #pragma once
 
+#ifndef __COMAL80__
+#define __COMAL80__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -44,7 +45,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_COMAL80, c64_comal80_cartridge_device)
+extern const device_type C64_COMAL80;
 
 
-#endif // MAME_BUS_C64_COMAL80_H
+#endif

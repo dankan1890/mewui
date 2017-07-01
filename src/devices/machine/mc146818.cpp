@@ -11,29 +11,43 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "coreutil.h"
 #include "machine/mc146818.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
+
+//**************************************************************************
+//  DEBUGGING
+//**************************************************************************
+
+#define LOG_MC146818        0
 
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(MC146818, mc146818_device, "mc146818", "MC146818 RTC")
+const device_type MC146818 = &device_creator<mc146818_device>;
 
 //-------------------------------------------------
 //  mc146818_device - constructor
 //-------------------------------------------------
 
 mc146818_device::mc146818_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: mc146818_device(mconfig, MC146818, tag, owner, clock)
+	: device_t(mconfig, MC146818, "MC146818 RTC", tag, owner, clock, "mc146818", __FILE__),
+		device_nvram_interface(mconfig, *this),
+		m_region(*this, DEVICE_SELF),
+		m_index(0),
+		m_last_refresh(attotime::zero), m_clock_timer(nullptr), m_periodic_timer(nullptr),
+		m_write_irq(*this),
+		m_century_index(-1),
+		m_epoch(0),
+		m_use_utc(false),
+		m_binary(false),
+		m_hour(false),
+		m_binyear(false)
 {
 }
 
-mc146818_device::mc146818_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock),
+mc146818_device::mc146818_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
 		device_nvram_interface(mconfig, *this),
 		m_region(*this, DEVICE_SELF),
 		m_index(0),
@@ -541,7 +555,8 @@ READ8_MEMBER( mc146818_device::read )
 		break;
 	}
 
-	LOG("mc146818_port_r(): index=0x%02x data=0x%02x\n", m_index, data);
+	if (LOG_MC146818)
+		logerror("mc146818_port_r(): index=0x%02x data=0x%02x\n", m_index, data);
 
 	return data;
 }
@@ -553,7 +568,8 @@ READ8_MEMBER( mc146818_device::read )
 
 WRITE8_MEMBER( mc146818_device::write )
 {
-	LOG("mc146818_port_w(): index=0x%02x data=0x%02x\n", m_index, data);
+	if (LOG_MC146818)
+		logerror("mc146818_port_w(): index=0x%02x data=0x%02x\n", m_index, data);
 
 	switch (offset)
 	{

@@ -8,10 +8,8 @@
 
 ****************************************************************************/
 
-#ifndef MAME_DEVICES_IMAGEDEV_PRINTER_H
-#define MAME_DEVICES_IMAGEDEV_PRINTER_H
-
-#pragma once
+#ifndef __PRINTER_H__
+#define __PRINTER_H__
 
 #define MCFG_PRINTER_ONLINE_CB(_devcb) \
 	devcb = &printer_image_device::set_online_callback(*device, DEVCB_##_devcb);
@@ -54,12 +52,13 @@ public:
 protected:
 	// device-level overrides
 	virtual void device_start() override;
+	virtual void device_config_complete() override;
 
 	devcb_write_line m_online_cb;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PRINTER, printer_image_device)
+extern const device_type PRINTER;
 
-#endif // MAME_DEVICES_IMAGEDEV_PRINTER_H
+#endif /* __PRINTER_H__ */

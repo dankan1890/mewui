@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Andreas Naive,David Haywood
-#include "emu.h"
 #include "igs036crypt.h"
 
 /****************************************************************************

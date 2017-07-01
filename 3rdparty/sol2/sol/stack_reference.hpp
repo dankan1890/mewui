@@ -35,34 +35,22 @@ namespace sol {
 
 	public:
 		stack_reference() noexcept = default;
-		stack_reference(lua_nil_t) noexcept : stack_reference() {};
+		stack_reference(nil_t) noexcept : stack_reference() {};
 		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
 		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
 		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
-		stack_reference(lua_State* L, ref_index i) noexcept = delete;
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;
 		stack_reference& operator=(const stack_reference&) noexcept = default;
 
 		int push() const noexcept {
-			return push(lua_state());
-		}
-
-		int push(lua_State* Ls) const noexcept {
-			lua_pushvalue(lua_state(), index);
-			if (Ls != lua_state()) {
-				lua_xmove(lua_state(), Ls, 1);
-			}
+			lua_pushvalue(L, index);
 			return 1;
 		}
 
-		void pop() const noexcept {
-			pop(lua_state());
-		}
-
-		void pop(lua_State* Ls, int n = 1) const noexcept {
-			lua_pop(Ls, n);
+		void pop(int n = 1) const noexcept {
+			lua_pop(lua_state(), n);
 		}
 
 		int stack_index() const noexcept {
@@ -80,7 +68,7 @@ namespace sol {
 
 		bool valid() const noexcept {
 			type t = get_type();
-			return t != type::lua_nil && t != type::none;
+			return t != type::nil && t != type::none;
 		}
 	};
 

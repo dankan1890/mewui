@@ -230,15 +230,13 @@
 
 *******************************************************************************/
 
-#include "emu.h"
-#include "cpu/m68000/m68000.h"
-#include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 #define MASTER_CLOCK    XTAL_8MHz   /* from CPU Board */
 #define SECONDARY_CLOCK XTAL_6MHz   /* from GFX Board */
+
+#include "emu.h"
+#include "cpu/m68000/m68000.h"
+#include "sound/ay8910.h"
 
 
 class goldngam_state : public driver_device
@@ -546,7 +544,7 @@ GFXDECODE_END
 *************************/
 
 
-static MACHINE_CONFIG_START( swisspkr )
+static MACHINE_CONFIG_START( swisspkr, goldngam_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, MASTER_CLOCK)
@@ -614,6 +612,6 @@ ROM_END
 *      Game Drivers      *
 *************************/
 
-//    YEAR  NAME      PARENT    MACHINE    INPUT     STATE            INIT  ROT   COMPANY                           FULLNAME                           FLAGS
-GAME( 1990, swisspkr, 0,        swisspkr,  goldngam, goldngam_state,  0,    ROT0, "Golden Games / C+M Technics AG", "Swiss Poker ('50 SG-.10', V2.5)", MACHINE_NO_SOUND | MACHINE_NOT_WORKING )
-GAME( 1998, moviecrd, 0,        moviecrd,  goldngam, goldngam_state,  0,    ROT0, "Golden Games / C+M Technics AG", "Movie Card",                      MACHINE_NO_SOUND | MACHINE_NOT_WORKING )
+/*    YEAR  NAME      PARENT    MACHINE    INPUT      INIT  ROT    COMPANY                           FULLNAME                          FLAGS */
+GAME( 1990, swisspkr, 0,        swisspkr,  goldngam, driver_device,  0,    ROT0, "Golden Games / C+M Technics AG", "Swiss Poker ('50 SG-.10', V2.5)", MACHINE_NO_SOUND | MACHINE_NOT_WORKING )
+GAME( 1998, moviecrd, 0,        moviecrd,  goldngam, driver_device,  0,    ROT0, "Golden Games / C+M Technics AG", "Movie Card",                      MACHINE_NO_SOUND | MACHINE_NOT_WORKING )

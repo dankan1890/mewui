@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_APF_SLOT_H
-#define MAME_BUS_APF_SLOT_H
+#ifndef __APF_SLOT_H
+#define __APF_SLOT_H
 
 #include "softlist_dev.h"
 
@@ -64,6 +64,7 @@ public:
 
 	// device-level overrides
 	virtual void device_start() override;
+	virtual void device_config_complete() override;
 
 	// image-level overrides
 	virtual image_init_result call_load() override;
@@ -84,7 +85,7 @@ public:
 	virtual const char *file_extensions() const override { return "bin"; }
 
 	// slot interface overrides
-	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
+	virtual std::string get_default_card_software() override;
 
 	// reading and writing
 	virtual DECLARE_READ8_MEMBER(read_rom);
@@ -101,7 +102,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(APF_CART_SLOT, apf_cart_slot_device)
+extern const device_type APF_CART_SLOT;
 
 
 /***************************************************************************
@@ -113,5 +114,4 @@ DECLARE_DEVICE_TYPE(APF_CART_SLOT, apf_cart_slot_device)
 #define MCFG_APF_CARTRIDGE_ADD(_tag,_slot_intf,_def_slot) \
 	MCFG_DEVICE_ADD(_tag, APF_CART_SLOT, 0) \
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false)
-
-#endif // MAME_BUS_APF_SLOT_H
+#endif

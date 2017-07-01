@@ -8,11 +8,10 @@
 #ifndef PTYPES_H_
 #define PTYPES_H_
 
+#include <type_traits>
+
 #include "pconfig.h"
 #include "pstring.h"
-
-#include <type_traits>
-#include <limits>
 
 namespace plib
 {
@@ -40,36 +39,10 @@ namespace plib
 #endif
 
 	//============================================================
-	// prevent implicit copying
-	//============================================================
-
-	struct nocopyassignmove
-	{
-	protected:
-		nocopyassignmove() = default;
-		~nocopyassignmove() = default;
-	private:
-		nocopyassignmove(const nocopyassignmove &) = delete;
-		nocopyassignmove(nocopyassignmove &&) = delete;
-		nocopyassignmove &operator=(const nocopyassignmove &) = delete;
-		nocopyassignmove &operator=(nocopyassignmove &&) = delete;
-	};
-
-	struct nocopyassign
-	{
-	protected:
-		nocopyassign() = default;
-		~nocopyassign() = default;
-	private:
-		nocopyassign(const nocopyassign &) = delete;
-		nocopyassign &operator=(const nocopyassign &) = delete;
-	};
-
-	//============================================================
 	//  penum - strongly typed enumeration
 	//============================================================
 
-	struct penum_base
+	struct enum_base
 	{
 	protected:
 		static int from_string_int(const char *str, const char *x);
@@ -79,22 +52,22 @@ namespace plib
 }
 
 #define P_ENUM(ename, ...) \
-	struct ename : public plib::penum_base { \
-		enum E { __VA_ARGS__ }; \
-		ename (E v) : m_v(v) { } \
+	struct ename : public plib::enum_base { \
+		enum e { __VA_ARGS__ }; \
+		ename (e v) : m_v(v) { } \
 		bool set_from_string (const pstring &s) { \
 			static const char *strings = # __VA_ARGS__; \
-			int f = from_string_int(strings, s.c_str()); \
-			if (f>=0) { m_v = static_cast<E>(f); return true; } else { return false; } \
+			int f = from_string_int(strings, s.cstr()); \
+			if (f>=0) { m_v = static_cast<e>(f); return true; } else { return false; } \
 		} \
-		operator E() const {return m_v;} \
+		operator e() const {return m_v;} \
 		bool operator==(const ename &rhs) const {return m_v == rhs.m_v;} \
-		bool operator==(const E &rhs) const {return m_v == rhs;} \
+		bool operator==(const e &rhs) const {return m_v == rhs;} \
 		const pstring name() const { \
 			static const char *strings = # __VA_ARGS__; \
 			return nthstr(static_cast<int>(m_v), strings); \
 		} \
-		private: E m_v; };
+		private: e m_v; };
 
 
 #endif /* PTYPES_H_ */

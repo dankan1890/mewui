@@ -812,7 +812,7 @@ Notes:
       PIC16F84 - Microchip PIC16F84 PIC (SOIC20)
                   - For 500GP and Angler King stamped 'CAP10'
                   - For Ridge Racer V (on System 246) stamped 'CAP11'
-      MCU      - Fujitsu MB90F574 F2MC-16LX Family Microcontroller (QFP120)
+      MCU      - Fujitsu MB90F574 Microcontroller (QFP120)
                   - For 500 GP and Angler King stamped 'FCAF10'
                   - For Ridge Racer V (on System 246) stamped 'FCAF11'
       ADM485   - Analog Devices ADM485 +5V Low Power EIA RS-485 Transceiver (SOIC8)
@@ -1255,19 +1255,16 @@ Notes:
 */
 
 #include "emu.h"
+#include <float.h>
+#include "video/poly.h"
+#include "cpu/mips/mips3.h"
 #include "cpu/h8/h83002.h"
 #include "cpu/h8/h83337.h"
-#include "cpu/mips/mips3.h"
 #include "cpu/sh2/sh2.h"
-#include "machine/namco_settings.h"
+#include "sound/c352.h"
 #include "machine/nvram.h"
 #include "machine/rtc4543.h"
-#include "sound/c352.h"
-#include "video/poly.h"
-#include "speaker.h"
-
-#include <float.h>
-
+#include "machine/namco_settings.h"
 
 #define JVSCLOCK    (XTAL_14_7456MHz)
 
@@ -1565,7 +1562,7 @@ public:
 	uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 	INTERRUPT_GEN_MEMBER(interrupt);
 	TIMER_CALLBACK_MEMBER(c361_timer_cb);
-	DECLARE_WRITE_LINE_MEMBER(sub_irq);
+	void sub_irq(screen_device &screen, bool vblank_state);
 	uint8_t nthbyte(const uint32_t *pSource, int offs);
 	uint16_t nthword(const uint32_t *pSource, int offs);
 	inline int32_t u32_to_s24(uint32_t v);
@@ -2460,11 +2457,11 @@ INTERRUPT_GEN_MEMBER(namcos23_state::interrupt)
 	m_render.count[m_render.cur] = 0;
 }
 
-WRITE_LINE_MEMBER(namcos23_state::sub_irq)
+void namcos23_state::sub_irq(screen_device &screen, bool vblank_state)
 {
-	m_subcpu->set_input_line(1, state ? ASSERT_LINE : CLEAR_LINE);
-	m_adc->adtrg_w(state);
-	m_sub_portb = (m_sub_portb & 0x7f) | (state << 7);
+	m_subcpu->set_input_line(1, vblank_state ? ASSERT_LINE : CLEAR_LINE);
+	m_adc->adtrg_w(vblank_state);
+	m_sub_portb = (m_sub_portb & 0x7f) | (vblank_state << 7);
 }
 
 
@@ -3536,7 +3533,7 @@ static GFXDECODE_START( namcos23 )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( gorgon )
+static MACHINE_CONFIG_START( gorgon, namcos23_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", R4650BE, BUSCLOCK*4)
@@ -3569,10 +3566,13 @@ static MACHINE_CONFIG_START( gorgon )
 	MCFG_RTC4543_ADD("rtc", XTAL_32_768kHz)
 	MCFG_RTC4543_DATA_CALLBACK(DEVWRITELINE("subcpu:sci1", h8_sci_device, rx_w))
 
+	MCFG_LINE_DISPATCH_ADD("clk_dispatch", 2)
+	MCFG_LINE_DISPATCH_FWD_CB(0, 2, DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
+	MCFG_LINE_DISPATCH_FWD_CB(1, 2, DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+
 	MCFG_DEVICE_MODIFY("subcpu:sci1")
 	MCFG_H8_SCI_TX_CALLBACK(DEVWRITELINE(":namco_settings", namco_settings_device, data_w))
-	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
-	MCFG_DEVCB_CHAIN_OUTPUT(DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":clk_dispatch", devcb_line_dispatch_device<2>, in_w))
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 
@@ -3583,7 +3583,7 @@ static MACHINE_CONFIG_START( gorgon )
 	MCFG_SCREEN_SIZE(640, 480)
 	MCFG_SCREEN_VISIBLE_AREA(0, 639, 0, 479)
 	MCFG_SCREEN_UPDATE_DRIVER(namcos23_state, screen_update)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(namcos23_state, sub_irq))
+	MCFG_SCREEN_VBLANK_DRIVER(namcos23_state, sub_irq)
 
 	MCFG_PALETTE_ADD("palette", 0x8000)
 
@@ -3602,7 +3602,7 @@ static MACHINE_CONFIG_START( gorgon )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( s23 )
+static MACHINE_CONFIG_START( s23, namcos23_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", R4650BE, BUSCLOCK*4)
@@ -3635,10 +3635,13 @@ static MACHINE_CONFIG_START( s23 )
 	MCFG_RTC4543_ADD("rtc", XTAL_32_768kHz)
 	MCFG_RTC4543_DATA_CALLBACK(DEVWRITELINE("subcpu:sci1", h8_sci_device, rx_w))
 
+	MCFG_LINE_DISPATCH_ADD("clk_dispatch", 2)
+	MCFG_LINE_DISPATCH_FWD_CB(0, 2, DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
+	MCFG_LINE_DISPATCH_FWD_CB(1, 2, DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+
 	MCFG_DEVICE_MODIFY("subcpu:sci1")
 	MCFG_H8_SCI_TX_CALLBACK(DEVWRITELINE(":namco_settings", namco_settings_device, data_w))
-	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
-	MCFG_DEVCB_CHAIN_OUTPUT(DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":clk_dispatch", devcb_line_dispatch_device<2>, in_w))
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 
@@ -3649,7 +3652,7 @@ static MACHINE_CONFIG_START( s23 )
 	MCFG_SCREEN_SIZE(640, 480)
 	MCFG_SCREEN_VISIBLE_AREA(0, 639, 0, 479)
 	MCFG_SCREEN_UPDATE_DRIVER(namcos23_state, screen_update)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(namcos23_state, sub_irq))
+	MCFG_SCREEN_VBLANK_DRIVER(namcos23_state, sub_irq)
 
 	MCFG_PALETTE_ADD("palette", 0x8000)
 
@@ -3688,7 +3691,7 @@ static MACHINE_CONFIG_DERIVED( gmen, s23 )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( ss23 )
+static MACHINE_CONFIG_START( ss23, namcos23_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", R4650BE, BUSCLOCK*5)
@@ -3712,10 +3715,13 @@ static MACHINE_CONFIG_START( ss23 )
 	MCFG_RTC4543_ADD("rtc", XTAL_32_768kHz)
 	MCFG_RTC4543_DATA_CALLBACK(DEVWRITELINE("subcpu:sci1", h8_sci_device, rx_w))
 
+	MCFG_LINE_DISPATCH_ADD("clk_dispatch", 2)
+	MCFG_LINE_DISPATCH_FWD_CB(0, 2, DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
+	MCFG_LINE_DISPATCH_FWD_CB(1, 2, DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+
 	MCFG_DEVICE_MODIFY("subcpu:sci1")
 	MCFG_H8_SCI_TX_CALLBACK(DEVWRITELINE(":namco_settings", namco_settings_device, data_w))
-	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":rtc", rtc4543_device, clk_w)) MCFG_DEVCB_INVERT
-	MCFG_DEVCB_CHAIN_OUTPUT(DEVWRITELINE(":namco_settings", namco_settings_device, clk_w))
+	MCFG_H8_SCI_CLK_CALLBACK(DEVWRITELINE(":clk_dispatch", devcb_line_dispatch_device<2>, in_w))
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 
@@ -3726,7 +3732,7 @@ static MACHINE_CONFIG_START( ss23 )
 	MCFG_SCREEN_SIZE(640, 480)
 	MCFG_SCREEN_VISIBLE_AREA(0, 639, 0, 479)
 	MCFG_SCREEN_UPDATE_DRIVER(namcos23_state, screen_update)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(namcos23_state, sub_irq))
+	MCFG_SCREEN_VBLANK_DRIVER(namcos23_state, sub_irq)
 
 	MCFG_PALETTE_ADD("palette", 0x8000)
 

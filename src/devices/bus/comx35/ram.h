@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_COMX35_RAM_H
-#define MAME_BUS_COMX35_RAM_H
-
 #pragma once
 
+#ifndef __COMX_RAM__
+#define __COMX_RAM__
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -46,7 +47,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(COMX_RAM, comx_ram_device)
+extern const device_type COMX_RAM;
 
 
-#endif // MAME_BUS_COMX35_RAM_H
+#endif

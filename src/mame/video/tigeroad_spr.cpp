@@ -19,10 +19,10 @@
 #include "tigeroad_spr.h"
 
 
-DEFINE_DEVICE_TYPE(TIGEROAD_SPRITE, tigeroad_spr_device, "tigeroad_spr", "Simple Capcom (Tiger Road) Sprite")
+const device_type TIGEROAD_SPRITE = &device_creator<tigeroad_spr_device>;
 
 tigeroad_spr_device::tigeroad_spr_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TIGEROAD_SPRITE, tag, owner, clock)
+	: device_t(mconfig, TIGEROAD_SPRITE, "Simple Capcom (Tiger Road) Sprite", tag, owner, clock, "tigeroad_spr", __FILE__)
 {
 }
 

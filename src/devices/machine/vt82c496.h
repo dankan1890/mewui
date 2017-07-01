@@ -6,11 +6,10 @@
 
 */
 
-#ifndef MAME_MACHINE_VT82C496_H
-#define MAME_MACHINE_VT82C496_H
+#ifndef __VT82C496_H__
+#define __VT82C496_H__
 
-#pragma once
-
+#include "emu.h"
 #include "ram.h"
 
 #define MCFG_VT82C496_ADD(_tag) \
@@ -55,6 +54,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(VT82C496, vt82c496_device)
+extern const device_type VT82C496;
 
-#endif // MAME_MACHINE_VT82C496_H
+
+#endif /* __VT82C496_H__ */

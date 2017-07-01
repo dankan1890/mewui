@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_VIC20_4CGA_H
-#define MAME_BUS_VIC20_4CGA_H
-
 #pragma once
 
+#ifndef __C64_4CGA__
+#define __C64_4CGA__
 
+
+#include "emu.h"
 #include "user.h"
 
 
@@ -59,7 +60,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_4CGA, c64_4cga_device)
+extern const device_type C64_4CGA;
 
 
-#endif // MAME_BUS_VIC20_4CGA_H
+#endif

@@ -14,7 +14,6 @@ local extlibs = {
 	portmidi   = { "portmidi",  "3rdparty/portmidi/pm_common" },
 	portaudio  = { "portaudio", "3rdparty/portaudio/include" },
 	lua        = { "lua",       "3rdparty/lua/src" },
-	utf8proc   = { "utf8proc",  "3rdparty/utf8proc" },
 }
 
 -- system lib options
@@ -56,11 +55,6 @@ newoption {
 newoption {
 	trigger = "with-system-lua",
 	description = "Use system LUA library",
-}
-
-newoption {
-	trigger = "with-system-utf8proc",
-	description = "Use system utf8proc library",
 }
 
 -- build helpers

@@ -25,11 +25,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_QL_ROM_H
-#define MAME_BUS_QL_ROM_H
-
 #pragma once
 
+#ifndef __QL_ROM_CARTRIDGE_SLOT__
+#define __QL_ROM_CARTRIDGE_SLOT__
+
+#include "emu.h"
 #include "softlist_dev.h"
 
 
@@ -49,14 +50,15 @@
 
 // ======================> device_ql_rom_cartridge_card_interface
 
-class ql_rom_cartridge_slot_device;
+class ql_rom_cartridge_slot_t;
 
 class device_ql_rom_cartridge_card_interface : public device_slot_card_interface
 {
-	friend class ql_rom_cartridge_slot_device;
+	friend class ql_rom_cartridge_slot_t;
 
 public:
 	// construction/destruction
+	device_ql_rom_cartridge_card_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_ql_rom_cartridge_card_interface();
 
 	virtual void romoeh_w(int state) { m_romoeh = state; }
@@ -64,9 +66,7 @@ public:
 	virtual void write(address_space &space, offs_t offset, uint8_t data) { }
 
 protected:
-	device_ql_rom_cartridge_card_interface(const machine_config &mconfig, device_t &device);
-
-	ql_rom_cartridge_slot_device *m_slot;
+	ql_rom_cartridge_slot_t *m_slot;
 
 	optional_shared_ptr<uint8_t> m_rom;
 
@@ -74,15 +74,15 @@ protected:
 };
 
 
-// ======================> ql_rom_cartridge_slot_device
+// ======================> ql_rom_cartridge_slot_t
 
-class ql_rom_cartridge_slot_device : public device_t,
+class ql_rom_cartridge_slot_t : public device_t,
 								public device_slot_interface,
 								public device_image_interface
 {
 public:
 	// construction/destruction
-	ql_rom_cartridge_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	ql_rom_cartridge_slot_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// computer interface
 	uint8_t read(address_space &space, offs_t offset, uint8_t data) { if (m_card) data = m_card->read(space, offset, data); return data; }
@@ -91,6 +91,7 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override { update_names(); }
 	virtual void device_start() override;
 
 	// image-level overrides
@@ -108,15 +109,17 @@ protected:
 	virtual const char *file_extensions() const override { return "rom,bin"; }
 
 	// slot interface overrides
-	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
+	virtual std::string get_default_card_software() override;
 
 	device_ql_rom_cartridge_card_interface *m_card;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(QL_ROM_CARTRIDGE_SLOT, ql_rom_cartridge_slot_device)
+extern const device_type QL_ROM_CARTRIDGE_SLOT;
 
 SLOT_INTERFACE_EXTERN( ql_rom_cartridge_cards );
 
-#endif // MAME_BUS_QL_ROM_H
+
+
+#endif

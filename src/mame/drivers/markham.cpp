@@ -11,12 +11,9 @@
 *****************************************************************************/
 
 #include "emu.h"
-#include "includes/markham.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/markham.h"
 
 
 READ8_MEMBER(markham_state::markham_e004_r)
@@ -177,7 +174,7 @@ static GFXDECODE_START( markham )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( markham )
+static MACHINE_CONFIG_START( markham, markham_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,8000000/2) /* 4.000MHz */
@@ -245,4 +242,4 @@ ROM_START( markham )
 ROM_END
 
 
-GAME( 1983, markham, 0, markham, markham, markham_state, 0, ROT0, "Sun Electronics", "Markham", MACHINE_SUPPORTS_SAVE )
+GAME( 1983, markham, 0, markham, markham, driver_device, 0, ROT0, "Sun Electronics", "Markham", MACHINE_SUPPORTS_SAVE )

@@ -30,7 +30,6 @@ ToDo:
 
 *****************************************************************************************************/
 
-#include "emu.h"
 #include "machine/genpin.h"
 #include "cpu/m6502/m65c02.h"
 #include "machine/6522via.h"
@@ -274,7 +273,7 @@ DRIVER_INIT_MEMBER( gts3_state, gts3 )
 {
 }
 
-static MACHINE_CONFIG_START( gts3 )
+static MACHINE_CONFIG_START( gts3, gts3_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M65C02, XTAL_4MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(gts3_map)

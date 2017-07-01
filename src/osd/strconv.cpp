@@ -6,8 +6,11 @@
 //
 //============================================================
 #if defined(SDLMAME_WIN32) || defined(OSD_WINDOWS) || defined(OSD_UWP)
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+#undef min
+#undef max
 #include <algorithm>
 #include <assert.h>
 // MAMEOS headers

@@ -5,13 +5,10 @@
     Sound handler
 ****************************************************************************/
 #include "emu.h"
-#include "includes/polepos.h"
-
+#include "machine/rescap.h"
 #include "namco52.h"
 #include "namco54.h"
-
-#include "machine/rescap.h"
-
+#include "includes/polepos.h"
 
 #define OUTPUT_RATE         24000
 
@@ -216,7 +213,7 @@ static void filter_opamp_m_bandpass_setup(device_t *device, double r1, double r2
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(POLEPOS, polepos_sound_device, "polepos_sound", "Pole Position Audio Custom")
+const device_type POLEPOS = &device_creator<polepos_sound_device>;
 
 
 //**************************************************************************
@@ -228,7 +225,7 @@ DEFINE_DEVICE_TYPE(POLEPOS, polepos_sound_device, "polepos_sound", "Pole Positio
 //-------------------------------------------------
 
 polepos_sound_device::polepos_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, POLEPOS, tag, owner, clock),
+	: device_t(mconfig, POLEPOS, "Pole Position Audio Custom", tag, owner, clock, "polepos_sound", __FILE__),
 		device_sound_interface(mconfig, *this),
 		m_current_position(0),
 		m_sample_msb(0),

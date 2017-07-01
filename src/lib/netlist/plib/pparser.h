@@ -8,20 +8,25 @@
 #ifndef PPARSER_H_
 #define PPARSER_H_
 
-#include "pstring.h"
-#include "plists.h"
-#include "pstream.h"
-
 #include <unordered_map>
 #include <cstdint>
 
-namespace plib {
-class ptokenizer : nocopyassignmove
-{
-public:
-	explicit ptokenizer(plib::putf8_reader &strm);
+#include "pconfig.h"
+#include "pstring.h"
+#include "plists.h"
+#include "putil.h"
+#include "pstream.h"
 
-	virtual ~ptokenizer();
+namespace plib {
+class ptokenizer
+{
+	P_PREVENT_COPYING(ptokenizer)
+public:
+	virtual ~ptokenizer() {}
+
+	explicit ptokenizer(pistream &strm)
+	: m_strm(strm), m_lineno(0), m_cur_line(""), m_px(m_cur_line.begin()), m_unget(0), m_string('"')
+	{}
 
 	enum token_type
 	{
@@ -38,10 +43,10 @@ public:
 	{
 	public:
 
-		static constexpr std::size_t npos = static_cast<std::size_t>(-1);
+		static const std::size_t npos = static_cast<std::size_t>(-1);
 
 		token_id_t() : m_id(npos) {}
-		explicit token_id_t(const std::size_t id) : m_id(id) {}
+		token_id_t(const std::size_t id) : m_id(id) {}
 		std::size_t id() const { return m_id; }
 	private:
 		std::size_t m_id;
@@ -49,7 +54,7 @@ public:
 
 	struct token_t
 	{
-		explicit token_t(token_type type)
+		token_t(token_type type)
 		: m_type(type), m_id(), m_token("")
 		{
 		}
@@ -57,7 +62,7 @@ public:
 		: m_type(type), m_id(), m_token(str)
 		{
 		}
-		token_t(const token_id_t &id, const pstring &str)
+		token_t(const token_id_t id, const pstring &str)
 		: m_type(TOKEN), m_id(id), m_token(str)
 		{
 		}
@@ -89,7 +94,7 @@ public:
 	long get_number_long();
 
 	void require_token(const token_id_t &token_num);
-	void require_token(const token_t &tok, const token_id_t &token_num);
+	void require_token(const token_t tok, const token_id_t &token_num);
 
 	token_id_t register_token(pstring token)
 	{
@@ -123,11 +128,11 @@ private:
 
 	bool eof() { return m_strm.eof(); }
 
-	putf8_reader &m_strm;
+	pistream &m_strm;
 
 	int m_lineno;
 	pstring m_cur_line;
-	pstring::const_iterator m_px;
+	pstring::iterator m_px;
 	pstring::code_t m_unget;
 
 	/* tokenizer stuff follows ... */
@@ -145,8 +150,9 @@ private:
 };
 
 
-class ppreprocessor : plib::nocopyassignmove
+class ppreprocessor
 {
+	P_PREVENT_COPYING(ppreprocessor)
 public:
 
 	struct define_t
@@ -158,15 +164,25 @@ public:
 		pstring m_replace;
 	};
 
-	explicit ppreprocessor(std::vector<define_t> *defines = nullptr);
+	ppreprocessor(std::vector<define_t> *defines = nullptr);
 	virtual ~ppreprocessor() {}
 
-	void process(putf8_reader &istrm, putf8_writer &ostrm);
+	template<class ISTR, class OSTR>
+	OSTR &process(ISTR &istrm, OSTR &ostrm)
+	{
+		return dynamic_cast<OSTR &>(process_i(istrm, ostrm));
+	}
 
 protected:
-	double expr(const std::vector<pstring> &sexpr, std::size_t &start, int prio);
+
+	postream &process_i(pistream &istrm, postream &ostrm);
+
+	double expr(const plib::pstring_vector_t &sexpr, std::size_t &start, int prio);
+
 	define_t *get_define(const pstring &name);
+
 	pstring replace_macros(const pstring &line);
+
 	virtual void error(const pstring &err);
 
 private:
@@ -174,9 +190,9 @@ private:
 	pstring process_line(const pstring &line);
 
 	std::unordered_map<pstring, define_t> m_defines;
-	std::vector<pstring> m_expr_sep;
+	plib::pstring_vector_t m_expr_sep;
 
-	std::uint_least64_t m_ifflag; // 31 if levels
+	std::uint_least32_t m_ifflag; // 31 if levels
 	int m_level;
 	int m_lineno;
 };

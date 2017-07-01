@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "mp_fdi.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(MICRO_PERIPHERALS_FLOPPY_DISK_INTERFACE, micro_peripherals_floppy_disk_interface_device, "ql_mpfdi", "Micro Peripherals Floppy Disk Interface")
+const device_type MICRO_PERIPHERALS_FLOPPY_DISK_INTERFACE = &device_creator<micro_peripherals_floppy_disk_interface_t>;
 
 
 //-------------------------------------------------
@@ -34,7 +33,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const tiny_rom_entry *micro_peripherals_floppy_disk_interface_device::device_rom_region() const
+const tiny_rom_entry *micro_peripherals_floppy_disk_interface_t::device_rom_region() const
 {
 	return ROM_NAME( micro_peripherals_floppy_disk_interface );
 }
@@ -46,11 +45,11 @@ const tiny_rom_entry *micro_peripherals_floppy_disk_interface_device::device_rom
 //**************************************************************************
 
 //-------------------------------------------------
-//  micro_peripherals_floppy_disk_interface_device - constructor
+//  micro_peripherals_floppy_disk_interface_t - constructor
 //-------------------------------------------------
 
-micro_peripherals_floppy_disk_interface_device::micro_peripherals_floppy_disk_interface_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, MICRO_PERIPHERALS_FLOPPY_DISK_INTERFACE, tag, owner, clock),
+micro_peripherals_floppy_disk_interface_t::micro_peripherals_floppy_disk_interface_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, MICRO_PERIPHERALS_FLOPPY_DISK_INTERFACE, "Micro Peripherals Floppy Disk Interface", tag, owner, clock, "ql_mpfdi", __FILE__),
 	device_ql_expansion_card_interface(mconfig, *this)
 {
 }
@@ -60,7 +59,7 @@ micro_peripherals_floppy_disk_interface_device::micro_peripherals_floppy_disk_in
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void micro_peripherals_floppy_disk_interface_device::device_start()
+void micro_peripherals_floppy_disk_interface_t::device_start()
 {
 }
 
@@ -69,7 +68,7 @@ void micro_peripherals_floppy_disk_interface_device::device_start()
 //  read -
 //-------------------------------------------------
 
-uint8_t micro_peripherals_floppy_disk_interface_device::read(address_space &space, offs_t offset, uint8_t data)
+uint8_t micro_peripherals_floppy_disk_interface_t::read(address_space &space, offs_t offset, uint8_t data)
 {
 	return data;
 }
@@ -79,6 +78,6 @@ uint8_t micro_peripherals_floppy_disk_interface_device::read(address_space &spac
 //  write -
 //-------------------------------------------------
 
-void micro_peripherals_floppy_disk_interface_device::write(address_space &space, offs_t offset, uint8_t data)
+void micro_peripherals_floppy_disk_interface_t::write(address_space &space, offs_t offset, uint8_t data)
 {
 }

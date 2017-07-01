@@ -11,7 +11,8 @@
 
 #include "emu.h"
 #include "includes/electron.h"
-#include "screen.h"
+#include "sound/beep.h"
+#include "imagedev/cassette.h"
 
 
 void electron_state::waitforramsync()
@@ -406,7 +407,7 @@ void electron_state::machine_start()
 
 DEVICE_IMAGE_LOAD_MEMBER( electron_state, electron_cart )
 {
-	if (!image.loaded_through_softlist())
+	if (image.software_entry() == nullptr)
 	{
 		uint32_t filesize = image.length();
 

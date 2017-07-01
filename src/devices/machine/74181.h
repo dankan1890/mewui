@@ -8,11 +8,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_74181_H
-#define MAME_MACHINE_74181_H
-
 #pragma once
 
+#ifndef __74181_H__
+#define __74181_H__
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -73,6 +74,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(TTL74181, ttl74181_device)
+extern const device_type TTL74181;
 
-#endif // MAME_MACHINE_74181_H
+
+#endif  /* __74181_H__ */

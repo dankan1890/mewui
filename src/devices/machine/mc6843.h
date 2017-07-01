@@ -8,10 +8,8 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_MC6843_H
-#define MAME_MACHINE_MC6843_H
-
-#pragma once
+#ifndef MC6843_H
+#define MC6843_H
 
 #include "imagedev/flopdrv.h"
 
@@ -22,8 +20,9 @@ class mc6843_device : public device_t
 {
 public:
 	mc6843_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~mc6843_device() {}
 
-	template <class Object> static devcb_base &set_irq_wr_callback(device_t &device, Object &&cb) { return downcast<mc6843_device &>(device).m_write_irq.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_wr_callback(device_t &device, _Object object) { return downcast<mc6843_device &>(device).m_write_irq.set_callback(object); }
 
 	DECLARE_READ8_MEMBER(read);
 	DECLARE_WRITE8_MEMBER(write);
@@ -84,6 +83,6 @@ private:
 
 };
 
-DECLARE_DEVICE_TYPE(MC6843, mc6843_device)
+extern const device_type MC6843;
 
-#endif // MAME_MACHINE_MC6843_H
+#endif

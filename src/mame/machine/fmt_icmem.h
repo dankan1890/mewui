@@ -8,10 +8,10 @@
 
 *********************************************************************/
 
-#ifndef MAME_MACHINE_FMT_ICMEM_H
-#define MAME_MACHINE_FMT_ICMEM_H
-
 #pragma once
+
+#ifndef __FMT_ICMEM_H__
+#define __FMT_ICMEM_H__
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
@@ -24,7 +24,8 @@
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-class fmt_icmem_device : public device_t, public device_image_interface
+class fmt_icmem_device :  public device_t,
+				public device_image_interface
 {
 public:
 	// construction/destruction
@@ -45,6 +46,7 @@ public:
 
 	// device-level overrides
 	virtual void device_start() override;
+	virtual void device_config_complete() override;
 
 	DECLARE_READ8_MEMBER(static_mem_read);
 	DECLARE_WRITE8_MEMBER(static_mem_write);
@@ -69,7 +71,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(FMT_ICMEM, fmt_icmem_device)
+extern const device_type FMT_ICMEM;
 
 
-#endif  // MAME_MACHINE_FMT_ICMEM_H
+#endif  /* __FMT_ICMEM_H__ */

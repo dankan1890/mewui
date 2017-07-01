@@ -1,11 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#include "emu.h"
 #include "pci.h"
 
-DEFINE_DEVICE_TYPE(PCI_ROOT,   pci_root_device,   "pci_root",   "PCI virtual root")
-DEFINE_DEVICE_TYPE(PCI_BRIDGE, pci_bridge_device, "pci_bridge", "PCI-PCI Bridge")
-
+const device_type PCI_ROOT   = &device_creator<pci_root_device>;
+const device_type PCI_BRIDGE = &device_creator<pci_bridge_device>;
 
 DEVICE_ADDRESS_MAP_START(config_map, 32, pci_device)
 	AM_RANGE(0x00, 0x03) AM_READ16     (vendor_r,                                 0x0000ffff)
@@ -25,8 +23,6 @@ DEVICE_ADDRESS_MAP_START(config_map, 32, pci_device)
 	AM_RANGE(0x2c, 0x2f) AM_WRITENOP
 	AM_RANGE(0x30, 0x33) AM_READWRITE  (expansion_base_r,    expansion_base_w)
 	AM_RANGE(0x34, 0x37) AM_READ8      (capptr_r,                                 0x000000ff)
-	AM_RANGE(0x3c, 0x3f) AM_READWRITE8(interrupt_line_r,     interrupt_line_w,    0x000000ff)
-	AM_RANGE(0x3c, 0x3f) AM_READWRITE8(interrupt_pin_r,      interrupt_pin_w,     0x0000ff00)
 ADDRESS_MAP_END
 
 DEVICE_ADDRESS_MAP_START(config_map, 32, pci_bridge_device)
@@ -62,17 +58,15 @@ DEVICE_ADDRESS_MAP_START(config_map, 32, pci_bridge_device)
 	AM_RANGE(0x3c, 0x3f) AM_READWRITE16(bridge_control_r,    bridge_control_w,    0xffff0000)
 ADDRESS_MAP_END
 
-pci_device::pci_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, type, tag, owner, clock)
-	, m_region(*this, DEVICE_SELF)
+pci_device::pci_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: device_t(mconfig, type, name, tag, owner, clock, shortname, source),
+		m_region(*this, DEVICE_SELF)
 {
 	main_id = 0xffffffff;
 	revision = 0x00;
 	pclass = 0xffffff;
 	subsystem_id = 0xffffffff;
 	is_multifunction_device = false;
-	intr_pin = 0x0;
-	intr_line = 0xff;
 }
 
 void pci_device::set_ids(uint32_t _main_id, uint8_t _revision, uint32_t _pclass, uint32_t _subsystem_id)
@@ -103,15 +97,6 @@ void pci_device::device_start()
 	expansion_rom = nullptr;
 	expansion_rom_size = 0;
 	expansion_rom_base = 0;
-
-	for (int i = 0; i < ARRAY_LENGTH(bank_infos); i++) {
-		save_item(NAME(bank_infos[i].adr), i);
-	}
-	save_item(NAME(command));
-	save_item(NAME(command_mask));
-	save_item(NAME(status));
-	save_item(NAME(intr_line));
-	save_item(NAME(intr_pin));
 }
 
 void pci_device::device_reset()
@@ -260,30 +245,6 @@ READ8_MEMBER(pci_device::capptr_r)
 	return 0x00;
 }
 
-READ8_MEMBER(pci_device::interrupt_line_r)
-{
-	logerror("interrupt_line_r = %02x\n", intr_line);
-	return intr_line;
-}
-
-WRITE8_MEMBER(pci_device::interrupt_line_w)
-{
-	COMBINE_DATA(&intr_line);
-	logerror("interrupt_line_w %02x\n", data);
-}
-
-READ8_MEMBER(pci_device::interrupt_pin_r)
-{
-	logerror("interrupt_pin_r = %02x\n", intr_pin);
-	return intr_pin;
-}
-
-WRITE8_MEMBER(pci_device::interrupt_pin_w)
-{
-	COMBINE_DATA(&intr_pin);
-	logerror("interrupt_pin_w = %02x\n", data);
-}
-
 void pci_device::set_remap_cb(mapper_cb _remap_cb)
 {
 	remap_cb = _remap_cb;
@@ -323,7 +284,7 @@ void pci_device::map_device(uint64_t memory_window_start, uint64_t memory_window
 		case 5: space->install_readwrite_handler(start, end, read32_delegate(FUNC(pci_device::unmapped5_r), this), write32_delegate(FUNC(pci_device::unmapped5_w), this)); break;
 		}
 
-		space->install_device_delegate(start, end, *bi.device, bi.map);
+		space->install_device_delegate(start, end, *this, bi.map);
 		logerror("map %s at %0*x-%0*x\n", bi.map.name(), bi.flags & M_IO ? 4 : 8, uint32_t(start), bi.flags & M_IO ? 4 : 8, uint32_t(end));
 	}
 
@@ -356,12 +317,11 @@ void pci_device::skip_map_regs(int count)
 	assert(bank_reg_count <= 6);
 }
 
-void pci_device::add_map(uint64_t size, int flags, address_map_delegate &map, device_t *relative_to)
+void pci_device::add_map(uint64_t size, int flags, address_map_delegate &map)
 {
 	assert(bank_count < 6);
 	int bid = bank_count++;
 	bank_infos[bid].map = map;
-	bank_infos[bid].device = relative_to ? relative_to : this;
 	bank_infos[bid].adr = 0;
 	bank_infos[bid].size = size;
 	bank_infos[bid].flags = flags;
@@ -414,8 +374,8 @@ void pci_device::set_map_flags(int id, int flags)
 	remap_cb();
 }
 
-agp_device::agp_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: pci_device(mconfig, type, tag, owner, clock)
+agp_device::agp_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: pci_device(mconfig, type, name, tag, owner, clock, shortname, source)
 {
 }
 
@@ -432,14 +392,16 @@ void agp_device::device_reset()
 
 
 pci_bridge_device::pci_bridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: pci_bridge_device(mconfig, PCI_BRIDGE, tag, owner, clock)
+	: pci_device(mconfig, PCI_BRIDGE, "PCI-PCI Bridge", tag, owner, clock, "pci_bridge", __FILE__),
+		device_memory_interface(mconfig, *this),
+		configure_space_config("configuration_space", ENDIANNESS_LITTLE, 32, 20)
 {
 }
 
-pci_bridge_device::pci_bridge_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: pci_device(mconfig, type, tag, owner, clock)
-	, device_memory_interface(mconfig, *this)
-	, configure_space_config("configuration_space", ENDIANNESS_LITTLE, 32, 20)
+pci_bridge_device::pci_bridge_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: pci_device(mconfig, type, name, tag, owner, clock, shortname, source),
+		device_memory_interface(mconfig, *this),
+		configure_space_config("configuration_space", ENDIANNESS_LITTLE, 32, 20)
 {
 }
 
@@ -786,6 +748,28 @@ WRITE16_MEMBER(pci_bridge_device::iolimitu_w)
 	logerror("iolimitu_w %04x\n", iolimitu);
 }
 
+READ8_MEMBER  (pci_bridge_device::interrupt_line_r)
+{
+	logerror("interrupt_line_r\n");
+	return 0xff;
+}
+
+WRITE8_MEMBER (pci_bridge_device::interrupt_line_w)
+{
+	logerror("interrupt_line_w %02x\n", data);
+}
+
+READ8_MEMBER  (pci_bridge_device::interrupt_pin_r)
+{
+	logerror("interrupt_pin_r\n");
+	return 0xff;
+}
+
+WRITE8_MEMBER (pci_bridge_device::interrupt_pin_w)
+{
+	logerror("interrupt_pin_w %02x\n", data);
+}
+
 READ16_MEMBER (pci_bridge_device::bridge_control_r)
 {
 	return bridge_control;
@@ -798,8 +782,8 @@ WRITE16_MEMBER(pci_bridge_device::bridge_control_w)
 }
 
 
-agp_bridge_device::agp_bridge_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: pci_bridge_device(mconfig, type, tag, owner, clock)
+agp_bridge_device::agp_bridge_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: pci_bridge_device(mconfig, type, name, tag, owner, clock, shortname, source)
 {
 }
 
@@ -821,8 +805,8 @@ DEVICE_ADDRESS_MAP_START(io_configuration_access_map, 32, pci_host_device)
 ADDRESS_MAP_END
 
 
-pci_host_device::pci_host_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: pci_bridge_device(mconfig, type, tag, owner, clock)
+pci_host_device::pci_host_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source)
+	: pci_bridge_device(mconfig, type, name, tag, owner, clock, shortname, source)
 {
 }
 
@@ -841,9 +825,6 @@ void pci_host_device::device_start()
 	io_window_start = io_window_end = io_offset = 0;
 
 	reset_all_mappings();
-
-	save_item(NAME(config_address));
-
 }
 
 void pci_host_device::device_reset()
@@ -905,7 +886,7 @@ void pci_host_device::root_config_write(uint8_t bus, uint8_t device, uint16_t re
 
 
 pci_root_device::pci_root_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, PCI_ROOT, tag, owner, clock)
+	: device_t(mconfig, PCI_ROOT,"PCI virtual root", tag, owner, clock, "pci_root", __FILE__)
 {
 }
 

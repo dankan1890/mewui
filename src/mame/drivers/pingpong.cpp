@@ -7,14 +7,11 @@ Ping Pong (c) 1985 Konami
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/pingpong.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
 #include "machine/nvram.h"
 #include "machine/watchdog.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/pingpong.h"
 
 
 
@@ -446,7 +443,7 @@ static GFXDECODE_START( pingpong )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( pingpong )
+static MACHINE_CONFIG_START( pingpong, pingpong_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80,18432000/6)      /* 3.072 MHz (probably) */
@@ -612,6 +609,6 @@ DRIVER_INIT_MEMBER(pingpong_state,cashquiz)
 }
 
 
-GAME( 1985, pingpong, 0, pingpong, pingpong, pingpong_state, 0,        ROT0,  "Konami",         "Konami's Ping-Pong",            0 )
-GAME( 1986, merlinmm, 0, merlinmm, merlinmm, pingpong_state, merlinmm, ROT90, "Zilec-Zenitone", "Merlins Money Maze",            0 )
-GAME( 1986, cashquiz, 0, merlinmm, cashquiz, pingpong_state, cashquiz, ROT0,  "Zilec-Zenitone", "Cash Quiz (Type B, Version 5)", MACHINE_IMPERFECT_GRAPHICS )
+GAME( 1985, pingpong, 0, pingpong, pingpong, driver_device, 0,         ROT0, "Konami", "Konami's Ping-Pong", 0 )
+GAME( 1986, merlinmm, 0, merlinmm, merlinmm, pingpong_state, merlinmm, ROT90,"Zilec-Zenitone", "Merlins Money Maze", 0 )
+GAME( 1986, cashquiz, 0, merlinmm, cashquiz, pingpong_state, cashquiz, ROT0, "Zilec-Zenitone", "Cash Quiz (Type B, Version 5)", MACHINE_IMPERFECT_GRAPHICS )

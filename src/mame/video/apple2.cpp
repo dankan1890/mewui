@@ -668,14 +668,14 @@ uint32_t apple2_state::screen_update_apple2(screen_device &screen, bitmap_ind16 
     New implementation
 */
 
-DEFINE_DEVICE_TYPE(APPLE2_VIDEO, a2_video_device, "a2video", "Apple II video")
+const device_type APPLE2_VIDEO = &device_creator<a2_video_device>;
 
 //-------------------------------------------------
 //  a2_video_device - constructor
 //-------------------------------------------------
 
 a2_video_device::a2_video_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, APPLE2_VIDEO, tag, owner, clock)
+	: device_t(mconfig, APPLE2_VIDEO, "Apple II video", tag, owner, clock, "a2video", __FILE__)
 {
 }
 

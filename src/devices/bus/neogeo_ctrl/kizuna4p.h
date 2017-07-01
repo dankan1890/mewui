@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NEOGEO_CTRL_KIZUNA4P_H
-#define MAME_BUS_NEOGEO_CTRL_KIZUNA4P_H
-
 #pragma once
 
+#ifndef __NEOGEO_KIZ4P__
+#define __NEOGEO_KIZ4P__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -52,8 +53,9 @@ private:
 };
 
 
+
 // device type definition
-DECLARE_DEVICE_TYPE(NEOGEO_KIZ4P, neogeo_kizuna4p_device)
+extern const device_type NEOGEO_KIZ4P;
 
 
-#endif // MAME_BUS_NEOGEO_CTRL_KIZUNA4P_H
+#endif

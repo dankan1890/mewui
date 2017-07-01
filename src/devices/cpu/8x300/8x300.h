@@ -7,10 +7,10 @@
  *  Created on: 18/12/2013
  */
 
-#ifndef MAME_CPU_8X300_8X300_H
-#define MAME_CPU_8X300_8X300_H
+#ifndef _8X300_H_
+#define _8X300_H_
 
-#pragma once
+#include "emu.h"
 
 // Register enumeration
 enum
@@ -134,6 +134,6 @@ private:
 	uint8_t get_reg(uint8_t reg);
 };
 
-DECLARE_DEVICE_TYPE(N8X300, n8x300_cpu_device)
+extern const device_type N8X300;
 
-#endif // MAME_CPU_8X300_8X300_H
+#endif /* 8X300_H_ */

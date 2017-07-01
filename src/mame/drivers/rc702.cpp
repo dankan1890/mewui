@@ -19,23 +19,19 @@ Issues:
 ****************************************************************************************************************/
 
 #include "emu.h"
-
-#include "bus/rs232/rs232.h"
 #include "cpu/z80/z80.h"
-#include "cpu/z80/z80daisy.h"
-#include "machine/7474.h"
-#include "machine/am9517a.h"
-#include "machine/clock.h"
-#include "machine/keyboard.h"
 #include "machine/upd765.h"
-#include "machine/z80ctc.h"
-#include "machine/z80dart.h"
+#include "cpu/z80/z80daisy.h"
 #include "machine/z80pio.h"
-#include "sound/beep.h"
+#include "machine/z80dart.h"
+#include "machine/z80ctc.h"
+#include "machine/am9517a.h"
+#include "machine/7474.h"
+#include "bus/rs232/rs232.h"
+#include "machine/clock.h"
 #include "video/i8275.h"
-
-#include "screen.h"
-#include "speaker.h"
+#include "machine/keyboard.h"
+#include "sound/beep.h"
 
 
 
@@ -46,7 +42,6 @@ public:
 		: driver_device(mconfig, type, tag)
 		, m_palette(*this, "palette")
 		, m_maincpu(*this, "maincpu")
-		, m_p_chargen(*this, "chargen")
 		, m_sio1(*this, "sio1")
 		, m_ctc1(*this, "ctc1")
 		, m_pio(*this, "pio")
@@ -75,9 +70,10 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(qbar_w);
 	DECLARE_WRITE_LINE_MEMBER(dack1_w);
 	I8275_DRAW_CHARACTER_MEMBER(display_pixels);
-	void kbd_put(u8 data);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 
 private:
+	uint8_t *m_p_chargen;
 	bool m_q_state;
 	bool m_qbar_state;
 	bool m_drq_state;
@@ -86,7 +82,6 @@ private:
 	bool m_tc;
 	required_device<palette_device> m_palette;
 	required_device<cpu_device> m_maincpu;
-	required_region_ptr<u8> m_p_chargen;
 	required_device<z80dart_device> m_sio1;
 	required_device<z80ctc_device> m_ctc1;
 	required_device<z80pio_device> m_pio;
@@ -249,6 +244,7 @@ DRIVER_INIT_MEMBER( rc702_state, rc702 )
 	membank("bankr0")->configure_entry(1, &main[0x0000]);
 	membank("bankr0")->configure_entry(0, &main[0x10000]);
 	membank("bankw0")->configure_entry(0, &main[0x0000]);
+	m_p_chargen = memregion("chargen")->base();
 	m_palette->set_pen_colors(0, our_palette, ARRAY_LENGTH(our_palette));
 }
 
@@ -326,9 +322,9 @@ static const z80_daisy_config daisy_chain_intf[] =
 	{ nullptr }
 };
 
-void rc702_state::kbd_put(u8 data)
+WRITE8_MEMBER( rc702_state::kbd_put )
 {
-	m_pio->pa_w(machine().dummy_space(), 0, data);
+	m_pio->pa_w(space, 0, data);
 	m_pio->strobe_a(0);
 	m_pio->strobe_a(1);
 }
@@ -337,7 +333,7 @@ static SLOT_INTERFACE_START( floppies )
 	SLOT_INTERFACE( "drive0", FLOPPY_525_QD )
 SLOT_INTERFACE_END
 
-static MACHINE_CONFIG_START( rc702 )
+static MACHINE_CONFIG_START( rc702, rc702_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_8MHz / 2)
 	MCFG_CPU_PROGRAM_MAP(rc702_mem)
@@ -380,7 +376,7 @@ static MACHINE_CONFIG_START( rc702 )
 
 	/* Keyboard */
 	MCFG_DEVICE_ADD("keyboard", GENERIC_KEYBOARD, 0)
-	MCFG_GENERIC_KEYBOARD_CB(PUT(rc702_state, kbd_put))
+	MCFG_GENERIC_KEYBOARD_CB(WRITE8(rc702_state, kbd_put))
 
 	MCFG_DEVICE_ADD("7474", TTL7474, 0)
 	MCFG_7474_COMP_OUTPUT_CB(WRITELINE(rc702_state, q_w))
@@ -424,5 +420,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME       PARENT   COMPAT  MACHINE     INPUT     CLASS            INIT    COMPANY            FULLNAME         FLAGS
+/*    YEAR  NAME       PARENT   COMPAT  MACHINE     INPUT     CLASS            INIT      COMPANY           FULLNAME       FLAGS */
 COMP( 1979, rc702,     0,       0,      rc702,      rc702,    rc702_state,     rc702,  "Regnecentralen",  "RC702 Piccolo", MACHINE_NOT_WORKING )

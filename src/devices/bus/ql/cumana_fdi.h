@@ -6,10 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_QL_CUMANA_FDI_H
-#define MAME_BUS_QL_CUMANA_FDI_H
-
 #pragma once
+
+#ifndef __CUMANA_FLOPPY_DISK_INTERFACE__
+#define __CUMANA_FLOPPY_DISK_INTERFACE__
 
 #include "exp.h"
 
@@ -21,11 +21,12 @@
 
 // ======================> cumana_floppy_disk_interface_t
 
-class cumana_floppy_disk_interface_device : public device_t, public device_ql_expansion_card_interface
+class cumana_floppy_disk_interface_t : public device_t,
+										public device_ql_expansion_card_interface
 {
 public:
 	// construction/destruction
-	cumana_floppy_disk_interface_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	cumana_floppy_disk_interface_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// optional information overrides
 	virtual const tiny_rom_entry *device_rom_region() const override;
@@ -40,7 +41,10 @@ protected:
 };
 
 
-// device type definition
-DECLARE_DEVICE_TYPE(CUMANA_FLOPPY_DISK_INTERFACE, cumana_floppy_disk_interface_device)
 
-#endif // MAME_BUS_QL_CUMANA_FDI_H
+// device type definition
+extern const device_type CUMANA_FLOPPY_DISK_INTERFACE;
+
+
+
+#endif

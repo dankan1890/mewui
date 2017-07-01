@@ -55,14 +55,14 @@ static int32_t UNPACK(uint16_t val)
 	return uval;
 }
 
-void AICADSP::init()
+void aica_dsp_init(AICADSP *DSP)
 {
-	memset(this,0,sizeof(*this));
-	RBL=0x8000;
-	Stopped=1;
+	memset(DSP,0,sizeof(AICADSP));
+	DSP->RBL=0x8000;
+	DSP->Stopped=1;
 }
 
-void AICADSP::step()
+void aica_dsp_step(AICADSP *DSP)
 {
 	int32_t ACC=0;    //26 bit
 	int32_t SHIFTED=0;    //24 bit
@@ -77,19 +77,19 @@ void AICADSP::step()
 	uint32_t ADRS_REG=0;  //13 bit
 	int step;
 
-	if(Stopped)
+	if(DSP->Stopped)
 		return;
 
-	memset(EFREG,0,2*16);
+	memset(DSP->EFREG,0,2*16);
 #if 0
 	int dump=0;
 	FILE *f=nullptr;
 	if(dump)
 		f=fopen("dsp.txt","wt");
 #endif
-	for(step=0;step</*128*/LastStep;++step)
+	for(step=0;step</*128*/DSP->LastStep;++step)
 	{
-		uint16_t *IPtr=MPRO+step*8;
+		uint16_t *IPtr=DSP->MPRO+step*8;
 
 //      if(IPtr[0]==0 && IPtr[1]==0 && IPtr[2]==0 && IPtr[3]==0)
 //          break;
@@ -157,9 +157,9 @@ void AICADSP::step()
 		//INPUTS RW
 		assert(IRA<0x32);
 		if(IRA<=0x1f)
-			INPUTS=MEMS[IRA];
+			INPUTS=DSP->MEMS[IRA];
 		else if(IRA<=0x2F)
-			INPUTS=MIXS[IRA-0x20]<<4;  //MIXS is 20 bit
+			INPUTS=DSP->MIXS[IRA-0x20]<<4;  //MIXS is 20 bit
 		else if(IRA<=0x31)
 			INPUTS=0;
 
@@ -170,7 +170,7 @@ void AICADSP::step()
 
 		if(IWT)
 		{
-			MEMS[IWA]=MEMVAL;  //MEMVAL was selected in previous MRD
+			DSP->MEMS[IWA]=MEMVAL;  //MEMVAL was selected in previous MRD
 			if(IRA==IWA)
 				INPUTS=MEMVAL;
 		}
@@ -183,7 +183,7 @@ void AICADSP::step()
 				B=ACC;
 			else
 			{
-				B=TEMP[(TRA+DEC)&0x7F];
+				B=DSP->TEMP[(TRA+DSP->DEC)&0x7F];
 				B<<=8;
 				B>>=8;
 				//if(B&0x00800000)
@@ -200,7 +200,7 @@ void AICADSP::step()
 			X=INPUTS;
 		else
 		{
-			X=TEMP[(TRA+DEC)&0x7F];
+			X=DSP->TEMP[(TRA+DSP->DEC)&0x7F];
 			X<<=8;
 			X>>=8;
 			//if(X&0x00800000)
@@ -211,7 +211,7 @@ void AICADSP::step()
 		if(YSEL==0)
 			Y=FRC_REG;
 		else if(YSEL==1)
-			Y=this->COEF[COEF<<1]>>3;    //COEF is 16 bits
+			Y=DSP->COEF[COEF<<1]>>3;    //COEF is 16 bits
 		else if(YSEL==2)
 			Y=(Y_REG>>11)&0x1FFF;
 		else if(YSEL==3)
@@ -266,7 +266,7 @@ void AICADSP::step()
 		ACC=(int) v+B;
 
 		if(TWT)
-			TEMP[(TWA+DEC)&0x7F]=SHIFTED;
+			DSP->TEMP[(TWA+DSP->DEC)&0x7F]=SHIFTED;
 
 		if(FRCL)
 		{
@@ -279,34 +279,34 @@ void AICADSP::step()
 		if(MRD || MWT)
 		//if(0)
 		{
-			ADDR=MADRS[MASA<<1];
+			ADDR=DSP->MADRS[MASA<<1];
 			if(!TABLE)
-				ADDR+=DEC;
+				ADDR+=DSP->DEC;
 			if(ADREB)
 				ADDR+=ADRS_REG&0x0FFF;
 			if(NXADR)
 				ADDR++;
 			if(!TABLE)
-				ADDR&=RBL-1;
+				ADDR&=DSP->RBL-1;
 			else
 				ADDR&=0xFFFF;
 			//ADDR<<=1;
-			//ADDR+=RBP<<13;
-			//MEMVAL=AICARAM[ADDR>>1];
-			ADDR+=RBP<<10;
+			//ADDR+=DSP->RBP<<13;
+			//MEMVAL=DSP->AICARAM[ADDR>>1];
+			ADDR+=DSP->RBP<<10;
 			if(MRD && (step&1)) //memory only allowed on odd? DoA inserts NOPs on even
 			{
 				if(NOFL)
-					MEMVAL=AICARAM[ADDR]<<8;
+					MEMVAL=DSP->AICARAM[ADDR]<<8;
 				else
-					MEMVAL=UNPACK(AICARAM[ADDR]);
+					MEMVAL=UNPACK(DSP->AICARAM[ADDR]);
 			}
 			if(MWT && (step&1))
 			{
 				if(NOFL)
-					AICARAM[ADDR]=SHIFTED>>8;
+					DSP->AICARAM[ADDR]=SHIFTED>>8;
 				else
-					AICARAM[ADDR]=PACK(SHIFTED);
+					DSP->AICARAM[ADDR]=PACK(SHIFTED);
 			}
 		}
 
@@ -319,33 +319,34 @@ void AICADSP::step()
 		}
 
 		if(EWT)
-			EFREG[EWA]+=SHIFTED>>8;
+			DSP->EFREG[EWA]+=SHIFTED>>8;
 
 	}
-	--DEC;
-	memset(MIXS,0,4*16);
+	--DSP->DEC;
+	memset(DSP->MIXS,0,4*16);
 //  if(f)
 //      fclose(f);
 }
 
-void AICADSP::setsample(int32_t sample,int SEL,int MXL)
+void aica_dsp_setsample(AICADSP *DSP,int32_t sample,int SEL,int MXL)
 {
-	//MIXS[SEL]+=sample<<(MXL+1)/*7*/;
-	MIXS[SEL]+=sample;
+	//DSP->MIXS[SEL]+=sample<<(MXL+1)/*7*/;
+	DSP->MIXS[SEL]+=sample;
 //  if(MXL)
 //      int a=1;
 }
 
-void AICADSP::start()
+void aica_dsp_start(AICADSP *DSP)
 {
 	int i;
-	Stopped=0;
+	DSP->Stopped=0;
 	for(i=127;i>=0;--i)
 	{
-		uint16_t *IPtr=MPRO+i*8;
+		uint16_t *IPtr=DSP->MPRO+i*8;
 
 		if(IPtr[0]!=0 || IPtr[2]!=0 || IPtr[4]!=0 || IPtr[6]!=0)
 			break;
 	}
-	LastStep=i+1;
+	DSP->LastStep=i+1;
+
 }

@@ -11,11 +11,9 @@
 #include "emu.h"
 #include "z8000.h"
 #include "z8000cpu.h"
-
 #include "debugger.h"
 #include "debug/debugvw.h"
 #include "debug/debugcon.h"
-
 
 static int n[16];   /* opcode nibbles */
 static int b[8];    /* opcode bytes */
@@ -54,11 +52,13 @@ CPU_DISASSEMBLE(z8000)
 {
 	int new_pc = pc, i, j, tmp;
 	const char *src;
-	z8002_device::Z8000_dasm o;
+	Z8000_exec *o;
 	uint32_t flags = 0;
 	uint32_t old_w;
 
-	z8002_device::init_tables();
+	/* already initialized? */
+	if(z8000_exec == nullptr)
+		z8000_init_tables();
 
 	GET_OP(oprom, 0, new_pc - pc);
 	new_pc += 2;
@@ -74,11 +74,11 @@ CPU_DISASSEMBLE(z8000)
 			util::stream_format(stream, ".word   #%%%04x ;RST PC", w[0]);
 			break;
 		default:
-			o = z8002_device::dasm(w[0]);
-			if (o.size > 1) { GET_OP(oprom, 1, new_pc - pc); new_pc += 2; }
-			if (o.size > 2) { GET_OP(oprom, 2, new_pc - pc); new_pc += 2; }
-			src = o.dasm;
-			flags = o.flags;
+			o = &z8000_exec[w[0]];
+			if (o->size > 1) { GET_OP(oprom, 1, new_pc - pc); new_pc += 2; }
+			if (o->size > 2) { GET_OP(oprom, 2, new_pc - pc); new_pc += 2; }
+			src = o->dasm;
+			flags = o->dasmflags;
 
 			while (*src)
 			{
@@ -198,9 +198,9 @@ CPU_DISASSEMBLE(z8000)
 						if (z8k_segm) {
 							if (w[i] & 0x8000) {
 								old_w = w[i];
-								for (j = i; j < o.size; j++)
+								for (j = i; j < o->size; j++)
 									w[j] = w[j + 1];
-								GET_OP(oprom, o.size - 1, new_pc - pc);
+								GET_OP(oprom, o->size - 1, new_pc - pc);
 								new_pc += 2;
 								w[i] = ((old_w & 0x7f00) << 16) | (w[i] & 0xffff);
 							}

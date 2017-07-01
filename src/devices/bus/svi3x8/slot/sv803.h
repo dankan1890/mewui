@@ -6,11 +6,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_SVI3X8_SLOT_SV803_H
-#define MAME_BUS_SVI3X8_SLOT_SV803_H
-
 #pragma once
 
+#ifndef __SVI3X8_SLOT_SV803_H__
+#define __SVI3X8_SLOT_SV803_H__
+
+#include "emu.h"
 #include "slot.h"
 
 
@@ -38,6 +39,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(SV803, sv803_device)
+extern const device_type SV803;
 
-#endif // MAME_BUS_SVI3X8_SLOT_SV803_H
+#endif // __SVI3X8_SLOT_SV803_H__

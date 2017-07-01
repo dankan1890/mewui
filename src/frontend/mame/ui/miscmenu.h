@@ -183,10 +183,6 @@ protected:
 	virtual void handle() override;
 
 	virtual void custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2) override;
-
-private:
-	bool m_first_run;
-	std::unordered_map<std::string, std::string> m_plugins_value;
 };
 
 } // namespace ui

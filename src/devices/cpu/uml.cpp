@@ -1003,11 +1003,6 @@ std::string uml::instruction::disasm(drcuml_state *drcuml) const
 				util::stream_format(buffer, "%s", param.handle().string());
 				break;
 
-			// label
-			case parameter::PTYPE_CODE_LABEL:
-				util::stream_format(buffer, "$%8X", param.label().label());
-				break;
-
 			default:
 				util::stream_format(buffer, "???");
 				break;

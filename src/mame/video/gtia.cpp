@@ -12,7 +12,6 @@
 
 #include "emu.h"
 #include "video/gtia.h"
-#include "screen.h"
 
 #define GTIA_P0 0x01
 #define GTIA_P1 0x02
@@ -112,16 +111,16 @@
 
 
 // devices
-DEFINE_DEVICE_TYPE(ATARI_GTIA, gtia_device, "gtia", "Atari GTIA")
+const device_type ATARI_GTIA = &device_creator<gtia_device>;
 
 //-------------------------------------------------
 //  upd7220_device - constructor
 //-------------------------------------------------
 
 gtia_device::gtia_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ATARI_GTIA, tag, owner, clock),
-	m_read_cb(*this),
-	m_write_cb(*this)
+				device_t(mconfig, ATARI_GTIA, "Atari GTIA", tag, owner, clock, "gtia", __FILE__),
+				m_read_cb(*this),
+				m_write_cb(*this)
 {
 }
 

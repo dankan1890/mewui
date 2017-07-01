@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "djdma.h"
 
 
@@ -23,7 +22,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(S100_DJDMA, s100_djdma_device, "s100_djdma", "Morrow Disk Jockey/DMA")
+const device_type S100_DJDMA = &device_creator<s100_djdma_device>;
 
 
 //-------------------------------------------------
@@ -73,14 +72,25 @@ ADDRESS_MAP_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( s100_djdma )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( s100_djdma_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( s100_djdma )
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(djdma_mem)
 	MCFG_CPU_IO_MAP(djdma_io)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor s100_djdma_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( s100_djdma );
+}
 
 
 
@@ -93,7 +103,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 s100_djdma_device::s100_djdma_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, S100_DJDMA, tag, owner, clock),
+	device_t(mconfig, S100_DJDMA, "DJDMA", tag, owner, clock, "djdma", __FILE__),
 	device_s100_card_interface(mconfig, *this)
 {
 }

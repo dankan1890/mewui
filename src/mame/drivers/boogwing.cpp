@@ -81,18 +81,14 @@
 */
 
 #include "emu.h"
-#include "includes/boogwing.h"
-
 #include "cpu/m68000/m68000.h"
 #include "cpu/h6280/h6280.h"
+#include "includes/boogwing.h"
 #include "machine/deco102.h"
 #include "machine/decocrpt.h"
 #include "machine/gen_latch.h"
 #include "sound/ym2151.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
-
 
 READ16_MEMBER( boogwing_state::boogwing_protection_region_0_104_r )
 {
@@ -321,7 +317,7 @@ DECO16IC_BANK_CB_MEMBER(boogwing_state::bank_callback2)
 	return offset;
 }
 
-static MACHINE_CONFIG_START( boogwing )
+static MACHINE_CONFIG_START( boogwing, boogwing_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 14000000)   /* DE102 */
@@ -403,11 +399,11 @@ static MACHINE_CONFIG_START( boogwing )
 	MCFG_SOUND_ROUTE(0, "lspeaker", 0.80)
 	MCFG_SOUND_ROUTE(1, "rspeaker", 0.80)
 
-	MCFG_OKIM6295_ADD("oki1", 32220000/32, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki1", 32220000/32, OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 1.40)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "rspeaker", 1.40)
 
-	MCFG_OKIM6295_ADD("oki2", 32220000/16, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki2", 32220000/16, OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 0.30)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "rspeaker", 0.30)
 MACHINE_CONFIG_END

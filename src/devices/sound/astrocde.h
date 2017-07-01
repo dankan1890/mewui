@@ -1,20 +1,19 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles,Frank Palazzolo
-#ifndef MAME_SOUND_ASTROCDE_H
-#define MAME_SOUND_ASTROCDE_H
-
 #pragma once
+
+#ifndef __ASTROCDE_H__
+#define __ASTROCDE_H__
 
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_ASTROCADE_ADD(tag, clock) \
-		MCFG_DEVICE_ADD((tag), ASTROCADE, (clock))
-
-#define MCFG_ASTROCADE_REPLACE(tag, clock) \
-		MCFG_DEVICE_REPLACE((tag), ASTROCADE, (clock))
+#define MCFG_ASTROCADE_ADD(_tag, _clock) \
+	MCFG_DEVICE_ADD(_tag, ASTROCADE, _clock)
+#define MCFG_ASTROCADE_REPLACE(_tag, _clock) \
+	MCFG_DEVICE_REPLACE(_tag, ASTROCADE, _clock)
 
 
 
@@ -24,10 +23,12 @@
 
 // ======================> astrocade_device
 
-class astrocade_device : public device_t, public device_sound_interface
+class astrocade_device : public device_t,
+							public device_sound_interface
 {
 public:
 	astrocade_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~astrocade_device() { }
 
 protected:
 	// device-level overrides
@@ -43,6 +44,7 @@ public:
 private:
 	void state_save_register();
 
+private:
 	sound_stream *m_stream;       /* sound stream */
 
 	uint8_t       m_reg[8];         /* 8 control registers */
@@ -65,6 +67,7 @@ private:
 	uint8_t       m_bitswap[256];   /* bitswap table */
 };
 
-DECLARE_DEVICE_TYPE(ASTROCADE, astrocade_device)
+extern const device_type ASTROCADE;
 
-#endif // MAME_SOUND_ASTROCDE_H
+
+#endif /* __ASTROCDE_H__ */

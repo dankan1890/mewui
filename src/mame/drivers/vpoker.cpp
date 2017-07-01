@@ -101,8 +101,6 @@
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6840ptm.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class vpoker_state : public driver_device
@@ -627,7 +625,7 @@ WRITE_LINE_MEMBER(vpoker_state::ptm_irq)
 	m_maincpu->set_input_line(M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static MACHINE_CONFIG_START( vpoker )
+static MACHINE_CONFIG_START( vpoker, vpoker_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",M6809,XTAL_4MHz)
@@ -702,6 +700,6 @@ ROM_START( 5acespkr )
 ROM_END
 
 
-//    YEAR  NAME      PARENT  MACHINE  INPUT     STATE         INIT  ROT   COMPANY               FULLNAME                   FLAGS
-GAME( 198?, vpoker,   0,      vpoker,  vpoker,   vpoker_state, 0,    ROT0, "Videotronics, Inc.", "Videotronics Draw Poker", MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
-GAME( 198?, 5acespkr, 0,      vpoker,  5acespkr, vpoker_state, 0,    ROT0, "<unknown>",          "5-Aces Poker",            MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
+/*    YEAR  NAME      PARENT  MACHINE  INPUT     STATE          INIT  ROT    COMPANY               FULLNAME                  FLAGS... */
+GAME( 198?, vpoker,   0,      vpoker,  vpoker,   driver_device, 0,    ROT0, "Videotronics, Inc.", "Videotronics Draw Poker", MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
+GAME( 198?, 5acespkr, 0,      vpoker,  5acespkr, driver_device, 0,    ROT0, "<unknown>",          "5-Aces Poker",            MACHINE_NOT_WORKING | MACHINE_NO_SOUND )

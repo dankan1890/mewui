@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_LPCI_H
-#define MAME_MACHINE_LPCI_H
-
-#pragma once
+#ifndef LPCI_H
+#define LPCI_H
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -66,7 +64,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(PCI_BUS_LEGACY, pci_bus_legacy_device)
+extern const device_type PCI_BUS_LEGACY;
 
 
 /***************************************************************************
@@ -82,4 +80,4 @@ DECLARE_DEVICE_TYPE(PCI_BUS_LEGACY, pci_bus_legacy_device)
 	downcast<pci_bus_legacy_device *>(device)->set_father(_father_tag);
 
 
-#endif // MAME_MACHINE_LPCI_H
+#endif /* PCI_H */

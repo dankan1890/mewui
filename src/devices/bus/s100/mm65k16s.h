@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_S100_MM65K16S_H
-#define MAME_BUS_S100_MM65K16S_H
-
 #pragma once
 
+#ifndef __S100_MM65K16S__
+#define __S100_MM65K16S__
+
+#include "emu.h"
 #include "s100.h"
 
 
@@ -48,6 +49,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(S100_MM65K16S, s100_mm65k16s_device)
+extern const device_type S100_MM65K16S;
 
-#endif // MAME_BUS_S100_MM65K16S_H
+
+#endif

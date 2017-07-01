@@ -1,9 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
 #include "emu.h"
-#include "includes/f1gp.h"
 
-#include "screen.h"
+#include "includes/f1gp.h"
 
 
 #define TOTAL_CHARS 0x800

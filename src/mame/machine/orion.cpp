@@ -11,11 +11,10 @@
 
 
 #include "emu.h"
-#include "includes/orion.h"
-
+#include "cpu/i8085/i8085.h"
 #include "imagedev/cassette.h"
-#include "screen.h"
-
+#include "sound/speaker.h"
+#include "includes/orion.h"
 
 #define SCREEN_WIDTH_384 48
 #define SCREEN_WIDTH_480 60

@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_UPD4992_H
-#define MAME_MACHINE_UPD4992_H
-
 #pragma once
+
+#ifndef __UPD4992DEV_H__
+#define __UPD4992DEV_H__
 
 #include "dirtc.h"
 
@@ -18,8 +18,8 @@
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_UPD4992_ADD(tag) \
-		MCFG_DEVICE_ADD((tag), UPD4992, XTAL_32_768kHz)
+#define MCFG_UPD4992_ADD(_tag) \
+	MCFG_DEVICE_ADD(_tag, UPD4992, XTAL_32_768kHz)
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -27,7 +27,8 @@
 
 // ======================> upd4992_device
 
-class upd4992_device : public device_t, public device_rtc_interface
+class upd4992_device : public device_t,
+						public device_rtc_interface
 {
 public:
 	// construction/destruction
@@ -60,6 +61,13 @@ private:
 
 // device type definition
 extern const device_type UPD4992;
-DECLARE_DEVICE_TYPE(UPD4992, upd4992_device)
 
-#endif // MAME_MACHINE_UPD4992_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

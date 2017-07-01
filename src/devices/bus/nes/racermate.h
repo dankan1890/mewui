@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_NES_RACERMATE_H
-#define MAME_BUS_NES_RACERMATE_H
+#ifndef __NES_RACERMATE_H
+#define __NES_RACERMATE_H
 
 #include "nxrom.h"
 
@@ -26,7 +26,10 @@ private:
 };
 
 
-// device type definition
-DECLARE_DEVICE_TYPE(NES_RACERMATE, nes_racermate_device)
 
-#endif // MAME_BUS_NES_RACERMATE_H
+
+
+// device type definition
+extern const device_type NES_RACERMATE;
+
+#endif

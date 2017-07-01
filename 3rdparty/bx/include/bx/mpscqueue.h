@@ -1,47 +1,53 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
 #ifndef BX_MPSCQUEUE_H_HEADER_GUARD
 #define BX_MPSCQUEUE_H_HEADER_GUARD
 
-#include "mutex.h"
 #include "spscqueue.h"
 
 namespace bx
 {
-	///
 	template <typename Ty>
-	class MpScUnboundedQueueT
+	class MpScUnboundedQueue
 	{
-		BX_CLASS(MpScUnboundedQueueT
+		BX_CLASS(MpScUnboundedQueue
 			, NO_COPY
 			, NO_ASSIGNMENT
 			);
 
 	public:
-		///
-		MpScUnboundedQueueT();
+		MpScUnboundedQueue()
+		{
+		}
 
-		///
-		~MpScUnboundedQueueT();
+		~MpScUnboundedQueue()
+		{
+		}
 
-		///
-		void push(Ty* _ptr); // producer only
+		void push(Ty* _ptr) // producer only
+		{
+			LwMutexScope lock(m_write);
+			m_queue.push(_ptr);
+		}
 
-		///
-		Ty* peek(); // consumer only
+		Ty* peek() // consumer only
+		{
+			return m_queue.peek();
+		}
 
-		///
-		Ty* pop(); // consumer only
+		Ty* pop() // consumer only
+		{
+			return m_queue.pop();
+		}
 
 	private:
-		Mutex m_write;
-		SpScUnboundedQueueT<Ty> m_queue;
+		LwMutex m_write;
+		SpScUnboundedQueue<Ty> m_queue;
 	};
 
-	///
 	template <typename Ty>
 	class MpScUnboundedBlockingQueue
 	{
@@ -51,25 +57,31 @@ namespace bx
 			);
 
 	public:
-		///
-		MpScUnboundedBlockingQueue();
+		MpScUnboundedBlockingQueue()
+		{
+		}
 
-		///
-		~MpScUnboundedBlockingQueue();
+		~MpScUnboundedBlockingQueue()
+		{
+		}
 
-		///
-		void push(Ty* _ptr); // producer only
+		void push(Ty* _ptr) // producer only
+		{
+			m_queue.push(_ptr);
+			m_sem.post();
+		}
 
-		///
-		Ty* pop(); // consumer only
+		Ty* pop() // consumer only
+		{
+			m_sem.wait();
+			return m_queue.pop();
+		}
 
 	private:
-		MpScUnboundedQueueT<Ty> m_queue;
+		MpScUnboundedQueue<Ty> m_queue;
 		Semaphore m_sem;
 	};
 
 } // namespace bx
-
-#include "inline/mpscqueue.inl"
 
 #endif // BX_MPSCQUEUE_H_HEADER_GUARD

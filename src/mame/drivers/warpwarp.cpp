@@ -127,11 +127,8 @@ Notes:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/warpwarp.h"
-
 #include "cpu/i8085/i8085.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/warpwarp.h"
 
 #include "geebee.lh"
 #include "navarone.lh"
@@ -730,7 +727,7 @@ GFXDECODE_END
 
 
 
-static MACHINE_CONFIG_START( geebee )
+static MACHINE_CONFIG_START( geebee, warpwarp_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8080, MASTER_CLOCK/9) /* verified on pcb */
@@ -768,7 +765,7 @@ static MACHINE_CONFIG_DERIVED( navarone, geebee )
 	MCFG_VIDEO_START_OVERRIDE(warpwarp_state,navarone)
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_START( bombbee )
+static MACHINE_CONFIG_START( bombbee, warpwarp_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8080, MASTER_CLOCK/9)

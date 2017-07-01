@@ -90,7 +90,7 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(PDP8, pdp8_device)
+extern const device_type PDP8CPU;
 
 /***************************************************************************
     REGISTER ENUMERATION

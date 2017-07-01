@@ -10,21 +10,15 @@
 
 
 #include "emu.h"
-#include "includes/radio86.h"
-
 #include "cpu/i8085/i8085.h"
-#include "imagedev/cassette.h"
+#include "sound/wave.h"
+#include "sound/speaker.h"
 #include "machine/i8255.h"
 #include "machine/pit8253.h"
-#include "sound/spkrdev.h"
-#include "sound/wave.h"
-
-#include "screen.h"
-#include "softlist.h"
-#include "speaker.h"
-
+#include "imagedev/cassette.h"
 #include "formats/rk_cas.h"
-
+#include "includes/radio86.h"
+#include "softlist.h"
 
 class apogee_state : public radio86_state
 {
@@ -212,7 +206,7 @@ GFXDECODE_END
 
 
 /* Machine driver */
-static MACHINE_CONFIG_START( apogee )
+static MACHINE_CONFIG_START( apogee, apogee_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8080, XTAL_16MHz / 9)
 	MCFG_CPU_PROGRAM_MAP(apogee_mem)
@@ -282,5 +276,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT   COMPAT  MACHINE    INPUT   STATE         INIT     COMPANY      FULLNAME        FLAGS
-COMP( 1989, apogee, radio86, 0,      apogee,    apogee, apogee_state, radio86, "Zavod BRA", "Apogee BK-01", 0 )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   INIT    COMPANY   FULLNAME       FLAGS */
+COMP( 1989, apogee, radio86,0,       apogee,    apogee, radio86_state,radio86, "Zavod BRA", "Apogee BK-01", 0)

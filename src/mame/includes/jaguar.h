@@ -14,7 +14,6 @@
 #include "imagedev/snapquik.h"
 #include "cdrom.h"
 #include "imagedev/chd_cd.h"
-#include "screen.h"
 
 #ifndef ENABLE_SPEEDUP_HACKS
 #define ENABLE_SPEEDUP_HACKS 1

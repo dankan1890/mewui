@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "vp620.h"
 
 
@@ -15,14 +14,14 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VP620, vp620_device, "vp620", "VP-620 ASCII Keyboard")
+const device_type VP620 = &device_creator<vp620_device>;
 
 
 //-------------------------------------------------
 //  ASCII_KEYBOARD_INTERFACE( kb_intf )
 //-------------------------------------------------
 
-void vp620_device::kb_w(uint8_t data)
+WRITE8_MEMBER( vp620_device::kb_w )
 {
 	m_keydata = data;
 
@@ -33,13 +32,24 @@ void vp620_device::kb_w(uint8_t data)
 }
 
 //-------------------------------------------------
-//  MACHINE_CONFIG_START( vp620 )
+//  MACHINE_CONFIG_FRAGMENT( vp620 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( vp620_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( vp620 )
 	MCFG_DEVICE_ADD("keyboard", GENERIC_KEYBOARD, 0)
-	MCFG_GENERIC_KEYBOARD_CB(PUT(vp620_device, kb_w))
+	MCFG_GENERIC_KEYBOARD_CB(WRITE8(vp620_device, kb_w))
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor vp620_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( vp620 );
+}
 
 
 
@@ -52,7 +62,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 vp620_device::vp620_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, VP620, tag, owner, clock),
+	device_t(mconfig, VP620, "VP620", tag, owner, clock, "vp620", __FILE__),
 	device_vip_byteio_port_interface(mconfig, *this),
 	m_keydata(0),
 	m_keystb(CLEAR_LINE)

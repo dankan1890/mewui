@@ -1,7 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Takahiro Nogi
-#include "screen.h"
-
 class magmax_state : public driver_device
 {
 public:

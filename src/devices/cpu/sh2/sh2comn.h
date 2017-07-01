@@ -8,10 +8,10 @@
  *
  *****************************************************************************/
 
-#ifndef MAME_CPU_SH2_SH2COMN_H
-#define MAME_CPU_SH2_SH2COMN_H
-
 #pragma once
+
+#ifndef __SH2COMN_H__
+#define __SH2COMN_H__
 
 
 
@@ -82,4 +82,4 @@ do {                                            \
 } while(0)
 
 
-#endif // MAME_CPU_SH2_SH2COMN_H
+#endif /* __SH2COMN_H__ */

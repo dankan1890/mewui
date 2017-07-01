@@ -11,7 +11,6 @@
 #include "emu.h"
 #include "includes/seibuspi.h"
 #include "machine/seibuspi.h"
-#include "screen.h"
 
 
 /**************************************************************************

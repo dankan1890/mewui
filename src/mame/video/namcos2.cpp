@@ -3,13 +3,18 @@
 /* video hardware for Namco System II */
 
 #include "emu.h"
-#include "includes/namcos2.h"
 
-void namcos2_state::TilemapCB(uint16_t code, int *tile, int *mask)
+#include "includes/namcos2.h"
+#include "includes/namcoic.h"
+
+static void
+TilemapCB( running_machine &machine, uint16_t code, int *tile, int *mask )
+//void namcos2_shared_state::tilemap_cb(uint16_t code, int *tile, int *mask)
 {
 	*mask = code;
 
-	switch( m_gametype )
+	namcos2_shared_state *state = machine.driver_data<namcos2_shared_state>();
+	switch( state->m_gametype )
 	{
 	case NAMCOS2_FINAL_LAP_2:
 	case NAMCOS2_FINAL_LAP_3:
@@ -343,9 +348,10 @@ WRITE16_MEMBER( namcos2_state::paletteram_word_w )
 
 			/* register 5: POSIRQ scanline (only 8 bits used) */
 			/*case 0x180a:*/ case 0x180b:
-				//if (data^m_paletteram[offset]) {
+				if (data^m_paletteram[offset]) {
 					m_paletteram[offset] = data;
-				//}
+					adjust_posirq_timer(get_pos_irq_scanline());
+				}
 				break;
 
 			/* registers 6,7: nothing? */
@@ -396,7 +402,7 @@ void namcos2_state::draw_sprite_init()
 
 void namcos2_state::video_start()
 {
-	c123_tilemap_init(2, memregion("gfx4")->base(), namcos2_shared_state::c123_tilemap_delegate(&namcos2_state::TilemapCB, this));
+	namco_tilemap_init(2, memregion("gfx4")->base(), TilemapCB);
 	m_tilemap_roz = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(namcos2_state::roz_tile_info), this), TILEMAP_SCAN_ROWS, 8,8,256,256);
 	m_tilemap_roz->set_transparent_pen(0xff);
 	draw_sprite_init();
@@ -428,7 +434,7 @@ uint32_t namcos2_state::screen_update(screen_device &screen, bitmap_ind16 &bitma
 	{
 		if( (pri&1)==0 )
 		{
-			c123_tilemap_draw( screen, bitmap, clip, pri/2 );
+			namco_tilemap_draw( screen, bitmap, clip, pri/2 );
 
 			if( ((m_gfx_ctrl & 0x7000) >> 12)==pri/2 )
 			{
@@ -444,7 +450,7 @@ uint32_t namcos2_state::screen_update(screen_device &screen, bitmap_ind16 &bitma
 
 void namcos2_state::video_start_finallap()
 {
-	c123_tilemap_init(2,memregion("gfx4")->base(),namcos2_shared_state::c123_tilemap_delegate(&namcos2_state::TilemapCB, this));
+	namco_tilemap_init(2,memregion("gfx4")->base(),TilemapCB);
 	draw_sprite_init();
 }
 
@@ -461,7 +467,7 @@ uint32_t namcos2_state::screen_update_finallap(screen_device &screen, bitmap_ind
 	{
 		if( (pri&1)==0 )
 		{
-			c123_tilemap_draw( screen, bitmap, clip, pri/2 );
+			namco_tilemap_draw( screen, bitmap, clip, pri/2 );
 		}
 		m_c45_road->draw(bitmap,clip,pri);
 		draw_sprites(screen,bitmap,clip,pri,m_gfx_ctrl );
@@ -473,7 +479,7 @@ uint32_t namcos2_state::screen_update_finallap(screen_device &screen, bitmap_ind
 
 void namcos2_state::video_start_luckywld()
 {
-	c123_tilemap_init(2,memregion("gfx4")->base(),namcos2_shared_state::c123_tilemap_delegate(&namcos2_state::TilemapCB, this));
+	namco_tilemap_init(2,memregion("gfx4")->base(),TilemapCB);
 	c355_obj_init( 0, 0x0, namcos2_shared_state::c355_obj_code2tile_delegate() );
 	if( m_gametype==NAMCOS2_LUCKY_AND_WILD )
 	{
@@ -494,7 +500,7 @@ uint32_t namcos2_state::screen_update_luckywld(screen_device &screen, bitmap_ind
 	{
 		if( (pri&1)==0 )
 		{
-			c123_tilemap_draw( screen, bitmap, clip, pri/2 );
+			namco_tilemap_draw( screen, bitmap, clip, pri/2 );
 		}
 		m_c45_road->draw(bitmap,clip,pri);
 		if( m_gametype==NAMCOS2_LUCKY_AND_WILD )
@@ -510,7 +516,7 @@ uint32_t namcos2_state::screen_update_luckywld(screen_device &screen, bitmap_ind
 
 void namcos2_state::video_start_sgunner()
 {
-	c123_tilemap_init(2,memregion("gfx4")->base(),namcos2_shared_state::c123_tilemap_delegate(&namcos2_state::TilemapCB, this));
+	namco_tilemap_init(2,memregion("gfx4")->base(),TilemapCB);
 	c355_obj_init( 0, 0x0, namcos2_shared_state::c355_obj_code2tile_delegate() );
 }
 
@@ -525,7 +531,7 @@ uint32_t namcos2_state::screen_update_sgunner(screen_device &screen, bitmap_ind1
 
 	for( pri=0; pri<8; pri++ )
 	{
-		c123_tilemap_draw( screen, bitmap, clip, pri );
+		namco_tilemap_draw( screen, bitmap, clip, pri );
 		c355_obj_draw(screen, bitmap, clip, pri );
 	}
 	return 0;
@@ -536,7 +542,7 @@ uint32_t namcos2_state::screen_update_sgunner(screen_device &screen, bitmap_ind1
 
 void namcos2_state::video_start_metlhawk()
 {
-	c123_tilemap_init(2,memregion("gfx4")->base(),namcos2_shared_state::c123_tilemap_delegate(&namcos2_state::TilemapCB, this));
+	namco_tilemap_init(2,memregion("gfx4")->base(),TilemapCB);
 	c169_roz_init(1, "gfx5");
 }
 
@@ -553,7 +559,7 @@ uint32_t namcos2_state::screen_update_metlhawk(screen_device &screen, bitmap_ind
 	{
 		if( (pri&1)==0 )
 		{
-			c123_tilemap_draw( screen, bitmap, clip, pri/2 );
+			namco_tilemap_draw( screen, bitmap, clip, pri/2 );
 		}
 		c169_roz_draw(screen, bitmap, clip, pri);
 		draw_sprites_metalhawk(screen,bitmap,clip,pri );

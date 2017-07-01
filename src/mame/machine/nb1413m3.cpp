@@ -13,19 +13,18 @@ Memo:
 ******************************************************************************/
 
 #include "emu.h"
-#include "includes/nb1413m3.h"
-
 #include "cpu/z80/z80.h"
+#include "includes/nb1413m3.h"
 
 
 #define NB1413M3_DEBUG  0
 
 #define NB1413M3_TIMER_BASE 20000000
 
-DEFINE_DEVICE_TYPE(NB1413M3, nb1413m3_device, "nb1413m3", "NB1413 Mahjong Custom")
+const device_type NB1413M3 = &device_creator<nb1413m3_device>;
 
 nb1413m3_device::nb1413m3_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, NB1413M3, tag, owner, clock),
+	: device_t(mconfig, NB1413M3, "NB1413M3 Mahjong Custom", tag, owner, clock, "nb1413m3", __FILE__),
 	m_sndromrgntag("voice"),
 	m_sndrombank1(0),
 	m_sndrombank2(0),

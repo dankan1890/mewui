@@ -13,10 +13,18 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_NMC9306_H
-#define MAME_MACHINE_NMC9306_H
-
 #pragma once
+
+#ifndef __NMC9306__
+#define __NMC9306__
+
+#include "emu.h"
+
+
+
+//**************************************************************************
+//  MACROS / CONSTANTS
+//**************************************************************************
 
 
 
@@ -25,8 +33,8 @@
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_NMC9306_ADD(tag) \
-		MCFG_DEVICE_ADD((tag), NMC9306, 0)
+#define MCFG_NMC9306_ADD(_tag) \
+	MCFG_DEVICE_ADD(_tag, NMC9306, 0)
 
 
 
@@ -79,6 +87,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NMC9306, nmc9306_device)
+extern const device_type NMC9306;
 
-#endif // MAME_MACHINE_NMC9306_H
+
+#endif

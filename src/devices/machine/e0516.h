@@ -17,10 +17,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_E0516_H
-#define MAME_MACHINE_E0516_H
-
 #pragma once
+
+#ifndef __E0516__
+#define __E0516__
 
 #include "dirtc.h"
 
@@ -41,7 +41,8 @@
 
 // ======================> e0516_device
 
-class e0516_device : public device_t, public device_rtc_interface
+class e0516_device :  public device_t,
+						public device_rtc_interface
 {
 public:
 	// construction/destruction
@@ -76,6 +77,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(E0516, e0516_device)
+extern const device_type E0516;
 
-#endif // MAME_MACHINE_E0516_H
+
+
+#endif

@@ -11,8 +11,14 @@
 #include "emu.h"
 #include "machine/eeprom.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
+
+
+//**************************************************************************
+//  DEBUGGING
+//**************************************************************************
+
+#define VERBOSE 0
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
 
 //**************************************************************************
@@ -23,8 +29,8 @@
 //  eeprom_base_device - constructor
 //-------------------------------------------------
 
-eeprom_base_device::eeprom_base_device(const machine_config &mconfig, device_type devtype, const char *tag, device_t *owner)
-	: device_t(mconfig, devtype, tag, owner, 0),
+eeprom_base_device::eeprom_base_device(const machine_config &mconfig, device_type devtype, const char *name, const char *tag, device_t *owner, const char *shortname, const char *file)
+	: device_t(mconfig, devtype, name, tag, owner, 0, shortname, file),
 		device_nvram_interface(mconfig, *this),
 		m_region(*this, DEVICE_SELF),
 		m_cells(0),

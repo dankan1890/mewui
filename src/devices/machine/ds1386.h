@@ -51,11 +51,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_DS1386_H
-#define MAME_MACHINE_DS1386_H
-
 #pragma once
 
+#ifndef DS1386_H
+#define DS1386_H
+
+#include "emu.h"
 
 // handlers
 
@@ -80,6 +81,8 @@ class ds1386_device : public device_t,
 					  public device_nvram_interface
 {
 public:
+	ds1386_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, size_t size);
+
 	DECLARE_WRITE8_MEMBER( data_w );
 	DECLARE_READ8_MEMBER( data_r );
 
@@ -87,9 +90,9 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( oe_w );
 	DECLARE_WRITE_LINE_MEMBER( we_w );
 
-	template <class Object> static devcb_base &set_inta_cb(device_t &device, Object &&cb) { return downcast<ds1386_device &>(device).m_inta_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_intb_cb(device_t &device, Object &&cb) { return downcast<ds1386_device &>(device).m_intb_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_sqw_cb(device_t &device, Object &&cb) { return downcast<ds1386_device &>(device).m_sqw_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_inta_cb(device_t &device, _Object object) { return downcast<ds1386_device &>(device).m_inta_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_intb_cb(device_t &device, _Object object) { return downcast<ds1386_device &>(device).m_intb_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_sqw_cb(device_t &device, _Object object) { return downcast<ds1386_device &>(device).m_sqw_cb.set_callback(object); }
 
 protected:
 	enum
@@ -120,8 +123,6 @@ protected:
 		ALARM_PER_MINUTE    = 0x7
 	};
 
-	ds1386_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, size_t size);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -132,11 +133,11 @@ protected:
 	virtual void nvram_read(emu_file &file) override;
 	virtual void nvram_write(emu_file &file) override;
 
-	static constexpr device_timer_id CLOCK_TIMER = 0;
-	static constexpr device_timer_id SQUAREWAVE_TIMER = 1;
-	static constexpr device_timer_id WATCHDOG_TIMER = 2;
-	static constexpr device_timer_id INTA_TIMER = 3;
-	static constexpr device_timer_id INTB_TIMER = 4;
+	static const device_timer_id CLOCK_TIMER = 0;
+	static const device_timer_id SQUAREWAVE_TIMER = 1;
+	static const device_timer_id WATCHDOG_TIMER = 2;
+	static const device_timer_id INTA_TIMER = 3;
+	static const device_timer_id INTB_TIMER = 4;
 
 protected:
 	void safe_inta_cb(int state);
@@ -203,7 +204,7 @@ public:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DS1386_8K,  ds1386_8k_device)
-DECLARE_DEVICE_TYPE(DS1386_32K, ds1386_32k_device)
+extern const device_type DS1386_8K;
+extern const device_type DS1386_32K;
 
-#endif // MAME_MACHINE_DS1386_H
+#endif

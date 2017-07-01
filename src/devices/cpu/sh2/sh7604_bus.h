@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_SH2_SH7604_BUS_H
-#define MAME_CPU_SH2_SH7604_BUS_H
-
 #pragma once
+
+#ifndef __SH7604_BUSDEV_H__
+#define __SH7604_BUSDEV_H__
 
 
 
@@ -72,6 +72,14 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SH7604_BUS, sh7604_bus_device)
+extern const device_type SH7604_BUS;
 
-#endif // MAME_CPU_SH2_SH7604_BUS_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

@@ -7,10 +7,9 @@
     6502, NES variant
 
 ***************************************************************************/
-#ifndef MAME_CPU_M6502_N2A03_H
-#define MAME_CPU_M6502_N2A03_H
 
-#pragma once
+#ifndef __N2A03_H__
+#define __N2A03_H__
 
 #include "m6502.h"
 #include "sound/nes_apu.h"
@@ -18,6 +17,8 @@
 class n2a03_device : public m6502_device {
 public:
 	n2a03_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	required_device<nesapu_device> m_apu;
 
 	static const disasm_entry disasm_entries[0x100];
 
@@ -30,8 +31,6 @@ public:
 	READ8_MEMBER(psg1_4015_r);
 	WRITE8_MEMBER(psg1_4015_w);
 	WRITE8_MEMBER(psg1_4017_w);
-
-	required_device<nesapu_device> m_apu; // public for vgmplay
 
 protected:
 	class mi_2a03_normal : public memory_interface {
@@ -65,26 +64,15 @@ protected:
 
 #undef O
 
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override;
 
 private:
 	address_space_config m_program_config;
 
-	DECLARE_WRITE_LINE_MEMBER(apu_irq);
-	DECLARE_READ8_MEMBER(apu_read_mem);
-
 };
 
-/* These are the official XTAL values and clock rates used by Nintendo for
-   manufacturing throughout the production of the 2A03. PALC_APU_CLOCK is
-   the clock rate devised by UMC(?) for PAL Famicom clone hardware.        */
-
-#define N2A03_NTSC_XTAL           XTAL_21_4772MHz
-#define N2A03_PAL_XTAL            XTAL_26_601712MHz
-#define NTSC_APU_CLOCK      (N2A03_NTSC_XTAL/12) /* 1.7897726666... MHz */
-#define PAL_APU_CLOCK       (N2A03_PAL_XTAL/16) /* 1.662607 MHz */
-#define PALC_APU_CLOCK      (N2A03_PAL_XTAL/15) /* 1.77344746666... MHz */
+#define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
 enum {
 	N2A03_IRQ_LINE = m6502_device::IRQ_LINE,
@@ -93,6 +81,6 @@ enum {
 	N2A03_SET_OVERFLOW = m6502_device::V_LINE
 };
 
-DECLARE_DEVICE_TYPE(N2A03, n2a03_device)
+extern const device_type N2A03;
 
-#endif // MAME_CPU_M6502_N2A03_H
+#endif

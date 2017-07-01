@@ -68,7 +68,6 @@ give the leftmost column of the rectangle, the next four give the next column, a
 
 *************************************************************************************************************/
 
-#include "emu.h"
 #include <functional>
 
 #include "includes/mbc55x.h"
@@ -78,12 +77,12 @@ give the leftmost column of the rectangle, the next four give the next column, a
 
 #define DEBUG_SET(flags)    ((m_debug_video & (flags))==(flags))
 
-void mbc55x_state::video_debug(int ref, const std::vector<std::string> &params)
+void mbc55x_state::video_debug(int ref, int params, const char *param[])
 {
-	if (params.size() > 0)
+	if (params > 0)
 	{
 		int temp;
-		sscanf(params[0].c_str(), "%d", &temp);
+		sscanf(param[0],"%d",&temp);
 		m_debug_video = temp;
 	}
 	else
@@ -172,7 +171,7 @@ void mbc55x_state::video_start()
 	if (machine().debug_flags & DEBUG_FLAG_ENABLED)
 	{
 		using namespace std::placeholders;
-		machine().debugger().console().register_command("mbc55x_vid_debug", CMDFLAG_NONE, 0, 0, 1, std::bind(&mbc55x_state::video_debug, this, _1, _2));
+		machine().debugger().console().register_command("mbc55x_vid_debug", CMDFLAG_NONE, 0, 0, 1, std::bind(&mbc55x_state::video_debug, this, _1, _2, _3));
 	}
 }
 
@@ -184,7 +183,7 @@ void mbc55x_state::video_reset()
 	logerror("Video reset\n");
 }
 
-WRITE_LINE_MEMBER(mbc55x_state::screen_vblank_mbc55x)
+void mbc55x_state::screen_eof_mbc55x(screen_device &screen, bool state)
 {
-//  logerror("screen_vblank_mbc55x\n");
+//  logerror("screen_eof_mbc55x\n");
 }

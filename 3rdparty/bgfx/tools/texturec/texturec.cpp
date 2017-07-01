@@ -1,22 +1,22 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
-#include <bx/allocator.h>
-#include <bx/readerwriter.h>
-#include <bx/endian.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <bgfx/bgfx.h>
+// Just hacking DDS loading code in here.
+#include "bgfx_p.h"
 
 #include "image.h"
-
 #include <libsquish/squish.h>
 #include <etc1/etc1.h>
 #include <etc2/ProcessRGB.hpp>
 #include <nvtt/nvtt.h>
 #include <pvrtc/PvrTcEncoder.h>
-
+#include <tinyexr/tinyexr.h>
 #include <edtaa3/edtaa3func.h>
 
 extern "C" {
@@ -57,16 +57,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
 #include <stb/stb_image.c>
 BX_PRAGMA_DIAGNOSTIC_POP();
 
-BX_PRAGMA_DIAGNOSTIC_PUSH()
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wtype-limits")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-parameter")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wunused-value")
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: '' : unreferenced formal parameter
-#define MINIZ_NO_STDIO
-#define TINYEXR_IMPLEMENTATION
-#include <tinyexr/tinyexr.h>
-BX_PRAGMA_DIAGNOSTIC_POP()
-
 #if 0
 #	define BX_TRACE(_format, ...) fprintf(stderr, "" _format "\n", ##__VA_ARGS__)
 #endif // DEBUG
@@ -78,6 +68,29 @@ BX_PRAGMA_DIAGNOSTIC_POP()
 
 namespace bgfx
 {
+	const Memory* alloc(uint32_t _size)
+	{
+		Memory* mem = (Memory*)::realloc(NULL, sizeof(Memory) + _size);
+		mem->size = _size;
+		mem->data = (uint8_t*)mem + sizeof(Memory);
+		return mem;
+	}
+
+	const Memory* makeRef(const void* _data, uint32_t _size, ReleaseFn _releaseFn, void* _userData)
+	{
+		BX_UNUSED(_releaseFn, _userData);
+		Memory* mem = (Memory*)::realloc(NULL, sizeof(Memory) );
+		mem->size = _size;
+		mem->data = (uint8_t*)_data;
+		return mem;
+	}
+
+	void release(const Memory* _mem)
+	{
+		Memory* mem = const_cast<Memory*>(_mem);
+		::free(mem);
+	}
+
 	bool imageParse(ImageContainer& _imageContainer, const void* _data, uint32_t _size, void** _out)
 	{
 		*_out = NULL;
@@ -297,7 +310,7 @@ namespace bgfx
 			return true;
 
 		case TextureFormat::BGRA8:
-			imageSwizzleBgra8(_dst, _width, _height, _width*4, _src);
+			imageSwizzleBgra8(_width, _height, _width*4, _src, _dst);
 			return true;
 
 		case TextureFormat::RGBA8:
@@ -305,10 +318,10 @@ namespace bgfx
 			return true;
 
 		default:
-			break;
+			return imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
 		}
 
-		return imageConvert(_dst, format, _src, TextureFormat::RGBA8, _width, _height);
+		return false;
 	}
 
 	bool imageEncodeFromRgba32f(bx::AllocatorI* _allocator, void* _dst, const void* _src, uint32_t _width, uint32_t _height, uint8_t _format)
@@ -361,10 +374,10 @@ namespace bgfx
 			return true;
 
 		default:
-			break;
+			return imageConvert(_dst, format, _src, TextureFormat::RGBA32F, _width, _height);
 		}
 
-		return imageConvert(_dst, format, _src, TextureFormat::RGBA32F, _width, _height);
+		return false;
 	}
 
 	void imageRgba32f11to01(void* _dst, uint32_t _width, uint32_t _height, uint32_t _pitch, const void* _src)
@@ -483,7 +496,7 @@ void help(const char* _error = NULL)
 
 	fprintf(stderr
 		, "texturec, bgfx texture compiler tool\n"
-		  "Copyright 2011-2017 Branimir Karadzic. All rights reserved.\n"
+		  "Copyright 2011-2016 Branimir Karadzic. All rights reserved.\n"
 		  "License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause\n\n"
 		);
 
@@ -547,10 +560,6 @@ int main(int _argc, const char* _argv[])
 	}
 	BX_UNUSED(sdf, edge);
 
-	const bool mips      = cmdLine.hasArg('m',  "mips");
-	const bool normalMap = cmdLine.hasArg('n',  "normalmap");
-	const bool iqa       = cmdLine.hasArg('\0', "iqa");
-
 	bx::CrtFileReader reader;
 	if (!bx::open(&reader, inputFileName) )
 	{
@@ -558,33 +567,35 @@ int main(int _argc, const char* _argv[])
 		return EXIT_FAILURE;
 	}
 
-	bx::CrtAllocator allocator;
+	const bool mips      = cmdLine.hasArg('m',  "mips");
+	const bool normalMap = cmdLine.hasArg('n',  "normalmap");
+	const bool iqa       = cmdLine.hasArg('\0', "iqa");
 
-	uint32_t inputSize = (uint32_t)bx::getSize(&reader);
-	uint8_t* inputData = (uint8_t*)BX_ALLOC(&allocator, inputSize);
-
-	bx::read(&reader, inputData, inputSize);
-	bx::close(&reader);
+	const bgfx::Memory* mem;
+	{
+		uint32_t size = (uint32_t)bx::getSize(&reader);
+		mem = bgfx::alloc(size);
+		bx::read(&reader, mem->data, mem->size);
+		bx::close(&reader);
+	}
 
 	{
 		using namespace bgfx;
 
 		uint8_t* decodedImage = NULL;
-		ImageContainer input;
+		ImageContainer imageContainer;
 
-		bool loaded = imageParse(input, inputData, inputSize, (void**)&decodedImage);
+		bool loaded = imageParse(imageContainer, mem->data, mem->size, (void**)&decodedImage);
 		if (NULL != decodedImage)
 		{
-			BX_FREE(&allocator, inputData);
-
-			inputData = (uint8_t*)input.m_data;
-			inputSize = input.m_size;
+			release(mem);
+			mem = makeRef(imageContainer.m_data, imageContainer.m_size);
 		}
 
 		if (loaded)
 		{
 			const char* type = cmdLine.findOption('t');
-			bgfx::TextureFormat::Enum format = input.m_format;
+			bgfx::TextureFormat::Enum format = imageContainer.m_format;
 
 			if (NULL != type)
 			{
@@ -597,10 +608,11 @@ int main(int _argc, const char* _argv[])
 				}
 			}
 
-			ImageContainer* output = NULL;
+			bx::CrtAllocator allocator;
+			const Memory* output = NULL;
 
 			ImageMip mip;
-			if (imageGetRawData(input, 0, 0, inputData, inputSize, mip) )
+			if (imageGetRawData(imageContainer, 0, 0, mem->data, mem->size, mip) )
 			{
 				uint8_t numMips = mips
 					? imageGetNumMips(format, mip.m_width, mip.m_height)
@@ -611,10 +623,10 @@ int main(int _argc, const char* _argv[])
 
 				if (normalMap)
 				{
-					output = imageAlloc(&allocator, format, mip.m_width, mip.m_height, 0, 1, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
-					imageGetRawData(*output, 0, 0, NULL, 0, dstMip);
+					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
 
 					if (mip.m_width  != dstMip.m_width
 					&&  mip.m_height != dstMip.m_height)
@@ -629,16 +641,7 @@ int main(int _argc, const char* _argv[])
 						return EXIT_FAILURE;
 					}
 
-					uint32_t size = imageGetSize(
-						  NULL
-						, dstMip.m_width
-						, dstMip.m_height
-						, 0
-						, false
-						, false
-						, 1
-						, TextureFormat::RGBA32F
-						);
+					uint32_t size = imageGetSize(TextureFormat::RGBA32F, dstMip.m_width, dstMip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					float* rgba = (float*)temp;
 					float* rgbaDst = (float*)BX_ALLOC(&allocator, size);
@@ -669,25 +672,25 @@ int main(int _argc, const char* _argv[])
 					}
 
 					imageRgba32f11to01(rgbaDst, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
-					imageEncodeFromRgba32f(&allocator, output->m_data, rgbaDst, dstMip.m_width, dstMip.m_height, format);
+					imageEncodeFromRgba32f(&allocator, output->data, rgbaDst, dstMip.m_width, dstMip.m_height, format);
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fDownsample2x2NormalMap(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
+						imageRgba32fDownsample2x2NormalMap(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
 						imageRgba32f11to01(rgbaDst, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
-						imageGetRawData(*output, 0, lod, output->m_data, output->m_size, dstMip);
+						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 						imageEncodeFromRgba32f(&allocator, data, rgbaDst, dstMip.m_width, dstMip.m_height, format);
 					}
 
 					BX_FREE(&allocator, rgbaDst);
 				}
-				else if (8 != getBlockInfo(input.m_format).rBits)
+				else if (8 != getBlockInfo(imageContainer.m_format).rBits)
 				{
-					output = imageAlloc(&allocator, format, mip.m_width, mip.m_height, 0, 1, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
-					imageGetRawData(*output, 0, 0, NULL, 0, dstMip);
+					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
 
 					if (mip.m_width  != dstMip.m_width
 					&&  mip.m_height != dstMip.m_height)
@@ -702,16 +705,7 @@ int main(int _argc, const char* _argv[])
 						return EXIT_FAILURE;
 					}
 
-					uint32_t size = imageGetSize(
-						  NULL
-						, dstMip.m_width
-						, dstMip.m_height
-						, 0
-						, false
-						, false
-						, 1
-						, TextureFormat::RGBA32F
-						);
+					uint32_t size = imageGetSize(TextureFormat::RGBA32F, dstMip.m_width, dstMip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					float* rgba = (float*)temp;
 					float* rgbaDst = (float*)BX_ALLOC(&allocator, size);
@@ -724,7 +718,7 @@ int main(int _argc, const char* _argv[])
 						, mip.m_width*mip.m_bpp/8
 						, mip.m_format
 						);
-					imageEncodeFromRgba32f(&allocator, output->m_data, rgba, dstMip.m_width, dstMip.m_height, format);
+					imageEncodeFromRgba32f(&allocator, output->data, rgba, dstMip.m_width, dstMip.m_height, format);
 
 					imageRgba32fToLinear(rgba
 						, mip.m_width
@@ -735,8 +729,8 @@ int main(int _argc, const char* _argv[])
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba32fLinearDownsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba);
-						imageGetRawData(*output, 0, lod, output->m_data, output->m_size, dstMip);
+						imageRgba32fLinearDownsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*16, rgba, rgba);
+						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 
 						imageRgba32fToGamma(rgbaDst
@@ -753,10 +747,10 @@ int main(int _argc, const char* _argv[])
 				}
 				else
 				{
-					output = imageAlloc(&allocator, format, mip.m_width, mip.m_height, 0, 1, false, mips);
+					output = imageAlloc(imageContainer, format, mip.m_width, mip.m_height, 0, 1, false, mips);
 
 					ImageMip dstMip;
-					imageGetRawData(*output, 0, 0, NULL, 0, dstMip);
+					imageGetRawData(imageContainer, 0, 0, NULL, 0, dstMip);
 
 					if (mip.m_width  != dstMip.m_width
 					&&  mip.m_height != dstMip.m_height)
@@ -771,16 +765,7 @@ int main(int _argc, const char* _argv[])
 						return EXIT_FAILURE;
 					}
 
-					uint32_t size = imageGetSize(
-						  NULL
-						, dstMip.m_width
-						, dstMip.m_height
-						, 0
-						, false
-						, false
-						, 1
-						, TextureFormat::RGBA8
-						);
+					uint32_t size = imageGetSize(TextureFormat::RGBA8, dstMip.m_width, dstMip.m_height);
 					temp = BX_ALLOC(&allocator, size);
 					memset(temp, 0, size);
 					uint8_t* rgba = (uint8_t*)temp;
@@ -800,12 +785,12 @@ int main(int _argc, const char* _argv[])
 						memcpy(ref, rgba, size);
 					}
 
-					imageEncodeFromRgba8(output->m_data, rgba, dstMip.m_width, dstMip.m_height, format);
+					imageEncodeFromRgba8(output->data, rgba, dstMip.m_width, dstMip.m_height, format);
 
 					for (uint8_t lod = 1; lod < numMips; ++lod)
 					{
-						imageRgba8Downsample2x2(rgba, dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba);
-						imageGetRawData(*output, 0, lod, output->m_data, output->m_size, dstMip);
+						imageRgba8Downsample2x2(dstMip.m_width, dstMip.m_height, dstMip.m_width*4, rgba, rgba);
+						imageGetRawData(imageContainer, 0, lod, output->data, output->size, dstMip);
 						uint8_t* data = const_cast<uint8_t*>(dstMip.m_data);
 						imageEncodeFromRgba8(data, rgba, dstMip.m_width, dstMip.m_height, format);
 					}
@@ -813,7 +798,7 @@ int main(int _argc, const char* _argv[])
 					if (NULL != ref)
 					{
 						imageDecodeToRgba8(rgba
-							, output->m_data
+							, output->data
 							, mip.m_width
 							, mip.m_height
 							, mip.m_width*mip.m_bpp/8
@@ -855,7 +840,7 @@ int main(int _argc, const char* _argv[])
 				{
 					if (NULL != bx::stristr(outputFileName, ".ktx") )
 					{
-						imageWriteKtx(&writer, *output, output->m_data, output->m_size);
+						imageWriteKtx(&writer, imageContainer, output->data, output->size);
 					}
 
 					bx::close(&writer);
@@ -880,7 +865,7 @@ int main(int _argc, const char* _argv[])
 			return EXIT_FAILURE;
 		}
 
-		BX_FREE(&allocator, inputData);
+		release(mem);
 	}
 
 	return EXIT_SUCCESS;

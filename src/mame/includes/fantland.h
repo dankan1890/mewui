@@ -3,7 +3,6 @@
 
 #include "machine/gen_latch.h"
 #include "sound/msm5205.h"
-#include "screen.h"
 
 class fantland_state : public driver_device
 {

@@ -8,8 +8,8 @@
 
 *********************************************************************/
 
-#ifndef MAME_MACHINE_8530SCC_H
-#define MAME_MACHINE_8530SCC_H
+#ifndef __8530SCC_H__
+#define __8530SCC_H__
 
 #define MCFG_Z8530_INTRQ_CALLBACK(_write) \
 	devcb = &scc8530_t::set_intrq_wr_callback(*device, DEVCB_##_write);
@@ -31,7 +31,7 @@ public:
 
 	scc8530_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_intrq_wr_callback(device_t &device, Object &&cb) { return downcast<scc8530_t &>(device).intrq_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_intrq_wr_callback(device_t &device, _Object object) { return downcast<scc8530_t &>(device).intrq_cb.set_callback(object); }
 
 	uint8_t get_reg_a(int reg);
 	uint8_t get_reg_b(int reg);
@@ -101,6 +101,6 @@ private:
     MACROS
 ***************************************************************************/
 
-DECLARE_DEVICE_TYPE(SCC8530, scc8530_t)
+extern const device_type SCC8530;
 
-#endif // MAME_MACHINE_8530SCC_H
+#endif /* __8530SCC_H__ */

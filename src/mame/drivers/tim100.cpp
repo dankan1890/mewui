@@ -17,12 +17,11 @@ Notes:
 *******************************************************************************************************/
 
 #include "emu.h"
-#include "bus/rs232/rs232.h"
 #include "cpu/i8085/i8085.h"
-#include "machine/clock.h"
 #include "machine/i8251.h"
 #include "video/i8275.h"
-#include "screen.h"
+#include "bus/rs232/rs232.h"
+#include "machine/clock.h"
 
 class tim100_state : public driver_device
 {
@@ -168,7 +167,7 @@ WRITE_LINE_MEMBER( tim100_state::clock_w )
 }
 
 
-static MACHINE_CONFIG_START( tim100 )
+static MACHINE_CONFIG_START( tim100, tim100_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",I8085A, XTAL_4_9152MHz) // divider unknown
 	MCFG_CPU_PROGRAM_MAP(tim100_mem)
@@ -239,4 +238,4 @@ ROM_START( tim100 )
 ROM_END
 
 /* Driver */
-COMP( 1985, tim100, 0, 0, tim100, tim100, tim100_state, 0, "Mihajlo Pupin Institute", "TIM-100", MACHINE_IS_SKELETON)
+COMP( 1985, tim100, 0, 0, tim100, tim100, driver_device, 0, "Mihajlo Pupin Institute", "TIM-100", MACHINE_IS_SKELETON)

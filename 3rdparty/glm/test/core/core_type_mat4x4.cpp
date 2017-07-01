@@ -294,20 +294,6 @@ struct repro
 	glm::mat4* matrix;
 };
 
-int test_size()
-{
-	int Error = 0;
-
-	Error += 64 == sizeof(glm::mat4) ? 0 : 1;
-	Error += 128 == sizeof(glm::dmat4) ? 0 : 1;
-	Error += glm::mat4().length() == 4 ? 0 : 1;
-	Error += glm::dmat4().length() == 4 ? 0 : 1;
-	Error += glm::mat4::length() == 4 ? 0 : 1;
-	Error += glm::dmat4::length() == 4 ? 0 : 1;
-
-	return Error;
-}
-
 int main()
 {
 	int Error = 0;
@@ -320,7 +306,6 @@ int main()
 	Error += test_inverse_mat4x4();
 	Error += test_operators();
 	Error += test_inverse();
-	Error += test_size();
 
 	Error += perf_mul();
 

@@ -38,30 +38,15 @@
 
 *****************************************************************************/
 
-#include "emu.h"
+#include <math.h>
 #include "tms9902.h"
 
-#include <math.h>
-
-#define LOG_GENERAL (1U << 0)
-#define LOG_LINES   (1U << 1)
-#define LOG_CRU     (1U << 2)
-#define LOG_DETAIL  (1U << 3)
-#define LOG_BUFFER  (1U << 4)
-#define LOG_ERROR   (1U << 5)
-#define LOG_SETTING (1U << 6)
-
-#define VERBOSE (LOG_ERROR)
-#include "logmacro.h"
-
-#define LOGGENERAL(...)     LOGMASKED(LOG_GENERAL, __VA_ARGS__)
-#define LOGLINES(...)       LOGMASKED(LOG_LINES, __VA_ARGS__)
-#define LOGCRU(...)         LOGMASKED(LOG_CRU, __VA_ARGS__)
-#define LOGDETAIL(...)      LOGMASKED(LOG_DETAIL, __VA_ARGS__)
-#define LOGBUFFER(...)      LOGMASKED(LOG_BUFFER, __VA_ARGS__)
-#define LOGERROR(...)       LOGMASKED(LOG_ERROR, __VA_ARGS__)
-#define LOGSETTING(...)     LOGMASKED(LOG_SETTING, __VA_ARGS__)
-
+#define TRACE_LINES 0
+#define TRACE_CRU 0
+#define TRACE_DETAIL 0
+#define TRACE_BUFFER 0
+#define TRACE_ERROR 1
+#define TRACE_SETTING 0
 
 enum
 {
@@ -80,11 +65,11 @@ enum
     Constructor
 */
 tms9902_device::tms9902_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TMS9902, tag, owner, clock)
-	, m_int_cb(*this)
-	, m_rcv_cb(*this)
-	, m_xmit_cb(*this)
-	, m_ctrl_cb(*this)
+	: device_t(mconfig, TMS9902, "TMS9902 ACC", tag, owner, clock, "tms9902", __FILE__),
+		m_int_cb(*this),
+		m_rcv_cb(*this),
+		m_xmit_cb(*this),
+		m_ctrl_cb(*this)
 {
 }
 
@@ -93,19 +78,19 @@ tms9902_device::tms9902_device(const machine_config &mconfig, const char *tag, d
 */
 void tms9902_device::field_interrupts()
 {
-	bool const new_int = (m_DSCH && m_DSCENB)
+	bool new_int = (m_DSCH && m_DSCENB)
 							|| (m_RBRL && m_RIENB)
 							|| (m_XBRE && m_XBIENB)
 							|| (m_TIMELP && m_TIMENB);
-	LOGDETAIL("interrupt flags (DSCH = %02x, DSCENB = %02x), (RBRL = %02x, RIENB = %02x), (XBRE = %02x, XBIENB = %02x), (TIMELP = %02x, TIMENB = %02x)\n",
-			m_DSCH, m_DSCENB, m_RBRL, m_RIENB, m_XBRE, m_XBIENB, m_TIMELP, m_TIMENB);
+	if (TRACE_DETAIL) logerror("interrupt flags (DSCH = %02x, DSCENB = %02x), (RBRL = %02x, RIENB = %02x), (XBRE = %02x, XBIENB = %02x), (TIMELP = %02x, TIMENB = %02x)\n",
+		m_DSCH, m_DSCENB, m_RBRL, m_RIENB, m_XBRE, m_XBIENB, m_TIMELP, m_TIMENB);
 
 	if (new_int != m_INT)
 	{
 		// Only consider edges
 		m_INT = new_int;
-		LOGLINES("/INT = %s\n", m_INT ? "asserted" : "cleared");
-		m_int_cb(m_INT ? ASSERT_LINE : CLEAR_LINE);
+		if (TRACE_LINES) logerror("/INT = %s\n", (m_INT)? "asserted" : "cleared");
+		m_int_cb(m_INT? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
@@ -120,7 +105,7 @@ void tms9902_device::rcv_cts(line_state state)
 	// CTSin is an internal register of the TMS9902 with positive logic
 	m_CTSin = (state==ASSERT_LINE);
 
-	LOGLINES("CTS* = %s\n", (state==ASSERT_LINE)? "asserted" : "cleared");
+	if (TRACE_LINES) logerror("CTS* = %s\n", (state==ASSERT_LINE)? "asserted" : "cleared");
 
 	if (m_CTSin != previous)
 	{
@@ -150,7 +135,7 @@ void tms9902_device::rcv_cts(line_state state)
 	else
 	{
 		m_DSCH = false;
-		LOGLINES("no change in CTS line, no interrupt.\n");
+		if (TRACE_LINES) logerror("no change in CTS line, no interrupt.\n");
 	}
 }
 
@@ -169,7 +154,7 @@ void tms9902_device::set_clock(bool state)
 void tms9902_device::rcv_dsr(line_state state)
 {
 	bool previous = m_DSRin;
-	LOGLINES("DSR* = %s\n", (state==ASSERT_LINE)? "asserted" : "cleared");
+	if (TRACE_LINES) logerror("DSR* = %s\n", (state==ASSERT_LINE)? "asserted" : "cleared");
 	m_DSRin = (state==ASSERT_LINE);
 
 	if (m_DSRin != previous)
@@ -180,7 +165,7 @@ void tms9902_device::rcv_dsr(line_state state)
 	else
 	{
 		m_DSCH = false;
-		LOGLINES("no change in DSR line, no interrupt.\n");
+		if (TRACE_LINES) logerror("no change in DSR line, no interrupt.\n");
 	}
 }
 
@@ -203,14 +188,14 @@ void tms9902_device::rcv_data(uint8_t data)
 		// Receive buffer was empty
 		m_RBRL = true;
 		m_ROVER = false;
-		LOGBUFFER("Receive buffer loaded with byte %02x; RIENB=%d\n", data, m_RIENB);
+		if (TRACE_BUFFER) logerror("Receive buffer loaded with byte %02x; RIENB=%d\n", data, m_RIENB);
 		field_interrupts();
 	}
 	else
 	{
 		// Receive buffer was full
 		m_ROVER = true;
-		LOGERROR("Receive buffer still loaded; overflow error\n");
+		if (TRACE_ERROR) logerror("Receive buffer still loaded; overflow error\n");
 	}
 }
 
@@ -224,7 +209,7 @@ void tms9902_device::rcv_data(uint8_t data)
 */
 void tms9902_device::rcv_framing_error()
 {
-	LOGERROR("Detected framing error\n");
+	if (TRACE_ERROR) logerror("Detected framing error\n");
 	m_RFER = true;
 }
 
@@ -236,7 +221,7 @@ void tms9902_device::rcv_framing_error()
 */
 void tms9902_device::rcv_parity_error()
 {
-	LOGERROR("Detected parity error\n");
+	if (TRACE_ERROR) logerror("Detected parity error\n");
 	m_RPER = true;
 }
 
@@ -248,7 +233,7 @@ void tms9902_device::rcv_parity_error()
 */
 void tms9902_device::rcv_break(bool value)
 {
-	LOGERROR("Receive BREAK=%d (no effect)\n", value? 1:0);
+	if (TRACE_ERROR) logerror("Receive BREAK=%d (no effect)\n", value? 1:0);
 }
 
 //------------------------------------------------
@@ -311,7 +296,7 @@ void tms9902_device::send_break(bool state)
 	if (state != m_BRKout)
 	{
 		m_BRKout = state;
-		LOGLINES("Sending BREAK=%d\n", state? 1:0);
+		if (TRACE_LINES) logerror("Sending BREAK=%d\n", state? 1:0);
 
 		// Signal BRK (on/off) to the remote site
 		m_ctrl_cb((offs_t)(EXCEPT | BRK), state? 1:0);
@@ -343,7 +328,7 @@ double tms9902_device::get_baudpoll()
 void tms9902_device::set_receive_data_rate()
 {
 	int value = (m_CLK4M? 0x800 : 0) | (m_RDV8? 0x400 : 0) | m_RDR;
-	LOGSETTING("receive rate = %04x\n", value);
+	if (TRACE_SETTING) logerror("receive rate = %04x\n", value);
 
 	// Calculate the ratio between receive baud rate and polling frequency
 	double fint = m_clock_rate / ((m_CLK4M) ? 4.0 : 3.0);
@@ -354,7 +339,7 @@ void tms9902_device::set_receive_data_rate()
 	// Thus the callback function should add up this value on each poll
 	// and deliver a data input not before it sums up to 1.
 	m_baudpoll = (double)(baud / (10*POLLING_FREQ));
-	LOGSETTING("baudpoll = %f\n", m_baudpoll);
+	if (TRACE_SETTING) logerror ("baudpoll = %f\n", m_baudpoll);
 
 	m_last_config_value = value;
 	m_ctrl_cb((offs_t)CONFIG, RATERECV);
@@ -367,7 +352,7 @@ void tms9902_device::set_receive_data_rate()
 void tms9902_device::set_transmit_data_rate()
 {
 	int value = (m_CLK4M? 0x800 : 0) | (m_XDV8? 0x400 : 0) | m_XDR;
-	LOGSETTING("set transmit rate = %04x\n", value);
+	if (TRACE_SETTING) logerror("set transmit rate = %04x\n", value);
 	m_last_config_value = value;
 	m_ctrl_cb((offs_t)CONFIG, RATEXMIT);
 }
@@ -375,7 +360,7 @@ void tms9902_device::set_transmit_data_rate()
 void tms9902_device::set_stop_bits()
 {
 	int value = m_STOPB;
-	LOGSETTING("set stop bits = %02x\n", value);
+	if (TRACE_SETTING) logerror("set stop bits = %02x\n", value);
 	m_last_config_value = value;
 	m_ctrl_cb((offs_t)CONFIG, STOPBITS);
 }
@@ -383,7 +368,7 @@ void tms9902_device::set_stop_bits()
 void tms9902_device::set_data_bits()
 {
 	int value = m_RCL;
-	LOGSETTING("set data bits = %02x\n", value);
+	if (TRACE_SETTING) logerror("set data bits = %02x\n", value);
 	m_last_config_value = value;
 	m_ctrl_cb((offs_t)CONFIG, DATABITS);
 }
@@ -391,7 +376,7 @@ void tms9902_device::set_data_bits()
 void tms9902_device::set_parity()
 {
 	int value = (m_PENB? 2:0) | (m_ODDP? 1:0);
-	LOGSETTING("set parity = %02x\n", value);
+	if (TRACE_SETTING) logerror("set parity = %02x\n", value);
 	m_last_config_value = value;
 	m_ctrl_cb((offs_t)CONFIG, PARITY);
 }
@@ -400,7 +385,7 @@ void tms9902_device::transmit_line_state()
 {
 	// 00ab cdef = setting line RTS=a, CTS=b, DSR=c, DCD=d, DTR=e, RI=f
 	// The 9902 only outputs RTS and BRK
-	LOGSETTING("transmitting line state (only RTS) = %02x\n", (m_RTSout)? 1:0);
+	if (TRACE_SETTING) logerror("transmitting line state (only RTS) = %02x\n", (m_RTSout)? 1:0);
 	m_last_config_value = (m_RTSout)? RTS : 0;
 	m_ctrl_cb((offs_t)(LINES | RTS), RTS);
 }
@@ -412,7 +397,7 @@ void tms9902_device::set_rts(line_state state)
 	if (lstate != m_RTSout)
 	{
 		// Signal RTS to the modem
-		LOGSETTING("Set RTS=%d\n", lstate? 1:0);
+		if (TRACE_SETTING) logerror("Set RTS=%d\n", lstate? 1:0);
 		m_RTSout = lstate;
 		transmit_line_state();
 	}
@@ -443,7 +428,7 @@ void tms9902_device::initiate_transmit()
 
 			field_interrupts();
 
-			LOGBUFFER("transmit XSR=%02x, RCL=%02x\n", m_XSR, m_RCL);
+			if (TRACE_BUFFER) logerror("transmit XSR=%02x, RCL=%02x\n", m_XSR, m_RCL);
 
 			m_xmit_cb((offs_t)0, m_XSR & (0xff >> (3-m_RCL)));
 
@@ -516,11 +501,11 @@ READ8_MEMBER( tms9902_device::cruread )
 		break;
 
 	case 0: // Bits 7-0
-		LOGCRU("Reading received byte = %02x\n", m_RBR);
+		if (TRACE_CRU) logerror("Reading received byte = %02x\n", m_RBR);
 		answer = m_RBR;
 		break;
 	}
-	if (VERBOSE & LOG_DETAIL) LOGCRU("Reading flag bits %d - %d = %02x\n", ((offset+1)*8-1), offset*8, answer);
+	if (TRACE_CRU && TRACE_DETAIL) logerror("Reading flag bits %d - %d = %02x\n", ((offset+1)*8-1), offset*8, answer);
 	return answer;
 }
 
@@ -600,7 +585,7 @@ WRITE8_MEMBER( tms9902_device::cruwrite )
 	data &= 1;  /* clear extra bits */
 
 	offset &= 0x1F;
-	if (VERBOSE & LOG_DETAIL) LOGCRU("Setting bit %d = %02x\n", offset, data);
+	if (TRACE_CRU && TRACE_DETAIL) logerror("Setting bit %d = %02x\n", offset, data);
 
 	if (offset <= 10)
 	{
@@ -764,7 +749,7 @@ WRITE8_MEMBER( tms9902_device::cruwrite )
 			}
 			return;
 		case 17:
-			LOGCRU("set BRKON=%d; BRK=%d\n", data, m_BRKout? 1:0);
+			if (TRACE_CRU) logerror("set BRKON=%d; BRK=%d\n", data, m_BRKout? 1:0);
 			m_BRKON = (data!=0);
 			if (m_BRKout && data==0)
 			{
@@ -792,13 +777,13 @@ WRITE8_MEMBER( tms9902_device::cruwrite )
 			// (the only way to clear the flag!)
 			m_RIENB = (data!=0);
 			m_RBRL = false;
-			LOGCRU("Set RBRL=0, set RIENB=%d\n", data);
+			if (TRACE_CRU) logerror("Set RBRL=0, set RIENB=%d\n", data);
 			field_interrupts();
 			return;
 		case 19:
 			/* Transmit Buffer Interrupt Enable */
 			m_XBIENB = (data!=0);
-			LOGCRU("set XBIENB=%d\n", data);
+			if (TRACE_CRU) logerror("set XBIENB=%d\n", data);
 			field_interrupts();
 			return;
 		case 20:
@@ -812,7 +797,7 @@ WRITE8_MEMBER( tms9902_device::cruwrite )
 			/* Data Set Change Interrupt Enable */
 			m_DSCENB = (data!=0);
 			m_DSCH = false;
-			LOGCRU("set DSCH=0, set DSCENB=%d\n", data);
+			if (TRACE_CRU) logerror("set DSCH=0, set DSCENB=%d\n", data);
 			field_interrupts();
 			return;
 		case 31:
@@ -867,4 +852,4 @@ void tms9902_device::device_start()
 	m_sendtimer = timer_alloc(SENDTIMER);
 }
 
-DEFINE_DEVICE_TYPE(TMS9902, tms9902_device, "tms9902", "TMS9902 ACC")
+const device_type TMS9902 = &device_creator<tms9902_device>;

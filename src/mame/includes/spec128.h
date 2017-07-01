@@ -6,8 +6,8 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_SPEC128_H
-#define MAME_INCLUDES_SPEC128_H
+#ifndef __SPEC128H__
+#define __SPEC128H__
 
 /* 128K machines take an extra 4 cycles per scan line - add this to retrace */
 #define SPEC128_UNSEEN_LINES    15
@@ -16,4 +16,4 @@
 
 MACHINE_CONFIG_EXTERN( spectrum_128 );
 
-#endif // MAME_INCLUDES_SPEC128_H
+#endif /* __SPEC128H__ */

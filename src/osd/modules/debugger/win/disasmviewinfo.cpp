@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #include "disasmviewinfo.h"
 
 
@@ -33,7 +32,7 @@ offs_t disasmview_info::selected_address() const
 }
 
 
-void disasmview_info::set_expression(const std::string &string)
+void disasmview_info::set_expression(char const *string)
 {
 	view<debug_view_disasm>()->set_expression(string);
 }

@@ -5,7 +5,6 @@
  *   Xerox AltoII display vertical task
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 
 /*

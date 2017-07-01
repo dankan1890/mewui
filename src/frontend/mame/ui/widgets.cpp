@@ -106,7 +106,7 @@ void widgets_manager::render_triangle(bitmap_argb32 &dest, bitmap_argb32 &source
 				target[x] = target[-x] = rgb_t(dalpha / 2, 0xff, 0xff, 0xff);
 			}
 
-			// account for the weight we consumed
+			// account for the weight we consumed */
 			linewidth -= dalpha;
 		}
 	}

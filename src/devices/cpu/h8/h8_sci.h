@@ -9,10 +9,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_H8_H8_SCI_H
-#define MAME_CPU_H8_H8_SCI_H
-
-#pragma once
+#ifndef __H8_SCI_H__
+#define __H8_SCI_H__
 
 #include "h8.h"
 #include "h8_intc.h"
@@ -54,8 +52,8 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(rx_w);
 	DECLARE_WRITE_LINE_MEMBER(clk_w);
 
-	template <class Object> static devcb_base &set_tx_cb(device_t &device, Object &&cb) { return downcast<h8_sci_device &>(device).tx_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_clk_cb(device_t &device, Object &&cb) { return downcast<h8_sci_device &>(device).clk_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_tx_cb(device_t &device, _Object object) { return downcast<h8_sci_device &>(device).tx_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_clk_cb(device_t &device, _Object object) { return downcast<h8_sci_device &>(device).clk_cb.set_callback(object); }
 
 	uint64_t internal_update(uint64_t current_time);
 
@@ -145,6 +143,6 @@ protected:
 	bool has_recv_error() const;
 };
 
-DECLARE_DEVICE_TYPE(H8_SCI, h8_sci_device)
+extern const device_type H8_SCI;
 
-#endif // MAME_CPU_H8_H8_SCI_H
+#endif

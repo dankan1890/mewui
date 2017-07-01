@@ -5,19 +5,17 @@
 
 #include "emu.h"
 #include "machine/inder_sb.h"
-
 #include "sound/volt_reg.h"
-#include "speaker.h"
 
 
-DEFINE_DEVICE_TYPE(INDER_AUDIO, inder_sb_device, "indersb", "Inder 4xDAC Sound Board")
+extern const device_type INDER_AUDIO = &device_creator<inder_sb_device>;
 
 
 inder_sb_device::inder_sb_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, INDER_AUDIO, tag, owner, clock)
-	, device_mixer_interface(mconfig, *this, 2)
-	, m_audiocpu(*this, "audiocpu")
-	, m_ctc(*this, "ctc")
+	: device_t(mconfig, INDER_AUDIO, "Inder 4xDAC Sound Board", tag, owner, clock, "indersb", __FILE__),
+		device_mixer_interface(mconfig, *this, 2),
+		m_audiocpu(*this, "audiocpu"),
+		m_ctc(*this, "ctc")
 {
 }
 
@@ -206,7 +204,8 @@ static ADDRESS_MAP_START( sound_io, AS_IO, 8, inder_sb_device )
 ADDRESS_MAP_END
 
 
-MACHINE_CONFIG_MEMBER( inder_sb_device::device_add_mconfig )
+
+static MACHINE_CONFIG_FRAGMENT( inder_sb )
 	MCFG_CPU_ADD("audiocpu", Z80, 8000000) // unk freq
 	MCFG_Z80_DAISY_CHAIN(daisy_chain)
 	MCFG_CPU_PROGRAM_MAP(sound_map)
@@ -236,6 +235,10 @@ MACHINE_CONFIG_MEMBER( inder_sb_device::device_add_mconfig )
 	MCFG_SOUND_ROUTE_EX(0, "dac3vol", 1.0, DAC_VREF_POS_INPUT)
 MACHINE_CONFIG_END
 
+machine_config_constructor inder_sb_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( inder_sb );
+}
 
 void inder_sb_device::device_start()
 {

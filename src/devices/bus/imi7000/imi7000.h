@@ -26,11 +26,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_IMI7000_IMI7000_H
-#define MAME_BUS_IMI7000_IMI7000_H
-
 #pragma once
 
+#ifndef __IMI7000_BUS__
+#define __IMI7000_BUS__
+
+#include "emu.h"
 
 
 
@@ -106,20 +107,24 @@ class device_imi7000_interface : public device_slot_card_interface
 {
 	friend class imi7000_slot_device;
 
-protected:
+public:
 	// construction/destruction
 	device_imi7000_interface(const machine_config &mconfig, device_t &device);
+	virtual ~device_imi7000_interface() { }
 
+protected:
 	imi7000_slot_device *m_slot;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(IMI7000_BUS,  imi7000_bus_device)
-DECLARE_DEVICE_TYPE(IMI7000_SLOT, imi7000_slot_device)
+extern const device_type IMI7000_BUS;
+extern const device_type IMI7000_SLOT;
 
 
 // slot interface
 SLOT_INTERFACE_EXTERN( imi7000_devices );
 
-#endif // MAME_BUS_IMI7000_IMI7000_H
+
+
+#endif

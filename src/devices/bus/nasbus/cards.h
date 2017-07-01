@@ -6,12 +6,16 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_NASBUS_CARDS_H
-#define MAME_BUS_NASBUS_CARDS_H
-
 #pragma once
 
+#ifndef __NASBUS_CARDS_H__
+#define __NASBUS_CARDS_H__
+
+#include "emu.h"
+
+#include "avc.h"
+#include "floppy.h"
 
 SLOT_INTERFACE_EXTERN( nasbus_slot_cards );
 
-#endif // MAME_BUS_NASBUS_CARDS_H
+#endif // __NASBUS_CARDS_H__

@@ -41,11 +41,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_APRICOT_EXPANSION_EXPANSION_H
-#define MAME_BUS_APRICOT_EXPANSION_EXPANSION_H
-
 #pragma once
 
+#ifndef __APRICOT_EXPANSION_H__
+#define __APRICOT_EXPANSION_H__
+
+#include "emu.h"
 
 
 //**************************************************************************
@@ -97,9 +98,8 @@ class apricot_expansion_slot_device : public device_t, public device_slot_interf
 public:
 	// construction/destruction
 	apricot_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-protected:
-	apricot_expansion_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	apricot_expansion_slot_device(const machine_config &mconfig, device_type type, const char *name,
+		const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
 	// device-level overrides
 	virtual void device_start() override;
@@ -118,23 +118,23 @@ public:
 	apricot_expansion_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~apricot_expansion_bus_device();
 
-	template <class Object> static devcb_base &set_dma1_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_dma1_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_dma1_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_dma1_handler.set_callback(object); }
 
-	template <class Object> static devcb_base &set_dma2_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_dma2_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_dma2_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_dma2_handler.set_callback(object); }
 
-	template <class Object> static devcb_base &set_ext1_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_ext1_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_ext1_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_ext1_handler.set_callback(object); }
 
-	template <class Object> static devcb_base &set_ext2_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_ext2_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_ext2_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_ext2_handler.set_callback(object); }
 
-	template <class Object> static devcb_base &set_int2_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_int2_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_int2_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_int2_handler.set_callback(object); }
 
-	template <class Object> static devcb_base &set_int3_handler(device_t &device, Object &&cb)
-	{ return downcast<apricot_expansion_bus_device &>(device).m_int3_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_int3_handler(device_t &device, _Object object)
+		{ return downcast<apricot_expansion_bus_device &>(device).m_int3_handler.set_callback(object); }
 
 	// inline configuration
 	static void set_cpu_tag(device_t &device, device_t *owner, const char *tag);
@@ -179,29 +179,25 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(APRICOT_EXPANSION_BUS, apricot_expansion_bus_device)
+extern const device_type APRICOT_EXPANSION_BUS;
 
 
 // ======================> device_apricot_expansion_card_interface
 
 class device_apricot_expansion_card_interface : public device_slot_card_interface
 {
-	template <class ElementType> friend class simple_list;
-
 public:
 	// construction/destruction
+	device_apricot_expansion_card_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_apricot_expansion_card_interface();
 
 	void set_bus_device(apricot_expansion_bus_device *bus);
 
 	device_apricot_expansion_card_interface *next() const { return m_next; }
+	device_apricot_expansion_card_interface *m_next;
 
 protected:
-	device_apricot_expansion_card_interface(const machine_config &mconfig, device_t &device);
-
 	apricot_expansion_bus_device *m_bus;
-
-	device_apricot_expansion_card_interface *m_next;
 };
 
 
@@ -209,4 +205,4 @@ protected:
 #include "cards.h"
 
 
-#endif // MAME_BUS_APRICOT_EXPANSION_EXPANSION_H
+#endif // __APRICOT_EXPANSION_H__

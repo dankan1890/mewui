@@ -10,15 +10,15 @@
 
 
 #include "emu.h"
-
-#include "cpu/mcs48/mcs48.h"
 #include "cpu/z80/z80.h"
-#include "machine/am9517a.h"
-#include "machine/dmv_keyb.h"
-#include "machine/pit8253.h"
+#include "cpu/mcs48/mcs48.h"
 #include "machine/upd765.h"
-#include "sound/spkrdev.h"
+#include "machine/am9517a.h"
+#include "machine/pit8253.h"
+#include "machine/dmv_keyb.h"
+#include "sound/speaker.h"
 #include "video/upd7220.h"
+#include "formats/dmv_dsk.h"
 
 // expansion slots
 #include "bus/dmv/dmvbus.h"
@@ -31,11 +31,7 @@
 #include "bus/dmv/k806.h"
 #include "bus/dmv/ram.h"
 
-#include "screen.h"
 #include "softlist.h"
-#include "speaker.h"
-
-#include "formats/dmv_dsk.h"
 
 #include "dmv.lh"
 
@@ -315,7 +311,7 @@ UPD7220_DISPLAY_PIXELS_MEMBER( dmv_state::hgdc_display_pixels )
 		for(int xi=0;xi<16;xi++)
 		{
 			if (bitmap.cliprect().contains(x + xi, y))
-				bitmap.pix32(y, x + xi) = ((gfx >> xi) & 1) ? palette[2] : palette[0];
+				bitmap.pix32(y, x + xi) = ((gfx >> xi) & 1) ? palette[1] : palette[0];
 		}
 	}
 }
@@ -336,8 +332,8 @@ UPD7220_DRAW_TEXT_LINE_MEMBER( dmv_state::hgdc_draw_text )
 		else
 		{
 			const rgb_t *palette = m_palette->palette()->entry_list_raw();
-			bg = palette[(attr & 1) ? 2 : 0];
-			fg = palette[(attr & 1) ? 0 : 2];
+			bg = palette[(attr & 1) ? 1 : 0];
+			fg = palette[(attr & 1) ? 0 : 1];
 		}
 
 		for( int yi = 0; yi < lr; yi++)
@@ -554,6 +550,11 @@ WRITE8_MEMBER(dmv_state::kb_mcu_port2_w)
 	m_slot7->keyint_w(BIT(data, 4));
 }
 
+static ADDRESS_MAP_START( dmv_kb_ctrl_io, AS_IO, 8, dmv_state )
+	AM_RANGE(MCS48_PORT_P1, MCS48_PORT_P1) AM_READWRITE(kb_mcu_port1_r, kb_mcu_port1_w) // bit 0 data from kb, bit 1 data to kb
+	AM_RANGE(MCS48_PORT_P2, MCS48_PORT_P2) AM_WRITE(kb_mcu_port2_w)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( upd7220_map, AS_0, 16, dmv_state )
 	ADDRESS_MAP_GLOBAL_MASK(0x1ffff)
 	AM_RANGE(0x00000, 0x1ffff) AM_RAM  AM_SHARE("video_ram")
@@ -712,16 +713,14 @@ static SLOT_INTERFACE_START(dmv_slot7a)
 	SLOT_INTERFACE("k235", DMV_K235)            // K235 Internal 8088 module with interrupt controller
 SLOT_INTERFACE_END
 
-static MACHINE_CONFIG_START( dmv )
+static MACHINE_CONFIG_START( dmv, dmv_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, XTAL_24MHz / 6)
 	MCFG_CPU_PROGRAM_MAP(dmv_mem)
 	MCFG_CPU_IO_MAP(dmv_io)
 
 	MCFG_CPU_ADD("kb_ctrl_mcu", I8741, XTAL_6MHz)
-	MCFG_MCS48_PORT_P1_IN_CB(READ8(dmv_state, kb_mcu_port1_r)) // bit 0 data from kb
-	MCFG_MCS48_PORT_P1_OUT_CB(WRITE8(dmv_state, kb_mcu_port1_w)) // bit 1 data to kb
-	MCFG_MCS48_PORT_P2_OUT_CB(WRITE8(dmv_state, kb_mcu_port2_w))
+	MCFG_CPU_IO_MAP(dmv_kb_ctrl_io)
 
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 
@@ -749,10 +748,10 @@ static MACHINE_CONFIG_START( dmv )
 	MCFG_I8237_OUT_EOP_CB(WRITELINE(dmv_state, dmac_eop))
 	MCFG_I8237_IN_MEMR_CB(READ8(dmv_state, program_r))
 	MCFG_I8237_OUT_MEMW_CB(WRITE8(dmv_state, program_w))
-	MCFG_I8237_IN_IOR_0_CB(LOGGER("Read DMA CH1"))
-	MCFG_I8237_OUT_IOW_0_CB(LOGGER("Write DMA CH1"))
-	MCFG_I8237_IN_IOR_1_CB(LOGGER("Read DMA CH2"))
-	MCFG_I8237_OUT_IOW_1_CB(LOGGER("Write DMA CH2"))
+	MCFG_I8237_IN_IOR_0_CB(LOGGER("DMA CH1", 0))
+	MCFG_I8237_OUT_IOW_0_CB(LOGGER("DMA CH1", 0))
+	MCFG_I8237_IN_IOR_1_CB(LOGGER("DMA CH2", 0))
+	MCFG_I8237_OUT_IOW_1_CB(LOGGER("DMA CH2", 0))
 	MCFG_I8237_IN_IOR_2_CB(DEVREAD8("upd7220", upd7220_device, dack_r))
 	MCFG_I8237_OUT_IOW_2_CB(DEVWRITE8("upd7220", upd7220_device, dack_w))
 	MCFG_I8237_IN_IOR_3_CB(DEVREAD8("i8272", i8272a_device, mdma_r))
@@ -850,5 +849,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE  INPUT  STATE      INIT   COMPANY  FULLNAME             FLAGS
-COMP( 1984, dmv,    0,      0,       dmv,     dmv,   dmv_state, 0,     "NCR",   "Decision Mate V",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY   FULLNAME             FLAGS */
+COMP( 1984, dmv,    0,       0,         dmv,    dmv, driver_device,  0,      "NCR",   "Decision Mate V",    MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

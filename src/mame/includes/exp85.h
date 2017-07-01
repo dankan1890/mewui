@@ -1,11 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Curt Coder
-#ifndef MAME_INCLUDES_EXP85_H
-#define MAME_INCLUDES_EXP85_H
+#ifndef __EXP85__
+#define __EXP85__
 
 #include "bus/rs232/rs232.h"
 #include "imagedev/cassette.h"
-#include "sound/spkrdev.h"
+#include "sound/speaker.h"
 
 #define SCREEN_TAG      "screen"
 #define I8085A_TAG      "u100"
@@ -44,4 +44,4 @@ public:
 	int m_tape_control;
 };
 
-#endif // MAME_INCLUDES_EXP85_H
+#endif

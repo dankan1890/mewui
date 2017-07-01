@@ -8,8 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_M6502_M6504_H
-#define MAME_CPU_M6502_M6504_H
+#ifndef __M6504_H__
+#define __M6504_H__
 
 #include "m6502.h"
 
@@ -46,4 +46,4 @@ enum {
 
 extern const device_type M6504;
 
-#endif // MAME_CPU_M6502_M6504_H
+#endif

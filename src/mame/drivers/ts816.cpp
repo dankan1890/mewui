@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	void kbd_put(u8 data);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	DECLARE_READ8_MEMBER(keyin_r);
 	DECLARE_READ8_MEMBER(status_r);
 
@@ -74,7 +74,7 @@ READ8_MEMBER( ts816_state::status_r )
 		return 4;
 }
 
-void ts816_state::kbd_put(u8 data)
+WRITE8_MEMBER( ts816_state::kbd_put )
 {
 	m_term_data = data;
 	m_status = 3;
@@ -86,7 +86,7 @@ void ts816_state::machine_reset()
 	m_status = 1;
 }
 
-static MACHINE_CONFIG_START( ts816 )
+static MACHINE_CONFIG_START( ts816, ts816_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, 4000000)
 	MCFG_CPU_PROGRAM_MAP(ts816_mem)
@@ -94,7 +94,7 @@ static MACHINE_CONFIG_START( ts816 )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(ts816_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(ts816_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -105,5 +105,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE         INIT  COMPANY      FULLNAME  FLAGS
-COMP( 1980, ts816,  0,      0,       ts816,     ts816, ts816_state,  0,    "Televideo", "TS816",  MACHINE_IS_SKELETON )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE         INIT    COMPANY    FULLNAME       FLAGS */
+COMP( 1980, ts816,  0,      0,       ts816,     ts816, driver_device,  0,  "Televideo", "TS816", MACHINE_IS_SKELETON )

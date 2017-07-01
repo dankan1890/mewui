@@ -20,13 +20,10 @@ Notes:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/goindol.h"
-
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/goindol.h"
 
 
 WRITE8_MEMBER(goindol_state::goindol_bankswitch_w)
@@ -233,7 +230,7 @@ void goindol_state::machine_reset()
 	m_prot_toggle = 0;
 }
 
-static MACHINE_CONFIG_START( goindol )
+static MACHINE_CONFIG_START( goindol, goindol_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_12MHz/2)  /* XTAL confirmed, divisor is not */
@@ -255,7 +252,7 @@ static MACHINE_CONFIG_START( goindol )
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", goindol)
-	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
+	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", 256)
 
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
@@ -410,4 +407,4 @@ DRIVER_INIT_MEMBER(goindol_state,goindol)
 GAME( 1987, goindol,  0,       goindol, goindol, goindol_state, goindol, ROT90, "SunA",    "Goindol (World)", MACHINE_UNEMULATED_PROTECTION | MACHINE_SUPPORTS_SAVE )
 GAME( 1987, goindolu, goindol, goindol, goindol, goindol_state, goindol, ROT90, "SunA",    "Goindol (US)",    MACHINE_UNEMULATED_PROTECTION | MACHINE_SUPPORTS_SAVE )
 GAME( 1987, goindolk, goindol, goindol, goindol, goindol_state, goindol, ROT90, "SunA",    "Goindol (Korea)", MACHINE_UNEMULATED_PROTECTION | MACHINE_SUPPORTS_SAVE )
-GAME( 1987, homo,     goindol, goindol, homo,    goindol_state, 0,       ROT90, "bootleg", "Homo",            MACHINE_SUPPORTS_SAVE )
+GAME( 1987, homo,     goindol, goindol, homo, driver_device,    0,       ROT90, "bootleg", "Homo", MACHINE_SUPPORTS_SAVE )

@@ -5,14 +5,8 @@
     The Game Room Lethal Justice hardware
 
 **************************************************************************/
-#ifndef MAME_INCLUDES_LETHALJ_H
-#define MAME_INCLUDES_LETHALJ_H
 
-#pragma once
-
-#include "cpu/tms34010/tms34010.h"
 #include "machine/ticket.h"
-#include "screen.h"
 
 
 class lethalj_state : public driver_device
@@ -44,7 +38,6 @@ public:
 	optional_ioport m_light1_x;
 	optional_ioport m_light1_y;
 
-	emu_timer *m_gen_ext1_int_timer;
 	uint16_t m_blitter_data[8];
 	std::unique_ptr<uint16_t[]> m_screenram;
 	uint8_t m_vispage;
@@ -71,4 +64,5 @@ protected:
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 };
 
-#endif // MAME_INCLUDES_LETHALJ_H
+/*----------- defined in video/lethalj.c -----------*/
+void lethalj_scanline_update(screen_device &screen, bitmap_ind16 &bitmap, int scanline, const tms34010_display_params *params);

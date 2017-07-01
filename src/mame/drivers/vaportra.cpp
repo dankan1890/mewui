@@ -17,16 +17,12 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/vaportra.h"
-
 #include "cpu/m68000/m68000.h"
 #include "cpu/h6280/h6280.h"
 #include "sound/2203intf.h"
 #include "sound/ym2151.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
-
+#include "includes/vaportra.h"
 
 /******************************************************************************/
 
@@ -238,7 +234,7 @@ void vaportra_state::machine_reset()
 	m_priority[1] = 0;
 }
 
-static MACHINE_CONFIG_START( vaportra )
+static MACHINE_CONFIG_START( vaportra, vaportra_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000,XTAL_24MHz/2) /* Custom chip 59 */
@@ -311,10 +307,10 @@ static MACHINE_CONFIG_START( vaportra )
 	MCFG_SOUND_ROUTE(0, "mono", 0.60)
 	MCFG_SOUND_ROUTE(1, "mono", 0.60)
 
-	MCFG_OKIM6295_ADD("oki1", XTAL_32_22MHz/32, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki1", XTAL_32_22MHz/32, OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 
-	MCFG_OKIM6295_ADD("oki2", XTAL_32_22MHz/16, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki2", XTAL_32_22MHz/16, OKIM6295_PIN7_HIGH)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_CONFIG_END
 

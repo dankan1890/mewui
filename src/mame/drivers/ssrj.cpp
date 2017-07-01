@@ -32,13 +32,9 @@ HW info :
 ************************************/
 
 #include "emu.h"
-#include "includes/ssrj.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
-
+#include "includes/ssrj.h"
 
 void ssrj_state::machine_start()
 {
@@ -139,7 +135,7 @@ static GFXDECODE_START( ssrj )
 	GFXDECODE_ENTRY( "gfx1", 0, charlayout,     0, 0x10 )
 GFXDECODE_END
 
-static MACHINE_CONFIG_START( ssrj )
+static MACHINE_CONFIG_START( ssrj, ssrj_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,8000000/2)
@@ -153,7 +149,7 @@ static MACHINE_CONFIG_START( ssrj )
 	MCFG_SCREEN_SIZE(40*8, 32*8)
 	MCFG_SCREEN_VISIBLE_AREA(0*8, 34*8-1, 1*8, 31*8-1) // unknown res
 	MCFG_SCREEN_UPDATE_DRIVER(ssrj_state, screen_update)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(ssrj_state, screen_vblank))
+	MCFG_SCREEN_VBLANK_DRIVER(ssrj_state, screen_eof)
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", ssrj)
@@ -190,4 +186,4 @@ ROM_START( ssrj )
 
 ROM_END
 
-GAME( 1985, ssrj,  0,       ssrj,  ssrj, ssrj_state,  0, ROT90, "Taito Corporation", "Super Speed Race Junior (Japan)", MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE )
+GAME( 1985, ssrj,  0,       ssrj,  ssrj, driver_device,  0, ROT90, "Taito Corporation", "Super Speed Race Junior (Japan)", MACHINE_WRONG_COLORS | MACHINE_IMPERFECT_GRAPHICS | MACHINE_SUPPORTS_SAVE )

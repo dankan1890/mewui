@@ -34,28 +34,34 @@ static const floppy_interface rx01_floppy_interface =
 };
 
 
+MACHINE_CONFIG_FRAGMENT( rx01 )
+	MCFG_LEGACY_FLOPPY_2_DRIVES_ADD(rx01_floppy_interface)
+MACHINE_CONFIG_END
+
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(RX01, rx01_device, "rx01", "RX01")
+const device_type RX01 = &device_creator<rx01_device>;
 
 //-------------------------------------------------
 //  rx01_device - constructor
 //-------------------------------------------------
 
 rx01_device::rx01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, RX01, tag, owner, clock)
+	: device_t(mconfig, RX01, "RX01", tag, owner, clock, "rx01", __FILE__)
 {
 }
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( rx01_device::device_add_mconfig )
-	MCFG_LEGACY_FLOPPY_2_DRIVES_ADD(rx01_floppy_interface)
-MACHINE_CONFIG_END
+machine_config_constructor rx01_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( rx01 );
+}
 
 //-------------------------------------------------
 //  device_start - device-specific startup

@@ -61,12 +61,8 @@ Expansion bus stuff:
 
 #include "emu.h"
 #include "includes/3do.h"
-
 #include "cpu/arm7/arm7core.h"
-
 #include "debugger.h"
-#include "screen.h"
-
 
 #define VERBOSE         1
 #define LOG(x) do { if (VERBOSE) printf x; } while (0)
@@ -657,7 +653,7 @@ WRITE32_MEMBER(_3do_state::_3do_madam_w){
 
 READ32_MEMBER(_3do_state::_3do_clio_r)
 {
-	if (!machine().side_effect_disabled())
+	if (!space.debugger_access())
 	{
 		if(offset != 0x200/4 && offset != 0x40/4 && offset != 0x44/4 && offset != 0x48/4 && offset != 0x4c/4 &&
 			offset != 0x118/4 && offset != 0x11c/4)
@@ -775,7 +771,7 @@ READ32_MEMBER(_3do_state::_3do_clio_r)
 		return m_clio.uncle_rom;
 
 	default:
-		if (!machine().side_effect_disabled())
+		if (!space.debugger_access())
 			logerror( "%08X: unhandled CLIO read offset = %08X\n", m_maincpu->pc(), offset * 4 );
 		break;
 	}

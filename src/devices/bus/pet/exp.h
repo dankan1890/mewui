@@ -8,11 +8,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_PET_EXP_H
-#define MAME_BUS_PET_EXP_H
-
 #pragma once
 
+#ifndef __PET_EXPANSION_SLOT__
+#define __PET_EXPANSION_SLOT__
+
+#include "emu.h"
 
 
 
@@ -112,11 +113,10 @@ class device_pet_expansion_card_interface : public device_slot_card_interface
 
 public:
 	// construction/destruction
+	device_pet_expansion_card_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_pet_expansion_card_interface();
 
 protected:
-	device_pet_expansion_card_interface(const machine_config &mconfig, device_t &device);
-
 	// runtime
 	virtual int pet_norom_r(address_space &space, offs_t offset, int sel) { return 1; }
 	virtual uint8_t pet_bd_r(address_space &space, offs_t offset, uint8_t data, int &sel) { return data; };
@@ -129,9 +129,11 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PET_EXPANSION_SLOT, pet_expansion_slot_device)
+extern const device_type PET_EXPANSION_SLOT;
 
 
 SLOT_INTERFACE_EXTERN( pet_expansion_cards );
 
-#endif // MAME_BUS_PET_EXP_H
+
+
+#endif

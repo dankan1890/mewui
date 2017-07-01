@@ -6,11 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_VIDEO_HUC6270_H
-#define MAME_VIDEO_HUC6270_H
+#ifndef __HUC6270_H_
+#define __HUC6270_H_
 
-#pragma once
-
+#include "emu.h"
 
 #define MCFG_HUC6270_VRAM_SIZE(_size) \
 	huc6270_device::set_vram_size(*device, _size);
@@ -18,14 +17,14 @@
 #define MCFG_HUC6270_IRQ_CHANGED_CB(_devcb) \
 	devcb = &huc6270_device::set_irq_changed_callback(*device, DEVCB_##_devcb);
 
-class huc6270_device : public device_t
+class huc6270_device :  public device_t
 {
 public:
 	// construction/destruction
 	huc6270_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	static void set_vram_size(device_t &device, uint32_t vram_size) { downcast<huc6270_device &>(device).m_vram_size = vram_size; }
-	template <class Object> static devcb_base &set_irq_changed_callback(device_t &device, Object &&cb) { return downcast<huc6270_device &>(device).m_irq_changed_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_changed_callback(device_t &device, _Object object) { return downcast<huc6270_device &>(device).m_irq_changed_cb.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
@@ -54,6 +53,7 @@ protected:
 	inline void next_horz_state();
 
 private:
+
 	enum huc6270_v_state {
 		HUC6270_VSW,
 		HUC6270_VDS,
@@ -131,10 +131,11 @@ private:
 	std::unique_ptr<uint16_t[]>  m_vram;
 	uint16_t  m_vram_mask;
 
-	static constexpr uint8_t vram_increments[4] = { 1, 32, 64, 128 };
+	const static uint8_t vram_increments[4];
 };
 
 
-DECLARE_DEVICE_TYPE(HUC6270, huc6270_device)
+extern const device_type HUC6270;
 
-#endif // MAME_VIDEO_HUC6270_H
+
+#endif

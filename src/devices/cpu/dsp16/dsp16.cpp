@@ -27,7 +27,7 @@
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(DSP16, dsp16_device, "dsp16", "DSP16")
+const device_type DSP16 = &device_creator<dsp16_device>;
 
 
 //-------------------------------------------------
@@ -35,7 +35,7 @@ DEFINE_DEVICE_TYPE(DSP16, dsp16_device, "dsp16", "DSP16")
 //-------------------------------------------------
 
 dsp16_device::dsp16_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: cpu_device(mconfig, DSP16, tag, owner, clock),
+	: cpu_device(mconfig, DSP16, "DSP16", tag, owner, clock, "dsp16", __FILE__),
 		m_program_config("program", ENDIANNESS_LITTLE, 16, 16, -1),
 		m_data_config("data", ENDIANNESS_LITTLE, 16, 16, -1),
 		m_i(0),

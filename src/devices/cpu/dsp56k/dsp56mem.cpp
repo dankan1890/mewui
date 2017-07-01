@@ -3,12 +3,11 @@
 // This file contains functions which handle the On-Chip peripheral Memory Map
 // as well as the Host Interface and the SSI0/SSI1 Serial Interfaces.
 
-#include "emu.h"
 #include "dsp56mem.h"
 #include "dsp56pcu.h"
 
-namespace DSP56K {
-
+namespace DSP56K
+{
 /* IPR Accessor Implementations */
 void IPR_set(dsp56k_core* cpustate, uint16_t value)
 {
@@ -486,6 +485,9 @@ void dsp56k_io_reset(dsp56k_core* cpustate)
 }
 
 
+} // namespace DSP56K
+
+
 /* Work */
 READ16_MEMBER( dsp56k_device::peripheral_register_r )
 {
@@ -944,6 +946,3 @@ uint16_t dsp56k_device::get_peripheral_memory(uint16_t addr)
 	dsp56k_core* cpustate = &m_dsp56k_core;
 	return cpustate->peripheral_ram[A2O(addr)];
 }
-
-
-} // namespace DSP56K

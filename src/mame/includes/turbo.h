@@ -10,8 +10,6 @@
 #include "machine/i8255.h"
 #include "sound/discrete.h"
 #include "sound/samples.h"
-#include "screen.h"
-
 /* sprites are scaled in the analog domain; to give a better */
 /* rendition of this, we scale in the X direction by this factor */
 #define TURBO_X_SCALE       2

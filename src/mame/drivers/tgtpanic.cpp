@@ -13,7 +13,6 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "screen.h"
 
 
 class tgtpanic_state : public driver_device
@@ -146,7 +145,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( tgtpanic )
+static MACHINE_CONFIG_START( tgtpanic, tgtpanic_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_4MHz)
@@ -182,4 +181,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1996, tgtpanic, 0, tgtpanic, tgtpanic, tgtpanic_state, 0, ROT0, "Konami", "Target Panic", MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+GAME( 1996, tgtpanic, 0, tgtpanic, tgtpanic, driver_device, 0, ROT0, "Konami", "Target Panic", MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )

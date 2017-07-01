@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#include "emu.h"
 #include "pccard.h"
 
 READ16_MEMBER( pccard_interface::read_memory )
@@ -25,10 +24,10 @@ WRITE16_MEMBER( pccard_interface::write_reg )
 	//printf("unhandled register write %08x %04x %04x\n", offset, data, mem_mask);
 }
 
-DEFINE_DEVICE_TYPE(PCCARD_SLOT, pccard_slot_device, "pccard", "PC Card Slot")
+const device_type PCCARD_SLOT = &device_creator<pccard_slot_device>;
 
 pccard_slot_device::pccard_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, PCCARD_SLOT, tag, owner, clock),
+	device_t(mconfig, PCCARD_SLOT, "PCCARD SLOT", tag, owner, clock, "pccard", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_pccard(nullptr)
 {

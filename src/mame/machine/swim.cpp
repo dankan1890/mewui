@@ -9,7 +9,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "machine/swim.h"
 
 
@@ -32,14 +31,14 @@ enum
     DEVICE
 ***************************************************************************/
 
-DEFINE_DEVICE_TYPE(SWIM, swim_device, "swim", "Apple SWIM (Steve Woz Integrated Machine")
+const device_type SWIM = &device_creator<swim_device>;
 
 //-------------------------------------------------
 //  ctor
 //-------------------------------------------------
 
 swim_device::swim_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: applefdc_base_device(APPLEFDC_SWIM, mconfig, SWIM, tag, owner, clock)
+	: applefdc_base_device(APPLEFDC_SWIM, mconfig, SWIM, "Apple SWIM (Steve Woz Integrated Machine)", tag, owner, clock, "swim", __FILE__)
 {
 }
 

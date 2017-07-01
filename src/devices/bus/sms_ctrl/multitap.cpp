@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "multitap.h"
 
 
@@ -17,7 +16,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SMS_MULTITAP, sms_multitap_device, "sms_multitap", "Sega SMS Multitap")
+const device_type SMS_MULTITAP = &device_creator<sms_multitap_device>;
 
 
 //**************************************************************************
@@ -29,7 +28,7 @@ DEFINE_DEVICE_TYPE(SMS_MULTITAP, sms_multitap_device, "sms_multitap", "Sega SMS 
 //-------------------------------------------------
 
 sms_multitap_device::sms_multitap_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SMS_MULTITAP, tag, owner, clock),
+	device_t(mconfig, SMS_MULTITAP, "Sega SMS Multitap", tag, owner, clock, "sms_multitap", __FILE__),
 	device_sms_control_port_interface(mconfig, *this),
 	m_subctrl1_port(*this, "ctrl1"),
 	m_subctrl2_port(*this, "ctrl2"),
@@ -49,6 +48,11 @@ void sms_multitap_device::device_start()
 {
 	save_item(NAME(m_read_state));
 	save_item(NAME(m_last_data));
+
+	m_subctrl1_port->device_start();
+	m_subctrl2_port->device_start();
+	m_subctrl3_port->device_start();
+	m_subctrl4_port->device_start();
 }
 
 
@@ -120,7 +124,8 @@ void sms_multitap_device::peripheral_w(uint8_t data)
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  machine_config_additions - device-specific
+//  machine configurations
 //-------------------------------------------------
 
 READ32_MEMBER( sms_multitap_device::pixel_r )
@@ -129,7 +134,7 @@ READ32_MEMBER( sms_multitap_device::pixel_r )
 }
 
 
-MACHINE_CONFIG_MEMBER( sms_multitap_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( multitap_slot )
 	// Controller subports setup, without the TH callback declaration,
 	// because the circuit scheme shows TH of subports without connection.
 	MCFG_SMS_CONTROL_PORT_ADD("ctrl1", sms_control_port_devices, "joypad")
@@ -141,3 +146,9 @@ MACHINE_CONFIG_MEMBER( sms_multitap_device::device_add_mconfig )
 	MCFG_SMS_CONTROL_PORT_ADD("ctrl4", sms_control_port_devices, "joypad")
 	MCFG_SMS_CONTROL_PORT_PIXEL_HANDLER(READ32(sms_multitap_device, pixel_r))
 MACHINE_CONFIG_END
+
+
+machine_config_constructor sms_multitap_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( multitap_slot );
+}

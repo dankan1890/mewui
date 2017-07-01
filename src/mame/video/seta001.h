@@ -1,9 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia, David Haywood
-#ifndef MAME_VIDEO_SETA001_H
-#define MAME_VIDEO_SETA001_H
-
-#pragma once
 
 typedef device_delegate<int (uint16_t code, uint8_t color)> gfxbank_cb_delegate;
 
@@ -86,9 +82,7 @@ private:
 	uint8_t m_spritecodehigh[0x2000]; // ^
 };
 
-DECLARE_DEVICE_TYPE(SETA001_SPRITE, seta001_device)
+extern const device_type SETA001_SPRITE;
 
 #define MCFG_SETA001_SPRITE_GFXDECODE(_gfxtag) \
 	seta001_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
-
-#endif // MAME_VIDEO_SETA001_H

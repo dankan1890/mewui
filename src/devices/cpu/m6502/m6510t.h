@@ -8,8 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_M6502_M6510T_H
-#define MAME_CPU_M6502_M6510T_H
+#ifndef __M6510T_H__
+#define __M6510T_H__
 
 #include "m6510.h"
 
@@ -29,6 +29,6 @@ enum {
 	M6510T_SET_OVERFLOW = m6502_device::V_LINE
 };
 
-DECLARE_DEVICE_TYPE(M6510T, m6510t_device)
+extern const device_type M6510T;
 
-#endif // MAME_CPU_M6502_M6510T_H
+#endif

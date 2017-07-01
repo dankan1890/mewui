@@ -6,21 +6,19 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_AVIGO_H
-#define MAME_INCLUDES_AVIGO_H
-
-#pragma once
+#ifndef AVIGO_H_
+#define AVIGO_H_
 
 #include "bus/rs232/rs232.h"
 #include "cpu/z80/z80.h"
-#include "imagedev/snapquik.h"
-#include "machine/bankdev.h"
+#include "machine/rp5c01.h"
 #include "machine/ins8250.h"
 #include "machine/intelfsh.h"
+#include "machine/bankdev.h"
 #include "machine/nvram.h"
+#include "sound/speaker.h"
 #include "machine/ram.h"
-#include "machine/rp5c01.h"
-#include "sound/spkrdev.h"
+#include "imagedev/snapquik.h"
 
 #define AVIGO_NUM_COLOURS 2
 
@@ -111,5 +109,4 @@ public:
 
 	DECLARE_QUICKLOAD_LOAD_MEMBER( avigo);
 };
-
-#endif // MAME_INCLUDES_AVIGO_H
+#endif /* AVIGO_H_ */

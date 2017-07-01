@@ -14,24 +14,23 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_CYBIKO_H
-#define MAME_INCLUDES_CYBIKO_H
+#ifndef CYBIKO_H_
+#define CYBIKO_H_
 
-#include "cpu/h8/h8s2245.h"
+/* Core includes */
+#include "emu.h"
+#include "sound/speaker.h"
+
+/* Components */
 #include "cpu/h8/h8s2320.h"
-
-#include "imagedev/snapquik.h"
-
+#include "cpu/h8/h8s2245.h"
+#include "video/hd66421.h"
+#include "machine/pcf8593.h"
 #include "machine/at45dbxx.h"
 #include "machine/intelfsh.h"
-#include "machine/nvram.h"
-#include "machine/pcf8593.h"
 #include "machine/ram.h"
-
-#include "sound/spkrdev.h"
-
-#include "video/hd66421.h"
-
+#include "imagedev/snapquik.h"
+#include "machine/nvram.h"
 
 class cybiko_state : public driver_device
 {
@@ -82,4 +81,4 @@ public:
 	DECLARE_QUICKLOAD_LOAD_MEMBER( cybikoxt );
 };
 
-#endif // MAME_INCLUDES_CYBIKO_H
+#endif /* CYBIKO_H_ */

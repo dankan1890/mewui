@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Carl
-#ifndef MAME_BUS_PC_JOY_PC_JOY_SW_H
-#define MAME_BUS_PC_JOY_PC_JOY_SW_H
+#ifndef PC_JOY_SW_H_
+#define PC_JOY_SW_H_
 
 #include "pc_joy.h"
 
@@ -18,8 +18,8 @@ public:
 
 protected:
 	virtual void device_start() override;
-	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id tid, int param, void *ptr) override;
+	virtual void device_reset() override;
 
 private:
 	required_ioport m_btn1;
@@ -33,6 +33,6 @@ private:
 	bool m_active;
 };
 
-DECLARE_DEVICE_TYPE(PC_MSSW_PAD, pc_mssw_pad_device)
+extern const device_type PC_MSSW_PAD;
 
-#endif // MAME_BUS_PC_JOY_PC_JOY_SW_H
+#endif /* PC_JOY_SW_H_ */

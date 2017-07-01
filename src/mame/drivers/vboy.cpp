@@ -27,17 +27,12 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "audio/vboy.h"
-
 #include "cpu/v810/v810.h"
+#include "audio/vboy.h"
 #include "bus/vboy/slot.h"
 #include "bus/vboy/rom.h"
-#include "screen.h"
 #include "softlist.h"
-#include "speaker.h"
-
 #include "vboy.lh"
-
 
 #define READ_BGMAP(bgoffs) m_bgmap[(bgoffs) & 0xffff]
 #define READ_WORLD(wldoffs)   READ_BGMAP((0x1d800 >> 1) + wldoffs)
@@ -1345,7 +1340,7 @@ static SLOT_INTERFACE_START(vboy_cart)
 	SLOT_INTERFACE_INTERNAL("vb_eeprom", VBOY_ROM_EEPROM)
 SLOT_INTERFACE_END
 
-static MACHINE_CONFIG_START( vboy )
+static MACHINE_CONFIG_START( vboy, vboy_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD( "maincpu", V810, XTAL_20MHz )
@@ -1397,5 +1392,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE       INIT  COMPANY     FULLNAME       FLAGS */
-CONS( 1995, vboy,   0,      0,       vboy,      vboy,  vboy_state, 0,    "Nintendo", "Virtual Boy", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY     FULLNAME       FLAGS */
+CONS( 1995, vboy,   0,      0,       vboy,      vboy, driver_device,    0,    "Nintendo", "Virtual Boy", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND)

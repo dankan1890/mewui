@@ -6,14 +6,11 @@
 
 ****************************************************************************/
 
-#ifndef MAME_AUDIO_DCS_H
-#define MAME_AUDIO_DCS_H
-
-#pragma once
+#ifndef __DCS_H__
+#define __DCS_H__
 
 #include "cpu/adsp2100/adsp2100.h"
 #include "sound/dmadac.h"
-#include "machine/bankdev.h"
 
 #define MCFG_DCS2_AUDIO_DRAM_IN_MB(_dram_in_mb) \
 	dcs_audio_device::static_set_dram_in_mb(*device, _dram_in_mb);
@@ -25,6 +22,9 @@
 class dcs_audio_device : public device_t
 {
 public:
+	// construction/destruction
+	dcs_audio_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, int rev = 1);
+
 	// for dcs2 (int dram_in_mb, offs_t polling_offset)
 	static void static_set_dram_in_mb(device_t &device, int dram_in_mb) { downcast<dcs_audio_device &>(device).m_dram_in_mb = dram_in_mb; }
 	static void static_set_polling_offset(device_t &device, offs_t polling_offset) { downcast<dcs_audio_device &>(device).m_polling_offset = polling_offset; }
@@ -105,14 +105,11 @@ public:
 	int preprocess_write(uint16_t data);
 
 protected:
-	// construction/destruction
-	dcs_audio_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, int rev);
-
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	void add_mconfig_dcs(machine_config &config);
 
+protected:
 	struct sdrc_state
 	{
 		uint16_t      reg[4];
@@ -170,7 +167,6 @@ protected:
 	uint32_t      m_sounddata_banks;
 	uint16_t      m_sounddata_bank;
 
-	optional_device<address_map_bank_device> m_ram_map;
 	optional_memory_bank    m_data_bank;
 	memory_bank *           m_rom_page;
 	memory_bank *           m_dram_page;
@@ -207,7 +203,6 @@ protected:
 	uint16_t *m_polling_base;
 	uint32_t *m_internal_program_ram;
 	uint32_t *m_external_program_ram;
-	uint32_t *m_internal_data_ram;
 
 	int m_dmovlay_val;
 
@@ -229,14 +224,13 @@ public:
 	// construction/destruction
 	dcs_audio_2k_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS_AUDIO_2K, dcs_audio_2k_device)
+extern const device_type DCS_AUDIO_2K;
 
 // dcs_audio_2k_uart_device
 
@@ -246,13 +240,13 @@ public:
 	// construction/destruction
 	dcs_audio_2k_uart_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS_AUDIO_2K_UART, dcs_audio_2k_uart_device)
+extern const device_type DCS_AUDIO_2K_UART;
 
 // dcs_audio_8k_device
 
@@ -262,13 +256,13 @@ public:
 	// construction/destruction
 	dcs_audio_8k_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS_AUDIO_8K, dcs_audio_8k_device)
+extern const device_type DCS_AUDIO_8K;
 
 // dcs_audio_wpc_device
 
@@ -278,26 +272,25 @@ public:
 	// construction/destruction
 	dcs_audio_wpc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS_AUDIO_WPC, dcs_audio_wpc_device)
+extern const device_type DCS_AUDIO_WPC;
 
 
 // dcs2_audio_device
 
 class dcs2_audio_device : public dcs_audio_device
 {
-protected:
+public:
 	// construction/destruction
-	dcs2_audio_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	dcs2_audio_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
+protected:
 	// device-level overrides
 	virtual void device_start() override;
-	void add_mconfig_dcs2(machine_config &config);
 };
 
 // dcs2_audio_2115_device
@@ -308,13 +301,13 @@ public:
 	// construction/destruction
 	dcs2_audio_2115_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS2_AUDIO_2115, dcs2_audio_2115_device)
+extern const device_type DCS2_AUDIO_2115;
 
 // dcs2_audio_2104_device
 
@@ -324,13 +317,13 @@ public:
 	// construction/destruction
 	dcs2_audio_2104_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS2_AUDIO_2104, dcs2_audio_2104_device)
+extern const device_type DCS2_AUDIO_2104;
 
 // dcs2_audio_dsio_device
 
@@ -340,13 +333,13 @@ public:
 	// construction/destruction
 	dcs2_audio_dsio_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS2_AUDIO_DSIO, dcs2_audio_dsio_device)
+extern const device_type DCS2_AUDIO_DSIO;
 
 // dcs2_audio_denver_device
 
@@ -356,12 +349,12 @@ public:
 	// construction/destruction
 	dcs2_audio_denver_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
 	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DCS2_AUDIO_DENVER, dcs2_audio_denver_device)
+extern const device_type DCS2_AUDIO_DENVER;
 
-#endif // MAME_AUDIO_DCS_H
+#endif

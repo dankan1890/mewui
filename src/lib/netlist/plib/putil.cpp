@@ -1,14 +1,14 @@
 // license:GPL-2.0+
 // copyright-holders:Couriersud
 
-#include "putil.h"
-#include "ptypes.h"
-#include "plists.h"
-
+#include <cstring>
 #include <cstdlib>
 #include <algorithm>
 #include <initializer_list>
-#include <cstring>
+
+#include "plib/putil.h"
+#include "plib/ptypes.h"
+#include "plib/plists.h"
 
 namespace plib
 {
@@ -33,49 +33,47 @@ namespace plib
 
 		const pstring environment(const pstring &var, const pstring &default_val)
 		{
-			if (getenv(var.c_str()) == nullptr)
+			if (getenv(var.cstr()) == nullptr)
 				return default_val;
 			else
-				return pstring(getenv(var.c_str()), pstring::UTF8);
+				return pstring(getenv(var.cstr()));
 		}
 	}
 
-	std::vector<pstring> psplit(const pstring &str, const pstring &onstr, bool ignore_empty)
+	pstring_vector_t::pstring_vector_t(const pstring &str, const pstring &onstr, bool ignore_empty)
+	: std::vector<pstring>()
 	{
-		std::vector<pstring> ret;
+		pstring::iterator p = str.begin();
+		pstring::iterator pn = str.find(onstr, p);
 
-		pstring::size_type p = 0;
-		pstring::size_type pn = str.find(onstr, p);
-
-		while (pn != pstring::npos)
+		while (pn != str.end())
 		{
-			pstring t = str.substr(p, pn - p);
-			if (!ignore_empty || t.length() != 0)
-				ret.push_back(t);
-			p = pn + onstr.length();
+			pstring t = str.substr(p, pn);
+			if (!ignore_empty || t.len() != 0)
+				this->push_back(t);
+			p = pn + onstr.len();
 			pn = str.find(onstr, p);
 		}
-		if (p < str.length())
+		if (p != str.end())
 		{
-			pstring t = str.substr(p);
-			if (!ignore_empty || t.length() != 0)
-				ret.push_back(t);
+			pstring t = str.substr(p, str.end());
+			if (!ignore_empty || t.len() != 0)
+				this->push_back(t);
 		}
-		return ret;
 	}
 
-	std::vector<pstring> psplit(const pstring &str, const std::vector<pstring> &onstrl)
+	pstring_vector_t::pstring_vector_t(const pstring &str, const pstring_vector_t &onstrl)
+	: std::vector<pstring>()
 	{
 		pstring col = "";
-		std::vector<pstring> ret;
 
-		auto i = str.begin();
-		while (i != str.end())
+		unsigned i = 0;
+		while (i<str.blen())
 		{
 			std::size_t p = static_cast<std::size_t>(-1);
 			for (std::size_t j=0; j < onstrl.size(); j++)
 			{
-				if (std::equal(onstrl[j].begin(), onstrl[j].end(), i))
+				if (std::memcmp(onstrl[j].cstr(), &(str.cstr()[i]), onstrl[j].blen())==0)
 				{
 					p = j;
 					break;
@@ -84,27 +82,25 @@ namespace plib
 			if (p != static_cast<std::size_t>(-1))
 			{
 				if (col != "")
-					ret.push_back(col);
+					this->push_back(col);
 
 				col = "";
-				ret.push_back(onstrl[p]);
-				i = std::next(i, static_cast<pstring::difference_type>(onstrl[p].length()));
+				this->push_back(onstrl[p]);
+				i += onstrl[p].blen();
 			}
 			else
 			{
-				pstring::code_t c = *i;
+				pstring::traits::code_t c = pstring::traits::code(str.cstr() + i);
 				col += c;
-				i++;
+				i+=pstring::traits::codelen(c);
 			}
 		}
 		if (col != "")
-			ret.push_back(col);
-
-		return ret;
+			this->push_back(col);
 	}
 
 
-	int penum_base::from_string_int(const char *str, const char *x)
+	int enum_base::from_string_int(const char *str, const char *x)
 	{
 		int cnt = 0;
 		const char *cur = str;
@@ -131,7 +127,7 @@ namespace plib
 				return cnt;
 		return -1;
 	}
-	pstring penum_base::nthstr(int n, const char *str)
+	pstring enum_base::nthstr(int n, const char *str)
 	{
 		char buf[64];
 		char *bufp = buf;
@@ -143,7 +139,7 @@ namespace plib
 				if (*str == ',')
 				{
 					*bufp = 0;
-					return pstring(buf, pstring::UTF8);
+					return pstring(buf);
 				}
 				else if (*str != ' ')
 					*bufp++ = *str;
@@ -156,6 +152,6 @@ namespace plib
 			str++;
 		}
 		*bufp = 0;
-		return pstring(buf, pstring::UTF8);
+		return pstring(buf);
 	}
 } // namespace plib

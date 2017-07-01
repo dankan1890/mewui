@@ -5,86 +5,138 @@
  *
  */
 
+#include <cstring>
+//FIXME:: pstring should be locale free
+#include <cctype>
+#include <cstdlib>
+#include <cstdio>
+
+#include <algorithm>
+
 #include "pfmtlog.h"
 #include "palloc.h"
 
-#include <cstring>
-#include <cstdlib>
-#include <cstdarg>
-#include <algorithm>
-#include <locale>
-#include <iostream>
-
 namespace plib {
+pfmt::pfmt(const pstring &fmt)
+: m_str(m_str_buf), m_allocated(0), m_arg(0)
+{
+	std::size_t l = fmt.blen() + 1;
+	if (l>sizeof(m_str_buf))
+	{
+		m_allocated = 2 * l;
+		m_str = palloc_array<char>(2 * l);
+	}
+	memcpy(m_str, fmt.cstr(), l);
+}
 
-pfmt &pfmt::format_element(const char *l, const unsigned cfmt_spec,  ...)
+pfmt::pfmt(const char *fmt)
+: m_str(m_str_buf), m_allocated(0), m_arg(0)
+{
+	std::size_t l = strlen(fmt) + 1;
+	if (l>sizeof(m_str_buf))
+	{
+		m_allocated = 2 * l;
+		m_str = palloc_array<char>(2 * l);
+	}
+	memcpy(m_str, fmt, l);
+}
+
+pfmt::~pfmt()
+{
+	if (m_allocated > 0)
+		pfree_array(m_str);
+}
+
+void pfmt::format_element(const char *f, const char *l, const char *fmt_spec,  ...)
 {
 	va_list ap;
-	va_start(ap, cfmt_spec);
-	pstring fmt("%");
-	char buf[2048]; // FIXME
-	std::size_t sl;
-
+	va_start(ap, fmt_spec);
+	char fmt[30] = "%";
+	char search[10] = "";
+	char buf[2048];
 	m_arg++;
-
-	pstring search("{");
-	search += plib::to_string(m_arg);
-	sl = search.length();
-
-	auto p = m_str.find(search + ":");
-	sl++; // ":"
-	if (p == pstring::npos) // no further specifiers
+	std::size_t sl = static_cast<std::size_t>(sprintf(search, "{%d:", m_arg));
+	char *p = strstr(m_str, search);
+	if (p == nullptr)
 	{
-		p = m_str.find(search + "}");
-		if (p == pstring::npos) // not found try default
+		sl = static_cast<std::size_t>(sprintf(search, "{%d}", m_arg));
+		p = strstr(m_str, search);
+		if (p == nullptr)
 		{
 			sl = 2;
-			p = m_str.find("{}");
+			p = strstr(m_str, "{}");
 		}
-		if (p == pstring::npos)
+		if (p==nullptr)
 		{
 			sl=1;
-			p = m_str.find("{");
-			if (p != pstring:: npos)
+			p = strstr(m_str, "{");
+			if (p != nullptr)
 			{
-				auto p1 = m_str.find("}", p);
-				if (p1 != pstring::npos)
+				char *p1 = strstr(p, "}");
+				if (p1 != nullptr)
 				{
-					sl = p1 - p + 1;
-					fmt += m_str.substr(p+1, p1 - p - 1);
+					sl = static_cast<std::size_t>(p1 - p + 1);
+					strncat(fmt, p+1, static_cast<std::size_t>(p1 - p - 2));
 				}
+				else
+					strcat(fmt, f);
 			}
+			else
+				strcat(fmt, f);
 		}
 	}
 	else
 	{
-		auto p1 = m_str.find("}", p);
-		if (p1 != pstring::npos)
+		char *p1 = strstr(p, "}");
+		if (p1 != nullptr)
 		{
-			sl = p1 - p + 1;
-			fmt += ((m_arg>=10) ? m_str.substr(p+4, p1 - p - 4) : m_str.substr(p+3, p1 - p - 3));
+			sl = static_cast<std::size_t>(p1 - p + 1);
+			if (m_arg>=10)
+				strncat(fmt, p+4, static_cast<std::size_t>(p1 - p - 4));
+			else
+				strncat(fmt, p+3, static_cast<std::size_t>(p1 - p - 3));
 		}
-	}
-	pstring::code_t pend = fmt.at(fmt.length() - 1);
-	if (pstring("duxo").find(cfmt_spec) != pstring::npos)
-	{
-		if (pstring("duxo").find(pend) == pstring::npos)
-			fmt += (pstring(l, pstring::UTF8) + cfmt_spec);
 		else
-			fmt = fmt.left(fmt.length() - 1) + pstring(l, pstring::UTF8) + fmt.right(1);
+			strcat(fmt, f);
 	}
-	else if (pstring("fge").find(cfmt_spec) != pstring::npos)
+	strcat(fmt, l);
+	char *pend = fmt + strlen(fmt) - 1;
+	if (strchr("fge", *fmt_spec) != nullptr)
 	{
-		if (pstring("fge").find(pend) == pstring::npos)
-			fmt += cfmt_spec;
+		if (strchr("fge", *pend) == nullptr)
+			strcat(fmt, fmt_spec);
+	}
+	else if (strchr("duxo", *fmt_spec) != nullptr)
+	{
+		if (strchr("duxo", *pend) == nullptr)
+			strcat(fmt, fmt_spec);
 	}
 	else
-		fmt += cfmt_spec;
-	vsprintf(buf, fmt.c_str(), ap);
-	if (p != pstring::npos)
-		m_str = m_str.substr(0, p) + pstring(buf, pstring::UTF8) + m_str.substr(p + sl);
+		strcat(fmt, fmt_spec);
+	std::size_t nl = static_cast<std::size_t>(vsprintf(buf, fmt, ap));
+	if (p != nullptr)
+	{
+		// check room
+		std::size_t new_size = static_cast<std::size_t>(p - m_str) + nl + strlen(p) + 1 - sl;
+		if (new_size > m_allocated)
+		{
+			std::size_t old_alloc = std::max(m_allocated, sizeof(m_str_buf));
+			if (m_allocated < old_alloc)
+				m_allocated = old_alloc;
+			while (new_size > m_allocated)
+				m_allocated *= 2;
+			char *np = palloc_array<char>(m_allocated);
+			memcpy(np, m_str, old_alloc);
+			p = np + (p - m_str);
+			if (m_str != m_str_buf)
+				pfree_array(m_str);
+			m_str = np;
+		}
+		// Make room
+		memmove(p+nl, p+sl, strlen(p) + 1 - sl);
+		memcpy(p, buf, nl);
+	}
 	va_end(ap);
-	return *this;
 }
 
 }

@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_MIKRO_ASSEMBLER_H
-#define MAME_BUS_C64_MIKRO_ASSEMBLER_H
-
 #pragma once
 
+#ifndef __MIKRO_ASSEMBLER__
+#define __MIKRO_ASSEMBLER__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -39,7 +40,7 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_MIKRO_ASSEMBLER, c64_mikro_assembler_cartridge_device)
+extern const device_type C64_MIKRO_ASSEMBLER;
 
 
-#endif // MAME_BUS_C64_MIKRO_ASSEMBLER_H
+#endif

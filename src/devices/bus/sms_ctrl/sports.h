@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_SMS_CTRL_SPORTS_H
-#define MAME_BUS_SMS_CTRL_SPORTS_H
-
 #pragma once
 
+#ifndef __SMS_SPORTS_PAD__
+#define __SMS_SPORTS_PAD__
 
+
+#include "emu.h"
 #include "smsctrl.h"
 
 
@@ -63,7 +64,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SMS_SPORTS_PAD, sms_sports_pad_device)
+extern const device_type SMS_SPORTS_PAD;
 
 
-#endif // MAME_BUS_SMS_CTRL_SPORTS_H
+#endif

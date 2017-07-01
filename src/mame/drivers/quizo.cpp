@@ -28,8 +28,6 @@ Xtals 8MHz, 21.47727MHz
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class quizo_state : public driver_device
@@ -210,7 +208,7 @@ static INPUT_PORTS_START( quizo )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static MACHINE_CONFIG_START( quizo )
+static MACHINE_CONFIG_START( quizo, quizo_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,XTAL1/2)
 	MCFG_CPU_PROGRAM_MAP(memmap)

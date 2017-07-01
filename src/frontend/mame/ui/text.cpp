@@ -8,7 +8,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "text.h"
 #include "rendfont.h"
 #include "render.h"

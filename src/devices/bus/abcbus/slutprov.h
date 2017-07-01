@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Curt Coder
-#ifndef MAME_BUS_ABCBUS_SLUTPROV_H
-#define MAME_BUS_ABCBUS_SLUTPROV_H
-
 #pragma once
 
+#ifndef __ABC_SLUTPROV__
+#define __ABC_SLUTPROV__
+
+#include "emu.h"
 #include "abcbus.h"
 
 
@@ -36,6 +37,8 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ABC_SLUTPROV, abc_slutprov_device)
+extern const device_type ABC_SLUTPROV;
 
-#endif // MAME_BUS_ABCBUS_SLUTPROV_H
+
+
+#endif

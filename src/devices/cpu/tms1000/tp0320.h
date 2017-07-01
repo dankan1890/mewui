@@ -6,10 +6,8 @@
 
 */
 
-#ifndef MAME_CPU_TMS1000_TP0320_H
-#define MAME_CPU_TMS1000_TP0320_H
-
-#pragma once
+#ifndef _TP0320_H_
+#define _TP0320_H_
 
 #include "tms0980.h"
 
@@ -17,21 +15,21 @@
 class tp0320_cpu_device : public tms0980_cpu_device
 {
 public:
-	tp0320_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
+	tp0320_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 protected:
 	// overrides
 	//virtual void device_start() override;
 
-	virtual u32 decode_fixed(u16 op) override { return 0; } // not yet
-	virtual u32 decode_micro(u8 sel) override;
+	virtual uint32_t decode_fixed(uint16_t op) override { return 0; } // not yet
+	virtual uint32_t decode_micro(uint8_t sel) override;
 	virtual void device_reset() override;
-	virtual offs_t disasm_disassemble(std::ostream &stream, offs_t pc, const u8 *oprom, const u8 *opram, u32 options) override;
+	virtual offs_t disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options) override;
 
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 
-DECLARE_DEVICE_TYPE(TP0320, tp0320_cpu_device)
+extern const device_type TP0320;
 
-#endif // MAME_CPU_TMS1000_TP0320_H
+#endif /* _TP0320_H_ */

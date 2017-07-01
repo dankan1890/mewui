@@ -9,10 +9,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_TMS34010_34010OPS_H
-#define MAME_CPU_TMS34010_34010OPS_H
-
 #pragma once
+
+#ifndef __34010OPS_H__
+#define __34010OPS_H__
 
 
 
@@ -151,4 +151,4 @@ inline void tms340x0_device::TMS34010_WRMEM_DWORD(offs_t A, uint32_t V)
 		return TMS34010_RDMEM_DWORD(TOBYTE(offset));
 
 
-#endif // MAME_CPU_TMS34010_34010OPS_H
+#endif /* __34010OPS_H__ */

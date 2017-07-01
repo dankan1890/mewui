@@ -54,7 +54,6 @@ Notes:
 
 */
 
-#include "emu.h"
 #include "memcard.h"
 
 
@@ -63,7 +62,7 @@ Notes:
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ABC_MEMORY_CARD, abc_memory_card_device, "abc_mem", "ABC Memory Card")
+const device_type ABC_MEMORY_CARD = &device_creator<abc_memory_card_t>;
 
 
 //-------------------------------------------------
@@ -95,7 +94,7 @@ ROM_END
 //  rom_region - device-specific ROM region
 //-------------------------------------------------
 
-const tiny_rom_entry *abc_memory_card_device::device_rom_region() const
+const tiny_rom_entry *abc_memory_card_t::device_rom_region() const
 {
 	return ROM_NAME( abc_dos );
 }
@@ -107,11 +106,11 @@ const tiny_rom_entry *abc_memory_card_device::device_rom_region() const
 //**************************************************************************
 
 //-------------------------------------------------
-//  abc_memory_card_device - constructor
+//  abc_memory_card_t - constructor
 //-------------------------------------------------
 
-abc_memory_card_device::abc_memory_card_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ABC_MEMORY_CARD, tag, owner, clock),
+abc_memory_card_t::abc_memory_card_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, ABC_MEMORY_CARD, "ABC Memory Card", tag, owner, clock, "abc_mem", __FILE__),
 	device_abcbus_card_interface(mconfig, *this),
 	m_dos_rom(*this, "dos"),
 	m_iec_rom(*this, "iec"),
@@ -125,7 +124,7 @@ abc_memory_card_device::abc_memory_card_device(const machine_config &mconfig, co
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void abc_memory_card_device::device_start()
+void abc_memory_card_t::device_start()
 {
 }
 
@@ -139,7 +138,7 @@ void abc_memory_card_device::device_start()
 //  abcbus_xmemfl -
 //-------------------------------------------------
 
-uint8_t abc_memory_card_device::abcbus_xmemfl(offs_t offset)
+uint8_t abc_memory_card_t::abcbus_xmemfl(offs_t offset)
 {
 	uint8_t data = 0xff;
 

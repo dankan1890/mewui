@@ -1,5 +1,7 @@
 // license:GPL-2.0+
 // copyright-holders:Jarek Burczynski,Tatsuyuki Satoh
+#define YM2610B_WARNING
+
 /*
 **
 ** File: fm.c -- software implementation of Yamaha FM sound generator
@@ -112,8 +114,6 @@
 /************************************************************************/
 
 #include "emu.h"
-
-#define YM2610B_WARNING
 #include "fm.h"
 
 
@@ -121,20 +121,6 @@
 #if (BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B)
 	#include "ymdeltat.h"
 #endif
-
-
-#if BUILD_YM2203
-#include "2203intf.h"
-#endif /* BUILD_YM2203 */
-
-#if BUILD_YM2608
-#include "2608intf.h"
-#endif /* BUILD_YM2608 */
-
-#if (BUILD_YM2610||BUILD_YM2610B)
-#include "2610intf.h"
-#endif /* (BUILD_YM2610||BUILD_YM2610B) */
-
 
 /* shared function building option */
 #define BUILD_OPN (BUILD_YM2203||BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B)
@@ -603,6 +589,7 @@ struct FM_CH
 struct FM_ST
 {
 	device_t *device;
+	void *      param;              /* this chip parameter  */
 	int         clock;              /* master clock  (Hz)   */
 	int         rate;               /* sampling rate (Hz)   */
 	double      freqbase;           /* frequency base       */
@@ -715,7 +702,7 @@ static inline void FM_STATUS_SET(FM_ST *ST,int flag)
 	{
 		ST->irq = 1;
 		/* callback user interrupt handler (IRQ is OFF to ON) */
-		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->device,1);
+		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->param,1);
 	}
 }
 
@@ -728,7 +715,7 @@ static inline void FM_STATUS_RESET(FM_ST *ST,int flag)
 	{
 		ST->irq = 0;
 		/* callback user interrupt handler (IRQ is ON to OFF) */
-		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->device,0);
+		if(ST->IRQ_Handler) (ST->IRQ_Handler)(ST->param,0);
 	}
 }
 
@@ -742,7 +729,7 @@ static inline void FM_IRQMASK_SET(FM_ST *ST,int flag)
 }
 
 /* OPN Mode Register Write */
-static inline void set_timers( FM_ST *ST, device_t *n, int v )
+static inline void set_timers( FM_ST *ST, void *n, int v )
 {
 	/* b7 = CSM MODE */
 	/* b6 = 3 slot mode */
@@ -806,7 +793,7 @@ static inline void TimerAOver(FM_ST *ST)
 	if(ST->mode & 0x04) FM_STATUS_SET(ST,0x01);
 	/* clear or reload the counter */
 	ST->TAC = (1024-ST->TA);
-	if (ST->timer_handler) (ST->timer_handler)(ST->device,0,ST->TAC * ST->timer_prescaler,ST->clock);
+	if (ST->timer_handler) (ST->timer_handler)(ST->param,0,ST->TAC * ST->timer_prescaler,ST->clock);
 }
 /* Timer B Overflow */
 static inline void TimerBOver(FM_ST *ST)
@@ -815,7 +802,7 @@ static inline void TimerBOver(FM_ST *ST)
 	if(ST->mode & 0x08) FM_STATUS_SET(ST,0x02);
 	/* clear or reload the counter */
 	ST->TBC = ( 256-ST->TB)<<4;
-	if (ST->timer_handler) (ST->timer_handler)(ST->device,1,ST->TBC * ST->timer_prescaler,ST->clock);
+	if (ST->timer_handler) (ST->timer_handler)(ST->param,1,ST->TBC * ST->timer_prescaler,ST->clock);
 }
 
 
@@ -1757,7 +1744,7 @@ static void OPNSetPres(FM_OPN *OPN, int pres, int timer_prescaler, int SSGpres)
 	OPN->ST.timer_prescaler = timer_prescaler;
 
 	/* SSG part  prescaler set */
-	if( SSGpres ) (*OPN->ST.SSG->set_clock)( OPN->ST.device, OPN->ST.clock * 2 / SSGpres );
+	if( SSGpres ) (*OPN->ST.SSG->set_clock)( OPN->ST.param, OPN->ST.clock * 2 / SSGpres );
 
 	/* make time tables */
 	init_timetables( &OPN->ST, dt_tab );
@@ -1827,7 +1814,7 @@ static void OPNWriteMode(FM_OPN *OPN, int r, int v)
 		OPN->ST.TB = v;
 		break;
 	case 0x27:  /* mode, timer control */
-		set_timers( &(OPN->ST),OPN->ST.device,v );
+		set_timers( &(OPN->ST),OPN->ST.param,v );
 		break;
 	case 0x28:  /* key on / off */
 		c = v & 0x03;
@@ -2101,19 +2088,17 @@ static void OPNPrescaler_w(FM_OPN *OPN , int addr, int pre_divider)
 /*****************************************************************************/
 
 /* here's the virtual YM2203(OPN) */
-namespace {
-struct ym2203_state
+struct YM2203
 {
 	uint8_t REGS[256];        /* registers         */
 	FM_OPN OPN;             /* OPN state         */
 	FM_CH CH[3];            /* channel state     */
 };
-} // anonymous namespace
 
 /* Generate samples for one of the YM2203s */
 void ym2203_update_one(void *chip, FMSAMPLE *buffer, int length)
 {
-	ym2203_state *F2203 = (ym2203_state *)chip;
+	YM2203 *F2203 = (YM2203 *)chip;
 	FM_OPN *OPN =   &F2203->OPN;
 	int i;
 	FMSAMPLE *buf = buffer;
@@ -2199,13 +2184,13 @@ void ym2203_update_one(void *chip, FMSAMPLE *buffer, int length)
 void ym2203_reset_chip(void *chip)
 {
 	int i;
-	ym2203_state *F2203 = (ym2203_state *)chip;
+	YM2203 *F2203 = (YM2203 *)chip;
 	FM_OPN *OPN = &F2203->OPN;
 
 	/* Reset Prescaler */
 	OPNPrescaler_w(OPN, 0 , 1 );
 	/* reset SSG section */
-	(*OPN->ST.SSG->reset)(OPN->ST.device);
+	(*OPN->ST.SSG->reset)(OPN->ST.param);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x03);
 	FM_BUSY_CLEAR(&OPN->ST);
@@ -2227,7 +2212,7 @@ void ym2203_postload(void *chip)
 {
 	if (chip)
 	{
-		ym2203_state *F2203 = (ym2203_state *)chip;
+		YM2203 *F2203 = (YM2203 *)chip;
 		int r;
 
 		/* prescaler */
@@ -2236,8 +2221,8 @@ void ym2203_postload(void *chip)
 		/* SSG registers */
 		for(r=0;r<16;r++)
 		{
-			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.device,0,r);
-			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.device,1,F2203->REGS[r]);
+			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,0,r);
+			(*F2203->OPN.ST.SSG->write)(F2203->OPN.ST.param,1,F2203->REGS[r]);
 		}
 
 		/* OPN registers */
@@ -2255,7 +2240,7 @@ void ym2203_postload(void *chip)
 	}
 }
 
-static void YM2203_save_state(ym2203_state *F2203, device_t *device)
+static void YM2203_save_state(YM2203 *F2203, device_t *device)
 {
 	device->save_item(NAME(F2203->REGS));
 	FMsave_state_st(device,&F2203->OPN.ST);
@@ -2272,12 +2257,13 @@ static void YM2203_save_state(ym2203_state *F2203, device_t *device)
    'clock' is the chip clock in Hz
    'rate' is sampling rate
 */
-void * ym2203_init(device_t *device, int clock, int rate, FM_TIMERHANDLER timer_handler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg)
+void * ym2203_init(void *param, device_t *device, int clock, int rate,
+				FM_TIMERHANDLER timer_handler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg)
 {
-	ym2203_state *F2203;
+	YM2203 *F2203;
 
 	/* allocate ym2203 state space */
-	F2203 = auto_alloc_clear(device->machine(), <ym2203_state>());
+	F2203 = auto_alloc_clear(device->machine(), <YM2203>());
 
 	if( !init_tables() )
 	{
@@ -2285,6 +2271,7 @@ void * ym2203_init(device_t *device, int clock, int rate, FM_TIMERHANDLER timer_
 		return nullptr;
 	}
 
+	F2203->OPN.ST.param = param;
 	F2203->OPN.type = TYPE_YM2203;
 	F2203->OPN.P_CH = F2203->CH;
 	F2203->OPN.ST.device = device;
@@ -2303,7 +2290,7 @@ void * ym2203_init(device_t *device, int clock, int rate, FM_TIMERHANDLER timer_
 
 void ym2203_clock_changed(void *chip, int clock, int rate)
 {
-	ym2203_state *FM2203 = (ym2203_state *)chip;
+	YM2203 *FM2203 = (YM2203 *)chip;
 
 	FM2203->OPN.ST.clock = clock;
 	FM2203->OPN.ST.rate = rate;
@@ -2312,7 +2299,7 @@ void ym2203_clock_changed(void *chip, int clock, int rate)
 /* shut down emulator */
 void ym2203_shutdown(void *chip)
 {
-	ym2203_state *FM2203 = (ym2203_state *)chip;
+	YM2203 *FM2203 = (YM2203 *)chip;
 
 	FMCloseTable();
 	auto_free(FM2203->OPN.ST.device->machine(), FM2203);
@@ -2321,7 +2308,7 @@ void ym2203_shutdown(void *chip)
 /* YM2203 I/O interface */
 int ym2203_write(void *chip,int a,uint8_t v)
 {
-	ym2203_state *F2203 = (ym2203_state *)chip;
+	YM2203 *F2203 = (YM2203 *)chip;
 	FM_OPN *OPN = &F2203->OPN;
 
 	if( !(a&1) )
@@ -2329,7 +2316,7 @@ int ym2203_write(void *chip,int a,uint8_t v)
 		OPN->ST.address = (v &= 0xff);
 
 		/* Write register to SSG emulator */
-		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.device,0,v);
+		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.param,0,v);
 
 		/* prescaler select : 2d,2e,2f  */
 		if( v >= 0x2d && v <= 0x2f )
@@ -2343,15 +2330,15 @@ int ym2203_write(void *chip,int a,uint8_t v)
 		{
 		case 0x00:  /* 0x00-0x0f : SSG section */
 			/* Write data to SSG emulator */
-			(*OPN->ST.SSG->write)(OPN->ST.device,a,v);
+			(*OPN->ST.SSG->write)(OPN->ST.param,a,v);
 			break;
 		case 0x20:  /* 0x20-0x2f : Mode section */
-			ym2203_device::update_request(OPN->ST.device);
+			ym2203_update_req(OPN->ST.param);
 			/* write register */
 			OPNWriteMode(OPN,addr,v);
 			break;
 		default:    /* 0x30-0xff : OPN section */
-			ym2203_device::update_request(OPN->ST.device);
+			ym2203_update_req(OPN->ST.param);
 			/* write register */
 			OPNWriteReg(OPN,addr,v);
 		}
@@ -2362,7 +2349,7 @@ int ym2203_write(void *chip,int a,uint8_t v)
 
 uint8_t ym2203_read(void *chip,int a)
 {
-	ym2203_state *F2203 = (ym2203_state *)chip;
+	YM2203 *F2203 = (YM2203 *)chip;
 	int addr = F2203->OPN.ST.address;
 	uint8_t ret = 0;
 
@@ -2372,14 +2359,14 @@ uint8_t ym2203_read(void *chip,int a)
 	}
 	else
 	{   /* data port (only SSG) */
-		if( addr < 16 ) ret = (*F2203->OPN.ST.SSG->read)(F2203->OPN.ST.device);
+		if( addr < 16 ) ret = (*F2203->OPN.ST.SSG->read)(F2203->OPN.ST.param);
 	}
 	return ret;
 }
 
 int ym2203_timer_over(void *chip,int c)
 {
-	ym2203_state *F2203 = (ym2203_state *)chip;
+	YM2203 *F2203 = (YM2203 *)chip;
 
 	if( c )
 	{   /* Timer B */
@@ -2387,7 +2374,7 @@ int ym2203_timer_over(void *chip,int c)
 	}
 	else
 	{   /* Timer A */
-		ym2203_device::update_request(F2203->OPN.ST.device);
+		ym2203_update_req(F2203->OPN.ST.param);
 		/* timer update */
 		TimerAOver( &(F2203->OPN.ST) );
 		/* CSM mode key,TL control */
@@ -2403,14 +2390,6 @@ int ym2203_timer_over(void *chip,int c)
 
 
 #if (BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B)
-
-namespace {
-/**** YM2610 ADPCM defines ****/
-constexpr unsigned ADPCM_SHIFT          = 16;  /* frequency step rate   */
-constexpr unsigned ADPCMA_ADDRESS_SHIFT = 8;   /* adpcm A address shift */
-
-/* speedup purposes only */
-static int jedi_table[ 49*16 ];
 
 /* ADPCM type A channel struct */
 struct ADPCM_CH
@@ -2433,7 +2412,7 @@ struct ADPCM_CH
 };
 
 /* here's the virtual YM2610 */
-struct ym2610_state
+struct YM2610
 {
 	uint8_t       REGS[512];          /* registers            */
 	FM_OPN      OPN;                /* OPN state            */
@@ -2453,202 +2432,20 @@ struct ym2610_state
 	uint8_t       irqmask;            /* YM2608 only */
 
 	device_t    *device;
-
-	/* different from the usual ADPCM table */
-	static constexpr int step_inc[8] = { -1*16, -1*16, -1*16, -1*16, 2*16, 5*16, 7*16, 9*16 };
-
-	/* ADPCM A (Non control type) : calculate one channel output */
-	inline void ADPCMA_calc_chan( ADPCM_CH *ch )
-	{
-		uint32_t step;
-		uint8_t  data;
-
-
-		ch->now_step += ch->step;
-		if ( ch->now_step >= (1<<ADPCM_SHIFT) )
-		{
-			step = ch->now_step >> ADPCM_SHIFT;
-			ch->now_step &= (1<<ADPCM_SHIFT)-1;
-			do{
-				/* end check */
-				/* 11-06-2001 JB: corrected comparison. Was > instead of == */
-				/* YM2610 checks lower 20 bits only, the 4 MSB bits are sample bank */
-				/* Here we use 1<<21 to compensate for nibble calculations */
-
-				if (   (ch->now_addr & ((1<<21)-1)) == ((ch->end<<1) & ((1<<21)-1))    )
-				{
-					ch->flag = 0;
-					adpcm_arrivedEndAddress |= ch->flagMask;
-					return;
-				}
-#if 0
-				if ( ch->now_addr > (pcmsizeA<<1) )
-				{
-					LOG(LOG_WAR,("YM2610: Attempting to play past adpcm rom size!\n" ));
-					return;
-				}
-#endif
-				if ( ch->now_addr&1 )
-					data = ch->now_data & 0x0f;
-				else
-				{
-					ch->now_data = *(pcmbuf+(ch->now_addr>>1));
-					data = (ch->now_data >> 4) & 0x0f;
-				}
-
-				ch->now_addr++;
-
-				ch->adpcm_acc += jedi_table[ch->adpcm_step + data];
-
-				/* extend 12-bit signed int */
-				if (ch->adpcm_acc & ~0x7ff)
-					ch->adpcm_acc |= ~0xfff;
-				else
-					ch->adpcm_acc &= 0xfff;
-
-				ch->adpcm_step += step_inc[data & 7];
-				Limit( ch->adpcm_step, 48*16, 0*16 );
-
-			}while(--step);
-
-			/* calc pcm * volume data */
-			ch->adpcm_out = ((ch->adpcm_acc * ch->vol_mul) >> ch->vol_shift) & ~3;  /* multiply, shift and mask out 2 LSB bits */
-		}
-
-		/* output for work of output channels (out_adpcm[OPNxxxx])*/
-		*(ch->pan) += ch->adpcm_out;
-	}
-
-	/* ADPCM type A Write */
-	void FM_ADPCMAWrite(int r,int v)
-	{
-		uint8_t c = r&0x07;
-
-		adpcmreg[r] = v&0xff; /* stock data */
-		switch( r )
-		{
-		case 0x00: /* DM,--,C5,C4,C3,C2,C1,C0 */
-			if( !(v&0x80) )
-			{
-				/* KEY ON */
-				for( c = 0; c < 6; c++ )
-				{
-					if( (v>>c)&1 )
-					{
-						/**** start adpcm ****/
-						adpcm[c].step      = (uint32_t)((float)(1<<ADPCM_SHIFT)*((float)OPN.ST.freqbase)/3.0f);
-						adpcm[c].now_addr  = adpcm[c].start<<1;
-						adpcm[c].now_step  = 0;
-						adpcm[c].adpcm_acc = 0;
-						adpcm[c].adpcm_step= 0;
-						adpcm[c].adpcm_out = 0;
-						adpcm[c].flag      = 1;
-
-						if(pcmbuf==nullptr)
-						{                   /* Check ROM Mapped */
-							device->logerror("YM2608-YM2610: ADPCM-A rom not mapped\n");
-							adpcm[c].flag = 0;
-						}
-						else
-						{
-							if(adpcm[c].end >= pcm_size)
-							{   /* Check End in Range */
-								device->logerror("YM2610: ADPCM-A end out of range: $%08x\n",adpcm[c].end);
-								/*adpcm[c].end = pcm_size-1;*/ /* JB: DO NOT uncomment this, otherwise you will break the comparison in the ADPCM_CALC_CHA() */
-							}
-							if(adpcm[c].start >= pcm_size)   /* Check Start in Range */
-							{
-								device->logerror("YM2608-YM2610: ADPCM-A start out of range: $%08x\n",adpcm[c].start);
-								adpcm[c].flag = 0;
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				/* KEY OFF */
-				for( c = 0; c < 6; c++ )
-					if( (v>>c)&1 )
-						adpcm[c].flag = 0;
-			}
-			break;
-		case 0x01:  /* B0-5 = TL */
-			adpcmTL = (v & 0x3f) ^ 0x3f;
-			for( c = 0; c < 6; c++ )
-			{
-				int volume = adpcmTL + adpcm[c].IL;
-
-				if ( volume >= 63 ) /* This is correct, 63 = quiet */
-				{
-					adpcm[c].vol_mul   = 0;
-					adpcm[c].vol_shift = 0;
-				}
-				else
-				{
-					adpcm[c].vol_mul   = 15 - (volume & 7);     /* so called 0.75 dB */
-					adpcm[c].vol_shift =  1 + (volume >> 3);    /* Yamaha engineers used the approximation: each -6 dB is close to divide by two (shift right) */
-				}
-
-				/* calc pcm * volume data */
-				adpcm[c].adpcm_out = ((adpcm[c].adpcm_acc * adpcm[c].vol_mul) >> adpcm[c].vol_shift) & ~3;  /* multiply, shift and mask out low 2 bits */
-			}
-			break;
-		default:
-			c = r&0x07;
-			if( c >= 0x06 ) return;
-			switch( r&0x38 )
-			{
-			case 0x08:  /* B7=L,B6=R, B4-0=IL */
-			{
-				int volume;
-
-				adpcm[c].IL = (v & 0x1f) ^ 0x1f;
-
-				volume = adpcmTL + adpcm[c].IL;
-
-				if ( volume >= 63 ) /* This is correct, 63 = quiet */
-				{
-					adpcm[c].vol_mul   = 0;
-					adpcm[c].vol_shift = 0;
-				}
-				else
-				{
-					adpcm[c].vol_mul   = 15 - (volume & 7);     /* so called 0.75 dB */
-					adpcm[c].vol_shift =  1 + (volume >> 3);    /* Yamaha engineers used the approximation: each -6 dB is close to divide by two (shift right) */
-				}
-
-				adpcm[c].pan    = &OPN.out_adpcm[(v>>6)&0x03];
-
-				/* calc pcm * volume data */
-				adpcm[c].adpcm_out = ((adpcm[c].adpcm_acc * adpcm[c].vol_mul) >> adpcm[c].vol_shift) & ~3;  /* multiply, shift and mask out low 2 bits */
-			}
-				break;
-			case 0x10:
-			case 0x18:
-				adpcm[c].start  = ( (adpcmreg[0x18 + c]*0x0100 | adpcmreg[0x10 + c]) << ADPCMA_ADDRESS_SHIFT);
-				break;
-			case 0x20:
-			case 0x28:
-				adpcm[c].end    = ( (adpcmreg[0x28 + c]*0x0100 | adpcmreg[0x20 + c]) << ADPCMA_ADDRESS_SHIFT);
-				adpcm[c].end   += (1<<ADPCMA_ADDRESS_SHIFT) - 1;
-				break;
-			}
-		}
-	}
-
 };
 
-constexpr int ym2610_state::step_inc[8];
-
 /* here is the virtual YM2608 */
-typedef ym2610_state ym2608_state;
+typedef YM2610 YM2608;
 
+
+/**** YM2610 ADPCM defines ****/
+#define ADPCM_SHIFT    (16)      /* frequency step rate   */
+#define ADPCMA_ADDRESS_SHIFT 8   /* adpcm A address shift */
 
 /* Algorithm and tables verified on real YM2608 and YM2610 */
 
 /* usual ADPCM table (16 * 1.1^N) */
-constexpr int steps[49] =
+static const int steps[49] =
 {
 		16,  17,   19,   21,   23,   25,   28,
 		31,  34,   37,   41,   45,   50,   55,
@@ -2659,8 +2456,14 @@ constexpr int steps[49] =
 	876, 963, 1060, 1166, 1282, 1411, 1552
 };
 
+/* different from the usual ADPCM table */
+static const int step_inc[8] = { -1*16, -1*16, -1*16, -1*16, 2*16, 5*16, 7*16, 9*16 };
 
-void Init_ADPCMATable()
+/* speedup purposes only */
+static int jedi_table[ 49*16 ];
+
+
+static void Init_ADPCMATable(void)
 {
 	int step, nib;
 
@@ -2675,9 +2478,190 @@ void Init_ADPCMATable()
 	}
 }
 
+/* ADPCM A (Non control type) : calculate one channel output */
+static inline void ADPCMA_calc_chan( YM2610 *F2610, ADPCM_CH *ch )
+{
+	uint32_t step;
+	uint8_t  data;
+
+
+	ch->now_step += ch->step;
+	if ( ch->now_step >= (1<<ADPCM_SHIFT) )
+	{
+		step = ch->now_step >> ADPCM_SHIFT;
+		ch->now_step &= (1<<ADPCM_SHIFT)-1;
+		do{
+			/* end check */
+			/* 11-06-2001 JB: corrected comparison. Was > instead of == */
+			/* YM2610 checks lower 20 bits only, the 4 MSB bits are sample bank */
+			/* Here we use 1<<21 to compensate for nibble calculations */
+
+			if (   (ch->now_addr & ((1<<21)-1)) == ((ch->end<<1) & ((1<<21)-1))    )
+			{
+				ch->flag = 0;
+				F2610->adpcm_arrivedEndAddress |= ch->flagMask;
+				return;
+			}
+#if 0
+			if ( ch->now_addr > (F2610->pcmsizeA<<1) )
+			{
+				LOG(LOG_WAR,("YM2610: Attempting to play past adpcm rom size!\n" ));
+				return;
+			}
+#endif
+			if ( ch->now_addr&1 )
+				data = ch->now_data & 0x0f;
+			else
+			{
+				ch->now_data = *(F2610->pcmbuf+(ch->now_addr>>1));
+				data = (ch->now_data >> 4) & 0x0f;
+			}
+
+			ch->now_addr++;
+
+			ch->adpcm_acc += jedi_table[ch->adpcm_step + data];
+
+			/* extend 12-bit signed int */
+			if (ch->adpcm_acc & ~0x7ff)
+				ch->adpcm_acc |= ~0xfff;
+			else
+				ch->adpcm_acc &= 0xfff;
+
+			ch->adpcm_step += step_inc[data & 7];
+			Limit( ch->adpcm_step, 48*16, 0*16 );
+
+		}while(--step);
+
+		/* calc pcm * volume data */
+		ch->adpcm_out = ((ch->adpcm_acc * ch->vol_mul) >> ch->vol_shift) & ~3;  /* multiply, shift and mask out 2 LSB bits */
+	}
+
+	/* output for work of output channels (out_adpcm[OPNxxxx])*/
+	*(ch->pan) += ch->adpcm_out;
+}
+
+/* ADPCM type A Write */
+static void FM_ADPCMAWrite(YM2610 *F2610,int r,int v)
+{
+	ADPCM_CH *adpcm = F2610->adpcm;
+	uint8_t c = r&0x07;
+
+	F2610->adpcmreg[r] = v&0xff; /* stock data */
+	switch( r )
+	{
+	case 0x00: /* DM,--,C5,C4,C3,C2,C1,C0 */
+		if( !(v&0x80) )
+		{
+			/* KEY ON */
+			for( c = 0; c < 6; c++ )
+			{
+				if( (v>>c)&1 )
+				{
+					/**** start adpcm ****/
+					adpcm[c].step      = (uint32_t)((float)(1<<ADPCM_SHIFT)*((float)F2610->OPN.ST.freqbase)/3.0f);
+					adpcm[c].now_addr  = adpcm[c].start<<1;
+					adpcm[c].now_step  = 0;
+					adpcm[c].adpcm_acc = 0;
+					adpcm[c].adpcm_step= 0;
+					adpcm[c].adpcm_out = 0;
+					adpcm[c].flag      = 1;
+
+					if(F2610->pcmbuf==nullptr)
+					{                   /* Check ROM Mapped */
+						F2610->device->logerror("YM2608-YM2610: ADPCM-A rom not mapped\n");
+						adpcm[c].flag = 0;
+					}
+					else
+					{
+						if(adpcm[c].end >= F2610->pcm_size)
+						{   /* Check End in Range */
+							F2610->device->logerror("YM2610: ADPCM-A end out of range: $%08x\n",adpcm[c].end);
+							/*adpcm[c].end = F2610->pcm_size-1;*/ /* JB: DO NOT uncomment this, otherwise you will break the comparison in the ADPCM_CALC_CHA() */
+						}
+						if(adpcm[c].start >= F2610->pcm_size)   /* Check Start in Range */
+						{
+							F2610->device->logerror("YM2608-YM2610: ADPCM-A start out of range: $%08x\n",adpcm[c].start);
+							adpcm[c].flag = 0;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			/* KEY OFF */
+			for( c = 0; c < 6; c++ )
+				if( (v>>c)&1 )
+					adpcm[c].flag = 0;
+		}
+		break;
+	case 0x01:  /* B0-5 = TL */
+		F2610->adpcmTL = (v & 0x3f) ^ 0x3f;
+		for( c = 0; c < 6; c++ )
+		{
+			int volume = F2610->adpcmTL + adpcm[c].IL;
+
+			if ( volume >= 63 ) /* This is correct, 63 = quiet */
+			{
+				adpcm[c].vol_mul   = 0;
+				adpcm[c].vol_shift = 0;
+			}
+			else
+			{
+				adpcm[c].vol_mul   = 15 - (volume & 7);     /* so called 0.75 dB */
+				adpcm[c].vol_shift =  1 + (volume >> 3);    /* Yamaha engineers used the approximation: each -6 dB is close to divide by two (shift right) */
+			}
+
+			/* calc pcm * volume data */
+			adpcm[c].adpcm_out = ((adpcm[c].adpcm_acc * adpcm[c].vol_mul) >> adpcm[c].vol_shift) & ~3;  /* multiply, shift and mask out low 2 bits */
+		}
+		break;
+	default:
+		c = r&0x07;
+		if( c >= 0x06 ) return;
+		switch( r&0x38 )
+		{
+		case 0x08:  /* B7=L,B6=R, B4-0=IL */
+		{
+			int volume;
+
+			adpcm[c].IL = (v & 0x1f) ^ 0x1f;
+
+			volume = F2610->adpcmTL + adpcm[c].IL;
+
+			if ( volume >= 63 ) /* This is correct, 63 = quiet */
+			{
+				adpcm[c].vol_mul   = 0;
+				adpcm[c].vol_shift = 0;
+			}
+			else
+			{
+				adpcm[c].vol_mul   = 15 - (volume & 7);     /* so called 0.75 dB */
+				adpcm[c].vol_shift =  1 + (volume >> 3);    /* Yamaha engineers used the approximation: each -6 dB is close to divide by two (shift right) */
+			}
+
+			adpcm[c].pan    = &F2610->OPN.out_adpcm[(v>>6)&0x03];
+
+			/* calc pcm * volume data */
+			adpcm[c].adpcm_out = ((adpcm[c].adpcm_acc * adpcm[c].vol_mul) >> adpcm[c].vol_shift) & ~3;  /* multiply, shift and mask out low 2 bits */
+		}
+			break;
+		case 0x10:
+		case 0x18:
+			adpcm[c].start  = ( (F2610->adpcmreg[0x18 + c]*0x0100 | F2610->adpcmreg[0x10 + c]) << ADPCMA_ADDRESS_SHIFT);
+			break;
+		case 0x20:
+		case 0x28:
+			adpcm[c].end    = ( (F2610->adpcmreg[0x28 + c]*0x0100 | F2610->adpcmreg[0x20 + c]) << ADPCMA_ADDRESS_SHIFT);
+			adpcm[c].end   += (1<<ADPCMA_ADDRESS_SHIFT) - 1;
+			break;
+		}
+	}
+}
+
 #ifdef MAME_EMU_SAVE_H
 /* FM channel save , internal state only */
-void FMsave_state_adpcma(device_t *device,ADPCM_CH *adpcm)
+static void FMsave_state_adpcma(device_t *device,ADPCM_CH *adpcm)
 {
 	int ch;
 
@@ -2693,7 +2677,6 @@ void FMsave_state_adpcma(device_t *device,ADPCM_CH *adpcm)
 	}
 }
 #endif /* MAME_EMU_SAVE_H */
-} // anonymous namespace
 
 #endif /* (BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B) */
 
@@ -2716,7 +2699,7 @@ static const unsigned int YM2608_ADPCM_ROM_addr[2*6] = {
 
 
 /* flag enable control 0x110 */
-static inline void YM2608IRQFlagWrite(FM_OPN *OPN, ym2608_state *F2608, int v)
+static inline void YM2608IRQFlagWrite(FM_OPN *OPN, YM2608 *F2608, int v)
 {
 	if( v & 0x80 )
 	{   /* Reset IRQ flag */
@@ -2730,7 +2713,7 @@ static inline void YM2608IRQFlagWrite(FM_OPN *OPN, ym2608_state *F2608, int v)
 }
 
 /* compatible mode & IRQ enable control 0x29 */
-static inline void YM2608IRQMaskWrite(FM_OPN *OPN, ym2608_state *F2608, int v)
+static inline void YM2608IRQMaskWrite(FM_OPN *OPN, YM2608 *F2608, int v)
 {
 	/* SCH,xx,xxx,EN_ZERO,EN_BRDY,EN_EOS,EN_TB,EN_TA */
 
@@ -2748,7 +2731,7 @@ static inline void YM2608IRQMaskWrite(FM_OPN *OPN, ym2608_state *F2608, int v)
 /* Generate samples for one of the YM2608s */
 void ym2608_update_one(void *chip, FMSAMPLE **buffer, int length)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	FM_OPN *OPN   = &F2608->OPN;
 	YM_DELTAT *DELTAT = &F2608->deltaT;
 	int i,j;
@@ -2814,13 +2797,13 @@ void ym2608_update_one(void *chip, FMSAMPLE **buffer, int length)
 
 		/* deltaT ADPCM */
 		if( DELTAT->portstate&0x80 )
-			DELTAT->ADPCM_CALC();
+			YM_DELTAT_ADPCM_CALC(DELTAT);
 
 		/* ADPCMA */
 		for( j = 0; j < 6; j++ )
 		{
 			if( F2608->adpcm[j].flag )
-				F2608->ADPCMA_calc_chan( &F2608->adpcm[j]);
+				ADPCMA_calc_chan( F2608, &F2608->adpcm[j]);
 		}
 
 		/* advance envelope generator */
@@ -2889,7 +2872,7 @@ void ym2608_postload(void *chip)
 {
 	if (chip)
 	{
-		ym2608_state *F2608 = (ym2608_state *)chip;
+		YM2608 *F2608 = (YM2608 *)chip;
 		int r;
 
 		/* prescaler */
@@ -2900,8 +2883,8 @@ void ym2608_postload(void *chip)
 		/* SSG registers */
 		for(r=0;r<16;r++)
 		{
-			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.device,0,r);
-			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.device,1,F2608->REGS[r]);
+			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,0,r);
+			(*F2608->OPN.ST.SSG->write)(F2608->OPN.ST.param,1,F2608->REGS[r]);
 		}
 
 		/* OPN registers */
@@ -2922,15 +2905,15 @@ void ym2608_postload(void *chip)
 		/* FM channels */
 		/*FM_channel_postload(F2608->CH,6);*/
 		/* rhythm(ADPCMA) */
-		F2608->FM_ADPCMAWrite(1,F2608->REGS[0x111]);
+		FM_ADPCMAWrite(F2608,1,F2608->REGS[0x111]);
 		for( r=0x08 ; r<0x0c ; r++)
-			F2608->FM_ADPCMAWrite(r,F2608->REGS[r+0x110]);
+			FM_ADPCMAWrite(F2608,r,F2608->REGS[r+0x110]);
 		/* Delta-T ADPCM unit */
-		F2608->deltaT.postload( &F2608->REGS[0x100] );
+		YM_DELTAT_postload(&F2608->deltaT , &F2608->REGS[0x100] );
 	}
 }
 
-static void YM2608_save_state(ym2608_state *F2608, device_t *device)
+static void YM2608_save_state(YM2608 *F2608, device_t *device)
 {
 	device->save_item(NAME(F2608->REGS));
 	FMsave_state_st(device,&F2608->OPN.ST);
@@ -2944,28 +2927,29 @@ static void YM2608_save_state(ym2608_state *F2608, device_t *device)
 	/* rhythm(ADPCMA) */
 	FMsave_state_adpcma(device,F2608->adpcm);
 	/* Delta-T ADPCM unit */
-	F2608->deltaT.savestate(device);
+	YM_DELTAT_savestate(device,&F2608->deltaT);
 }
 #endif /* MAME_EMU_SAVE_H */
 
 static void YM2608_deltat_status_set(void *chip, uint8_t changebits)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	FM_STATUS_SET(&(F2608->OPN.ST), changebits);
 }
 static void YM2608_deltat_status_reset(void *chip, uint8_t changebits)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	FM_STATUS_RESET(&(F2608->OPN.ST), changebits);
 }
 /* YM2608(OPNA) */
-void * ym2608_init(device_t *device, int clock, int rate, void *pcmrom,int pcmsize,
+void * ym2608_init(void *param, device_t *device, int clock, int rate,
+				void *pcmrom,int pcmsize,
 				FM_TIMERHANDLER timer_handler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg)
 {
-	ym2608_state *F2608;
+	YM2608 *F2608;
 
 	/* allocate extend state space */
-	F2608 = auto_alloc_clear(device->machine(), <ym2608_state>());
+	F2608 = auto_alloc_clear(device->machine(), <YM2608>());
 	/* allocate total level table (128kb space) */
 	if( !init_tables() )
 	{
@@ -2974,6 +2958,7 @@ void * ym2608_init(device_t *device, int clock, int rate, void *pcmrom,int pcmsi
 	}
 
 	F2608->device = device;
+	F2608->OPN.ST.param = param;
 	F2608->OPN.type = TYPE_YM2608;
 	F2608->OPN.P_CH = F2608->CH;
 	F2608->OPN.ST.device = device;
@@ -3014,7 +2999,7 @@ void * ym2608_init(device_t *device, int clock, int rate, void *pcmrom,int pcmsi
 /* shut down emulator */
 void ym2608_shutdown(void *chip)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 
 	FMCloseTable();
 	auto_free(F2608->OPN.ST.device->machine(), F2608);
@@ -3024,7 +3009,7 @@ void ym2608_shutdown(void *chip)
 void ym2608_reset_chip(void *chip)
 {
 	int i;
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	FM_OPN *OPN   = &F2608->OPN;
 	YM_DELTAT *DELTAT = &F2608->deltaT;
 
@@ -3032,7 +3017,7 @@ void ym2608_reset_chip(void *chip)
 	OPNPrescaler_w(OPN , 0 , 2);
 	F2608->deltaT.freqbase = OPN->ST.freqbase;
 	/* reset SSG section */
-	(*OPN->ST.SSG->reset)(OPN->ST.device);
+	(*OPN->ST.SSG->reset)(OPN->ST.param);
 
 	/* status clear */
 	FM_BUSY_CLEAR(&OPN->ST);
@@ -3096,7 +3081,7 @@ void ym2608_reset_chip(void *chip)
 	DELTAT->output_pointer = OPN->out_delta;
 	DELTAT->portshift = 5;      /* always 5bits shift */ /* ASG */
 	DELTAT->output_range = 1<<23;
-	DELTAT->ADPCM_Reset(OUTD_CENTER,YM_DELTAT::EMULATION_MODE_NORMAL,F2608->device);
+	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER,YM_DELTAT_EMULATION_MODE_NORMAL,F2608->device);
 }
 
 /* YM2608 write */
@@ -3105,7 +3090,7 @@ void ym2608_reset_chip(void *chip)
 /* v = value   */
 int ym2608_write(void *chip, int a,uint8_t v)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	FM_OPN *OPN   = &F2608->OPN;
 	int addr;
 
@@ -3119,7 +3104,7 @@ int ym2608_write(void *chip, int a,uint8_t v)
 		F2608->addr_A1 = 0;
 
 		/* Write register to SSG emulator */
-		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.device,0,v);
+		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.param,0,v);
 		/* prescaler selecter : 2d,2e,2f  */
 		if( v >= 0x2d && v <= 0x2f )
 		{
@@ -3138,11 +3123,11 @@ int ym2608_write(void *chip, int a,uint8_t v)
 		{
 		case 0x00:  /* SSG section */
 			/* Write data to SSG emulator */
-			(*OPN->ST.SSG->write)(OPN->ST.device,a,v);
+			(*OPN->ST.SSG->write)(OPN->ST.param,a,v);
 			break;
 		case 0x10:  /* 0x10-0x1f : Rhythm section */
-			ym2608_device::update_request(OPN->ST.device);
-			F2608->FM_ADPCMAWrite(addr-0x10,v);
+			ym2608_update_req(OPN->ST.param);
+			FM_ADPCMAWrite(F2608,addr-0x10,v);
 			break;
 		case 0x20:  /* Mode Register */
 			switch(addr)
@@ -3151,12 +3136,12 @@ int ym2608_write(void *chip, int a,uint8_t v)
 				YM2608IRQMaskWrite(OPN, F2608, v);
 				break;
 			default:
-				ym2608_device::update_request(OPN->ST.device);
+				ym2608_update_req(OPN->ST.param);
 				OPNWriteMode(OPN,addr,v);
 			}
 			break;
 		default:    /* OPN section */
-			ym2608_device::update_request(OPN->ST.device);
+			ym2608_update_req(OPN->ST.param);
 			OPNWriteReg(OPN,addr,v);
 		}
 		break;
@@ -3172,7 +3157,7 @@ int ym2608_write(void *chip, int a,uint8_t v)
 
 		addr = OPN->ST.address;
 		F2608->REGS[addr | 0x100] = v;
-		ym2608_device::update_request(OPN->ST.device);
+		ym2608_update_req(OPN->ST.param);
 		switch( addr & 0xf0 )
 		{
 		case 0x00:  /* DELTAT PORT */
@@ -3183,7 +3168,7 @@ int ym2608_write(void *chip, int a,uint8_t v)
 				break;
 			default:
 				/* 0x00-0x0d */
-				F2608->deltaT.ADPCM_Write(addr,v);
+				YM_DELTAT_ADPCM_Write(&F2608->deltaT,addr,v);
 			}
 			break;
 		case 0x10:  /* IRQ Flag control */
@@ -3201,7 +3186,7 @@ int ym2608_write(void *chip, int a,uint8_t v)
 
 uint8_t ym2608_read(void *chip,int a)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 	int addr = F2608->OPN.ST.address;
 	uint8_t ret = 0;
 
@@ -3213,7 +3198,7 @@ uint8_t ym2608_read(void *chip,int a)
 		break;
 
 	case 1: /* status 0, ID  */
-		if( addr < 16 ) ret = (*F2608->OPN.ST.SSG->read)(F2608->OPN.ST.device);
+		if( addr < 16 ) ret = (*F2608->OPN.ST.SSG->read)(F2608->OPN.ST.param);
 		else if(addr == 0xff) ret = 0x01; /* ID code */
 		break;
 
@@ -3225,7 +3210,7 @@ uint8_t ym2608_read(void *chip,int a)
 	case 3:
 		if(addr == 0x08)
 		{
-			ret = F2608->deltaT.ADPCM_Read();
+			ret = YM_DELTAT_ADPCM_Read(&F2608->deltaT);
 		}
 		else
 		{
@@ -3242,14 +3227,14 @@ uint8_t ym2608_read(void *chip,int a)
 
 int ym2608_timer_over(void *chip,int c)
 {
-	ym2608_state *F2608 = (ym2608_state *)chip;
+	YM2608 *F2608 = (YM2608 *)chip;
 
 	switch(c)
 	{
 #if 0
 	case 2:
 		{   /* BUFRDY flag */
-			F2608->deltaT.BRDY_callback();
+			YM_DELTAT_BRDY_callback( &F2608->deltaT );
 		}
 		break;
 #endif
@@ -3260,7 +3245,7 @@ int ym2608_timer_over(void *chip,int c)
 		break;
 	case 0:
 		{   /* Timer A */
-			ym2608_device::update_request(F2608->OPN.ST.device);
+			ym2608_update_req(F2608->OPN.ST.param);
 			/* timer update */
 			TimerAOver( &(F2608->OPN.ST) );
 			/* CSM mode key,TL controll */
@@ -3287,7 +3272,7 @@ int ym2608_timer_over(void *chip,int c)
 /* Generate samples for one of the YM2610s */
 void ym2610_update_one(void *chip, FMSAMPLE **buffer, int length)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	FM_OPN *OPN   = &F2610->OPN;
 	YM_DELTAT *DELTAT = &F2610->deltaT;
 	int i,j;
@@ -3309,9 +3294,9 @@ void ym2610_update_one(void *chip, FMSAMPLE **buffer, int length)
 #define FM_MSG_YM2610B "YM2610-%p.CH%d is playing,Check whether the type of the chip is YM2610B\n"
 	/* Check YM2610B warning message */
 	if( FM_KEY_IS(&F2610->CH[0].SLOT[3]) )
-		LOG(F2610->device,LOG_WAR,(FM_MSG_YM2610B,F2610->OPN.ST.device,0));
+		LOG(F2610->device,LOG_WAR,(FM_MSG_YM2610B,F2610->OPN.ST.param,0));
 	if( FM_KEY_IS(&F2610->CH[3].SLOT[3]) )
-		LOG(F2610->device,LOG_WAR,(FM_MSG_YM2610B,F2610->OPN.ST.device,3));
+		LOG(F2610->device,LOG_WAR,(FM_MSG_YM2610B,F2610->OPN.ST.param,3));
 #endif
 
 	/* refresh PG and EG */
@@ -3367,13 +3352,13 @@ void ym2610_update_one(void *chip, FMSAMPLE **buffer, int length)
 
 		/* deltaT ADPCM */
 		if( DELTAT->portstate&0x80 )
-			DELTAT->ADPCM_CALC();
+			YM_DELTAT_ADPCM_CALC(DELTAT);
 
 		/* ADPCMA */
 		for( j = 0; j < 6; j++ )
 		{
 			if( F2610->adpcm[j].flag )
-				F2610->ADPCMA_calc_chan(&F2610->adpcm[j]);
+				ADPCMA_calc_chan( F2610, &F2610->adpcm[j]);
 		}
 
 		/* buffering */
@@ -3423,7 +3408,7 @@ void ym2610_update_one(void *chip, FMSAMPLE **buffer, int length)
 /* Generate samples for one of the YM2610Bs */
 void ym2610b_update_one(void *chip, FMSAMPLE **buffer, int length)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	FM_OPN *OPN   = &F2610->OPN;
 	YM_DELTAT *DELTAT = &F2610->deltaT;
 	int i,j;
@@ -3503,13 +3488,13 @@ void ym2610b_update_one(void *chip, FMSAMPLE **buffer, int length)
 
 		/* deltaT ADPCM */
 		if( DELTAT->portstate&0x80 )
-			DELTAT->ADPCM_CALC();
+			YM_DELTAT_ADPCM_CALC(DELTAT);
 
 		/* ADPCMA */
 		for( j = 0; j < 6; j++ )
 		{
 			if( F2610->adpcm[j].flag )
-				F2610->ADPCMA_calc_chan(&F2610->adpcm[j]);
+				ADPCMA_calc_chan( F2610, &F2610->adpcm[j]);
 		}
 
 		/* buffering */
@@ -3564,14 +3549,14 @@ void ym2610_postload(void *chip)
 {
 	if (chip)
 	{
-		ym2610_state *F2610 = (ym2610_state *)chip;
+		YM2610 *F2610 = (YM2610 *)chip;
 		int r;
 
 		/* SSG registers */
 		for(r=0;r<16;r++)
 		{
-			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.device,0,r);
-			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.device,1,F2610->REGS[r]);
+			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,0,r);
+			(*F2610->OPN.ST.SSG->write)(F2610->OPN.ST.param,1,F2610->REGS[r]);
 		}
 
 		/* OPN registers */
@@ -3593,21 +3578,21 @@ void ym2610_postload(void *chip)
 		/*FM_channel_postload(F2610->CH,6);*/
 
 		/* rhythm(ADPCMA) */
-		F2610->FM_ADPCMAWrite(1,F2610->REGS[0x101]);
+		FM_ADPCMAWrite(F2610,1,F2610->REGS[0x101]);
 		for( r=0 ; r<6 ; r++)
 		{
-			F2610->FM_ADPCMAWrite(r+0x08,F2610->REGS[r+0x108]);
-			F2610->FM_ADPCMAWrite(r+0x10,F2610->REGS[r+0x110]);
-			F2610->FM_ADPCMAWrite(r+0x18,F2610->REGS[r+0x118]);
-			F2610->FM_ADPCMAWrite(r+0x20,F2610->REGS[r+0x120]);
-			F2610->FM_ADPCMAWrite(r+0x28,F2610->REGS[r+0x128]);
+			FM_ADPCMAWrite(F2610,r+0x08,F2610->REGS[r+0x108]);
+			FM_ADPCMAWrite(F2610,r+0x10,F2610->REGS[r+0x110]);
+			FM_ADPCMAWrite(F2610,r+0x18,F2610->REGS[r+0x118]);
+			FM_ADPCMAWrite(F2610,r+0x20,F2610->REGS[r+0x120]);
+			FM_ADPCMAWrite(F2610,r+0x28,F2610->REGS[r+0x128]);
 		}
 		/* Delta-T ADPCM unit */
-		F2610->deltaT.postload( &F2610->REGS[0x010] );
+		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x010] );
 	}
 }
 
-static void YM2610_save_state(ym2610_state *F2610, device_t *device)
+static void YM2610_save_state(YM2610 *F2610, device_t *device)
 {
 	device->save_item(NAME(F2610->REGS));
 	FMsave_state_st(device,&F2610->OPN.ST);
@@ -3623,29 +3608,30 @@ static void YM2610_save_state(ym2610_state *F2610, device_t *device)
 	/* rhythm(ADPCMA) */
 	FMsave_state_adpcma(device,F2610->adpcm);
 	/* Delta-T ADPCM unit */
-	F2610->deltaT.savestate(device);
+	YM_DELTAT_savestate(device,&F2610->deltaT);
 }
 #endif /* MAME_EMU_SAVE_H */
 
 static void YM2610_deltat_status_set(void *chip, uint8_t changebits)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	F2610->adpcm_arrivedEndAddress |= changebits;
 }
 static void YM2610_deltat_status_reset(void *chip, uint8_t changebits)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	F2610->adpcm_arrivedEndAddress &= (~changebits);
 }
 
-void *ym2610_init(device_t *device, int clock, int rate, void *pcmroma,int pcmsizea,void *pcmromb,int pcmsizeb,
+void *ym2610_init(void *param, device_t *device, int clock, int rate,
+				void *pcmroma,int pcmsizea,void *pcmromb,int pcmsizeb,
 				FM_TIMERHANDLER timer_handler,FM_IRQHANDLER IRQHandler, const ssg_callbacks *ssg)
 
 {
-	ym2610_state *F2610;
+	YM2610 *F2610;
 
 	/* allocate extend state space */
-	F2610 = auto_alloc_clear(device->machine(), <ym2610_state>());
+	F2610 = auto_alloc_clear(device->machine(), <YM2610>());
 	/* allocate total level table (128kb space) */
 	if( !init_tables() )
 	{
@@ -3655,6 +3641,7 @@ void *ym2610_init(device_t *device, int clock, int rate, void *pcmroma,int pcmsi
 
 	F2610->device = device;
 	/* FM */
+	F2610->OPN.ST.param = param;
 	F2610->OPN.type = TYPE_YM2610;
 	F2610->OPN.P_CH = F2610->CH;
 	F2610->OPN.ST.device = device;
@@ -3686,7 +3673,7 @@ void *ym2610_init(device_t *device, int clock, int rate, void *pcmroma,int pcmsi
 /* shut down emulator */
 void ym2610_shutdown(void *chip)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 
 	FMCloseTable();
 	auto_free(F2610->OPN.ST.device->machine(), F2610);
@@ -3696,7 +3683,7 @@ void ym2610_shutdown(void *chip)
 void ym2610_reset_chip(void *chip)
 {
 	int i;
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	FM_OPN *OPN   = &F2610->OPN;
 	YM_DELTAT *DELTAT = &F2610->deltaT;
 
@@ -3726,7 +3713,7 @@ void ym2610_reset_chip(void *chip)
 	/* Reset Prescaler */
 	OPNSetPres( OPN, 6*24, 6*24, 4*2); /* OPN 1/6 , SSG 1/4 */
 	/* reset SSG section */
-	(*OPN->ST.SSG->reset)(OPN->ST.device);
+	(*OPN->ST.SSG->reset)(OPN->ST.param);
 	/* status clear */
 	FM_IRQMASK_SET(&OPN->ST,0x03);
 	FM_BUSY_CLEAR(&OPN->ST);
@@ -3776,7 +3763,7 @@ void ym2610_reset_chip(void *chip)
 	DELTAT->output_pointer = OPN->out_delta;
 	DELTAT->portshift = 8;      /* allways 8bits shift */
 	DELTAT->output_range = 1<<23;
-	DELTAT->ADPCM_Reset(OUTD_CENTER,YM_DELTAT::EMULATION_MODE_YM2610,F2610->device);
+	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER,YM_DELTAT_EMULATION_MODE_YM2610,F2610->device);
 }
 
 /* YM2610 write */
@@ -3785,7 +3772,7 @@ void ym2610_reset_chip(void *chip)
 /* v = value   */
 int ym2610_write(void *chip, int a, uint8_t v)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	FM_OPN *OPN   = &F2610->OPN;
 	int addr;
 	int ch;
@@ -3799,7 +3786,7 @@ int ym2610_write(void *chip, int a, uint8_t v)
 		F2610->addr_A1 = 0;
 
 		/* Write register to SSG emulator */
-		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.device,0,v);
+		if( v < 16 ) (*OPN->ST.SSG->write)(OPN->ST.param,0,v);
 		break;
 
 	case 1: /* data port 0    */
@@ -3812,10 +3799,10 @@ int ym2610_write(void *chip, int a, uint8_t v)
 		{
 		case 0x00:  /* SSG section */
 			/* Write data to SSG emulator */
-			(*OPN->ST.SSG->write)(OPN->ST.device,a,v);
+			(*OPN->ST.SSG->write)(OPN->ST.param,a,v);
 			break;
 		case 0x10: /* DeltaT ADPCM */
-			ym2610_device::update_request(OPN->ST.device);
+			ym2610_update_req(OPN->ST.param);
 
 			switch(addr)
 			{
@@ -3830,7 +3817,7 @@ int ym2610_write(void *chip, int a, uint8_t v)
 			case 0x1a:  /* delta-n H */
 			case 0x1b:  /* volume */
 				{
-					F2610->deltaT.ADPCM_Write(addr-0x10,v);
+					YM_DELTAT_ADPCM_Write(&F2610->deltaT,addr-0x10,v);
 				}
 				break;
 
@@ -3855,11 +3842,11 @@ int ym2610_write(void *chip, int a, uint8_t v)
 
 			break;
 		case 0x20:  /* Mode Register */
-			ym2610_device::update_request(OPN->ST.device);
+			ym2610_update_req(OPN->ST.param);
 			OPNWriteMode(OPN,addr,v);
 			break;
 		default:    /* OPN section */
-			ym2610_device::update_request(OPN->ST.device);
+			ym2610_update_req(OPN->ST.param);
 			/* write register */
 			OPNWriteReg(OPN,addr,v);
 		}
@@ -3874,12 +3861,12 @@ int ym2610_write(void *chip, int a, uint8_t v)
 		if (F2610->addr_A1 != 1)
 			break;  /* verified on real YM2608 */
 
-		ym2610_device::update_request(OPN->ST.device);
+		ym2610_update_req(OPN->ST.param);
 		addr = OPN->ST.address;
 		F2610->REGS[addr | 0x100] = v;
 		if( addr < 0x30 )
 			/* 100-12f : ADPCM A section */
-			F2610->FM_ADPCMAWrite(addr,v);
+			FM_ADPCMAWrite(F2610,addr,v);
 		else
 			OPNWriteReg(OPN,addr | 0x100,v);
 	}
@@ -3888,7 +3875,7 @@ int ym2610_write(void *chip, int a, uint8_t v)
 
 uint8_t ym2610_read(void *chip,int a)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 	int addr = F2610->OPN.ST.address;
 	uint8_t ret = 0;
 
@@ -3898,7 +3885,7 @@ uint8_t ym2610_read(void *chip,int a)
 		ret = FM_STATUS_FLAG(&F2610->OPN.ST) & 0x83;
 		break;
 	case 1: /* data 0 */
-		if( addr < 16 ) ret = (*F2610->OPN.ST.SSG->read)(F2610->OPN.ST.device);
+		if( addr < 16 ) ret = (*F2610->OPN.ST.SSG->read)(F2610->OPN.ST.param);
 		if( addr == 0xff ) ret = 0x01;
 		break;
 	case 2: /* status 1 : ADPCM status */
@@ -3917,7 +3904,7 @@ uint8_t ym2610_read(void *chip,int a)
 
 int ym2610_timer_over(void *chip,int c)
 {
-	ym2610_state *F2610 = (ym2610_state *)chip;
+	YM2610 *F2610 = (YM2610 *)chip;
 
 	if( c )
 	{   /* Timer B */
@@ -3925,7 +3912,7 @@ int ym2610_timer_over(void *chip,int c)
 	}
 	else
 	{   /* Timer A */
-		ym2610_device::update_request(F2610->OPN.ST.device);
+		ym2610_update_req(F2610->OPN.ST.param);
 		/* timer update */
 		TimerAOver( &(F2610->OPN.ST) );
 		/* CSM mode key,TL controll */

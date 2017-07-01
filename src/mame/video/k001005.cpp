@@ -3,8 +3,6 @@
 #include "emu.h"
 #include "k001005.h"
 
-#include "video/k001006.h"
-
 
 /*****************************************************************************/
 /* Konami K001005 Polygon Renderer (KS10071) */
@@ -1183,10 +1181,10 @@ void k001005_renderer::draw(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 
 
 
-DEFINE_DEVICE_TYPE(K001005, k001005_device, "k001005", "K001005 Polygon Renderer")
+const device_type K001005 = &device_creator<k001005_device>;
 
 k001005_device::k001005_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, K001005, tag, owner, clock),
+	: device_t(mconfig, K001005, "K001005 Polygon Renderer", tag, owner, clock, "k001005", __FILE__),
 		device_video_interface(mconfig, *this),
 		m_k001006(nullptr),
 		m_fifo(nullptr),
@@ -1198,6 +1196,16 @@ k001005_device::k001005_device(const machine_config &mconfig, const char *tag, d
 {
 		m_ram[0] = nullptr;
 		m_ram[1] = nullptr;
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void k001005_device::device_config_complete()
+{
 }
 
 //-------------------------------------------------

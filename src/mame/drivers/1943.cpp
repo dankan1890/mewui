@@ -32,14 +32,11 @@
 */
 
 #include "emu.h"
-#include "includes/1943.h"
-
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
 #include "machine/watchdog.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/1943.h"
 
 
 /* Protection Handlers */
@@ -309,7 +306,7 @@ void _1943_state::machine_reset()
 	m_prot_value = 0;
 }
 
-static MACHINE_CONFIG_START( 1943 )
+static MACHINE_CONFIG_START( 1943, _1943_state )
 
 	// basic machine hardware
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_24MHz/4) /* verified on pcb */

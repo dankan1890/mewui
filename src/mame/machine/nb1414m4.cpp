@@ -13,6 +13,7 @@ TODO:
 - first byte meaning is completely unknown;
 - Ninja Emaki triggers unknown commands 0x8000 & 0xff20;
 - Ninja Emaki continue screen is corrupt;
+- How to NOT draw the params?
 
 Notes:
 - Just before any string in the "MCU" rom, there's a control byte, this meaning is as follows:
@@ -28,14 +29,13 @@ Notes:
 
 #include "emu.h"
 #include "includes/nb1414m4.h"
-#include "screen.h"
 
-DEFINE_DEVICE_TYPE(NB1414M4, nb1414m4_device, "nb1414m4", "NB1414M4 Mahjong Custom")
+const device_type NB1414M4 = &device_creator<nb1414m4_device>;
 
 nb1414m4_device::nb1414m4_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, NB1414M4, tag, owner, clock)
-	, device_video_interface(mconfig, *this)
-	, m_data(*this, DEVICE_SELF)
+	: device_t(mconfig, NB1414M4, "NB1414M4 Mahjong Custom", tag, owner, clock, "nb1414m4", __FILE__),
+	device_video_interface(mconfig, *this),
+	m_data(*this, DEVICE_SELF)
 {
 }
 

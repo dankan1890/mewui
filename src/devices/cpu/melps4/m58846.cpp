@@ -6,11 +6,10 @@
 
 */
 
-#include "emu.h"
 #include "m58846.h"
 
 
-DEFINE_DEVICE_TYPE(M58846, m58846_device, "m58846", "M58846")
+const device_type M58846 = &device_creator<m58846_device>;
 
 
 // internal memory maps
@@ -26,7 +25,7 @@ ADDRESS_MAP_END
 
 // device definitions
 m58846_device::m58846_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: melps4_cpu_device(mconfig, M58846, tag, owner, clock, 11, ADDRESS_MAP_NAME(program_2kx9), 7, ADDRESS_MAP_NAME(data_128x4), 12 /* number of D pins */, 2 /* subroutine page */, 1 /* interrupt page */), m_timer(nullptr)
+	: melps4_cpu_device(mconfig, M58846, "M58846", tag, owner, clock, 11, ADDRESS_MAP_NAME(program_2kx9), 7, ADDRESS_MAP_NAME(data_128x4), 12 /* number of D pins */, 2 /* subroutine page */, 1 /* interrupt page */, "m58846", __FILE__), m_timer(nullptr)
 { }
 
 

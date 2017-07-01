@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C4_FINAL3_H
-#define MAME_BUS_C4_FINAL3_H
-
 #pragma once
 
+#ifndef __FINAL3__
+#define __FINAL3__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -50,7 +51,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_FINAL3, c64_final3_cartridge_device)
+extern const device_type C64_FINAL3;
 
 
-#endif // MAME_BUS_C4_FINAL3_H
+#endif

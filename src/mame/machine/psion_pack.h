@@ -6,8 +6,8 @@
 
 ****************************************************************************/
 
-#ifndef MAME_MACHINE_PSION_PACK_H
-#define MAME_MACHINE_PSION_PACK_H
+#ifndef __PSION_PACK_H__
+#define __PSION_PACK_H__
 
 #include "softlist_dev.h"
 
@@ -69,7 +69,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(PSION_DATAPACK, datapack_device)
+extern const device_type PSION_DATAPACK;
 
 
 /***************************************************************************
@@ -78,5 +78,4 @@ DECLARE_DEVICE_TYPE(PSION_DATAPACK, datapack_device)
 
 #define MCFG_PSION_DATAPACK_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, PSION_DATAPACK, 0)
-
-#endif // MAME_MACHINE_PSION_PACK_H
+#endif /* __PSION_PACK_H__ */

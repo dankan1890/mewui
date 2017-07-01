@@ -89,15 +89,12 @@ ROMs    : MR96004-10.1  [125661cd] (IC5 - Samples)
 */
 
 #include "emu.h"
-#include "includes/ms32.h"
-
 #include "cpu/z80/z80.h"
 #include "cpu/v60/v60.h"
-#include "sound/ymf271.h"
-#include "machine/jalcrpt.h"
-
 #include "rendlay.h"
-#include "speaker.h"
+#include "sound/ymf271.h"
+#include "includes/ms32.h"
+#include "machine/jalcrpt.h"
 
 
 class bnstars_state : public ms32_state
@@ -806,7 +803,7 @@ void bnstars_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( bnstars )
+static MACHINE_CONFIG_START( bnstars, bnstars_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", V70, 20000000) // 20MHz

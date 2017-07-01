@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "std.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(PLUS4_STD, plus4_standard_cartridge_device, "plus4_standard", "Plus/4 standard cartridge")
+const device_type PLUS4_STD = &device_creator<plus4_standard_cartridge_device>;
 
 
 
@@ -28,7 +27,7 @@ DEFINE_DEVICE_TYPE(PLUS4_STD, plus4_standard_cartridge_device, "plus4_standard",
 //-------------------------------------------------
 
 plus4_standard_cartridge_device::plus4_standard_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, PLUS4_STD, tag, owner, clock),
+	device_t(mconfig, PLUS4_STD, "Plus/4 standard cartridge", tag, owner, clock, "plus4_standard", __FILE__),
 	device_plus4_expansion_card_interface(mconfig, *this)
 {
 }

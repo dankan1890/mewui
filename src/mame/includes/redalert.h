@@ -11,7 +11,6 @@
 
 #include "machine/gen_latch.h"
 #include "sound/hc55516.h"
-#include "screen.h"
 
 class redalert_state : public driver_device
 {

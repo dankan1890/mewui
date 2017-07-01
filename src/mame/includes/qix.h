@@ -8,17 +8,10 @@
 ***************************************************************************/
 
 #include "cpu/m6809/m6809.h"
-#include "cpu/m6805/m68705.h"
-
-#include "machine/6821pia.h"
-
-#include "sound/discrete.h"
-#include "sound/sn76496.h"
-
 #include "video/mc6845.h"
-
-#include "screen.h"
-
+#include "machine/6821pia.h"
+#include "sound/sn76496.h"
+#include "sound/discrete.h"
 
 #define MAIN_CLOCK_OSC          20000000    /* 20 MHz */
 #define SLITHER_CLOCK_OSC       21300000    /* 21.3 MHz */
@@ -46,6 +39,8 @@ public:
 		m_sn1 (*this, "sn1"),
 		m_sn2 (*this, "sn2"),
 		m_discrete(*this, "discrete"),
+		m_68705_port_out(*this, "68705_port_out"),
+		m_68705_ddr(*this, "68705_ddr"),
 		m_paletteram(*this, "paletteram"),
 		m_videoram(*this, "videoram"),
 		m_videoram_address(*this, "videoram_addr"),
@@ -59,7 +54,7 @@ public:
 	required_device<m6809_base_device> m_maincpu;
 	optional_device<cpu_device> m_audiocpu;
 	required_device<m6809_base_device> m_videocpu;
-	optional_device<m68705p_device> m_mcu;
+	optional_device<cpu_device> m_mcu;
 	required_device<mc6845_device> m_crtc;
 	required_device<pia6821_device> m_pia0;
 	required_device<pia6821_device> m_pia1;
@@ -72,7 +67,9 @@ public:
 	optional_device<discrete_device> m_discrete;
 
 	/* machine state */
-	uint8_t  m_68705_portA_out;
+	optional_shared_ptr<uint8_t> m_68705_port_out;
+	optional_shared_ptr<uint8_t> m_68705_ddr;
+	uint8_t  m_68705_port_in[3];
 	uint8_t  m_coinctrl;
 
 	/* video state */
@@ -99,10 +96,12 @@ public:
 	DECLARE_WRITE8_MEMBER(qix_video_firq_ack_w);
 	DECLARE_READ8_MEMBER(qix_video_firq_r);
 	DECLARE_READ8_MEMBER(qix_video_firq_ack_r);
+	DECLARE_READ8_MEMBER(qix_68705_portA_r);
 	DECLARE_READ8_MEMBER(qix_68705_portB_r);
 	DECLARE_READ8_MEMBER(qix_68705_portC_r);
 	DECLARE_WRITE8_MEMBER(qix_68705_portA_w);
 	DECLARE_WRITE8_MEMBER(qix_68705_portB_w);
+	DECLARE_WRITE8_MEMBER(qix_68705_portC_w);
 	DECLARE_READ8_MEMBER(qix_videoram_r);
 	DECLARE_WRITE8_MEMBER(qix_videoram_w);
 	DECLARE_WRITE8_MEMBER(slither_videoram_w);

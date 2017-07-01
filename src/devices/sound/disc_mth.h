@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:K.Wilkins,Couriersud,Derrick Renaud,Frank Palazzolo
-#ifndef MAME_SOUND_DISC_MTH_H
-#define MAME_SOUND_DISC_MTH_H
-
 #pragma once
+
+#ifndef __DISC_MTH_H__
+#define __DISC_MTH_H__
 
 /***********************************************************************
  *
@@ -236,4 +236,4 @@ DISCRETE_CLASS_STEP(dst_xtime_or, 1, /* no context */ );
 DISCRETE_CLASS_STEP(dst_xtime_xor, 1, /* no context */ );
 
 
-#endif // MAME_SOUND_DISC_MTH_H
+#endif /* __DISC_WAV_H__ */

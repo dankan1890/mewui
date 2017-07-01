@@ -6,14 +6,13 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "partytap.h"
 
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(NES_PARTYTAP, nes_partytap_device, "nes_partytap", "Yonezawa Party Tap Controller")
+const device_type NES_PARTYTAP = &device_creator<nes_partytap_device>;
 
 
 static INPUT_PORTS_START( nes_partytap )
@@ -45,11 +44,9 @@ ioport_constructor nes_partytap_device::device_input_ports() const
 //-------------------------------------------------
 
 nes_partytap_device::nes_partytap_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, NES_PARTYTAP, tag, owner, clock),
-	device_nes_control_port_interface(mconfig, *this),
-	m_inputs(*this, "INPUTS"),
-	m_mode(0),
-	m_latch(0)
+					device_t(mconfig, NES_PARTYTAP, "Yonezawa Party Tap Controller", tag, owner, clock, "nes_partytap", __FILE__),
+					device_nes_control_port_interface(mconfig, *this),
+					m_inputs(*this, "INPUTS"), m_mode(0), m_latch(0)
 {
 }
 

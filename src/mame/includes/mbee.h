@@ -6,29 +6,23 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_MBEE_H
-#define MAME_INCLUDES_MBEE_H
+#ifndef MBEE_H_
+#define MBEE_H_
 
+#include "emu.h"
+#include "imagedev/snapquik.h"
+#include "machine/z80pio.h"
+#include "machine/8530scc.h"
+#include "imagedev/cassette.h"
+#include "machine/buffer.h"
 #include "bus/centronics/ctronics.h"
-
+#include "machine/mc146818.h"
+#include "video/mc6845.h"
+#include "sound/speaker.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
-
-#include "imagedev/cassette.h"
-#include "imagedev/snapquik.h"
-
-#include "machine/8530scc.h"
-#include "machine/buffer.h"
-#include "machine/mc146818.h"
-#include "machine/wd_fdc.h"
-#include "machine/z80pio.h"
-
-#include "sound/spkrdev.h"
 #include "sound/wave.h"
-
-#include "video/mc6845.h"
-
-#include "screen.h"
+#include "machine/wd_fdc.h"
 
 
 class mbee_state : public driver_device
@@ -160,7 +154,7 @@ private:
 	required_device<centronics_device> m_centronics;
 	required_device<output_latch_device> m_cent_data_out;
 	required_device<mc6845_device> m_crtc;
-	optional_device<wd2793_device> m_fdc;
+	optional_device<wd2793_t> m_fdc;
 	optional_device<floppy_connector> m_floppy0;
 	optional_device<floppy_connector> m_floppy1;
 	optional_device<mc146818_device> m_rtc;
@@ -174,4 +168,4 @@ private:
 	required_device<screen_device> m_screen;
 };
 
-#endif // MAME_INCLUDES_MBEE_H
+#endif /* MBEE_H_ */

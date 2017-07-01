@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_VIDEO_HD44102_H
-#define MAME_VIDEO_HD44102_H
-
 #pragma once
 
+#ifndef __HD44102__
+#define __HD44102__
+
+#include "emu.h"
 
 
 
@@ -78,6 +79,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(HD44102, hd44102_device)
+extern const device_type HD44102;
 
-#endif // MAME_VIDEO_HD44102_H
+
+
+#endif

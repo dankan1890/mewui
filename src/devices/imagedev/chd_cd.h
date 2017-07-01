@@ -8,10 +8,8 @@
 
 *********************************************************************/
 
-#ifndef MAME_DEVICES_IMAGEDEV_CHD_CD_H
-#define MAME_DEVICES_IMAGEDEV_CHD_CD_H
-
-#pragma once
+#ifndef CHD_CD_H
+#define CHD_CD_H
 
 #include "cdrom.h"
 #include "softlist_dev.h"
@@ -28,6 +26,7 @@ class cdrom_image_device :  public device_t,
 public:
 	// construction/destruction
 	cdrom_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	cdrom_image_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 	virtual ~cdrom_image_device();
 
 	static void static_set_interface(device_t &device, const char *_interface) { downcast<cdrom_image_device &>(device).m_interface = _interface; }
@@ -49,10 +48,7 @@ public:
 
 	// specific implementation
 	cdrom_file *get_cdrom_file() { return m_cdrom_handle; }
-
 protected:
-	cdrom_image_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	// device-level overrides
 	virtual void device_config_complete() override;
 	virtual void device_start() override;
@@ -65,7 +61,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(CDROM, cdrom_image_device)
+extern const device_type CDROM;
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -78,4 +74,4 @@ DECLARE_DEVICE_TYPE(CDROM, cdrom_image_device)
 #define MCFG_CDROM_INTERFACE(_interface)                         \
 	cdrom_image_device::static_set_interface(*device, _interface);
 
-#endif // MAME_DEVICES_IMAGEDEV_CHD_CD_H
+#endif /* CHD_CD_H */

@@ -1238,15 +1238,10 @@ WRITE_LINE_MEMBER(mac_state::mac_adb_via_out_cb2)
 	}
 	else
 	{
-		m_adb_command <<= 1;
 		if (state)
-		{
 			m_adb_command |= 1;
-		}
 		else
-		{
 			m_adb_command &= ~1;
-		}
 	}
 }
 

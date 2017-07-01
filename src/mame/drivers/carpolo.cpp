@@ -19,12 +19,10 @@
 ****************************************************************************/
 
 #include "emu.h"
-#include "includes/carpolo.h"
-
 #include "cpu/m6502/m6502.h"
 #include "machine/74153.h"
 #include "machine/6821pia.h"
-#include "screen.h"
+#include "includes/carpolo.h"
 
 
 
@@ -231,7 +229,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( carpolo )
+static MACHINE_CONFIG_START( carpolo, carpolo_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6502, XTAL_11_289MHz/12)       /* 940.75 kHz */
@@ -277,9 +275,7 @@ static MACHINE_CONFIG_START( carpolo )
 	MCFG_DEVICE_ADD("74148_3s", TTL74148, 0)
 	MCFG_74148_OUTPUT_CB(carpolo_state, ttl74148_3s_cb)
 
-	MCFG_TTL153_ADD("74153_1k")
-	MCFG_TTL153_ZA_CB(WRITELINE(carpolo_state, ls153_za_w)) // pia1 pb5
-	MCFG_TTL153_ZB_CB(WRITELINE(carpolo_state, ls153_zb_w)) // pia1 pb4
+	MCFG_DEVICE_ADD("74153_1k", TTL74153, 0)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -288,7 +284,7 @@ static MACHINE_CONFIG_START( carpolo )
 	MCFG_SCREEN_SIZE(256, 256)
 	MCFG_SCREEN_VISIBLE_AREA(0, 239, 0, 255)
 	MCFG_SCREEN_UPDATE_DRIVER(carpolo_state, screen_update_carpolo)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(carpolo_state, screen_vblank_carpolo))
+	MCFG_SCREEN_VBLANK_DRIVER(carpolo_state, screen_eof_carpolo)
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_GFXDECODE_ADD("gfxdecode", "palette", carpolo)

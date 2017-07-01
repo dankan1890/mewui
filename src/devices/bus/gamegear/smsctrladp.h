@@ -7,12 +7,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_GAMEGEAR_SMSCRTLADP_H
-#define MAME_BUS_GAMEGEAR_SMSCRTLADP_H
-
 #pragma once
 
+#ifndef __SMS_CTRL_ADAPTOR__
+#define __SMS_CTRL_ADAPTOR__
 
+
+#include "emu.h"
 #include "ggext.h"
 #include "bus/sms_ctrl/smsctrl.h"
 
@@ -31,25 +32,25 @@ public:
 	// construction/destruction
 	sms_ctrl_adaptor_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	DECLARE_WRITE_LINE_MEMBER(th_pin_w);
+	DECLARE_READ32_MEMBER(pixel_r);
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	// device_gg_ext_port_interface overrides
 	virtual uint8_t peripheral_r() override;
 	virtual void peripheral_w(uint8_t data) override;
 
 private:
-	DECLARE_WRITE_LINE_MEMBER(th_pin_w);
-	DECLARE_READ32_MEMBER(pixel_r);
-
 	required_device<sms_control_port_device> m_subctrl_port;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(SMS_CTRL_ADAPTOR, sms_ctrl_adaptor_device)
+extern const device_type SMS_CTRL_ADAPTOR;
 
 
-#endif // MAME_BUS_GAMEGEAR_SMSCRTLADP_H
+#endif

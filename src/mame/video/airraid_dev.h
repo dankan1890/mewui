@@ -1,15 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Tomasz Slanina, Angelo Salese, hap, David Haywood
 
-#ifndef MAME_VIDEO_AIRRAID_DEV_H
-#define MAME_VIDEO_AIRRAID_DEV_H
-
 #pragma once
 
-#include "screen.h"
+#ifndef __AIRRAID_VIDEO__
+#define __AIRRAID_VIDEO__
 
 
-DECLARE_DEVICE_TYPE(AIRRAID_VIDEO, airraid_video_device)
+
+extern const device_type AIRRAID_VIDEO;
 
 #define MCFG_AIRRAID_VIDEO_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, AIRRAID_VIDEO, 0)
@@ -26,8 +25,10 @@ public:
 	DECLARE_WRITE8_MEMBER(vregs_w);
 	void layer_enable_w(uint8_t enable);
 
+	uint32_t screen_update_airraid(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
+
 protected:
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -69,8 +70,6 @@ private:
 	bitmap_ind16 m_temp_bitmap;
 	void draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect);
 	void mix_layer(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, uint8_t* clut, int base);
-
-	uint32_t screen_update_airraid(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 };
 
-#endif // MAME_VIDEO_AIRRAID_DEV_H
+#endif

@@ -136,12 +136,12 @@ const jaguar_cpu_device::op_func jaguar_cpu_device::dsp_op_table[64] =
 #define ROPCODE(pc)           (m_direct->read_word(pc, WORD_XOR_BE(0)))
 
 
-DEFINE_DEVICE_TYPE(JAGUARGPU, jaguargpu_cpu_device, "jaguargpu", "Jaguar GPU")
-DEFINE_DEVICE_TYPE(JAGUARDSP, jaguardsp_cpu_device, "jaguardsp", "Jaguar DSP")
+const device_type JAGUARGPU = &device_creator<jaguargpu_cpu_device>;
+const device_type JAGUARDSP = &device_creator<jaguardsp_cpu_device>;
 
 
-jaguar_cpu_device::jaguar_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, bool isdsp)
-	: cpu_device(mconfig, type, tag, owner, clock)
+jaguar_cpu_device::jaguar_cpu_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, bool isdsp)
+	: cpu_device(mconfig, type, name, tag, owner, clock, shortname, source)
 	, m_program_config("program", ENDIANNESS_BIG, 32, 24, 0)
 	, m_isdsp(isdsp)
 	, m_cpu_interrupt(*this)
@@ -163,13 +163,13 @@ jaguar_cpu_device::jaguar_cpu_device(const machine_config &mconfig, device_type 
 
 
 jaguargpu_cpu_device::jaguargpu_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: jaguar_cpu_device(mconfig, JAGUARGPU, tag, owner, clock, false)
+	: jaguar_cpu_device(mconfig, JAGUARGPU, "Jaguar GPU", tag, owner, clock, "jaguargpu", __FILE__, false)
 {
 }
 
 
 jaguardsp_cpu_device::jaguardsp_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: jaguar_cpu_device(mconfig, JAGUARDSP, tag, owner, clock, true)
+	: jaguar_cpu_device(mconfig, JAGUARDSP, "Jaguar DSP", tag, owner, clock, "jaguardsp", __FILE__, true)
 {
 }
 

@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "hpc101.h"
 
 
@@ -26,14 +25,14 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(POFO_HPC101, pofo_hpc101_device, "pofo_hpc101", "Atari Portfolio HPC-101")
+const device_type HPC101 = &device_creator<hpc101_t>;
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( hpc101 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( pofo_hpc101_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( hpc101 )
 	MCFG_DEVICE_ADD(M82C55A_TAG, I8255A, 0)
 	MCFG_I8255_OUT_PORTA_CB(DEVWRITE8("cent_data_out", output_latch_device, write))
 	MCFG_I8255_OUT_PORTB_CB(DEVWRITE8("cent_ctrl_out", output_latch_device, write))
@@ -57,16 +56,27 @@ MACHINE_CONFIG_MEMBER( pofo_hpc101_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor hpc101_t::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( hpc101 );
+}
+
+
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 //-------------------------------------------------
-//  pofo_hpc101_device - constructor
+//  hpc101_t - constructor
 //-------------------------------------------------
 
-pofo_hpc101_device::pofo_hpc101_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, POFO_HPC101, tag, owner, clock),
+hpc101_t::hpc101_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, HPC101, "Atari Portfolio HPC-101", tag, owner, clock, "hpc101", __FILE__),
 	device_portfolio_expansion_slot_interface(mconfig, *this),
 	m_ppi(*this, M82C55A_TAG)
 {
@@ -77,7 +87,7 @@ pofo_hpc101_device::pofo_hpc101_device(const machine_config &mconfig, const char
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void pofo_hpc101_device::device_start()
+void hpc101_t::device_start()
 {
 }
 
@@ -86,7 +96,7 @@ void pofo_hpc101_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void pofo_hpc101_device::device_reset()
+void hpc101_t::device_reset()
 {
 	m_ppi->reset();
 }
@@ -96,7 +106,7 @@ void pofo_hpc101_device::device_reset()
 //  nrdi_r - read
 //-------------------------------------------------
 
-uint8_t pofo_hpc101_device::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+uint8_t hpc101_t::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	if (!bcom)
 	{
@@ -119,7 +129,7 @@ uint8_t pofo_hpc101_device::nrdi_r(address_space &space, offs_t offset, uint8_t 
 //  nwri_w - write
 //-------------------------------------------------
 
-void pofo_hpc101_device::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+void hpc101_t::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	if (!bcom)
 	{

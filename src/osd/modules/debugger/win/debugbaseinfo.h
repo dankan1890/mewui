@@ -11,6 +11,7 @@
 
 #include "debugwin.h"
 
+#include "emu.h"
 
 
 class debugbase_info

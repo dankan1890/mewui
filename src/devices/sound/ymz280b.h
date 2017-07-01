@@ -7,13 +7,14 @@
  *
  **********************************************************************************************/
 
-#ifndef MAME_SOUND_YMZ280B_H
-#define MAME_SOUND_YMZ280B_H
-
 #pragma once
 
+#ifndef __YMZ280B_H__
+#define __YMZ280B_H__
 
-#define YMZ280B_MAKE_WAVS 0
+#include "emu.h"
+
+#define MAKE_WAVS           0
 
 #define MCFG_YMZ280B_IRQ_HANDLER(_devcb) \
 	devcb = &ymz280b_device::set_irq_handler(*device, DEVCB_##_devcb);
@@ -24,31 +25,32 @@
 #define MCFG_YMZ280B_EXT_WRITE_HANDLER(_devcb) \
 	devcb = &ymz280b_device::set_ext_write_handler(*device, DEVCB_##_devcb);
 
-class ymz280b_device : public device_t, public device_sound_interface
+class ymz280b_device : public device_t,
+									public device_sound_interface
 {
 public:
 	ymz280b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_irq_handler(device_t &device, Object &&cb) { return downcast<ymz280b_device &>(device).m_irq_handler.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_ext_read_handler(device_t &device, Object &&cb) { return downcast<ymz280b_device &>(device).m_ext_read_handler.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_ext_write_handler(device_t &device, Object &&cb) { return downcast<ymz280b_device &>(device).m_ext_write_handler.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_irq_handler(device_t &device, _Object object) { return downcast<ymz280b_device &>(device).m_irq_handler.set_callback(object); }
+	template<class _Object> static devcb_base &set_ext_read_handler(device_t &device, _Object object) { return downcast<ymz280b_device &>(device).m_ext_read_handler.set_callback(object); }
+	template<class _Object> static devcb_base &set_ext_write_handler(device_t &device, _Object object) { return downcast<ymz280b_device &>(device).m_ext_write_handler.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_post_load() override;
 	virtual void device_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
-	virtual void device_clock_changed() override;
 
 	// sound stream update overrides
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
-
 private:
+
 	/* struct describing a single playing ADPCM voice */
 	struct YMZ280BVoice
 	{
@@ -120,11 +122,12 @@ private:
 	uint32_t m_mem_size;
 	sound_stream *m_stream;           /* which stream are we using */
 	std::unique_ptr<int16_t[]> m_scratch;
-#if YMZ280B_MAKE_WAVS
+#if MAKE_WAVS
 	void *m_wavresample;              /* resampled waveform */
 #endif
 };
 
-DECLARE_DEVICE_TYPE(YMZ280B, ymz280b_device)
+extern const device_type YMZ280B;
 
-#endif // MAME_SOUND_YMZ280B_H
+
+#endif /* __YMZ280B_H__ */

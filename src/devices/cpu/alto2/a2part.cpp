@@ -5,7 +5,6 @@
  *   Xerox AltoII parity task
  *
  *****************************************************************************/
-#include "emu.h"
 #include "alto2cpu.h"
 
 //! called by the CPU when the parity task becomes active

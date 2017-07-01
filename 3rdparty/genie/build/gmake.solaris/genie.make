@@ -66,9 +66,6 @@ ifeq ($(config),release)
 	$(OBJDIR)/src/host/os_stat.o \
 	$(OBJDIR)/src/host/os_ticks.o \
 	$(OBJDIR)/src/host/os_uuid.o \
-	$(OBJDIR)/src/host/path_getabsolute.o \
-	$(OBJDIR)/src/host/path_getrelative.o \
-	$(OBJDIR)/src/host/path_helpers.o \
 	$(OBJDIR)/src/host/path_isabsolute.o \
 	$(OBJDIR)/src/host/premake.o \
 	$(OBJDIR)/src/host/premake_main.o \
@@ -146,9 +143,6 @@ ifeq ($(config),debug)
 	$(OBJDIR)/src/host/os_stat.o \
 	$(OBJDIR)/src/host/os_ticks.o \
 	$(OBJDIR)/src/host/os_uuid.o \
-	$(OBJDIR)/src/host/path_getabsolute.o \
-	$(OBJDIR)/src/host/path_getrelative.o \
-	$(OBJDIR)/src/host/path_helpers.o \
 	$(OBJDIR)/src/host/path_isabsolute.o \
 	$(OBJDIR)/src/host/premake.o \
 	$(OBJDIR)/src/host/premake_main.o \
@@ -293,18 +287,6 @@ $(OBJDIR)/src/host/os_ticks.o: ../../src/host/os_ticks.c
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF $(@:%.o=%.d) -c "$<"
 
 $(OBJDIR)/src/host/os_uuid.o: ../../src/host/os_uuid.c
-	@echo $(notdir $<)
-	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF $(@:%.o=%.d) -c "$<"
-
-$(OBJDIR)/src/host/path_getabsolute.o: ../../src/host/path_getabsolute.c
-	@echo $(notdir $<)
-	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF $(@:%.o=%.d) -c "$<"
-
-$(OBJDIR)/src/host/path_getrelative.o: ../../src/host/path_getrelative.c
-	@echo $(notdir $<)
-	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF $(@:%.o=%.d) -c "$<"
-
-$(OBJDIR)/src/host/path_helpers.o: ../../src/host/path_helpers.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF $(@:%.o=%.d) -c "$<"
 

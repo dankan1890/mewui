@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_BBC_JOYPORT_JOYSTICK_H
-#define MAME_BUS_BBC_JOYPORT_JOYSTICK_H
-
 #pragma once
 
+#ifndef __BBCMC_JOYSTICK__
+#define __BBCMC_JOYSTICK__
 
+
+#include "emu.h"
 #include "joyport.h"
 
 //**************************************************************************
@@ -45,7 +46,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(BBCMC_JOYSTICK, bbcmc_joystick_device)
+extern const device_type BBCMC_JOYSTICK;
 
 
-#endif // MAME_BUS_BBC_JOYPORT_JOYSTICK_H
+#endif

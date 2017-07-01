@@ -8,29 +8,33 @@
 
 **********************************************************************/
 
-#ifndef MAME_CPU_M6809_M6809_H
-#define MAME_CPU_M6809_M6809_H
-
 #pragma once
+
+#ifndef __M6809_H__
+#define __M6809_H__
 
 
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
 
+class m6809_device;
+
+
 // device type definition
-DECLARE_DEVICE_TYPE(M6809, m6809_device)
-DECLARE_DEVICE_TYPE(M6809E, m6809e_device)
+extern const device_type M6809;
+extern const device_type M6809E;
 
 // ======================> m6809_base_device
 
 // Used by core CPU interface
 class m6809_base_device : public cpu_device
 {
-protected:
+public:
 	// construction/destruction
-	m6809_base_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, const device_type type, int divider);
+	m6809_base_device(const machine_config &mconfig, const char *name, const char *tag, device_t *owner, uint32_t clock, const device_type type, int divider, const char *shortname, const char *source);
 
+protected:
 	class memory_interface {
 	public:
 		address_space *m_program, *m_sprogram;
@@ -306,7 +310,7 @@ public:
 // ======================> m6809e_device
 
 #define MCFG_M6809E_LIC_CB(_devcb) \
-	devcb = &m6809e_device::set_lic_cb(*device, DEVCB_##_devcb);
+	m6809e_device::set_lic_cb(*device, DEVCB_##_devcb);
 
 
 class m6809e_device : public m6809_base_device
@@ -330,4 +334,4 @@ enum
 
 /* M6809e has LIC line to indicate opcode/data fetch */
 
-#endif // MAME_CPU_M6809_M6809_H
+#endif /* __M6809_H__ */

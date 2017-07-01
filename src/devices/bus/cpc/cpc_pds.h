@@ -21,11 +21,10 @@
  *  running the target side
  */
 
-#ifndef MAME_BUS_CPC_CPC_PDS_H
-#define MAME_BUS_CPC_CPC_PDS_H
+#ifndef CPC_PDS_H_
+#define CPC_PDS_H_
 
-#pragma once
-
+#include "emu.h"
 #include "cpcexp.h"
 #include "machine/z80pio.h"
 
@@ -36,6 +35,9 @@ public:
 	// construction/destruction
 	cpc_pds_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 	DECLARE_READ8_MEMBER(pio_r);
 	DECLARE_WRITE8_MEMBER(pio_w);
 
@@ -44,9 +46,6 @@ protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
-
 private:
 	cpc_expansion_slot_device *m_slot;
 
@@ -54,6 +53,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(CPC_PDS, cpc_pds_device)
+extern const device_type CPC_PDS;
 
-#endif // MAME_BUS_CPC_CPC_PDS_H
+#endif /* CPC_PDS_H_ */

@@ -3,6 +3,7 @@
 #ifndef __OSDNET_H__
 #define __OSDNET_H__
 
+#include "emu.h"
 
 class osd_netdev;
 

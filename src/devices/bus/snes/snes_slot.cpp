@@ -56,9 +56,9 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SNS_CART_SLOT,        sns_cart_slot_device,        "sns_cart_slot",        "SNES Cartridge Slot")
-DEFINE_DEVICE_TYPE(SNS_SUFAMI_CART_SLOT, sns_sufami_cart_slot_device, "sns_sufami_cart_slot", "SNES Sufami Turbo Cartridge Slot")
-DEFINE_DEVICE_TYPE(SNS_BSX_CART_SLOT,    sns_bsx_cart_slot_device,    "sns_bsx_cart_slot",    "SNES BS-X Cartridge Slot")
+const device_type SNS_CART_SLOT = &device_creator<sns_cart_slot_device>;
+const device_type SNS_SUFAMI_CART_SLOT = &device_creator<sns_sufami_cart_slot_device>;
+const device_type SNS_BSX_CART_SLOT = &device_creator<sns_bsx_cart_slot_device>;
 
 //**************************************************************************
 //    SNES Cartridge Interface
@@ -68,10 +68,10 @@ DEFINE_DEVICE_TYPE(SNS_BSX_CART_SLOT,    sns_bsx_cart_slot_device,    "sns_bsx_c
 //  device_sns_cart_interface - constructor
 //-------------------------------------------------
 
-device_sns_cart_interface::device_sns_cart_interface(const machine_config &mconfig, device_t &device) :
-	device_slot_card_interface(mconfig, device),
-	m_rom(nullptr),
-	m_rom_size(0)
+device_sns_cart_interface::device_sns_cart_interface(const machine_config &mconfig, device_t &device)
+	: device_slot_card_interface(mconfig, device),
+		m_rom(nullptr),
+		m_rom_size(0)
 {
 }
 
@@ -172,28 +172,27 @@ void device_sns_cart_interface::rom_map_setup(uint32_t size)
 //-------------------------------------------------
 //  base_sns_cart_slot_device - constructor
 //-------------------------------------------------
-base_sns_cart_slot_device::base_sns_cart_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
-	device_image_interface(mconfig, *this),
-	device_slot_interface(mconfig, *this),
-	m_addon(ADDON_NONE),
-	m_type(SNES_MODE20),
-	m_cart(nullptr)
+base_sns_cart_slot_device::base_sns_cart_slot_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+						device_t(mconfig, type, name, tag, owner, clock, shortname, source),
+						device_image_interface(mconfig, *this),
+						device_slot_interface(mconfig, *this),
+						m_addon(ADDON_NONE),
+						m_type(SNES_MODE20), m_cart(nullptr)
 {
 }
 
 sns_cart_slot_device::sns_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	base_sns_cart_slot_device(mconfig, SNS_CART_SLOT, tag, owner, clock)
+						base_sns_cart_slot_device(mconfig, SNS_CART_SLOT, "SNES Cartridge Slot", tag, owner, clock, "sns_cart_slot", __FILE__)
 {
 }
 
 sns_sufami_cart_slot_device::sns_sufami_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	base_sns_cart_slot_device(mconfig, SNS_SUFAMI_CART_SLOT, tag, owner, clock)
+						base_sns_cart_slot_device(mconfig, SNS_SUFAMI_CART_SLOT, "SNES Sufami Turbo Cartridge Slot", tag, owner, clock, "sns_sufami_cart_slot", __FILE__)
 {
 }
 
 sns_bsx_cart_slot_device::sns_bsx_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	base_sns_cart_slot_device(mconfig, SNS_BSX_CART_SLOT, tag, owner, clock)
+						base_sns_cart_slot_device(mconfig, SNS_BSX_CART_SLOT, "SNES BS-X Cartridge Slot", tag, owner, clock, "sns_bsx_cart_slot", __FILE__)
 {
 }
 
@@ -212,6 +211,18 @@ base_sns_cart_slot_device::~base_sns_cart_slot_device()
 void base_sns_cart_slot_device::device_start()
 {
 	m_cart = dynamic_cast<device_sns_cart_interface *>(get_card_device());
+}
+
+//-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void base_sns_cart_slot_device::device_config_complete()
+{
+	// set brief and instance name
+	update_names();
 }
 
 
@@ -309,7 +320,7 @@ static const char *sns_get_slot(int type)
 
 
 /* Here we add a couple of cart utilities, to avoid duplicating the code in each DEVICE_IMAGE_LOAD */
-uint32_t base_sns_cart_slot_device::snes_skip_header(const uint8_t *ROM, uint32_t rom_size) const
+uint32_t base_sns_cart_slot_device::snes_skip_header( uint8_t *ROM, uint32_t rom_size )
 {
 	uint8_t header[512];
 	uint32_t offset = 512;
@@ -346,7 +357,7 @@ uint32_t base_sns_cart_slot_device::snes_skip_header(const uint8_t *ROM, uint32_
 /* This function assign a 'score' to data immediately after 'offset' to measure how valid they are
  as information block (to decide if the image is HiRom, LoRom, ExLoRom or ExHiRom) */
 /* Code from bsnes, courtesy of byuu - http://byuu.org/ , based on previous code by Cowering */
-static int snes_validate_infoblock(const uint8_t *infoblock, uint32_t offset)
+static int snes_validate_infoblock( uint8_t *infoblock, uint32_t offset )
 {
 	int score = 0;
 	uint16_t reset_vector = infoblock[offset + 0x3c] | (infoblock[offset + 0x3d] << 8);
@@ -455,7 +466,7 @@ static int snes_validate_infoblock(const uint8_t *infoblock, uint32_t offset)
 /* This determines if a cart is in Mode 20, 21, 22 or 25; sets state->m_cart[0].mode and
  state->m_cart[0].sram accordingly; and returns the offset of the internal header (needed to
  detect BSX and ST carts) */
-static uint32_t snes_find_hilo_mode(const device_t *device, const uint8_t *buffer, uint32_t buf_len)
+static uint32_t snes_find_hilo_mode(device_t *device, uint8_t *buffer, uint32_t buf_len )
 {
 	uint8_t valid_mode20 = 0;
 	uint8_t valid_mode21 = 0;
@@ -491,7 +502,7 @@ static uint32_t snes_find_hilo_mode(const device_t *device, const uint8_t *buffe
 }
 
 
-static int snes_find_addon_chip( const uint8_t *buffer, uint32_t start_offs )
+static int snes_find_addon_chip( uint8_t *buffer, uint32_t start_offs )
 {
 	/* Info mostly taken from http://snesemu.black-ship.net/misc/hardware/-from%20nsrt.edgeemu.com-chipinfo.htm */
 	switch (buffer[start_offs + 0x16])
@@ -598,7 +609,7 @@ image_init_result base_sns_cart_slot_device::call_load()
 		const char *slot_name;
 
 		/* Check for a header (512 bytes), and skip it if found */
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 		{
 			uint32_t tmplen = length();
 			std::vector<uint8_t> tmpROM(tmplen);
@@ -607,11 +618,11 @@ image_init_result base_sns_cart_slot_device::call_load()
 			fseek(offset, SEEK_SET);
 		}
 
-		len = !loaded_through_softlist() ? (length() - offset) : get_software_region_length("rom");
+		len = (software_entry() == nullptr) ? (length() - offset) : get_software_region_length("rom");
 
 		m_cart->rom_alloc(len, tag());
 		ROM = m_cart->get_rom_base();
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 			fread(ROM, len);
 		else
 			memcpy(ROM, get_software_region("rom"), len);
@@ -619,7 +630,7 @@ image_init_result base_sns_cart_slot_device::call_load()
 		m_cart->rom_map_setup(len);
 
 		// check for on-cart CPU bios
-		if (loaded_through_softlist())
+		if (software_entry() != nullptr)
 		{
 			if (get_software_region("addon"))
 			{
@@ -629,7 +640,7 @@ image_init_result base_sns_cart_slot_device::call_load()
 		}
 
 		// get pcb type
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 			get_cart_type_addon(ROM, len, m_type, m_addon);
 		else
 		{
@@ -642,7 +653,7 @@ image_init_result base_sns_cart_slot_device::call_load()
 					m_type = SNES_DSP_2MB;
 		}
 
-		if (!loaded_through_softlist())
+		if (software_entry() == nullptr)
 			setup_addon_from_fullpath();
 
 		// in carts with an add-on CPU having internal dump, this speeds up access to the internal rom
@@ -834,7 +845,7 @@ void base_sns_cart_slot_device::setup_nvram()
 {
 	uint8_t *ROM = (uint8_t *)m_cart->get_rom_base();
 	uint32_t size = 0;
-	if (!loaded_through_softlist())
+	if (software_entry() == nullptr)
 	{
 		int hilo_mode = snes_find_hilo_mode(this, ROM, m_cart->get_rom_size());
 		uint8_t sram_size = (m_type == SNES_SFX) ? (ROM[0x00ffbd] & 0x07) : (ROM[hilo_mode + 0x18] & 0x07);
@@ -869,10 +880,10 @@ void base_sns_cart_slot_device::setup_nvram()
 
 
 
-void base_sns_cart_slot_device::get_cart_type_addon(const uint8_t *ROM, uint32_t len, int &type, int &addon) const
+void base_sns_cart_slot_device::get_cart_type_addon(uint8_t *ROM, uint32_t len, int &type, int &addon)
 {
 	// First, look if the cart is HiROM or LoROM (and set snes_cart accordingly)
-	int hilo_mode = snes_find_hilo_mode(this, ROM, len);
+	int hilo_mode = snes_find_hilo_mode(this,ROM, len);
 
 	switch (hilo_mode)
 	{
@@ -978,17 +989,19 @@ void base_sns_cart_slot_device::get_cart_type_addon(const uint8_t *ROM, uint32_t
  get default card software
  -------------------------------------------------*/
 
-std::string base_sns_cart_slot_device::get_default_card_software(get_default_card_software_hook &hook) const
+std::string base_sns_cart_slot_device::get_default_card_software()
 {
-	if (hook.image_file())
+	bool fullpath = open_image_file(mconfig().options());
+
+	if (fullpath)
 	{
 		const char *slot_string;
 		uint32_t offset;
-		uint32_t len = hook.image_file()->size();
+		uint32_t len = m_file->size();
 		std::vector<uint8_t> rom(len);
 		int type = 0, addon = 0;
 
-		hook.image_file()->read(&rom[0], len);
+		m_file->read(&rom[0], len);
 
 		offset = snes_skip_header(&rom[0], len);
 
@@ -1032,6 +1045,8 @@ std::string base_sns_cart_slot_device::get_default_card_software(get_default_car
 		}
 
 		slot_string = sns_get_slot(type);
+
+		clear();
 
 		return std::string(slot_string);
 	}

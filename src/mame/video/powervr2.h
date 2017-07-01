@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_VIDEO_POWERVR2_H
-#define MAME_VIDEO_POWERVR2_H
-
-#pragma once
+#ifndef __POWERVR2_H__
+#define __POWERVR2_H__
 
 #define MCFG_POWERVR2_ADD(_tag, _irq_cb)                                \
 	MCFG_DEVICE_ADD(_tag, POWERVR2, 0)                                  \
@@ -485,6 +483,6 @@ private:
 
 };
 
-DECLARE_DEVICE_TYPE(POWERVR2, powervr2_device)
+extern const device_type POWERVR2;
 
-#endif // MAME_VIDEO_POWERVR2_H
+#endif

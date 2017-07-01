@@ -29,7 +29,6 @@ public:
 
 	/* misc */
 	int        m_readzoomroms;
-	emu_timer *m_nmi_timer;
 
 	/* devices */
 	required_device<cpu_device> m_maincpu;

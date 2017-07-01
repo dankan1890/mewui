@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NES_CTRL_ZAPPER
-#define MAME_BUS_NES_CTRL_ZAPPER
-
 #pragma once
 
+#ifndef __NES_ZAPPER__
+#define __NES_ZAPPER__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -45,6 +46,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(NES_ZAPPER, nes_zapper_device)
+extern const device_type NES_ZAPPER;
 
-#endif // MAME_BUS_NES_CTRL_ZAPPER
+
+#endif

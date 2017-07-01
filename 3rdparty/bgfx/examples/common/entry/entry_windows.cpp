@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2016 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -7,19 +7,16 @@
 
 #if ENTRY_CONFIG_USE_NATIVE && BX_PLATFORM_WINDOWS
 
-#include <bgfx/platform.h>
+#include <bgfx/bgfxplatform.h>
 
+#include <bx/uint32_t.h>
+#include <bx/thread.h>
 #include <bx/mutex.h>
 #include <bx/handlealloc.h>
-#include <bx/os.h>
-#include <bx/thread.h>
 #include <bx/timer.h>
-#include <bx/uint32_t.h>
-
 #include <tinystl/allocator.h>
 #include <tinystl/string.h>
 
-#include <windows.h>
 #include <windowsx.h>
 #include <xinput.h>
 
@@ -37,7 +34,7 @@ namespace entry
 	inline void winSetHwnd(::HWND _window)
 	{
 		bgfx::PlatformData pd;
-		bx::memSet(&pd, 0, sizeof(pd) );
+		memset(&pd, 0, sizeof(pd) );
 		pd.nwh = _window;
 		bgfx::setPlatformData(pd);
 	}
@@ -78,8 +75,8 @@ namespace entry
 		XInput()
 			: m_xinputdll(NULL)
 		{
-			bx::memSet(m_connected, 0, sizeof(m_connected) );
-			bx::memSet(m_state, 0, sizeof(m_state) );
+			memset(m_connected, 0, sizeof(m_connected) );
+			memset(m_state, 0, sizeof(m_state) );
 
 			m_deadzone[GamepadAxis::LeftX ] =
 			m_deadzone[GamepadAxis::LeftY ] = XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE;
@@ -88,7 +85,7 @@ namespace entry
 			m_deadzone[GamepadAxis::LeftZ ] =
 			m_deadzone[GamepadAxis::RightZ] = XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
 
-			bx::memSet(m_flip, 1, sizeof(m_flip) );
+			memset(m_flip, 1, sizeof(m_flip) );
 			m_flip[GamepadAxis::LeftY ] =
 			m_flip[GamepadAxis::RightY] = -1;
 		}
@@ -146,13 +143,12 @@ namespace entry
 			}
 
 			WindowHandle defaultWindow = { 0 };
+			GamepadHandle handle = { 0 };
 
-			for (uint16_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
+			for (uint32_t ii = 0; ii < BX_COUNTOF(m_state); ++ii)
 			{
 				XINPUT_STATE state;
 				DWORD result = XInputGetState(ii, &state);
-
-				GamepadHandle handle = { ii };
 
 				bool connected = ERROR_SUCCESS == result;
 				if (connected != m_connected[ii])
@@ -356,7 +352,7 @@ namespace entry
 			, m_init(false)
 			, m_exit(false)
 		{
-			bx::memSet(s_translateKey, 0, sizeof(s_translateKey) );
+			memset(s_translateKey, 0, sizeof(s_translateKey) );
 			s_translateKey[VK_ESCAPE]     = Key::Esc;
 			s_translateKey[VK_RETURN]     = Key::Return;
 			s_translateKey[VK_TAB]        = Key::Tab;
@@ -454,7 +450,7 @@ namespace entry
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(NULL);
 
 			WNDCLASSEXA wnd;
-			bx::memSet(&wnd, 0, sizeof(wnd) );
+			memset(&wnd, 0, sizeof(wnd) );
 			wnd.cbSize = sizeof(wnd);
 			wnd.style = CS_HREDRAW | CS_VREDRAW;
 			wnd.lpfnWndProc = wndProc;
@@ -564,15 +560,10 @@ namespace entry
 				case WM_USER_WINDOW_DESTROY:
 					{
 						WindowHandle handle = { (uint16_t)_wparam };
+						PostMessageA(m_hwnd[_wparam], WM_CLOSE, 0, 0);
 						m_eventQueue.postWindowEvent(handle);
 						DestroyWindow(m_hwnd[_wparam]);
 						m_hwnd[_wparam] = 0;
-
-						if (0 == handle.idx)
-						{
-							m_exit = true;
-							m_eventQueue.postExitEvent();
-						}
 					}
 					break;
 
@@ -624,7 +615,15 @@ namespace entry
 
 				case WM_QUIT:
 				case WM_CLOSE:
-					destroyWindow(findHandle(_hwnd) );
+					if (_hwnd == m_hwnd[0])
+					{
+						m_exit = true;
+						m_eventQueue.postExitEvent();
+					}
+					else
+					{
+						destroyWindow(findHandle(_hwnd) );
+					}
 					// Don't process message. Window will be destroyed later.
 					return 0;
 
@@ -832,7 +831,7 @@ namespace entry
 
 		WindowHandle findHandle(HWND _hwnd)
 		{
-			bx::MutexScope scope(m_lock);
+			bx::LwMutexScope scope(m_lock);
 			for (uint16_t ii = 0, num = m_windowAlloc.getNumHandles(); ii < num; ++ii)
 			{
 				uint16_t idx = m_windowAlloc.getHandleAt(ii);
@@ -970,7 +969,7 @@ namespace entry
 		static LRESULT CALLBACK wndProc(HWND _hwnd, UINT _id, WPARAM _wparam, LPARAM _lparam);
 
 		EventQueue m_eventQueue;
-		bx::Mutex m_lock;
+		bx::LwMutex m_lock;
 
 		bx::HandleAllocT<ENTRY_CONFIG_MAX_WINDOWS> m_windowAlloc;
 
@@ -1021,7 +1020,7 @@ namespace entry
 
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		bx::MutexScope scope(s_ctx.m_lock);
+		bx::LwMutexScope scope(s_ctx.m_lock);
 		WindowHandle handle = { s_ctx.m_windowAlloc.alloc() };
 
 		if (UINT16_MAX != handle.idx)
@@ -1045,7 +1044,7 @@ namespace entry
 		{
 			PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_DESTROY, _handle.idx, 0);
 
-			bx::MutexScope scope(s_ctx.m_lock);
+			bx::LwMutexScope scope(s_ctx.m_lock);
 			s_ctx.m_windowAlloc.free(_handle.idx);
 		}
 	}

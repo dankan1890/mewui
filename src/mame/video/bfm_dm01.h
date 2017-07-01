@@ -5,23 +5,21 @@
     Bellfruit dotmatrix driver, (under heavy construction !!!)
 
 *************************************************************************************/
-#ifndef MAME_VIDEO_BFM_DM01
-#define MAME_VIDEO_BFM_DM01
+#ifndef BFM_DM01
+#define BFM_DM01
 
-#pragma once
+#define DM_BYTESPERROW 9
 
-#include "screen.h"
+#define MCFG_BF_DM01_BUSY_CB(_devcb) \
+	devcb = &bfmdm01_device::set_busy_callback(*device, DEVCB_##_devcb);
 
-#define MCFG_BFM_DM01_BUSY_CB(_devcb) \
-	devcb = &bfm_dm01_device::set_busy_callback(*device, DEVCB_##_devcb);
-
-class bfm_dm01_device : public device_t
+class bfmdm01_device : public device_t
 {
 public:
-	bfm_dm01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-	~bfm_dm01_device() {}
+	bfmdm01_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~bfmdm01_device() {}
 
-	template <class Object> static devcb_base &set_busy_callback(device_t &device, Object &&cb) { return downcast<bfm_dm01_device &>(device).m_busy_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_busy_callback(device_t &device, _Object object) { return downcast<bfmdm01_device &>(device).m_busy_cb.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( control_r );
 	DECLARE_WRITE8_MEMBER( control_w );
@@ -35,15 +33,17 @@ public:
 	void writedata(uint8_t data);
 	int busy(void);
 
+	INTERRUPT_GEN_MEMBER(nmi_line_assert);
+
+	uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
+
 protected:
 	// device-level overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
 private:
-	static constexpr unsigned BYTES_PER_ROW = 9;
-
 	required_device<cpu_device> m_matrixcpu;
 	required_device<screen_device> m_screen;
 	required_device<palette_device> m_palette;
@@ -55,7 +55,7 @@ private:
 	int m_segbuffer[65];
 	int m_busy;
 
-	uint8_t m_scanline[BYTES_PER_ROW];
+	uint8_t m_scanline[DM_BYTESPERROW];
 	uint8_t m_comdata;
 
 	devcb_write_line m_busy_cb;
@@ -64,11 +64,9 @@ private:
 
 	bitmap_ind16 m_tmpbitmap;
 
-	INTERRUPT_GEN_MEMBER(nmi_line_assert);
-
-	uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 };
 
-DECLARE_DEVICE_TYPE(BFM_DM01, bfm_dm01_device)
+extern const device_type BF_DM01;
 
-#endif // MAME_VIDEO_BFM_DM01
+
+#endif

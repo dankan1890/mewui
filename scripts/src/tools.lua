@@ -31,7 +31,6 @@ links {
 	"7z",
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -74,7 +73,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -120,7 +118,6 @@ links {
 	ext_lib("expat"),
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -164,7 +161,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -210,7 +206,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -257,7 +252,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -302,7 +296,6 @@ links {
 	ext_lib("expat"),
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -343,7 +336,6 @@ links {
 	ext_lib("expat"),
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -384,7 +376,6 @@ links {
 	ext_lib("expat"),
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -427,7 +418,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -468,7 +458,6 @@ links {
 	ext_lib("expat"),
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -505,25 +494,25 @@ if _OPTIONS["SEPARATE_BIN"]~="1" then
 end
 
 links {
+	"utils",
+	ext_lib("expat"),
+	"7z",
+	"ocore_" .. _OPTIONS["osd"],
 	"netlist",
+	ext_lib("zlib"),
+	ext_lib("flac"),
 }
 
 includedirs {
-	MAME_DIR .. "src/lib",
+	MAME_DIR .. "src/osd",
+	MAME_DIR .. "src/lib/util",
+	MAME_DIR .. "src/lib/netlist",
 }
 
 files {
 	MAME_DIR .. "src/lib/netlist/prg/nltool.cpp",
+	MAME_DIR .. "src/emu/emucore.cpp",
 }
-
-configuration { "mingw*" }
-  linkoptions{
-	"-municode",
-  }
-configuration { "vs*" }
-  flags {
-	"Unicode",
-  }
 
 configuration { "mingw*" or "vs*" }
 	targetextension ".exe"
@@ -549,25 +538,21 @@ if _OPTIONS["SEPARATE_BIN"]~="1" then
 end
 
 links {
+	"utils",
+	"ocore_" .. _OPTIONS["osd"],
 	"netlist",
 }
 
 includedirs {
-	MAME_DIR .. "src/lib",
+	MAME_DIR .. "src/osd",
+	MAME_DIR .. "src/lib/util",
+	MAME_DIR .. "src/lib/netlist",
 }
 
 files {
 	MAME_DIR .. "src/lib/netlist/prg/nlwav.cpp",
+	MAME_DIR .. "src/emu/emucore.cpp",
 }
-
-configuration { "mingw*" }
-  linkoptions{
-	"-municode",
-  }
-configuration { "vs*" }
-  flags {
-	"Unicode",
-  }
 
 configuration { "mingw*" or "vs*" }
 	targetextension ".exe"
@@ -600,7 +585,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -646,7 +630,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -692,7 +675,6 @@ links {
 	"ocore_" .. _OPTIONS["osd"],
 	ext_lib("zlib"),
 	ext_lib("flac"),
-	ext_lib("utf8proc"),
 }
 
 includedirs {
@@ -780,7 +762,7 @@ if _OPTIONS["targetos"] == "macosx" then
 		end
 
 		linkoptions {
-			"-sectcreate __TEXT __info_plist " .. _MAKE.esc(MAME_DIR) .. "src/tools/aueffectutil-Info.plist",
+			"-sectcreate __TEXT __info_plist " .. MAME_DIR .. "src/tools/aueffectutil-Info.plist",
 		}
 
 		dependency {

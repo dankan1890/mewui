@@ -6,13 +6,14 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NES_CTRL_POWERPAD_H
-#define MAME_BUS_NES_CTRL_POWERPAD_H
-
 #pragma once
 
-#include "ctrl.h"
+#ifndef __NES_POWERPAD__
+#define __NES_POWERPAD__
 
+
+#include "emu.h"
+#include "ctrl.h"
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -48,4 +49,4 @@ private:
 extern const device_type NES_POWERPAD;
 
 
-#endif // MAME_BUS_NES_CTRL_POWERPAD_H
+#endif

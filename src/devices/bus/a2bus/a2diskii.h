@@ -8,11 +8,10 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_A2BUS_A2DISKII_H
-#define MAME_BUS_A2BUS_A2DISKII_H
+#ifndef __A2BUS_DISKII__
+#define __A2BUS_DISKII__
 
-#pragma once
-
+#include "emu.h"
 #include "a2bus.h"
 #include "machine/applefdc.h"
 
@@ -24,14 +23,17 @@ class a2bus_floppy_device:
 	public device_t,
 	public device_a2bus_card_interface
 {
-protected:
+public:
 	// construction/destruction
-	a2bus_floppy_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
+	a2bus_floppy_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
+
+protected:
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
 
 	// overrides of standard a2bus slot functions
 	virtual uint8_t read_c0nx(address_space &space, uint8_t offset) override;
@@ -55,21 +57,11 @@ class a2bus_iwmflop_device: public a2bus_floppy_device
 public:
 	a2bus_iwmflop_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
-	virtual void device_add_mconfig(machine_config &config) override;
-};
-
-class a2bus_agat7flop_device: public a2bus_floppy_device
-{
-public:
-	a2bus_agat7flop_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(A2BUS_DISKII,    a2bus_diskii_device)
-DECLARE_DEVICE_TYPE(A2BUS_IWM_FDC,   a2bus_iwmflop_device)
-DECLARE_DEVICE_TYPE(A2BUS_AGAT7_FDC, a2bus_agat7flop_device)
+extern const device_type A2BUS_DISKII;
+extern const device_type A2BUS_IWM_FDC;
 
-#endif  // MAME_BUS_A2BUS_A2DISKII_H
+#endif  /* __A2BUS_DISKII__ */

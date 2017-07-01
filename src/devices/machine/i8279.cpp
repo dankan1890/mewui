@@ -74,25 +74,23 @@ that uses this feature.
 
 **********************************************************************/
 
-#include "emu.h"
 #include "i8279.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
+#define LOG 0
 
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 // device type definition
-DEFINE_DEVICE_TYPE(I8279, i8279_device, "i8279", "Intel 8279 KDC")
+const device_type I8279 = &device_creator<i8279_device>;
 
 //-------------------------------------------------
 //  i8279_device - constructor
 //-------------------------------------------------
 
 i8279_device::i8279_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, I8279, tag, owner, clock),
+	: device_t(mconfig, I8279, "8279 KDC", tag, owner, clock, "i8279", __FILE__),
 	m_out_irq_cb(*this),
 	m_out_sl_cb(*this),
 	m_out_disp_cb(*this),
@@ -459,7 +457,7 @@ WRITE8_MEMBER( i8279_device::cmd_w )
 	switch (cmd)
 	{
 		case 0:
-			LOG("I8279 kb mode %x, display mode %x\n", data & 7, (data>>3) & 3);
+			if (LOG) logerror("I8279 '%s' kb mode %x, display mode %x\n", tag(), data & 7, (data>>3) & 3);
 			break;
 		case 1:
 			if (data > 1)
@@ -474,7 +472,7 @@ WRITE8_MEMBER( i8279_device::cmd_w )
 			{
 				m_autoinc = BIT(data, 4);
 				m_s_ram_ptr = data & 7;
-				LOG("I8279 selct sensor row %x, AI %d\n", m_s_ram_ptr, m_autoinc);
+				if (LOG) logerror("I8279 '%s' selct sensor row %x, AI %d\n", tag(), m_s_ram_ptr, m_autoinc);
 			}
 			break;
 		case 3:
@@ -487,7 +485,7 @@ WRITE8_MEMBER( i8279_device::cmd_w )
 			m_autoinc = BIT(data, 4);
 			break;
 		case 6:
-			LOG("I8279 clear cmd %x\n", data);
+			if (LOG) logerror("I8279 '%s' clear cmd %x\n", tag(), data);
 			clear_display();
 			break;
 	}

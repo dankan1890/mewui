@@ -12,8 +12,7 @@
 
 ***************************************************************************/
 
-#define DAC_GENERATOR_EPILOG(_dac_type, _dac_class, _dac_description, _dac_shortname) \
-DEFINE_DEVICE_TYPE(_dac_type, _dac_class, _dac_shortname, _dac_description)
+#define DAC_GENERATOR_EPILOG(_dac_type, _dac_class) \
+const device_type _dac_type = &device_creator<_dac_class>;
 
-#include "emu.h"
 #include "dac.h"

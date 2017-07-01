@@ -37,6 +37,7 @@ private:
 // debug view for state
 class debug_view_state : public debug_view
 {
+	friend resource_pool_object<debug_view_state>::~resource_pool_object();
 	friend class debug_view_manager;
 
 	// construction/destruction

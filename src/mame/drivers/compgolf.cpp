@@ -15,9 +15,6 @@
 #include "emu.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/2203intf.h"
-#include "screen.h"
-#include "speaker.h"
-
 #include "includes/compgolf.h"
 
 
@@ -221,7 +218,7 @@ void compgolf_state::machine_reset()
 	m_scrolly_hi = 0;
 }
 
-static MACHINE_CONFIG_START( compgolf )
+static MACHINE_CONFIG_START( compgolf, compgolf_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6809, 2000000)

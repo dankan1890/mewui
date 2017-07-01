@@ -6,13 +6,14 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_CPM_H
-#define MAME_BUS_C64_CPM_H
-
 #pragma once
 
-#include "exp.h"
+#ifndef __CPM__
+#define __CPM__
+
+#include "emu.h"
 #include "cpu/z80/z80.h"
+#include "exp.h"
 
 
 
@@ -29,6 +30,9 @@ public:
 	// construction/destruction
 	c64_cpm_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
+	// optional information overrides
+	virtual machine_config_constructor device_mconfig_additions() const override;
+
 	// not really public
 	DECLARE_READ8_MEMBER( dma_r );
 	DECLARE_WRITE8_MEMBER( dma_w );
@@ -37,9 +41,6 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
-	// optional information overrides
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	// device_c64_expansion_card_interface overrides
 	virtual void c64_cd_w(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2) override;
@@ -58,7 +59,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_CPM, c64_cpm_cartridge_device)
+extern const device_type C64_CPM;
 
 
-#endif // MAME_BUS_C64_CPM_H
+#endif

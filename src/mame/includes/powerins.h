@@ -1,7 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Luca Elia
 #include "machine/nmk112.h"
-#include "screen.h"
 
 class powerins_state : public driver_device
 {

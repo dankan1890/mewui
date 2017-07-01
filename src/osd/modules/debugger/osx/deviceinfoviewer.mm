@@ -6,7 +6,6 @@
 //
 //============================================================
 
-#include "emu.h"
 #import "deviceinfoviewer.h"
 
 
@@ -219,7 +218,6 @@
 	[contentScroll setHasVerticalScroller:YES];
 	[contentScroll setAutohidesScrollers:YES];
 	[contentScroll setBorderType:NSNoBorder];
-	[contentScroll setDrawsBackground:NO];
 	[contentScroll setDocumentView:contentView];
 	[contentView release];
 	[[window contentView] addSubview:contentScroll];

@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
-#ifndef MAME_SOUND_N63701X_H
-#define MAME_SOUND_N63701X_H
-
 #pragma once
+
+#ifndef __N63701X_H__
+#define __N63701X_H__
 
 //**************************************************************************
 //  INTERFACE CONFIGURATION MACROS
@@ -19,6 +19,24 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
+struct voice_63701x
+{
+	voice_63701x()
+		: select(0),
+			playing(0),
+			base_addr(0),
+			position(0),
+			volume(0),
+			silence_counter(0) {}
+
+	int select;
+	int playing;
+	int base_addr;
+	int position;
+	int volume;
+	int silence_counter;
+};
+
 
 // ======================> namco_63701x_device
 
@@ -27,8 +45,7 @@ class namco_63701x_device : public device_t,
 {
 public:
 	namco_63701x_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
-
-	DECLARE_WRITE8_MEMBER(namco_63701x_w);
+	~namco_63701x_device() { }
 
 protected:
 	// device-level overrides
@@ -37,24 +54,16 @@ protected:
 	// sound stream update overrides
 	virtual void sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples) override;
 
+public:
+	DECLARE_WRITE8_MEMBER(namco_63701x_w);
+
 private:
-	struct voice_63701x
-	{
-		voice_63701x() { }
-
-		int select          = 0;
-		int playing         = 0;
-		int base_addr       = 0;
-		int position        = 0;
-		int volume          = 0;
-		int silence_counter = 0;
-	};
-
 	required_region_ptr<uint8_t> m_rom;
 	voice_63701x m_voices[2];
 	sound_stream *m_stream; /* channel assigned by the mixer */
 };
 
-DECLARE_DEVICE_TYPE(NAMCO_63701X, namco_63701x_device)
+extern const device_type NAMCO_63701X;
 
-#endif // MAME_SOUND_N63701X_H
+
+#endif /* __N63701X_H__ */

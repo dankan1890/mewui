@@ -6,11 +6,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_VCS_CTRL_PADDLES_H
-#define MAME_BUS_VCS_CTRL_PADDLES_H
-
 #pragma once
 
+#ifndef __VCS_PADDLES__
+#define __VCS_PADDLES__
+
+#include "emu.h"
 #include "ctrl.h"
 
 
@@ -51,6 +52,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(VCS_PADDLES, vcs_paddles_device)
+extern const device_type VCS_PADDLES;
 
-#endif // MAME_BUS_VCS_CTRL_PADDLES_H
+
+#endif

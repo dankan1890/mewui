@@ -2,10 +2,8 @@
 // copyright-holders:Olivier Galibert
 // Intel i82875p northbridge
 
-#ifndef MAME_MACHINE_I82875P_H
-#define MAME_MACHINE_I82875P_H
-
-#pragma once
+#ifndef I82875P_H
+#define I82875P_H
 
 #include "pci.h"
 
@@ -122,6 +120,7 @@ public:
 	DECLARE_WRITE32_MEMBER(dram_controller_mode_w);
 
 protected:
+
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -132,8 +131,9 @@ private:
 	uint32_t dram_timing, dram_controller_mode;
 };
 
-DECLARE_DEVICE_TYPE(I82875P_HOST,     i82875p_host_device)
-DECLARE_DEVICE_TYPE(I82875P_AGP,      i82875p_agp_device)
-DECLARE_DEVICE_TYPE(I82875P_OVERFLOW, i82875p_overflow_device)
+extern const device_type I82875P_HOST;
+extern const device_type I82875P_AGP;
+extern const device_type I82875P_OVERFLOW;
 
-#endif // MAME_MACHINE_I82875P_H
+
+#endif

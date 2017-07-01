@@ -27,7 +27,7 @@ public:
 	virtual ~menu_select_software() override;
 
 protected:
-	virtual bool menu_has_search_active() override { return !m_search.empty(); }
+	virtual bool menu_has_search_active() override { return (m_search[0] != 0); }
 
 private:
 	enum { VISIBLE_GAMES_IN_SEARCH = 200 };
@@ -38,9 +38,6 @@ private:
 	int                 highlight;
 
 	virtual void populate(float &customtop, float &custombottom) override;
-	static std::pair<uint16_t, uint16_t> m_sub_filter;
-	static std::pair<const game_driver *, std::pair<uint16_t, uint16_t>> m_last_filter;
-
 	virtual void handle() override;
 
 	// draw left panel

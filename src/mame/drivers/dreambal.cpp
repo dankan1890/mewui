@@ -21,16 +21,14 @@ lamps?
 */
 
 #include "emu.h"
-#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
-#include "machine/deco104.h"
+#include "cpu/m68000/m68000.h"
 #include "machine/decocrpt.h"
-#include "machine/eepromser.h"
 #include "sound/okim6295.h"
 #include "video/deco16ic.h"
 #include "video/decospr.h"
-#include "screen.h"
-#include "speaker.h"
+#include "machine/eepromser.h"
+#include "machine/deco104.h"
 
 class dreambal_state : public driver_device
 {
@@ -304,7 +302,7 @@ void dreambal_state::machine_reset()
 }
 
 // xtals = 28.000, 9.8304
-static MACHINE_CONFIG_START( dreambal )
+static MACHINE_CONFIG_START( dreambal, dreambal_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 28000000/2)
@@ -346,7 +344,7 @@ static MACHINE_CONFIG_START( dreambal )
 	/* sound hardware */
 	MCFG_SPEAKER_STANDARD_MONO("mono")
 
-	MCFG_OKIM6295_ADD("oki", 9830400/8, PIN7_HIGH)
+	MCFG_OKIM6295_ADD("oki", 9830400/8, OKIM6295_PIN7_HIGH)
 
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_CONFIG_END

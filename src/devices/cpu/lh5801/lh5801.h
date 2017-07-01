@@ -7,10 +7,10 @@
  *
  *
  *****************************************************************************/
-#ifndef MAME_CPU_LH5801_LH5801_H
-#define MAME_CPU_LH5801_LH5801_H
-
 #pragma once
+
+#ifndef __LH5801_H__
+#define __LH5801_H__
 
 /*
 lh5801
@@ -61,7 +61,7 @@ enum
 
 
 #define MCFG_LH5801_IN(_devcb) \
-	devcb = &lh5801_cpu_device::set_in_func(*device, DEVCB_##_devcb);
+	lh5801_cpu_device::set_in_func(*device, DEVCB_##_devcb);
 
 
 class lh5801_cpu_device :  public cpu_device
@@ -71,7 +71,7 @@ public:
 	lh5801_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_in_func(device_t &device, Object &&cb) { return downcast<lh5801_cpu_device &>(device).m_in_func.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_in_func(device_t &device, _Object object) { return downcast<lh5801_cpu_device &>(device).m_in_func.set_callback(object); }
 
 protected:
 	// device-level overrides
@@ -87,7 +87,7 @@ protected:
 	virtual void execute_set_input(int inputnum, int state) override;
 
 	// device_memory_interface overrides
-	virtual const address_space_config *memory_space_config(address_spacenum spacenum) const override { return (spacenum == AS_PROGRAM) ? &m_program_config : (spacenum == AS_IO) ? &m_io_config : nullptr; }
+	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override { return (spacenum == AS_PROGRAM) ? &m_program_config : ( (spacenum == AS_IO) ? &m_io_config : nullptr ); }
 
 	// device_state_interface overrides
 	virtual void state_string_export(const device_state_entry &entry, std::string &str) const override;
@@ -182,7 +182,7 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(LH5801, lh5801_cpu_device)
+extern const device_type LH5801;
 
 
-#endif // MAME_CPU_LH5801_LH5801_H
+#endif /* __LH5801_H__ */

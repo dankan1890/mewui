@@ -72,7 +72,7 @@ SampleWindow = (function()
 		if (this.SampleDigest != sample_digest)
 		{
 			this.RootRow.Rows.ClearIndex("_ID");
-			var index = UpdateAllSampleFields(this.RootRow, samples, 0, "");
+			var index = UpdateSamples(this.RootRow, samples, 0, "");
 			this.SampleDigest = sample_digest;
 
 			// Clear out any left-over rows
@@ -85,8 +85,8 @@ SampleWindow = (function()
 
 		else if (this.Visible)
 		{
-			// Otherwise just update the existing sample fields
-		    UpdateChangedSampleFields(this.RootRow, samples, "");
+			// Otherwise just update the existing sample times
+			UpdateSampleTimes(this.RootRow, samples);
 		}
 	}
 
@@ -99,7 +99,7 @@ SampleWindow = (function()
 		{
 			var cell_data =
 			{
-			    _ID: i,
+				_ID: i,
 				Name: "",
 				Control: new WM.Label()
 			};
@@ -114,7 +114,7 @@ SampleWindow = (function()
 	}
 
 
-	function UpdateAllSampleFields(parent_row, samples, index, indent)
+	function UpdateSamples(parent_row, samples, index, indent)
 	{
 		for (var i in samples)
 		{
@@ -131,24 +131,21 @@ SampleWindow = (function()
 			row.CellData._ID = sample.id;
 			parent_row.Rows.AddRowToIndex("_ID", sample.id, row);
 
-            // Record sample name for later comparison
-			row.CellData.Name = sample.name;
-			
-		    // Set sample name and colour
+			// Set sample name and colour
 			var name_node = row.CellNodes["Name"];
 			name_node.innerHTML = indent + sample.name;
 			DOM.Node.SetColour(name_node, sample.colour);
 
 			row.CellData.Control.SetText(sample.us_length);
 
-			index = UpdateAllSampleFields(parent_row, sample.children, index, indent + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+			index = UpdateSamples(parent_row, sample.children, index, indent + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		}
 
 		return index;
 	}
 
 
-	function UpdateChangedSampleFields(parent_row, samples, indent)
+	function UpdateSampleTimes(parent_row, samples)
 	{
 		for (var i in samples)
 		{
@@ -156,20 +153,9 @@ SampleWindow = (function()
 
 			var row = parent_row.Rows.GetBy("_ID", sample.id);
 			if (row)
-			{
-			    row.CellData.Control.SetText(sample.us_length);
+				row.CellData.Control.SetText(sample.us_length);
 
-			    // Sample name will change when it switches from hash ID to network-retrieved 
-                // name. Quickly check that before re-applying the HTML for the name.
-			    if (row.CellData.Name != sample.name)
-			    {
-			        var name_node = row.CellNodes["Name"];
-			        row.CellData.Name = sample.name;
-			        name_node.innerHTML = indent + sample.name;
-			    }
-			}
-
-			UpdateChangedSampleFields(parent_row, sample.children, indent + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+			UpdateSampleTimes(parent_row, sample.children);
 		}
 	}
 

@@ -8,14 +8,13 @@
  *
  */
 
-#ifndef MAME_MACHINE_DS2401_H
-#define MAME_MACHINE_DS2401_H
-
-#pragma once
+#ifndef __DS2401_H__
+#define __DS2401_H__
 
 #define MCFG_DS2401_ADD(_tag) \
 	MCFG_DEVICE_ADD(_tag, DS2401, 0)
 
+#include "emu.h"
 
 class ds2401_device : public device_t
 {
@@ -68,6 +67,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(DS2401, ds2401_device)
+extern const device_type DS2401;
 
-#endif // MAME_MACHINE_DS2401_H
+#endif

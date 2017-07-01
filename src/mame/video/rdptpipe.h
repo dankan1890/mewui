@@ -16,6 +16,7 @@
 #ifndef _VIDEO_RDPTEXPIPE_H_
 #define _VIDEO_RDPTEXPIPE_H_
 
+#include "emu.h"
 #include "video/n64types.h"
 
 class n64_texture_pipe_t

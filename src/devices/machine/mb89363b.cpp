@@ -80,11 +80,12 @@
 #include "machine/mb89363b.h"
 
 
-DEFINE_DEVICE_TYPE(MB89363B, mb89363b_device, "mb89363b", "Fujitsu MB89363B I/O")
+
+extern const device_type MB89363B = &device_creator<mb89363b_device>;
 
 
 mb89363b_device::mb89363b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, MB89363B, tag, owner, clock),
+	: device_t(mconfig, MB89363B, "MB89363 I/O", tag, owner, clock, "mb89363b", __FILE__),
 		m_i8255_a(*this, "i8255_a"),
 		m_i8255_b(*this, "i8255_b"),
 		m_in_a_pa_cb(*this),
@@ -134,7 +135,7 @@ WRITE8_MEMBER( mb89363b_device::write )
 }
 
 
-MACHINE_CONFIG_MEMBER( mb89363b_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( mb89363b )
 	MCFG_DEVICE_ADD("i8255_a", I8255, 0)
 	MCFG_I8255_IN_PORTA_CB(READ8(mb89363b_device, i8255_a_port_a_r))
 	MCFG_I8255_IN_PORTB_CB(READ8(mb89363b_device, i8255_a_port_b_r))
@@ -152,6 +153,10 @@ MACHINE_CONFIG_MEMBER( mb89363b_device::device_add_mconfig )
 	MCFG_I8255_OUT_PORTC_CB(WRITE8(mb89363b_device, i8255_b_port_c_w))
 MACHINE_CONFIG_END
 
+machine_config_constructor mb89363b_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( mb89363b );
+}
 
 void mb89363b_device::device_start()
 {

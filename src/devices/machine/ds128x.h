@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_MACHINE_DS128X_H
-#define MAME_MACHINE_DS128X_H
+#ifndef __DS128X_H__
+#define __DS128X_H__
 
 #include "mc146818.h"
 
@@ -21,6 +21,6 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DS12885, ds12885_device)
+extern const device_type DS12885;
 
-#endif // MAME_MACHINE_DS128X_H
+#endif

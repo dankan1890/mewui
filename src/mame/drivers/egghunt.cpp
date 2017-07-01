@@ -47,8 +47,6 @@ I dumped it with this configuration. In case I'll redump it desoldering pin 16 f
 #include "cpu/z80/z80.h"
 #include "machine/gen_latch.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
 
 class egghunt_state : public driver_device
 {
@@ -417,7 +415,7 @@ void egghunt_state::machine_reset()
 	m_vidram_bank = 0;
 }
 
-static MACHINE_CONFIG_START( egghunt )
+static MACHINE_CONFIG_START( egghunt, egghunt_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,12000000/2)      /* 6 MHz ?*/
@@ -448,7 +446,7 @@ static MACHINE_CONFIG_START( egghunt )
 
 	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
 
-	MCFG_OKIM6295_ADD("oki", 1056000, PIN7_HIGH) // clock frequency & pin 7 not verified
+	MCFG_OKIM6295_ADD("oki", 1056000, OKIM6295_PIN7_HIGH) // clock frequency & pin 7 not verified
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 
@@ -475,4 +473,4 @@ ROM_START( egghunt )
 	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(f03589bc) SHA1(4d9c8422ac3c4c3ecba3bcf0ed47b8c7d5903f8c) )
 ROM_END
 
-GAME( 1995, egghunt, 0, egghunt, egghunt, egghunt_state, 0, ROT0, "Invi Image", "Egg Hunt", MACHINE_SUPPORTS_SAVE )
+GAME( 1995, egghunt, 0, egghunt, egghunt, driver_device, 0, ROT0, "Invi Image", "Egg Hunt", MACHINE_SUPPORTS_SAVE )

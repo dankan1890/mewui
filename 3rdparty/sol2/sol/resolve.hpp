@@ -26,10 +26,9 @@
 #include "tuple.hpp"
 
 namespace sol {
-	
+	// Clang has distinct problems with constexpr arguments,
+	// so don't use the constexpr versions inside of clang.
 #ifndef __clang__
-	// constexpr is fine for not-clang
-
 	namespace detail {
 		template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
 		inline constexpr auto resolve_i(types<R(Args...)>, F&&)->R(meta::unqualified_t<F>::*)(Args...) {
@@ -96,10 +95,6 @@ namespace sol {
 		return detail::resolve_i(types<Sig...>(), std::forward<F>(f));
 	}
 #else
-
-	// Clang has distinct problems with constexpr arguments,
-	// so don't use the constexpr versions inside of clang.
-
 	namespace detail {
 		template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
 		inline auto resolve_i(types<R(Args...)>, F&&)->R(meta::unqualified_t<F>::*)(Args...) {
@@ -165,9 +160,7 @@ namespace sol {
 	inline auto resolve(F&& f) -> decltype(detail::resolve_i(types<Sig...>(), std::forward<F>(f))) {
 		return detail::resolve_i(types<Sig...>(), std::forward<F>(f));
 	}
-
 #endif
-
 } // sol
 
 #endif // SOL_RESOLVE_HPP

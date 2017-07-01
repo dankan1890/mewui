@@ -8,10 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_BUS_LPCI_I82439TX_H
-#define MAME_BUS_LPCI_I82439TX_H
-
-#pragma once
+#ifndef __I82439TX_H__
+#define __I82439TX_H__
 
 #include "pci.h"
 #include "northbridge.h"
@@ -24,7 +22,8 @@
 
 // ======================> i82439tx_device
 
-class i82439tx_device : public northbridge_device, public pci_device_interface
+class i82439tx_device :  public northbridge_device,
+	public pci_device_interface
 {
 public:
 	// construction/destruction
@@ -55,6 +54,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(I82439TX, i82439tx_device)
+extern const device_type I82439TX;
 
-#endif // MAME_BUS_LPCI_I82439TX_H
+#endif /* __I82439TX_H__ */

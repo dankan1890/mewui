@@ -167,7 +167,7 @@ uint32_t shadfrce_state::screen_update(screen_device &screen, bitmap_ind16 &bitm
 	return 0;
 }
 
-WRITE_LINE_MEMBER(shadfrce_state::screen_vblank)
+void shadfrce_state::screen_eof(screen_device &screen, bool state)
 {
 	// rising edge
 	if (state)

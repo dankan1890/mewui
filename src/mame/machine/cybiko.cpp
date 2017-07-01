@@ -12,7 +12,6 @@
 
 */
 
-#include "emu.h"
 #include "includes/cybiko.h"
 
 #define LOG_LEVEL  1

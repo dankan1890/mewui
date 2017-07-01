@@ -12,11 +12,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_RA17XX_H
-#define MAME_MACHINE_RA17XX_H
+#ifndef __RA17XX_H__
+#define __RA17XX_H__
 
 #include "device.h"
-#include "cpu/pps4/pps4.h"
 
 /*************************************
  *
@@ -24,28 +23,23 @@
  *
  *************************************/
 
-// Set the read line handler
-#define MCFG_RA17XX_READ(devcb) \
-		ra17xx_device::set_iord(*device, DEVCB_##devcb);
-// Set the write line handler
-#define MCFG_RA17XX_WRITE(devcb) \
-		ra17xx_device::set_iowr(*device, DEVCB_##devcb);
-
-#define MCFG_RA17XX_CPU(tag) \
-		ra17xx_device::set_cpu_tag(*device, "^" tag);
-
+/* Set the read line handler */
+#define MCFG_RA17XX_READ(_devcb) \
+	ra17xx_device::set_iord(*device, DEVCB_##_devcb);
+/* Set the write line handler */
+#define MCFG_RA17XX_WRITE(_devcb) \
+	ra17xx_device::set_iowr(*device, DEVCB_##_devcb);
 class ra17xx_device : public device_t
 {
 public:
 	ra17xx_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~ra17xx_device() {}
 
 	DECLARE_READ8_MEMBER ( io_r );
 	DECLARE_WRITE8_MEMBER( io_w );
 
-	template <class Object> static devcb_base &set_iord(device_t &device, Object &&cb) { return downcast<ra17xx_device &>(device).m_iord.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_iowr(device_t &device, Object &&cb) { return downcast<ra17xx_device &>(device).m_iowr.set_callback(std::forward<Object>(cb)); }
-	static void set_cpu_tag(device_t &device, const char *tag) { downcast<ra17xx_device &>(device).m_cpu.set_tag(tag); }
-
+	template<class _Object> static devcb_base &set_iord(device_t &device, _Object object) { return downcast<ra17xx_device &>(device).m_iord.set_callback(object); }
+	template<class _Object> static devcb_base &set_iowr(device_t &device, _Object object) { return downcast<ra17xx_device &>(device).m_iowr.set_callback(object); }
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -57,9 +51,8 @@ private:
 	bool            m_enable;     //!< true if outputs are enabled
 	devcb_read8     m_iord;       //!< input line (read, offset = line, data = 0/1)
 	devcb_write8    m_iowr;       //!< output line (write, offset = line, data = 0/1)
-	required_device<pps4_device> m_cpu;
 };
 
-DECLARE_DEVICE_TYPE(RA17XX, ra17xx_device)
+extern const device_type RA17XX;
 
-#endif // MAME_MACHINE_RA17XX_H
+#endif /* __RA17XX_H__ */

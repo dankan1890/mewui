@@ -6,7 +6,6 @@
  */
 
 #include "nld_74153.h"
-#include "../nl_base.h"
 
 namespace netlist
 {
@@ -120,15 +119,15 @@ namespace netlist
 	NETLIB_UPDATE(74153)
 	{
 		m_sub.m_chan = (m_A() | (m_B()<<1));
-		m_sub.update_dev();
+		m_sub.do_update();
 	}
 
 
 	NETLIB_UPDATE(74153_dip)
 	{
 		m_2.m_chan = m_1.m_chan = (m_A() | (m_B()<<1));
-		m_1.update_dev();
-		m_2.update_dev();
+		m_1.do_update();
+		m_2.do_update();
 	}
 
 	NETLIB_DEVICE_IMPL(74153)

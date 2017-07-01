@@ -2,8 +2,8 @@
 // copyright-holders:Olivier Galibert
 // Intel i6300ESB southbridge
 
-#ifndef MAME_MACHINE_I6300ESB_H
-#define MAME_MACHINE_I6300ESB_H
+#ifndef I6300ESB_H
+#define I6300ESB_H
 
 #include "pci.h"
 #include "lpc-acpi.h"
@@ -155,7 +155,7 @@ private:
 	DECLARE_ADDRESS_MAP(map, 32);
 };
 
-DECLARE_DEVICE_TYPE(I6300ESB_LPC,      i6300esb_lpc_device)
-DECLARE_DEVICE_TYPE(I6300ESB_WATCHDOG, i6300esb_watchdog_device)
+extern const device_type I6300ESB_LPC;
+extern const device_type I6300ESB_WATCHDOG;
 
-#endif // MAME_MACHINE_I6300ESB_H
+#endif

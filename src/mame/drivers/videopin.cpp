@@ -18,14 +18,11 @@ solarwar
 *************************************************************************/
 
 #include "emu.h"
-#include "includes/videopin.h"
-
 #include "cpu/m6502/m6502.h"
 #include "machine/watchdog.h"
-#include "sound/discrete.h"
-#include "speaker.h"
-
+#include "includes/videopin.h"
 #include "videopin.lh"
+#include "sound/discrete.h"
 
 
 void videopin_state::update_plunger()
@@ -358,7 +355,7 @@ GFXDECODE_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( videopin )
+static MACHINE_CONFIG_START( videopin, videopin_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M6502, 12096000 / 16)
@@ -465,5 +462,5 @@ ROM_END
  *
  *************************************/
 
-GAMEL( 1979, videopin, 0, videopin, videopin, videopin_state, 0, ROT270, "Atari", "Video Pinball", MACHINE_SUPPORTS_SAVE, layout_videopin )
-GAMEL( 1979, solarwar, 0, videopin, solarwar, videopin_state, 0, ROT270, "Atari", "Solar War", MACHINE_SUPPORTS_SAVE, layout_videopin )
+GAMEL( 1979, videopin, 0, videopin, videopin, driver_device, 0, ROT270, "Atari", "Video Pinball", MACHINE_SUPPORTS_SAVE, layout_videopin )
+GAMEL( 1979, solarwar, 0, videopin, solarwar, driver_device, 0, ROT270, "Atari", "Solar War", MACHINE_SUPPORTS_SAVE, layout_videopin )

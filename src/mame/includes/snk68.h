@@ -4,7 +4,6 @@
 #include "machine/gen_latch.h"
 #include "sound/upd7759.h"
 #include "video/snk68_spr.h"
-#include "screen.h"
 
 class snk68_state : public driver_device
 {
@@ -39,7 +38,7 @@ public:
 	uint32_t m_fg_tile_offset;
 
 	// common
-	DECLARE_WRITE8_MEMBER(sound_w);
+	DECLARE_WRITE16_MEMBER(sound_w);
 	DECLARE_WRITE8_MEMBER(D7759_write_port_0_w);
 	DECLARE_WRITE8_MEMBER(D7759_upd_reset_w);
 

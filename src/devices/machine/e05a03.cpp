@@ -14,10 +14,10 @@
     DEVICE INTERFACE
 *****************************************************************************/
 
-DEFINE_DEVICE_TYPE(E05A03, e05a03_device, "e05a03", "Epson E05A03 Gate Array")
+const device_type E05A03 = &device_creator<e05a03_device>;
 
 e05a03_device::e05a03_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, E05A03, tag, owner, clock),
+	: device_t(mconfig, E05A03, "E05A03", tag, owner, clock, "e05a03", __FILE__),
 	m_write_nlq_lp(*this),
 	m_write_pe_lp(*this),
 	m_write_reso(*this),

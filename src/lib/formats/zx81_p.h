@@ -14,7 +14,6 @@
 #include "cassimg.h"
 
 CASSETTE_FORMATLIST_EXTERN(zx81_p_format);
-CASSETTE_FORMATLIST_EXTERN(zx81_cassette_formats);
 CASSETTE_FORMATLIST_EXTERN(zx80_o_format);
 
 #endif /* ZX81_P_H */

@@ -102,15 +102,12 @@
  */
 
 #include "emu.h"
-#include "includes/pass.h"
-
-#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
+#include "cpu/m68000/m68000.h"
 #include "machine/gen_latch.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/pass.h"
 
 
 /* todo: check all memory regions actually readable / read from */
@@ -237,7 +234,7 @@ static GFXDECODE_START( pass )
 GFXDECODE_END
 
 /* todo : is this correct? */
-static MACHINE_CONFIG_START( pass )
+static MACHINE_CONFIG_START( pass, pass_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M68000, 14318180/2 )
@@ -271,7 +268,7 @@ static MACHINE_CONFIG_START( pass )
 	MCFG_SOUND_ADD("ymsnd", YM2203, 14318180/4)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 
-	MCFG_OKIM6295_ADD("oki", 792000, PIN7_HIGH) // clock frequency & pin 7 not verified
+	MCFG_OKIM6295_ADD("oki", 792000, OKIM6295_PIN7_HIGH) // clock frequency & pin 7 not verified
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_CONFIG_END
 
@@ -299,4 +296,4 @@ ROM_START( pass )
 ROM_END
 
 
-GAME( 1992, pass, 0, pass, pass, pass_state, 0, ROT0, "Oksan", "Pass", MACHINE_SUPPORTS_SAVE )
+GAME( 1992, pass, 0, pass, pass, driver_device, 0, ROT0, "Oksan", "Pass", MACHINE_SUPPORTS_SAVE )

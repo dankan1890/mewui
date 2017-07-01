@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_NEORAM_H
-#define MAME_BUS_C64_NEORAM_H
-
 #pragma once
 
+#ifndef __NEORAM__
+#define __NEORAM__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -50,7 +51,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_NEORAM, c64_neoram_cartridge_device)
+extern const device_type C64_NEORAM;
 
 
-#endif // MAME_BUS_C64_NEORAM_H
+#endif

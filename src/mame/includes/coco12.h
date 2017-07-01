@@ -10,8 +10,8 @@
 
 #pragma once
 
-#ifndef MAME_INCLUDES_COCO12_H
-#define MAME_INCLUDES_COCO12_H
+#ifndef __COCO12__
+#define __COCO12__
 
 
 #include "includes/coco.h"
@@ -37,31 +37,31 @@ class coco12_state : public coco_state
 {
 public:
 	coco12_state(const machine_config &mconfig, device_type type, const char *tag)
-		: coco_state(mconfig, type, tag)
-		, m_sam(*this, SAM_TAG)
-		, m_vdg(*this, VDG_TAG)
+	: coco_state(mconfig, type, tag),
+		m_sam(*this, SAM_TAG),
+		m_vdg(*this, VDG_TAG)
 	{
 	}
+
+
+	required_device<sam6883_device> m_sam;
+	required_device<mc6847_base_device> m_vdg;
 
 	DECLARE_READ8_MEMBER( sam_read );
 
 	DECLARE_WRITE_LINE_MEMBER( horizontal_sync );
 	DECLARE_WRITE_LINE_MEMBER( field_sync );
-
 protected:
 	virtual void device_start() override;
 	virtual void update_cart_base(uint8_t *cart_base) override;
 
-	// PIA1
+	/* PIA1 */
 	virtual void pia1_pb_changed(uint8_t data) override;
 
-	sam6883_device &sam() { return *m_sam; }
-
 private:
-	void configure_sam(void);
 
-	required_device<sam6883_device> m_sam;
-	required_device<mc6847_base_device> m_vdg;
+	void configure_sam(void);
 };
 
-#endif // MAME_INCLUDES_COCO12_H
+
+#endif /* __COCO12__ */

@@ -62,26 +62,21 @@ correctly.
 ***************************************************************************/
 
 /* 12mhz OSC */
-#define MASTER_CLOCK      (XTAL_12MHz)
-#define MAIN_CPU_CLOCK      (MASTER_CLOCK/3)
-#define SOUND_CPU_CLOCK     (MASTER_CLOCK/4)
-#define AUDIO_CLOCK     (MASTER_CLOCK/8)
+#define MAIN_CPU_CLOCK      (XTAL_12MHz/3)
+#define SOUND_CPU_CLOCK     (XTAL_12MHz/4)
+#define AUDIO_CLOCK     (XTAL_12MHz/8)
 /* 20mhz OSC - both Z80s are 4 MHz */
-#define MASTER_CLOCK_1942P     (XTAL_20MHz)
-#define MAIN_CPU_CLOCK_1942P      (MASTER_CLOCK_1942P/5)
-#define SOUND_CPU_CLOCK_1942P     (MASTER_CLOCK_1942P/5)
-#define AUDIO_CLOCK_1942P     (MASTER_CLOCK_1942P/16)
+#define MAIN_CPU_CLOCK_1942P      (XTAL_20MHz/5)
+#define SOUND_CPU_CLOCK_1942P     (XTAL_20MHz/5)
+#define AUDIO_CLOCK_1942P     (XTAL_20MHz/16)
 
 #include "emu.h"
-#include "includes/1942.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
 #include "machine/netlist.h"
-#include "screen.h"
-#include "speaker.h"
-
 #include "netlist/devices/net_lib.h"
+
+#include "includes/1942.h"
 
 #define NLFILT(RA, R1, C1, R2) \
 	NET_C(RA.1, V5)             \
@@ -560,7 +555,7 @@ void _1942_state::machine_reset()
 	m_scroll[1] = 0;
 }
 
-static MACHINE_CONFIG_START( 1942 )
+static MACHINE_CONFIG_START( 1942, _1942_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, MAIN_CPU_CLOCK)    /* 4 MHz ??? */
@@ -628,7 +623,7 @@ static MACHINE_CONFIG_START( 1942 )
 MACHINE_CONFIG_END
 
 
-static MACHINE_CONFIG_START( 1942p )
+static MACHINE_CONFIG_START( 1942p, _1942_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, MAIN_CPU_CLOCK_1942P)    /* 4 MHz - verified on PCB */

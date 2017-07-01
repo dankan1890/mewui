@@ -5,14 +5,13 @@
  *
  */
 
-#include "emu.h"
 #include "acb4070.h"
 
 // device type definition
-DEFINE_DEVICE_TYPE(ACB4070, acb4070_device, "acb4070", "ACB4070")
+const device_type ACB4070 = &device_creator<acb4070_device>;
 
 acb4070_device::acb4070_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: scsihd_device(mconfig, ACB4070, tag, owner, clock)
+	: scsihd_device(mconfig, ACB4070, "ACB4070", tag, owner, clock, "acb4070", __FILE__)
 {
 }
 

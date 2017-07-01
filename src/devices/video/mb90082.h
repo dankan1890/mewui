@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_MB90082DEV_H
-#define MAME_VIDEO_MB90082DEV_H
-
 #pragma once
+
+#ifndef __MB90082DEV_H__
+#define __MB90082DEV_H__
 
 
 
@@ -23,6 +23,12 @@
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
+
+enum
+{
+	OSD_COMMAND = 0,
+	OSD_DATA
+};
 
 
 // ======================> mb90082_device
@@ -46,15 +52,9 @@ protected:
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual const address_space_config *memory_space_config(address_spacenum spacenum) const override;
+	virtual const address_space_config *memory_space_config(address_spacenum spacenum = AS_0) const override;
 
 private:
-	enum
-	{
-		OSD_COMMAND = 0,
-		OSD_DATA
-	};
-
 	uint8_t m_cmd_ff;
 	uint8_t m_cmd,m_cmd_param;
 	uint8_t m_reset_line;
@@ -72,6 +72,14 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(MB90082, mb90082_device)
+extern const device_type MB90082;
 
-#endif // MAME_VIDEO_MB90082DEV_H
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

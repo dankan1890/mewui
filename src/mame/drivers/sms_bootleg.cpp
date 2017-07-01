@@ -117,10 +117,11 @@ A Korean version has been seen too (unless this can be switched?)
 */
 
 #include "emu.h"
-#include "includes/sms_bootleg.h"
-
 #include "cpu/z80/z80.h"
-#include "speaker.h"
+#include "sound/sn76496.h"
+#include "sound/ym2413.h"
+#include "video/315_5124.h"
+#include "includes/sms_bootleg.h"
 
 
 
@@ -159,7 +160,7 @@ ADDRESS_MAP_END
 
 
 
-static MACHINE_CONFIG_START( sms_supergame )
+static MACHINE_CONFIG_START( sms_supergame, smsbootleg_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_10_738635MHz/3)
 	MCFG_CPU_PROGRAM_MAP(sms_supergame_map)
@@ -178,9 +179,9 @@ static MACHINE_CONFIG_START( sms_supergame )
 
 	MCFG_SCREEN_ADD("screen", RASTER)
 	MCFG_SCREEN_RAW_PARAMS(XTAL_10_738635MHz/2, \
-			sega315_5124_device::WIDTH , sega315_5124_device::LBORDER_START + sega315_5124_device::LBORDER_WIDTH - 2, sega315_5124_device::LBORDER_START + sega315_5124_device::LBORDER_WIDTH + 256 + 10, \
-			sega315_5124_device::HEIGHT_NTSC, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT + 224)
-	MCFG_SCREEN_REFRESH_RATE((double) XTAL_10_738635MHz/2 / (sega315_5124_device::WIDTH * sega315_5124_device::HEIGHT_NTSC))
+		SEGA315_5124_WIDTH , SEGA315_5124_LBORDER_START + SEGA315_5124_LBORDER_WIDTH - 2, SEGA315_5124_LBORDER_START + SEGA315_5124_LBORDER_WIDTH + 256 + 10, \
+		SEGA315_5124_HEIGHT_NTSC, SEGA315_5124_TBORDER_START + SEGA315_5124_NTSC_224_TBORDER_HEIGHT, SEGA315_5124_TBORDER_START + SEGA315_5124_NTSC_224_TBORDER_HEIGHT + 224)
+	MCFG_SCREEN_REFRESH_RATE((double) XTAL_10_738635MHz/2 / (SEGA315_5124_WIDTH * SEGA315_5124_HEIGHT_NTSC))
 	MCFG_SCREEN_UPDATE_DRIVER(sms_state, screen_update_sms)
 
 	MCFG_DEVICE_ADD("sms_vdp", SEGA315_5246, 0)

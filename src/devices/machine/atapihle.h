@@ -8,17 +8,20 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_ATAPIHLE_H
-#define MAME_MACHINE_ATAPIHLE_H
-
 #pragma once
+
+#ifndef __ATAPIHLE_H__
+#define __ATAPIHLE_H__
 
 #include "atahle.h"
 #include "t10spc.h"
 
-class atapi_hle_device : public ata_hle_device, public virtual t10spc
+class atapi_hle_device : public ata_hle_device,
+	public virtual t10spc
 {
 public:
+	atapi_hle_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock,const char *shortname, const char *source);
+
 	enum atapi_features_flag_t
 	{
 		ATAPI_FEATURES_FLAG_DMA = 0x01,
@@ -47,8 +50,6 @@ public:
 	};
 
 protected:
-	atapi_hle_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -71,7 +72,7 @@ private:
 	int m_packet;
 	int m_data_size;
 
-	static constexpr int ATAPI_BUFFER_LENGTH = 0xf800;
+	static const int ATAPI_BUFFER_LENGTH = 0xf800;
 };
 
-#endif // MAME_MACHINE_ATAPIHLE_H
+#endif

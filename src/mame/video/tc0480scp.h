@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Nicola Salmoria
-#ifndef MAME_VIDEO_TC0480SCP_H
-#define MAME_VIDEO_TC0480SCP_H
-
-#pragma once
+#ifndef __TC0480SCP_H__
+#define __TC0480SCP_H__
 
 class tc0480scp_device : public device_t
 {
 public:
 	tc0480scp_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~tc0480scp_device() {}
 
 	// static configuration
 	static void static_set_gfxdecode_tag(device_t &device, const char *tag);
@@ -111,7 +110,7 @@ private:
 	void bg23_draw( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int layer, int flags, uint32_t priority );
 };
 
-DECLARE_DEVICE_TYPE(TC0480SCP, tc0480scp_device)
+extern const device_type TC0480SCP;
 
 
 #define MCFG_TC0480SCP_GFX_REGION(_region) \
@@ -135,4 +134,4 @@ DECLARE_DEVICE_TYPE(TC0480SCP, tc0480scp_device)
 #define MCFG_TC0480SCP_GFXDECODE(_gfxtag) \
 	tc0480scp_device::static_set_gfxdecode_tag(*device, "^" _gfxtag);
 
-#endif // MAME_VIDEO_TC0480SCP_H
+#endif

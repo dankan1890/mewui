@@ -14,7 +14,6 @@
 
 */
 
-#include "emu.h"
 #include "dj2db.h"
 
 
@@ -33,7 +32,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(S100_DJ2DB, s100_dj2db_device, "s100_sj2db", "Morrow Disk Jockey 2D/B")
+const device_type S100_DJ2DB = &device_creator<s100_dj2db_device>;
 
 
 //-------------------------------------------------
@@ -98,10 +97,10 @@ WRITE_LINE_MEMBER( s100_dj2db_device::fdc_drq_w )
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( s100_dj2db )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( s100_dj2db_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( s100_dj2db )
 	MCFG_DEVICE_ADD(BR1941_TAG, COM8116, XTAL_5_0688MHz)
 	MCFG_COM8116_FR_HANDLER(WRITELINE(s100_dj2db_device, fr_w))
 
@@ -114,6 +113,17 @@ MACHINE_CONFIG_MEMBER( s100_dj2db_device::device_add_mconfig )
 	MCFG_FLOPPY_DRIVE_ADD(MB8866_TAG":2", s100_dj2db_floppies, nullptr,    floppy_image_device::default_floppy_formats)
 	MCFG_FLOPPY_DRIVE_ADD(MB8866_TAG":3", s100_dj2db_floppies, nullptr,    floppy_image_device::default_floppy_formats)
 MACHINE_CONFIG_END
+
+
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor s100_dj2db_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( s100_dj2db );
+}
 
 
 //-------------------------------------------------
@@ -241,7 +251,7 @@ ioport_constructor s100_dj2db_device::device_input_ports() const
 //-------------------------------------------------
 
 s100_dj2db_device::s100_dj2db_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, S100_DJ2DB, tag, owner, clock),
+	device_t(mconfig, S100_DJ2DB, "DJ2DB", tag, owner, clock, "dj2db", __FILE__),
 	device_s100_card_interface(mconfig, *this),
 	m_fdc(*this, MB8866_TAG),
 	m_dbrg(*this, BR1941_TAG),

@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Jonathan Gevaryahu
-#ifndef MAME_AUDIO_SOCRATES_H
-#define MAME_AUDIO_SOCRATES_H
-
 #pragma once
+
+#ifndef __SOCR_SND_H__
+#define __SOCR_SND_H__
 
 class socrates_snd_device : public device_t,
 							public device_sound_interface
@@ -38,7 +38,7 @@ private:
 	uint16_t          m_DAC_output;   // output
 };
 
-DECLARE_DEVICE_TYPE(SOCRATES_SOUND, socrates_snd_device)
+extern const device_type SOCRATES_SOUND;
 
 
-#endif // MAME_AUDIO_SOCRATES_H
+#endif /* __SOCR_SND_H__ */

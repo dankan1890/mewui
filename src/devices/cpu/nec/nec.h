@@ -1,10 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail
 /* ASG 971222 -- rewrote this interface */
-#ifndef MAME_CPU_NEC_NEC_H
-#define MAME_CPU_NEC_NEC_H
-
-#pragma once
+#ifndef __NEC_H_
+#define __NEC_H_
 
 
 #define NEC_INPUT_LINE_INTP0 10
@@ -23,10 +21,11 @@ enum
 
 class nec_common_device : public cpu_device
 {
-protected:
+public:
 	// construction/destruction
-	nec_common_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, bool is_16bit, offs_t fetch_xor, uint8_t prefetch_size, uint8_t prefetch_cycles, uint32_t chip_type);
+	nec_common_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source, bool is_16bit, offs_t fetch_xor, uint8_t prefetch_size, uint8_t prefetch_cycles, uint32_t chip_type);
 
+protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
@@ -56,12 +55,12 @@ private:
 	address_space_config m_program_config;
 	address_space_config m_io_config;
 
-	/* NEC registers */
-	union necbasicregs
-	{                   /* eight general registers */
-		uint16_t w[8];    /* viewed as 16 bits registers */
-		uint8_t  b[16];   /* or as 8 bit registers */
-	};
+/* NEC registers */
+union necbasicregs
+{                   /* eight general registers */
+	uint16_t w[8];    /* viewed as 16 bits registers */
+	uint8_t  b[16];   /* or as 8 bit registers */
+};
 
 	necbasicregs m_regs;
 	offs_t  m_fetch_xor;
@@ -424,9 +423,11 @@ public:
 };
 
 
-DECLARE_DEVICE_TYPE(V20,  v20_device)
-DECLARE_DEVICE_TYPE(V30,  v30_device)
-DECLARE_DEVICE_TYPE(V33,  v33_device)
-DECLARE_DEVICE_TYPE(V33A, v33a_device)
+extern const device_type V20;
+extern const device_type V30;
+extern const device_type V33;
+extern const device_type V33A;
 
-#endif // MAME_CPU_NEC_NEC_H
+
+
+#endif

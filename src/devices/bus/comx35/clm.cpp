@@ -44,9 +44,7 @@ Notes:
 
 */
 
-#include "emu.h"
 #include "clm.h"
-#include "screen.h"
 
 
 
@@ -64,7 +62,7 @@ Notes:
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(COMX_CLM, comx_clm_device, "comx_clm", "COMX 80 Column Card")
+const device_type COMX_CLM = &device_creator<comx_clm_device>;
 
 
 //-------------------------------------------------
@@ -133,10 +131,10 @@ GFXDECODE_END
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( comx_clm )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( comx_clm_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( comx_clm )
 	MCFG_SCREEN_ADD_MONOCHROME(MC6845_SCREEN_TAG, RASTER, rgb_t::white())
 	MCFG_SCREEN_UPDATE_DEVICE(MC6845_TAG, mc6845_device, screen_update)
 	MCFG_SCREEN_SIZE(80*8, 24*8)
@@ -154,6 +152,18 @@ MACHINE_CONFIG_MEMBER( comx_clm_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor comx_clm_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( comx_clm );
+}
+
+
+
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
@@ -163,7 +173,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 comx_clm_device::comx_clm_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, COMX_CLM, tag, owner, clock),
+	device_t(mconfig, COMX_CLM, "COMX 80 Column Card", tag, owner, clock, "comx_clm", __FILE__),
 	device_comx_expansion_card_interface(mconfig, *this),
 	device_gfx_interface(mconfig, *this, nullptr, "palette"),
 	m_crtc(*this, MC6845_TAG),

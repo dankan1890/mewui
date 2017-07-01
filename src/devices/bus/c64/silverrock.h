@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_SILVERROCK_H
-#define MAME_BUS_C64_SILVERROCK_H
-
 #pragma once
 
+#ifndef __SILVERROCK__
+#define __SILVERROCK__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -44,7 +45,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_SILVERROCK, c64_silverrock_cartridge_device)
+extern const device_type C64_SILVERROCK;
 
 
-#endif // MAME_BUS_C64_SILVERROCK_H
+#endif

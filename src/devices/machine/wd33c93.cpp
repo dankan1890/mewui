@@ -16,9 +16,8 @@
 #include "emu.h"
 #include "wd33c93.h"
 
-//#define VERBOSE 1
-#include "logmacro.h"
-
+#define VERBOSE 0
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
 /* WD commands */
 #define WD_CMD_RESET                0x00
@@ -138,7 +137,7 @@
 #define SRCID_ER                    0x80
 
 /* convernience functions */
-uint8_t wd33c93_device::getunit()
+uint8_t wd33c93_device::getunit( void )
 {
 	/* return the destination unit id */
 	return regs[WD_DESTINATION_ID] & SRCID_MASK;
@@ -152,7 +151,7 @@ void wd33c93_device::set_xfer_count( int count )
 	regs[ WD_TRANSFER_COUNT_MSB ] = ( count >> 16 ) & 0xff;
 }
 
-int wd33c93_device::get_xfer_count()
+int wd33c93_device::get_xfer_count( void )
 {
 	/* get the count */
 	int count = regs[ WD_TRANSFER_COUNT_MSB ];
@@ -474,7 +473,7 @@ WRITE8_MEMBER(wd33c93_device::write)
 
 		case 1:
 		{
-			LOG( "WD33C93: PC=%08x - Write REG=%02x, data = %02x\n", space.device().safe_pc(), sasr, data );
+			LOG(( "WD33C93: PC=%08x - Write REG=%02x, data = %02x\n", space.device().safe_pc(), sasr, data ));
 
 			/* update the register */
 			regs[sasr] = data;
@@ -482,7 +481,7 @@ WRITE8_MEMBER(wd33c93_device::write)
 			/* if we receive a command, schedule to process it */
 			if ( sasr == WD_COMMAND )
 			{
-				LOG( "WDC33C93: PC=%08x - Executing command %08x - unit %d\n", space.device().safe_pc(), data, getunit() );
+				LOG(( "WDC33C93: PC=%08x - Executing command %08x - unit %d\n", space.device().safe_pc(), data, getunit() ));
 
 				/* signal we're processing it */
 				regs[WD_AUXILIARY_STATUS] |= ASR_CIP;
@@ -631,7 +630,7 @@ READ8_MEMBER(wd33c93_device::read)
 					m_irq_cb(0);
 				}
 
-				LOG( "WD33C93: PC=%08x - Status read (%02x)\n", space.device().safe_pc(), regs[WD_SCSI_STATUS] );
+				LOG(( "WD33C93: PC=%08x - Status read (%02x)\n", space.device().safe_pc(), regs[WD_SCSI_STATUS] ));
 			}
 			else if ( sasr == WD_DATA )
 			{
@@ -700,7 +699,7 @@ READ8_MEMBER(wd33c93_device::read)
 				}
 			}
 
-			LOG( "WD33C93: PC=%08x - Data read (%02x)\n", space.device().safe_pc(), regs[WD_DATA] );
+			LOG(( "WD33C93: PC=%08x - Data read (%02x)\n", space.device().safe_pc(), regs[WD_DATA] ));
 
 			/* get the register value */
 			ret = regs[sasr];
@@ -725,7 +724,7 @@ READ8_MEMBER(wd33c93_device::read)
 }
 
 wd33c93_device::wd33c93_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	legacy_scsi_host_adapter(mconfig, WD33C93, tag, owner, clock),
+	legacy_scsi_host_adapter(mconfig, WD33C93, "33C93 SCSI", tag, owner, clock, "wd33c93", __FILE__),
 	m_irq_cb(*this)
 {
 }
@@ -805,4 +804,4 @@ int wd33c93_device::get_dma_count()
 	return get_xfer_count();
 }
 
-DEFINE_DEVICE_TYPE(WD33C93, wd33c93_device, "wd33c93", "Western Digital WD33C93 SCSI")
+const device_type WD33C93 = &device_creator<wd33c93_device>;

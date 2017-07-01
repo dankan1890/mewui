@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_MACHINE_NSCSI_HD_H
-#define MAME_MACHINE_NSCSI_HD_H
-
-#pragma once
+#ifndef __NSCSI_HD_H__
+#define __NSCSI_HD_H__
 
 #include "machine/nscsi_bus.h"
 #include "harddisk.h"
@@ -12,13 +10,13 @@ class nscsi_harddisk_device : public nscsi_full_device
 {
 public:
 	nscsi_harddisk_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	nscsi_harddisk_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
+
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 protected:
-	nscsi_harddisk_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
 
 	virtual void scsi_command() override;
 	virtual uint8_t scsi_get_data(int id, int pos) override;
@@ -30,6 +28,6 @@ protected:
 	int bytes_per_sector;
 };
 
-DECLARE_DEVICE_TYPE(NSCSI_HARDDISK, nscsi_harddisk_device)
+extern const device_type NSCSI_HARDDISK;
 
-#endif // MAME_MACHINE_NSCSI_HD_H
+#endif

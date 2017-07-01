@@ -32,14 +32,11 @@ public:
 	{
 	}
 
-	DECLARE_READ8_MEMBER(port50_r);
-	DECLARE_READ8_MEMBER(port51_r);
-	void kbd_put(u8 data);
-
-protected:
 	required_device<cpu_device> m_maincpu;
 	required_device<generic_terminal_device> m_terminal;
-
+	DECLARE_READ8_MEMBER(port50_r);
+	DECLARE_READ8_MEMBER(port51_r);
+	DECLARE_WRITE8_MEMBER(kbd_put);
 	uint8_t m_term_data;
 	virtual void machine_reset() override;
 };
@@ -79,12 +76,12 @@ void mice_state::machine_reset()
 {
 }
 
-void mice_state::kbd_put(u8 data)
+WRITE8_MEMBER( mice_state::kbd_put )
 {
 	m_term_data = data;
 }
 
-static MACHINE_CONFIG_START( mice )
+static MACHINE_CONFIG_START( mice, mice_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", I8085A, XTAL_6_144MHz)
 	MCFG_CPU_PROGRAM_MAP(mice_mem)
@@ -92,7 +89,7 @@ static MACHINE_CONFIG_START( mice )
 
 	/* video hardware */
 	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(mice_state, kbd_put))
+	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(WRITE8(mice_state, kbd_put))
 MACHINE_CONFIG_END
 
 /* ROM definition */
@@ -120,5 +117,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME   PARENT  COMPAT   MACHINE   INPUT  CLASS       INIT  COMPANY                       FULLNAME  FLAGS
-COMP( 1980, mice,  0,      0,       mice,     mice,  mice_state, 0,    "Microtek International Inc", "Mice",   MACHINE_IS_SKELETON )
+/*    YEAR  NAME   PARENT  COMPAT   MACHINE   INPUT CLASS          INIT     COMPANY                  FULLNAME       FLAGS */
+COMP( 1980, mice,  0,      0,       mice,     mice, driver_device,   0,  "Microtek International Inc", "Mice", MACHINE_IS_SKELETON )

@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Carl
-#ifndef MAME_BUS_ISA_MCD_H
-#define MAME_BUS_ISA_MCD_H
-
 #pragma once
 
+#ifndef __MCD_H__
+#define __MCD_H__
+
+#include "emu.h"
 #include "isa.h"
 #include "imagedev/chd_cd.h"
 
@@ -31,12 +32,10 @@ public:
 	DECLARE_WRITE8_MEMBER(cmd_w);
 	DECLARE_WRITE8_MEMBER(reset_w);
 	virtual uint16_t dack16_r(int line) override;
-
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
-
 private:
 	bool read_sector(bool first = false);
 
@@ -115,6 +114,6 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ISA16_MCD, mcd_isa_device)
+extern const device_type ISA16_MCD;
 
-#endif // MAME_BUS_ISA_MCD_H
+#endif

@@ -5,14 +5,10 @@
  *  Implementation of ASIC65
  *
  *************************************/
-#ifndef MAME_MACHINE_ASIC65_H
-#define MAME_MACHINE_ASIC65_H
 
-#pragma once
+	#include "cpu/tms32010/tms32010.h"
 
-#include "cpu/tms32010/tms32010.h"
-
-enum {
+	enum {
 	ASIC65_STANDARD,
 	ASIC65_STEELTAL,
 	ASIC65_GUARDIANS,
@@ -36,6 +32,7 @@ public:
 	DECLARE_READ16_MEMBER( m68k_r );
 	DECLARE_WRITE16_MEMBER( stat_w );
 	DECLARE_READ16_MEMBER( stat_r );
+	DECLARE_READ_LINE_MEMBER( get_bio );
 
 	enum
 	{
@@ -44,9 +41,10 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
 
 private:
@@ -69,14 +67,10 @@ private:
 	uint16_t  m_tdata;
 
 	FILE * m_log;
-
-	DECLARE_READ_LINE_MEMBER( get_bio );
 };
 
-DECLARE_DEVICE_TYPE(ASIC65, asic65_device)
+extern const device_type ASIC65;
 
 #define MCFG_ASIC65_ADD(_tag, _type) \
 	MCFG_DEVICE_ADD(_tag, ASIC65, 0) \
 	asic65_device::set_type(*device, _type);
-
-#endif // MAME_MACHINE_ASIC65_H

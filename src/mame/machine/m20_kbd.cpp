@@ -1,7 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Carl,Vas Crabb
 
-#include "emu.h"
 #include "machine/m20_kbd.h"
 
 #include "machine/keyboard.ipp"
@@ -155,7 +154,7 @@ INPUT_PORTS_END
 
 
 m20_keyboard_device::m20_keyboard_device(const machine_config& mconfig, const char* tag, device_t* owner, uint32_t clock)
-	: buffered_rs232_device(mconfig, M20_KEYBOARD, tag, owner, 0)
+	: buffered_rs232_device(mconfig, M20_KEYBOARD, "M20 Keyboard", tag, owner, 0, "m20_keyboard", __FILE__)
 	, device_matrix_keyboard_interface(mconfig, *this, "LINE0", "LINE1", "LINE2", "LINE3", "LINE4", "LINE5", "LINE6", "LINE7", "LINE8")
 	, m_modifiers(*this, "MODIFIERS")
 {
@@ -235,4 +234,4 @@ void m20_keyboard_device::received_byte(uint8_t byte)
 }
 
 
-DEFINE_DEVICE_TYPE(M20_KEYBOARD, m20_keyboard_device, "m20_kbd", "Olivetti M20 Keyboard")
+const device_type M20_KEYBOARD = &device_creator<m20_keyboard_device>;

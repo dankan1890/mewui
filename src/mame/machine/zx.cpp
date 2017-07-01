@@ -8,7 +8,6 @@
 
 ****************************************************************************/
 
-#include "emu.h"
 #include "includes/zx.h"
 
 DRIVER_INIT_MEMBER(zx_state,zx)

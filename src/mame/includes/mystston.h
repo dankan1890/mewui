@@ -8,8 +8,6 @@
 
 ***************************************************************************/
 
-#include "screen.h"
-
 
 #define MYSTSTON_MASTER_CLOCK   (XTAL_12MHz)
 

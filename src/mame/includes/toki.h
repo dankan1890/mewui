@@ -5,7 +5,6 @@
 #include "machine/gen_latch.h"
 #include "sound/msm5205.h"
 #include "video/bufsprite.h"
-#include "screen.h"
 
 class toki_state : public driver_device
 {

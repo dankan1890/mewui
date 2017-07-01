@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_NEOGEO_CTRL_DIAL_H
-#define MAME_BUS_NEOGEO_CTRL_DIAL_H
-
 #pragma once
 
+#ifndef __NEOGEO_DIAL__
+#define __NEOGEO_DIAL__
 
+
+#include "emu.h"
 #include "ctrl.h"
 
 //**************************************************************************
@@ -20,7 +21,8 @@
 
 // ======================> neogeo_dial_device
 
-class neogeo_dial_device : public device_t, public device_neogeo_ctrl_edge_interface
+class neogeo_dial_device : public device_t,
+						public device_neogeo_ctrl_edge_interface
 {
 public:
 	// construction/destruction
@@ -47,7 +49,10 @@ private:
 	uint8_t m_ctrl_sel;
 };
 
-// device type definition
-DECLARE_DEVICE_TYPE(NEOGEO_DIAL, neogeo_dial_device)
 
-#endif // MAME_BUS_NEOGEO_CTRL_DIAL_H
+
+// device type definition
+extern const device_type NEOGEO_DIAL;
+
+
+#endif

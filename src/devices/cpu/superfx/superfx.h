@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Ryan Holtz
-#ifndef MAME_CPU_SUPERFX_SUPERFX_H
-#define MAME_CPU_SUPERFX_SUPERFX_H
-
-#pragma once
+#ifndef __SUPERFX_H__
+#define __SUPERFX_H__
 
 
 enum
@@ -89,7 +87,7 @@ enum
 
 
 #define MCFG_SUPERFX_OUT_IRQ(_devcb) \
-	devcb = &superfx_device::set_out_irq_func(*device, DEVCB_##_devcb);
+	superfx_device::set_out_irq_func(*device, DEVCB_##_devcb);
 
 
 class superfx_device :  public cpu_device
@@ -99,7 +97,7 @@ public:
 	superfx_device(const machine_config &mconfig, const char *_tag, device_t *_owner, uint32_t _clock);
 
 	// static configuration helpers
-	template <class Object> static devcb_base &set_out_irq_func(device_t &device, Object &&cb) { return downcast<superfx_device &>(device).m_out_irq_func.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_irq_func(device_t &device, _Object object) { return downcast<superfx_device &>(device).m_out_irq_func.set_callback(object); }
 
 	uint8_t mmio_read(uint32_t addr);
 	void mmio_write(uint32_t addr, uint8_t data);
@@ -214,8 +212,8 @@ private:
 };
 
 
-DECLARE_DEVICE_TYPE(SUPERFX, superfx_device)
+extern const device_type SUPERFX;
 
 offs_t superfx_dasm_one(std::ostream &stream, offs_t pc, uint8_t op, uint8_t param0, uint8_t param1, uint16_t alt);
 
-#endif // MAME_CPU_SUPERFX_SUPERFX_H
+#endif /* __SUPERFX_H__ */

@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_ASTROCADE_EXP_H
-#define MAME_BUS_ASTROCADE_EXP_H
+#ifndef __ASTROCADE_EXP_H
+#define __ASTROCADE_EXP_H
 
 // ======================> device_astrocade_card_interface
 
@@ -9,20 +9,19 @@ class device_astrocade_card_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_astrocade_card_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_astrocade_card_interface();
 
 	// reading and writing
 	virtual DECLARE_READ8_MEMBER(read) { return 0xff; }
-	virtual DECLARE_WRITE8_MEMBER(write) { }
-
-protected:
-	device_astrocade_card_interface(const machine_config &mconfig, device_t &device);
+	virtual DECLARE_WRITE8_MEMBER(write) {}
 };
 
 
 // ======================> astrocade_exp_device
 
-class astrocade_exp_device : public device_t, public device_slot_interface
+class astrocade_exp_device : public device_t,
+								public device_slot_interface
 {
 public:
 	// construction/destruction
@@ -46,11 +45,11 @@ protected:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(ASTROCADE_EXP_SLOT, astrocade_exp_device)
+extern const device_type ASTROCADE_EXP_SLOT;
 
 
 #define MCFG_ASTROCADE_EXPANSION_SLOT_ADD(_tag, _slot_intf, _def_slot) \
 	MCFG_DEVICE_ADD(_tag, ASTROCADE_EXP_SLOT, 0) \
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false)
 
-#endif // MAME_BUS_ASTROCADE_EXP_H
+#endif

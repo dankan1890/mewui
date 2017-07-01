@@ -59,8 +59,8 @@ namespace glm
 			char_type  newline;
 			order_type order;
 
-			GLM_FUNC_DECL explicit format_punct(size_t a = 0);
-			GLM_FUNC_DECL explicit format_punct(format_punct const&);
+			explicit format_punct(size_t a = 0);
+			explicit format_punct(format_punct const&);
 		};
 
 		template <typename CTy, typename CTr = std::char_traits<CTy> >
@@ -68,8 +68,8 @@ namespace glm
 
 		public:
 
-			GLM_FUNC_DECL explicit basic_state_saver(std::basic_ios<CTy,CTr>&);
-			GLM_FUNC_DECL ~basic_state_saver();
+			explicit basic_state_saver(std::basic_ios<CTy,CTr>&);
+					~basic_state_saver();
 
 		private:
 
@@ -86,7 +86,7 @@ namespace glm
 			char_type       fill_;
 			locale_type     locale_;
 
-			GLM_FUNC_DECL basic_state_saver& operator=(basic_state_saver const&);
+			basic_state_saver& operator=(basic_state_saver const&);
 		};
 
 		typedef basic_state_saver<char>     state_saver;
@@ -97,14 +97,14 @@ namespace glm
 		{
 		public:
 
-			GLM_FUNC_DECL explicit basic_format_saver(std::basic_ios<CTy,CTr>&);
-			GLM_FUNC_DECL ~basic_format_saver();
+			explicit basic_format_saver(std::basic_ios<CTy,CTr>&);
+					~basic_format_saver();
 
 		private:
 
 			basic_state_saver<CTy> const bss_;
 
-			GLM_FUNC_DECL basic_format_saver& operator=(basic_format_saver const&);
+			basic_format_saver& operator=(basic_format_saver const&);
 		};
 
 		typedef basic_format_saver<char>     format_saver;
@@ -114,14 +114,14 @@ namespace glm
 		{
 			unsigned value;
 
-			GLM_FUNC_DECL explicit precision(unsigned);
+			explicit precision(unsigned);
 		};
 
 		struct width
 		{
 			unsigned value;
 
-			GLM_FUNC_DECL explicit width(unsigned);
+			explicit width(unsigned);
 		};
 
 		template <typename CTy>
@@ -129,14 +129,14 @@ namespace glm
 		{
 			CTy value[3];
 
-			GLM_FUNC_DECL explicit delimeter(CTy /* left */, CTy /* right */, CTy /* separator */ = ',');
+			explicit delimeter(CTy /* left */, CTy /* right */, CTy /* separator */ = ',');
 		};
 
 		struct order
 		{
 			order_type value;
 
-			GLM_FUNC_DECL explicit order(order_type);
+			explicit order(order_type);
 		};
 
 		// functions, inlined (inline)

@@ -10,7 +10,6 @@
 
 #include "machine/gen_latch.h"
 #include "video/tecmo_spr.h"
-#include "screen.h"
 
 class galspnbl_state : public driver_device
 {

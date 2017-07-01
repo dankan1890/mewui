@@ -6,18 +6,18 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_PK8020_H
-#define MAME_INCLUDES_PK8020_H
+#ifndef PK8020_H_
+#define PK8020_H_
 
-#include "imagedev/cassette.h"
-#include "machine/i8251.h"
 #include "machine/i8255.h"
-#include "machine/pic8259.h"
 #include "machine/pit8253.h"
-#include "machine/ram.h"
+#include "machine/pic8259.h"
+#include "machine/i8251.h"
 #include "machine/wd_fdc.h"
-#include "sound/spkrdev.h"
+#include "imagedev/cassette.h"
+#include "sound/speaker.h"
 #include "sound/wave.h"
+#include "machine/ram.h"
 
 
 class pk8020_state : public driver_device
@@ -88,7 +88,7 @@ protected:
 	required_device<i8251_device> m_rs232;
 	required_device<i8251_device> m_lan;
 	required_device<ram_device> m_ram;
-	required_device<fd1793_device> m_wd1793;
+	required_device<fd1793_t> m_wd1793;
 	required_device<floppy_connector> m_floppy0;
 	required_device<floppy_connector> m_floppy1;
 	required_device<floppy_connector> m_floppy2;
@@ -103,4 +103,4 @@ protected:
 	void pk8020_set_bank(uint8_t data);
 };
 
-#endif // MAME_INCLUDES_PK8020_H
+#endif /* pk8020_H_ */

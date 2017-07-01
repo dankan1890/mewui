@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "ddp.h"
 
 
@@ -23,7 +22,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ADAM_DDP, adam_digital_data_pack_device, "adam_ddp", "Adam Digital Data Pack")
+const device_type ADAM_DDP = &device_creator<adam_digital_data_pack_device>;
 
 
 //-------------------------------------------------
@@ -76,12 +75,11 @@ static const struct CassetteOptions adam_cassette_options =
 	44100   /* sample frequency */
 };
 
-
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_DRIVER( adam_ddp )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( adam_digital_data_pack_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( adam_ddp )
 	MCFG_CPU_ADD(M6801_TAG, M6801, XTAL_4MHz)
 	MCFG_CPU_PROGRAM_MAP(adam_ddp_mem)
 	MCFG_CPU_IO_MAP(adam_ddp_io)
@@ -100,6 +98,17 @@ MACHINE_CONFIG_MEMBER( adam_digital_data_pack_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor adam_digital_data_pack_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( adam_ddp );
+}
+
+
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -110,7 +119,7 @@ MACHINE_CONFIG_END
 //-------------------------------------------------
 
 adam_digital_data_pack_device::adam_digital_data_pack_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, ADAM_DDP, tag, owner, clock),
+	: device_t(mconfig, ADAM_DDP, "Adam DDP", tag, owner, clock, "adam_ddp", __FILE__),
 		device_adamnet_card_interface(mconfig, *this),
 		m_maincpu(*this, M6801_TAG),
 		m_ddp0(*this, "cassette"),

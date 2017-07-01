@@ -10,7 +10,6 @@
 #include "audio/dcs.h"
 #include "machine/midwayic.h"
 #include "machine/watchdog.h"
-#include "screen.h"
 
 #define MIDVUNIT_VIDEO_CLOCK    33000000
 
@@ -96,7 +95,6 @@ public:
 	uint16_t m_page_control;
 	uint8_t m_video_changed;
 	emu_timer *m_scanline_timer;
-	emu_timer *m_adc_ready_timer;
 	std::unique_ptr<midvunit_renderer> m_poly;
 	uint8_t m_galil_input_index;
 	uint8_t m_galil_input_length;

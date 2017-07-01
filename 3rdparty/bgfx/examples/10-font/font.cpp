@@ -17,17 +17,31 @@
 #include <iconfontheaders/icons_font_awesome.h>
 #include <iconfontheaders/icons_kenney.h>
 
+#include <stdio.h>
 #include <wchar.h>
+
+long int fsize(FILE* _file)
+{
+	long int pos = ftell(_file);
+	fseek(_file, 0L, SEEK_END);
+	long int size = ftell(_file);
+	fseek(_file, pos, SEEK_SET);
+	return size;
+}
 
 TrueTypeHandle loadTtf(FontManager* _fm, const char* _filePath)
 {
-	uint32_t size;
-	void* data = load(_filePath, &size);
-
-	if (NULL != data)
+	FILE* file = fopen(_filePath, "rb");
+	if (NULL != file)
 	{
-		TrueTypeHandle handle = _fm->createTtf( (uint8_t*)data, size);
-		BX_FREE(entry::getAllocator(), data);
+		uint32_t size = (uint32_t)fsize(file);
+		uint8_t* mem = (uint8_t*)malloc(size+1);
+		size_t ignore = fread(mem, 1, size, file);
+		BX_UNUSED(ignore);
+		fclose(file);
+		mem[size-1] = '\0';
+		TrueTypeHandle handle = _fm->createTtf(mem, size);
+		free(mem);
 		return handle;
 	}
 
@@ -215,7 +229,7 @@ int _main_(int _argc, char** _argv)
 		if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
 		{
 			float proj[16];
-			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+			bx::mtxProj(proj, hmd->eye[0].fov, 0.1f, 100.0f);
 
 			static float time = 0.0f;
 			time += 0.05f;
@@ -234,7 +248,7 @@ int _main_(int _argc, char** _argv)
 		else
 		{
 			float ortho[16];
-			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f, bgfx::getCaps()->homogeneousDepth);
+			bx::mtxOrtho(ortho, centering, width + centering, height + centering, centering, -1.0f, 1.0f);
 			bgfx::setViewTransform(0, view, ortho);
 			bgfx::setViewRect(0, 0, 0, uint16_t(width), uint16_t(height) );
 		}

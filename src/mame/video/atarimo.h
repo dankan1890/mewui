@@ -8,8 +8,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_VIDEO_ATARIMO_H
-#define MAME_VIDEO_ATARIMO_H
+#ifndef __ATARIMO__
+#define __ATARIMO__
 
 #include "video/sprite.h"
 
@@ -73,7 +73,7 @@ struct atari_motion_objects_config
 // ======================> atari_motion_objects_device
 
 // device type definition
-DECLARE_DEVICE_TYPE(ATARI_MOTION_OBJECTS, atari_motion_objects_device)
+extern const device_type ATARI_MOTION_OBJECTS;
 
 class atari_motion_objects_device : public sprite16_device_ind16,
 									public device_video_interface,
@@ -225,4 +225,4 @@ private:
 };
 
 
-#endif // MAME_VIDEO_ATARIMO_H
+#endif

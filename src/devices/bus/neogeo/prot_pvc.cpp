@@ -7,13 +7,12 @@
 
 
 
-DEFINE_DEVICE_TYPE(NG_PVC_PROT, pvc_prot_device, "ng_pvc_prot", "Neo Geo PVC Protection")
+extern const device_type PVC_PROT = &device_creator<pvc_prot_device>;
 
 
 pvc_prot_device::pvc_prot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, NG_PVC_PROT, tag, owner, clock)
-{
-}
+	device_t(mconfig, PVC_PROT, "Neo Geo PVC Protection", tag, owner, clock, "pvc_prot", __FILE__)
+{}
 
 
 void pvc_prot_device::device_start()

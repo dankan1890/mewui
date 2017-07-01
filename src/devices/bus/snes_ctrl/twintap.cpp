@@ -13,14 +13,13 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "twintap.h"
 
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SNES_TWINTAP, snes_twintap_device, "snes_twintap", "Yonezawa Twin Tap Controller")
+const device_type SNES_TWINTAP = &device_creator<snes_twintap_device>;
 
 
 static INPUT_PORTS_START( snes_twintap )
@@ -51,10 +50,9 @@ ioport_constructor snes_twintap_device::device_input_ports() const
 //-------------------------------------------------
 
 snes_twintap_device::snes_twintap_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, SNES_TWINTAP, tag, owner, clock),
-	device_snes_control_port_interface(mconfig, *this),
-	m_inputs(*this, "INPUTS"),
-	m_strobe(0), m_latch(0)
+					device_t(mconfig, SNES_TWINTAP, "Yonezawa Twin Tap Controller", tag, owner, clock, "snes_twintap", __FILE__),
+					device_snes_control_port_interface(mconfig, *this),
+					m_inputs(*this, "INPUTS"), m_strobe(0), m_latch(0)
 {
 }
 

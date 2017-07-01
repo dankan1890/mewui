@@ -23,11 +23,9 @@ TODO:
 ******************************************************************************/
 
 #include "emu.h"
-#include "includes/xyonix.h"
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/xyonix.h"
 
 
 void xyonix_state::machine_start()
@@ -224,7 +222,7 @@ GFXDECODE_END
 
 /* MACHINE driver *************************************************************/
 
-static MACHINE_CONFIG_START( xyonix )
+static MACHINE_CONFIG_START( xyonix, xyonix_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80,16000000 / 4)        /* 4 MHz ? */
@@ -275,4 +273,4 @@ ROM_END
 
 /* GAME drivers **************************************************************/
 
-GAME( 1989, xyonix, 0, xyonix, xyonix, xyonix_state, 0, ROT0, "Philko", "Xyonix", MACHINE_SUPPORTS_SAVE )
+GAME( 1989, xyonix, 0, xyonix, xyonix, driver_device, 0, ROT0, "Philko", "Xyonix", MACHINE_SUPPORTS_SAVE )

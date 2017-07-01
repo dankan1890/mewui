@@ -6,10 +6,11 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_AUDIO_CHANNELF_H
-#define MAME_AUDIO_CHANNELF_H
+#ifndef CHANNELF_SOUND_H_
+#define CHANNELF_SOUND_H_
 
-class channelf_sound_device : public device_t, public device_sound_interface
+class channelf_sound_device : public device_t,
+									public device_sound_interface
 {
 public:
 	channelf_sound_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -17,6 +18,7 @@ public:
 	void sound_w(int mode);
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 
 	// sound stream update overrides
@@ -34,6 +36,7 @@ private:
 
 };
 
-DECLARE_DEVICE_TYPE(CHANNELF_SOUND, channelf_sound_device)
+extern const device_type CHANNELF_SOUND;
 
-#endif // MAME_AUDIO_CHANNELF_H
+
+#endif /* CHANNELF_SOUND_H_ */

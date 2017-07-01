@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "abc1600mac.h"
 
 
@@ -54,7 +53,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(ABC1600_MAC, abc1600_mac_device, "abc1600mac", "ABC 1600 MAC")
+const device_type ABC1600_MAC = &device_creator<abc1600_mac_device>;
 
 
 DEVICE_ADDRESS_MAP_START( map, 8, abc1600_mac_device )
@@ -66,10 +65,15 @@ static ADDRESS_MAP_START( program_map, AS_PROGRAM, 8, abc1600_mac_device )
 ADDRESS_MAP_END
 
 
-MACHINE_CONFIG_MEMBER( abc1600_mac_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( abc1600_mac )
 	MCFG_WATCHDOG_ADD("watchdog")
 	MCFG_WATCHDOG_TIME_INIT(attotime::from_msec(1600)) // XTAL_64MHz/8/10/20000/8/8
 MACHINE_CONFIG_END
+
+machine_config_constructor abc1600_mac_device::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( abc1600_mac );
+}
 
 
 //-------------------------------------------------
@@ -105,7 +109,7 @@ const tiny_rom_entry *abc1600_mac_device::device_rom_region() const
 //-------------------------------------------------
 
 abc1600_mac_device::abc1600_mac_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, ABC1600_MAC, tag, owner, clock),
+	device_t(mconfig, ABC1600_MAC, "ABC 1600 MAC", tag, owner, clock, "abc1600mac", __FILE__),
 	device_memory_interface(mconfig, *this),
 	m_space_config("program", ENDIANNESS_LITTLE, 8, 22, 0, *ADDRESS_MAP_NAME(program_map)),
 	m_rom(*this, "boot"),

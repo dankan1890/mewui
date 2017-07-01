@@ -6,12 +6,13 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_C64_SUPER_GAMES_H
-#define MAME_BUS_C64_SUPER_GAMES_H
-
 #pragma once
 
+#ifndef __SUPER_GAMES__
+#define __SUPER_GAMES__
 
+
+#include "emu.h"
 #include "exp.h"
 
 
@@ -44,7 +45,7 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(C64_SUPER_GAMES, c64_super_games_cartridge_device)
+extern const device_type C64_SUPER_GAMES;
 
 
-#endif // MAME_BUS_C64_SUPER_GAMES_H
+#endif

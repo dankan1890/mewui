@@ -12,18 +12,21 @@ BOARDS:
 
 ***************************************************************************/
 
-#include "emu.h"
 #include "dmac.h"
 
+
+//**************************************************************************
+//  CONSTANTS / MACROS
+//**************************************************************************
+
 #define VERBOSE 1
-#include "logmacro.h"
 
 
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(AMIGA_DMAC, amiga_dmac_device, "amiga_dmac", "Amiga DMAC DMA Controller")
+const device_type DMAC = &device_creator<dmac_device>;
 
 
 //**************************************************************************
@@ -31,11 +34,11 @@ DEFINE_DEVICE_TYPE(AMIGA_DMAC, amiga_dmac_device, "amiga_dmac", "Amiga DMAC DMA 
 //**************************************************************************
 
 //-------------------------------------------------
-//  amiga_dmac_device - constructor
+//  dmac_device - constructor
 //-------------------------------------------------
 
-amiga_dmac_device::amiga_dmac_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, AMIGA_DMAC, tag, owner, clock),
+dmac_device::dmac_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, DMAC, "DMAC DMA Controller", tag, owner, clock, "dmac", __FILE__),
 	amiga_autoconfig(),
 	m_cfgout_handler(*this),
 	m_int_handler(*this),
@@ -62,7 +65,7 @@ amiga_dmac_device::amiga_dmac_device(const machine_config &mconfig, const char *
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void amiga_dmac_device::device_start()
+void dmac_device::device_start()
 {
 	// resolve callbacks
 	m_cfgout_handler.resolve_safe();
@@ -78,19 +81,21 @@ void amiga_dmac_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void amiga_dmac_device::device_reset()
+void dmac_device::device_reset()
 {
 	// fifo empty
 	m_istr |= ISTR_FE_FLG;
 }
 
-void amiga_dmac_device::autoconfig_base_address(offs_t address)
+void dmac_device::autoconfig_base_address(offs_t address)
 {
-	LOG("%s('%s'): autoconfig_base_address received: 0x%06x\n", shortname(), basetag(), address);
+	if (VERBOSE)
+		logerror("%s('%s'): autoconfig_base_address received: 0x%06x\n", shortname(), basetag(), address);
 
 	if (!m_configured && m_ram_size > 0)
 	{
-		LOG("-> installing ram (%d bytes)\n", m_ram_size);
+		if (VERBOSE)
+			logerror("-> installing ram (%d bytes)\n", m_ram_size);
 
 		// install access to the ram space
 		if (address)
@@ -109,12 +114,13 @@ void amiga_dmac_device::autoconfig_base_address(offs_t address)
 	}
 	else
 	{
-		LOG("-> installing dmac\n");
+		if (VERBOSE)
+			logerror("-> installing dmac\n");
 
 		// internal dmac registers
 		m_space->install_readwrite_handler(address, address + 0xff,
-			read16_delegate(FUNC(amiga_dmac_device::register_read), this),
-			write16_delegate(FUNC(amiga_dmac_device::register_write), this), 0xffff);
+			read16_delegate(FUNC(dmac_device::register_read), this),
+			write16_delegate(FUNC(dmac_device::register_write), this), 0xffff);
 
 		// install access to the rom space
 		if (m_rom)
@@ -131,7 +137,7 @@ void amiga_dmac_device::autoconfig_base_address(offs_t address)
 	}
 }
 
-void amiga_dmac_device::check_interrupts()
+void dmac_device::check_interrupts()
 {
 	// interrupts enabled?
 	if (m_cntr & CNTR_INTEN)
@@ -149,14 +155,14 @@ void amiga_dmac_device::check_interrupts()
 	m_int_handler((m_istr & ISTR_INT_P) ? 1 : 0);
 }
 
-void amiga_dmac_device::stop_dma()
+void dmac_device::stop_dma()
 {
 	m_dma_active = false;
 	m_istr &= ~ISTR_E_INT;
 	check_interrupts();
 }
 
-void amiga_dmac_device::start_dma()
+void dmac_device::start_dma()
 {
 	m_dma_active = true;
 }
@@ -166,7 +172,7 @@ void amiga_dmac_device::start_dma()
 //  IMPLEMENTATION
 //**************************************************************************
 
-READ16_MEMBER( amiga_dmac_device::register_read )
+READ16_MEMBER( dmac_device::register_read )
 {
 	uint16_t data = 0xffff;
 
@@ -183,14 +189,16 @@ READ16_MEMBER( amiga_dmac_device::register_read )
 		m_istr &= ~0x0f;
 		check_interrupts();
 
-		LOG("%s('%s'): read istr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read istr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		break;
 
 	case 0x21:
 		data = m_cntr;
 
-		LOG("%s('%s'): read cntr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read cntr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		break;
 
@@ -198,7 +206,8 @@ READ16_MEMBER( amiga_dmac_device::register_read )
 	case 0x49:
 		data = m_scsi_read_handler(offset);
 
-		LOG("%s('%s'): read scsi register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read scsi register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
 
 		break;
 
@@ -206,24 +215,28 @@ READ16_MEMBER( amiga_dmac_device::register_read )
 	case 0x51:
 	case 0x52:
 	case 0x53:
-		LOG("%s('%s'): read xt register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read xt register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
 
 		break;
 
 	case 0x70:
-		LOG("%s('%s'): read dma start strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read dma start strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		start_dma();
 		break;
 
 	case 0x71:
-		LOG("%s('%s'): read dma stop strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read dma stop strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		stop_dma();
 		break;
 
 	case 0x72:
-		LOG("%s('%s'): read clear irq strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read clear irq strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		// clear all interrupts
 		m_istr &= ~ISTR_INT_MASK;
@@ -231,64 +244,73 @@ READ16_MEMBER( amiga_dmac_device::register_read )
 		break;
 
 	case 0x74:
-		LOG("%s('%s'): read flush fifo strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): read flush fifo strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_istr |= ISTR_FE_FLG;
 		break;
 
 	default:
-		LOG("%s('%s'): register_read %04x @ %02x [mask = %04x]\n", shortname(), basetag(), data, offset, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): register_read %04x @ %02x [mask = %04x]\n", shortname(), basetag(), data, offset, mem_mask);
 	}
 
 	return data;
 }
 
-WRITE16_MEMBER( amiga_dmac_device::register_write )
+WRITE16_MEMBER( dmac_device::register_write )
 {
 	switch (offset)
 	{
 	case 0x21:
-		LOG("%s('%s'): write cntr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write cntr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_cntr = data;
 		check_interrupts();
 		break;
 
 	case 0x40:
-		LOG("%s('%s'): write wtc hi %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write wtc hi %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_wtc &= 0x0000ffff;
 		m_wtc |= ((uint32_t) data) << 16;
 		break;
 
 	case 0x41:
-		LOG("%s('%s'): write wtc lo %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write wtc lo %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_wtc &= 0xffff0000;
 		m_wtc |= data;
 		break;
 
 	case 0x42:
-		LOG("%s('%s'): write acr hi %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write acr hi %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_acr &= 0x0000ffff;
 		m_acr |= ((uint32_t) data) << 16;
 		break;
 
 	case 0x43:
-		LOG("%s('%s'): write acr lo %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write acr lo %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_acr &= 0xffff0000;
 		m_acr |= data;
 		break;
 
 	case 0x47:
-		LOG("%s('%s'): write dawr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write dawr %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 		break;
 
 	case 0x48:
 	case 0x49:
-		LOG("%s('%s'): write scsi register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write scsi register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
 
 		m_scsi_write_handler(offset, data, 0xff);
 		break;
@@ -297,23 +319,27 @@ WRITE16_MEMBER( amiga_dmac_device::register_write )
 	case 0x51:
 	case 0x52:
 	case 0x53:
-		LOG("%s('%s'): write xt register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write xt register @ %02x %04x [mask = %04x]\n", shortname(), basetag(), offset, data, mem_mask);
 		break;
 
 	case 0x70:
-		LOG("%s('%s'): write dma start strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write dma start strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		start_dma();
 		break;
 
 	case 0x71:
-		LOG("%s('%s'): write dma stop strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write dma stop strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		stop_dma();
 		break;
 
 	case 0x72:
-		LOG("%s('%s'): write clear irq strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write clear irq strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		// clear all interrupts
 		m_istr &= ~ISTR_INT_MASK;
@@ -321,20 +347,23 @@ WRITE16_MEMBER( amiga_dmac_device::register_write )
 		break;
 
 	case 0x74:
-		LOG("%s('%s'): write flush fifo strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write flush fifo strobe %04x [mask = %04x]\n", shortname(), basetag(), data, mem_mask);
 
 		m_istr |= ISTR_FE_FLG;
 		break;
 
 	default:
-		LOG("%s('%s'): write %04x @ %02x [mask = %04x]\n", shortname(), basetag(), data, offset, mem_mask);
+		if (VERBOSE)
+			logerror("%s('%s'): write %04x @ %02x [mask = %04x]\n", shortname(), basetag(), data, offset, mem_mask);
 	}
 }
 
 // this signal tells us to expose our autoconfig values
-WRITE_LINE_MEMBER( amiga_dmac_device::configin_w )
+WRITE_LINE_MEMBER( dmac_device::configin_w )
 {
-	LOG("%s('%s'): configin_w (%d)\n", shortname(), basetag(), state);
+	if (VERBOSE)
+		logerror("%s('%s'): configin_w (%d)\n", shortname(), basetag(), state);
 
 	if (state == 0 && !m_configured)
 	{
@@ -387,9 +416,10 @@ WRITE_LINE_MEMBER( amiga_dmac_device::configin_w )
 }
 
 // this sets the ram size depending on the line voltage
-WRITE_LINE_MEMBER( amiga_dmac_device::ramsz_w )
+WRITE_LINE_MEMBER( dmac_device::ramsz_w )
 {
-	LOG("%s('%s'): ramsz_w (%d)\n", shortname(), basetag(), state);
+	if (VERBOSE)
+		logerror("%s('%s'): ramsz_w (%d)\n", shortname(), basetag(), state);
 
 	switch (state)
 	{
@@ -401,9 +431,10 @@ WRITE_LINE_MEMBER( amiga_dmac_device::ramsz_w )
 }
 
 // reset the device
-WRITE_LINE_MEMBER( amiga_dmac_device::rst_w )
+WRITE_LINE_MEMBER( dmac_device::rst_w )
 {
-	LOG("%s('%s'): rst_w (%d)\n", shortname(), basetag(), state);
+	if (VERBOSE)
+		logerror("%s('%s'): rst_w (%d)\n", shortname(), basetag(), state);
 
 	if (m_rst == 1 && state == 0)
 		device_reset();
@@ -412,9 +443,10 @@ WRITE_LINE_MEMBER( amiga_dmac_device::rst_w )
 }
 
 // external interrupt
-WRITE_LINE_MEMBER( amiga_dmac_device::intx_w )
+WRITE_LINE_MEMBER( dmac_device::intx_w )
 {
-	LOG("%s('%s'): intx_w (%d)\n", shortname(), basetag(), state);
+	if (VERBOSE)
+		logerror("%s('%s'): intx_w (%d)\n", shortname(), basetag(), state);
 
 	if (state)
 		m_istr |= ISTR_INTS;
@@ -425,9 +457,10 @@ WRITE_LINE_MEMBER( amiga_dmac_device::intx_w )
 }
 
 // data request
-WRITE_LINE_MEMBER( amiga_dmac_device::xdreq_w )
+WRITE_LINE_MEMBER( dmac_device::xdreq_w )
 {
-	LOG("%s('%s'): xdreq_w (%d)\n", shortname(), basetag(), state);
+	if (VERBOSE)
+		logerror("%s('%s'): xdreq_w (%d)\n", shortname(), basetag(), state);
 
 	if (m_dma_active)
 	{

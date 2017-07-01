@@ -8,7 +8,6 @@
 
 #include "machine/watchdog.h"
 #include "sound/flt_vol.h"
-#include "screen.h"
 
 /* Calculated from CRT controller writes */
 #define PIXEL_CLOCK            (XTAL_21MHz / 3)
@@ -129,7 +128,7 @@ public:
 	virtual void video_start() override;
 	DECLARE_PALETTE_INIT(lockon);
 	uint32_t screen_update_lockon(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_lockon);
+	void screen_eof_lockon(screen_device &screen, bool state);
 	TIMER_CALLBACK_MEMBER(cursor_callback);
 	TIMER_CALLBACK_MEMBER(bufend_callback);
 	void scene_draw(  );

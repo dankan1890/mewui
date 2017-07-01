@@ -8,11 +8,8 @@
 */
 
 #include "emu.h"
-#include "e132xs.h"
 #include "debugger.h"
-
-#include "32xsdefs.h"
-
+#include "e132xs.h"
 
 static const char *const L_REG[] =
 {

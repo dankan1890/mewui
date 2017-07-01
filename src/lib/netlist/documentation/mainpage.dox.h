@@ -1,12 +1,5 @@
-/*
- * Documentation settings
- */
 
-/*!
- *
- * \mainpage Netlist
-
-
+/*! \mainpage notitle
 
 ##Netlist
 
@@ -167,5 +160,6 @@ Going forward, the approach can be extended e.g. to use a linear
 equation solver.
 
 The formal representation of the circuit will stay the same, thus scales.
+
 
 */

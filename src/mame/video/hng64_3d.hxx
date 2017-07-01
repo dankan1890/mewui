@@ -71,7 +71,7 @@ g_profiler.start(PROFILER_USER1);
 	}
 
 	// Schedule a small amount of time to let the 3d hardware rasterize the display buffer
-	m_3dfifo_timer->adjust(m_maincpu->cycles_to_attotime(0x200*8));
+	machine().scheduler().timer_set(m_maincpu->cycles_to_attotime(0x200*8), timer_expired_delegate(FUNC(hng64_state::hng64_3dfifo_processed), this));
 g_profiler.stop();
 }
 

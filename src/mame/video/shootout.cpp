@@ -7,7 +7,6 @@
 
 #include "emu.h"
 #include "includes/shootout.h"
-#include "screen.h"
 
 
 PALETTE_INIT_MEMBER(shootout_state, shootout)
@@ -84,7 +83,7 @@ void shootout_state::video_start()
 	m_foreground = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(shootout_state::get_fg_tile_info),this), TILEMAP_SCAN_ROWS, 8, 8, 32, 32);
 	m_foreground->set_transparent_pen(0 );
 
-	save_item(NAME(m_ccnt_old_val));
+	save_item(NAME(m_bFlicker));
 }
 
 void shootout_state::draw_sprites(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int bank_bits )
@@ -93,7 +92,7 @@ void shootout_state::draw_sprites(screen_device &screen, bitmap_ind16 &bitmap, c
 	const uint8_t *source = m_spriteram+127*4;
 	int count;
 
-	bool m_bFlicker = (screen.frame_number () & 1) != 0;
+	m_bFlicker = !m_bFlicker;
 
 	for( count=0; count<128; count++ )
 	{

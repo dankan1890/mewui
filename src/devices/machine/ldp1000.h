@@ -6,10 +6,10 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_LDP1000_H
-#define MAME_MACHINE_LDP1000_H
-
 #pragma once
+
+#ifndef __LDP1000DEV_H__
+#define __LDP1000DEV_H__
 
 #include "laserdsc.h"
 
@@ -27,7 +27,6 @@
 
 // device type definition
 extern const device_type SONY_LDP1000;
-DECLARE_DEVICE_TYPE(SONY_LDP1000, sony_ldp1000_device)
 
 // ======================> sony_ldp1000_device
 
@@ -83,4 +82,15 @@ private:
 
 };
 
-#endif // MAME_MACHINE_LDP1000_H
+
+
+
+
+
+//**************************************************************************
+//  GLOBAL VARIABLES
+//**************************************************************************
+
+
+
+#endif

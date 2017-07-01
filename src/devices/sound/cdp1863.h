@@ -17,11 +17,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_SOUND_CDP1863_H
-#define MAME_SOUND_CDP1863_H
-
 #pragma once
 
+#ifndef __CDP1863__
+#define __CDP1863__
+
+#include "emu.h"
 
 
 
@@ -81,6 +82,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(CDP1863, cdp1863_device)
+extern const device_type CDP1863;
 
-#endif // MAME_SOUND_CDP1863_H
+
+
+#endif

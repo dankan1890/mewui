@@ -38,20 +38,16 @@
 ***************************************************************************/
 
 #include "emu.h"
-
 #include "cpu/m68000/m68000.h"
-#include "formats/guab_dsk.h"
 #include "machine/6840ptm.h"
-#include "machine/6850acia.h"
 #include "machine/i8255.h"
-#include "machine/wd_fdc.h"
-#include "sound/sn76496.h"
-#include "video/ef9369.h"
+#include "machine/6850acia.h"
 #include "video/tms34061.h"
-#include "screen.h"
+#include "video/ef9369.h"
+#include "sound/sn76496.h"
+#include "machine/wd_fdc.h"
+#include "formats/guab_dsk.h"
 #include "softlist.h"
-#include "speaker.h"
-
 #include "guab.lh"
 
 
@@ -101,7 +97,7 @@ private:
 	required_device<cpu_device> m_maincpu;
 	required_device<tms34061_device> m_tms34061;
 	required_device<sn76489_device> m_sn;
-	required_device<wd1773_device> m_fdc;
+	required_device<wd1773_t> m_fdc;
 	required_device<floppy_connector> m_floppy;
 	required_device<palette_device> m_palette;
 
@@ -126,7 +122,7 @@ static ADDRESS_MAP_START( guab_map, AS_PROGRAM, 16, guab_state )
 	AM_RANGE(0x0c00a0, 0x0c00a1) AM_DEVREADWRITE8("acia6850_2", acia6850_device, status_r, control_w, 0x00ff)
 	AM_RANGE(0x0c00a2, 0x0c00a3) AM_DEVREADWRITE8("acia6850_2", acia6850_device, data_r, data_w, 0x00ff)
 	AM_RANGE(0x0c00c0, 0x0c00cf) AM_DEVREADWRITE8("6840ptm", ptm6840_device, read, write, 0x00ff)
-	AM_RANGE(0x0c00e0, 0x0c00e7) AM_DEVREADWRITE8("fdc", wd1773_device, read, write, 0x00ff)
+	AM_RANGE(0x0c00e0, 0x0c00e7) AM_DEVREADWRITE8("fdc", wd1773_t, read, write, 0x00ff)
 	AM_RANGE(0x080000, 0x080fff) AM_RAM
 	AM_RANGE(0x100000, 0x100001) AM_DEVREADWRITE8("ef9369", ef9369_device, data_r, data_w, 0x00ff)
 	AM_RANGE(0x100002, 0x100003) AM_DEVWRITE8("ef9369", ef9369_device, address_w, 0x00ff)
@@ -359,36 +355,36 @@ WRITE8_MEMBER( guab_state::output2_w )
 {
 	output().set_value("led_8", BIT(data, 0));
 	output().set_value("led_9", BIT(data, 1));
-	output().set_value("led_10", BIT(data, 2)); // start (ten up: start)
+	output().set_value("led_10", BIT(data, 2));	// start (ten up: start)
 	output().set_value("led_11", BIT(data, 3)); // (ten up: feature 6)
 	output().set_value("led_12", BIT(data, 4)); // (ten up: feature 11)
 	output().set_value("led_13", BIT(data, 5)); // (ten up: feature 13)
-	output().set_value("led_14", BIT(data, 6)); // lamp a (ten up: feature 12)
-	output().set_value("led_15", BIT(data, 7)); // lamp b (ten up: pass)
+	output().set_value("led_14", BIT(data, 6));	// lamp a (ten up: feature 12)
+	output().set_value("led_15", BIT(data, 7));	// lamp b (ten up: pass)
 }
 
 WRITE8_MEMBER( guab_state::output3_w )
 {
-	output().set_value("led_16", BIT(data, 0)); // select (ten up: collect)
+	output().set_value("led_16", BIT(data, 0));	// select (ten up: collect)
 	output().set_value("led_17", BIT(data, 1)); // (ten up: feature 14)
 	output().set_value("led_18", BIT(data, 2)); // (ten up: feature 9)
 	output().set_value("led_19", BIT(data, 3)); //   (ten up: lamp a)
-	output().set_value("led_20", BIT(data, 4)); // lamp c (ten up: lamp b)
-	output().set_value("led_21", BIT(data, 5)); // lamp d (ten up: lamp c)
+	output().set_value("led_20", BIT(data, 4));	// lamp c (ten up: lamp b)
+	output().set_value("led_21", BIT(data, 5));	// lamp d (ten up: lamp c)
 	output().set_value("led_22", BIT(data, 6));
 	output().set_value("led_23", BIT(data, 7));
 }
 
 WRITE8_MEMBER( guab_state::output4_w )
 {
-	output().set_value("led_24", BIT(data, 0)); // feature 1 (ten up: feature 1)
-	output().set_value("led_25", BIT(data, 1)); // feature 2 (ten up: feature 10)
-	output().set_value("led_26", BIT(data, 2)); // feature 3 (ten up: feature 7)
-	output().set_value("led_27", BIT(data, 3)); // feature 4 (ten up: feature 2)
-	output().set_value("led_28", BIT(data, 4)); // feature 5 (ten up: feature 8)
-	output().set_value("led_29", BIT(data, 5)); // feature 6 (ten up: feature 3)
-	output().set_value("led_30", BIT(data, 6)); // feature 7 (ten up: feature 4)
-	output().set_value("led_31", BIT(data, 7)); // feature 8 (ten up: feature 5)
+	output().set_value("led_24", BIT(data, 0));	// feature 1 (ten up: feature 1)
+	output().set_value("led_25", BIT(data, 1));	// feature 2 (ten up: feature 10)
+	output().set_value("led_26", BIT(data, 2));	// feature 3 (ten up: feature 7)
+	output().set_value("led_27", BIT(data, 3));	// feature 4 (ten up: feature 2)
+	output().set_value("led_28", BIT(data, 4));	// feature 5 (ten up: feature 8)
+	output().set_value("led_29", BIT(data, 5));	// feature 6 (ten up: feature 3)
+	output().set_value("led_30", BIT(data, 6));	// feature 7 (ten up: feature 4)
+	output().set_value("led_31", BIT(data, 7));	// feature 8 (ten up: feature 5)
 }
 
 WRITE8_MEMBER( guab_state::output5_w )
@@ -449,7 +445,7 @@ SLOT_INTERFACE_END
 //  MACHINE DEFINTIONS
 //**************************************************************************
 
-static MACHINE_CONFIG_START( guab )
+static MACHINE_CONFIG_START( guab, guab_state )
 	/* TODO: Verify clock */
 	MCFG_CPU_ADD("maincpu", M68000, 8000000)
 	MCFG_CPU_PROGRAM_MAP(guab_map)
@@ -553,7 +549,7 @@ ROM_END
 //  SYSTEM DRIVERS
 //**************************************************************************
 
-//    YEAR  NAME      PARENT  MACHINE  INPUT  CLASS       INIT  ROTATION  COMPANY  FULLNAME                FLAGS
-GAME( 1986, guab,     0,      guab,    guab,  guab_state, 0,    ROT0,     "JPM",   "Give us a Break",      0 )
-GAME( 1986, crisscrs, 0,      guab,    guab,  guab_state, 0,    ROT0,     "JPM",   "Criss Cross (Sweden)", MACHINE_NOT_WORKING )
-GAME( 1988, tenup,    0,      guab,    tenup, guab_state, 0,    ROT0,     "JPM",   "Ten Up",               0 )
+//    YEAR  NAME      PARENT  MACHINE  INPUT  CLASS          INIT  ROTATION  COMPANY  FULLNAME                FLAGS
+GAME( 1986, guab,     0,      guab,    guab,  driver_device, 0,    ROT0,     "JPM",   "Give us a Break",      0 )
+GAME( 1986, crisscrs, 0,      guab,    guab,  driver_device, 0,    ROT0,     "JPM",   "Criss Cross (Sweden)", MACHINE_NOT_WORKING )
+GAME( 1988, tenup,    0,      guab,    tenup, driver_device, 0,    ROT0,     "JPM",   "Ten Up",               0 )

@@ -17,8 +17,6 @@
 #include "bus/vectrex/slot.h"
 #include "bus/vectrex/rom.h"
 
-#include "screen.h"
-
 #define NVECT 10000
 
 struct vectrex_point

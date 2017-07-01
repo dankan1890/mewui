@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "exp.h"
 
 
@@ -14,7 +13,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(COMX_EXPANSION_SLOT, comx_expansion_slot_device, "comx_expansion_slot", "COMX-35 expansion slot")
+const device_type COMX_EXPANSION_SLOT = &device_creator<comx_expansion_slot_device>;
 
 
 
@@ -44,7 +43,7 @@ device_comx_expansion_card_interface::device_comx_expansion_card_interface(const
 //-------------------------------------------------
 
 comx_expansion_slot_device::comx_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, COMX_EXPANSION_SLOT, tag, owner, clock),
+	device_t(mconfig, COMX_EXPANSION_SLOT, "COMX-35 expansion slot", tag, owner, clock, "comx_expansion_slot", __FILE__),
 	device_slot_interface(mconfig, *this),
 	m_write_irq(*this), m_card(nullptr)
 {

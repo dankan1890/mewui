@@ -24,16 +24,16 @@
 #include <nana/gui/filebox.hpp>
 #include <functional>
 #include <cstdlib>  //include std::abs
-#if defined(NANA_WINDOWS)
+#if defined(NANA_WINDOWS) && !defined(NANA_SAME_LEF)
 	#include <windows.h>
-#elif defined(NANA_X11)
+#elif defined(NANA_X11) || defined(NANA_SAME_LEF)
 	#include <nana/gui/widgets/picture.hpp>
 	#include <nana/paint/pixel_buffer.hpp>
 #endif
 
 namespace nana
 {
-#if defined(NANA_X11)
+#if defined(NANA_X11) || defined(NANA_SAME_LEF)
 		class msgbox_window
 			: public form
 		{
@@ -419,7 +419,7 @@ namespace nana
 
 	msgbox::pick_t msgbox::show() const
 	{
-#if defined(NANA_WINDOWS)
+#if defined(NANA_WINDOWS) && !defined(NANA_SAME_LEF)
 		int type = 0;
 		switch(button_)
 		{
@@ -466,7 +466,7 @@ namespace nana
 		}
 
 		return pick_yes;
-#elif defined(NANA_X11)
+#elif defined(NANA_X11) || defined(NANA_SAME_LEF)
 		msgbox_window box(wd_, title_, button_, icon_);
 		box.prompt(sstream_.str());
 		return box.pick();

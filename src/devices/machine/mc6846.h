@@ -8,10 +8,8 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_MC6846_H
-#define MAME_MACHINE_MC6846_H
-
-#pragma once
+#ifndef MC6846_H
+#define MC6846_H
 
 
 #define MCFG_MC6846_OUT_PORT_CB(_devcb) \
@@ -37,13 +35,14 @@ class mc6846_device : public device_t
 {
 public:
 	mc6846_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~mc6846_device() {}
 
-	template <class Object> static devcb_base &set_out_port_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_out_port_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_cp1_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_out_cp1_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_cp2_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_out_cp2_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_in_port_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_in_port_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_cto_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_out_cto_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_irq_callback(device_t &device, Object &&cb) { return downcast<mc6846_device &>(device).m_irq_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_port_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_out_port_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_cp1_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_out_cp1_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_cp2_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_out_cp2_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_in_port_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_in_port_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_cto_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_out_cto_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_irq_callback(device_t &device, _Object object) { return downcast<mc6846_device &>(device).m_irq_cb.set_callback(object); }
 
 	/* interface to CPU via address/data bus*/
 	DECLARE_READ8_MEMBER(read);
@@ -121,6 +120,6 @@ private:
 	TIMER_CALLBACK_MEMBER(timer_one_shot);
 };
 
-DECLARE_DEVICE_TYPE(MC6846, mc6846_device)
+extern const device_type MC6846;
 
-#endif // MAME_MACHINE_MC6846_H
+#endif

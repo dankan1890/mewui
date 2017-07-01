@@ -18,7 +18,6 @@ months for an average citizen.
 
 #include "emu.h"
 #include "cpu/t11/t11.h"
-#include "screen.h"
 
 
 class mk90_state : public driver_device
@@ -67,7 +66,7 @@ uint32_t mk90_state::screen_update_mk90(screen_device &screen, bitmap_ind16 &bit
 	return 0;
 }
 
-static MACHINE_CONFIG_START( mk90 )
+static MACHINE_CONFIG_START( mk90, mk90_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", K1801VM2, XTAL_4MHz)
 	MCFG_T11_INITIAL_MODE(0x8000)
@@ -99,5 +98,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE       INIT  COMPANY        FULLNAME  FLAGS */
-COMP( 1988, mk90,   0,      0,       mk90,      mk90,  mk90_state, 0,    "Elektronika", "MK-90",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT    INIT    COMPANY     FULLNAME       FLAGS */
+COMP( 1988, mk90,   0,      0,       mk90,      mk90, driver_device,    0,   "Elektronika", "MK-90", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

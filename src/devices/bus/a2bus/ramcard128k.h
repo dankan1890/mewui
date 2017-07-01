@@ -8,11 +8,10 @@
 
 *********************************************************************/
 
-#ifndef MAME_BUS_A2BUS_RAMCARD128K_H
-#define MAME_BUS_A2BUS_RAMCARD128K_H
+#ifndef __A2BUS_RAMCARD128K__
+#define __A2BUS_RAMCARD128K__
 
-#pragma once
-
+#include "emu.h"
 #include "a2bus.h"
 
 //**************************************************************************
@@ -25,11 +24,10 @@ class a2bus_ssramcard_device:
 {
 public:
 	// construction/destruction
+	a2bus_ssramcard_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source);
 	a2bus_ssramcard_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 protected:
-	a2bus_ssramcard_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
-
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
@@ -53,6 +51,6 @@ private:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(A2BUS_RAMCARD128K, a2bus_ssramcard_device)
+extern const device_type A2BUS_RAMCARD128K;
 
-#endif // MAME_BUS_A2BUS_RAMCARD128K_H
+#endif /* __A2BUS_RAMCARD128K__ */

@@ -2,14 +2,14 @@
 // copyright-holders:<author_name>
 /***************************************************************************
 
-Template for squeleton device
+Template for skeleton device
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_XXX_H
-#define MAME_MACHINE_XXX_H
-
 #pragma once
+
+#ifndef __XXXDEV_H__
+#define __XXXDEV_H__
 
 
 
@@ -17,9 +17,8 @@ Template for squeleton device
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_XXX_ADD(tag, freq) \
-		MCFG_DEVICE_ADD((tag), XXX, (freq))
-
+#define MCFG_XXX_ADD(_tag,_freq) \
+	MCFG_DEVICE_ADD(_tag, XXX, _freq)
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -39,15 +38,14 @@ public:
 
 protected:
 	// device-level overrides
-	//virtual void device_validity_check(validity_checker &valid) const override;
-	virtual void device_add_mconfig() override;
+//  virtual void device_validity_check(validity_checker &valid) const;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(XXX, xxx_device)
+extern const device_type XXX;
 
 
 
@@ -56,4 +54,5 @@ DECLARE_DEVICE_TYPE(XXX, xxx_device)
 //**************************************************************************
 
 
-#endif // MAME_MACHINE_XXX_H
+
+#endif

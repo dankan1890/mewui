@@ -23,11 +23,12 @@
 
 ***************************************************************************/
 
-#ifndef MAME_MACHINE_MC2661_H
-#define MAME_MACHINE_MC2661_H
-
 #pragma once
 
+#ifndef __MC2661__
+#define __MC2661__
+
+#include "emu.h"
 
 
 
@@ -83,14 +84,14 @@ public:
 	static void static_set_rxc(device_t &device, int clock) { downcast<mc2661_device &>(device).m_rxc = clock; }
 	static void static_set_txc(device_t &device, int clock) { downcast<mc2661_device &>(device).m_txc = clock; }
 
-	template <class Object> static devcb_base &set_txd_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_txd.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_rxrdy_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_rxrdy.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_txrdy_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_txrdy.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_rts_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_rts.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_dtr_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_dtr.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_txemt_dschg_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_txemt_dschg.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_bkdet_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_bkdet.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_xsync_callback(device_t &device, Object &&cb) { return downcast<mc2661_device &>(device).m_write_xsync.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_txd_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_txd.set_callback(object); }
+	template<class _Object> static devcb_base &set_rxrdy_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_rxrdy.set_callback(object); }
+	template<class _Object> static devcb_base &set_txrdy_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_txrdy.set_callback(object); }
+	template<class _Object> static devcb_base &set_rts_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_rts.set_callback(object); }
+	template<class _Object> static devcb_base &set_dtr_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_dtr.set_callback(object); }
+	template<class _Object> static devcb_base &set_txemt_dschg_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_txemt_dschg.set_callback(object); }
+	template<class _Object> static devcb_base &set_bkdet_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_bkdet.set_callback(object); }
+	template<class _Object> static devcb_base &set_xsync_callback(device_t &device, _Object object) { return downcast<mc2661_device &>(device).m_write_xsync.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
@@ -141,6 +142,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(MC2661, mc2661_device)
+extern const device_type MC2661;
 
-#endif // MAME_MACHINE_MC2661_H
+
+
+#endif

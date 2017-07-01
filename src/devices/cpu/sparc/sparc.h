@@ -4,8 +4,8 @@
     SPARC v7 emulator
 */
 
-#ifndef MAME_CPU_SPARC_SPARC_H
-#define MAME_CPU_SPARC_SPARC_H
+#ifndef __SPARC_H__
+#define __SPARC_H__
 
 #pragma once
 
@@ -233,7 +233,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(MB86901, mb86901_device)
+extern const device_type MB86901;
 
 enum
 {
@@ -290,4 +290,4 @@ enum
 	SPARC_RESET
 };
 
-#endif // MAME_CPU_SPARC_SPARC_H
+#endif /* __SPARC_H__ */

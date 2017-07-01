@@ -94,12 +94,9 @@
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/bankp.h"
-
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
-#include "screen.h"
-#include "speaker.h"
+#include "includes/bankp.h"
 
 
 #define MASTER_CLOCK    XTAL_15_468MHz
@@ -291,7 +288,7 @@ INTERRUPT_GEN_MEMBER(bankp_state::vblank_irq)
 		device.execute().set_input_line(INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static MACHINE_CONFIG_START( bankp )
+static MACHINE_CONFIG_START( bankp, bankp_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, MASTER_CLOCK/6)
@@ -398,5 +395,5 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, bankp, 0, bankp, bankp, bankp_state, 0, ROT0,   "Sanritsu / Sega", "Bank Panic",  MACHINE_SUPPORTS_SAVE )
-GAME( 1987, combh, 0, bankp, combh, bankp_state, 0, ROT270, "Sanritsu / Sega", "Combat Hawk", MACHINE_SUPPORTS_SAVE )
+GAME( 1984, bankp, 0, bankp, bankp, driver_device, 0, ROT0,   "Sanritsu / Sega", "Bank Panic",  MACHINE_SUPPORTS_SAVE )
+GAME( 1987, combh, 0, bankp, combh, driver_device, 0, ROT270, "Sanritsu / Sega", "Combat Hawk", MACHINE_SUPPORTS_SAVE )

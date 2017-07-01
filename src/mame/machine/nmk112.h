@@ -6,10 +6,8 @@
 
 **************************************************************************/
 
-#ifndef MAME_MACHINE_NMK112_H
-#define MAME_MACHINE_NMK112_H
-
-#pragma once
+#ifndef __NMK112_H__
+#define __NMK112_H__
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -19,6 +17,7 @@ class nmk112_device : public device_t
 {
 public:
 	nmk112_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~nmk112_device() {}
 
 	// static configuration
 	static void set_rom0_tag(device_t &device, const char *tag) { downcast<nmk112_device &>(device).m_tag0 = tag; }
@@ -48,7 +47,7 @@ private:
 	int   m_size0, m_size1;
 };
 
-DECLARE_DEVICE_TYPE(NMK112, nmk112_device)
+extern const device_type NMK112;
 
 
 /***************************************************************************
@@ -65,4 +64,4 @@ DECLARE_DEVICE_TYPE(NMK112, nmk112_device)
 	nmk112_device::set_page_mask(*device, _mask);
 
 
-#endif // MAME_MACHINE_NMK112_H
+#endif /* __NMK112_H__ */

@@ -81,19 +81,15 @@ ToDo:
 ****************************************************************************/
 
 #include "emu.h"
-
 #include "cpu/z80/z80.h"
-#include "imagedev/cassette.h"
-#include "sound/sn76496.h"
-#include "sound/wave.h"
 #include "video/tms9928a.h"
-
+#include "sound/sn76496.h"
 #include "bus/centronics/ctronics.h"
+#include "imagedev/cassette.h"
+#include "sound/wave.h"
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
-
 #include "softlist.h"
-#include "speaker.h"
 
 class pencil2_state : public driver_device
 {
@@ -303,7 +299,7 @@ void pencil2_state::machine_start()
 		m_maincpu->space(AS_PROGRAM).install_read_handler(0x8000, 0xffff, read8_delegate(FUNC(generic_slot_device::read_rom),(generic_slot_device*)m_cart));
 }
 
-static MACHINE_CONFIG_START( pencil2 )
+static MACHINE_CONFIG_START( pencil2, pencil2_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_10_738635MHz/3)
 	MCFG_CPU_PROGRAM_MAP(pencil2_mem)
@@ -348,5 +344,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME     PARENT  COMPAT  MACHINE   INPUT    STATE          INIT  COMPANY    FULLNAME     FLAGS
-COMP( 1983, pencil2, 0,      0,      pencil2,  pencil2, pencil2_state, 0,    "Hanimex", "Pencil II", 0 )
+/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT     STATE         INIT  COMPANY    FULLNAME       FLAGS */
+COMP( 1983, pencil2,   0,     0,     pencil2,   pencil2, driver_device,  0,  "Hanimex", "Pencil II", 0 )

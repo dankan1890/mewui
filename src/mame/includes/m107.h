@@ -8,7 +8,6 @@
 
 #include "machine/gen_latch.h"
 #include "machine/pic8259.h"
-#include "screen.h"
 
 struct pf_layer_info
 {

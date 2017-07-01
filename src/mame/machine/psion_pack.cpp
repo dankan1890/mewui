@@ -54,15 +54,15 @@ static const char *datapack_option_spec =
 
 
 // device type definition
-DEFINE_DEVICE_TYPE(PSION_DATAPACK, datapack_device, "datapack", "Psion Datapack")
+const device_type PSION_DATAPACK = &device_creator<datapack_device>;
 
 //-------------------------------------------------
 //  datapack_device - constructor
 //-------------------------------------------------
 
 datapack_device::datapack_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, PSION_DATAPACK, tag, owner, clock)
-	, device_image_interface(mconfig, *this)
+	: device_t(mconfig, PSION_DATAPACK, "Psion Datapack", tag, owner, clock, "datapack", __FILE__),
+		device_image_interface(mconfig, *this)
 {
 }
 
@@ -95,6 +95,9 @@ void datapack_device::device_start()
 void datapack_device::device_config_complete()
 {
 	add_format("opk", "Psion Datapack image", "opk", datapack_option_spec);
+
+	// set brief and instance name
+	update_names();
 }
 
 
@@ -125,7 +128,7 @@ void datapack_device::update()
 		if ((m_control & DP_LINE_OUTPUT_ENABLE) && !(m_control & DP_LINE_RESET))
 		{
 			// write data
-			if (!loaded_through_softlist() && (m_id & DP_ID_WRITE))
+			if (software_entry() == nullptr && (m_id & DP_ID_WRITE))
 			{
 				fseek(pack_addr + OPK_HEAD_SIZE, SEEK_SET);
 				fwrite(&m_data, 1);
@@ -161,7 +164,7 @@ void datapack_device::update()
 		else if (!(m_control & DP_LINE_OUTPUT_ENABLE) && (m_control & DP_LINE_RESET))
 		{
 			// read datapack ID
-			if ((m_id & DP_ID_EPROM) || loaded_through_softlist())
+			if ((m_id & DP_ID_EPROM) || software_entry() != nullptr)
 				m_data = m_id;
 			else
 				m_data = 0x01;      // for identify RAM pack

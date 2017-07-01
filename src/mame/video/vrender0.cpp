@@ -23,10 +23,10 @@
  DEVICE INTERFACE
  *****************************************************************************/
 
-DEFINE_DEVICE_TYPE(VIDEO_VRENDER0, vr0video_device, "vr0video", "VRender0 Video")
+const device_type VIDEO_VRENDER0 = &device_creator<vr0video_device>;
 
 vr0video_device::vr0video_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, VIDEO_VRENDER0, tag, owner, clock)
+	: device_t(mconfig, VIDEO_VRENDER0, "VRender0 Video", tag, owner, clock, "vr0video", __FILE__)
 	, m_cpu(*this, finder_base::DUMMY_TAG)
 {
 }

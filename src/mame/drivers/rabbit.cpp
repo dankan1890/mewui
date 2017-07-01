@@ -85,8 +85,6 @@ Custom: Imagetek I5000 (2ch video & 2ch sound)
 #include "cpu/m68000/m68000.h"
 #include "machine/eepromser.h"
 #include "sound/i5000.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 class rabbit_state : public driver_device
@@ -135,7 +133,6 @@ public:
 	int m_banking;
 	std::unique_ptr<uint32_t[]> m_tilemap_ram[4];
 	tilemap_t *m_tilemap[4];
-	emu_timer *m_blit_done_timer;
 
 	DECLARE_WRITE32_MEMBER(tilemap0_w);
 	DECLARE_WRITE32_MEMBER(tilemap1_w);
@@ -440,8 +437,6 @@ void rabbit_state::video_start()
 	m_sprite_bitmap = std::make_unique<bitmap_ind16>(0x1000,0x1000);
 	m_sprite_clip.set(0, 0x1000-1, 0, 0x1000-1);
 
-	m_blit_done_timer = timer_alloc(TIMER_BLIT_DONE);
-
 	save_pointer(NAME(m_tilemap_ram[0].get()), 0x20000/4);
 	save_pointer(NAME(m_tilemap_ram[1].get()), 0x20000/4);
 	save_pointer(NAME(m_tilemap_ram[2].get()), 0x20000/4);
@@ -634,7 +629,7 @@ void rabbit_state::do_blit()
 				if (!blt_amount)
 				{
 					if(BLITLOG) osd_printf_debug("end of blit list\n");
-					m_blit_done_timer->adjust(attotime::from_usec(500));
+					timer_set(attotime::from_usec(500), TIMER_BLIT_DONE);
 					return;
 				}
 
@@ -898,7 +893,7 @@ INTERRUPT_GEN_MEMBER(rabbit_state::vblank_interrupt)
 	m_maincpu->set_input_line(m_vblirqlevel, HOLD_LINE);
 }
 
-static MACHINE_CONFIG_START( rabbit )
+static MACHINE_CONFIG_START( rabbit, rabbit_state )
 	MCFG_CPU_ADD("maincpu", M68EC020, XTAL_24MHz)
 	MCFG_CPU_PROGRAM_MAP(rabbit_map)
 	MCFG_CPU_VBLANK_INT_DRIVER("screen", rabbit_state,  vblank_interrupt)

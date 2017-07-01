@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
-#ifndef MAME_MACHINE_PCCARD_H
-#define MAME_MACHINE_PCCARD_H
-
 #pragma once
 
+#ifndef __PCCARD_H__
+#define __PCCARD_H__
+
+#include "emu.h"
 
 class pccard_interface
 {
@@ -17,9 +18,10 @@ public:
 	virtual ~pccard_interface() {}
 };
 
-DECLARE_DEVICE_TYPE(PCCARD_SLOT, pccard_slot_device)
+extern const device_type PCCARD_SLOT;
 
-class pccard_slot_device : public device_t, public device_slot_interface
+class pccard_slot_device : public device_t,
+	public device_slot_interface
 {
 public:
 	pccard_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -38,4 +40,4 @@ private:
 	pccard_interface *m_pccard;
 };
 
-#endif // MAME_MACHINE_PCCARD_H
+#endif

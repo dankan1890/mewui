@@ -48,9 +48,7 @@
 #include "machine/ram.h"
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
-#include "screen.h"
 #include "softlist.h"
-#include "speaker.h"
 
 class rx78_state : public driver_device
 {
@@ -451,7 +449,7 @@ static GFXDECODE_START( rx78 )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( rx78 )
+static MACHINE_CONFIG_START( rx78, rx78_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu",Z80, MASTER_CLOCK/7) // unknown divider
 	MCFG_CPU_PROGRAM_MAP(rx78_mem)

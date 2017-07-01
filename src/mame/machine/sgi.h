@@ -8,18 +8,17 @@
 
 *********************************************************************/
 
-#ifndef MAME_MACHINE_SGI_H
-#define MAME_MACHINE_SGI_H
-
-#pragma once
+#ifndef _SGIMC_H
+#define _SGIMC_H
 
 class sgi_mc_device : public device_t
 {
 public:
 	sgi_mc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~sgi_mc_device() {}
 
-	DECLARE_READ32_MEMBER(read);
-	DECLARE_WRITE32_MEMBER(write);
+DECLARE_READ32_MEMBER(read);
+DECLARE_WRITE32_MEMBER(write);
 
 protected:
 	// device-level overrides
@@ -75,7 +74,7 @@ private:
 	void timer_init();
 };
 
-DECLARE_DEVICE_TYPE(SGI_MC, sgi_mc_device)
+extern const device_type SGI_MC;
 
 
-#endif // MAME_MACHINE_SGI_H
+#endif /* _SGIMC_H */

@@ -1,14 +1,13 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert
-#ifndef MAME_VIDEO_K053250_H
-#define MAME_VIDEO_K053250_H
-
-#pragma once
+#ifndef __K053250_H__
+#define __K053250_H__
 
 //
 //  Konami 053250 road generator
 //
 
+#include "emu.h"
 
 #define MCFG_K053250_ADD(_tag, _palette_tag, _screen_tag, offx, offy)  \
 	MCFG_DEVICE_ADD(_tag, K053250, 0) \
@@ -59,6 +58,6 @@ private:
 									uint32_t clipmask, uint32_t wrapmask, uint32_t orientation, bitmap_ind8 &priority, uint8_t pri);
 };
 
-DECLARE_DEVICE_TYPE(K053250, k053250_device)
+extern const device_type K053250;
 
-#endif // MAME_VIDEO_K053250_H
+#endif

@@ -1,9 +1,9 @@
 // license:BSD-3-Clause
 // copyright-holders:Derrick Renaud, Couriersud
-#ifndef MAME_SOUND_FLT_VOL_H
-#define MAME_SOUND_FLT_VOL_H
-
 #pragma once
+
+#ifndef __FLT_VOL_H__
+#define __FLT_VOL_H__
 
 
 
@@ -23,10 +23,12 @@
 
 // ======================> filter_volume_device
 
-class filter_volume_device : public device_t, public device_sound_interface
+class filter_volume_device : public device_t,
+								public device_sound_interface
 {
 public:
 	filter_volume_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	~filter_volume_device() { }
 
 	void flt_volume_set_volume(float volume);
 
@@ -42,7 +44,7 @@ private:
 	int            m_gain;
 };
 
-DECLARE_DEVICE_TYPE(FILTER_VOLUME, filter_volume_device)
+extern const device_type FILTER_VOLUME;
 
 
-#endif // MAME_SOUND_FLT_VOL_H
+#endif /* __FLT_VOL_H__ */

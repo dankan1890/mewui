@@ -17,8 +17,9 @@
 
 #include "emu.h"
 #include "includes/vtech2.h"
-
 #include "imagedev/flopdrv.h"
+#include "imagedev/cassette.h"
+#include "sound/speaker.h"
 
 /* public */
 

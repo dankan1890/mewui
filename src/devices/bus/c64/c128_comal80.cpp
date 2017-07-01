@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "c128_comal80.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C128_COMAL80, c128_comal80_cartridge_device, "c128_comal80", "C128 COMAL 80 cartridge")
+const device_type C128_COMAL80 = &device_creator<c128_comal80_cartridge_device>;
 
 
 
@@ -28,7 +27,7 @@ DEFINE_DEVICE_TYPE(C128_COMAL80, c128_comal80_cartridge_device, "c128_comal80", 
 //-------------------------------------------------
 
 c128_comal80_cartridge_device::c128_comal80_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C128_COMAL80, tag, owner, clock),
+	device_t(mconfig, C128_COMAL80, "C128 COMAL 80 cartridge", tag, owner, clock, "c128_comal80", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this),
 	m_bank(0)
 {

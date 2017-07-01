@@ -18,11 +18,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_MACHINE_RP5C15_H
-#define MAME_MACHINE_RP5C15_H
-
 #pragma once
 
+#ifndef __RP5C15__
+#define __RP5C15__
+
+#include "emu.h"
 #include "dirtc.h"
 
 
@@ -50,8 +51,8 @@ public:
 	// construction/destruction
 	rp5c15_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_out_alarm_callback(device_t &device, Object &&cb) { return downcast<rp5c15_device &>(device).m_out_alarm_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_out_clkout_callback(device_t &device, Object &&cb) { return downcast<rp5c15_device &>(device).m_out_clkout_cb.set_callback(std::forward<Object>(cb)); }
+	template<class _Object> static devcb_base &set_out_alarm_callback(device_t &device, _Object object) { return downcast<rp5c15_device &>(device).m_out_alarm_cb.set_callback(object); }
+	template<class _Object> static devcb_base &set_out_clkout_callback(device_t &device, _Object object) { return downcast<rp5c15_device &>(device).m_out_clkout_cb.set_callback(object); }
 
 	DECLARE_READ8_MEMBER( read );
 	DECLARE_WRITE8_MEMBER( write );
@@ -97,6 +98,8 @@ private:
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(RP5C15, rp5c15_device)
+extern const device_type RP5C15;
 
-#endif // MAME_MACHINE_RP5C15_H
+
+
+#endif

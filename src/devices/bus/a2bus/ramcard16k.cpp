@@ -8,7 +8,6 @@
 
 *********************************************************************/
 
-#include "emu.h"
 #include "ramcard16k.h"
 
 /***************************************************************************
@@ -19,7 +18,7 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(A2BUS_RAMCARD16K, a2bus_ramcard_device, "a2ram16k", "Apple II 16K Language Card")
+const device_type A2BUS_RAMCARD16K = &device_creator<a2bus_ramcard_device>;
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -29,14 +28,15 @@ DEFINE_DEVICE_TYPE(A2BUS_RAMCARD16K, a2bus_ramcard_device, "a2ram16k", "Apple II
 //  LIVE DEVICE
 //**************************************************************************
 
-a2bus_ramcard_device::a2bus_ramcard_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, type, tag, owner, clock),
-	device_a2bus_card_interface(mconfig, *this), m_inh_state(0), m_prewrite(false), m_dxxx_bank(0)
+a2bus_ramcard_device::a2bus_ramcard_device(const machine_config &mconfig, device_type type, const char *name, const char *tag, device_t *owner, uint32_t clock, const char *shortname, const char *source) :
+	device_t(mconfig, type, name, tag, owner, clock, shortname, source),
+	device_a2bus_card_interface(mconfig, *this), m_inh_state(0), m_last_offset(0), m_dxxx_bank(0)
 {
 }
 
 a2bus_ramcard_device::a2bus_ramcard_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	a2bus_ramcard_device(mconfig, A2BUS_RAMCARD16K, tag, owner, clock)
+	device_t(mconfig, A2BUS_RAMCARD16K, "Apple II 16K Language Card", tag, owner, clock, "a2ram16k", __FILE__),
+	device_a2bus_card_interface(mconfig, *this), m_inh_state(0), m_last_offset(0), m_dxxx_bank(0)
 {
 }
 
@@ -54,64 +54,47 @@ void a2bus_ramcard_device::device_start()
 	save_item(NAME(m_inh_state));
 	save_item(NAME(m_ram));
 	save_item(NAME(m_dxxx_bank));
-	save_item(NAME(m_prewrite));
+	save_item(NAME(m_last_offset));
 }
 
 void a2bus_ramcard_device::device_reset()
 {
-	m_inh_state = INH_WRITE;
+	m_inh_state = INH_NONE;
 	m_dxxx_bank = 0;
-	m_prewrite = false;
+	m_last_offset = -1;
 }
 
-void a2bus_ramcard_device::do_io(int offset, bool writing)
+void a2bus_ramcard_device::do_io(int offset)
 {
 	int old_inh_state = m_inh_state;
 
-	//any even access disables pre-write and writing
-	if ((offset & 1) == 0)
+	switch (offset)
 	{
-		m_prewrite = false;
-		m_inh_state &= ~INH_WRITE;
+		case 0x1: case 0x3: case 0x9: case 0xb:
+			if (offset != m_last_offset)
+			{
+				m_last_offset = offset;
+				return;
+			}
+			break;
+	}
+	m_last_offset = offset;
+
+	m_inh_state = INH_NONE;
+	m_dxxx_bank = 0;
+
+	if (offset & 0x1)
+	{
+		m_inh_state |= INH_WRITE;
 	}
 
-	//any write disables pre-write
-	//has no effect on write-enable if writing was enabled already
-	if (writing == true)
+	switch(offset & 0x03)
 	{
-		m_prewrite = false;
-	}
-	//first odd read enables pre-write, second one enables writing
-	else if ((offset & 1) == 1)
-	{
-		if (m_prewrite == false)
-		{
-			m_prewrite = true;
-		}
-		else
-		{
-			m_inh_state |= INH_WRITE;
-		}
-	}
-
-	switch (offset & 3)
-	{
-		case 0:
-		case 3:
-		{
+		case 0x00:
+		case 0x03:
 			m_inh_state |= INH_READ;
 			break;
-		}
-
-		case 1:
-		case 2:
-		{
-			m_inh_state &= ~INH_READ;
-			break;
-		}
 	}
-
-	m_dxxx_bank = 0;
 
 	if (!(offset & 8))
 	{
@@ -138,7 +121,7 @@ void a2bus_ramcard_device::do_io(int offset, bool writing)
 
 uint8_t a2bus_ramcard_device::read_c0nx(address_space &space, uint8_t offset)
 {
-	do_io(offset & 0xf, false);
+	do_io(offset & 0xf);
 	return 0xff;
 }
 
@@ -149,7 +132,7 @@ uint8_t a2bus_ramcard_device::read_c0nx(address_space &space, uint8_t offset)
 
 void a2bus_ramcard_device::write_c0nx(address_space &space, uint8_t offset, uint8_t data)
 {
-	do_io(offset & 0xf, true);
+	do_io(offset & 0xf);
 }
 
 uint8_t a2bus_ramcard_device::read_inh_rom(address_space &space, uint16_t offset)

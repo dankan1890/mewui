@@ -12,7 +12,6 @@
 
 #include "emu.h"
 #include "cpu/t11/t11.h"
-#include "screen.h"
 
 
 #define MAX_POINTS 2048
@@ -318,7 +317,7 @@ void galaxygame_state::machine_reset()
 	m_interrupt = 0;
 }
 
-static MACHINE_CONFIG_START( galaxygame )
+static MACHINE_CONFIG_START( galaxygame, galaxygame_state )
 
 	MCFG_CPU_ADD("maincpu", T11, 3000000 )
 	MCFG_CPU_PROGRAM_MAP(galaxygame_map)

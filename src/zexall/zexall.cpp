@@ -140,7 +140,7 @@ INPUT_PORTS_END
  Machine Drivers
 ******************************************************************************/
 
-static MACHINE_CONFIG_START( zexall )
+static MACHINE_CONFIG_START( zexall, zexall_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, XTAL_3_579545MHz)
 	MCFG_CPU_PROGRAM_MAP(z80_mem)

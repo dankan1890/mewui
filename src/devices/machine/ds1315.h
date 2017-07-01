@@ -10,26 +10,27 @@
 
 *********************************************************************/
 
-#ifndef MAME_MACHINE_DS1315_H
-#define MAME_MACHINE_DS1315_H
+#ifndef __DS1315_H__
+#define __DS1315_H__
 
-#pragma once
-
+#include "emu.h"
 
 
 /***************************************************************************
     MACROS
 ***************************************************************************/
 
+enum ds1315_mode_t
+{
+	DS_SEEK_MATCHING,
+	DS_CALENDAR_IO
+};
+
+ALLOW_SAVE_TYPE(ds1315_mode_t);
+
 class ds1315_device : public device_t
 {
 public:
-	enum mode_t
-	{
-		DS_SEEK_MATCHING,
-		DS_CALENDAR_IO
-	};
-
 	ds1315_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	~ds1315_device() {}
 
@@ -43,12 +44,13 @@ public:
 
 protected:
 	// device-level overrides
+	virtual void device_config_complete() override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
 private:
 	// internal state
-	mode_t m_mode;
+	ds1315_mode_t m_mode;
 
 	void fill_raw_data();
 	void input_raw_data();
@@ -57,9 +59,7 @@ private:
 	uint8_t m_raw_data[8*8];
 };
 
-ALLOW_SAVE_TYPE(ds1315_device::mode_t);
-
-DECLARE_DEVICE_TYPE(DS1315, ds1315_device)
+extern const device_type DS1315;
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -69,4 +69,4 @@ DECLARE_DEVICE_TYPE(DS1315, ds1315_device)
 	MCFG_DEVICE_ADD(_tag, DS1315, 0)
 
 
-#endif // MAME_MACHINE_DS1315_H
+#endif /* __DS1315_H__ */

@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Aaron Giles
-#ifndef MAME_MACHINE_NAMCO50_H
-#define MAME_MACHINE_NAMCO50_H
-
-#pragma once
+#ifndef NAMCO50_H
+#define NAMCO50_H
 
 #include "cpu/mb88xx/mb88xx.h"
 
@@ -30,7 +28,7 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 
 	TIMER_CALLBACK_MEMBER( latch_callback );
 	TIMER_CALLBACK_MEMBER( readrequest_callback );
@@ -44,6 +42,6 @@ private:
 	uint8_t                   m_portO;
 };
 
-DECLARE_DEVICE_TYPE(NAMCO_50XX, namco_50xx_device)
+extern const device_type NAMCO_50XX;
 
-#endif // MAME_MACHINE_NAMCO50_H
+#endif  /* NAMCO50_H */

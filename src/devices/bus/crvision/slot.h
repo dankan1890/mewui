@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Fabio Priuli
-#ifndef MAME_BUS_CRVISION_SLOT_H
-#define MAME_BUS_CRVISION_SLOT_H
-
-#pragma once
+#ifndef __CRVISION_SLOT_H
+#define __CRVISION_SLOT_H
 
 #include "softlist_dev.h"
 
@@ -32,6 +30,7 @@ class device_crvision_cart_interface : public device_slot_card_interface
 {
 public:
 	// construction/destruction
+	device_crvision_cart_interface(const machine_config &mconfig, device_t &device);
 	virtual ~device_crvision_cart_interface();
 
 	// reading and writing
@@ -43,8 +42,6 @@ public:
 	uint32_t get_rom_size() { return m_rom_size; }
 
 protected:
-	device_crvision_cart_interface(const machine_config &mconfig, device_t &device);
-
 	// internal state
 	uint8_t *m_rom;
 	uint32_t m_rom_size;
@@ -64,6 +61,7 @@ public:
 
 	// device-level overrides
 	virtual void device_start() override;
+	virtual void device_config_complete() override;
 
 	// image-level overrides
 	virtual image_init_result call_load() override;
@@ -82,7 +80,7 @@ public:
 	virtual const char *file_extensions() const override { return "bin,rom"; }
 
 	// slot interface overrides
-	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
+	virtual std::string get_default_card_software() override;
 
 	// reading and writing
 	virtual DECLARE_READ8_MEMBER(read_rom40);
@@ -98,7 +96,6 @@ protected:
 
 // device type definition
 extern const device_type CRVISION_CART_SLOT;
-DECLARE_DEVICE_TYPE(CRVISION_CART_SLOT, crvision_cart_slot_device)
 
 
 /***************************************************************************
@@ -110,5 +107,4 @@ DECLARE_DEVICE_TYPE(CRVISION_CART_SLOT, crvision_cart_slot_device)
 #define MCFG_CRVISION_CARTRIDGE_ADD(_tag,_slot_intf,_def_slot) \
 	MCFG_DEVICE_ADD(_tag, CRVISION_CART_SLOT, 0) \
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false)
-
-#endif // MAME_BUS_CRVISION_SLOT_H
+#endif

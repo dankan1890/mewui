@@ -1,9 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:ElSemi
-#ifndef MAME_CPU_SE3208_SE3208_H
-#define MAME_CPU_SE3208_SE3208_H
-
-#pragma once
 
 enum
 {
@@ -84,8 +80,8 @@ private:
 	inline void PushVal(uint32_t Val);
 	inline uint32_t PopVal();
 
-	typedef void (se3208_device::*OP)(uint16_t Opcode);
-	OP OpTable[0x10000];
+	typedef void (se3208_device::*_OP)(uint16_t Opcode);
+	_OP OpTable[0x10000];
 
 	void INVALIDOP(uint16_t Opcode);
 	void LDB(uint16_t Opcode);
@@ -163,13 +159,11 @@ private:
 	void MVFC(uint16_t Opcode);
 
 	void BuildTable(void);
-	OP DecodeOp(uint16_t Opcode);
+	_OP DecodeOp(uint16_t Opcode);
 	void SE3208_NMI();
 	void SE3208_Interrupt();
 
 };
 
 
-DECLARE_DEVICE_TYPE(SE3208, se3208_device)
-
-#endif // MAME_CPU_SE3208_SE3208_H
+extern const device_type SE3208;

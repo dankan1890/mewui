@@ -17,12 +17,12 @@
 
 **********************************************************************/
 
-#ifndef MAME_VIDEO_DM9368_H
-#define MAME_VIDEO_DM9368_H
-
 #pragma once
 
-#include "dioutput.h"
+#ifndef __DM9368__
+#define __DM9368__
+
+#include "emu.h"
 
 
 
@@ -63,11 +63,13 @@ private:
 	int m_rbi;
 	int m_rbo;
 
-	static const uint8_t s_segment_data[16];
+	static const uint8_t m_segment_data[];
 };
 
 
 // device type definition
-DECLARE_DEVICE_TYPE(DM9368, dm9368_device)
+extern const device_type DM9368;
 
-#endif // MAME_VIDEO_DM9368_H
+
+
+#endif

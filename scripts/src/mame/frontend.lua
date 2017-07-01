@@ -45,6 +45,10 @@ includedirs {
 	MAME_DIR .. "3rdparty/asio/include",
 }
 
+configuration { "vs*" }
+	buildoptions {
+		"/bigobj",
+	}
 configuration { }
 if (_OPTIONS["targetos"] == "windows") then
 	defines {
@@ -168,21 +172,19 @@ files {
 	MAME_DIR .. "src/frontend/mame/ui/sndmenu.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/sndmenu.h",
 	MAME_DIR .. "src/frontend/mame/ui/starimg.ipp",
-	MAME_DIR .. "src/frontend/mame/ui/state.cpp",
-	MAME_DIR .. "src/frontend/mame/ui/state.h",
 	MAME_DIR .. "src/frontend/mame/ui/toolbar.ipp",
 	MAME_DIR .. "src/frontend/mame/ui/utils.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/utils.h",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.h",
-	MAME_DIR .. "src/frontend/mame/mewui/mewui.cpp",
-	MAME_DIR .. "src/frontend/mame/mewui/mewui.h",
-	MAME_DIR .. "src/frontend/mame/mewui/mainform.cpp",
-	MAME_DIR .. "src/frontend/mame/mewui/mainform.h",
-	MAME_DIR .. "src/frontend/mame/mewui/optionsform.cpp",
-	MAME_DIR .. "src/frontend/mame/mewui/optionsform.h",
-	MAME_DIR .. "src/frontend/mame/mewui/custom.cpp",
-	MAME_DIR .. "src/frontend/mame/mewui/custom.h",
-	MAME_DIR .. "src/frontend/mame/mewui/datfile.cpp",
-	MAME_DIR .. "src/frontend/mame/mewui/datfile.h",
+	MAME_DIR .. "src/frontend/nanamame/nanamame.cpp",
+	MAME_DIR .. "src/frontend/nanamame/nanamame.h",
+	MAME_DIR .. "src/frontend/nanamame/mainform.cpp",
+	MAME_DIR .. "src/frontend/nanamame/mainform.h",
+	MAME_DIR .. "src/frontend/nanamame/optionsform.cpp",
+	MAME_DIR .. "src/frontend/nanamame/optionsform.h",
+	MAME_DIR .. "src/frontend/nanamame/custom.cpp",
+	MAME_DIR .. "src/frontend/nanamame/custom.h",
+	MAME_DIR .. "src/frontend/nanamame/datfile.cpp",
+	MAME_DIR .. "src/frontend/nanamame/datfile.h",
 }

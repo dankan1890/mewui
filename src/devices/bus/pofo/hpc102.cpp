@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "hpc102.h"
 
 
@@ -26,14 +25,14 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(POFO_HPC102, pofo_hpc102_device, "pofo_hpc102", "Atari Portfolio HPC-102")
+const device_type HPC102 = &device_creator<hpc102_t>;
 
 
 //-------------------------------------------------
-//  device_add_mconfig - add device configuration
+//  MACHINE_CONFIG_FRAGMENT( hpc102 )
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( pofo_hpc102_device::device_add_mconfig )
+static MACHINE_CONFIG_FRAGMENT( hpc102 )
 	MCFG_DEVICE_ADD(M82C50A_TAG, INS8250, XTAL_1_8432MHz) // should be INS8250A
 	MCFG_INS8250_OUT_TX_CB(DEVWRITELINE(RS232_TAG, rs232_port_device, write_txd))
 	MCFG_INS8250_OUT_DTR_CB(DEVWRITELINE(RS232_TAG, rs232_port_device, write_dtr))
@@ -49,16 +48,27 @@ MACHINE_CONFIG_MEMBER( pofo_hpc102_device::device_add_mconfig )
 MACHINE_CONFIG_END
 
 
+//-------------------------------------------------
+//  machine_config_additions - device-specific
+//  machine configurations
+//-------------------------------------------------
+
+machine_config_constructor hpc102_t::device_mconfig_additions() const
+{
+	return MACHINE_CONFIG_NAME( hpc102 );
+}
+
+
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 //-------------------------------------------------
-//  pofo_hpc102_device - constructor
+//  hpc102_t - constructor
 //-------------------------------------------------
 
-pofo_hpc102_device::pofo_hpc102_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, POFO_HPC102, tag, owner, clock),
+hpc102_t::hpc102_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, HPC102, "Atari Portfolio HPC-102", tag, owner, clock, "hpc102", __FILE__),
 	device_portfolio_expansion_slot_interface(mconfig, *this),
 	m_uart(*this, M82C50A_TAG)
 {
@@ -69,7 +79,7 @@ pofo_hpc102_device::pofo_hpc102_device(const machine_config &mconfig, const char
 //  device_start - device-specific startup
 //-------------------------------------------------
 
-void pofo_hpc102_device::device_start()
+void hpc102_t::device_start()
 {
 }
 
@@ -78,7 +88,7 @@ void pofo_hpc102_device::device_start()
 //  device_reset - device-specific reset
 //-------------------------------------------------
 
-void pofo_hpc102_device::device_reset()
+void hpc102_t::device_reset()
 {
 	m_uart->reset();
 }
@@ -88,7 +98,7 @@ void pofo_hpc102_device::device_reset()
 //  eack_r - external interrupt acknowledge
 //-------------------------------------------------
 
-uint8_t pofo_hpc102_device::eack_r()
+uint8_t hpc102_t::eack_r()
 {
 	return m_vector;
 }
@@ -98,7 +108,7 @@ uint8_t pofo_hpc102_device::eack_r()
 //  nrdi_r - read
 //-------------------------------------------------
 
-uint8_t pofo_hpc102_device::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+uint8_t hpc102_t::nrdi_r(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	if (!bcom)
 	{
@@ -121,7 +131,7 @@ uint8_t pofo_hpc102_device::nrdi_r(address_space &space, offs_t offset, uint8_t 
 //  nwri_w - write
 //-------------------------------------------------
 
-void pofo_hpc102_device::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
+void hpc102_t::nwri_w(address_space &space, offs_t offset, uint8_t data, bool iom, bool bcom, bool ncc1)
 {
 	if (!bcom)
 	{

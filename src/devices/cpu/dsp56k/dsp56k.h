@@ -9,11 +9,12 @@
 ***************************************************************************/
 
 
-#ifndef MAME_CPU_DSP56K_DSP56K_H
-#define MAME_CPU_DSP56K_DSP56K_H
-
 #pragma once
 
+#ifndef __DSP56K_H__
+#define __DSP56K_H__
+
+#include "emu.h"
 
 
 // IRQ Lines
@@ -23,8 +24,6 @@
 #define DSP56K_IRQ_MODC  2
 #define DSP56K_IRQ_RESET 3  /* Is this needed? */
 
-
-namespace DSP56K {
 
 /***************************************************************************
     STRUCTURES & TYPEDEFS
@@ -248,14 +247,11 @@ private:
 
 	void agu_init();
 	void alu_init();
+
 };
 
-} // namespace DSP56K
+
+extern const device_type DSP56156;
 
 
-DECLARE_DEVICE_TYPE_NS(DSP56156, DSP56K, dsp56k_device)
-using DSP56K::dsp56k_device;
-
-extern CPU_DISASSEMBLE( dsp56k );
-
-#endif // MAME_CPU_DSP56K_DSP56K_H
+#endif /* __DSP56K_H__ */

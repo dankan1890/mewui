@@ -6,10 +6,10 @@
 
 **********************************************************************/
 
-#ifndef MAME_BUS_QL_MIRACLE_HD
-#define MAME_BUS_QL_MIRACLE_HD
-
 #pragma once
+
+#ifndef __MIRACLE_HARD_DISK__
+#define __MIRACLE_HARD_DISK__
 
 #include "rom.h"
 
@@ -19,14 +19,14 @@
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> miracle_hard_disk_device
+// ======================> miracle_hard_disk_t
 
-class miracle_hard_disk_device : public device_t,
+class miracle_hard_disk_t : public device_t,
 							public device_ql_rom_cartridge_card_interface
 {
 public:
 	// construction/destruction
-	miracle_hard_disk_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	miracle_hard_disk_t(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// optional information overrides
 	virtual const tiny_rom_entry *device_rom_region() const override;
@@ -41,7 +41,10 @@ protected:
 };
 
 
-// device type definition
-DECLARE_DEVICE_TYPE(MIRACLE_HARD_DISK, miracle_hard_disk_device)
 
-#endif // MAME_BUS_QL_MIRACLE_HD
+// device type definition
+extern const device_type MIRACLE_HARD_DISK;
+
+
+
+#endif

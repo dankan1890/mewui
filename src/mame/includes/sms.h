@@ -6,8 +6,8 @@
  *
  ****************************************************************************/
 
-#ifndef MAME_INCLUDES_SMS_H
-#define MAME_INCLUDES_SMS_H
+#ifndef SMS_H_
+#define SMS_H_
 
 #define LOG_REG
 #define LOG_PAGING
@@ -21,16 +21,11 @@
 #define CONTROL1_TAG   "ctrl1"
 #define CONTROL2_TAG   "ctrl2"
 
-#include "bus/gamegear/ggext.h"
 #include "bus/sega8/sega8_slot.h"
 #include "bus/sg1000_exp/sg1000exp.h"
-#include "bus/sms_ctrl/smsctrl.h"
 #include "bus/sms_exp/smsexp.h"
-#include "sound/sn76496.h"
-#include "sound/ym2413.h"
-#include "video/315_5124.h"
-
-#include "screen.h"
+#include "bus/sms_ctrl/smsctrl.h"
+#include "bus/gamegear/ggext.h"
 
 
 class sms_state : public driver_device
@@ -223,7 +218,7 @@ public:
 	uint32_t screen_update_sms1(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_gamegear(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 	void screen_gg_sms_mode_scaling(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
-	DECLARE_WRITE_LINE_MEMBER(screen_vblank_sms1);
+	void screen_vblank_sms1(screen_device &screen, bool state);
 
 protected:
 	uint8_t read_bus(address_space &space, unsigned int bank, uint16_t base_addr, uint16_t offset);
@@ -265,4 +260,4 @@ public:
 #define IO_BIOS_ROM     (0x08)  /* BIOS ROM disabled (1= disabled, 0= enabled) */
 #define IO_CHIP         (0x04)  /* I/O chip disabled (1= disabled, 0= enabled) */
 
-#endif // MAME_INCLUDES_SMS_H
+#endif /* SMS_H_ */

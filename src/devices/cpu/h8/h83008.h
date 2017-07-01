@@ -11,10 +11,8 @@
 
 ***************************************************************************/
 
-#ifndef MAME_CPU_H8_H83008_H
-#define MAME_CPU_H8_H83008_H
-
-#pragma once
+#ifndef __H83008_H__
+#define __H83008_H__
 
 #include "h8h.h"
 #include "h8_adc.h"
@@ -61,7 +59,7 @@ protected:
 	virtual int trapa_setup() override;
 	virtual void irq_setup() override;
 	virtual void internal_update(uint64_t current_time) override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	DECLARE_ADDRESS_MAP(map, 16);
 
 	virtual void device_start() override;
@@ -69,6 +67,6 @@ protected:
 	virtual void execute_set_input(int inputnum, int state) override;
 };
 
-DECLARE_DEVICE_TYPE(H83008, h83008_device)
+extern const device_type H83008;
 
-#endif // MAME_CPU_H8_H83008_H
+#endif

@@ -39,6 +39,7 @@ public:
 	tilemap_t *m_text_layer;
 	int m_sound_command1;
 	int m_sound_command2;
+	int m_last[4];
 
 	// common
 	DECLARE_WRITE16_MEMBER(flipscreen_w);
@@ -46,6 +47,8 @@ public:
 	DECLARE_WRITE16_MEMBER(text_videoram_w);
 
 	// cabal specific
+	DECLARE_WRITE16_MEMBER(track_reset_w);
+	DECLARE_READ16_MEMBER(track_r);
 	DECLARE_WRITE16_MEMBER(sound_irq_trigger_word_w);
 
 	// cabalbl specific
@@ -58,6 +61,7 @@ public:
 	DECLARE_WRITE8_MEMBER(cabalbl_2_adpcm_w);
 
 	DECLARE_DRIVER_INIT(cabal);
+	DECLARE_MACHINE_START(cabal);
 	DECLARE_MACHINE_START(cabalbl);
 	DECLARE_MACHINE_RESET(cabalbl);
 	virtual void video_start() override;

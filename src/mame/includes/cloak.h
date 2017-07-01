@@ -5,7 +5,6 @@
     Atari Cloak & Dagger hardware
 
 *************************************************************************/
-#include "screen.h"
 
 class cloak_state : public driver_device
 {

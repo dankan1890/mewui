@@ -26,14 +26,11 @@ Known issues:
 
 #include "emu.h"
 #include "includes/bwing.h"
-
 #include "cpu/m6502/deco16.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
-#include "screen.h"
-#include "speaker.h"
 
 
 //****************************************************************************
@@ -358,7 +355,7 @@ void bwing_state::bwing_postload()
 }
 
 
-static MACHINE_CONFIG_START( bwing )
+static MACHINE_CONFIG_START( bwing, bwing_state )
 
 	// basic machine hardware
 	MCFG_CPU_ADD("maincpu", M6809, 2000000)

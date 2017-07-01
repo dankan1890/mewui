@@ -20,9 +20,7 @@
 
 */
 
-#include "emu.h"
 #include "includes/huebler.h"
-#include "screen.h"
 
 /* Keyboard */
 
@@ -309,7 +307,7 @@ static GFXDECODE_START( amu880 )
 GFXDECODE_END
 
 
-static MACHINE_CONFIG_START( amu880 )
+static MACHINE_CONFIG_START( amu880, amu880_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD(Z80_TAG, Z80, XTAL_10MHz/4) // U880D
 	MCFG_CPU_PROGRAM_MAP(amu880_mem)
@@ -378,5 +376,5 @@ ROM_END
 
 /* System Drivers */
 
-/*    YEAR  NAME    PARENT  COMPAT  MACHINE INPUT   INIT           INIT  COMPANY                     FULLNAME                                        FLAGS */
-COMP( 1983, amu880, 0,      0,      amu880, amu880, amu880_state,  0,    "Militaerverlag der DDR",   "Ausbaufaehiger Mikrocomputer mit dem U 880",   MACHINE_NO_SOUND )
+/*    YEAR  NAME    PARENT  COMPAT  MACHINE INPUT   INIT    COMPANY                     FULLNAME                                        FLAGS */
+COMP( 1983, amu880, 0,      0,      amu880, amu880, driver_device,  0,      "Militaerverlag der DDR",   "Ausbaufaehiger Mikrocomputer mit dem U 880",   MACHINE_NO_SOUND )

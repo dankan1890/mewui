@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "epyx_fast_load.h"
 
 
@@ -25,7 +24,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(C64_EPYX_FAST_LOAD, c64_epyx_fast_load_cartridge_device, "c64_epyx_fast_load", "C64 Epyx Fast Load cartridge")
+const device_type C64_EPYX_FAST_LOAD = &device_creator<c64_epyx_fast_load_cartridge_device>;
 
 
 
@@ -38,7 +37,7 @@ DEFINE_DEVICE_TYPE(C64_EPYX_FAST_LOAD, c64_epyx_fast_load_cartridge_device, "c64
 //-------------------------------------------------
 
 c64_epyx_fast_load_cartridge_device::c64_epyx_fast_load_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, C64_EPYX_FAST_LOAD, tag, owner, clock),
+	device_t(mconfig, C64_EPYX_FAST_LOAD, "C64 Epyx Fast Load cartridge", tag, owner, clock, "c64_epyx_fast_load", __FILE__),
 	device_c64_expansion_card_interface(mconfig, *this), m_exrom_timer(nullptr)
 {
 }

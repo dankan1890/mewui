@@ -1,10 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Sergey Svishchev
-#ifndef MAME_MACHINE_KM035_H
-#define MAME_MACHINE_KM035_H
-
 #pragma once
 
+#ifndef __KM035_H__
+#define __KM035_H__
+
+#include "emu.h"
 #include "cpu/mcs48/mcs48.h"
 #include "sound/beep.h"
 
@@ -39,11 +40,19 @@ public:
 	template<class _Object> static devcb_base &set_tx_handler(device_t &device, _Object wr) { return downcast<km035_device &>(device).m_tx_handler.set_callback(wr); }
 	template<class _Object> static devcb_base &set_rts_handler(device_t &device, _Object wr) { return downcast<km035_device &>(device).m_rts_handler.set_callback(wr); }
 
+	DECLARE_WRITE8_MEMBER( bus_w );
+	DECLARE_WRITE8_MEMBER( p1_w );
+	DECLARE_WRITE8_MEMBER( p2_w );
+	DECLARE_READ8_MEMBER( p1_r );
+	DECLARE_READ8_MEMBER( p2_r );
+	DECLARE_READ8_MEMBER( t0_r );
+	DECLARE_READ8_MEMBER( t1_r );
+
 	DECLARE_WRITE_LINE_MEMBER( write_rxd );
 
 protected:
 	// device-level overrides
-	virtual void device_add_mconfig(machine_config &config) override;
+	virtual machine_config_constructor device_mconfig_additions() const override;
 	virtual const tiny_rom_entry *device_rom_region() const override;
 	virtual ioport_constructor device_input_ports() const override;
 	virtual void device_start() override;
@@ -62,17 +71,9 @@ private:
 
 	devcb_write_line m_tx_handler;
 	devcb_write_line m_rts_handler;
-
-	DECLARE_WRITE8_MEMBER( bus_w );
-	DECLARE_WRITE8_MEMBER( p1_w );
-	DECLARE_WRITE8_MEMBER( p2_w );
-	DECLARE_READ8_MEMBER( p1_r );
-	DECLARE_READ8_MEMBER( p2_r );
-	DECLARE_READ_LINE_MEMBER( t0_r );
-	DECLARE_READ_LINE_MEMBER( t1_r );
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(KM035, km035_device)
+extern const device_type KM035;
 
-#endif // MAME_MACHINE_KM035_H
+#endif

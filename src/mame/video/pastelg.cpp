@@ -272,7 +272,7 @@ void pastelg_state::pastelg_gfxdraw()
 	}
 
 	m_nb1413m3->m_busyflag = 0;
-	m_blitter_timer->adjust(attotime::from_hz(400000) * m_nb1413m3->m_busyctr);
+	timer_set(attotime::from_hz(400000) * m_nb1413m3->m_busyctr, TIMER_BLITTER);
 }
 
 /******************************************************************************
@@ -285,8 +285,6 @@ void pastelg_state::video_start()
 	int height = m_screen->height();
 
 	m_videoram = make_unique_clear<uint8_t[]>(width * height);
-
-	m_blitter_timer = timer_alloc(TIMER_BLITTER);
 
 	save_item(NAME(m_blitter_desty));
 	save_item(NAME(m_blitter_sizex));

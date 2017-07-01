@@ -1,13 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:smf
 
-#include "emu.h"
 #include "dsjoy.h"
 
-DEFINE_DEVICE_TYPE(DEMPA_SHINBUNSHA_JOYSTICK, dempa_shinbunsha_joystick_device, "dempa_shinbunsha_joystick", "Dempa Shinbunsha Joystick")
+const device_type DEMPA_SHINBUNSHA_JOYSTICK = &device_creator<dempa_shinbunsha_joystick_device>;
 
 dempa_shinbunsha_joystick_device::dempa_shinbunsha_joystick_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, DEMPA_SHINBUNSHA_JOYSTICK, tag, owner, clock),
+	device_t(mconfig, DEMPA_SHINBUNSHA_JOYSTICK, "Dempa Shinbunsha Joystick", tag, owner, clock, "dempa_shinbunsha_joystick", __FILE__),
 	device_centronics_peripheral_interface( mconfig, *this ),
 	m_lptjoy(*this, "lptjoy"),
 	m_data(0xff),

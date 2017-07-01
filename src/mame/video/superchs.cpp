@@ -2,7 +2,6 @@
 // copyright-holders:Bryan McPhail, David Graves
 #include "emu.h"
 #include "includes/superchs.h"
-#include "screen.h"
 
 void superchs_state::video_start()
 {

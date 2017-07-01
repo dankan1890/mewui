@@ -52,10 +52,9 @@ write:
 ***************************************************************************/
 
 #include "emu.h"
-#include "includes/dday.h"
-
 #include "cpu/z80/z80.h"
-#include "speaker.h"
+#include "sound/ay8910.h"
+#include "includes/dday.h"
 
 
 static ADDRESS_MAP_START( dday_map, AS_PROGRAM, 8, dday_state )
@@ -239,6 +238,8 @@ GFXDECODE_END
 
 void dday_state::machine_start()
 {
+	m_ay1 = machine().device("ay1");
+
 	save_item(NAME(m_control));
 	save_item(NAME(m_sl_enable));
 	save_item(NAME(m_sl_image));
@@ -253,7 +254,7 @@ void dday_state::machine_reset()
 }
 
 
-static MACHINE_CONFIG_START( dday )
+static MACHINE_CONFIG_START( dday, dday_state )
 
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", Z80, 2000000)     /* 2 MHz ? */
@@ -358,5 +359,5 @@ ROM_START( ddayc )
 ROM_END
 
 
-GAME( 1982, dday,  0,    dday, dday,  dday_state, 0, ROT0, "Olympia",                   "D-Day",           MACHINE_IMPERFECT_COLORS | MACHINE_SUPPORTS_SAVE )
-GAME( 1982, ddayc, dday, dday, ddayc, dday_state, 0, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", MACHINE_IMPERFECT_COLORS | MACHINE_SUPPORTS_SAVE )
+GAME( 1982, dday,  0,    dday, dday, driver_device,  0, ROT0, "Olympia", "D-Day", MACHINE_IMPERFECT_COLORS | MACHINE_SUPPORTS_SAVE )
+GAME( 1982, ddayc, dday, dday, ddayc, driver_device, 0, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", MACHINE_IMPERFECT_COLORS | MACHINE_SUPPORTS_SAVE )

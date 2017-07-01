@@ -9,13 +9,10 @@
 ******************************************************************************/
 
 #include "emu.h"
-#include "includes/lynx.h"
-#include "audio/lynx.h"
-
 #include "cpu/m6502/m65sc02.h"
-#include "screen.h"
+#include "audio/lynx.h"
+#include "includes/lynx.h"
 #include "softlist.h"
-#include "speaker.h"
 
 #include "lynx.lh"
 
@@ -75,7 +72,7 @@ void lynx_state::sound_cb()
 	lynx_timer_count_down(1);
 }
 
-static MACHINE_CONFIG_START( lynx )
+static MACHINE_CONFIG_START( lynx, lynx_state )
 	/* basic machine hardware */
 	MCFG_CPU_ADD("maincpu", M65SC02, 4000000)        /* vti core, integrated in vlsi, stz, but not bbr bbs */
 	MCFG_CPU_PROGRAM_MAP(lynx_mem)
@@ -198,6 +195,6 @@ QUICKLOAD_LOAD_MEMBER( lynx_state, lynx )
 
 ***************************************************************************/
 
-/*    YEAR  NAME    PARENT  COMPAT  MACHINE INPUT STATE         INIT    COMPANY   FULLNAME      FLAGS */
-CONS( 1989, lynx,   0,      0,      lynx,   lynx, lynx_state,   0,      "Atari",  "Lynx",       MACHINE_SUPPORTS_SAVE )
-// CONS( 1991, lynx2,  lynx,  0,      lynx2,  lynx, lynx_state,   0,      "Atari",  "Lynx II",    MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND )
+/*    YEAR  NAME    PARENT  COMPAT  MACHINE INPUT   INIT    COMPANY   FULLNAME      FLAGS */
+CONS( 1989, lynx,   0,      0,      lynx,   lynx, driver_device,   0,       "Atari",  "Lynx", MACHINE_SUPPORTS_SAVE )
+// CONS( 1991, lynx2,  lynx,   0,      lynx2,  lynx, driver_device,   0,       "Atari",  "Lynx II",    MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND )

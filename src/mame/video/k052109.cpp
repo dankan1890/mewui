@@ -124,10 +124,9 @@ to through the chip.
 #include "k052109.h"
 
 #define VERBOSE 0
-#include "logmacro.h"
+#define LOG(x) do { if (VERBOSE) logerror x; } while (0)
 
-
-DEFINE_DEVICE_TYPE(K052109, k052109_device, "k052109", "K052109 Tilemap Generator")
+const device_type K052109 = &device_creator<k052109_device>;
 
 const gfx_layout k052109_device::charlayout =
 {
@@ -161,7 +160,7 @@ GFXDECODE_END
 
 
 k052109_device::k052109_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, K052109, tag, owner, clock),
+	: device_t(mconfig, K052109, "K052109 Tilemap Generator", tag, owner, clock, "k052109", __FILE__),
 	device_gfx_interface(mconfig, *this, gfxinfo),
 	m_ram(nullptr),
 	m_videoram_F(nullptr),

@@ -6,7 +6,6 @@
 
 **********************************************************************/
 
-#include "emu.h"
 #include "vic1111.h"
 
 
@@ -15,7 +14,7 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(VIC1111, vic1111_device, "vic1111", "VIC-1111 16K RAM Expansion")
+const device_type VIC1111 = &device_creator<vic1111_device>;
 
 
 
@@ -28,9 +27,9 @@ DEFINE_DEVICE_TYPE(VIC1111, vic1111_device, "vic1111", "VIC-1111 16K RAM Expansi
 //-------------------------------------------------
 
 vic1111_device::vic1111_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, VIC1111, tag, owner, clock)
-	, device_vic20_expansion_card_interface(mconfig, *this)
-	, m_ram(*this, "ram")
+	: device_t(mconfig, VIC1111, "VIC1111", tag, owner, clock, "vic1111", __FILE__),
+		device_vic20_expansion_card_interface(mconfig, *this),
+		m_ram(*this, "ram")
 {
 }
 

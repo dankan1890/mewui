@@ -4,15 +4,13 @@
  *   DIABLO drive image to hard disk interface
  **********************************************************/
 
-#ifndef MAME_DEVICES_IMAGEDEV_DIABLO_H
-#define MAME_DEVICES_IMAGEDEV_DIABLO_H
-
-#pragma once
+#ifndef _IMAGEDEV_DIABLO_H_
+#define _IMAGEDEV_DIABLO_H_
 
 #include "harddisk.h"
 #include "softlist_dev.h"
 
-#define DIABLO_TAG(id) "diablo"#id
+#define DIABLO_TAG(_id) "diablo"#_id
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -20,7 +18,8 @@
 
 // ======================> diablo_image_device
 
-class diablo_image_device : public device_t, public device_image_interface
+class diablo_image_device :   public device_t,
+								public device_image_interface
 {
 public:
 	// construction/destruction
@@ -71,7 +70,7 @@ protected:
 };
 
 // device type definition
-DECLARE_DEVICE_TYPE(DIABLO, diablo_image_device)
+extern const device_type DIABLO;
 
 /***************************************************************************
     DEVICE CONFIGURATION MACROS
@@ -89,4 +88,4 @@ DECLARE_DEVICE_TYPE(DIABLO, diablo_image_device)
 #define MCFG_DIABLO_INTERFACE(_interface)                         \
 	diablo_image_device::static_set_interface(*device, _interface);
 
-#endif // MAME_DEVICES_IMAGEDEV_DIABLO_H
+#endif /* _IMAGEDEV_DIABLO_H_ */

@@ -15,11 +15,12 @@ namespace netlist
 {
 	class parser_t : public plib::ptokenizer
 	{
+		P_PREVENT_COPYING(parser_t)
 	public:
-		parser_t(plib::putf8_reader &strm, setup_t &setup)
-		: plib::ptokenizer(strm), m_setup(setup) {}
+		parser_t(plib::pistream &strm, setup_t &setup)
+		: plib::ptokenizer(strm), m_setup(setup), m_buf(nullptr) {}
 
-		bool parse(const pstring &nlname = "");
+		bool parse(const pstring nlname = "");
 
 	protected:
 		void parse_netlist(const pstring &nlname);
@@ -36,7 +37,7 @@ namespace netlist
 		void net_submodel();
 		void net_include();
 		void net_local_source();
-		void net_truthtable_start(const pstring &nlname);
+		void net_truthtable_start();
 
 		/* for debugging messages */
 		netlist_t &netlist() { return m_setup.netlist(); }
@@ -69,7 +70,9 @@ namespace netlist
 		token_id_t m_tok_TT_FAMILY;
 
 		setup_t &m_setup;
-};
+
+		const char *m_buf;
+	};
 
 }
 

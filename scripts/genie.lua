@@ -465,6 +465,9 @@ flags {
 }
 
 configuration { "vs*" }
+	buildoptions {
+		"/bigobj",
+	}
 	flags {
 		"NoPCH",
 		"ExtraWarnings",
@@ -1132,10 +1135,16 @@ configuration { "osx* or xcode4" }
 		}
 
 configuration { "mingw*" }
+		local version = str_to_version(_OPTIONS["gcc_version"])
+		if not (_OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "clang")) or version < 40000
+		then
 		linkoptions {
-			"-static-libgcc",
-			"-static-libstdc++",
+
+
 			"-static",
+			}
+		end
+		linkoptions {
 			"-Wl,--start-group",
 		}
 		links {
@@ -1328,6 +1337,13 @@ end
 configuration { }
 
 if (_OPTIONS["SOURCES"] ~= nil) then
+	local str = _OPTIONS["SOURCES"]
+	for word in string.gmatch(str, '([^,]+)') do
+		if (not os.isfile(path.join(MAME_DIR ,word))) then
+			print("File " .. word.. " does not exist")
+			os.exit()
+		end
+	end
 	OUT_STR = os.outputof( PYTHON .. " " .. MAME_DIR .. "scripts/build/makedep.py " .. MAME_DIR .. " " .. _OPTIONS["SOURCES"] .. " target " .. _OPTIONS["subtarget"])
 	load(OUT_STR)()
 	os.outputof( PYTHON .. " " .. MAME_DIR .. "scripts/build/makedep.py " .. MAME_DIR .. " " .. _OPTIONS["SOURCES"] .. " drivers " .. _OPTIONS["subtarget"] .. " > ".. GEN_DIR  .. _OPTIONS["target"] .. "/" .. _OPTIONS["subtarget"]..".flt")

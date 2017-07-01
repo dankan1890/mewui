@@ -248,6 +248,7 @@ dependency {
 	{ MAME_DIR .. "src/emu/rendlay.cpp", GEN_DIR .. "emu/layout/noscreens.lh" },
 
 	{ MAME_DIR .. "src/emu/video.cpp",   GEN_DIR .. "emu/layout/snap.lh" },
+--	{ MAME_DIR .. "src/emu/drivers/empty.cpp",   GEN_DIR .. "emu/layout/___empty.lh" },
 
 }
 
@@ -270,6 +271,8 @@ custombuildtask {
 	layoutbuildtask("emu/layout", "svg"),
 	layoutbuildtask("emu/layout", "noscreens"),
 	layoutbuildtask("emu/layout", "snap"),
+--	layoutbuildtask("emu/layout", "___empty"),
+
 }
 
 project ("precompile")
@@ -290,5 +293,4 @@ files {
 dependency {
 	{ "$(OBJDIR)/src/emu/drivers/empty.o", "$(GCH)", true  },
 }
-
 

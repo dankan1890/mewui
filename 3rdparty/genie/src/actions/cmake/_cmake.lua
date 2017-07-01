@@ -6,6 +6,10 @@
 
 premake.cmake = { }
 
+--
+-- Register the "cmake" action
+--
+
 newaction {
 	trigger         = "cmake",
 	shortname       = "CMake",
@@ -28,4 +32,3 @@ newaction {
 		premake.clean.file(prj, "%%/CMakeLists.txt")
 	end
 }
-

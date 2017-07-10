@@ -462,6 +462,7 @@ MACHINES["MB87078"] = true
 MACHINES["MB8795"] = true
 MACHINES["MB89352"] = true
 MACHINES["MB89371"] = true
+MACHINES["MC14411"] = true
 MACHINES["MC146818"] = true
 MACHINES["MC2661"] = true
 MACHINES["MC6843"] = true
@@ -2086,7 +2087,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/hp9k_3xx.cpp",
 	MAME_DIR .. "src/mame/drivers/hp64k.cpp",
 	MAME_DIR .. "src/mame/drivers/hp_ipc.cpp",
-        MAME_DIR .. "src/mame/drivers/hp80.cpp",
+	MAME_DIR .. "src/mame/drivers/hp80.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "hec2hrp")
@@ -2151,8 +2152,6 @@ files {
 	MAME_DIR .. "src/mame/includes/interpro.h",
 	MAME_DIR .. "src/mame/machine/cammu.h",
 	MAME_DIR .. "src/mame/machine/cammu.cpp",
-	MAME_DIR .. "src/mame/machine/interpro_ioga.h",
-	MAME_DIR .. "src/mame/machine/interpro_ioga.cpp",
 	MAME_DIR .. "src/mame/machine/interpro_ioga.h",
 	MAME_DIR .. "src/mame/machine/interpro_ioga.cpp",
 	MAME_DIR .. "src/mame/machine/interpro_mcga.h",
@@ -2552,6 +2551,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/pcipc.cpp",
 	MAME_DIR .. "src/mame/drivers/tandy1t.cpp",
 	MAME_DIR .. "src/mame/drivers/tosh1000.cpp",
+	MAME_DIR .. "src/mame/drivers/compc.cpp",
 	MAME_DIR .. "src/mame/video/pc_t1t.cpp",
 	MAME_DIR .. "src/mame/video/pc_t1t.h",
 }

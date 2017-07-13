@@ -37,7 +37,6 @@
  Paper tape reader run/stop is sent to RTS on the serial port.
 
  TODO:
- * Default terminal serial settings
  * Universal slot cards
  * Expose general-purpose I/O?
  */
@@ -288,6 +287,17 @@ ADDRESS_MAP_END
   Common machine configuration
 ----------------------------------*/
 
+DEVICE_INPUT_DEFAULTS_START(tty)
+	DEVICE_INPUT_DEFAULTS("RS232_TXBAUD",    0x00ff, RS232_BAUD_110)
+	DEVICE_INPUT_DEFAULTS("RS232_RXBAUD",    0x00ff, RS232_BAUD_110)
+	DEVICE_INPUT_DEFAULTS("RS232_STARTBITS", 0x00ff, RS232_STARTBITS_1)
+	DEVICE_INPUT_DEFAULTS("RS232_DATABITS",  0x00ff, RS232_DATABITS_8)
+	DEVICE_INPUT_DEFAULTS("RS232_PARITY",    0x00ff, RS232_PARITY_NONE)
+	DEVICE_INPUT_DEFAULTS("RS232_STOPBITS",  0x00ff, RS232_STOPBITS_2)
+	DEVICE_INPUT_DEFAULTS("TERM_CONF",       0x01c0, 0x0000)
+	DEVICE_INPUT_DEFAULTS("FLOW_CONTROL",    0x0001, 0x0000)
+DEVICE_INPUT_DEFAULTS_END
+
 MACHINE_CONFIG_START(intellec4)
 	MCFG_DEVICE_ADD("prgbank", ADDRESS_MAP_BANK, 0)
 	MCFG_DEVICE_PROGRAM_MAP(intellec4_program_banks)
@@ -306,6 +316,8 @@ MACHINE_CONFIG_START(intellec4)
 	MCFG_DEVICE_ADD("promprg", INTEL_IMM6_76, 0)
 
 	MCFG_RS232_PORT_ADD("tty", default_rs232_devices, "terminal")
+	MCFG_DEVICE_CARD_DEVICE_INPUT_DEFAULTS("terminal",   tty)
+	MCFG_DEVICE_CARD_DEVICE_INPUT_DEFAULTS("null_modem", tty)
 
 	MCFG_DEVICE_ADD("bus", INTELLEC4_UNIV_BUS, 518000. / 7)
 	MCFG_INTELLEC4_UNIV_BUS_ROM_SPACE("prgbank", AS_PROGRAM)
@@ -315,8 +327,8 @@ MACHINE_CONFIG_START(intellec4)
 	MCFG_INTELLEC4_UNIV_BUS_RAM_PORTS_SPACE("maincpu", mcs40_cpu_device_base::AS_RAM_PORTS)
 	MCFG_INTELLEC4_UNIV_BUS_RESET_4002_CB(WRITELINE(intellec4_state, bus_reset_4002))
 	MCFG_INTELLEC4_UNIV_BUS_USER_RESET_CB(WRITELINE(intellec4_state, bus_user_reset))
-	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j7",  518000. / 7, intellec4_univ_cards, "ptreader")
-	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j8",  518000. / 7, intellec4_univ_cards, nullptr)
+	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j7",  518000. / 7, intellec4_univ_cards, "imm4_90")
+	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j8",  518000. / 7, intellec4_univ_cards, "imm6_26")
 	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j9",  518000. / 7, intellec4_univ_cards, nullptr)
 	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j10", 518000. / 7, intellec4_univ_cards, nullptr)
 	MCFG_INTELLEC4_UNIV_SLOT_ADD("bus", "j11", 518000. / 7, intellec4_univ_cards, nullptr)
@@ -1448,5 +1460,5 @@ ROM_END
 ***********************************************************************/
 
 //    YEAR   NAME      PARENT  COMPAT  MACHINE   INPUT  STATE        INIT  COMPANY  FULLNAME             FLAGS
-COMP( 1973?, intlc44,  0,      0,      mod4,     mod4,  mod4_state,  0,    "Intel", "INTELLEC 4/MOD 4",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_CLICKABLE_ARTWORK | MACHINE_SUPPORTS_SAVE )
-COMP( 1974?, intlc440, 0,      0,      mod40,    mod40, mod40_state, 0,    "Intel", "INTELLEC 4/MOD 40", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_CLICKABLE_ARTWORK | MACHINE_SUPPORTS_SAVE )
+COMP( 1973?, intlc44,  0,      0,      mod4,     mod4,  mod4_state,  0,    "Intel", "INTELLEC 4/MOD 4",  MACHINE_NO_SOUND_HW | MACHINE_CLICKABLE_ARTWORK | MACHINE_SUPPORTS_SAVE )
+COMP( 1974?, intlc440, 0,      0,      mod40,    mod40, mod40_state, 0,    "Intel", "INTELLEC 4/MOD 40", MACHINE_NO_SOUND_HW | MACHINE_CLICKABLE_ARTWORK | MACHINE_SUPPORTS_SAVE )

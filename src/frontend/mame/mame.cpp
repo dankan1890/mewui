@@ -18,6 +18,7 @@
 #include "clifront.h"
 #include "luaengine.h"
 #include <time.h>
+#include <modules/lib/osdobj_common.h>
 #include "ui/ui.h"
 #include "ui/selgame.h"
 #include "ui/simpleselgame.h"
@@ -182,6 +183,9 @@ int mame_machine_manager::execute()
 
 	bool firstgame = true;
 
+	static bool m_window;
+	static std::string m_video;
+
 	// loop across multiple hard resets
 	bool exit_pending = false;
 	int error = EMU_ERR_NONE;
@@ -224,6 +228,15 @@ int mame_machine_manager::execute()
 		running_machine machine(config, *this);
 
 		set_machine(&machine);
+
+		osd_options &options = downcast<osd_options &>(machine.options());
+		if (is_empty)
+		{
+			m_video = options.video();
+			m_window = options.window();
+			options.set_value(OSDOPTION_VIDEO, "bgfx", OPTION_PRIORITY_CMDLINE);
+			options.set_value(OSDOPTION_WINDOW, true, OPTION_PRIORITY_CMDLINE);
+		}
 
 		// run the machine
 		error = machine.run(is_empty);

@@ -41,6 +41,10 @@ includedirs {
 	ext_includedir("zlib"),
 	ext_includedir("flac"),
 	MAME_DIR .. "3rdparty/asio/include",
+	MAME_DIR .. "3rdparty/bgfx/examples/common",
+	MAME_DIR .. "3rdparty/bgfx/include",
+	MAME_DIR .. "3rdparty/bgfx/3rdparty",
+
 }
 
 configuration { }
@@ -166,4 +170,5 @@ files {
 	MAME_DIR .. "src/frontend/mame/ui/utils.h",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/widgets.h",
+	MAME_DIR .. "3rdparty/bgfx/3rdparty/ocornut-imgui/imgui_demo.cpp",
 }

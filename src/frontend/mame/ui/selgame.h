@@ -43,6 +43,8 @@ private:
 	static int m_isabios;
 	int highlight;
 
+	std::vector<const char *> m_mmm;
+
 	static std::vector<const game_driver *> m_sortedlist;
 	std::vector<const game_driver *> m_availsortedlist;
 	std::vector<const game_driver *> m_unavailsortedlist;

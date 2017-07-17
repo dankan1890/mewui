@@ -95,8 +95,8 @@ void modern_launcher::handle()
 					0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
 //	ImGui::ShowTestWindow(nullptr);
 
-	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiSetCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(width, height));
+	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
 	std::string title = util::string_format("MEWUI %s", bare_build_version);
 	if (!ImGui::Begin(title.c_str(), nullptr, window_flags)) {
 		// Early out if the window is collapsed, as an optimization.
@@ -192,12 +192,6 @@ void modern_launcher::build_list()
 	{
 		switch (main_filters::actual)
 		{
-			case FILTER_ALL:
-			case FILTER_AVAILABLE:
-			case FILTER_UNAVAILABLE:
-				m_displaylist.push_back(s_driver);
-				break;
-
 			case FILTER_WORKING:
 				if (!(s_driver->flags & MACHINE_NOT_WORKING))
 					m_displaylist.push_back(s_driver);
@@ -297,6 +291,11 @@ void modern_launcher::build_list()
 					m_displaylist.push_back(s_driver);
 			}
 				break;
+
+			default:
+				m_displaylist.push_back(s_driver);
+				break;
+
 		}
 	}
 }

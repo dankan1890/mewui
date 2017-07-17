@@ -435,6 +435,8 @@ emu_options::emu_options(option_support support)
 	{
 		if (value == "simple")
 			m_ui = UI_SIMPLE;
+		else if (value == "modern")
+			m_ui = UI_MEWUI;
 		else
 			m_ui = UI_CABINET;
 	});

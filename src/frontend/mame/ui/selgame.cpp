@@ -51,26 +51,6 @@ int menu_select_game::m_isabios = 0;
 menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &container, const char *gamename)
 	: menu_select_launch(mui, container, false)
 {
-	osd_options &options = downcast<osd_options &>(mui.machine().options());
-
-	ImGuiIO& io = ImGui::GetIO();
-	io.MouseDrawCursor = true;
-
-	auto font_name = options.debugger_font();
-	auto font_size = options.debugger_font_size();
-
-	if(font_size == 0)
-		font_size = 12;
-
-	io.Fonts->Clear();
-	if(!strcmp(font_name, OSDOPTVAL_AUTO))
-		io.Fonts->AddFontDefault();
-	else
-		io.Fonts->AddFontFromFileTTF(font_name,font_size);  // for now, font name must be a path to a TTF file
-	auto m_font = imguiCreate();
-	imguiSetFont(m_font);
-
-
 	highlight = 0;
 	std::string error_string, last_filter, sub_filter;
 	ui_options &moptions = mui.options();
@@ -157,8 +137,6 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 
 menu_select_game::~menu_select_game()
 {
-	//imguiDestroy();
-
 	std::string error_string, last_driver;
 	game_driver const *const driver(isfavorite() ? nullptr : reinterpret_cast<game_driver const *>(get_selection_ref()));
 	ui_software_info *const swinfo(isfavorite() ? reinterpret_cast<ui_software_info *>(get_selection_ref()) : nullptr);
@@ -191,72 +169,8 @@ menu_select_game::~menu_select_game()
 //  handle
 //-------------------------------------------------
 
-static auto vector_getter = [](void* vec, int idx, const char** out_text)
-{
-	auto& vector = *static_cast<std::vector<std::string>*>(vec);
-	if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
-	*out_text = vector.at(idx).c_str();
-	return true;
-};
-
-bool ListBox(const char* label, int* currIndex, std::vector<std::string>& values)
-{
-	if (values.empty()) { return false; }
-	return ImGui::ListBox(label, currIndex, vector_getter,
-				   static_cast<void*>(&values), values.size());
-}
-
 void menu_select_game::handle()
 {
-	u32 width = machine().render().ui_target().width();
-	u32 height = machine().render().ui_target().height();
-	int32_t m_mouse_x, m_mouse_y;
-	bool m_mouse_button;
-	ImGuiWindowFlags window_flags = 0;
-	window_flags |= ImGuiWindowFlags_NoCollapse;
-	window_flags |= ImGuiWindowFlags_NoResize;
-	window_flags |= ImGuiWindowFlags_NoMove;
-	machine().ui_input().find_mouse(&m_mouse_x, &m_mouse_y, &m_mouse_button);
-	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<uint8_t>(m_mouse_button ? IMGUI_MBUT_LEFT : 0),
-					0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
-//	ImGui::ShowTestWindow(nullptr);
-
-	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiSetCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(width,height), ImGuiSetCond_FirstUseEver);
-	std::string title = util::string_format("MEWUI %s", bare_build_version);
-	if (!ImGui::Begin(title.c_str(), nullptr, window_flags))
-	{
-		// Early out if the window is collapsed, as an optimization.
-		ImGui::End();
-		return;
-	}
-	static int listbox_item_current = 0, filter_current = 0;
-	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
-	ImGui::PushItemWidth(-1);
-	ImGui::ListBox("##Filters", &filter_current, main_filters::text, main_filters::length, 20);
-	ImGui::PopItemWidth();
-	ImGui::EndChild();
-	ImGui::SameLine(0, 20);
-	ImGui::BeginChild("Games", ImVec2(width - 300, 0), true);
-	auto wh = (ImGui::GetWindowHeight() / ImGui::GetTextLineHeight()) - 1;
-	ImGui::PushItemWidth(-1);
-	ImGui::ListBox("##Games", &listbox_item_current, m_mmm.data(), m_mmm.size(), wh);
-	ImGui::PopItemWidth();
-	ImGui::EndChild();
-	ImGui::End();
-
-	imguiEndFrame();
-
-	int iptkey = IPT_INVALID;
-	// hitting cancel also pops the stack
-	if (exclusive_input_pressed(iptkey, IPT_UI_CANCEL, 0))
-	{
-		if (!m_ui_error && !menu_has_search_active())
-			stack_pop();
-		return;
-	}
-	return;
-
 	if (!m_prev_selected)
 		m_prev_selected = item[0].ref;
 
@@ -602,7 +516,6 @@ void menu_select_game::populate(float &customtop, float &custombottom)
 			// reset search string
 			m_search.clear();
 			m_displaylist.clear();
-			m_mmm.clear();
 
 			// if filter is set on category, build category list
 			switch (main_filters::actual)
@@ -641,7 +554,6 @@ void menu_select_game::populate(float &customtop, float &custombottom)
 
 				item_append(elem->type.fullname(), "", (cloneof) ? (flags_ui | FLAG_INVERT) : flags_ui, (void *)elem);
 				curitem++;
-				m_mmm.push_back(elem->type.fullname());
 			}
 		}
 	}

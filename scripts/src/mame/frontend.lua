@@ -148,6 +148,8 @@ files {
 	MAME_DIR .. "src/frontend/mame/ui/inifile.h",
 	MAME_DIR .. "src/frontend/mame/ui/miscmenu.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/miscmenu.h",
+	MAME_DIR .. "src/frontend/mame/ui/mewui.cpp",
+	MAME_DIR .. "src/frontend/mame/ui/mewui.h",
 	MAME_DIR .. "src/frontend/mame/ui/moptions.cpp",
 	MAME_DIR .. "src/frontend/mame/ui/moptions.h",
 	MAME_DIR .. "src/frontend/mame/ui/optsmenu.cpp",

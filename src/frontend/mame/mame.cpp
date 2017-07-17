@@ -18,10 +18,11 @@
 #include "clifront.h"
 #include "luaengine.h"
 #include <time.h>
-#include <modules/lib/osdobj_common.h>
+#include "modules/lib/osdobj_common.h"
 #include "ui/ui.h"
 #include "ui/selgame.h"
 #include "ui/simpleselgame.h"
+#include "ui/mewui.h"
 #include "cheat.h"
 #include "ui/inifile.h"
 #include "xmlfile.h"
@@ -230,12 +231,17 @@ int mame_machine_manager::execute()
 		set_machine(&machine);
 
 		osd_options &options = downcast<osd_options &>(machine.options());
-		if (is_empty)
+		if (is_empty && m_options.ui() == emu_options::UI_MEWUI)
 		{
 			m_video = options.video();
 			m_window = options.window();
 			options.set_value(OSDOPTION_VIDEO, "bgfx", OPTION_PRIORITY_CMDLINE);
 			options.set_value(OSDOPTION_WINDOW, true, OPTION_PRIORITY_CMDLINE);
+		}
+		else if (!m_video.empty())
+		{
+			options.set_value(OSDOPTION_VIDEO, m_video, OPTION_PRIORITY_CMDLINE);
+			options.set_value(OSDOPTION_WINDOW, m_window, OPTION_PRIORITY_CMDLINE);
 		}
 
 		// run the machine
@@ -332,6 +338,8 @@ void emulator_info::display_ui_chooser(running_machine& machine)
 	render_container &container = machine.render().ui_container();
 	if (machine.options().ui() == emu_options::UI_SIMPLE)
 		ui::simple_menu_select_game::force_game_select(mui, container);
+	else if (machine.options().ui() == emu_options::UI_MEWUI)
+		ui::modern_launcher::force_game_select(mui, container);
 	else
 		ui::menu_select_game::force_game_select(mui, container);
 }

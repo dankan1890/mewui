@@ -271,7 +271,8 @@ public:
 	enum ui_option
 	{
 		UI_CABINET,
-		UI_SIMPLE
+		UI_SIMPLE,
+		UI_MEWUI
 	};
 
 	enum class option_support

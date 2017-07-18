@@ -32,7 +32,7 @@ int modern_launcher::m_isabios = 0;
 
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
-	osd_options &options = downcast<osd_options &>(mui.machine().options());
+	auto &options = downcast<osd_options &>(mui.machine().options());
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.MouseDrawCursor = true; // FIXME: ???
@@ -103,24 +103,97 @@ void modern_launcher::handle()
 		ImGui::End();
 		return;
 	}
-	static int listbox_item_current = 0, filter_current = 0;
+
+	static int listbox_item_current = 0;
+
 	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
-	for (int i = 0; i < main_filters::length; ++i) {
-		if (ImGui::Selectable(main_filters::text[i], filter_current == i)) {
-			filter_current = i;
-			if (i != main_filters::actual) {
-				main_filters::actual = i;
-				reset(reset_options::SELECT_FIRST);
+	static int selection_mask = (1 << 2); // Dumb representation of what may be user-side selection state. You may carry selection state inside or outside your objects in whatever format you see fit.
+	int node_clicked = -1;                // Temporary storage of what node we have clicked to process selection at the end of the loop. May be a pointer to your own node type, etc.
+	ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize()*3); // Increase spacing to differentiate leaves from expanded contents.
+	for (int i = 0; i < main_filters::length; i++) {
+		// Disable the default open on single-click behavior and pass in Selected flag according to our selection state.
+		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
+		switch (i) {
+			case FILTER_MANUFACTURER: {
+				// Node
+				static int sele = -1;
+				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i, node_flags, main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				if (node_open) {
+					for (int s = 0; s < c_mnfct::ui.size(); ++s)
+						if (ImGui::Selectable(c_mnfct::ui[s].c_str(), sele == s)) {
+							c_mnfct::actual = s;
+							sele = s;
+						}
+					ImGui::TreePop();
+				}
 			}
+				break;
+			case FILTER_YEAR: {
+				static int sele = -1;
+				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i, node_flags, main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				if (node_open) {
+					for (int s = 0; s < c_year::ui.size(); ++s)
+						if (ImGui::Selectable(c_year::ui[s].c_str(), sele == s)) {
+							c_year::actual = s;
+							sele = s;
+						}
+					ImGui::TreePop();
+				}
+			}
+				break;
+			default:
+				// Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf. Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().
+				ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				break;
+
 		}
 	}
 
+	if (node_clicked != -1) {
+		// Update selection state. Process outside of tree loop to avoid visual inconsistencies during the clicking-frame.
+		selection_mask = (1 << node_clicked);           // Click to single-select
+
+		if (node_clicked != main_filters::actual) {
+			main_filters::actual = node_clicked;
+			reset(reset_options::SELECT_FIRST);
+		}
+	}
+	ImGui::PopStyleVar();
 	ImGui::EndChild();
+
 	ImGui::SameLine(0, 20);
+
 	ImGui::BeginChild("Games", ImVec2(width - 300, 0), true);
 	int i = 0;
-	for (auto e : m_displaylist) {
-		if (ImGui::Selectable(e->type.fullname(), listbox_item_current == i, ImGuiSelectableFlags_AllowDoubleClick)) {
+	ImGui::Columns(4, "##mycolumns", false);
+//	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
+	ImGui::Text("Name"); ImGui::NextColumn();
+	ImGui::Text("Romset"); ImGui::NextColumn();
+	ImGui::Text("Manufacturer"); ImGui::NextColumn();
+	ImGui::Text("Year"); ImGui::NextColumn();
+//	ImGui::PopStyleColor(1);
+	ImGui::Separator();
+
+	for (auto & e : m_displaylist) {
+		bool cloneof = strcmp(e->parent, "0");
+		if (cloneof)
+		{
+			auto cx = driver_list::find(e->parent);
+			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
+				cloneof = false;
+		}
+		if (cloneof) {
+			ImGui::Indent();
+			ImGui::PushStyleColor(ImGuiCol_Text, ImColor(UI_CLONE_COLOR));
+		}
+//		ImGui::Columns(4, "##mycolumns", false);
+		if (ImGui::Selectable(e->type.fullname(), listbox_item_current == i, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_SpanAllColumns)) {
 			listbox_item_current = i;
 			if (ImGui::IsMouseDoubleClicked(0)) {
 				// audit the game first to see if we're going to work
@@ -138,8 +211,17 @@ void modern_launcher::handle()
 				}
 			}
 		}
+		ImGui::NextColumn(); ImGui::Text(e->name);
+		ImGui::NextColumn(); ImGui::Text(e->manufacturer);
+		ImGui::NextColumn(); ImGui::Text(e->year);
+		ImGui::NextColumn();
+		if (cloneof) {
+			ImGui::Unindent();
+			ImGui::PopStyleColor(1);
+		}
 		i++;
 	}
+	ImGui::Columns(1);
 
 	ImGui::EndChild();
 	ImGui::End();

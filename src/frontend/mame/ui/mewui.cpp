@@ -96,7 +96,6 @@ void modern_launcher::handle()
 					0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
 //	ImGui::ShowTestWindow(nullptr);
 
-
 	ImGui::SetNextWindowSize(ImVec2(width, height));
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
 	std::string title = util::string_format("MEWUI %s", bare_build_version);
@@ -125,6 +124,7 @@ void modern_launcher::machines_panel()
 
 	static int current = 0;
 	static bool error = false;
+	bool tres = false;
 	ImGui::BeginChild("Games", ImVec2(width - 300, 0), true);
 
 	ImGui::Columns(4, "##mycolumns", false);
@@ -167,7 +167,7 @@ void modern_launcher::machines_panel()
 					mame_machine_manager::instance()->schedule_new_driver(*e);
 					machine().schedule_hard_reset();
 					stack_reset();
-					reselect = true;
+					tres = true;
 				} else {
 					error = true;
 				}
@@ -176,7 +176,6 @@ void modern_launcher::machines_panel()
 
 		if (current == i && reselect) {
 			ImGui::SetScrollHere();
-			reselect = false;
 		}
 
 		ImGui::NextColumn(); ImGui::Text(e->name);
@@ -202,6 +201,8 @@ void modern_launcher::machines_panel()
 			ImGui::EndPopup();
 		}
 	}
+
+	reselect = tres;
 
 	ImGui::EndChild();
 }

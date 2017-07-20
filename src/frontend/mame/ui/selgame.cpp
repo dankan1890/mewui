@@ -52,7 +52,7 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 	: menu_select_launch(mui, container, false)
 {
 	highlight = 0;
-	std::string error_string, last_filter, sub_filter;
+	std::string last_filter, sub_filter;
 	ui_options &moptions = mui.options();
 
 	// load drivers cache
@@ -137,7 +137,7 @@ menu_select_game::menu_select_game(mame_ui_manager &mui, render_container &conta
 
 menu_select_game::~menu_select_game()
 {
-	std::string error_string, last_driver;
+	std::string last_driver;
 	game_driver const *const driver(isfavorite() ? nullptr : reinterpret_cast<game_driver const *>(get_selection_ref()));
 	ui_software_info *const swinfo(isfavorite() ? reinterpret_cast<ui_software_info *>(get_selection_ref()) : nullptr);
 

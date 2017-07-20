@@ -230,6 +230,7 @@ public:
 	virtual void popup_time_string(int seconds, std::string message) override;
 
 	virtual void menu_reset() override;
+	render_texture *get_mouse_arrow() { return m_mouse_arrow_texture; }
 
 private:
 	// instance variables

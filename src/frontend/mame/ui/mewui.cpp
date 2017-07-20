@@ -24,6 +24,7 @@ namespace ui {
 
 std::vector<const game_driver *> modern_launcher::m_sortedlist;
 int modern_launcher::m_isabios = 0;
+bool modern_launcher::reselect = false;
 
 //-------------------------------------------------
 //  force the game select menu to be visible
@@ -35,7 +36,6 @@ modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &contain
 	auto &options = downcast<osd_options &>(mui.machine().options());
 
 	ImGuiIO& io = ImGui::GetIO();
-	io.MouseDrawCursor = true; // FIXME: ???
 
 	auto font_name = options.debugger_font();
 	auto font_size = options.debugger_font_size();
@@ -47,9 +47,10 @@ modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &contain
 	if(strcmp(font_name, OSDOPTVAL_AUTO) == 0)
 		io.Fonts->AddFontDefault();
 	else
-		io.Fonts->AddFontFromFileTTF(font_name,font_size);  // for now, font name must be a path to a TTF file
+		io.Fonts->AddFontFromFileTTF(font_name,font_size);
 	auto m_font = imguiCreate();
 	imguiSetFont(m_font);
+//	io.MouseDrawCursor = true; // FIXME: ???
 
 	init_sorted_list();
 }
@@ -95,82 +96,37 @@ void modern_launcher::handle()
 					0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
 //	ImGui::ShowTestWindow(nullptr);
 
+
 	ImGui::SetNextWindowSize(ImVec2(width, height));
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
 	std::string title = util::string_format("MEWUI %s", bare_build_version);
 	if (!ImGui::Begin(title.c_str(), nullptr, window_flags)) {
-		// Early out if the window is collapsed, as an optimization.
 		ImGui::End();
 		return;
 	}
 
-	static int listbox_item_current = 0;
-
-	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
-	static int selection_mask = (1 << 2); // Dumb representation of what may be user-side selection state. You may carry selection state inside or outside your objects in whatever format you see fit.
-	int node_clicked = -1;                // Temporary storage of what node we have clicked to process selection at the end of the loop. May be a pointer to your own node type, etc.
-	ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize()*3); // Increase spacing to differentiate leaves from expanded contents.
-	for (int i = 0; i < main_filters::length; i++) {
-		// Disable the default open on single-click behavior and pass in Selected flag according to our selection state.
-		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
-		switch (i) {
-			case FILTER_MANUFACTURER: {
-				// Node
-				static int sele = -1;
-				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i, node_flags, main_filters::text[i]);
-				if (ImGui::IsItemClicked())
-					node_clicked = i;
-				if (node_open) {
-					for (int s = 0; s < c_mnfct::ui.size(); ++s)
-						if (ImGui::Selectable(c_mnfct::ui[s].c_str(), sele == s)) {
-							c_mnfct::actual = s;
-							sele = s;
-						}
-					ImGui::TreePop();
-				}
-			}
-				break;
-			case FILTER_YEAR: {
-				static int sele = -1;
-				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i, node_flags, main_filters::text[i]);
-				if (ImGui::IsItemClicked())
-					node_clicked = i;
-				if (node_open) {
-					for (int s = 0; s < c_year::ui.size(); ++s)
-						if (ImGui::Selectable(c_year::ui[s].c_str(), sele == s)) {
-							c_year::actual = s;
-							sele = s;
-						}
-					ImGui::TreePop();
-				}
-			}
-				break;
-			default:
-				// Leaf: The only reason we have a TreeNode at all is to allow selection of the leaf. Otherwise we can use BulletText() or TreeAdvanceToLabelPos()+Text().
-				ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, main_filters::text[i]);
-				if (ImGui::IsItemClicked())
-					node_clicked = i;
-				break;
-
-		}
-	}
-
-	if (node_clicked != -1) {
-		// Update selection state. Process outside of tree loop to avoid visual inconsistencies during the clicking-frame.
-		selection_mask = (1 << node_clicked);           // Click to single-select
-
-		if (node_clicked != main_filters::actual) {
-			main_filters::actual = node_clicked;
-			reset(reset_options::SELECT_FIRST);
-		}
-	}
-	ImGui::PopStyleVar();
-	ImGui::EndChild();
-
+	filters_panel();
 	ImGui::SameLine(0, 20);
+	machines_panel();
 
+	ImGui::End();
+
+	imguiEndFrame();
+
+	int iptkey = IPT_INVALID;
+	if (exclusive_input_pressed(iptkey, IPT_UI_CANCEL, 0)) {
+		stack_pop();
+	}
+}
+
+void modern_launcher::machines_panel()
+{
+	u32 width = machine().render().ui_target().width();
+
+	static int current = 0;
+	static bool error = false;
 	ImGui::BeginChild("Games", ImVec2(width - 300, 0), true);
-	int i = 0;
+
 	ImGui::Columns(4, "##mycolumns", false);
 //	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
 	ImGui::Text("Name"); ImGui::NextColumn();
@@ -180,21 +136,24 @@ void modern_launcher::handle()
 //	ImGui::PopStyleColor(1);
 	ImGui::Separator();
 
-	for (auto & e : m_displaylist) {
+	for (int i = 0; i < m_displaylist.size(); ++i) {
+		auto & e = m_displaylist[i];
 		bool cloneof = strcmp(e->parent, "0");
-		if (cloneof)
-		{
+		if (cloneof) {
 			auto cx = driver_list::find(e->parent);
 			if (cx != -1 && ((driver_list::driver(cx).flags & MACHINE_IS_BIOS_ROOT) != 0))
 				cloneof = false;
 		}
+
 		if (cloneof) {
 			ImGui::Indent();
 			ImGui::PushStyleColor(ImGuiCol_Text, ImColor(UI_CLONE_COLOR));
 		}
-//		ImGui::Columns(4, "##mycolumns", false);
-		if (ImGui::Selectable(e->type.fullname(), listbox_item_current == i, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_SpanAllColumns)) {
-			listbox_item_current = i;
+
+		if (ImGui::Selectable(e->type.fullname(), current == i,
+							  ImGuiSelectableFlags_AllowDoubleClick
+							  | ImGuiSelectableFlags_SpanAllColumns)) {
+			current = i;
 			if (ImGui::IsMouseDoubleClicked(0)) {
 				// audit the game first to see if we're going to work
 				driver_enumerator enumerator(machine().options(), *e);
@@ -208,31 +167,113 @@ void modern_launcher::handle()
 					mame_machine_manager::instance()->schedule_new_driver(*e);
 					machine().schedule_hard_reset();
 					stack_reset();
+					reselect = true;
+				} else {
+					error = true;
 				}
 			}
 		}
+
+		if (current == i && reselect) {
+			ImGui::SetScrollHere();
+			reselect = false;
+		}
+
 		ImGui::NextColumn(); ImGui::Text(e->name);
 		ImGui::NextColumn(); ImGui::Text(e->manufacturer);
 		ImGui::NextColumn(); ImGui::Text(e->year);
 		ImGui::NextColumn();
+
 		if (cloneof) {
 			ImGui::Unindent();
 			ImGui::PopStyleColor(1);
 		}
-		i++;
 	}
+
 	ImGui::Columns(1);
 
-	ImGui::EndChild();
-	ImGui::End();
-
-	imguiEndFrame();
-
-	// hitting cancel also pops the stack
-	int iptkey = IPT_INVALID;
-	if (exclusive_input_pressed(iptkey, IPT_UI_CANCEL, 0)) {
-		stack_pop();
+	if (error) {
+		ImGui::OpenPopup("Error!");
+		if (ImGui::BeginPopupModal("Error!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+			ImGui::Text("The selected machine is missing one or more required ROM or CHD images.\n");
+			ImGui::Text("Please select a different machine.\n\n");
+			ImGui::Separator();
+			if (ImGui::Button("OK", ImVec2(120,0))) { error = false; ImGui::CloseCurrentPopup(); }
+			ImGui::EndPopup();
+		}
 	}
+
+	ImGui::EndChild();
+}
+
+
+void modern_launcher::filters_panel()
+{
+	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
+	static int selection_mask = (1 << 0);
+	int node_clicked = -1;
+	ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize()*3);
+	for (int i = 0; i < main_filters::length; ++i) {
+		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow
+										| ImGuiTreeNodeFlags_OpenOnDoubleClick
+										| ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
+		switch (i) {
+			case FILTER_MANUFACTURER: {
+				// Node
+				static int sele = -1;
+				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i,
+												   node_flags,
+												   main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				if (node_open) {
+					for (int s = 0; s < c_mnfct::ui.size(); ++s)
+						if (ImGui::Selectable(c_mnfct::ui[s].c_str(), sele == s)) {
+							c_mnfct::actual = s;
+							sele = s;
+						}
+					ImGui::TreePop();
+				}
+				break;
+			}
+			case FILTER_YEAR: {
+				static int sele = -1;
+				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i,
+												   node_flags,
+												   main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				if (node_open) {
+					for (int s = 0; s < c_year::ui.size(); ++s)
+						if (ImGui::Selectable(c_year::ui[s].c_str(), sele == s)) {
+							c_year::actual = s;
+							sele = s;
+						}
+					ImGui::TreePop();
+				}
+				break;
+			}
+			default:
+				ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags | ImGuiTreeNodeFlags_Leaf
+													  | ImGuiTreeNodeFlags_NoTreePushOnOpen,
+								  main_filters::text[i]);
+				if (ImGui::IsItemClicked())
+					node_clicked = i;
+				break;
+
+		}
+	}
+
+	if (node_clicked != -1) {
+		selection_mask = (1 << node_clicked);
+
+		if (node_clicked != main_filters::actual) {
+			main_filters::actual = node_clicked;
+			reset(reset_options::SELECT_FIRST);
+		}
+	}
+	ImGui::PopStyleVar();
+	ImGui::EndChild();
 }
 
 void modern_launcher::custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2)

@@ -84,11 +84,13 @@ public:
 	DECLARE_WRITE8_MEMBER(port20_w);
 	DECLARE_READ8_MEMBER(port30_r);
 	DECLARE_WRITE8_MEMBER(port30_w);
+	DECLARE_READ8_MEMBER(portf0_r);
 	DECLARE_WRITE8_MEMBER(portf0_w);		
 	DECLARE_INPUT_CHANGED_MEMBER(alphatro_break);
 	DECLARE_WRITE_LINE_MEMBER(txdata_callback);
 	DECLARE_WRITE_LINE_MEMBER(write_usart_clock);
 	DECLARE_WRITE_LINE_MEMBER(hrq_w);
+	DECLARE_WRITE_LINE_MEMBER(fdc_irq_w);
 	DECLARE_PALETTE_INIT(alphatro);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_c);
 	TIMER_DEVICE_CALLBACK_MEMBER(timer_p);
@@ -103,7 +105,7 @@ private:
 	u8 m_cass_data[4];
 	u8 m_port_10, m_port_20, m_port_30, m_port_f0;
 	bool m_cass_state;
-	bool m_cassold;
+	bool m_cassold, m_fdc_irq;
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
@@ -158,8 +160,28 @@ void alphatro_state::update_banking()
 	}
 }
 
-READ8_MEMBER (alphatro_state::ram0000_r) { return m_ram_ptr[offset]; }
-WRITE8_MEMBER(alphatro_state::ram0000_w) { m_ram_ptr[offset] = data; }
+READ8_MEMBER (alphatro_state::ram0000_r) 
+{ 
+	if (offset < 0xf000) 
+	{
+		return m_ram_ptr[offset]; 
+	}
+
+	return m_p_videoram[offset & 0xfff];
+}
+
+WRITE8_MEMBER(alphatro_state::ram0000_w) 
+{ 
+	if (offset < 0xf000) 
+	{
+		m_ram_ptr[offset] = data; 
+	}
+	else
+	{
+		m_p_videoram[offset & 0xfff] = data;
+	}
+}
+
 READ8_MEMBER (alphatro_state::ram6000_r) { return m_ram_ptr[offset+0x6000]; }
 WRITE8_MEMBER(alphatro_state::ram6000_w) { m_ram_ptr[offset+0x6000] = data; }
 READ8_MEMBER (alphatro_state::rama000_r) { return m_ram_ptr[offset+0xa000]; }
@@ -249,6 +271,11 @@ WRITE8_MEMBER( alphatro_state::port30_w )
 	m_port_30 = data;
 }
 
+READ8_MEMBER( alphatro_state::portf0_r )
+{
+	return m_fdc_irq << 6;
+}
+
 WRITE8_MEMBER( alphatro_state::portf0_w)
 {
 	if ((data & 0x1) && !(m_port_f0))
@@ -261,6 +288,12 @@ WRITE8_MEMBER( alphatro_state::portf0_w)
 		{
 			floppy->mon_w(0);
 			m_fdc->set_rate(250000);
+		}
+		con = machine().device<floppy_connector>("fdc:1");
+		floppy = con ? con->get_device() : nullptr;
+		if (floppy)
+		{
+			floppy->mon_w(0);
 		}
 	}
 	
@@ -396,7 +429,7 @@ static ADDRESS_MAP_START( alphatro_io, AS_IO, 8, alphatro_state )
 	AM_RANGE(0x60, 0x68) AM_DEVREADWRITE("dmac", i8257_device, read, write)
 	// 8259 PIT
 	//AM_RANGE(0x70, 0x72) AM_DEVREADWRITE("
-	AM_RANGE(0xf0, 0xf0) AM_DEVREAD("fdc", upd765a_device, msr_r) AM_WRITE(portf0_w)
+	AM_RANGE(0xf0, 0xf0) AM_READ(portf0_r) AM_WRITE(portf0_w)
 	AM_RANGE(0xf8, 0xf8) AM_DEVREADWRITE("fdc", upd765a_device, fifo_r, fifo_w)
 	AM_RANGE(0xf9, 0xf9) AM_DEVREAD("fdc", upd765a_device, msr_r)
 ADDRESS_MAP_END
@@ -553,6 +586,7 @@ void alphatro_state::machine_reset()
 	m_cass_data[0] = m_cass_data[1] = m_cass_data[2] = m_cass_data[3] = 0;
 	m_cass_state = 0;
 	m_cassold = 0;
+	m_fdc_irq = 0;
 	m_usart->write_rxd(0);
 	m_beep->set_state(0);
 }
@@ -603,6 +637,11 @@ TIMER_DEVICE_CALLBACK_MEMBER(alphatro_state::timer_p)
 	}
 }
 
+WRITE_LINE_MEMBER(alphatro_state::fdc_irq_w)
+{
+	m_fdc_irq = state ? false : true;
+}
+
 WRITE_LINE_MEMBER(alphatro_state::hrq_w)
 {
 	m_maincpu->set_input_line(INPUT_LINE_HALT, state);
@@ -639,11 +678,10 @@ static MACHINE_CONFIG_START( alphatro )
 
 	/* Devices */
 	MCFG_UPD765A_ADD("fdc", true, true)
+	MCFG_UPD765_INTRQ_CALLBACK(WRITELINE(alphatro_state, fdc_irq_w))
 	MCFG_UPD765_DRQ_CALLBACK(DEVWRITELINE("dmac", i8257_device, dreq2_w))
 	MCFG_FLOPPY_DRIVE_ADD("fdc:0", alphatro_floppies, "525dd", floppy_image_device::default_floppy_formats)
 	MCFG_FLOPPY_DRIVE_ADD("fdc:1", alphatro_floppies, "525dd", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD("fdc:2", alphatro_floppies, "525dd", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD("fdc:3", alphatro_floppies, "525dd", floppy_image_device::default_floppy_formats)
 	
 	MCFG_DEVICE_ADD("dmac" , I8257, MAIN_CLOCK)
 	MCFG_I8257_OUT_HRQ_CB(WRITELINE(alphatro_state, hrq_w))

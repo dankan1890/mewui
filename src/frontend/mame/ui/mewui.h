@@ -35,13 +35,15 @@ private:
 	static std::vector<const game_driver *> m_sortedlist;
 	std::vector<const game_driver *> m_displaylist;
 
-	static bool reselect;
 	std::string m_search;
 	static int m_isabios;
+	int sub_node_year = -1;
+	int sub_node_manuf = -1;
 	void init_sorted_list();
-	void build_list();
+	void build_list(const std::string& text = {} );
 	void filters_panel();
 	void machines_panel();
+	void menubar();
 
 };
 

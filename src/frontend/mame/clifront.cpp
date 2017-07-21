@@ -414,7 +414,7 @@ void cli_frontend::listclones(const std::vector<std::string> &args)
 		// see if we match but just weren't a clone
 		if (original_count == 0)
 			throw emu_fatalerror(EMU_ERR_NO_SUCH_GAME, "No matching games found for '%s'", gamename);
-		else // TODO: ??
+		else
 			osd_printf_info("Found %lu matches for '%s' but none were clones\n", (unsigned long)drivlist.count(), gamename);
 		return;
 	}

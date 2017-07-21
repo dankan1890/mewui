@@ -12,7 +12,6 @@
 #include "emuopts.h"
 #include "render.h"
 
-//#include "___empty.lh"
 //**************************************************************************
 //  DRIVER STATE
 //**************************************************************************
@@ -49,7 +48,6 @@ static MACHINE_CONFIG_START( ___empty )
 	MCFG_SCREEN_SIZE(640,480)
 	MCFG_SCREEN_VISIBLE_AREA(0,639, 0,479)
 	MCFG_SCREEN_REFRESH_RATE(30)
-//	MCFG_DEFAULT_LAYOUT(layout____empty)
 MACHINE_CONFIG_END
 
 

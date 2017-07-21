@@ -67,13 +67,17 @@ bool sorted_game_list(const game_driver *x, const game_driver *y)
 	}
 	else if (!clonex && cloney)
 	{
-		return !cs_stricmp(x->name, y->parent) ||
-			   cs_stricmp(x->type.fullname(), driver_list::driver(cy).type.fullname()) < 0;
+		if (!cs_stricmp(x->name, y->parent))
+			return true;
+		else
+			return (cs_stricmp(x->type.fullname(), driver_list::driver(cy).type.fullname()) < 0);
 	}
 	else
 	{
-		return cs_stricmp(x->parent, y->name) != 0 &&
-			   cs_stricmp(driver_list::driver(cx).type.fullname(), y->type.fullname()) < 0;
+		if (!cs_stricmp(x->parent, y->name))
+			return false;
+		else
+			return (cs_stricmp(driver_list::driver(cx).type.fullname(), y->type.fullname()) < 0);
 	}
 }
 

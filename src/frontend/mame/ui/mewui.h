@@ -13,7 +13,10 @@
 
 #include "ui/menu.h"
 
+class media_auditor;
+
 namespace ui {
+
 class modern_launcher : public menu
 {
 public:
@@ -44,7 +47,9 @@ private:
 	void filters_panel();
 	void machines_panel();
 	void menubar();
-
+	void software_panel(const game_driver * drv);
+	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
+	void show_error(std::string &error_text, bool &error);
 };
 
 } // namespace ui

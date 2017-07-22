@@ -11,14 +11,16 @@
 #include "emu.h"
 #include "mewui.h"
 #include "drivenum.h"
-#include "audit.h"
 #include "mame.h"
 #include "modules/lib/osdobj_common.h"
 #include "ui/miscmenu.h"
 #include "imgui/imgui.h"
+#include "bgfx/3rdparty/ocornut-imgui/imgui_internal.h"
+#include "softlist_dev.h"
 #include "utils.h"
 #include "uiinput.h"
 #include "ui/auditmenu.h"
+#include "audit.h"
 
 namespace ui {
 
@@ -84,16 +86,30 @@ void modern_launcher::handle()
 {
 	u32 width = machine().render().ui_target().width();
 	u32 height = machine().render().ui_target().height();
-	int32_t m_mouse_x, m_mouse_y;
+	s32 m_mouse_x, m_mouse_y;
 	bool m_mouse_button;
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_MenuBar;
+
+	static s32 zdelta = 0;
+	ui_event event;
+	while (machine().ui_input().pop_event(&event)) {
+		switch (event.event_type) {
+			case UI_EVENT_MOUSE_WHEEL:
+				zdelta += event.zdelta;
+				break;
+			default:
+				break;
+		}
+	}
+
 	machine().ui_input().find_mouse(&m_mouse_x, &m_mouse_y, &m_mouse_button);
-	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<uint8_t>(m_mouse_button ? IMGUI_MBUT_LEFT : 0),
-					0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
+
+	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<u8>(m_mouse_button ? IMGUI_MBUT_LEFT : 0),
+					zdelta, static_cast<u16>(width), static_cast<u16>(height));
 
 	ImGui::SetNextWindowSize(ImVec2(width, height));
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
@@ -111,8 +127,8 @@ void modern_launcher::handle()
 	ImGui::End();
 
 	// Test
-	bool opened = true;
-	ImGui::ShowTestWindow(&opened);
+//	bool opened = true;
+//	ImGui::ShowTestWindow(&opened);
 
 	imguiEndFrame();
 
@@ -124,13 +140,19 @@ void modern_launcher::handle()
 
 void modern_launcher::machines_panel()
 {
-	u32 width = machine().render().ui_target().width();
+	auto width = ImGui::GetWindowContentRegionWidth();
+	// FIXME: get without internal
+	ImGuiContext* cc = ImGui::GetCurrentContext();
+	auto *wc = cc->CurrentWindow;
+	auto height = ImGui::GetWindowHeight() - wc->TitleBarHeight() - wc->MenuBarHeight();
 
 	static int current = 0;
 	static bool error = false;
 	static bool reselect = false;
+	static std::string error_text;
 	bool tres = false;
-	ImGui::BeginChild("Games", ImVec2(width - 300, 0), true);
+	ImGui::BeginChild("Frames", ImVec2(width - 300, 0));
+	ImGui::BeginChild("Games", ImVec2(width - 300, height - 220), true);
 
 	ImGui::Columns(4, "##mycolumns", false);
 //	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
@@ -169,11 +191,13 @@ void modern_launcher::machines_panel()
 				// if everything looks good, schedule the new driver
 				if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE ||
 					summary == media_auditor::NONE_NEEDED) {
+					machine().options().set_system_name(e->name);
 					mame_machine_manager::instance()->schedule_new_driver(*e);
 					machine().schedule_hard_reset();
 					stack_reset();
 					tres = true;
 				} else {
+					error_text = make_error_text(media_auditor::NOTFOUND != summary, auditor, false);
 					error = true;
 				}
 			}
@@ -196,22 +220,111 @@ void modern_launcher::machines_panel()
 
 	ImGui::Columns(1);
 
-	if (error) {
-		ImGui::OpenPopup("Error!");
-		if (ImGui::BeginPopupModal("Error!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-			ImGui::Text("The selected machine is missing one or more required ROM or CHD images.\n");
-			ImGui::Text("Please select a different machine.\n\n");
-			ImGui::Separator();
-			if (ImGui::Button("OK", ImVec2(120,0))) { error = false; ImGui::CloseCurrentPopup(); }
-			ImGui::EndPopup();
-		}
-	}
+	if (error) { show_error(error_text, error);	}
 
 	reselect = tres;
 
 	ImGui::EndChild();
+	software_panel(m_displaylist[current]);
+	ImGui::EndChild();
 }
 
+std::string modern_launcher::make_error_text(bool summary, media_auditor const &auditor, bool software)
+{
+	std::ostringstream str;
+	std::string extra_text = (software) ? "software" : "machine";
+	std::string txt = string_format("The selected %s is missing one or more required ROM or CHD images.\nPlease select a different %s.\n\n", extra_text, extra_text);
+	str << txt;
+	if (summary)
+	{
+		auditor.summarize(nullptr, &str);
+		str << "\n";
+	}
+	return str.str();
+}
+
+void modern_launcher::show_error(std::string &error_text, bool &error)
+{
+	ImGui::OpenPopup("Error!");
+	if (ImGui::BeginPopupModal("Error!", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+		ImGui::Text(error_text.c_str());
+		ImGui::Separator();
+		if (ImGui::Button("OK", ImVec2(120,0))) {
+			error = false;
+			error_text.clear();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void modern_launcher::software_panel(const game_driver *drv)
+{
+	auto width = ImGui::GetWindowContentRegionWidth();
+	static int current = 0;
+	int i = 0;
+	static bool error = false;
+	static std::string error_text;
+
+	ImGui::BeginChild("Software", ImVec2(width, 200), true);
+
+	ImGui::Columns(4, "##mycolumns", false);
+//	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
+	ImGui::Text("Name"); ImGui::NextColumn();
+	ImGui::Text("Romset"); ImGui::NextColumn();
+	ImGui::Text("Manufacturer"); ImGui::NextColumn();
+	ImGui::Text("Year"); ImGui::NextColumn();
+//	ImGui::PopStyleColor(1);
+	ImGui::Separator();
+
+	std::unordered_set<std::string> list_map;
+	driver_enumerator drivlist(machine().options(), *drv);
+	while (drivlist.next()) {
+		for (software_list_device &swlistdev : software_list_device_iterator(drivlist.config()->root_device()))
+			if (list_map.insert(swlistdev.list_name()).second)
+				if (!swlistdev.get_info().empty()) {
+					for (const software_info &swinfo : swlistdev.get_info()) {
+						if (ImGui::Selectable(swinfo.longname().c_str(), current == i,
+											  ImGuiSelectableFlags_AllowDoubleClick
+											  | ImGuiSelectableFlags_SpanAllColumns)) {
+							current = i;
+							if (ImGui::IsMouseDoubleClicked(0)) {
+								driver_enumerator drivlist(machine().options(), *drv);
+								media_auditor auditor(drivlist);
+								drivlist.next();
+								media_auditor::summary const summary = auditor.audit_software(swlistdev.list_name(),
+																							  &swinfo,
+																							  AUDIT_VALIDATE_FAST);
+								if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE
+									|| summary == media_auditor::NONE_NEEDED) {
+									machine().options().set_system_name(drv->name);
+									std::string const string_list(
+											util::string_format("%s:%s", swlistdev.list_name(), swinfo.shortname()));
+									ui().machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(),
+																	   OPTION_PRIORITY_CMDLINE);
+									mame_machine_manager::instance()->schedule_new_driver(*drv);
+									machine().schedule_hard_reset();
+									stack_reset();
+								} else {
+									error_text = make_error_text(media_auditor::NOTFOUND != summary, auditor, true);
+									error = true;
+								}
+							}
+						}
+						ImGui::NextColumn(); ImGui::Text(swinfo.shortname().c_str());
+						ImGui::NextColumn(); ImGui::Text(swinfo.publisher().c_str());
+						ImGui::NextColumn(); ImGui::Text(swinfo.year().c_str());
+						ImGui::NextColumn();
+						i++;
+					}
+				}
+	}
+	ImGui::Columns(1);
+
+	if (error) { show_error(error_text, error);	}
+
+	ImGui::EndChild();
+}
 
 void modern_launcher::filters_panel()
 {

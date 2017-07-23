@@ -34,8 +34,32 @@ int modern_launcher::m_isabios = 0;
 
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
+	ImGuiIO& io = ImGui::GetIO();
+/*	io.KeyMap[ImGuiKey_A] = ITEM_ID_A;
+	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
+	io.KeyMap[ImGuiKey_V] = ITEM_ID_V;
+	io.KeyMap[ImGuiKey_X] = ITEM_ID_X;
+	io.KeyMap[ImGuiKey_Y] = ITEM_ID_Y;
+	io.KeyMap[ImGuiKey_Z] = ITEM_ID_Z; */
+	io.KeyMap[ImGuiKey_Backspace] = ITEM_ID_BACKSPACE;
+	io.KeyMap[ImGuiKey_Delete] = ITEM_ID_DEL;
+	io.KeyMap[ImGuiKey_Tab] = ITEM_ID_TAB;
+	io.KeyMap[ImGuiKey_PageUp] = ITEM_ID_PGUP;
+	io.KeyMap[ImGuiKey_PageDown] = ITEM_ID_PGDN;
+	io.KeyMap[ImGuiKey_Home] = ITEM_ID_HOME;
+	io.KeyMap[ImGuiKey_End] = ITEM_ID_END;
+	io.KeyMap[ImGuiKey_Escape] = ITEM_ID_ESC;
+	io.KeyMap[ImGuiKey_Enter] = ITEM_ID_ENTER;
+	io.KeyMap[ImGuiKey_LeftArrow] = ITEM_ID_LEFT;
+	io.KeyMap[ImGuiKey_RightArrow] = ITEM_ID_RIGHT;
+	io.KeyMap[ImGuiKey_UpArrow] = ITEM_ID_UP;
+	io.KeyMap[ImGuiKey_DownArrow] = ITEM_ID_DOWN;
+
+	// set key delay and repeat rates
+	io.KeyRepeatDelay = 0.800f;
+	io.KeyRepeatRate = 0.150f;
+
 	imguiCreate();
-//	io.MouseDrawCursor = true; // FIXME: ???
 
 	init_sorted_list();
 }
@@ -84,6 +108,9 @@ void modern_launcher::populate(float &customtop, float &custombottom)
 
 void modern_launcher::handle()
 {
+	ImGuiIO& io = ImGui::GetIO();
+//	io.MouseDrawCursor = true; // FIXME: ???
+
 	u32 width = machine().render().ui_target().width();
 	u32 height = machine().render().ui_target().height();
 	s32 m_mouse_x, m_mouse_y;
@@ -93,6 +120,15 @@ void modern_launcher::handle()
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_MenuBar;
+
+	io.KeyCtrl = machine().input().code_pressed(KEYCODE_LCONTROL);
+	io.KeyShift = machine().input().code_pressed(KEYCODE_LSHIFT);
+	io.KeyAlt = machine().input().code_pressed(KEYCODE_LALT);
+
+	for(input_item_id id = ITEM_ID_A; id <= ITEM_ID_CANCEL; ++id)
+	{
+		io.KeysDown[id] = machine().input().code_pressed(input_code(DEVICE_CLASS_KEYBOARD, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, id));
+	}
 
 	static s32 zdelta = 0;
 	ui_event event = {};
@@ -121,15 +157,14 @@ void modern_launcher::handle()
 
 	menubar();
 	bool treset = filters_panel();
-	if (treset)
-		zdelta = 0;
+	if (treset) zdelta = 0;
 	ImGui::SameLine(0, 20);
 	machines_panel(treset);
 	ImGui::End();
 
 	// Test
-//	bool opened = true;
-//	ImGui::ShowTestWindow(&opened);
+	bool opened = true;
+	ImGui::ShowTestWindow(&opened);
 
 	imguiEndFrame();
 
@@ -148,6 +183,7 @@ void modern_launcher::machines_panel(bool f_reset)
 	auto height = ImGui::GetWindowHeight() - wc->TitleBarHeight() - wc->MenuBarHeight();
 
 	static int current = 0;
+	imguihandle_keys(current, m_displaylist.size());
 	if (f_reset) current = 0;
 	static bool error = false;
 	static bool reselect = false;
@@ -232,6 +268,23 @@ void modern_launcher::machines_panel(bool f_reset)
 
 	ImGui::EndChild();
 }
+
+void modern_launcher::imguihandle_keys(int &current, int max)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); ++i)
+		if (io.KeysDownDuration[i] >= 0.0f) {
+			if (i == ITEM_ID_DOWN && current < max - 1) {
+				current++;
+				return;
+			}
+			if (i == ITEM_ID_UP && current > 0) {
+				current--;
+				return;
+			}
+		}
+}
+
 
 std::string modern_launcher::make_error_text(bool summary, media_auditor const &auditor, bool software)
 {
@@ -333,6 +386,8 @@ bool modern_launcher::software_panel(const game_driver *drv)
 				}
 	}
 	ImGui::Columns(1);
+	imguihandle_keys(current, i);
+
 
 	if (error) { show_error(error_text, error);	}
 

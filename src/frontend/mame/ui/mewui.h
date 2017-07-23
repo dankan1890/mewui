@@ -50,6 +50,7 @@ private:
 	bool software_panel(const game_driver * drv);
 	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
 	void show_error(std::string &error_text, bool &error);
+	void imguihandle_keys(int &current, int max);
 };
 
 } // namespace ui

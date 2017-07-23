@@ -95,7 +95,7 @@ void modern_launcher::handle()
 	window_flags |= ImGuiWindowFlags_MenuBar;
 
 	static s32 zdelta = 0;
-	ui_event event;
+	ui_event event = {};
 	while (machine().ui_input().pop_event(&event)) {
 		switch (event.event_type) {
 			case UI_EVENT_MOUSE_WHEEL:
@@ -120,10 +120,11 @@ void modern_launcher::handle()
 	}
 
 	menubar();
-	filters_panel();
+	bool treset = filters_panel();
+	if (treset)
+		zdelta = 0;
 	ImGui::SameLine(0, 20);
-	machines_panel();
-
+	machines_panel(treset);
 	ImGui::End();
 
 	// Test
@@ -138,7 +139,7 @@ void modern_launcher::handle()
 	}
 }
 
-void modern_launcher::machines_panel()
+void modern_launcher::machines_panel(bool f_reset)
 {
 	auto width = ImGui::GetWindowContentRegionWidth();
 	// FIXME: get without internal
@@ -147,10 +148,11 @@ void modern_launcher::machines_panel()
 	auto height = ImGui::GetWindowHeight() - wc->TitleBarHeight() - wc->MenuBarHeight();
 
 	static int current = 0;
+	if (f_reset) current = 0;
 	static bool error = false;
 	static bool reselect = false;
 	static std::string error_text;
-	bool tres = false;
+	bool launch = false;
 	ImGui::BeginChild("Frames", ImVec2(width - 300, 0));
 	ImGui::BeginChild("Games", ImVec2(width - 300, height - 220), true);
 
@@ -195,7 +197,7 @@ void modern_launcher::machines_panel()
 					mame_machine_manager::instance()->schedule_new_driver(*e);
 					machine().schedule_hard_reset();
 					stack_reset();
-					tres = true;
+					launch = true;
 				} else {
 					error_text = make_error_text(media_auditor::NOTFOUND != summary, auditor, false);
 					error = true;
@@ -203,7 +205,7 @@ void modern_launcher::machines_panel()
 			}
 		}
 
-		if (current == i && reselect) {
+		if (current == i && (reselect || f_reset)) {
 			ImGui::SetScrollHere();
 		}
 
@@ -222,10 +224,12 @@ void modern_launcher::machines_panel()
 
 	if (error) { show_error(error_text, error);	}
 
-	reselect = tres;
-
 	ImGui::EndChild();
-	software_panel(m_displaylist[current]);
+
+	if (software_panel(m_displaylist[current])) { launch = true; }
+
+	reselect = launch;
+
 	ImGui::EndChild();
 }
 
@@ -233,10 +237,9 @@ std::string modern_launcher::make_error_text(bool summary, media_auditor const &
 {
 	std::ostringstream str;
 	std::string extra_text = (software) ? "software" : "machine";
-	std::string txt = string_format("The selected %s is missing one or more required ROM or CHD images.\nPlease select a different %s.\n\n", extra_text, extra_text);
-	str << txt;
-	if (summary)
-	{
+	str << util::string_format("The selected %s is missing one or more required ROM or CHD images.\n"
+									   "Please select a different %s.\n\n", extra_text, extra_text);
+	if (summary) {
 		auditor.summarize(nullptr, &str);
 		str << "\n";
 	}
@@ -258,10 +261,14 @@ void modern_launcher::show_error(std::string &error_text, bool &error)
 	}
 }
 
-void modern_launcher::software_panel(const game_driver *drv)
+bool modern_launcher::software_panel(const game_driver *drv)
 {
+	static bool reselect = false;
+	bool launch = false;
+	static const game_driver *m_current_driver = nullptr;
 	auto width = ImGui::GetWindowContentRegionWidth();
 	static int current = 0;
+	if (m_current_driver != drv) { m_current_driver = drv ; current = 0; }
 	int i = 0;
 	static bool error = false;
 	static std::string error_text;
@@ -289,22 +296,24 @@ void modern_launcher::software_panel(const game_driver *drv)
 											  | ImGuiSelectableFlags_SpanAllColumns)) {
 							current = i;
 							if (ImGui::IsMouseDoubleClicked(0)) {
-								driver_enumerator drivlist(machine().options(), *drv);
 								media_auditor auditor(drivlist);
-								drivlist.next();
 								media_auditor::summary const summary = auditor.audit_software(swlistdev.list_name(),
 																							  &swinfo,
 																							  AUDIT_VALIDATE_FAST);
 								if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE
 									|| summary == media_auditor::NONE_NEEDED) {
 									machine().options().set_system_name(drv->name);
-									std::string const string_list(
-											util::string_format("%s:%s", swlistdev.list_name(), swinfo.shortname()));
-									ui().machine().options().set_value(OPTION_SOFTWARENAME, string_list.c_str(),
+
+									ui().machine().options().set_value(OPTION_SOFTWARENAME,
+																	   util::string_format("%s:%s",
+																						   swlistdev.list_name(),
+																						   swinfo.shortname()),
 																	   OPTION_PRIORITY_CMDLINE);
+
 									mame_machine_manager::instance()->schedule_new_driver(*drv);
 									machine().schedule_hard_reset();
 									stack_reset();
+									launch = true;
 								} else {
 									error_text = make_error_text(media_auditor::NOTFOUND != summary, auditor, true);
 									error = true;
@@ -315,6 +324,10 @@ void modern_launcher::software_panel(const game_driver *drv)
 						ImGui::NextColumn(); ImGui::Text(swinfo.publisher().c_str());
 						ImGui::NextColumn(); ImGui::Text(swinfo.year().c_str());
 						ImGui::NextColumn();
+
+						if (current == i && reselect) {
+							ImGui::SetScrollHere();
+						}
 						i++;
 					}
 				}
@@ -323,11 +336,16 @@ void modern_launcher::software_panel(const game_driver *drv)
 
 	if (error) { show_error(error_text, error);	}
 
+	reselect = launch;
+
 	ImGui::EndChild();
+
+	return launch;
 }
 
-void modern_launcher::filters_panel()
+bool modern_launcher::filters_panel()
 {
+	bool freset = false;
 	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
 	static int selection_mask = (1 << 0);
 	int node_clicked = -1;
@@ -387,12 +405,15 @@ void modern_launcher::filters_panel()
 		selection_mask = (1 << node_clicked);
 
 		if (node_clicked != main_filters::actual) {
-			main_filters::actual = static_cast<uint16_t>(node_clicked);
+			main_filters::actual = static_cast<u16>(node_clicked);
 			reset(reset_options::SELECT_FIRST);
+			freset = true;
 		}
 	}
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
+
+	return freset;
 }
 
 void modern_launcher::menubar()

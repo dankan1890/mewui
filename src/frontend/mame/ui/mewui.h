@@ -44,10 +44,10 @@ private:
 	int sub_node_manuf = -1;
 	void init_sorted_list();
 	void build_list(const std::string& text = {} );
-	void filters_panel();
-	void machines_panel();
+	bool filters_panel();
+	void machines_panel(bool f_reset);
 	void menubar();
-	void software_panel(const game_driver * drv);
+	bool software_panel(const game_driver * drv);
 	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
 	void show_error(std::string &error_text, bool &error);
 };

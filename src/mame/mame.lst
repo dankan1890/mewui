@@ -10059,6 +10059,7 @@ sf2m6                           // hack
 sf2m7                           // hack
 sf2m8                           // bootleg
 sf2qp1                          // hack
+sf2qp2                          // hack
 sf2rb                           // hack
 sf2rb2                          // hack
 sf2rb3                          // hack
@@ -35146,6 +35147,7 @@ super80v                        //
 superchs                        // D46 (c) 1992 Taito Corporation Japan (World)
 superchsj                       // D46 (c) 1992 Taito Corporation (Japan)
 superchsp                       // prototype
+superchsp2                      // prototype
 superchsu                       // D46 (c) 1992 Taito America Corporation (US)
 
 @source:supercrd.cpp

@@ -12,7 +12,10 @@
 
     TODO:
     - verify cpu speed and rom labels where unknown
-    - SC12 CPU divider isn't working right, seems too slow and the beeper sound should be clean
+    - improve SC12 CPU divider? it seems a little bit slower than the real machine.
+      Currently, a dummy timer workaround is needed, or it's much worse.
+      Is the problem here is due to timing of CPU addressbus changes? We can only 'sense'
+      the addressbus at read or write accesses.
     - EAG missing bankswitch? where is the 2nd half of the 32KB ROM used, if at all?
     - granits gives error beeps at start, need to press clear to play
     - finish fphantom emulation
@@ -358,7 +361,7 @@ Ricoh RP65C02G CPU, 3MHz XTAL
 PCB label 510.1129A01
 basically same as (Par) Excellence hardware, reskinned board
 
-Designer 2100 (model 6103): exactly same, but running at 5MHz
+Designer 2100 (model 6103): exactly same, but running at 6MHz
 
 Designer 2100 Display (model 6106)
 ----------------
@@ -451,6 +454,7 @@ public:
 
 	TIMER_DEVICE_CALLBACK_MEMBER(irq_on) { m_maincpu->set_input_line(M6502_IRQ_LINE, ASSERT_LINE); }
 	TIMER_DEVICE_CALLBACK_MEMBER(irq_off) { m_maincpu->set_input_line(M6502_IRQ_LINE, CLEAR_LINE); }
+	TIMER_DEVICE_CALLBACK_MEMBER(dummy) { ; }
 
 	// CSC, SU9, RSC
 	void csc_prepare_display();
@@ -825,7 +829,6 @@ WRITE8_MEMBER(fidel6502_state::sc12_control_w)
 	m_dac->write(BIT(sel, 9));
 
 	// d6,d7: led select (active low)
-	m_display_wait = 60;
 	display_matrix(9, 2, sel & 0x1ff, ~data >> 6 & 3);
 
 	// d4,d5: printer
@@ -1264,7 +1267,7 @@ static INPUT_PORTS_START( csc )
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_DEL) PORT_NAME("CL")
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_R) PORT_NAME("RE")
 
-	PORT_START("IN.9") // hardwired
+	PORT_START("IN.9") // hardwired, default to English
 	PORT_CONFNAME( 0x01, 0x00, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1276,7 +1279,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( cscg )
 	PORT_INCLUDE( csc )
 
-	PORT_MODIFY("IN.9")
+	PORT_MODIFY("IN.9") // hardwired, modify default to Other
 	PORT_CONFNAME( 0x01, 0x01, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1298,7 +1301,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( su9g )
 	PORT_INCLUDE( su9 )
 
-	PORT_MODIFY("IN.9")
+	PORT_MODIFY("IN.9") // hardwired, modify default to Other
 	PORT_CONFNAME( 0x01, 0x01, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1327,7 +1330,7 @@ static INPUT_PORTS_START( eas )
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_5) PORT_CODE(KEYCODE_5_PAD) PORT_NAME("TB / Knight")
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_6) PORT_CODE(KEYCODE_6_PAD) PORT_NAME("LV / Pawn")
 
-	PORT_START("IN.9") // hardwired
+	PORT_START("IN.9") // hardwired, default to English
 	PORT_CONFNAME( 0x01, 0x00, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1339,7 +1342,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( easg )
 	PORT_INCLUDE( eas )
 
-	PORT_MODIFY("IN.9")
+	PORT_MODIFY("IN.9") // hardwired, modify default to Other
 	PORT_CONFNAME( 0x01, 0x01, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1368,7 +1371,7 @@ static INPUT_PORTS_START( eag )
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_5) PORT_CODE(KEYCODE_5_PAD) PORT_NAME("PV / Queen")
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_KEYPAD) PORT_CODE(KEYCODE_6) PORT_CODE(KEYCODE_6_PAD) PORT_NAME("PB / King")
 
-	PORT_START("IN.9") // hardwired
+	PORT_START("IN.9") // hardwired, default to English
 	PORT_CONFNAME( 0x01, 0x00, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1380,7 +1383,7 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( eagg )
 	PORT_INCLUDE( eag )
 
-	PORT_MODIFY("IN.9")
+	PORT_MODIFY("IN.9") // hardwired, modify default to Other
 	PORT_CONFNAME( 0x01, 0x01, DEF_STR( Language ) )
 	PORT_CONFSETTING(    0x00, DEF_STR( English ) )
 	PORT_CONFSETTING(    0x01, "Other" )
@@ -1403,8 +1406,18 @@ static INPUT_PORTS_START( sc12 )
 	PORT_INCLUDE( fidel_cb_buttons )
 	PORT_INCLUDE( sc12_sidepanel )
 
-	PORT_START("IN.9") // hardwired
-	PORT_CONFNAME( 0x03, 0x00, "CPU Divider" )
+	PORT_START("IN.9") // hardwired, default to /2
+	PORT_CONFNAME( 0x03, 0x02, "CPU Divider" )
+	PORT_CONFSETTING(    0x00, "Disabled" )
+	PORT_CONFSETTING(    0x02, "2" )
+	PORT_CONFSETTING(    0x03, "4" )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( sc12b )
+	PORT_INCLUDE( sc12 )
+
+	PORT_MODIFY("IN.9") // hardwired, modify default to /4
+	PORT_CONFNAME( 0x03, 0x03, "CPU Divider" )
 	PORT_CONFSETTING(    0x00, "Disabled" )
 	PORT_CONFSETTING(    0x02, "2" )
 	PORT_CONFSETTING(    0x03, "4" )
@@ -1689,6 +1702,8 @@ static MACHINE_CONFIG_START( sc12 )
 	MCFG_TIMER_START_DELAY(attotime::from_hz(630) - attotime::from_nsec(15250)) // active for 15.25us
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("irq_off", fidel6502_state, irq_off, attotime::from_hz(630))
 
+	MCFG_TIMER_DRIVER_ADD_PERIODIC("dummy_timer", fidel6502_state, dummy, attotime::from_hz(XTAL_3MHz)) // MCFG_QUANTUM_PERFECT_CPU("maincpu") didn't work
+
 	MCFG_DEVICE_ADD("sc12_map", ADDRESS_MAP_BANK, 0)
 	MCFG_DEVICE_PROGRAM_MAP(sc12_map)
 	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
@@ -1723,6 +1738,9 @@ static MACHINE_CONFIG_DERIVED( sc12b, sc12 )
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("irq_on", fidel6502_state, irq_on, attotime::from_hz(596)) // from 556 timer (22nF, 82K+26K, 1K)
 	MCFG_TIMER_START_DELAY(attotime::from_hz(596) - attotime::from_nsec(15250)) // active for 15.25us
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("irq_off", fidel6502_state, irq_off, attotime::from_hz(596))
+
+	MCFG_DEVICE_REMOVE("dummy_timer")
+	MCFG_TIMER_DRIVER_ADD_PERIODIC("dummy_timer", fidel6502_state, dummy, attotime::from_hz(XTAL_4MHz)) // MCFG_QUANTUM_PERFECT_CPU("maincpu") didn't work
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_START( fexcel )
@@ -1772,10 +1790,10 @@ static MACHINE_CONFIG_DERIVED( granits, fexcelp )
 	MCFG_DEVICE_CLOCK(XTAL_8MHz) // overclocked
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_DERIVED( fdes2000, fexcel )
+static MACHINE_CONFIG_DERIVED( fdes2100, fexcel )
 
 	/* basic machine hardware */
-	MCFG_CPU_REPLACE("maincpu", R65C02, XTAL_3MHz) // RP65C02G
+	MCFG_CPU_REPLACE("maincpu", M65C02, XTAL_6MHz) // WDC 65C02
 	MCFG_CPU_PROGRAM_MAP(fexcelp_map)
 
 	// change irq timer frequency
@@ -1788,11 +1806,11 @@ static MACHINE_CONFIG_DERIVED( fdes2000, fexcel )
 	MCFG_DEFAULT_LAYOUT(layout_fidel_des)
 MACHINE_CONFIG_END
 
-static MACHINE_CONFIG_DERIVED( fdes2100, fdes2000 )
+static MACHINE_CONFIG_DERIVED( fdes2000, fdes2100 )
 
 	/* basic machine hardware */
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_DEVICE_CLOCK(XTAL_5MHz)
+	MCFG_CPU_REPLACE("maincpu", R65C02, XTAL_3MHz) // RP65C02G
+	MCFG_CPU_PROGRAM_MAP(fexcelp_map)
 MACHINE_CONFIG_END
 
 static MACHINE_CONFIG_DERIVED( fexcelv, fexcelb )
@@ -2351,7 +2369,7 @@ CONS( 1982, fscc9c,     fscc9,    0, sc9c,      sc9c,      fidel6502_state, 0,  
 CONS( 1983, fscc9ps,    fscc9,    0, playmatic, playmatic, fidel6502_state, 0,        "Fidelity Electronics", "Sensory 9 Playmatic 'S'", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK ) // Fidelity West Germany
 
 CONS( 1984, fscc12,     0,        0, sc12,      sc12,      fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
-CONS( 1984, fscc12b,    fscc12,   0, sc12b,     sc12,      fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12-B", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
+CONS( 1984, fscc12b,    fscc12,   0, sc12b,     sc12b,     fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12-B", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 
 CONS( 1987, fexcel,     0,        0, fexcelb,   fexcelb,   fidel6502_state, 0,        "Fidelity Electronics", "The Excellence (model 6080B)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )
 CONS( 1987, fexcelv,    fexcel,   0, fexcelv,   fexcelv,   fidel6502_state, 0,        "Fidelity Electronics", "Voice Excellence", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK )

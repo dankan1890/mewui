@@ -868,6 +868,14 @@ actfancrj                       // (c) 1989 Data East Corporation (Japan)
 triothep                        // (c) 1989 Data East Corporation (World)
 triothepj                       // (c) 1989 Data East Corporation (Japan)
 
+@source:acvirus.cpp
+virusa							// (c) 1997 Access Gmbh
+virusb							// (c) 1999 Access Gmbh
+virusc							// (c) 2002 Access Gmbh
+virusrck						// (c) 2001 Access Gmbh
+virusrckxl						// (c) 2002 Access Gmbh
+viruscl							// (c) 2004 Access Gmbh
+
 @source:adam.cpp
 adam                            // Coleco Adam
 
@@ -12039,6 +12047,10 @@ btm2105                         // 1985 BT Merlin M2105
 @source:elekscmp.cpp
 elekscmp                        //
 
+@source:elektronmono.cpp
+monomach						// MK2 (c) 2004 Elektron
+machdrum						// MK2 (c) 2007 Elektron
+
 @source:elf.cpp
 elf2                            //
 
@@ -12488,6 +12500,7 @@ fscc9b                          //
 fscc9c                          //
 fscc9ps                         //
 fscc12                          //
+fscc12b                         //
 granits                         // RCS
 reversic                        //
 super9cc                        // SU9: Super 9 Sensory Chess Challenger (English)
@@ -14566,6 +14579,7 @@ gnw_mw56                        // Nintendo
 kblades                         // Konami
 kbucky                          // Konami
 kcontra                         // Konami
+kgarfld                         // Konami
 kgradius                        // Konami
 kloneran                        // Konami
 ktmnt                           // Konami

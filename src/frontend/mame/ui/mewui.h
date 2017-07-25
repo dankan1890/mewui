@@ -35,13 +35,15 @@ private:
 	virtual void populate(float &customtop, float &custombottom) override;
 	virtual void handle() override;
 
-	static std::vector<const game_driver *> m_sortedlist;
+	std::vector<const game_driver *> m_sortedlist;
 	std::vector<const game_driver *> m_displaylist;
 
 	std::string m_search;
-	static int m_isabios;
+	int m_isabios = 0;
 	int sub_node_year = -1;
 	int sub_node_manuf = -1;
+	u16 m_current_filter = 0;
+
 	void init_sorted_list();
 	void build_list(const std::string& text = {} );
 	bool filters_panel();
@@ -51,6 +53,7 @@ private:
 	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
 	void show_error(std::string &error_text, bool &error);
 	void imguihandle_keys(int &current, int max);
+	void imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button, bool &m_mouse_rbutton);
 };
 
 } // namespace ui

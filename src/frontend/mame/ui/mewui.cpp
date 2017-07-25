@@ -24,9 +24,6 @@
 
 namespace ui {
 
-std::vector<const game_driver *> modern_launcher::m_sortedlist;
-int modern_launcher::m_isabios = 0;
-
 //-------------------------------------------------
 //  force the game select menu to be visible
 //  and inescapable
@@ -34,33 +31,8 @@ int modern_launcher::m_isabios = 0;
 
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
-	ImGuiIO& io = ImGui::GetIO();
-/*	io.KeyMap[ImGuiKey_A] = ITEM_ID_A;
-	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
-	io.KeyMap[ImGuiKey_V] = ITEM_ID_V;
-	io.KeyMap[ImGuiKey_X] = ITEM_ID_X;
-	io.KeyMap[ImGuiKey_Y] = ITEM_ID_Y;
-	io.KeyMap[ImGuiKey_Z] = ITEM_ID_Z; */
-	io.KeyMap[ImGuiKey_Backspace] = ITEM_ID_BACKSPACE;
-	io.KeyMap[ImGuiKey_Delete] = ITEM_ID_DEL;
-	io.KeyMap[ImGuiKey_Tab] = ITEM_ID_TAB;
-	io.KeyMap[ImGuiKey_PageUp] = ITEM_ID_PGUP;
-	io.KeyMap[ImGuiKey_PageDown] = ITEM_ID_PGDN;
-	io.KeyMap[ImGuiKey_Home] = ITEM_ID_HOME;
-	io.KeyMap[ImGuiKey_End] = ITEM_ID_END;
-	io.KeyMap[ImGuiKey_Escape] = ITEM_ID_ESC;
-	io.KeyMap[ImGuiKey_Enter] = ITEM_ID_ENTER;
-	io.KeyMap[ImGuiKey_LeftArrow] = ITEM_ID_LEFT;
-	io.KeyMap[ImGuiKey_RightArrow] = ITEM_ID_RIGHT;
-	io.KeyMap[ImGuiKey_UpArrow] = ITEM_ID_UP;
-	io.KeyMap[ImGuiKey_DownArrow] = ITEM_ID_DOWN;
-
-	// set key delay and repeat rates
-	io.KeyRepeatDelay = 0.800f;
-	io.KeyRepeatRate = 0.150f;
 
 	imguiCreate();
-
 	init_sorted_list();
 }
 
@@ -87,7 +59,7 @@ void modern_launcher::force_game_select(mame_ui_manager &mui, render_container &
 void modern_launcher::populate(float &customtop, float &custombottom)
 {
 	m_displaylist.clear();
-	switch (main_filters::actual) {
+	switch (m_current_filter) {
 		case FILTER_YEAR:
 			if (sub_node_year != -1)
 				build_list(c_year::ui[sub_node_year]);
@@ -108,48 +80,29 @@ void modern_launcher::populate(float &customtop, float &custombottom)
 
 void modern_launcher::handle()
 {
-	ImGuiIO& io = ImGui::GetIO();
-//	io.MouseDrawCursor = true; // FIXME: ???
-
 	u32 width = machine().render().ui_target().width();
 	u32 height = machine().render().ui_target().height();
+
 	s32 m_mouse_x, m_mouse_y;
-	bool m_mouse_button;
+	bool m_mouse_button, m_mouse_rbutton = false;
+	static s32 zdelta = 0;
+
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_MenuBar;
 
-	io.KeyCtrl = machine().input().code_pressed(KEYCODE_LCONTROL);
-	io.KeyShift = machine().input().code_pressed(KEYCODE_LSHIFT);
-	io.KeyAlt = machine().input().code_pressed(KEYCODE_LALT);
+	imguihandle_mouse(m_mouse_x, m_mouse_y, zdelta, m_mouse_button, m_mouse_rbutton);
 
-	for(input_item_id id = ITEM_ID_A; id <= ITEM_ID_CANCEL; ++id)
-	{
-		io.KeysDown[id] = machine().input().code_pressed(input_code(DEVICE_CLASS_KEYBOARD, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, id));
-	}
-
-	static s32 zdelta = 0;
-	ui_event event = {};
-	while (machine().ui_input().pop_event(&event)) {
-		switch (event.event_type) {
-			case UI_EVENT_MOUSE_WHEEL:
-				zdelta += event.zdelta;
-				break;
-			default:
-				break;
-		}
-	}
-
-	machine().ui_input().find_mouse(&m_mouse_x, &m_mouse_y, &m_mouse_button);
-
-	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<u8>(m_mouse_button ? IMGUI_MBUT_LEFT : 0),
+	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<u8>(m_mouse_button ? IMGUI_MBUT_LEFT : 0)
+										  | static_cast<u8>(m_mouse_rbutton ? IMGUI_MBUT_RIGHT : 0),
 					zdelta, static_cast<u16>(width), static_cast<u16>(height));
+
+	std::string title = util::string_format("MEWUI %s", bare_build_version);
 
 	ImGui::SetNextWindowSize(ImVec2(width, height));
 	ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-	std::string title = util::string_format("MEWUI %s", bare_build_version);
 	if (!ImGui::Begin(title.c_str(), nullptr, window_flags)) {
 		ImGui::End();
 		return;
@@ -163,15 +116,10 @@ void modern_launcher::handle()
 	ImGui::End();
 
 	// Test
-	bool opened = true;
-	ImGui::ShowTestWindow(&opened);
+//	bool opened = true;
+//	ImGui::ShowTestWindow(&opened);
 
 	imguiEndFrame();
-
-	int iptkey = IPT_INVALID;
-	if (exclusive_input_pressed(iptkey, IPT_UI_CANCEL, 0)) {
-		stack_pop();
-	}
 }
 
 void modern_launcher::machines_panel(bool f_reset)
@@ -183,7 +131,6 @@ void modern_launcher::machines_panel(bool f_reset)
 	auto height = ImGui::GetWindowHeight() - wc->TitleBarHeight() - wc->MenuBarHeight();
 
 	static int current = 0;
-	imguihandle_keys(current, m_displaylist.size());
 	if (f_reset) current = 0;
 	static bool error = false;
 	static bool reselect = false;
@@ -193,12 +140,10 @@ void modern_launcher::machines_panel(bool f_reset)
 	ImGui::BeginChild("Games", ImVec2(width - 300, height - 220), true);
 
 	ImGui::Columns(4, "##mycolumns", false);
-//	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
 	ImGui::Text("Name"); ImGui::NextColumn();
 	ImGui::Text("Romset"); ImGui::NextColumn();
 	ImGui::Text("Manufacturer"); ImGui::NextColumn();
 	ImGui::Text("Year"); ImGui::NextColumn();
-//	ImGui::PopStyleColor(1);
 	ImGui::Separator();
 
 	for (int i = 0; i < m_displaylist.size(); ++i) {
@@ -257,32 +202,61 @@ void modern_launcher::machines_panel(bool f_reset)
 	}
 
 	ImGui::Columns(1);
+	imguihandle_keys(current, m_displaylist.size());
 
 	if (error) { show_error(error_text, error);	}
 
-	ImGui::EndChild();
+	ImGui::EndChild(); // Games
 
 	if (software_panel(m_displaylist[current])) { launch = true; }
 
 	reselect = launch;
 
-	ImGui::EndChild();
+	ImGui::EndChild(); // Frame
+}
+
+void modern_launcher::imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button,
+										bool &m_mouse_rbutton)
+{
+	ui_event event = {};
+	while (machine().ui_input().pop_event(&event)) {
+		switch (event.event_type) {
+			case UI_EVENT_MOUSE_WHEEL:
+				zdelta += event.zdelta;
+				break;
+			case UI_EVENT_MOUSE_RDOWN:
+				m_mouse_rbutton = true;
+				break;
+			default:
+				break;
+		}
+	}
+	machine().ui_input().find_mouse(&m_mouse_x, &m_mouse_y, &m_mouse_button);
 }
 
 void modern_launcher::imguihandle_keys(int &current, int max)
 {
-	ImGuiIO& io = ImGui::GetIO();
-	for (int i = 0; i < IM_ARRAYSIZE(io.KeysDown); ++i)
-		if (io.KeysDownDuration[i] >= 0.0f) {
-			if (i == ITEM_ID_DOWN && current < max - 1) {
-				current++;
-				return;
-			}
-			if (i == ITEM_ID_UP && current > 0) {
-				current--;
-				return;
-			}
+	// Global keys
+	int iptkey = IPT_INVALID;
+	if (exclusive_input_pressed(iptkey, IPT_UI_CANCEL, 0)) {
+		stack_pop();
+		return;
+	}
+
+	if (!ImGui::IsWindowFocused()) return;
+
+	if (exclusive_input_pressed(iptkey, IPT_UI_DOWN, 6)) {
+		if (current < max - 1) {
+			current++;
+			return;
 		}
+	}
+
+	if (exclusive_input_pressed(iptkey, IPT_UI_UP, 6)) {
+		if (current > 0) {
+			current--;
+		}
+	}
 }
 
 
@@ -329,12 +303,10 @@ bool modern_launcher::software_panel(const game_driver *drv)
 	ImGui::BeginChild("Software", ImVec2(width, 200), true);
 
 	ImGui::Columns(4, "##mycolumns", false);
-//	ImGui::PushStyleColor(ImGuiCol_Text, ImColor(0, 0, 200));
 	ImGui::Text("Name"); ImGui::NextColumn();
 	ImGui::Text("Romset"); ImGui::NextColumn();
 	ImGui::Text("Manufacturer"); ImGui::NextColumn();
 	ImGui::Text("Year"); ImGui::NextColumn();
-//	ImGui::PopStyleColor(1);
 	ImGui::Separator();
 
 	std::unordered_set<std::string> list_map;
@@ -388,7 +360,6 @@ bool modern_launcher::software_panel(const game_driver *drv)
 	ImGui::Columns(1);
 	imguihandle_keys(current, i);
 
-
 	if (error) { show_error(error_text, error);	}
 
 	reselect = launch;
@@ -402,13 +373,13 @@ bool modern_launcher::filters_panel()
 {
 	bool freset = false;
 	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
-	static int selection_mask = (1 << 0);
+	static int selection_mask = 0;
 	int node_clicked = -1;
 	ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize() * 2);
 	for (int i = 0; i < main_filters::length; ++i) {
 		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow
 										| ImGuiTreeNodeFlags_OpenOnDoubleClick
-										| ((selection_mask & (1 << i)) ? ImGuiTreeNodeFlags_Selected : 0);
+										| ((selection_mask == i) ? ImGuiTreeNodeFlags_Selected : 0);
 		switch (i) {
 			case FILTER_MANUFACTURER: {
 				// Node
@@ -456,15 +427,16 @@ bool modern_launcher::filters_panel()
 		}
 	}
 
-	if (node_clicked != -1) {
-		selection_mask = (1 << node_clicked);
+	if (node_clicked != -1) { selection_mask = node_clicked; }
 
-		if (node_clicked != main_filters::actual) {
-			main_filters::actual = static_cast<u16>(node_clicked);
-			reset(reset_options::SELECT_FIRST);
-			freset = true;
-		}
+	imguihandle_keys(selection_mask, main_filters::length);
+
+	if (selection_mask != m_current_filter) {
+		m_current_filter = static_cast<u16>(selection_mask);
+		reset(reset_options::SELECT_FIRST);
+		freset = true;
 	}
+
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
 
@@ -499,6 +471,17 @@ void modern_launcher::menubar()
 				if (ImGui::MenuItem("Refresh speed", nullptr, true)) {}
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Artwork")) {
+				if (ImGui::MenuItem("Artwork Crop", nullptr, true)) {}
+				if (ImGui::MenuItem("Backdrops", nullptr, true)) {}
+				if (ImGui::MenuItem("Overlays", nullptr, true)) {}
+				if (ImGui::MenuItem("Bezels", nullptr, true)) {}
+				if (ImGui::MenuItem("Control Panels", nullptr, true)) {}
+				if (ImGui::MenuItem("Marquees", nullptr, true)) {}
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -512,9 +495,6 @@ void modern_launcher::custom_render(void *selectedref, float top, float bottom, 
 
 void modern_launcher::init_sorted_list()
 {
-	if (!m_sortedlist.empty())
-		return;
-
 	// generate full list
 	for (int x = 0; x < driver_list::total(); ++x) {
 		const game_driver *driver = &driver_list::driver(x);
@@ -540,7 +520,7 @@ void modern_launcher::init_sorted_list()
 void modern_launcher::build_list(const std::string &text)
 {
 	for (auto & s_driver: m_sortedlist) {
-		switch (main_filters::actual) {
+		switch (m_current_filter) {
 			case FILTER_WORKING:
 				if (!(s_driver->flags & MACHINE_NOT_WORKING))
 					m_displaylist.push_back(s_driver);
@@ -565,9 +545,9 @@ void modern_launcher::build_list(const std::string &text)
 						cloneof = false;
 				}
 
-				if (main_filters::actual == FILTER_CLONES && cloneof)
+				if (m_current_filter == FILTER_CLONES && cloneof)
 					m_displaylist.push_back(s_driver);
-				else if (main_filters::actual == FILTER_PARENT && !cloneof)
+				else if (m_current_filter == FILTER_PARENT && !cloneof)
 					m_displaylist.push_back(s_driver);
 				break;
 			}

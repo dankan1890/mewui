@@ -802,14 +802,13 @@ void menu_select_game::inkey_select(const event *menu_event)
 		// if everything looks good, schedule the new driver
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
-			if ((machine().system().flags & machine_flags::MASK_TYPE) != machine_flags::TYPE_ARCADE)
+			for (software_list_device &swlistdev : software_list_device_iterator(enumerator.config()->root_device()))
 			{
-				for (software_list_device &swlistdev : software_list_device_iterator(enumerator.config()->root_device()))
-					if (!swlistdev.get_info().empty())
-					{
-						menu::stack_push<menu_select_software>(ui(), container(), driver);
-						return;
-					}
+				if (!swlistdev.get_info().empty())
+				{
+					menu::stack_push<menu_select_software>(ui(), container(), driver);
+					return;
+				}
 			}
 
 			if (!select_bios(*driver, false))
@@ -861,14 +860,13 @@ void menu_select_game::inkey_select_favorite(const event *menu_event)
 
 		if (summary == media_auditor::CORRECT || summary == media_auditor::BEST_AVAILABLE || summary == media_auditor::NONE_NEEDED)
 		{
-			if ((machine().system().flags & machine_flags::MASK_TYPE) != machine_flags::TYPE_ARCADE)
+			for (software_list_device &swlistdev : software_list_device_iterator(enumerator.config()->root_device()))
 			{
-				for (software_list_device &swlistdev : software_list_device_iterator(enumerator.config()->root_device()))
-					if (!swlistdev.get_info().empty())
-					{
-						menu::stack_push<menu_select_software>(ui(), container(), ui_swinfo->driver);
-						return;
-					}
+				if (!swlistdev.get_info().empty())
+				{
+					menu::stack_push<menu_select_software>(ui(), container(), ui_swinfo->driver);
+					return;
+				}
 			}
 
 			// if everything looks good, schedule the new driver
@@ -1201,6 +1199,11 @@ void menu_select_game::general_info(const game_driver *driver, std::string &buff
 	else
 		str << _("Driver is Parent\t\n");
 
+	if (flags.has_analog())
+		str << _("Analog Controls\tYes\n");
+	if (flags.has_keyboard())
+		str << _("Keyboard\tYes\n");
+
 	if (flags.machine_flags() & machine_flags::NOT_WORKING)
 		str << _("Overall\tNOT WORKING\n");
 	else if ((flags.unemulated_features() | flags.imperfect_features()) & device_t::feature::PROTECTION)
@@ -1272,6 +1275,11 @@ void menu_select_game::general_info(const game_driver *driver, std::string &buff
 		str << _("WAN\tUnimplemented\n");
 	else if (flags.imperfect_features() & device_t::feature::WAN)
 		str << _("WAN\tImperfect\n");
+
+	if (flags.unemulated_features() & device_t::feature::TIMING)
+		str << _("Timing\tUnimplemented\n");
+	else if (flags.imperfect_features() & device_t::feature::TIMING)
+		str << _("Timing\tImperfect\n");
 
 	util::stream_format(str, _("Mechanical Machine\t%1$s\n"), ((flags.machine_flags() & machine_flags::MECHANICAL) ? _("Yes") : _("No")));
 	util::stream_format(str, _("Requires Artwork\t%1$s\n"), ((flags.machine_flags() & machine_flags::REQUIRES_ARTWORK) ? _("Yes") : _("No")));

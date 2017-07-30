@@ -11,6 +11,8 @@
     such as Arena(in editmode).
 
     TODO:
+    - Source organization is a big mess. Each machine family could be in its own
+      sub driverclass, and separate files.
     - verify cpu speed and rom labels where unknown
     - improve SC12 CPU divider? it seems a little bit slower than the real machine.
       Currently, a dummy timer workaround is needed, or it's much worse.
@@ -485,6 +487,7 @@ public:
 	DECLARE_WRITE8_MEMBER(sc9_control_w);
 	DECLARE_WRITE8_MEMBER(sc9_led_w);
 	DECLARE_READ8_MEMBER(sc9_input_r);
+	DECLARE_READ8_MEMBER(sc9d_input_r);
 	DECLARE_MACHINE_RESET(sc9c);
 	DECLARE_INPUT_CHANGED_MEMBER(sc9c_cpu_freq);
 	void sc9c_set_cpu_freq();
@@ -494,7 +497,6 @@ public:
 	DECLARE_READ8_MEMBER(sc12_trampoline_r);
 	DECLARE_WRITE8_MEMBER(sc12_control_w);
 	DECLARE_READ8_MEMBER(sc12_input_r);
-	DECLARE_READ8_MEMBER(sc12_cart_r);
 	void sc12_set_cpu_freq(offs_t offset);
 
 	// Excellence
@@ -774,6 +776,12 @@ READ8_MEMBER(fidel6502_state::sc9_input_r)
 	return read_inputs(9) ^ 0xff;
 }
 
+READ8_MEMBER(fidel6502_state::sc9d_input_r)
+{
+	// a0-a2,d7: multiplexed inputs (active low)
+	return (read_inputs(9) >> offset & 1) ? 0 : 0x80;
+}
+
 void fidel6502_state::sc9c_set_cpu_freq()
 {
 	// SC9(C01) was released with 1.5MHz, 1.6MHz, or 1.9MHz CPU
@@ -839,14 +847,6 @@ READ8_MEMBER(fidel6502_state::sc12_input_r)
 {
 	// a0-a2,d7: multiplexed inputs (active low)
 	return (read_inputs(9) >> offset & 1) ? 0 : 0x80;
-}
-
-READ8_MEMBER(fidel6502_state::sc12_cart_r)
-{
-	if (m_cart->exists())
-		return m_cart->read_rom(space, offset);
-	else
-		return 0;
 }
 
 
@@ -1107,7 +1107,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( eas_map, AS_PROGRAM, 8, fidel6502_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_SHARE("nvram")
-	AM_RANGE(0x2000, 0x5fff) AM_READ(sc12_cart_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(cartridge_r)
 	AM_RANGE(0x7000, 0x7003) AM_DEVREADWRITE("ppi8255", i8255_device, read, write)
 	AM_RANGE(0x7020, 0x7027) AM_WRITE(eas_segment_w) AM_READNOP
 	AM_RANGE(0x7030, 0x7037) AM_WRITE(eas_led_w) AM_READNOP
@@ -1119,7 +1119,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( eag_map, AS_PROGRAM, 8, fidel6502_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	AM_RANGE(0x0000, 0x1fff) AM_RAM AM_SHARE("nvram")
-	AM_RANGE(0x2000, 0x5fff) AM_READ(sc12_cart_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(cartridge_r)
 	AM_RANGE(0x7000, 0x7003) AM_DEVREADWRITE("ppi8255", i8255_device, read, write)
 	AM_RANGE(0x7020, 0x7027) AM_WRITE(eas_segment_w) AM_READNOP
 	AM_RANGE(0x7030, 0x7037) AM_WRITE(eas_led_w) AM_READNOP
@@ -1133,7 +1133,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sc9_map, AS_PROGRAM, 8, fidel6502_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM
-	AM_RANGE(0x2000, 0x5fff) AM_READ(sc12_cart_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(cartridge_r)
 	AM_RANGE(0x6000, 0x6000) AM_MIRROR(0x1fff) AM_WRITE(sc9_control_w)
 	AM_RANGE(0x8000, 0x8007) AM_MIRROR(0x1ff8) AM_WRITE(sc9_led_w) AM_READNOP
 	AM_RANGE(0xa000, 0xa000) AM_MIRROR(0x1fff) AM_READ(sc9_input_r)
@@ -1141,7 +1141,7 @@ static ADDRESS_MAP_START( sc9_map, AS_PROGRAM, 8, fidel6502_state )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sc9d_map, AS_PROGRAM, 8, fidel6502_state )
-	AM_RANGE(0xa000, 0xa007) AM_MIRROR(0x1ff8) AM_READ(sc12_input_r)
+	AM_RANGE(0xa000, 0xa007) AM_MIRROR(0x1ff8) AM_READ(sc9d_input_r)
 	AM_IMPORT_FROM( sc9_map )
 ADDRESS_MAP_END
 
@@ -1155,7 +1155,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sc12_map, AS_PROGRAM, 8, fidel6502_state )
 	ADDRESS_MAP_UNMAP_HIGH
 	AM_RANGE(0x0000, 0x0fff) AM_RAM
-	AM_RANGE(0x2000, 0x5fff) AM_READ(sc12_cart_r)
+	AM_RANGE(0x2000, 0x5fff) AM_READ(cartridge_r)
 	AM_RANGE(0x6000, 0x6000) AM_MIRROR(0x1fff) AM_WRITE(sc12_control_w)
 	AM_RANGE(0x8000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xa007) AM_MIRROR(0x1ff8) AM_READ(sc12_input_r)
@@ -2368,8 +2368,8 @@ CONS( 1982, fscc9b,     fscc9,    0, sc9b,      sc9,       fidel6502_state, 0,  
 CONS( 1982, fscc9c,     fscc9,    0, sc9c,      sc9c,      fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 9 (rev. C)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS )
 CONS( 1983, fscc9ps,    fscc9,    0, playmatic, playmatic, fidel6502_state, 0,        "Fidelity Electronics", "Sensory 9 Playmatic 'S'", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS ) // Fidelity West Germany
 
-CONS( 1984, fscc12,     0,        0, sc12,      sc12,      fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS )
-CONS( 1984, fscc12b,    fscc12,   0, sc12b,     sc12b,     fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12-B", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS )
+CONS( 1984, fscc12,     0,        0, sc12,      sc12,      fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS | MACHINE_IMPERFECT_TIMING )
+CONS( 1984, fscc12b,    fscc12,   0, sc12b,     sc12b,     fidel6502_state, 0,        "Fidelity Electronics", "Sensory Chess Challenger 12-B", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS | MACHINE_IMPERFECT_TIMING )
 
 CONS( 1987, fexcel,     0,        0, fexcelb,   fexcelb,   fidel6502_state, 0,        "Fidelity Electronics", "The Excellence (model 6080B)", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS )
 CONS( 1987, fexcelv,    fexcel,   0, fexcelv,   fexcelv,   fidel6502_state, 0,        "Fidelity Electronics", "Voice Excellence", MACHINE_SUPPORTS_SAVE | MACHINE_CLICKABLE_ARTWORK | MACHINE_IMPERFECT_CONTROLS )

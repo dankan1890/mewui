@@ -32,7 +32,8 @@ namespace ui {
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
 
-	imguiCreate();
+	auto fnt = imguiCreate();
+	imguiSetFont(fnt);
 	init_sorted_list();
 }
 
@@ -82,7 +83,6 @@ void modern_launcher::handle()
 {
 	u32 width = machine().render().ui_target().width();
 	u32 height = machine().render().ui_target().height();
-
 	s32 m_mouse_x, m_mouse_y;
 	bool m_mouse_button, m_mouse_rbutton = false;
 	static s32 zdelta = 0;
@@ -116,10 +116,23 @@ void modern_launcher::handle()
 	ImGui::End();
 
 	// Test
-//	bool opened = true;
-//	ImGui::ShowTestWindow(&opened);
+	bool opened = true;
+	ImGui::ShowTestWindow(&opened);
 
 	imguiEndFrame();
+}
+
+void modern_launcher::draw_title(float width)
+{
+	ImGui::BeginChild("##mytitle", ImVec2(width, ImGui::GetFontSize() * 2));
+	ImGui::Columns(4, "##mycolumns", false);
+	ImGui::Text("Name"); ImGui::NextColumn();
+	ImGui::Text("Romset"); ImGui::NextColumn();
+	ImGui::Text("Manufacturer"); ImGui::NextColumn();
+	ImGui::Text("Year"); ImGui::NextColumn();
+	ImGui::Separator();
+
+	ImGui::EndChild();
 }
 
 void modern_launcher::machines_panel(bool f_reset)
@@ -137,14 +150,11 @@ void modern_launcher::machines_panel(bool f_reset)
 	static std::string error_text;
 	bool launch = false;
 	ImGui::BeginChild("Frames", ImVec2(width - 300, 0));
-	ImGui::BeginChild("Games", ImVec2(width - 300, height - 220), true);
+	ImGui::BeginChild("GamesFrame", ImVec2(width - 300, height - 220), true);
 
+	draw_title(width - 300);
+	ImGui::BeginChild("Games", ImVec2(0, 0));
 	ImGui::Columns(4, "##mycolumns", false);
-	ImGui::Text("Name"); ImGui::NextColumn();
-	ImGui::Text("Romset"); ImGui::NextColumn();
-	ImGui::Text("Manufacturer"); ImGui::NextColumn();
-	ImGui::Text("Year"); ImGui::NextColumn();
-	ImGui::Separator();
 
 	for (int i = 0; i < m_displaylist.size(); ++i) {
 		auto & e = m_displaylist[i];
@@ -207,6 +217,7 @@ void modern_launcher::machines_panel(bool f_reset)
 	if (error) { show_error(error_text, error);	}
 
 	ImGui::EndChild(); // Games
+	ImGui::EndChild(); // GamesFrame
 
 	if (software_panel(m_displaylist[current])) { launch = true; }
 
@@ -290,24 +301,23 @@ void modern_launcher::show_error(std::string &error_text, bool &error)
 
 bool modern_launcher::software_panel(const game_driver *drv)
 {
+	float height = 200.0f;
 	static bool reselect = false;
 	bool launch = false;
 	static const game_driver *m_current_driver = nullptr;
-	auto width = ImGui::GetWindowContentRegionWidth();
+	auto width = 0.0f;
+//	auto width = ImGui::GetWindowContentRegionWidth();
 	static int current = 0;
 	if (m_current_driver != drv) { m_current_driver = drv ; current = 0; }
 	int i = 0;
 	static bool error = false;
 	static std::string error_text;
 
-	ImGui::BeginChild("Software", ImVec2(width, 200), true);
+	ImGui::BeginChild("SoftwareFrame", ImVec2(width, height), true);
+	draw_title(width);
 
+	ImGui::BeginChild("Software", ImVec2(0, 0));
 	ImGui::Columns(4, "##mycolumns", false);
-	ImGui::Text("Name"); ImGui::NextColumn();
-	ImGui::Text("Romset"); ImGui::NextColumn();
-	ImGui::Text("Manufacturer"); ImGui::NextColumn();
-	ImGui::Text("Year"); ImGui::NextColumn();
-	ImGui::Separator();
 
 	std::unordered_set<std::string> list_map;
 	driver_enumerator drivlist(machine().options(), *drv);
@@ -364,6 +374,7 @@ bool modern_launcher::software_panel(const game_driver *drv)
 
 	reselect = launch;
 
+	ImGui::EndChild();
 	ImGui::EndChild();
 
 	return launch;

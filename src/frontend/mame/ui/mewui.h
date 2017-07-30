@@ -54,6 +54,8 @@ private:
 	void show_error(std::string &error_text, bool &error);
 	void imguihandle_keys(int &current, int max);
 	void imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button, bool &m_mouse_rbutton);
+
+	void draw_title(float w);
 };
 
 } // namespace ui

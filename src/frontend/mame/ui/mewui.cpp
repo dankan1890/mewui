@@ -32,8 +32,7 @@ namespace ui {
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
 
-	auto fnt = imguiCreate();
-	imguiSetFont(fnt);
+	imguiCreate();
 	init_sorted_list();
 }
 
@@ -111,20 +110,20 @@ void modern_launcher::handle()
 	menubar();
 	bool treset = filters_panel();
 	if (treset) zdelta = 0;
-	ImGui::SameLine(0, 20);
+	ImGui::SameLine();
 	machines_panel(treset);
 	ImGui::End();
 
 	// Test
-	bool opened = true;
-	ImGui::ShowTestWindow(&opened);
+//	bool opened = true;
+//	ImGui::ShowTestWindow(&opened);
 
 	imguiEndFrame();
 }
 
-void modern_launcher::draw_title(float width)
+void modern_launcher::draw_title()
 {
-	ImGui::BeginChild("##mytitle", ImVec2(width, ImGui::GetFontSize() * 2));
+	ImGui::BeginChild("##mytitle", ImVec2(0, ImGui::GetFontSize() * 2));
 	ImGui::Columns(4, "##mycolumns", false);
 	ImGui::Text("Name"); ImGui::NextColumn();
 	ImGui::Text("Romset"); ImGui::NextColumn();
@@ -137,11 +136,7 @@ void modern_launcher::draw_title(float width)
 
 void modern_launcher::machines_panel(bool f_reset)
 {
-	auto width = ImGui::GetWindowContentRegionWidth();
-	// FIXME: get without internal
-	ImGuiContext* cc = ImGui::GetCurrentContext();
-	auto *wc = cc->CurrentWindow;
-	auto height = ImGui::GetWindowHeight() - wc->TitleBarHeight() - wc->MenuBarHeight();
+	auto height = ImGui::GetContentRegionAvail().y;
 
 	static int current = 0;
 	if (f_reset) current = 0;
@@ -149,10 +144,10 @@ void modern_launcher::machines_panel(bool f_reset)
 	static bool reselect = false;
 	static std::string error_text;
 	bool launch = false;
-	ImGui::BeginChild("Frames", ImVec2(width - 300, 0));
-	ImGui::BeginChild("GamesFrame", ImVec2(width - 300, height - 220), true);
+	ImGui::BeginChild("Frames", ImVec2(0, 0));
+	ImGui::BeginChild("GamesFrame", ImVec2(0, height - 200), true);
 
-	draw_title(width - 300);
+	draw_title();
 	ImGui::BeginChild("Games", ImVec2(0, 0));
 	ImGui::Columns(4, "##mycolumns", false);
 
@@ -219,6 +214,7 @@ void modern_launcher::machines_panel(bool f_reset)
 	ImGui::EndChild(); // Games
 	ImGui::EndChild(); // GamesFrame
 
+	ImGui::Spacing();
 	if (software_panel(m_displaylist[current])) { launch = true; }
 
 	reselect = launch;
@@ -301,20 +297,17 @@ void modern_launcher::show_error(std::string &error_text, bool &error)
 
 bool modern_launcher::software_panel(const game_driver *drv)
 {
-	float height = 200.0f;
 	static bool reselect = false;
 	bool launch = false;
 	static const game_driver *m_current_driver = nullptr;
-	auto width = 0.0f;
-//	auto width = ImGui::GetWindowContentRegionWidth();
 	static int current = 0;
 	if (m_current_driver != drv) { m_current_driver = drv ; current = 0; }
 	int i = 0;
 	static bool error = false;
 	static std::string error_text;
 
-	ImGui::BeginChild("SoftwareFrame", ImVec2(width, height), true);
-	draw_title(width);
+	ImGui::BeginChild("SoftwareFrame", ImVec2(0, 0), true);
+	draw_title();
 
 	ImGui::BeginChild("Software", ImVec2(0, 0));
 	ImGui::Columns(4, "##mycolumns", false);

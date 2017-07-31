@@ -43,6 +43,8 @@ private:
 	int sub_node_year = -1;
 	int sub_node_manuf = -1;
 	u16 m_current_filter = 0;
+	int *m_machine_current;
+	bool *m_machine_reselect;
 
 	void init_sorted_list();
 	void build_list(const std::string& text = {} );
@@ -53,7 +55,7 @@ private:
 	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
 	void show_error(std::string &error_text, bool &error);
 	void imguihandle_keys(int &current, int max);
-	void imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button, bool &m_mouse_rbutton);
+	void imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button, bool &m_mouse_rbutton, uint8_t &m_char);
 
 	void draw_title();
 };

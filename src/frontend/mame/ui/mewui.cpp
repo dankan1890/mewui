@@ -31,9 +31,37 @@ namespace ui {
 
 modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &container) : menu(mui, container)
 {
+	ImGuiIO& io = ImGui::GetIO();
+
+	// map keys to ImGui inputs
+	io.KeyMap[ImGuiKey_A] = ITEM_ID_A;
+	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
+	io.KeyMap[ImGuiKey_V] = ITEM_ID_V;
+	io.KeyMap[ImGuiKey_X] = ITEM_ID_X;
+	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
+	io.KeyMap[ImGuiKey_Y] = ITEM_ID_Y;
+	io.KeyMap[ImGuiKey_Z] = ITEM_ID_Z;
+	io.KeyMap[ImGuiKey_Backspace] = ITEM_ID_BACKSPACE;
+	io.KeyMap[ImGuiKey_Delete] = ITEM_ID_DEL;
+	io.KeyMap[ImGuiKey_Tab] = ITEM_ID_TAB;
+	io.KeyMap[ImGuiKey_PageUp] = ITEM_ID_PGUP;
+	io.KeyMap[ImGuiKey_PageDown] = ITEM_ID_PGDN;
+	io.KeyMap[ImGuiKey_Home] = ITEM_ID_HOME;
+	io.KeyMap[ImGuiKey_End] = ITEM_ID_END;
+	io.KeyMap[ImGuiKey_Escape] = ITEM_ID_ESC;
+	io.KeyMap[ImGuiKey_Enter] = ITEM_ID_ENTER;
+	io.KeyMap[ImGuiKey_LeftArrow] = ITEM_ID_LEFT;
+	io.KeyMap[ImGuiKey_RightArrow] = ITEM_ID_RIGHT;
+	io.KeyMap[ImGuiKey_UpArrow] = ITEM_ID_UP;
+	io.KeyMap[ImGuiKey_DownArrow] = ITEM_ID_DOWN;
+
+	// set key delay and repeat rates
+	io.KeyRepeatDelay = 0.400f;
+	io.KeyRepeatRate = 0.050f;
 
 	imguiCreate();
 	init_sorted_list();
+
 }
 
 modern_launcher::~modern_launcher()
@@ -85,6 +113,7 @@ void modern_launcher::handle()
 	s32 m_mouse_x, m_mouse_y;
 	bool m_mouse_button, m_mouse_rbutton = false;
 	static s32 zdelta = 0;
+	uint8_t m_key_char = 0;
 
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
@@ -92,11 +121,11 @@ void modern_launcher::handle()
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_MenuBar;
 
-	imguihandle_mouse(m_mouse_x, m_mouse_y, zdelta, m_mouse_button, m_mouse_rbutton);
+	imguihandle_mouse(m_mouse_x, m_mouse_y, zdelta, m_mouse_button, m_mouse_rbutton, m_key_char);
 
 	imguiBeginFrame(m_mouse_x, m_mouse_y, static_cast<u8>(m_mouse_button ? IMGUI_MBUT_LEFT : 0)
 										  | static_cast<u8>(m_mouse_rbutton ? IMGUI_MBUT_RIGHT : 0),
-					zdelta, static_cast<u16>(width), static_cast<u16>(height));
+					zdelta, static_cast<u16>(width), static_cast<u16>(height), m_key_char );
 
 	std::string title = util::string_format("MEWUI %s", bare_build_version);
 
@@ -195,7 +224,7 @@ void modern_launcher::machines_panel(bool f_reset)
 			ImGui::SetScrollHere();
 		}
 
-		ImGui::NextColumn(); ImGui::Text(e->name);
+		ImGui::NextColumn(); ImGui::Text(e->type.shortname());
 		ImGui::NextColumn(); ImGui::Text(e->manufacturer);
 		ImGui::NextColumn(); ImGui::Text(e->year);
 		ImGui::NextColumn();
@@ -218,13 +247,26 @@ void modern_launcher::machines_panel(bool f_reset)
 	if (software_panel(m_displaylist[current])) { launch = true; }
 
 	reselect = launch;
+	m_machine_reselect = &reselect;
 
 	ImGui::EndChild(); // Frame
+	m_machine_current = &current;
 }
 
 void modern_launcher::imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button,
-										bool &m_mouse_rbutton)
+										bool &m_mouse_rbutton, uint8_t &m_char)
 {
+	ImGuiIO& io = ImGui::GetIO();
+
+	io.KeyCtrl = machine().input().code_pressed(KEYCODE_LCONTROL);
+	io.KeyShift = machine().input().code_pressed(KEYCODE_LSHIFT);
+	io.KeyAlt = machine().input().code_pressed(KEYCODE_LALT);
+
+	for(input_item_id id = ITEM_ID_A; id <= ITEM_ID_CANCEL; ++id)
+	{
+		io.KeysDown[id] = machine().input().code_pressed(input_code(DEVICE_CLASS_KEYBOARD, 0, ITEM_CLASS_SWITCH, ITEM_MODIFIER_NONE, id));
+	}
+
 	ui_event event = {};
 	while (machine().ui_input().pop_event(&event)) {
 		switch (event.event_type) {
@@ -233,6 +275,9 @@ void modern_launcher::imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zde
 				break;
 			case UI_EVENT_MOUSE_RDOWN:
 				m_mouse_rbutton = true;
+				break;
+			case UI_EVENT_CHAR:
+				m_char = event.ch;
 				break;
 			default:
 				break;
@@ -491,6 +536,18 @@ void modern_launcher::menubar()
 
 		ImGui::EndMenuBar();
 	}
+
+	static char buf1[64] = "";
+	if (ImGui::InputText("search", buf1, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		for (int x = 0; x < m_displaylist.size(); ++x) {
+			if (strstr(m_displaylist[x]->type.fullname(), buf1) != nullptr) {
+				*m_machine_current = x;
+				*m_machine_reselect = true;
+				break;
+			}
+		}
+	}
+
 }
 
 void modern_launcher::custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2)

@@ -86,6 +86,7 @@ void modern_launcher::force_game_select(mame_ui_manager &mui, render_container &
 
 void modern_launcher::populate(float &customtop, float &custombottom)
 {
+	item_append("Dummy", "", 0, (void *)(uintptr_t)1);
 	m_displaylist.clear();
 	switch (m_current_filter) {
 		case FILTER_YEAR:
@@ -120,6 +121,7 @@ void modern_launcher::handle()
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_MenuBar;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 	imguihandle_mouse(m_mouse_x, m_mouse_y, zdelta, m_mouse_button, m_mouse_rbutton, m_key_char);
 
@@ -137,10 +139,14 @@ void modern_launcher::handle()
 	}
 
 	menubar();
+	searchbox();
 	bool treset = filters_panel();
 	if (treset) zdelta = 0;
 	ImGui::SameLine();
 	machines_panel(treset);
+	if (!downcast<osd_options &>(machine().options()).window()) {
+		draw_mouse();
+	}
 	ImGui::End();
 
 	// Test
@@ -161,6 +167,15 @@ void modern_launcher::draw_title()
 	ImGui::Separator();
 
 	ImGui::EndChild();
+}
+
+void modern_launcher::draw_mouse()
+{
+	auto fs = ImGui::GetFontSize() / 2;
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().MousePos.x - fs, ImGui::GetIO().MousePos.y - fs));
+	ImGui::Begin("##test", nullptr, ImVec2(0,0), 0.0f, ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoTitleBar| ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs);
+	ImGui::Text(u8"\ue95c");
+	ImGui::End();
 }
 
 void modern_launcher::machines_panel(bool f_reset)
@@ -536,9 +551,16 @@ void modern_launcher::menubar()
 
 		ImGui::EndMenuBar();
 	}
+}
 
+void modern_launcher::searchbox()
+{
 	static char buf1[64] = "";
-	if (ImGui::InputText("search", buf1, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
+	auto w = ImGui::GetWindowContentRegionMax().x;
+	ImGui::Spacing();
+	ImGui::SameLine(w - 230);
+	ImGui::PushItemWidth(200);
+	if (ImGui::InputText(u8"\ue935", buf1, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
 		for (int x = 0; x < m_displaylist.size(); ++x) {
 			if (strstr(m_displaylist[x]->type.fullname(), buf1) != nullptr) {
 				*m_machine_current = x;
@@ -547,7 +569,7 @@ void modern_launcher::menubar()
 			}
 		}
 	}
-
+	ImGui::PopItemWidth();
 }
 
 void modern_launcher::custom_render(void *selectedref, float top, float bottom, float x, float y, float x2, float y2)

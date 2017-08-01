@@ -51,6 +51,7 @@ private:
 	bool filters_panel();
 	void machines_panel(bool f_reset);
 	void menubar();
+	void searchbox();
 	bool software_panel(const game_driver * drv);
 	std::string make_error_text(bool summary, media_auditor const &auditor, bool software);
 	void show_error(std::string &error_text, bool &error);
@@ -58,6 +59,7 @@ private:
 	void imguihandle_mouse(s32 &m_mouse_x, s32 &m_mouse_y, s32 &zdelta, bool &m_mouse_button, bool &m_mouse_rbutton, uint8_t &m_char);
 
 	void draw_title();
+	void draw_mouse();
 };
 
 } // namespace ui

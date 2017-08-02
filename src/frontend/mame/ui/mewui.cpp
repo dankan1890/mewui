@@ -38,7 +38,6 @@ modern_launcher::modern_launcher(mame_ui_manager &mui, render_container &contain
 	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
 	io.KeyMap[ImGuiKey_V] = ITEM_ID_V;
 	io.KeyMap[ImGuiKey_X] = ITEM_ID_X;
-	io.KeyMap[ImGuiKey_C] = ITEM_ID_C;
 	io.KeyMap[ImGuiKey_Y] = ITEM_ID_Y;
 	io.KeyMap[ImGuiKey_Z] = ITEM_ID_Z;
 	io.KeyMap[ImGuiKey_Backspace] = ITEM_ID_BACKSPACE;

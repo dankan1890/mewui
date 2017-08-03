@@ -184,6 +184,7 @@ int mame_machine_manager::execute()
 
 	bool firstgame = true;
 
+	static bool m_window;
 	static std::string m_video;
 
 	// loop across multiple hard resets
@@ -233,11 +234,14 @@ int mame_machine_manager::execute()
 		if (is_empty && m_options.ui() == emu_options::UI_MEWUI)
 		{
 			m_video = options.video();
+			m_window = options.window();
 			options.set_value(OSDOPTION_VIDEO, "bgfx", OPTION_PRIORITY_CMDLINE);
+			options.set_value(OSDOPTION_WINDOW, true, OPTION_PRIORITY_CMDLINE);
 		}
 		else if (!m_video.empty())
 		{
 			options.set_value(OSDOPTION_VIDEO, m_video, OPTION_PRIORITY_CMDLINE);
+			options.set_value(OSDOPTION_WINDOW, m_window, OPTION_PRIORITY_CMDLINE);
 		}
 
 		// run the machine

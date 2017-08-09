@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "emu.h"
-
 #include "ui/selsoft.h"
 
 #include "ui/ui.h"
@@ -29,11 +28,6 @@
 
 
 namespace ui {
-
-static const char *region_lists[] = { "arab", "arg", "asia", "aus", "aut", "bel", "blr", "bra", "can", "chi", "chn", "cze", "den",
-										"ecu", "esp", "euro", "fin", "fra", "gbr", "ger", "gre", "hkg", "hun", "irl", "isr",
-										"isv", "ita", "jpn", "kaz", "kor", "lat", "lux", "mex", "ned", "nld", "nor", "nzl",
-										"pol", "rus", "slo", "spa", "sui", "swe", "tha", "tpe", "tw", "uk", "ukr", "usa" };
 
 //-------------------------------------------------
 //  compares two items in the software list and
@@ -90,10 +84,10 @@ bool compare_software(ui_software_info a, ui_software_info b)
 
 menu_select_software::menu_select_software(mame_ui_manager &mui, render_container &container, const game_driver *driver)
 	: menu_select_launch(mui, container, true)
+	, m_filter_type(software_filter::ALL)
 {
 	reselect_last::reselect(false);
 
-	sw_filters::actual = 0;
 	highlight = 0;
 
 	m_driver = driver;
@@ -132,8 +126,7 @@ void menu_select_software::handle()
 
 	// process the menu
 	const event *menu_event = process(PROCESS_LR_REPEAT);
-
-	if (menu_event && menu_event->itemref)
+	if (menu_event)
 	{
 		if (dismiss_error())
 		{
@@ -142,15 +135,15 @@ void menu_select_software::handle()
 		else if (menu_event->iptkey == IPT_UI_SELECT)
 		{
 			// handle selections
-			if (get_focus() == focused_menu::MAIN)
-			{
-				inkey_select(menu_event);
-			}
-			else if (get_focus() == focused_menu::LEFT)
+			if (get_focus() == focused_menu::LEFT)
 			{
 				l_sw_hover = highlight;
 				check_filter = true;
 				m_prev_selected = nullptr;
+			}
+			else if ((get_focus() == focused_menu::MAIN) && menu_event->itemref)
+			{
+				inkey_select(menu_event);
 			}
 		}
 		else if (menu_event->iptkey == IPT_UI_LEFT)
@@ -187,26 +180,6 @@ void menu_select_software::handle()
 				m_topline_datsview = 0;
 			}
 		}
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && highlight > UI_SW_FIRST)
-		{
-			// handle UI_UP_FILTER
-			highlight--;
-		}
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && highlight < UI_SW_LAST)
-		{
-			// handle UI_DOWN_FILTER
-			highlight++;
-		}
-		else if (menu_event->iptkey == IPT_UI_DATS)
-		{
-			// handle UI_DATS
-			ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;
-
-			if (ui_swinfo->startempty == 1 && mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", ui_swinfo->driver->name, true))
-				menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo->driver);
-			else if (mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", std::string(ui_swinfo->shortname).append(1, ',').append(ui_swinfo->listname).c_str()) || !ui_swinfo->usage.empty())
-				menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo);
-		}
 		else if (menu_event->iptkey == IPT_UI_LEFT_PANEL)
 		{
 			// handle UI_LEFT_PANEL
@@ -217,37 +190,15 @@ void menu_select_software::handle()
 			// handle UI_RIGHT_PANEL
 			ui_globals::rpanel = RP_INFOS;
 		}
-		else if (menu_event->iptkey == IPT_UI_CANCEL && !m_search.empty())
+		else if (menu_event->iptkey == IPT_UI_UP_FILTER && highlight > software_filter::FIRST)
 		{
-			// escape pressed with non-empty text clears the text
-			m_search.clear();
-			reset(reset_options::SELECT_FIRST);
+			// handle UI_UP_FILTER
+			highlight--;
 		}
-		else if (menu_event->iptkey == IPT_UI_FAVORITES)
+		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && highlight < software_filter::LAST)
 		{
-			// handle UI_FAVORITES
-			ui_software_info *swinfo = (ui_software_info *)menu_event->itemref;
-
-			if ((uintptr_t)swinfo > 2)
-			{
-				favorite_manager &mfav = mame_machine_manager::instance()->favorite();
-				if (!mfav.isgame_favorite(*swinfo))
-				{
-					mfav.add_favorite_game(*swinfo);
-					machine().popmessage(_("%s\n added to favorites list."), swinfo->longname.c_str());
-				}
-
-				else
-				{
-					machine().popmessage(_("%s\n removed from favorites list."), swinfo->longname.c_str());
-					mfav.remove_favorite_game();
-				}
-			}
-		}
-		else if (menu_event->iptkey == IPT_SPECIAL)
-		{
-			// typed characters append to the buffer
-			inkey_special(menu_event);
+			// handle UI_DOWN_FILTER
+			highlight++;
 		}
 		else if (menu_event->iptkey == IPT_OTHER)
 		{
@@ -259,73 +210,50 @@ void menu_select_software::handle()
 		{
 			inkey_navigation();
 		}
-	}
+		else if (menu_event->itemref)
+		{
+			if (menu_event->iptkey == IPT_UI_DATS)
+			{
+				// handle UI_DATS
+				ui_software_info *ui_swinfo = (ui_software_info *)menu_event->itemref;
 
-	if (menu_event && !menu_event->itemref)
-	{
-		if (menu_event->iptkey == IPT_UI_CONFIGURE)
-		{
-			inkey_navigation();
-		}
-		else if (menu_event->iptkey == IPT_UI_LEFT)
-		{
-			// handle UI_LEFT
-			if (ui_globals::rpanel == RP_IMAGES && ui_globals::curimage_view > FIRST_VIEW)
-			{
-				// Images
-				ui_globals::curimage_view--;
-				ui_globals::switch_image = true;
-				ui_globals::default_image = false;
+				if (ui_swinfo->startempty == 1 && mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", ui_swinfo->driver->name, true))
+					menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo->driver);
+				else if (mame_machine_manager::instance()->lua()->call_plugin_check<const char *>("data_list", std::string(ui_swinfo->shortname).append(1, ',').append(ui_swinfo->listname).c_str()) || !ui_swinfo->usage.empty())
+					menu::stack_push<menu_dats_view>(ui(), container(), ui_swinfo);
 			}
-			else if (ui_globals::rpanel == RP_INFOS && ui_globals::cur_sw_dats_view > 0)
+			else if (menu_event->iptkey == IPT_UI_CANCEL && !m_search.empty())
 			{
-				// Infos
-				ui_globals::cur_sw_dats_view--;
-				m_topline_datsview = 0;
+				// escape pressed with non-empty text clears the text
+				m_search.clear();
+				reset(reset_options::SELECT_FIRST);
 			}
-		}
-		else if (menu_event->iptkey == IPT_UI_RIGHT)
-		{
-			// handle UI_RIGHT
-			if (ui_globals::rpanel == RP_IMAGES && ui_globals::curimage_view < LAST_VIEW)
+			else if (menu_event->iptkey == IPT_UI_FAVORITES)
 			{
-				// Images
-				ui_globals::curimage_view++;
-				ui_globals::switch_image = true;
-				ui_globals::default_image = false;
+				// handle UI_FAVORITES
+				ui_software_info *swinfo = (ui_software_info *)menu_event->itemref;
+
+				if ((uintptr_t)swinfo > 2)
+				{
+					favorite_manager &mfav = mame_machine_manager::instance()->favorite();
+					if (!mfav.isgame_favorite(*swinfo))
+					{
+						mfav.add_favorite_game(*swinfo);
+						machine().popmessage(_("%s\n added to favorites list."), swinfo->longname.c_str());
+					}
+
+					else
+					{
+						machine().popmessage(_("%s\n removed from favorites list."), swinfo->longname.c_str());
+						mfav.remove_favorite_game();
+					}
+				}
 			}
-			else if (ui_globals::rpanel == RP_INFOS && ui_globals::cur_sw_dats_view < ui_globals::cur_sw_dats_total)
+			else if (menu_event->iptkey == IPT_SPECIAL)
 			{
-				// Infos
-				ui_globals::cur_sw_dats_view++;
-				m_topline_datsview = 0;
+				// typed characters append to the buffer
+				inkey_special(menu_event);
 			}
-		}
-		else if (menu_event->iptkey == IPT_UI_LEFT_PANEL)
-		{
-			// handle UI_LEFT_PANEL
-			ui_globals::rpanel = RP_IMAGES;
-		}
-		else if (menu_event->iptkey == IPT_UI_RIGHT_PANEL)
-		{
-			// handle UI_RIGHT_PANEL
-			ui_globals::rpanel = RP_INFOS;
-		}
-		else if (menu_event->iptkey == IPT_UI_UP_FILTER && highlight > UI_SW_FIRST)
-		{
-			// handle UI_UP_FILTER
-			highlight--;
-		}
-		else if (menu_event->iptkey == IPT_UI_DOWN_FILTER && highlight < UI_SW_LAST)
-		{
-			// handle UI_DOWN_FILTER
-			highlight++;
-		}
-		else if (menu_event->iptkey == IPT_OTHER && get_focus() == focused_menu::LEFT)
-		{
-			l_sw_hover = highlight;
-			check_filter = true;
-			m_prev_selected = nullptr;
 		}
 	}
 
@@ -336,32 +264,28 @@ void menu_select_software::handle()
 	if (check_filter)
 	{
 		m_search.clear();
-		switch (l_sw_hover)
-		{
-		case UI_SW_REGION:
-			menu::stack_push<menu_selector>(ui(), container(), m_filter.region.ui, m_filter.region.actual, menu_selector::SOFTWARE, l_sw_hover);
-			break;
-		case UI_SW_YEARS:
-			menu::stack_push<menu_selector>(ui(), container(), m_filter.year.ui, m_filter.year.actual, menu_selector::SOFTWARE, l_sw_hover);
-			break;
-		case UI_SW_LIST:
-			menu::stack_push<menu_selector>(ui(), container(), m_filter.swlist.description, m_filter.swlist.actual, menu_selector::SOFTWARE, l_sw_hover);
-			break;
-		case UI_SW_TYPE:
-			menu::stack_push<menu_selector>(ui(), container(), m_filter.type.ui, m_filter.type.actual, menu_selector::SOFTWARE, l_sw_hover);
-			break;
-		case UI_SW_PUBLISHERS:
-			menu::stack_push<menu_selector>(ui(), container(), m_filter.publisher.ui, m_filter.publisher.actual, menu_selector::SOFTWARE, l_sw_hover);
-			break;
-		case UI_SW_CUSTOM:
-			sw_filters::actual = l_sw_hover;
-			menu::stack_push<menu_swcustom_filter>(ui(), container(), m_driver, m_filter);
-			break;
-		default:
-			sw_filters::actual = l_sw_hover;
-			reset(reset_options::SELECT_FIRST);
-			break;
-		}
+
+		filter_map::const_iterator it(m_filters.find(software_filter::type(l_sw_hover)));
+		if (m_filters.end() == it)
+			it = m_filters.emplace(software_filter::type(l_sw_hover), software_filter::create(software_filter::type(l_sw_hover), m_filter_data)).first;
+		it->second->show_ui(
+				ui(),
+				container(),
+				[this, driver = m_driver] (software_filter &filter)
+				{
+					software_filter::type const new_type(filter.get_type());
+					if (software_filter::CUSTOM == new_type)
+					{
+						emu_file file(ui().options().ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+						if (file.open("custom_", driver->name, "_filter.ini") == osd_file::error::NONE)
+						{
+							filter.save_ini(file, 0);
+							file.close();
+						}
+					}
+					m_filter_type = new_type;
+					reset(reset_options::SELECT_FIRST);
+				});
 	}
 }
 
@@ -393,36 +317,11 @@ void menu_select_software::populate(float &customtop, float &custombottom)
 		m_displaylist.clear();
 		m_tmp.clear();
 
-		switch (sw_filters::actual)
-		{
-			case UI_SW_PUBLISHERS:
-				build_list(m_tmp, m_filter.publisher.ui[m_filter.publisher.actual].c_str());
-				break;
-
-			case UI_SW_LIST:
-				build_list(m_tmp, m_filter.swlist.name[m_filter.swlist.actual].c_str());
-				break;
-
-			case UI_SW_YEARS:
-				build_list(m_tmp, m_filter.year.ui[m_filter.year.actual].c_str());
-				break;
-
-			case UI_SW_TYPE:
-				build_list(m_tmp, m_filter.type.ui[m_filter.type.actual].c_str());
-				break;
-
-			case UI_SW_REGION:
-				build_list(m_tmp, m_filter.region.ui[m_filter.region.actual].c_str());
-				break;
-
-			case UI_SW_CUSTOM:
-				build_custom();
-				break;
-
-			default:
-				build_list(m_tmp);
-				break;
-		}
+		filter_map::const_iterator const it(m_filters.find(m_filter_type));
+		if (m_filters.end() == it)
+			m_displaylist = m_sortedlist;
+		else
+			it->second->apply(std::begin(m_sortedlist), std::end(m_sortedlist), std::back_inserter(m_displaylist));
 
 		// iterate over entries
 		for (size_t curitem = 0; curitem < m_displaylist.size(); ++curitem)
@@ -477,8 +376,8 @@ void menu_select_software::build_software_list()
 	// iterate thru all software lists
 	for (software_list_device &swlist : software_list_device_iterator(config.root_device()))
 	{
-		m_filter.swlist.name.push_back(swlist.list_name());
-		m_filter.swlist.description.push_back(swlist.description());
+		m_filter_data.swlist.name.push_back(swlist.list_name());
+		m_filter_data.swlist.description.push_back(swlist.description());
 		for (const software_info &swinfo : swlist.get_info())
 		{
 			const software_part &part = swinfo.parts().front();
@@ -501,10 +400,10 @@ void menu_select_software::build_software_list()
 
 				ui_software_info tmpmatches(swinfo, part, *m_driver, swlist.list_name(), instance_name, type_name);
 
-				m_filter.region.set(tmpmatches.longname);
-				m_filter.publisher.set(tmpmatches.publisher);
-				m_filter.year.set(tmpmatches.year);
-				m_filter.type.set(tmpmatches.devicetype);
+				m_filter_data.region.set(tmpmatches.longname);
+				m_filter_data.publisher.set(tmpmatches.publisher);
+				m_filter_data.year.set(tmpmatches.year);
+				m_filter_data.type.set(tmpmatches.devicetype);
 				m_swinfo.emplace_back(std::move(tmpmatches));
 			}
 		}
@@ -540,7 +439,7 @@ void menu_select_software::build_software_list()
 
 	std::string searchstr, curpath;
 	const osd::directory::entry *dir;
-	for (auto & elem : m_filter.swlist.name)
+	for (auto & elem : m_filter_data.swlist.name)
 	{
 		path_iterator path(machine().options().media_path());
 		while (path.next(curpath))
@@ -572,10 +471,10 @@ void menu_select_software::build_software_list()
 
 	// sort array
 	std::stable_sort(m_swinfo.begin() + 1, m_swinfo.end(), compare_software);
-	std::stable_sort(m_filter.region.ui.begin(), m_filter.region.ui.end());
-	std::stable_sort(m_filter.year.ui.begin(), m_filter.year.ui.end());
-	std::stable_sort(m_filter.type.ui.begin(), m_filter.type.ui.end());
-	std::stable_sort(m_filter.publisher.ui.begin(), m_filter.publisher.ui.end());
+	std::stable_sort(m_filter_data.region.ui.begin(), m_filter_data.region.ui.end());
+	std::stable_sort(m_filter_data.year.ui.begin(), m_filter_data.year.ui.end());
+	std::stable_sort(m_filter_data.type.ui.begin(), m_filter_data.type.ui.end());
+	std::stable_sort(m_filter_data.publisher.ui.begin(), m_filter_data.publisher.ui.end());
 
 	for (size_t x = 1; x < m_swinfo.size(); ++x)
 		m_sortedlist.push_back(&m_swinfo[x]);
@@ -654,246 +553,10 @@ void menu_select_software::load_sw_custom_filters()
 	emu_file file(ui().options().ui_path(), OPEN_FLAG_READ);
 	if (file.open("custom_", m_driver->name, "_filter.ini") == osd_file::error::NONE)
 	{
-		char buffer[MAX_CHAR_INFO];
-
-		// get number of filters
-		file.gets(buffer, MAX_CHAR_INFO);
-		char *pb = strchr(buffer, '=');
-		sw_custfltr::numother = atoi(++pb) - 1;
-
-		// get main filter
-		file.gets(buffer, MAX_CHAR_INFO);
-		pb = strchr(buffer, '=') + 2;
-
-		for (int y = 0; y < sw_filters::length; ++y)
-			if (!strncmp(pb, sw_filters::text[y], strlen(sw_filters::text[y])))
-			{
-				sw_custfltr::main = y;
-				break;
-			}
-
-		for (int x = 1; x <= sw_custfltr::numother; ++x)
-		{
-			file.gets(buffer, MAX_CHAR_INFO);
-			char *cb = strchr(buffer, '=') + 2;
-			for (int y = 0; y < sw_filters::length; y++)
-			{
-				if (!strncmp(cb, sw_filters::text[y], strlen(sw_filters::text[y])))
-				{
-					sw_custfltr::other[x] = y;
-					if (y == UI_SW_PUBLISHERS)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *ab = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.publisher.ui.size(); ++z)
-							if (!strncmp(ab, m_filter.publisher.ui[z].c_str(), m_filter.publisher.ui[z].length()))
-								sw_custfltr::mnfct[x] = z;
-					}
-					else if (y == UI_SW_YEARS)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *db = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.year.ui.size(); ++z)
-							if (!strncmp(db, m_filter.year.ui[z].c_str(), m_filter.year.ui[z].length()))
-								sw_custfltr::year[x] = z;
-					}
-					else if (y == UI_SW_LIST)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *gb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.swlist.name.size(); ++z)
-							if (!strncmp(gb, m_filter.swlist.name[z].c_str(), m_filter.swlist.name[z].length()))
-								sw_custfltr::list[x] = z;
-					}
-					else if (y == UI_SW_TYPE)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *fb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.type.ui.size(); ++z)
-							if (!strncmp(fb, m_filter.type.ui[z].c_str(), m_filter.type.ui[z].length()))
-								sw_custfltr::type[x] = z;
-					}
-					else if (y == UI_SW_REGION)
-					{
-						file.gets(buffer, MAX_CHAR_INFO);
-						char *eb = strchr(buffer, '=') + 2;
-						for (size_t z = 0; z < m_filter.region.ui.size(); ++z)
-							if (!strncmp(eb, m_filter.region.ui[z].c_str(), m_filter.region.ui[z].length()))
-								sw_custfltr::region[x] = z;
-					}
-				}
-			}
-		}
+		software_filter::ptr flt(software_filter::create(file, m_filter_data));
+		if (flt)
+			m_filters.emplace(flt->get_type(), std::move(flt));
 		file.close();
-	}
-}
-
-//-------------------------------------------------
-//  set software regions
-//-------------------------------------------------
-
-void c_sw_region::set(std::string &str)
-{
-	std::string name = getname(str);
-	if (std::find(ui.begin(), ui.end(), name) != ui.end())
-		return;
-
-	ui.push_back(name);
-}
-
-std::string c_sw_region::getname(std::string &str)
-{
-	std::string fullname(str);
-	strmakelower(fullname);
-	size_t found = fullname.find("(");
-
-	if (found != std::string::npos)
-	{
-		size_t ends = fullname.find_first_not_of("abcdefghijklmnopqrstuvwxyz", found + 1);
-		std::string temp(fullname.substr(found + 1, ends - found - 1));
-
-		for (auto & elem : region_lists)
-			if (temp == elem)
-				return (str.substr(found + 1, ends - found - 1));
-	}
-	return std::string("<none>");
-}
-
-//-------------------------------------------------
-//  set software device type
-//-------------------------------------------------
-
-void c_sw_type::set(std::string &str)
-{
-	if (std::find(ui.begin(), ui.end(), str) != ui.end())
-		return;
-
-	ui.push_back(str);
-}
-
-//-------------------------------------------------
-//  set software years
-//-------------------------------------------------
-
-void c_sw_year::set(std::string &str)
-{
-	if (std::find(ui.begin(), ui.end(), str) != ui.end())
-		return;
-
-	ui.push_back(str);
-}
-
-//-------------------------------------------------
-//  set software publishers
-//-------------------------------------------------
-
-void c_sw_publisher::set(std::string &str)
-{
-	std::string name = getname(str);
-	if (std::find(ui.begin(), ui.end(), name) != ui.end())
-		return;
-
-	ui.push_back(name);
-}
-
-std::string c_sw_publisher::getname(std::string &str)
-{
-	size_t found = str.find("(");
-
-	if (found != std::string::npos)
-		return (str.substr(0, found - 1));
-	else
-		return str;
-}
-
-//-------------------------------------------------
-//  build display list
-//-------------------------------------------------
-void menu_select_software::build_list(std::vector<ui_software_info *> &s_drivers, const char *filter_text, int filter)
-{
-	if (s_drivers.empty() && filter == -1)
-	{
-		filter = sw_filters::actual;
-		s_drivers = m_sortedlist;
-	}
-
-	// iterate over entries
-	for (auto & s_driver : s_drivers)
-	{
-		switch (filter)
-		{
-		case UI_SW_PARENTS:
-			if (s_driver->parentname.empty())
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_CLONES:
-			if (!s_driver->parentname.empty())
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_AVAILABLE:
-			if (s_driver->available)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_UNAVAILABLE:
-			if (!s_driver->available)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_SUPPORTED:
-			if (s_driver->supported == SOFTWARE_SUPPORTED_YES)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_PARTIAL_SUPPORTED:
-			if (s_driver->supported == SOFTWARE_SUPPORTED_PARTIAL)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_UNSUPPORTED:
-			if (s_driver->supported == SOFTWARE_SUPPORTED_NO)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_REGION:
-			{
-				std::string name = m_filter.region.getname(s_driver->longname);
-
-				if(!name.empty() && name == filter_text)
-					m_displaylist.push_back(s_driver);
-			}
-			break;
-
-		case UI_SW_PUBLISHERS:
-			{
-				std::string name = m_filter.publisher.getname(s_driver->publisher);
-
-				if(!name.empty() && name == filter_text)
-					m_displaylist.push_back(s_driver);
-			}
-			break;
-
-		case UI_SW_YEARS:
-			if(s_driver->year == filter_text)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_LIST:
-			if(s_driver->listname == filter_text)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		case UI_SW_TYPE:
-			if(s_driver->devicetype == filter_text)
-				m_displaylist.push_back(s_driver);
-			break;
-
-		default:
-			m_displaylist.push_back(s_driver);
-			break;
-		}
 	}
 }
 
@@ -936,46 +599,6 @@ void menu_select_software::find_matches(const char *str, int count)
 }
 
 //-------------------------------------------------
-//  build custom display list
-//-------------------------------------------------
-
-void menu_select_software::build_custom()
-{
-	std::vector<ui_software_info *> s_drivers;
-
-	build_list(m_sortedlist, nullptr, sw_custfltr::main);
-
-	for (int count = 1; count <= sw_custfltr::numother; ++count)
-	{
-		int filter = sw_custfltr::other[count];
-		s_drivers = m_displaylist;
-		m_displaylist.clear();
-
-		switch (filter)
-		{
-			case UI_SW_YEARS:
-				build_list(s_drivers, m_filter.year.ui[sw_custfltr::year[count]].c_str(), filter);
-				break;
-			case UI_SW_LIST:
-				build_list(s_drivers, m_filter.swlist.name[sw_custfltr::list[count]].c_str(), filter);
-				break;
-			case UI_SW_TYPE:
-				build_list(s_drivers, m_filter.type.ui[sw_custfltr::type[count]].c_str(), filter);
-				break;
-			case UI_SW_PUBLISHERS:
-				build_list(s_drivers, m_filter.publisher.ui[sw_custfltr::mnfct[count]].c_str(), filter);
-				break;
-			case UI_SW_REGION:
-				build_list(s_drivers, m_filter.region.ui[sw_custfltr::region[count]].c_str(), filter);
-				break;
-			default:
-				build_list(s_drivers, nullptr, filter);
-				break;
-		}
-	}
-}
-
-//-------------------------------------------------
 //  draw left box
 //-------------------------------------------------
 
@@ -983,32 +606,35 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 {
 	if (ui_globals::panels_status == SHOW_PANELS || ui_globals::panels_status == HIDE_RIGHT_PANEL)
 	{
+		filter_map::const_iterator active_filter(m_filters.find(m_filter_type));
+		if (m_filters.end() == active_filter)
+			active_filter = m_filters.emplace(m_filter_type, software_filter::create(m_filter_type, m_filter_data)).first;
 		float origy1 = y1;
 		float origy2 = y2;
 		float text_size = 0.75f;
 		float l_height = ui().get_line_height();
 		float line_height = l_height * text_size;
 		float left_width = 0.0f;
-		int text_lenght = sw_filters::length;
-		int afilter = sw_filters::actual;
+		int line_count = software_filter::COUNT;
 		int phover = HOVER_SW_FILTER_FIRST;
-		const char **text = sw_filters::text;
 		float sc = y2 - y1 - (2.0f * UI_BOX_TB_BORDER);
 
-		if ((text_lenght * line_height) > sc)
+		if ((line_count * line_height) > sc)
 		{
-			float lm = sc / (text_lenght);
+			float lm = sc / (line_count);
 			text_size = lm / l_height;
 			line_height = l_height * text_size;
 		}
 
-		float text_sign = ui().get_string_width("_# ", text_size);
-		for (int x = 0; x < text_lenght; ++x)
+		std::string tmp("_# ");
+		convert_command_glyph(tmp);
+		float text_sign = ui().get_string_width(tmp.c_str(), text_size);
+		for (software_filter::type x = software_filter::FIRST; x < software_filter::COUNT; ++x)
 		{
 			float total_width;
 
 			// compute width of left hand side
-			total_width = ui().get_string_width(text[x], text_size);
+			total_width = ui().get_string_width(software_filter::display_name(x), text_size);
 			total_width += text_sign;
 
 			// track the maximum
@@ -1025,9 +651,9 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 		y1 += UI_BOX_TB_BORDER;
 		y2 -= UI_BOX_TB_BORDER;
 
-		for (int filter = 0; filter < text_lenght; ++filter)
+		for (software_filter::type filter = software_filter::FIRST; filter < software_filter::COUNT; ++filter)
 		{
-			std::string str(text[filter]);
+			std::string const str(active_filter->second->adorned_display_name(filter));
 			rgb_t bgcolor = UI_TEXT_BG_COLOR;
 			rgb_t fgcolor = UI_TEXT_COLOR;
 
@@ -1050,35 +676,7 @@ float menu_select_software::draw_left_panel(float x1, float y1, float x2, float 
 						hilight_main_texture(), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXWRAP(1));
 			}
 
-			float x1t = x1 + text_sign;
-			if (afilter == UI_SW_CUSTOM)
-			{
-				if (filter == sw_custfltr::main)
-				{
-					str.assign("@custom1 ").append(text[filter]);
-					x1t -= text_sign;
-				}
-				else
-				{
-					for (int count = 1; count <= sw_custfltr::numother; ++count)
-					{
-						int cfilter = sw_custfltr::other[count];
-						if (cfilter == filter)
-						{
-							str = string_format("@custom%d %s", count + 1, text[filter]);
-							x1t -= text_sign;
-							break;
-						}
-					}
-				}
-				convert_command_glyph(str);
-			}
-			else if (filter == sw_filters::actual)
-			{
-				str.assign("_> ").append(text[filter]);
-				x1t -= text_sign;
-				convert_command_glyph(str);
-			}
+			float const x1t = x1 + ((str == software_filter::display_name(filter)) ? text_sign : 0.0f);
 
 			ui().draw_text_full(container(), str.c_str(), x1t, y1, x2 - x1, ui::text_layout::LEFT, ui::text_layout::NEVER,
 					mame_ui_manager::NORMAL, fgcolor, bgcolor, nullptr, nullptr, text_size);
@@ -1153,19 +751,12 @@ void menu_select_software::make_topbox_text(std::string &line0, std::string &lin
 	line0 = string_format(_("%1$s %2$s ( %3$d / %4$d software packages )"), emulator_info::get_appname(), bare_build_version, vis_item, m_swinfo.size() - 1);
 	line1 = string_format(_("Driver: \"%1$s\" software list "), m_driver->type.fullname());
 
-	std::string filtered;
-	if (sw_filters::actual == UI_SW_REGION && m_filter.region.ui.size() != 0)
-		filtered = string_format(_("Region: %1$s -"), m_filter.region.ui[m_filter.region.actual]);
-	else if (sw_filters::actual == UI_SW_PUBLISHERS)
-		filtered = string_format(_("Publisher: %1$s -"), m_filter.publisher.ui[m_filter.publisher.actual]);
-	else if (sw_filters::actual == UI_SW_YEARS)
-		filtered = string_format(_("Year: %1$s -"), m_filter.year.ui[m_filter.year.actual]);
-	else if (sw_filters::actual == UI_SW_LIST)
-		filtered = string_format(_("Software List: %1$s -"), m_filter.swlist.description[m_filter.swlist.actual]);
-	else if (sw_filters::actual == UI_SW_TYPE)
-		filtered = string_format(_("Device type: %1$s -"), m_filter.type.ui[m_filter.type.actual]);
-
-	line2 = string_format(_("%s Search: %s_"), filtered, m_search);
+	filter_map::const_iterator const it(m_filters.find(m_filter_type));
+	char const *const filter((m_filters.end() != it) ? it->second->filter_text() : nullptr);
+	if (filter)
+		line2 = string_format(_("%1$s: %2$s - Search: %3$s_"), it->second->display_name(), filter, m_search);
+	else
+		line2 = string_format(_("Search: %1$s_"), m_search);
 }
 
 

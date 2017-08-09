@@ -67,10 +67,10 @@ private:
 	virtual std::string make_software_description(ui_software_info const &software) const override;
 
 	// internal methods
-	void build_custom();
+	void change_info_pane(int delta);
+
 	void build_category();
 	void build_available_list();
-	void build_list(const char *filter_text = nullptr, int filter = 0, bool bioscheck = false, std::vector<const game_driver *> vec = {});
 
 	bool isfavorite() const;
 	void populate_search();

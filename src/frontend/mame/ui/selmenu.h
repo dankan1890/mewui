@@ -117,10 +117,13 @@ protected:
 	template <typename T> bool select_bios(T const &driver, bool inlist);
 	bool select_part(software_info const &info, ui_software_info const &ui_info);
 
+	int     l_hover, l_sw_hover;
 	int     visible_items;
 	void    *m_prev_selected;
 	int     m_total_lines;
 	int     m_topline_datsview;   // right box top line
+
+	static char const *const s_info_titles[];
 
 private:
 	using bitmap_vector = std::vector<bitmap_argb32>;

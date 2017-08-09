@@ -990,6 +990,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"isc",
 		"kaypro",
 		"koei",
+		"kontron",
 		"kurzweil",
 		"kyocera",
 		"luxor",
@@ -1375,6 +1376,7 @@ createMESSProjects(_target, _subtarget, "altos")
 files {
 	MAME_DIR .. "src/mame/drivers/altos5.cpp",
 	MAME_DIR .. "src/mame/drivers/altos486.cpp",
+	MAME_DIR .. "src/mame/drivers/altos8600.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "ami")
@@ -2219,6 +2221,11 @@ files {
 	MAME_DIR .. "src/mame/drivers/pasogo.cpp",
 }
 
+createMESSProjects(_target, _subtarget, "kontron")
+files {
+	MAME_DIR .. "src/mame/drivers/kdt6.cpp",
+}
+
 createMESSProjects(_target, _subtarget, "kurzweil")
 files {
 	MAME_DIR .. "src/mame/drivers/krz2000.cpp",
@@ -2410,6 +2417,8 @@ files {
 	MAME_DIR .. "src/mame/drivers/pc88va.cpp",
 	MAME_DIR .. "src/mame/drivers/pc100.cpp",
 	MAME_DIR .. "src/mame/drivers/pc9801.cpp",
+	MAME_DIR .. "src/mame/includes/pc9801.h",
+	MAME_DIR .. "src/mame/video/pc9801.cpp",
 	MAME_DIR .. "src/mame/machine/pc9801_kbd.cpp",
 	MAME_DIR .. "src/mame/machine/pc9801_kbd.h",
 	MAME_DIR .. "src/mame/machine/pc9801_cd.cpp",
@@ -2463,6 +2472,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/vboy.cpp",
 	MAME_DIR .. "src/mame/audio/vboy.cpp",
 	MAME_DIR .. "src/mame/audio/vboy.h",
+	MAME_DIR .. "src/mame/drivers/gamecube.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "nokia")

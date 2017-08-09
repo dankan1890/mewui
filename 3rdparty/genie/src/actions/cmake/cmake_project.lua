@@ -11,6 +11,26 @@ local tree = premake.tree
 local includestr = 'include_directories(../%s)'
 local definestr = 'add_definitions(-D%s)'
 
+function cmake.esc(value)
+    local result
+    if (type(value) == "table") then
+        result = { }
+        for _,v in ipairs(value) do
+            table.insert(result, cmake.esc(v))
+        end
+        return result
+    else
+        -- handle simple replacements
+        result = value:gsub("\\", "\\\\")
+        result = result:gsub(" ", "\\ ")
+        result = result:gsub("%%(", "\\%(")
+        result = result:gsub("%%)", "\\%)")
+
+        -- leave $(...) shell replacement sequences alone
+        result = result:gsub("$\\%((.-)\\%)", "$%(%1%)")
+        return result
+    end
+end
 
 local function is_excluded(prj, cfg, file)
     if table.icontains(prj.excludes, file) then
@@ -95,7 +115,7 @@ function cmake.customtasks(prj)
 
         for _, cmdline in ipairs(buildtask[4] or {}) do
             if (cmdline:sub(1, 1) ~= "@") then
-                local cmd = cmdline
+                local cmd = cmake.esc(cmdline)
                 local num = 1
                 for _, depdata in ipairs(buildtask[3] or {}) do
                     cmd = string.gsub(cmd, "%$%(" .. num .. "%)", string.format("${CMAKE_CURRENT_SOURCE_DIR}/../%s ", path.getrelative(prj.location, depdata)))

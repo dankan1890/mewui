@@ -88,13 +88,13 @@ void modern_launcher::populate(float &customtop, float &custombottom)
 	item_append("Dummy", "", 0, (void *)(uintptr_t)1);
 	m_displaylist.clear();
 	switch (m_current_filter) {
-		case FILTER_YEAR:
+		case machine_filter::YEAR:
 			if (sub_node_year != -1)
 				build_list(c_year::ui[sub_node_year]);
 			else
 				build_list();
 			break;
-		case FILTER_MANUFACTURER:
+		case machine_filter::MANUFACTURER:
 			if (sub_node_manuf != -1)
 				build_list(c_mnfct::ui[sub_node_manuf]);
 			else
@@ -438,18 +438,19 @@ bool modern_launcher::filters_panel()
 	ImGui::BeginChild("Filters", ImVec2(200, 0), true);
 	static int selection_mask = 0;
 	int node_clicked = -1;
+	int i = 0;
 	ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, ImGui::GetFontSize() * 2);
-	for (int i = 0; i < main_filters::length; ++i) {
+	for (machine_filter::type x = machine_filter::FIRST; x < machine_filter::COUNT; ++x, ++i) {
 		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow
 										| ImGuiTreeNodeFlags_OpenOnDoubleClick
 										| ((selection_mask == i) ? ImGuiTreeNodeFlags_Selected : 0);
 		switch (i) {
-			case FILTER_MANUFACTURER: {
+			case machine_filter::MANUFACTURER: {
 				// Node
 				static int sele = -1;
 				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i,
 												   node_flags,
-												   main_filters::text[i]);
+												   machine_filter::display_name(x));
 				if (ImGui::IsItemClicked())
 					node_clicked = i;
 				if (node_open) {
@@ -462,11 +463,11 @@ bool modern_launcher::filters_panel()
 				}
 				break;
 			}
-			case FILTER_YEAR: {
+			case machine_filter::YEAR: {
 				static int sele = -1;
 				bool node_open = ImGui::TreeNodeEx((void *) (intptr_t) i,
 												   node_flags,
-												   main_filters::text[i]);
+												   machine_filter::display_name(x));
 				if (ImGui::IsItemClicked())
 					node_clicked = i;
 				if (node_open) {
@@ -482,7 +483,7 @@ bool modern_launcher::filters_panel()
 			default:
 				ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags | ImGuiTreeNodeFlags_Leaf
 													  | ImGuiTreeNodeFlags_NoTreePushOnOpen,
-								  main_filters::text[i]);
+								  machine_filter::display_name(x));
 				if (ImGui::IsItemClicked())
 					node_clicked = i;
 				break;
@@ -492,7 +493,7 @@ bool modern_launcher::filters_panel()
 
 	if (node_clicked != -1) { selection_mask = node_clicked; }
 
-	imguihandle_keys(selection_mask, main_filters::length);
+	imguihandle_keys(selection_mask, machine_filter::COUNT);
 
 	if (selection_mask != m_current_filter) {
 		m_current_filter = static_cast<u16>(selection_mask);
@@ -577,24 +578,31 @@ void modern_launcher::custom_render(void *selectedref, float top, float bottom, 
 
 void modern_launcher::init_sorted_list()
 {
-	// generate full list
-	for (int x = 0; x < driver_list::total(); ++x) {
-		const game_driver *driver = &driver_list::driver(x);
-		if (driver == &GAME_NAME(___empty))
-			continue;
-		if (driver->flags & MACHINE_IS_BIOS_ROOT)
-			m_isabios++;
+	if (!m_sortedlist.empty())
+		return;
 
-		m_sortedlist.push_back(driver);
-		c_mnfct::set(driver->manufacturer);
-		c_year::set(driver->year);
+	// generate full list
+	std::unordered_set<std::string> manufacturers, years;
+	for (int x = 0; x < driver_list::total(); ++x)
+	{
+		game_driver const &driver(driver_list::driver(x));
+		if (&driver != &GAME_NAME(___empty))
+		{
+			if (driver.flags & machine_flags::IS_BIOS_ROOT)
+				m_isabios++;
+
+			m_sortedlist.push_back(&driver);
+			manufacturers.emplace(c_mnfct::getname(driver.manufacturer));
+			years.emplace(driver.year);
+		}
 	}
 
-	for (auto & e : c_mnfct::uimap)
-		c_mnfct::ui.emplace_back(e.first);
-
 	// sort manufacturers - years and driver
-	std::stable_sort(c_mnfct::ui.begin(), c_mnfct::ui.end());
+	for (auto it = manufacturers.begin(); manufacturers.end() != it; it = manufacturers.erase(it))
+		c_mnfct::ui.emplace_back(*it);
+	std::sort(c_mnfct::ui.begin(), c_mnfct::ui.end(), [] (std::string const &x, std::string const &y) { return 0 > core_stricmp(x.c_str(), y.c_str()); });
+	for (auto it = years.begin(); years.end() != it; it = years.erase(it))
+		c_year::ui.emplace_back(*it);
 	std::stable_sort(c_year::ui.begin(), c_year::ui.end());
 	std::stable_sort(m_sortedlist.begin(), m_sortedlist.end(), sorted_game_list);
 }
@@ -603,23 +611,23 @@ void modern_launcher::build_list(const std::string &text)
 {
 	for (auto & s_driver: m_sortedlist) {
 		switch (m_current_filter) {
-			case FILTER_WORKING:
+			case machine_filter::WORKING:
 				if (!(s_driver->flags & MACHINE_NOT_WORKING))
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_NOT_MECHANICAL:
+			case machine_filter::NOT_MECHANICAL:
 				if (!(s_driver->flags & MACHINE_MECHANICAL))
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_BIOS:
+			case machine_filter::BIOS:
 				if (s_driver->flags & MACHINE_IS_BIOS_ROOT)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_PARENT:
-			case FILTER_CLONES: {
+			case machine_filter::PARENTS:
+			case machine_filter::CLONES: {
 				bool cloneof = static_cast<bool>(strcmp(s_driver->parent, "0"));
 				if (cloneof) {
 					auto cx = driver_list::find(s_driver->parent);
@@ -627,48 +635,48 @@ void modern_launcher::build_list(const std::string &text)
 						cloneof = false;
 				}
 
-				if (m_current_filter == FILTER_CLONES && cloneof)
+				if (m_current_filter == machine_filter::CLONES && cloneof)
 					m_displaylist.push_back(s_driver);
-				else if (m_current_filter == FILTER_PARENT && !cloneof)
+				else if (m_current_filter == machine_filter::PARENTS && !cloneof)
 					m_displaylist.push_back(s_driver);
 				break;
 			}
-			case FILTER_NOT_WORKING:
+			case machine_filter::NOT_WORKING:
 				if (s_driver->flags & MACHINE_NOT_WORKING)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_MECHANICAL:
+			case machine_filter::MECHANICAL:
 				if (s_driver->flags & MACHINE_MECHANICAL)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_SAVE:
+			case machine_filter::SAVE:
 				if (s_driver->flags & MACHINE_SUPPORTS_SAVE)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_NOSAVE:
+			case machine_filter::NOSAVE:
 				if (!(s_driver->flags & MACHINE_SUPPORTS_SAVE))
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_YEAR:
+			case machine_filter::YEAR:
 				if (text.empty() || text == s_driver->year)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_VERTICAL:
+			case machine_filter::VERTICAL:
 				if (s_driver->flags & ORIENTATION_SWAP_XY)
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_HORIZONTAL:
+			case machine_filter::HORIZONTAL:
 				if (!(s_driver->flags & ORIENTATION_SWAP_XY))
 					m_displaylist.push_back(s_driver);
 				break;
 
-			case FILTER_MANUFACTURER: {
+			case machine_filter::MANUFACTURER: {
 				if (text.empty()) {
 					m_displaylist.push_back(s_driver);
 				} else {
@@ -678,7 +686,7 @@ void modern_launcher::build_list(const std::string &text)
 				}
 				break;
 			}
-			case FILTER_CHD: {
+			case machine_filter::CHD: {
 				auto entries = rom_build_entries(s_driver->rom);
 				for (const rom_entry &rom : entries)
 					if (ROMENTRY_ISREGION(&rom) && ROMREGION_ISDISKDATA(&rom)) {
@@ -687,7 +695,7 @@ void modern_launcher::build_list(const std::string &text)
 					}
 				break;
 			}
-			case FILTER_NOCHD: {
+			case machine_filter::NOCHD: {
 				auto entries = rom_build_entries(s_driver->rom);
 				bool found = false;
 				for (const rom_entry &rom : entries)

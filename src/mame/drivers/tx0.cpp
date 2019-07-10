@@ -17,10 +17,8 @@
 /*
     driver init function
 */
-DRIVER_INIT_MEMBER(tx0_state,tx0)
+void tx0_state::init_tx0()
 {
-	uint8_t *dst;
-
 	static const unsigned char fontdata6x8[tx0_fontdata_size] =
 	{   /* ASCII characters */
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x20,0x20,0x20,0x20,0x00,0x20,0x00,
@@ -74,20 +72,22 @@ DRIVER_INIT_MEMBER(tx0_state,tx0)
 	};
 
 	/* set up our font */
-	dst = memregion("gfx1")->base();
+	uint8_t *dst = memregion("gfx1")->base();
 
 	memcpy(dst, fontdata6x8, tx0_fontdata_size);
 }
 
 
-static ADDRESS_MAP_START(tx0_64kw_map, AS_PROGRAM, 32, tx0_state )
-	AM_RANGE(0x0000, 0xffff) AM_RAM
-ADDRESS_MAP_END
+void tx0_state::tx0_64kw_map(address_map &map)
+{
+	map(0x0000, 0xffff).ram();
+}
 
 
-static ADDRESS_MAP_START(tx0_8kw_map, AS_PROGRAM, 32, tx0_state )
-	AM_RANGE(0x0000, 0x1fff) AM_RAM
-ADDRESS_MAP_END
+void tx0_state::tx0_8kw_map(address_map &map)
+{
+	map(0x0000, 0x1fff).ram();
+}
 
 
 static INPUT_PORTS_START( tx0 )
@@ -216,7 +216,7 @@ static const uint8_t tx0_colors[] =
 	0x80,0x80,0x80  /* light gray */
 };
 
-static const uint8_t tx0_palette[] =
+static const uint8_t tx0_pens[] =
 {
 	pen_panel_bg, pen_panel_caption,    /* captions */
 	pen_typewriter_bg, pen_black,       /* black typing in typewriter */
@@ -225,12 +225,12 @@ static const uint8_t tx0_palette[] =
 
 static const uint8_t total_colors_needed = pen_crt_num_levels + sizeof(tx0_colors) / 3;
 
-static GFXDECODE_START( tx0 )
+static GFXDECODE_START( gfx_tx0 )
 	GFXDECODE_ENTRY( "gfx1", 0, fontlayout, pen_crt_num_levels + sizeof(tx0_colors) / 3, 3 )
 GFXDECODE_END
 
 /* Initialise the palette */
-PALETTE_INIT_MEMBER(tx0_state, tx0)
+void tx0_state::tx0_palette(palette_device &palette) const
 {
 	/* rgb components for the two color emissions */
 	const double r1 = .1, g1 = .1, b1 = .924, r2 = .7, g2 = .7, b2 = .076;
@@ -298,7 +298,7 @@ PALETTE_INIT_MEMBER(tx0_state, tx0)
 
 	/* set up palette for text */
 	for( i = 0; i < 6; i++ )
-		palette.set_pen_indirect(total_colors_needed + i, tx0_palette[i]);
+		palette.set_pen_indirect(total_colors_needed + i, tx0_pens[i]);
 }
 
 
@@ -373,9 +373,13 @@ public:
 
 	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override { }
+
+private:
+	required_device<tx0_state> m_tx0;
 };
 
 DEFINE_DEVICE_TYPE(TX0_READTAPE, tx0_readtape_image_device, "tx0_readtape_image", "TX0 Tape Reader")
@@ -383,6 +387,7 @@ DEFINE_DEVICE_TYPE(TX0_READTAPE, tx0_readtape_image_device, "tx0_readtape_image"
 tx0_readtape_image_device::tx0_readtape_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, TX0_READTAPE, tag, owner, clock)
 	, device_image_interface(mconfig, *this)
+	, m_tx0(*this, DEVICE_SELF_OWNER)
 {
 }
 
@@ -405,9 +410,13 @@ public:
 
 	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override { }
+
+private:
+	required_device<tx0_state> m_tx0;
 };
 
 DEFINE_DEVICE_TYPE(TX0_PUNCHTAPE, tx0_punchtape_image_device, "tx0_punchtape_image", "TX0 Tape Puncher")
@@ -415,6 +424,7 @@ DEFINE_DEVICE_TYPE(TX0_PUNCHTAPE, tx0_punchtape_image_device, "tx0_punchtape_ima
 tx0_punchtape_image_device::tx0_punchtape_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, TX0_PUNCHTAPE, tag, owner, clock)
 	, device_image_interface(mconfig, *this)
+	, m_tx0(*this, DEVICE_SELF_OWNER)
 {
 }
 
@@ -438,9 +448,13 @@ public:
 
 	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override { }
+
+private:
+	required_device<tx0_state> m_tx0;
 };
 
 DEFINE_DEVICE_TYPE(TX0_PRINTER, tx0_printer_image_device, "tx0_printer_image", "TX0 Typewriter")
@@ -448,6 +462,7 @@ DEFINE_DEVICE_TYPE(TX0_PRINTER, tx0_printer_image_device, "tx0_printer_image", "
 tx0_printer_image_device::tx0_printer_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, TX0_PRINTER, tag, owner, clock)
 	, device_image_interface(mconfig, *this)
+	, m_tx0(*this, DEVICE_SELF_OWNER)
 {
 }
 
@@ -470,9 +485,13 @@ public:
 
 	virtual image_init_result call_load() override;
 	virtual void call_unload() override;
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
+
+private:
+	required_device<tx0_state> m_tx0;
 };
 
 DEFINE_DEVICE_TYPE(TX0_MAGTAPE, tx0_magtape_image_device, "tx0_magtape_image", "TX0 Magnetic Tape")
@@ -480,6 +499,7 @@ DEFINE_DEVICE_TYPE(TX0_MAGTAPE, tx0_magtape_image_device, "tx0_magtape_image", "
 tx0_magtape_image_device::tx0_magtape_image_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, TX0_MAGTAPE, tag, owner, clock)
 	, device_image_interface(mconfig, *this)
+	, m_tx0(*this, DEVICE_SELF_OWNER)
 {
 }
 
@@ -490,29 +510,27 @@ tx0_magtape_image_device::tx0_magtape_image_device(const machine_config &mconfig
 */
 image_init_result tx0_readtape_image_device::call_load()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-
 	/* reader unit */
-	state->m_tape_reader.fd = this;
+	m_tx0->m_tape_reader.fd = this;
 
 	/* start motor */
-	state->m_tape_reader.motor_on = 1;
+	m_tx0->m_tape_reader.motor_on = 1;
 
 		/* restart reader IO when necessary */
 		/* note that this function may be called before tx0_init_machine, therefore
 		before tape_reader.timer is allocated.  It does not matter, as the clutch is never
 		down at power-up, but we must not call timer_enable with a nullptr parameter! */
 
-	if (state->m_tape_reader.timer)
+	if (m_tx0->m_tape_reader.timer)
 	{
-		if (state->m_tape_reader.motor_on && state->m_tape_reader.rcl)
+		if (m_tx0->m_tape_reader.motor_on && m_tx0->m_tape_reader.rcl)
 		{
 			/* delay is approximately 1/400s */
-			state->m_tape_reader.timer->adjust(attotime::from_usec(2500));
+			m_tx0->m_tape_reader.timer->adjust(attotime::from_usec(2500));
 		}
 		else
 		{
-			state->m_tape_reader.timer->enable(0);
+			m_tx0->m_tape_reader.timer->enable(0);
 		}
 	}
 
@@ -521,16 +539,14 @@ image_init_result tx0_readtape_image_device::call_load()
 
 void tx0_readtape_image_device::call_unload()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-
 	/* reader unit */
-	state->m_tape_reader.fd = nullptr;
+	m_tx0->m_tape_reader.fd = nullptr;
 
 	/* stop motor */
-	state->m_tape_reader.motor_on = 0;
+	m_tx0->m_tape_reader.motor_on = 0;
 
-	if (state->m_tape_reader.timer)
-		state->m_tape_reader.timer->enable(0);
+	if (m_tx0->m_tape_reader.timer)
+		m_tx0->m_tape_reader.timer->enable(0);
 }
 
 /*
@@ -626,20 +642,16 @@ TIMER_CALLBACK_MEMBER(tx0_state::reader_callback)
 */
 image_init_result tx0_punchtape_image_device::call_load()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-
 	/* punch unit */
-	state->m_tape_puncher.fd = this;
+	m_tx0->m_tape_puncher.fd = this;
 
 	return image_init_result::PASS;
 }
 
 void tx0_punchtape_image_device::call_unload()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-
 	/* punch unit */
-	state->m_tape_puncher.fd = nullptr;
+	m_tx0->m_tape_puncher.fd = nullptr;
 }
 
 TIMER_CALLBACK_MEMBER(tx0_state::puncher_callback)
@@ -706,17 +718,15 @@ WRITE_LINE_MEMBER( tx0_state::tx0_io_p7h )
 */
 image_init_result tx0_printer_image_device::call_load()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
 	/* open file */
-	state->m_typewriter.fd = this;
+	m_tx0->m_typewriter.fd = this;
 
 	return image_init_result::PASS;
 }
 
 void tx0_printer_image_device::call_unload()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-	state->m_typewriter.fd = nullptr;
+	m_tx0->m_typewriter.fd = nullptr;
 }
 
 /*
@@ -837,8 +847,7 @@ void tx0_state::schedule_unselect()
 
 void tx0_magtape_image_device::device_start()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-	state->m_magtape.img = this;
+	m_tx0->m_magtape.img = this;
 }
 
 /*
@@ -846,19 +855,18 @@ void tx0_magtape_image_device::device_start()
 */
 image_init_result tx0_magtape_image_device::call_load()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-	state->m_magtape.img = this;
+	m_tx0->m_magtape.img = this;
 
-	state->m_magtape.irg_pos = MTIRGP_END;
+	m_tx0->m_magtape.irg_pos = MTIRGP_END;
 
 	/* restart IO when necessary */
 	/* note that this function may be called before tx0_init_machine, therefore
 	before magtape.timer is allocated.  We must not call timer_enable with a
 	nullptr parameter! */
-	if (state->m_magtape.timer)
+	if (m_tx0->m_magtape.timer)
 	{
-		if (state->m_magtape.state == MTS_SELECTING)
-			state->schedule_select();
+		if (m_tx0->m_magtape.state == MTS_SELECTING)
+			m_tx0->schedule_select();
 	}
 
 	return image_init_result::PASS;
@@ -866,19 +874,18 @@ image_init_result tx0_magtape_image_device::call_load()
 
 void tx0_magtape_image_device::call_unload()
 {
-	tx0_state *state = machine().driver_data<tx0_state>();
-	state->m_magtape.img = nullptr;
+	m_tx0->m_magtape.img = nullptr;
 
-	if (state->m_magtape.timer)
+	if (m_tx0->m_magtape.timer)
 	{
-		if (state->m_magtape.state == MTS_SELECTING)
+		if (m_tx0->m_magtape.state == MTS_SELECTING)
 			/* I/O has not actually started, we can cancel the selection */
-			state->m_tape_reader.timer->enable(0);
-		if ((state->m_magtape.state == MTS_SELECTED) || ((state->m_magtape.state == MTS_SELECTING) && (state->m_magtape.command == 2)))
+			m_tx0->m_tape_reader.timer->enable(0);
+		if ((m_tx0->m_magtape.state == MTS_SELECTED) || ((m_tx0->m_magtape.state == MTS_SELECTING) && (m_tx0->m_magtape.command == 2)))
 		{   /* unit has become unavailable */
-			state->m_magtape.state = MTS_UNSELECTING;
-			state->m_maincpu->set_state_int(TX0_PF, state->m_maincpu->state_int(TX0_PF) | PF_RWC);
-			state->schedule_unselect();
+			m_tx0->m_magtape.state = MTS_UNSELECTING;
+			m_tx0->m_maincpu->set_state_int(TX0_PF, m_tx0->m_maincpu->state_int(TX0_PF) | PF_RWC);
+			m_tx0->schedule_unselect();
 		}
 	}
 }
@@ -1530,61 +1537,58 @@ INTERRUPT_GEN_MEMBER(tx0_state::tx0_interrupt)
 	}
 }
 
-static MACHINE_CONFIG_START( tx0_64kw )
+void tx0_state::tx0_64kw(machine_config &config)
+{
 	/* basic machine hardware */
 	/* TX0 CPU @ approx. 167 kHz (no master clock, but the memory cycle time is approximately 6usec) */
-	MCFG_CPU_ADD("maincpu", TX0_64KW, 166667)
-	MCFG_TX0_CONFIG(
-		WRITELINE( tx0_state, tx0_io_cpy ),
-		WRITELINE( tx0_state, tx0_io_r1l ),
-		WRITELINE( tx0_state, tx0_io_dis ),
-		WRITELINE( tx0_state, tx0_io_r3l ),
-		WRITELINE( tx0_state, tx0_io_prt ),
-		NOOP,
-		WRITELINE( tx0_state, tx0_io_p6h ),
-		WRITELINE( tx0_state, tx0_io_p7h ),
-		WRITELINE( tx0_state, tx0_sel ),
-		WRITELINE( tx0_state, tx0_io_reset_callback )
-	)
-	MCFG_CPU_PROGRAM_MAP(tx0_64kw_map)
+	TX0_64KW(config, m_maincpu, 166667);
+	m_maincpu->cpy().set(FUNC(tx0_state::tx0_io_cpy));
+	m_maincpu->r1l().set(FUNC(tx0_state::tx0_io_r1l));
+	m_maincpu->dis().set(FUNC(tx0_state::tx0_io_dis));
+	m_maincpu->r3l().set(FUNC(tx0_state::tx0_io_r3l));
+	m_maincpu->prt().set(FUNC(tx0_state::tx0_io_prt));
+	m_maincpu->rsv().set_nop();
+	m_maincpu->p6h().set(FUNC(tx0_state::tx0_io_p6h));
+	m_maincpu->p7h().set(FUNC(tx0_state::tx0_io_p7h));
+	m_maincpu->sel().set(FUNC(tx0_state::tx0_sel));
+	m_maincpu->res().set(FUNC(tx0_state::tx0_io_reset_callback));
+	m_maincpu->set_addrmap(AS_PROGRAM, &tx0_state::tx0_64kw_map);
 	/* dummy interrupt: handles input */
-	MCFG_CPU_VBLANK_INT_DRIVER("screen", tx0_state,  tx0_interrupt)
+	m_maincpu->set_vblank_int("screen", FUNC(tx0_state::tx0_interrupt));
 
 	/* video hardware (includes the control panel and typewriter output) */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(refresh_rate)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
-	MCFG_SCREEN_SIZE(virtual_width, virtual_height)
-	MCFG_SCREEN_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
-	MCFG_SCREEN_UPDATE_DRIVER(tx0_state, screen_update_tx0)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(tx0_state, screen_vblank_tx0))
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(refresh_rate);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500)); /* not accurate */
+	screen.set_size(virtual_width, virtual_height);
+	screen.set_visarea(0, virtual_width-1, 0, virtual_height-1);
+	screen.set_screen_update(FUNC(tx0_state::screen_update_tx0));
+	screen.screen_vblank().set(FUNC(tx0_state::screen_vblank_tx0));
+	screen.set_palette(m_palette);
 
-	MCFG_DEVICE_ADD("crt", CRT, 0)
-	MCFG_CRT_NUM_LEVELS(pen_crt_num_levels)
-	MCFG_CRT_OFFSETS(crt_window_offset_x, crt_window_offset_y)
-	MCFG_CRT_SIZE(crt_window_width, crt_window_height)
+	CRT(config, m_crt, 0);
+	m_crt->set_num_levels(pen_crt_num_levels);
+	m_crt->set_offsets(crt_window_offset_x, crt_window_offset_y);
+	m_crt->set_size(crt_window_width, crt_window_height);
 
-	MCFG_DEVICE_ADD("readt", TX0_READTAPE, 0)
-	MCFG_DEVICE_ADD("punch", TX0_PUNCHTAPE, 0)
-	MCFG_DEVICE_ADD("typewriter", TX0_PRINTER, 0)
-	MCFG_DEVICE_ADD("magtape", TX0_MAGTAPE, 0)
+	TX0_READTAPE(config, "readt", 0);
+	TX0_PUNCHTAPE(config, "punch", 0);
+	TX0_PRINTER(config, "typewriter", 0);
+	TX0_MAGTAPE(config, "magtape", 0);
 
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", tx0)
-	MCFG_PALETTE_ADD("palette", total_colors_needed + sizeof(tx0_palette))
-	MCFG_PALETTE_INDIRECT_ENTRIES(total_colors_needed)
-	MCFG_PALETTE_INIT_OWNER(tx0_state, tx0)
-MACHINE_CONFIG_END
+	GFXDECODE(config, m_gfxdecode, m_palette, gfx_tx0);
+	PALETTE(config, m_palette, FUNC(tx0_state::tx0_palette), total_colors_needed + sizeof(tx0_pens), total_colors_needed);
+}
 
-static MACHINE_CONFIG_DERIVED( tx0_8kw, tx0_64kw )
+void tx0_state::tx0_8kw(machine_config &config)
+{
+	tx0_64kw(config);
 
 	/* basic machine hardware */
 	/* TX0 CPU @ approx. 167 kHz (no master clock, but the memory cycle time is
 	approximately 6usec) */
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(tx0_8kw_map)
-	/*MCFG_CPU_PORTS(readport, writeport)*/
-MACHINE_CONFIG_END
+	m_maincpu->set_addrmap(AS_PROGRAM, &tx0_state::tx0_8kw_map);
+}
 
 ROM_START(tx0_64kw)
 	/*CPU memory space*/
@@ -1610,6 +1614,6 @@ ROM_END
 
 ***************************************************************************/
 
-//    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT  STATE        INIT   COMPANY  FULLNAME                                          FLAGS
-COMP( 1956, tx0_64kw, 0,        0,      tx0_64kw, tx0,   tx0_state,   tx0,   "MIT",   "TX-0 original demonstrator (64 kWords of RAM)" , MACHINE_NO_SOUND_HW | MACHINE_NOT_WORKING)
-COMP( 1962, tx0_8kw,  tx0_64kw, 0,      tx0_8kw,  tx0,   tx0_state,   tx0,   "MIT",   "TX-0 upgraded system (8 kWords of RAM)" ,        MACHINE_NO_SOUND_HW | MACHINE_NOT_WORKING)
+//    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT  STATE      INIT      COMPANY  FULLNAME                                         FLAGS
+COMP( 1956, tx0_64kw, 0,        0,      tx0_64kw, tx0,   tx0_state, init_tx0, "MIT",   "TX-0 original demonstrator (64 kWords of RAM)", MACHINE_NO_SOUND_HW | MACHINE_NOT_WORKING)
+COMP( 1962, tx0_8kw,  tx0_64kw, 0,      tx0_8kw,  tx0,   tx0_state, init_tx0, "MIT",   "TX-0 upgraded system (8 kWords of RAM)",        MACHINE_NO_SOUND_HW | MACHINE_NOT_WORKING)

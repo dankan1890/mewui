@@ -35,15 +35,8 @@ X  Examine and modify CPU registers
 #include "machine/pit8253.h"
 #include "machine/i8255.h"
 #include "machine/i8251.h"
-#include "machine/clock.h"
 #include "bus/rs232/rs232.h"
 
-#define I8259A_TAG      "pic8259"
-#define I8253_TAG       "pit8253"
-#define I8255A_TAG      "ppi8255"
-#define I8251A_TAG      "usart"
-#define I8251A_BAUD_TAG "usart_baud"
-#define RS232_TAG       "rs232"
 
 class isbc8030_state : public driver_device
 {
@@ -51,121 +44,76 @@ public:
 	isbc8030_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
-		, m_usart(*this, I8251A_TAG)
-		, m_ppi(*this, I8255A_TAG)
-		, m_pic(*this, I8259A_TAG)
-		, m_pit(*this, I8253_TAG)
-		, m_rs232(*this, RS232_TAG)
-		, m_usart_baud_rate(*this, I8251A_BAUD_TAG)
-		, m_usart_divide_counter(0)
-		, m_usart_clock_state(0)
+		, m_usart(*this, "usart")
+		, m_ppi(*this, "ppi8255")
+		, m_pic(*this, "pic8259")
+		, m_pit(*this, "pit8253")
+		, m_rs232(*this, "rs232")
 	{ }
 
-	DECLARE_WRITE_LINE_MEMBER( usart_clock_tick );
-
-	DECLARE_WRITE_LINE_MEMBER( isbc8030_tmr2_w );
+	void isbc8030(machine_config &config);
 
 private:
+	void isbc8030_io(address_map &map);
+	void isbc8030_mem(address_map &map);
+
 	required_device<cpu_device> m_maincpu;
 	required_device<i8251_device> m_usart;
 	required_device<i8255_device> m_ppi;
 	required_device<pic8259_device> m_pic;
 	required_device<pit8253_device> m_pit;
 	required_device<rs232_port_device> m_rs232;
-	required_ioport m_usart_baud_rate;
-
-	uint8_t m_usart_divide_counter;
-	uint8_t m_usart_clock_state;
 };
 
-static ADDRESS_MAP_START(isbc8030_mem, AS_PROGRAM, 8, isbc8030_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x1fff) AM_ROM
-	AM_RANGE(0x2000, 0xffff) AM_RAM
-ADDRESS_MAP_END
+void isbc8030_state::isbc8030_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x1fff).rom();
+	map(0x2000, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START(isbc8030_io, AS_IO, 8, isbc8030_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0xd8, 0xd9) AM_DEVREADWRITE(I8259A_TAG, pic8259_device, read, write)
-	AM_RANGE(0xdc, 0xdf) AM_DEVREADWRITE(I8253_TAG, pit8253_device, read, write)
-	AM_RANGE(0xe8, 0xeb) AM_DEVREADWRITE(I8255A_TAG, i8255_device, read, write)
-	AM_RANGE(0xec, 0xec) AM_MIRROR(0x02) AM_DEVREADWRITE(I8251A_TAG, i8251_device, data_r, data_w)
-	AM_RANGE(0xed, 0xed) AM_MIRROR(0x02) AM_DEVREADWRITE(I8251A_TAG, i8251_device, status_r, control_w)
-ADDRESS_MAP_END
+void isbc8030_state::isbc8030_io(address_map &map)
+{
+	map.unmap_value_high();
+	map.global_mask(0xff);
+	map(0xd8, 0xd9).rw(m_pic, FUNC(pic8259_device::read), FUNC(pic8259_device::write));
+	map(0xdc, 0xdf).rw(m_pit, FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0xe8, 0xeb).rw(m_ppi, FUNC(i8255_device::read), FUNC(i8255_device::write));
+	map(0xec, 0xed).mirror(0x02).rw(m_usart, FUNC(i8251_device::read), FUNC(i8251_device::write));
+}
 
 static INPUT_PORTS_START( isbc8030 )
-	PORT_START(I8251A_BAUD_TAG)
-	PORT_DIPNAME( 0x3f, 0x01, "i8251 Baud Rate" )
-	PORT_DIPSETTING(    0x01, "4800")
-	PORT_DIPSETTING(    0x02, "2400")
-	PORT_DIPSETTING(    0x04, "1200")
-	PORT_DIPSETTING(    0x08, "600")
-	PORT_DIPSETTING(    0x10, "300")
-	PORT_DIPSETTING(    0x20, "150")
-	PORT_DIPSETTING(    0x40, "75")
 INPUT_PORTS_END
 
-WRITE_LINE_MEMBER( isbc8030_state::usart_clock_tick )
+void isbc8030_state::isbc8030(machine_config &config)
 {
-	uint8_t old_counter = m_usart_divide_counter;
-	m_usart_divide_counter++;
+	I8085A(config, m_maincpu, XTAL(22'118'400) / 4);
+	m_maincpu->set_addrmap(AS_PROGRAM, &isbc8030_state::isbc8030_mem);
+	m_maincpu->set_addrmap(AS_IO, &isbc8030_state::isbc8030_io);
 
-	uint8_t transition = (old_counter ^ m_usart_divide_counter) & m_usart_baud_rate->read();
-	if (transition)
-	{
-		m_usart->write_txc(m_usart_clock_state);
-		m_usart->write_rxc(m_usart_clock_state);
-		m_usart_clock_state ^= 1;
-	}
+	PIC8259(config, m_pic, 0);
+	m_pic->out_int_callback().set_inputline(m_maincpu, 0);
+
+	PIT8253(config, m_pit, 0);
+	m_pit->set_clk<0>(XTAL(22'118'400) / 18);
+	m_pit->out_handler<0>().set(m_pic, FUNC(pic8259_device::ir0_w));
+	m_pit->set_clk<1>(XTAL(22'118'400) / 18);
+	m_pit->set_clk<2>(XTAL(22'118'400) / 18);
+	m_pit->out_handler<2>().set(m_usart, FUNC(i8251_device::write_rxc));
+	m_pit->out_handler<2>().append(m_usart, FUNC(i8251_device::write_txc));
+
+	I8251(config, m_usart, 0);
+	m_usart->txd_handler().set(m_rs232, FUNC(rs232_port_device::write_txd));
+	m_usart->dtr_handler().set(m_rs232, FUNC(rs232_port_device::write_dtr));
+	m_usart->rts_handler().set(m_rs232, FUNC(rs232_port_device::write_rts));
+
+	I8255A(config, m_ppi, 0);
+
+	RS232_PORT(config, m_rs232, default_rs232_devices, "terminal");
+	m_rs232->rxd_handler().set(m_usart, FUNC(i8251_device::write_rxd));
+	m_rs232->dsr_handler().set(m_usart, FUNC(i8251_device::write_dsr));
+	m_rs232->cts_handler().set(m_usart, FUNC(i8251_device::write_cts));
 }
-
-WRITE_LINE_MEMBER( isbc8030_state::isbc8030_tmr2_w )
-{
-	m_usart->write_rxc(state);
-	m_usart->write_txc(state);
-}
-
-static DEVICE_INPUT_DEFAULTS_START( terminal ) // set up terminal to default to 4800
-	DEVICE_INPUT_DEFAULTS( "RS232_RXBAUD", 0xff, RS232_BAUD_4800 )
-	DEVICE_INPUT_DEFAULTS( "RS232_TXBAUD", 0xff, RS232_BAUD_4800 )
-	DEVICE_INPUT_DEFAULTS( "RS232_STARTBITS", 0xff, RS232_STARTBITS_1 )
-	DEVICE_INPUT_DEFAULTS( "RS232_DATABITS", 0xff, RS232_DATABITS_8 )
-	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_NONE )
-	DEVICE_INPUT_DEFAULTS( "RS232_STOPBITS", 0xff, RS232_STOPBITS_1 )
-DEVICE_INPUT_DEFAULTS_END
-
-static MACHINE_CONFIG_START( isbc8030 )
-	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", I8085A, XTAL_22_1184MHz / 4)
-	MCFG_CPU_PROGRAM_MAP(isbc8030_mem)
-	MCFG_CPU_IO_MAP(isbc8030_io)
-
-	MCFG_PIC8259_ADD(I8259A_TAG, INPUTLINE(":maincpu", 0), VCC, NOOP)
-
-	MCFG_DEVICE_ADD(I8253_TAG, PIT8253, 0)
-	MCFG_PIT8253_CLK0(XTAL_22_1184MHz / 18)
-	MCFG_PIT8253_OUT0_HANDLER(DEVWRITELINE(I8259A_TAG, pic8259_device, ir0_w))
-	MCFG_PIT8253_CLK1(XTAL_22_1184MHz / 18)
-	MCFG_PIT8253_CLK2(XTAL_22_1184MHz / 18)
-	MCFG_PIT8253_OUT2_HANDLER(WRITELINE(isbc8030_state, isbc8030_tmr2_w))
-
-	MCFG_DEVICE_ADD(I8251A_TAG, I8251, 0)
-	MCFG_I8251_TXD_HANDLER(DEVWRITELINE(RS232_TAG, rs232_port_device, write_txd))
-	MCFG_I8251_DTR_HANDLER(DEVWRITELINE(RS232_TAG, rs232_port_device, write_dtr))
-	MCFG_I8251_RTS_HANDLER(DEVWRITELINE(RS232_TAG, rs232_port_device, write_rts))
-
-	MCFG_DEVICE_ADD(I8255A_TAG, I8255A, 0)
-
-	MCFG_RS232_PORT_ADD(RS232_TAG, default_rs232_devices, "terminal")
-	MCFG_RS232_RXD_HANDLER(DEVWRITELINE(I8251A_TAG, i8251_device, write_rxd))
-	MCFG_RS232_DSR_HANDLER(DEVWRITELINE(I8251A_TAG, i8251_device, write_dsr))
-	MCFG_RS232_CTS_HANDLER(DEVWRITELINE(I8251A_TAG, i8251_device, write_cts))
-	MCFG_DEVICE_CARD_DEVICE_INPUT_DEFAULTS("terminal", terminal)
-
-	MCFG_DEVICE_ADD("usart_clock", CLOCK, XTAL_18_432MHz/60)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE(isbc8030_state, usart_clock_tick))
-MACHINE_CONFIG_END
 
 /* ROM definition */
 ROM_START( isbc8030 )
@@ -173,5 +121,5 @@ ROM_START( isbc8030 )
 	ROM_LOAD( "mon830.bin", 0x0000, 0x0800, CRC(cda15115) SHA1(242dad14a919568178b363c3e27f22ec0a5849b3))
 ROM_END
 
-/*    YEAR  NAME       PARENT    COMPAT  MACHINE    INPUT      CLASS            INIT   COMPANY   FULLNAME       FLAGS */
-COMP( 1978, isbc8030,  0,        0,      isbc8030,  isbc8030,  isbc8030_state,  0,     "Intel",  "iSBC 80/30",  MACHINE_NO_SOUND_HW )
+/*    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     CLASS           INIT        COMPANY  FULLNAME      FLAGS */
+COMP( 1978, isbc8030, 0,      0,      isbc8030, isbc8030, isbc8030_state, empty_init, "Intel", "iSBC 80/30", MACHINE_NO_SOUND_HW )

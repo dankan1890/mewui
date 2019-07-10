@@ -72,7 +72,7 @@ WRITE8_MEMBER( kaypro_state::kayproii_pio_system_w )
 	m_system_port = data;
 }
 
-WRITE8_MEMBER( kaypro_state::kaypro4_pio_system_w )
+WRITE8_MEMBER( kaypro_state::kayproiv_pio_system_w )
 {
 	kayproii_pio_system_w(space, offset, data);
 
@@ -82,19 +82,19 @@ WRITE8_MEMBER( kaypro_state::kaypro4_pio_system_w )
 
 /***********************************************************
 
-    KAYPRO2X SYSTEM PORT
+    KAYPRO484 SYSTEM PORT
 
     The PIOs were replaced by a few standard 74xx chips
 
 ************************************************************/
 
-READ8_MEMBER( kaypro_state::kaypro2x_system_port_r )
+READ8_MEMBER( kaypro_state::kaypro484_system_port_r )
 {
 	uint8_t data = m_centronics_busy << 6;
 	return (m_system_port & 0xbf) | data;
 }
 
-WRITE8_MEMBER( kaypro_state::kaypro2x_system_port_w )
+WRITE8_MEMBER( kaypro_state::kaypro484_system_port_w )
 {
 /*  d7 bank select
     d6 alternate character set (write only)
@@ -138,7 +138,7 @@ WRITE8_MEMBER( kaypro_state::kaypro2x_system_port_w )
 
     SIO
 
-    On Kaypro2x, Channel B on both SIOs is hardwired to 300 baud.
+    On Kaypro484, Channel B on both SIOs is hardwired to 300 baud.
 
     Both devices on sio2 (printer and modem) are not emulated.
 
@@ -163,29 +163,9 @@ WRITE8_MEMBER( kaypro_state::kaypro2x_system_port_w )
     FFh    19200 */
 
 
-READ8_MEMBER(kaypro_state::kaypro_sio_r)
-{
-	if (offset == 1)
-		return kay_kbd_d_r();
-	else
-	if (offset == 3)
-		return kay_kbd_c_r();
-	else
-		return m_sio->cd_ba_r(space, offset);
-}
-
-WRITE8_MEMBER(kaypro_state::kaypro_sio_w)
-{
-	if (offset == 1)
-		kay_kbd_d_w(data);
-	else
-		m_sio->cd_ba_w(space, offset, data);
-}
-
-
 /*************************************************************************************
 
-    Floppy DIsk
+    Floppy Disk
 
     If DRQ or IRQ is set, and cpu is halted, the NMI goes low.
     Since the HALT occurs last (and has no callback mechanism), we need to set
@@ -248,7 +228,6 @@ MACHINE_START_MEMBER( kaypro_state,kayproii )
 
 MACHINE_RESET_MEMBER( kaypro_state,kaypro )
 {
-	MACHINE_RESET_CALL_MEMBER(kay_kbd);
 	membank("bankr0")->set_entry(1); // point at rom
 	membank("bankw0")->set_entry(0); // always write to ram
 	membank("bank3")->set_entry(1); // point at video ram
@@ -270,24 +249,33 @@ MACHINE_RESET_MEMBER( kaypro_state,kaypro )
 
 ************************************************************/
 
-QUICKLOAD_LOAD_MEMBER( kaypro_state, kaypro )
+QUICKLOAD_LOAD_MEMBER(kaypro_state::quickload_cb)
 {
 	uint8_t *RAM = memregion("rambank")->base();
-	uint16_t i;
-	uint8_t data;
+
+	/* Avoid loading a program if CP/M-80 is not in memory */
+	if ((RAM[0] != 0xc3) || (RAM[5] != 0xc3))
+		return image_init_result::FAIL;
+
+	if (quickload_size >= 0xfd00)
+		return image_init_result::FAIL;
 
 	/* Load image to the TPA (Transient Program Area) */
-	for (i = 0; i < quickload_size; i++)
+	for (uint16_t i = 0; i < quickload_size; i++)
 	{
-		if (image.fread( &data, 1) != 1) return image_init_result::FAIL;
-
+		uint8_t data;
+		if (image.fread( &data, 1) != 1)
+			return image_init_result::FAIL;
 		RAM[i+0x100] = data;
 	}
 
+
 	membank("bankr0")->set_entry(0);
 	membank("bank3")->set_entry(0);
-	RAM[0x80]=0;                            // clear out command tail
-	RAM[0x81]=0;
-	m_maincpu->set_pc(0x100);                // start program
+	RAM[0x80]=0; RAM[0x81]=0;    // clear out command tail
+
+	m_maincpu->set_pc(0x100);    // start program
+	m_maincpu->set_state_int(Z80_SP, 256 * RAM[7] - 300);   // put the stack a bit before BDOS
+
 	return image_init_result::PASS;
 }

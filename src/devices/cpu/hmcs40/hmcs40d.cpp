@@ -9,27 +9,36 @@
 */
 
 #include "emu.h"
-#include "debugger.h"
-#include "hmcs40.h"
+#include "hmcs40d.h"
 
+// constructor
 
-enum e_mnemonics
+hmcs40_disassembler::hmcs40_disassembler()
 {
-	mILL,
-	mLAB, mLBA, mLAY, mLASPX, mLASPY, mXAMR,
-	mLXA, mLYA, mLXI, mLYI, mIY, mDY, mAYY, mSYY, mXSP,
-	mLAM, mLBM, mXMA, mXMB, mLMAIY, mLMADY,
-	mLMIIY, mLAI, mLBI,
-	mAI, mIB, mDB, mAMC, mSMC, mAM, mDAA, mDAS, mNEGA, mCOMB, mSEC, mREC, mTC, mROTL, mROTR, mOR,
-	mMNEI, mYNEI, mANEM, mBNEM, mALEI, mALEM, mBLEM,
-	mSEM, mREM, mTM,
-	mBR, mCAL, mLPU, mTBR, mRTN,
-	mSEIE, mSEIF0, mSEIF1, mSETF, mSECF, mREIE, mREIF0, mREIF1, mRETF, mRECF, mTI0, mTI1, mTIF0, mTIF1, mTTF, mLTI, mLTA, mLAT, mRTNI,
-	mSED, mRED, mTD, mSEDD, mREDD, mLAR, mLBR, mLRA, mLRB, mP,
-	mNOP
-};
+	// init lfsr pc lut
+	for (u32 i = 0, pc = 0; i < 0x40; i++)
+	{
+		m_l2r[i] = pc;
+		m_r2l[pc] = i;
 
-static const char *const s_mnemonics[] =
+		// see hmcs40_cpu_device::increment_pc()
+		u32 mask = 0x3f;
+		u32 low = pc & mask;
+		u32 fb = (low << 1 & 0x20) == (low & 0x20);
+
+		if (low == (mask >> 1))
+			fb = 1;
+		else if (low == mask)
+			fb = 0;
+
+		pc = (pc & ~mask) | ((pc << 1 | fb) & mask);
+	}
+}
+
+
+// common lookup tables
+
+const char *const hmcs40_disassembler::s_mnemonics[] =
 {
 	"?",
 	"LAB", "LBA", "LAY", "LASPX", "LASPY", "XAMR",
@@ -46,7 +55,7 @@ static const char *const s_mnemonics[] =
 };
 
 // number of bits per opcode parameter, 99 means (XY) parameter, negative means reversed bit-order
-static const s8 s_bits[] =
+const s8 hmcs40_disassembler::s_bits[] =
 {
 	0,
 	0, 0, 0, 0, 0, 4,
@@ -62,10 +71,7 @@ static const s8 s_bits[] =
 	0
 };
 
-#define _OVER DASMFLAG_STEP_OVER
-#define _OUT  DASMFLAG_STEP_OUT
-
-static const u32 s_flags[] =
+const u32 hmcs40_disassembler::s_flags[] =
 {
 	0,
 	0, 0, 0, 0, 0, 0,
@@ -75,23 +81,13 @@ static const u32 s_flags[] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0,
-	0, _OVER, 0, 0, _OUT,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _OUT,
+	0, STEP_OVER, 0, 0, STEP_OUT,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, STEP_OUT,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0
 };
 
-// next program counter in sequence (relative)
-static const s8 s_next_pc[0x40] =
-{
-	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32+0x40 /* rollback */,
-	-32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17,
-	-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, -1
-};
-
-
-static const u8 hmcs40_mnemonic[0x400] =
+const u8 hmcs40_disassembler::hmcs40_mnemonic[0x400] =
 {
 /*  0      1      2      3      4      5      6      7      8      9      A      B      C      D      E      F  */
 	/* 0x000 */
@@ -183,10 +179,11 @@ static const u8 hmcs40_mnemonic[0x400] =
 };
 
 
+// disasm
 
-CPU_DISASSEMBLE(hmcs40)
+offs_t hmcs40_disassembler::disassemble(std::ostream &stream, offs_t pc, const data_buffer &opcodes, const data_buffer &params)
 {
-	u16 op = (oprom[0] | oprom[1] << 8) & 0x3ff;
+	u16 op = opcodes.r16(pc) & 0x3ff;
 	u8 instr = hmcs40_mnemonic[op];
 	s8 bits = s_bits[instr];
 
@@ -212,7 +209,7 @@ CPU_DISASSEMBLE(hmcs40)
 			// reverse bits
 			if (bits < 0)
 			{
-				param = BITSWAP8(param,0,1,2,3,4,5,6,7);
+				param = bitswap<8>(param,0,1,2,3,4,5,6,7);
 				param >>= (8 + bits);
 				bits = -bits;
 			}
@@ -226,6 +223,5 @@ CPU_DISASSEMBLE(hmcs40)
 		}
 	}
 
-	int pos = s_next_pc[pc & 0x3f] & DASMFLAG_LENGTHMASK;
-	return pos | s_flags[instr] | DASMFLAG_SUPPORTED;
+	return 1 | s_flags[instr] | SUPPORTED;
 }

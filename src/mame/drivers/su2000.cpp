@@ -48,9 +48,9 @@
  *************************************/
 
 #define I486_CLOCK          33000000
-#define MC68000_CLOCK       XTAL_10MHz
-#define TMS320C1_CLOCK      XTAL_33_833MHz
-#define MC88110_CLOCK       XTAL_40MHz
+#define MC68000_CLOCK       XTAL(10'000'000)
+#define TMS320C1_CLOCK      XTAL(33'833'000)
+#define MC88110_CLOCK       XTAL(40'000'000)
 
 
 /*************************************
@@ -65,6 +65,11 @@ public:
 	su2000_state(const machine_config &mconfig, device_type type, const char *tag)
 		: pcat_base_state(mconfig, type, tag){ }
 
+	void su2000(machine_config &config);
+
+private:
+	void pcat_io(address_map &map);
+	void pcat_map(address_map &map);
 };
 
 
@@ -74,21 +79,23 @@ public:
  *
  *************************************/
 
-static ADDRESS_MAP_START( pcat_map, AS_PROGRAM, 32, su2000_state )
-	AM_RANGE(0x00000000, 0x0009ffff) AM_RAM
-	AM_RANGE(0x000a0000, 0x000bffff) AM_DEVREADWRITE8("vga", vga_device, mem_r, mem_w, 0xffffffff)
-	AM_RANGE(0x000c0000, 0x000c7fff) AM_ROM
-	AM_RANGE(0x000f0000, 0x000fffff) AM_ROM
-	AM_RANGE(0x00100000, 0x003fffff) AM_RAM
-	AM_RANGE(0xffff0000, 0xffffffff) AM_ROM AM_REGION("maincpu", 0x0f0000)
-ADDRESS_MAP_END
+void su2000_state::pcat_map(address_map &map)
+{
+	map(0x00000000, 0x0009ffff).ram();
+	map(0x000a0000, 0x000bffff).rw("vga", FUNC(vga_device::mem_r), FUNC(vga_device::mem_w));
+	map(0x000c0000, 0x000c7fff).rom();
+	map(0x000f0000, 0x000fffff).rom();
+	map(0x00100000, 0x003fffff).ram();
+	map(0xffff0000, 0xffffffff).rom().region("maincpu", 0x0f0000);
+}
 
-static ADDRESS_MAP_START( pcat_io, AS_IO, 32, su2000_state )
-	AM_IMPORT_FROM(pcat32_io_common)
-	AM_RANGE(0x03b0, 0x03bf) AM_DEVREADWRITE8("vga", vga_device, port_03b0_r, port_03b0_w, 0xffffffff)
-	AM_RANGE(0x03c0, 0x03cf) AM_DEVREADWRITE8("vga", vga_device, port_03c0_r, port_03c0_w, 0xffffffff)
-	AM_RANGE(0x03d0, 0x03df) AM_DEVREADWRITE8("vga", vga_device, port_03d0_r, port_03d0_w, 0xffffffff)
-ADDRESS_MAP_END
+void su2000_state::pcat_io(address_map &map)
+{
+	pcat32_io_common(map);
+	map(0x03b0, 0x03bf).rw("vga", FUNC(vga_device::port_03b0_r), FUNC(vga_device::port_03b0_w));
+	map(0x03c0, 0x03cf).rw("vga", FUNC(vga_device::port_03c0_r), FUNC(vga_device::port_03c0_w));
+	map(0x03d0, 0x03df).rw("vga", FUNC(vga_device::port_03d0_r), FUNC(vga_device::port_03d0_w));
+}
 
 
 /*************************************
@@ -119,37 +126,37 @@ static void ide_interrupt(device_t *device, int state)
  *
  *************************************/
 
-static MACHINE_CONFIG_START( su2000 )
+void su2000_state::su2000(machine_config &config)
+{
 	/* Basic machine hardware */
-	MCFG_CPU_ADD("maincpu", I486, I486_CLOCK)
-	MCFG_CPU_PROGRAM_MAP(pcat_map)
-	MCFG_CPU_IO_MAP(pcat_io)
-	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("pic8259_1", pic8259_device, inta_cb)
+	I486(config, m_maincpu, I486_CLOCK);
+	m_maincpu->set_addrmap(AS_PROGRAM, &su2000_state::pcat_map);
+	m_maincpu->set_addrmap(AS_IO, &su2000_state::pcat_io);
+	m_maincpu->set_irq_acknowledge_callback("pic8259_1", FUNC(pic8259_device::inta_cb));
 
 #if 0
-	MCFG_CPU_ADD("tracker", TMS32031, TMS320C1_CLOCK)
-	MCFG_CPU_PROGRAM_MAP(tracker_map)
+	tms32031_device &tracker(TMS32031(config, "tracker", TMS320C1_CLOCK));
+	tracker.set_addrmap(AS_PROGRAM, &su2000_state::tracker_map);
 
-	MCFG_CPU_ADD("pix_cpu1", MC88110, MC88110_CLOCK)
-	MCFG_CPU_PROGRAM_MAP(pix_cpu_a)
+	mc88100_device &pix_cpu1(MC88110(config, "pix_cpu1", MC88110_CLOCK));
+	pix_cpu1.set_addrmap(AS_PROGRAM, &su2000_state::pix_cpu_a);
 
-	MCFG_CPU_ADD("pix_cpu2", MC88110, MC88110_CLOCK)
-	MCFG_CPU_PROGRAM_MAP(pix_cpu_b)
+	mc88100_device &pix_cpu2(MC88110(config, "pix_cpu2", MC88110_CLOCK));
+	pix_cpu2.set_addrmap(AS_PROGRAM, &su2000_state::pix_cpu_b);
 
-	MCFG_CPU_ADD("format_c", M68000, XTAL_10MHz)
-	MCFG_CPU_PROGRAM_MAP(formatc_map)
+	m68000_device &format_c(M68000(config, "format_c", XTAL(10'000'000)));
+	format_c.set_addrmap(AS_PROGRAM, &su2000_state::formatc_map);
 #endif
 
 	/* Video hardware */
-	MCFG_FRAGMENT_ADD(pcvideo_vga)
+	pcvideo_vga(config);
 
-	MCFG_FRAGMENT_ADD(pcat_common)
+	pcat_common(config);
 
-	MCFG_DEVICE_REMOVE("rtc")
-	MCFG_DS12885_ADD("rtc")
-	MCFG_MC146818_IRQ_HANDLER(DEVWRITELINE("pic8259_2", pic8259_device, ir0_w))
-	MCFG_MC146818_CENTURY_INDEX(0x32)
-MACHINE_CONFIG_END
+	DS12885(config.replace(), m_mc146818); // TODO: Rename m_mc146818 to m_rtc
+	m_mc146818->irq().set("pic8259_2", FUNC(pic8259_device::ir0_w));
+	m_mc146818->set_century_index(0x32);
+}
 
 
 /*************************************
@@ -266,4 +273,4 @@ ROM_START( su2000 )
  *
  *************************************/
 
-GAME( 1993, su2000, 0, su2000, pc_keyboard, su2000_state, 0, ROT0, "Virtuality", "SU2000", MACHINE_IS_BIOS_ROOT | MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
+GAME( 1993, su2000, 0, su2000, pc_keyboard, su2000_state, empty_init, ROT0, "Virtuality", "SU2000", MACHINE_IS_BIOS_ROOT | MACHINE_NOT_WORKING | MACHINE_NO_SOUND )

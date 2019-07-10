@@ -35,56 +35,42 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/terminal.h"
+#include "machine/z80sio.h"
+#include "machine/clock.h"
+#include "bus/rs232/rs232.h"
 
-#define TERMINAL_TAG "terminal"
 
 class systec_state : public driver_device
 {
 public:
 	systec_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+	{ }
 
-	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
-	DECLARE_READ8_MEMBER(systec_c4_r);
-	DECLARE_READ8_MEMBER(systec_c6_r);
-	void kbd_put(u8 data);
-	uint8_t m_term_data;
+	void systec(machine_config &config);
+
+private:
+	void systec_io(address_map &map);
+	void systec_mem(address_map &map);
+
 	virtual void machine_reset() override;
+	required_device<cpu_device> m_maincpu;
 };
 
-READ8_MEMBER( systec_state::systec_c4_r )
+void systec_state::systec_mem(address_map &map)
 {
-	uint8_t ret = m_term_data;
-	m_term_data = 0;
-	return ret;
+	map.unmap_value_high();
+	map(0x0000, 0xffff).ram().region("maincpu", 0);
 }
 
-READ8_MEMBER( systec_state::systec_c6_r )
+void systec_state::systec_io(address_map &map)
 {
-	return 0x04 | (m_term_data ? 1 : 0);
+	map.global_mask(0xff);
+	map(0x68, 0x6b); // fdc?
+	map(0x6c, 0x6c); // motor control?
+	map(0xc4, 0xc7).rw("sio", FUNC(z80sio_device::cd_ba_r), FUNC(z80sio_device::cd_ba_w));
 }
-
-void systec_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-}
-
-static ADDRESS_MAP_START(systec_mem, AS_PROGRAM, 8, systec_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0xffff) AM_RAM AM_REGION("maincpu", 0)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START(systec_io, AS_IO, 8, systec_state)
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0xc4, 0xc4) AM_READ(systec_c4_r) AM_DEVWRITE(TERMINAL_TAG, generic_terminal_device, write)
-	AM_RANGE(0xc6, 0xc6) AM_READ(systec_c6_r)
-ADDRESS_MAP_END
 
 /* Input ports */
 static INPUT_PORTS_START( systec )
@@ -97,17 +83,29 @@ void systec_state::machine_reset()
 	memcpy(m_p_maincpu, m_p_roms, 0x2000);
 }
 
-static MACHINE_CONFIG_START( systec )
+
+void systec_state::systec(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, XTAL_16MHz / 4)
-	MCFG_CPU_PROGRAM_MAP(systec_mem)
-	MCFG_CPU_IO_MAP(systec_io)
+	Z80(config, m_maincpu, XTAL(16'000'000) / 4);
+	m_maincpu->set_addrmap(AS_PROGRAM, &systec_state::systec_mem);
+	m_maincpu->set_addrmap(AS_IO, &systec_state::systec_io);
 
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 153600));
+	uart_clock.signal_handler().set("sio", FUNC(z80sio_device::txca_w));
+	uart_clock.signal_handler().append("sio", FUNC(z80sio_device::rxca_w));
 
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(systec_state, kbd_put))
-MACHINE_CONFIG_END
+	/* Devices */
+	z80sio_device& sio(Z80SIO(config, "sio", XTAL(4'000'000)));
+	//sio2.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0); // no evidence of a daisy chain because IM2 is not set
+	sio.out_txda_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	sio.out_dtra_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	sio.out_rtsa_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("sio", FUNC(z80sio_device::rxa_w));
+	rs232.cts_handler().set("sio", FUNC(z80sio_device::ctsa_w));
+}
 
 
 /* ROM definition */
@@ -119,5 +117,5 @@ ROM_END
 
 /* Driver */
 
-//   YEAR  NAME    PARENT  COMPAT   MACHINE  INPUT   STATE         INIT  COMPANY   FULLNAME      FLAGS
-COMP(19??, systec, 0,      0,       systec,  systec, systec_state, 0,    "Systec", "Systec Z80", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+//   YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT   CLASS         INIT        COMPANY   FULLNAME      FLAGS
+COMP(19??, systec, 0,      0,      systec,  systec, systec_state, empty_init, "Systec", "Systec Z80", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

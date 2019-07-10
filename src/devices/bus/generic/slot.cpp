@@ -28,7 +28,8 @@
 //  GLOBAL VARIABLES
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(GENERIC_SOCKET, generic_slot_device, "generic_socket", "Generic ROM Socket / RAM Socket / Cartridge Slot")
+DEFINE_DEVICE_TYPE(GENERIC_SOCKET, generic_socket_device, "generic_socket", "Generic ROM Socket / RAM Socket")
+DEFINE_DEVICE_TYPE(GENERIC_CARTSLOT, generic_cartslot_device, "generic_cartslot", "Generic Cartridge Slot")
 
 
 //-------------------------------------------------
@@ -84,8 +85,8 @@ void device_generic_cart_interface::ram_alloc(uint32_t size)
 //-------------------------------------------------
 //  generic_slot_device - constructor
 //-------------------------------------------------
-generic_slot_device::generic_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, GENERIC_SOCKET, tag, owner, clock),
+generic_slot_device::generic_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, type, tag, owner, clock),
 	device_image_interface(mconfig, *this),
 	device_slot_interface(mconfig, *this),
 	m_interface(nullptr),
@@ -98,6 +99,15 @@ generic_slot_device::generic_slot_device(const machine_config &mconfig, const ch
 {
 }
 
+generic_socket_device::generic_socket_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: generic_slot_device(mconfig, GENERIC_SOCKET, tag, owner, clock)
+{
+}
+
+generic_cartslot_device::generic_cartslot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: generic_slot_device(mconfig, GENERIC_CARTSLOT, tag, owner, clock)
+{
+}
 
 //-------------------------------------------------
 //  generic_slot_device - destructor
@@ -206,10 +216,10 @@ void generic_slot_device::common_load_rom(uint8_t *ROM, uint32_t len, const char
  read_rom
  -------------------------------------------------*/
 
-READ8_MEMBER(generic_slot_device::read_rom)
+uint8_t generic_slot_device::read_rom(offs_t offset)
 {
 	if (m_cart)
-		return m_cart->read_rom(space, offset);
+		return m_cart->read_rom(offset);
 	else
 		return 0xff;
 }
@@ -218,10 +228,10 @@ READ8_MEMBER(generic_slot_device::read_rom)
  read16_rom
  -------------------------------------------------*/
 
-READ16_MEMBER(generic_slot_device::read16_rom)
+uint16_t generic_slot_device::read16_rom(offs_t offset, uint16_t mem_mask)
 {
 	if (m_cart)
-		return m_cart->read16_rom(space, offset, mem_mask);
+		return m_cart->read16_rom(offset, mem_mask);
 	else
 		return 0xffff;
 }
@@ -230,10 +240,10 @@ READ16_MEMBER(generic_slot_device::read16_rom)
  read32_rom
  -------------------------------------------------*/
 
-READ32_MEMBER(generic_slot_device::read32_rom)
+uint32_t generic_slot_device::read32_rom(offs_t offset, uint32_t mem_mask)
 {
 	if (m_cart)
-		return m_cart->read32_rom(space, offset, mem_mask);
+		return m_cart->read32_rom(offset, mem_mask);
 	else
 		return 0xffffffff;
 }
@@ -242,10 +252,10 @@ READ32_MEMBER(generic_slot_device::read32_rom)
  read_ram
  -------------------------------------------------*/
 
-READ8_MEMBER(generic_slot_device::read_ram)
+uint8_t generic_slot_device::read_ram(offs_t offset)
 {
 	if (m_cart)
-		return m_cart->read_ram(space, offset);
+		return m_cart->read_ram(offset);
 	else
 		return 0xff;
 }
@@ -254,8 +264,8 @@ READ8_MEMBER(generic_slot_device::read_ram)
  write_ram
  -------------------------------------------------*/
 
-WRITE8_MEMBER(generic_slot_device::write_ram)
+void generic_slot_device::write_ram(offs_t offset, uint8_t data)
 {
 	if (m_cart)
-		m_cart->write_ram(space, offset, data);
+		m_cart->write_ram(offset, data);
 }

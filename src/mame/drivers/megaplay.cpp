@@ -1,23 +1,15 @@
 // license:BSD-3-Clause
 // copyright-holders:David Haywood
-/* Sega MegaPlay
-
-  changelog:
-
-  01 Oct  2009 - Converted to use the HazeMD SMS code so that old code
-                 can be removed, however this makes the text transparent,
-                 which IIRC is incorrect
-
-  22 Sept 2007 - Started updating this to use the new Megadrive code,
-                 fixing issues with Mazin Wars + Grand Slam.
-                 However I'm still not convinced that the handling of
-                 the Megaplay side of things is correct at all, and
-                 we're still hanging off the old SMS vdp code and
-                 IO code.
-
-*/
 
 /*
+
+Driver is marked as NOT WORKING because interaction between BIOS and 68k side is
+not fully understood.  The BIOS often doesn't register that a game has been started
+and leaves the 'PRESS P1 OR P2 START' message onscreen during gameplay as a result.
+If this happens, the games usually then crash when you run out of lives as they end
+up in an unknown state.
+
+
 
 About MegaPlay:
 
@@ -37,24 +29,18 @@ to the standard Genesis hardware.  In this case the additional hardware creates 
 which is displayed as an overlay to the game screen.  This layer contains basic text
 such as Insert Coin, and the Megaplay Logo / Instructions during the attract loop.
 
+The BIOS reads the Start inputs and (once enough coins have been inserted) passes them to
+the 68k rather than using the regular Genesis PAD hookups.
+
 Communication between the various CPUs seems to be fairly complex and it is not fully
 understood what is shared, where, and how.  One of the BIOS sets doesn't work, maybe for
 this reason.
-
-Only a handful of games were released for this system.
-
-Bugs:
- Most of this is guesswork and should be verified on real hw.  Sometimes after inserting
- a coin and pressing start the 'press start' message remains on screen and no credit is
- deducted.  (timing?)
-
 
 */
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
 #include "machine/cxd1095.h"
-#include "sound/sn76496.h"
 
 #include "includes/megadriv.h"
 
@@ -67,12 +53,21 @@ Bugs:
 class mplay_state : public md_base_state
 {
 public:
-	mplay_state(const machine_config &mconfig, device_type type, const char *tag)
-	: md_base_state(mconfig, type, tag),
-	m_ic3_ram(*this, "ic3_ram"),
-	m_vdp1(*this, "vdp1"),
-	m_bioscpu(*this, "mtbios")
+	mplay_state(const machine_config &mconfig, device_type type, const char *tag) :
+		md_base_state(mconfig, type, tag),
+		m_ic3_ram(*this, "ic3_ram"),
+		m_vdp1(*this, "vdp1"),
+		m_bioscpu(*this, "mtbios")
 	{ }
+
+	void megaplay(machine_config &config);
+
+	void init_megaplay();
+
+	DECLARE_READ_LINE_MEMBER(start1_r);
+	DECLARE_READ_LINE_MEMBER(start2_r);
+
+private:
 
 	DECLARE_READ16_MEMBER(extra_ram_r);
 	DECLARE_WRITE16_MEMBER(extra_ram_w);
@@ -93,12 +88,12 @@ public:
 	DECLARE_WRITE8_MEMBER(game_w);
 	DECLARE_READ8_MEMBER(vdp1_count_r);
 
-	DECLARE_DRIVER_INIT(megaplay);
 	DECLARE_VIDEO_START(megplay);
 	DECLARE_MACHINE_RESET(megaplay);
 	uint32_t screen_update_megplay(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 
-private:
+	void megaplay_bios_io_map(address_map &map);
+	void megaplay_bios_map(address_map &map);
 
 	uint32_t m_bios_mode;  // determines whether ROM banks or Game data is to read from 0x8000-0xffff
 
@@ -136,19 +131,20 @@ static INPUT_PORTS_START ( megaplay )
 	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START("COIN")
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-/* Caused 01081:
- *  PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START1 )
- *  PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
- */
+	PORT_MODIFY("PAD1") // P1 Start input processed through BIOS
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER(DEVICE_SELF, mplay_state, start1_r)
+
+	PORT_MODIFY("PAD2") // P2 Start input processed through BIOS
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER(DEVICE_SELF, mplay_state, start2_r)
 
 	PORT_START("DSW0")
 	PORT_DIPNAME( 0x0f, 0x0f, "Coin slot 1" ) PORT_DIPLOCATION("SW1:1,2,3,4")
@@ -405,6 +401,16 @@ INPUT_PORTS_END
 
 /*MEGAPLAY specific*/
 
+READ_LINE_MEMBER(mplay_state::start1_r)
+{
+	return BIT(m_bios_bank, 4);
+}
+
+READ_LINE_MEMBER(mplay_state::start2_r)
+{
+	return BIT(m_bios_bank, 5);
+}
+
 WRITE8_MEMBER(mplay_state::bios_banksel_w)
 {
 /*  Multi-slot note:
@@ -412,9 +418,13 @@ WRITE8_MEMBER(mplay_state::bios_banksel_w)
     It should be possible to multiplex different game ROMs at
     0x000000-0x3fffff based on these bits.
 */
+	if (BIT(m_bios_bank ^ data, 4))
+		logerror("BIOS: P1 Start %sactive\n", BIT(data, 4) ? "in" : "");
+	if (BIT(m_bios_bank ^ data, 5))
+		logerror("BIOS: P2 Start %sactive\n", BIT(data, 5) ? "in" : "");
 	m_bios_bank = data;
 	m_bios_mode = MP_ROM;
-//  logerror("BIOS: ROM bank %i selected [0x%02x]\n",bios_bank >> 6, data);
+//  logerror("BIOS: ROM bank %i selected [0x%02x]\n", m_bios_bank >> 6, data);
 }
 
 WRITE8_MEMBER(mplay_state::bios_gamesel_w)
@@ -536,7 +546,7 @@ READ8_MEMBER(mplay_state::bios_6404_r)
 WRITE8_MEMBER(mplay_state::bios_6404_w)
 {
 	if(((m_bios_6404 & 0x0c) == 0x00) && ((data & 0x0c) == 0x0c))
-		m_maincpu->set_input_line(INPUT_LINE_RESET, PULSE_LINE);
+		m_maincpu->pulse_input_line(INPUT_LINE_RESET, attotime::zero);
 	m_bios_6404 = data;
 
 //  logerror("BIOS: 0x6404 write: 0x%02x\n", data);
@@ -572,44 +582,45 @@ WRITE8_MEMBER(mplay_state::game_w)
 		m_bios_mode = MP_GAME;
 		m_readpos = 1;
 //      popmessage("Game bank selected: 0x%03x", m_game_banksel);
-		logerror("BIOS [0x%04x]: 68K address space bank selected: 0x%03x\n", space.device().safe_pcbase(), m_game_banksel);
+		logerror("BIOS [0x%04x]: 68K address space bank selected: 0x%03x\n", m_bioscpu->pcbase(), m_game_banksel);
 	}
 
 	m_bios_bank_addr = ((m_bios_bank_addr >> 1) | (data << 23)) & 0xff8000;
+	logerror("BIOS bank addr = %X\n", m_bios_bank_addr);
 }
 
-static ADDRESS_MAP_START( megaplay_bios_map, AS_PROGRAM, 8, mplay_state )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0x4fff) AM_RAM
-	AM_RANGE(0x5000, 0x5fff) AM_RAM
-	AM_RANGE(0x6000, 0x6000) AM_WRITE(game_w)
-	AM_RANGE(0x6200, 0x6207) AM_DEVREADWRITE("io1", cxd1095_device, read, write)
-	AM_RANGE(0x6400, 0x6407) AM_DEVREADWRITE("io2", cxd1095_device, read, write)
-	AM_RANGE(0x6600, 0x6600) AM_READWRITE(bios_6600_r, bios_6600_w)
-	AM_RANGE(0x6001, 0x67ff) AM_WRITEONLY
-	AM_RANGE(0x6800, 0x77ff) AM_RAM AM_SHARE("ic3_ram")
-	AM_RANGE(0x8000, 0xffff) AM_READWRITE(bank_r, bank_w)
-ADDRESS_MAP_END
+void mplay_state::megaplay_bios_map(address_map &map)
+{
+	map(0x0000, 0x3fff).rom();
+	map(0x4000, 0x4fff).ram();
+	map(0x5000, 0x5fff).ram();
+	map(0x6000, 0x6000).w(FUNC(mplay_state::game_w));
+	map(0x6200, 0x6207).rw("io1", FUNC(cxd1095_device::read), FUNC(cxd1095_device::write));
+	map(0x6400, 0x6407).rw("io2", FUNC(cxd1095_device::read), FUNC(cxd1095_device::write));
+	map(0x6600, 0x6600).rw(FUNC(mplay_state::bios_6600_r), FUNC(mplay_state::bios_6600_w));
+	map(0x6800, 0x77ff).ram().share("ic3_ram");
+	map(0x8000, 0xffff).rw(FUNC(mplay_state::bank_r), FUNC(mplay_state::bank_w));
+}
 
 
 
 READ8_MEMBER(mplay_state::vdp1_count_r)
 {
-	address_space &prg = m_bioscpu->space(AS_PROGRAM);
 	if (offset & 0x01)
-		return m_vdp1->hcount_read(prg, offset);
+		return m_vdp1->hcount_read();
 	else
-		return m_vdp1->vcount_read(prg, offset);
+		return m_vdp1->vcount_read();
 }
 
-static ADDRESS_MAP_START( megaplay_bios_io_map, AS_IO, 8, mplay_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x7f, 0x7f) AM_DEVWRITE("sn2", sn76496_device, write)
+void mplay_state::megaplay_bios_io_map(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x7f, 0x7f).w(m_vdp1, FUNC(sega315_5124_device::psg_w));
 
-	AM_RANGE(0x40, 0x41) AM_MIRROR(0x3e) AM_READ(vdp1_count_r)
-	AM_RANGE(0x80, 0x80) AM_MIRROR(0x3e) AM_DEVREADWRITE("vdp1", sega315_5124_device, vram_read, vram_write)
-	AM_RANGE(0x81, 0x81) AM_MIRROR(0x3e) AM_DEVREADWRITE("vdp1", sega315_5124_device, register_read, register_write)
-ADDRESS_MAP_END
+	map(0x40, 0x41).mirror(0x3e).r(FUNC(mplay_state::vdp1_count_r));
+	map(0x80, 0x80).mirror(0x3e).rw(m_vdp1, FUNC(sega315_5124_device::data_read), FUNC(sega315_5124_device::data_write));
+	map(0x81, 0x81).mirror(0x3e).rw(m_vdp1, FUNC(sega315_5124_device::control_read), FUNC(sega315_5124_device::control_write));
+}
 
 
 uint32_t mplay_state::screen_update_megplay(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
@@ -618,7 +629,7 @@ uint32_t mplay_state::screen_update_megplay(screen_device &screen, bitmap_rgb32 
 	screen_update_megadriv(screen, bitmap, cliprect);
 	//m_vdp1->screen_update(screen, bitmap, cliprect);
 
-	// i'm not sure if the overlay (256 pixels wide) is meant to be stretched over the 320 resolution genesis output, or centered.
+	// TODO : the overlay (256 pixels wide) is actually stretched over the 320 resolution genesis output, reference is https://youtu.be/Oir1Wp6yOq0.
 	// if it's meant to be stretched we'll have to multiply the entire outut x4 for the Genesis VDP and x5 for the SMS VDP to get a common 1280 pixel wide image
 
 	// overlay, only drawn for pixels != 0
@@ -651,57 +662,55 @@ MACHINE_RESET_MEMBER(mplay_state,megaplay)
 	MACHINE_RESET_CALL_MEMBER(megadriv);
 }
 
-static MACHINE_CONFIG_START( megaplay )
+void mplay_state::megaplay(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_FRAGMENT_ADD(md_ntsc)
+	md_ntsc(config);
 
 	/* The Megaplay has an extra BIOS cpu which drives an SMS VDP
 	   which includes an SN76496 for sound */
-	MCFG_CPU_ADD("mtbios", Z80, MASTER_CLOCK / 15) /* ?? */
-	MCFG_CPU_PROGRAM_MAP(megaplay_bios_map)
-	MCFG_CPU_IO_MAP(megaplay_bios_io_map)
+	Z80(config, m_bioscpu, MASTER_CLOCK / 15); /* ?? */
+	m_bioscpu->set_addrmap(AS_PROGRAM, &mplay_state::megaplay_bios_map);
+	m_bioscpu->set_addrmap(AS_IO, &mplay_state::megaplay_bios_io_map);
 
-	MCFG_QUANTUM_TIME(attotime::from_hz(6000))
+	config.m_minimum_quantum = attotime::from_hz(6000);
 
-	MCFG_DEVICE_ADD("io1", CXD1095, 0)
-	MCFG_CXD1095_IN_PORTA_CB(IOPORT("DSW0"))
-	MCFG_CXD1095_IN_PORTB_CB(IOPORT("DSW1"))
-	MCFG_CXD1095_OUT_PORTD_CB(WRITE8(mplay_state, bios_banksel_w))
-	MCFG_CXD1095_IN_PORTE_CB(READ8(mplay_state, bios_6204_r))
-	MCFG_CXD1095_OUT_PORTE_CB(WRITE8(mplay_state, bios_width_w))
+	cxd1095_device &io1(CXD1095(config, "io1", 0));
+	io1.in_porta_cb().set_ioport("DSW0");
+	io1.in_portb_cb().set_ioport("DSW1");
+	io1.out_portd_cb().set(FUNC(mplay_state::bios_banksel_w));
+	io1.in_porte_cb().set(FUNC(mplay_state::bios_6204_r));
+	io1.out_porte_cb().set(FUNC(mplay_state::bios_width_w));
 
-	MCFG_DEVICE_ADD("io2", CXD1095, 0)
-	MCFG_CXD1095_IN_PORTA_CB(IOPORT("TEST"))
-	MCFG_CXD1095_IN_PORTB_CB(IOPORT("COIN"))
-	MCFG_CXD1095_IN_PORTC_CB(READ8(mplay_state, bios_6402_r))
-	MCFG_CXD1095_OUT_PORTC_CB(WRITE8(mplay_state, bios_6402_w))
-	MCFG_CXD1095_OUT_PORTD_CB(WRITE8(mplay_state, bios_gamesel_w))
-	MCFG_CXD1095_IN_PORTE_CB(READ8(mplay_state, bios_6404_r))
-	MCFG_CXD1095_OUT_PORTE_CB(WRITE8(mplay_state, bios_6404_w))
-
-	MCFG_SOUND_ADD("sn2", SN76496, MASTER_CLOCK/15)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 0.25) /* 3.58 MHz */
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "rspeaker",0.25) /* 3.58 MHz */
+	cxd1095_device &io2(CXD1095(config, "io2", 0));
+	io2.in_porta_cb().set_ioport("TEST");
+	io2.in_portb_cb().set_ioport("COIN");
+	io2.in_portc_cb().set(FUNC(mplay_state::bios_6402_r));
+	io2.out_portc_cb().set(FUNC(mplay_state::bios_6402_w));
+	io2.out_portd_cb().set(FUNC(mplay_state::bios_gamesel_w));
+	io2.in_porte_cb().set(FUNC(mplay_state::bios_6404_r));
+	io2.out_porte_cb().set(FUNC(mplay_state::bios_6404_w));
 
 	/* New update functions to handle the extra layer */
-	MCFG_SCREEN_MODIFY("megadriv")
-	MCFG_SCREEN_RAW_PARAMS(XTAL_10_738635MHz/2, \
+	subdevice<screen_device>("megadriv")->set_raw(XTAL(10'738'635)/2, \
 			sega315_5124_device::WIDTH, sega315_5124_device::LBORDER_START + sega315_5124_device::LBORDER_WIDTH, sega315_5124_device::LBORDER_START + sega315_5124_device::LBORDER_WIDTH + 256, \
-			sega315_5124_device::HEIGHT_NTSC, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT + 224)
-	MCFG_SCREEN_UPDATE_DRIVER(mplay_state, screen_update_megplay)
+			sega315_5124_device::HEIGHT_NTSC, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT, sega315_5124_device::TBORDER_START + sega315_5124_device::NTSC_224_TBORDER_HEIGHT + 224);
+	subdevice<screen_device>("megadriv")->set_screen_update(FUNC(mplay_state::screen_update_megplay));
 
 	// Megaplay has an additional SMS VDP as an overlay
-	MCFG_DEVICE_ADD("vdp1", SEGA315_5246, 0)
-	MCFG_SEGA315_5246_SET_SCREEN("megadriv")
-	MCFG_SEGA315_5246_IS_PAL(false)
-	MCFG_SEGA315_5246_INT_CB(INPUTLINE("mtbios", 0))
-MACHINE_CONFIG_END
+	SEGA315_5246(config, m_vdp1, MASTER_CLOCK / 5); /* ?? */
+	m_vdp1->set_screen("megadriv");
+	m_vdp1->set_is_pal(false);
+	m_vdp1->n_int().set_inputline(m_bioscpu, 0);
+	m_vdp1->add_route(ALL_OUTPUTS, "lspeaker", 0.25);
+	m_vdp1->add_route(ALL_OUTPUTS, "rspeaker", 0.25);
+}
 
 
 /* MegaPlay Games - Modified Genesis games */
 
 #define ROM_LOAD_BIOS(bios,name,offset,length,hash) \
-		ROMX_LOAD(name, offset, length, hash, ROM_BIOS(bios+1)) /* Note '+1' */
+		ROMX_LOAD(name, offset, length, hash, ROM_BIOS(bios))
 
 #define MEGAPLAY_BIOS \
 	ROM_SYSTEM_BIOS( 0, "ver1",       "Megaplay Bios (Ver. 1)" ) \
@@ -792,7 +801,7 @@ ROM_START( mp_gslam ) /* Grand Slam */
 ROM_END
 
 
-ROM_START( mp_twc ) /* Tecmo World Cup */
+ROM_START( mp_twcup ) /* Tecmo World Cup */
 	ROM_REGION( 0x400000, "maincpu", 0 )
 	ROM_LOAD16_BYTE( "ep15183.ic2", 0x000000, 0x040000, CRC(8b79b861) SHA1(c72af72840513b82f2562409eccdf13b031bf3c0) )
 	ROM_LOAD16_BYTE( "ep15182.ic1", 0x000001, 0x040000, CRC(eb8325c3) SHA1(bb21ac926c353e14184dd476222bc6a8714606e5) )
@@ -899,7 +908,7 @@ WRITE16_MEMBER(mplay_state::extra_ram_w )
 }
 
 
-DRIVER_INIT_MEMBER(mplay_state,megaplay)
+void mplay_state::init_megaplay()
 {
 	// copy game instruction rom to main map. maybe this should just be accessed
 	// through a handler instead?
@@ -918,7 +927,7 @@ DRIVER_INIT_MEMBER(mplay_state,megaplay)
 	m_ic36_ram = std::make_unique<uint16_t[]>(0x10000 / 2);
 	m_ic37_ram = std::make_unique<uint8_t[]>(0x10000);
 
-	DRIVER_INIT_CALL(megadrij);
+	init_megadrij();
 	m_megadrive_io_read_data_port_ptr = read8_delegate(FUNC(md_base_state::megadrive_io_read_data_port_3button),this);
 	m_megadrive_io_write_data_port_ptr = write16_delegate(FUNC(md_base_state::megadrive_io_write_data_port_3button),this);
 
@@ -962,21 +971,21 @@ didn't have original Sega part numbers it's probably a converted TWC cart
 ** Probably reused cart case
 */
 
-/* -- */ GAME( 1993, megaplay, 0,        megaplay, megaplay, mplay_state, megaplay, ROT0, "Sega",                  "Mega Play BIOS", MACHINE_IS_BIOS_ROOT )
-/* 01 */ GAME( 1993, mp_sonic, megaplay, megaplay, mp_sonic, mplay_state, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog (Mega Play)" , 0 )
-/* 02 */ GAME( 1993, mp_gaxe2, megaplay, megaplay, mp_gaxe2, mplay_state, megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play) (Rev B)" , 0 )
-/* 02 */ GAME( 1993, mp_gaxe2a,mp_gaxe2, megaplay, mp_gaxe2, mplay_state, megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play)" , 0 )
-/* 03 */ GAME( 1993, mp_gslam, megaplay, megaplay, mp_gslam, mplay_state, megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)",0  )
-/* 04 */ GAME( 1993, mp_twc,   megaplay, megaplay, mp_twc,   mplay_state, megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)" , 0 )
-/* 05 */ GAME( 1993, mp_sor2,  megaplay, megaplay, mp_sor2,  mplay_state, megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)" , 0 )
-/* 06 */ GAME( 1993, mp_bio,   megaplay, megaplay, mp_bio,   mplay_state, megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)" , 0 )
-/* 07 */ GAME( 1993, mp_soni2, megaplay, megaplay, mp_soni2, mplay_state, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega Play)" , 0 )
-/* 08 */
-/* 09 */ GAME( 1993, mp_shnb3, megaplay, megaplay, mp_shnb3, mplay_state, megaplay, ROT0, "Sega",                  "Shinobi III (Mega Play)" , 0 )
-/* 10 */ GAME( 1993, mp_gunhe, megaplay, megaplay, mp_gunhe, mplay_state, megaplay, ROT0, "Sega",                  "Gunstar Heroes (Mega Play)" , 0 )
-/* 11 */ GAME( 1993, mp_mazin, megaplay, megaplay, mp_mazin, mplay_state, megaplay, ROT0, "Sega",                  "Mazin Wars / Mazin Saga (Mega Play)",0  )
+/* -- */ GAME( 1993, megaplay, 0,        megaplay, megaplay, mplay_state, init_megaplay, ROT0, "Sega",                  "Mega Play BIOS", MACHINE_IS_BIOS_ROOT | MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 01 */ GAME( 1993, mp_sonic, megaplay, megaplay, mp_sonic, mplay_state, init_megaplay, ROT0, "Sega",                  "Sonic The Hedgehog (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 02 */ GAME( 1993, mp_gaxe2, megaplay, megaplay, mp_gaxe2, mplay_state, init_megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play) (Rev B)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 02 */ GAME( 1993, mp_gaxe2a,mp_gaxe2, megaplay, mp_gaxe2, mplay_state, init_megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 03 */ GAME( 1993, mp_gslam, megaplay, megaplay, mp_gslam, mplay_state, init_megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 04 */ GAME( 1993, mp_twcup, megaplay, megaplay, mp_twc,   mplay_state, init_megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 05 */ GAME( 1993, mp_sor2,  megaplay, megaplay, mp_sor2,  mplay_state, init_megaplay, ROT0, "Sega",                  "Streets of Rage II (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 06 */ GAME( 1993, mp_bio,   megaplay, megaplay, mp_bio,   mplay_state, init_megaplay, ROT0, "Sega",                  "Bio-hazard Battle (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 07 */ GAME( 1993, mp_soni2, megaplay, megaplay, mp_soni2, mplay_state, init_megaplay, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 08 - Columns 3? see below */
+/* 09 */ GAME( 1993, mp_shnb3, megaplay, megaplay, mp_shnb3, mplay_state, init_megaplay, ROT0, "Sega",                  "Shinobi III (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 10 */ GAME( 1993, mp_gunhe, megaplay, megaplay, mp_gunhe, mplay_state, init_megaplay, ROT0, "Sega",                  "Gunstar Heroes (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
+/* 11 */ GAME( 1993, mp_mazin, megaplay, megaplay, mp_mazin, mplay_state, init_megaplay, ROT0, "Sega",                  "Mazin Wars / Mazin Saga (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
 
-/* ?? */ GAME( 1993, mp_col3,  megaplay, megaplay, megaplay, mplay_state, megaplay, ROT0, "Sega",                  "Columns III (Mega Play)" , 0 )
+/* ?? */ GAME( 1993, mp_col3,  megaplay, megaplay, megaplay, mplay_state, init_megaplay, ROT0, "Sega",                  "Columns III (Mega Play)", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS )
 
 
 /* Not confirmed to exist:

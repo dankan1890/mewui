@@ -10,8 +10,6 @@
 
 #define DECOBSMT_TAG "decobsmt"
 
-#define MCFG_DECOBSMT_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, DECOBSMT, 0)
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -23,15 +21,17 @@ public:
 	// construction/destruction
 	decobsmt_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	DECLARE_WRITE8_MEMBER(bsmt_reset_w);
-	DECLARE_READ8_MEMBER(bsmt_status_r);
-	DECLARE_WRITE8_MEMBER(bsmt0_w);
-	DECLARE_WRITE8_MEMBER(bsmt1_w);
-	DECLARE_READ8_MEMBER(bsmt_comms_r);
-	DECLARE_WRITE8_MEMBER(bsmt_comms_w);
+	void bsmt_reset_w(u8 data);
+	u8 bsmt_status_r();
+	void bsmt0_w(u8 data);
+	void bsmt1_w(offs_t offset, u8 data);
+	u8 bsmt_comms_r();
+	void bsmt_comms_w(u8 data);
 
 	DECLARE_WRITE_LINE_MEMBER(bsmt_reset_line);
 
+	void bsmt_map(address_map &map);
+	void decobsmt_map(address_map &map);
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -53,7 +53,6 @@ private:
 
 
 // device type definition
-extern const device_type DECOBSMT;
 DECLARE_DEVICE_TYPE(DECOBSMT, decobsmt_device)
 
 #endif  // MAME_AUDIO_DECOBSMT_H

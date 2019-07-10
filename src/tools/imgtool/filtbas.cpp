@@ -116,6 +116,8 @@ static imgtoolerr_t basic_readfile(const basictokens *tokens,
 		destf.printf("%u ", (unsigned) line_number);
 		shift = 0x00;
 
+		in_string = false; // in case the last line didn't terminate a string
+
 		while((mem_stream->read(&b, 1) > 0) && (b != 0x00))
 		{
 			if (b == 0x22)
@@ -245,8 +247,8 @@ static imgtoolerr_t basic_writefile(const basictokens *tokens,
 			}
 			else
 			{
-				place_integer_be(line_header, 0, 2, address);
-				place_integer_be(line_header, 2, 2, line_number);
+				place_integer_le(line_header, 0, 2, address);
+				place_integer_le(line_header, 2, 2, line_number);
 			}
 
 			/* emit line header */

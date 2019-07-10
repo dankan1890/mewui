@@ -8,6 +8,9 @@
      - Add pinout and description
      - Create a separate implementation for the PC060HA
 
+    General rule seems to be that TC0140SYT supports a YM2610,
+    whereas PC060HA goes with a YM2203 or YM2151.
+
 **********************************************************************************************/
 
 #include "emu.h"
@@ -23,14 +26,15 @@
 
 **********************************************************************************************/
 
-#define TC0140SYT_PORT01_FULL         (0x01)
-#define TC0140SYT_PORT23_FULL         (0x02)
-#define TC0140SYT_PORT01_FULL_MASTER  (0x04)
-#define TC0140SYT_PORT23_FULL_MASTER  (0x08)
+static constexpr u8 TC0140SYT_PORT01_FULL =        0x01;
+static constexpr u8 TC0140SYT_PORT23_FULL =        0x02;
+static constexpr u8 TC0140SYT_PORT01_FULL_MASTER = 0x04;
+static constexpr u8 TC0140SYT_PORT23_FULL_MASTER = 0x08;
 
 
 // device type definition
 DEFINE_DEVICE_TYPE(TC0140SYT, tc0140syt_device, "tc0140syt", "Taito TC0140SYT")
+DEFINE_DEVICE_TYPE(PC060HA, pc060ha_device, "pc060ha", "Taito PC060HA CIU")
 
 
 //**************************************************************************
@@ -41,8 +45,8 @@ DEFINE_DEVICE_TYPE(TC0140SYT, tc0140syt_device, "tc0140syt", "Taito TC0140SYT")
 //  tc0140syt_device - constructor
 //-------------------------------------------------
 
-tc0140syt_device::tc0140syt_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
-	: device_t(mconfig, TC0140SYT, tag, owner, clock)
+tc0140syt_device::tc0140syt_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
+	: device_t(mconfig, type, tag, owner, clock)
 	, m_mainmode(0)
 	, m_submode(0)
 	, m_status(0)
@@ -50,8 +54,13 @@ tc0140syt_device::tc0140syt_device(const machine_config &mconfig, const char *ta
 	, m_mastercpu(*this, finder_base::DUMMY_TAG)
 	, m_slavecpu(*this, finder_base::DUMMY_TAG)
 {
-	memset(m_slavedata, 0, sizeof(uint8_t)*4);
-	memset(m_masterdata, 0, sizeof(uint8_t)*4);
+	std::fill(std::begin(m_slavedata), std::end(m_slavedata), 0);
+	std::fill(std::begin(m_masterdata), std::end(m_masterdata), 0);
+}
+
+tc0140syt_device::tc0140syt_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: tc0140syt_device(mconfig, TC0140SYT, tag, owner, clock)
+{
 }
 
 
@@ -81,7 +90,7 @@ void tc0140syt_device::device_reset()
 	m_status = 0;
 	m_nmi_enabled = 0;
 
-	for (uint32_t i = 0; i < 4; i++)
+	for (u8 i = 0; i < 4; i++)
 	{
 		m_slavedata[i] = 0;
 		m_masterdata[i] = 0;
@@ -95,8 +104,8 @@ void tc0140syt_device::device_reset()
 
 void tc0140syt_device::update_nmi()
 {
-	uint32_t nmi_pending = m_status & (TC0140SYT_PORT23_FULL | TC0140SYT_PORT01_FULL);
-	uint32_t state = (nmi_pending && m_nmi_enabled) ? ASSERT_LINE : CLEAR_LINE;
+	u32 nmi_pending = m_status & (TC0140SYT_PORT23_FULL | TC0140SYT_PORT01_FULL);
+	u32 state = (nmi_pending && m_nmi_enabled) ? ASSERT_LINE : CLEAR_LINE;
 
 	m_slavecpu->set_input_line(INPUT_LINE_NMI, state);
 }
@@ -106,7 +115,7 @@ void tc0140syt_device::update_nmi()
 //  MASTER SIDE
 //-------------------------------------------------
 
-WRITE8_MEMBER( tc0140syt_device::master_port_w )
+void tc0140syt_device::master_port_w(u8 data)
 {
 	data &= 0x0f;
 	m_mainmode = data;
@@ -117,7 +126,7 @@ WRITE8_MEMBER( tc0140syt_device::master_port_w )
 	}
 }
 
-WRITE8_MEMBER( tc0140syt_device::master_comm_w )
+void tc0140syt_device::master_comm_w(u8 data)
 {
 	machine().scheduler().synchronize(); // let slavecpu catch up (after we return and the main cpu finishes what it's doing)
 	data &= 0x0f; /* this is important, otherwise ballbros won't work */
@@ -154,10 +163,10 @@ WRITE8_MEMBER( tc0140syt_device::master_comm_w )
 	}
 }
 
-READ8_MEMBER( tc0140syt_device::master_comm_r )
+u8 tc0140syt_device::master_comm_r()
 {
 	machine().scheduler().synchronize(); // let slavecpu catch up (after we return and the main cpu finishes what it's doing)
-	uint8_t res = 0;
+	u8 res = 0;
 
 	switch (m_mainmode)
 	{
@@ -195,7 +204,7 @@ READ8_MEMBER( tc0140syt_device::master_comm_r )
 //  SLAVE SIDE
 //-------------------------------------------------
 
-WRITE8_MEMBER( tc0140syt_device::slave_port_w )
+void tc0140syt_device::slave_port_w(u8 data)
 {
 	data &= 0x0f;
 	m_submode = data;
@@ -206,7 +215,7 @@ WRITE8_MEMBER( tc0140syt_device::slave_port_w )
 	}
 }
 
-WRITE8_MEMBER( tc0140syt_device::slave_comm_w )
+void tc0140syt_device::slave_comm_w(u8 data)
 {
 	data &= 0x0f;
 
@@ -249,9 +258,9 @@ WRITE8_MEMBER( tc0140syt_device::slave_comm_w )
 	}
 }
 
-READ8_MEMBER( tc0140syt_device::slave_comm_r )
+u8 tc0140syt_device::slave_comm_r()
 {
-	uint8_t res = 0;
+	u8 res = 0;
 
 	switch (m_submode)
 	{
@@ -284,4 +293,14 @@ READ8_MEMBER( tc0140syt_device::slave_comm_r )
 	}
 
 	return res;
+}
+
+
+//-------------------------------------------------
+//  pc060ha_device - constructor
+//-------------------------------------------------
+
+pc060ha_device::pc060ha_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: tc0140syt_device(mconfig, PC060HA, tag, owner, clock)
+{
 }

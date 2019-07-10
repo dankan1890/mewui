@@ -1,19 +1,22 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
+#include "bx_p.h"
 #include <bx/commandline.h>
 #include <bx/string.h>
 
 namespace bx
 {
-	// Reference:
-	// http://msdn.microsoft.com/en-us/library/a1y7w461.aspx
-	const char* tokenizeCommandLine(const char* _commandLine, char* _buffer, uint32_t& _bufferSize, int32_t& _argc, char* _argv[], int32_t _maxArgvs, char _term)
+	// Reference(s):
+	// - https://web.archive.org/web/20180629044234/https://msdn.microsoft.com/en-us/library/a1y7w461.aspx
+	//
+	StringView tokenizeCommandLine(const StringView& _commandLine, char* _buffer, uint32_t& _bufferSize, int32_t& _argc, char* _argv[], int32_t _maxArgvs, char _term)
 	{
 		int32_t argc = 0;
-		const char* curr = _commandLine;
+		const char* curr = _commandLine.getPtr();
+		const char* end  = _commandLine.getTerm();
 		char* currOut = _buffer;
 		char term = ' ';
 		bool sub = false;
@@ -29,7 +32,7 @@ namespace bx
 
 		ParserState state = SkipWhitespace;
 
-		while ('\0' != *curr
+		while (end != curr
 		&&     _term != *curr
 		&&     argc < _maxArgvs)
 		{
@@ -63,7 +66,7 @@ namespace bx
 						state = Escape;
 					}
 					else if ('"' == *curr
-						&&  '"' != term)
+					     &&  '"' != term)
 					{
 						sub = !sub;
 					}
@@ -134,7 +137,7 @@ namespace bx
 			++curr;
 		}
 
-		return curr;
+		return StringView(curr, _commandLine.getTerm() );
 	}
 
 	CommandLine::CommandLine(int32_t _argc, char const* const* _argv)
@@ -197,7 +200,7 @@ namespace bx
 		const char* arg = findOption(_short, _long, 1);
 		if (NULL != arg)
 		{
-			_value = atoi(arg);
+			fromString(&_value, arg);
 			return true;
 		}
 
@@ -209,7 +212,7 @@ namespace bx
 		const char* arg = findOption(_short, _long, 1);
 		if (NULL != arg)
 		{
-			_value = atoi(arg);
+			fromString(&_value, arg);
 			return true;
 		}
 
@@ -221,7 +224,7 @@ namespace bx
 		const char* arg = findOption(_short, _long, 1);
 		if (NULL != arg)
 		{
-			_value = float(atof(arg));
+			fromString(&_value, arg);
 			return true;
 		}
 
@@ -233,7 +236,7 @@ namespace bx
 		const char* arg = findOption(_short, _long, 1);
 		if (NULL != arg)
 		{
-			_value = atof(arg);
+			fromString(&_value, arg);
 			return true;
 		}
 
@@ -245,11 +248,11 @@ namespace bx
 		const char* arg = findOption(_short, _long, 1);
 		if (NULL != arg)
 		{
-			if ('0' == *arg || (0 == strincmp(arg, "false") ) )
+			if ('0' == *arg || (0 == strCmpI(arg, "false") ) )
 			{
 				_value = false;
 			}
-			else if ('0' != *arg || (0 == strincmp(arg, "true") ) )
+			else if ('0' != *arg || (0 == strCmpI(arg, "true") ) )
 			{
 				_value = true;
 			}
@@ -262,7 +265,7 @@ namespace bx
 
 	const char* CommandLine::find(int32_t _skip, const char _short, const char* _long, int32_t _numParams) const
 	{
-		for (int32_t ii = 0; ii < m_argc; ++ii)
+		for (int32_t ii = 0; ii < m_argc && 0 != strCmp(m_argv[ii], "--"); ++ii)
 		{
 			const char* arg = m_argv[ii];
 			if ('-' == *arg)
@@ -270,7 +273,7 @@ namespace bx
 				++arg;
 				if (_short == *arg)
 				{
-					if (1 == strnlen(arg) )
+					if (1 == strLen(arg) )
 					{
 						if (0 == _skip)
 						{
@@ -293,7 +296,7 @@ namespace bx
 				}
 				else if (NULL != _long
 					 &&  '-'  == *arg
-					 &&  0 == strincmp(arg+1, _long) )
+					 &&  0 == strCmpI(arg+1, _long) )
 				{
 					if (0 == _skip)
 					{
@@ -317,6 +320,16 @@ namespace bx
 		}
 
 		return NULL;
+	}
+
+	int32_t CommandLine::getNum() const
+	{
+		return m_argc;
+	}
+
+	char const* CommandLine::get(int32_t _idx) const
+	{
+		return m_argv[_idx];
 	}
 
 } // namespace bx

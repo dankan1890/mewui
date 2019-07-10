@@ -61,6 +61,13 @@
 		else
 			_p(2, '<Keyword>Win32Proj</Keyword>')
 		end
+		if _ACTION:sub(3) == "2015" or _ACTION:sub(3) == "2017" or _ACTION:sub(3) == "llvm" then
+			_p(2,'<PreferredToolArchitecture>x64</PreferredToolArchitecture>')
+		end
+		if (_ACTION:sub(3) == "2017" or _ACTION:sub(3) == "llvm")
+		and os.isdir(path.join(os.getenv("VSINSTALLDIR"), "VC/Tools/MSVC/14.14.26428")) then
+			_p(2,'<VCToolsVersion>14.14.26428</VCToolsVersion>')
+		end
 
 		_p(1,'</PropertyGroup>')
 	end
@@ -168,7 +175,7 @@
 
 			_p(1,'<PropertyGroup '..if_config_and_platform() ..'>', premake.esc(cfginfo.name))
 
-			_p(2,'<OutDir>%s</OutDir>', premake.esc(outdir))
+			_p(2,'<OutDir>%s</OutDir>', iif(outdir:len() > 0, premake.esc(outdir), ".\\"))
 
 			if cfg.platform == "Xbox360" then
 				_p(2,'<OutputFile>$(OutDir)%s</OutputFile>', premake.esc(target.name))
@@ -401,24 +408,24 @@
 
 		if  not premake.config.isoptimizedbuild(cfg.flags) then
 			if not cfg.flags.Managed then
-				_p(3,'<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>')
+				_p(3, '<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>')
 			end
 
 			if cfg.flags.ExtraWarnings then
---				_p(3,'<SmallerTypeCheck>true</SmallerTypeCheck>')
+--				_p(3, '<SmallerTypeCheck>true</SmallerTypeCheck>')
 			end
 		else
-			_p(3,'<StringPooling>true</StringPooling>')
+			_p(3, '<StringPooling>true</StringPooling>')
 		end
 
 		if cfg.platform == "Durango" or cfg.flags.NoWinRT then
 			_p(3, '<CompileAsWinRT>false</CompileAsWinRT>')
 		end
 
-		_p(3,'<RuntimeLibrary>%s</RuntimeLibrary>', runtime(cfg))
+		_p(3, '<RuntimeLibrary>%s</RuntimeLibrary>', runtime(cfg))
 
 		if cfg.flags.NoBufferSecurityCheck then
-			_p(3,'<BufferSecurityCheck>false</BufferSecurityCheck>')
+			_p(3, '<BufferSecurityCheck>false</BufferSecurityCheck>')
 		end
 
 		_p(3,'<FunctionLevelLinking>true</FunctionLevelLinking>')
@@ -426,23 +433,25 @@
 		-- If we aren't running NoMultiprocessorCompilation and not wanting a minimal rebuild,
 		-- then enable MultiProcessorCompilation.
 		if not cfg.flags.NoMultiProcessorCompilation and not cfg.flags.EnableMinimalRebuild then
-			_p(3,'<MultiProcessorCompilation>true</MultiProcessorCompilation>')
+			_p(3, '<MultiProcessorCompilation>true</MultiProcessorCompilation>')
 		else
-			_p(3,'<MultiProcessorCompilation>false</MultiProcessorCompilation>')
+			_p(3, '<MultiProcessorCompilation>false</MultiProcessorCompilation>')
 		end
 
 		precompiled_header(cfg)
 
-		if cfg.flags.ExtraWarnings then
-			_p(3,'<WarningLevel>Level4</WarningLevel>')
+		if cfg.flags.PedanticWarnings then
+			_p(3, '<WarningLevel>EnableAllWarnings</WarningLevel>')
+		elseif cfg.flags.ExtraWarnings then
+			_p(3, '<WarningLevel>Level4</WarningLevel>')
 		elseif cfg.flags.MinimumWarnings then
-			_p(3,'<WarningLevel>Level1</WarningLevel>')
+			_p(3, '<WarningLevel>Level1</WarningLevel>')
 		else
-			_p(3,'<WarningLevel>Level3</WarningLevel>')
+			_p(3 ,'<WarningLevel>Level3</WarningLevel>')
 		end
 
 		if cfg.flags.FatalWarnings then
-			_p(3,'<TreatWarningAsError>true</TreatWarningAsError>')
+			_p(3, '<TreatWarningAsError>true</TreatWarningAsError>')
 		end
 
 		exceptions(cfg)
@@ -453,13 +462,20 @@
 		floating_point(cfg)
 		debug_info(cfg)
 
-		if cfg.flags.Symbols then
-			_p(3,'<ProgramDataBaseFileName>$(OutDir)%s.pdb</ProgramDataBaseFileName>'
-				, path.getbasename(cfg.buildtarget.name))
+		if _ACTION:sub(3) == "llvm" then
+			_p(3,'<SupportJustMyCode>false</SupportJustMyCode>')
+		end
+
+		if  cfg.flags.Symbols
+		and _ACTION:sub(3) ~= "2017" and _ACTION:sub(3) ~= "llvm"
+		then
+			_p(3, '<ProgramDataBaseFileName>$(OutDir)%s.pdb</ProgramDataBaseFileName>'
+				, path.getbasename(cfg.buildtarget.name)
+				)
 		end
 
 		if cfg.flags.NoFramePointer then
-			_p(3,'<OmitFramePointers>true</OmitFramePointers>')
+			_p(3, '<OmitFramePointers>true</OmitFramePointers>')
 		end
 
 		if cfg.flags.UseFullPaths then
@@ -507,13 +523,16 @@
 		end
 	end
 
-	local function item_def_lib(cfg)
+	local function item_def_lib(prj, cfg)
 		-- The Xbox360 project files are stored in another place in the project file.
 		if cfg.kind == 'StaticLib' and cfg.platform ~= "Xbox360" then
 			_p(1,'<Lib>')
 				_p(2,'<OutputFile>$(OutDir)%s</OutputFile>',cfg.buildtarget.name)
 				additional_options(2,cfg)
 				link_target_machine(2,cfg)
+				if _ACTION:sub(3) == "llvm" and prj.name == "portaudio" then -- MSVC-LLVM needs special help
+					_p(2,'<AdditionalDependencies>ksuser.lib;%%(AdditionalDependencies)</AdditionalDependencies>')
+				end
 			_p(1,'</Lib>')
 		end
 	end
@@ -585,7 +604,17 @@
 	function vc2010.link(cfg)
 		_p(2,'<Link>')
 		_p(3,'<SubSystem>%s</SubSystem>', iif(cfg.kind == "ConsoleApp", "Console", "Windows"))
-		_p(3,'<GenerateDebugInformation>%s</GenerateDebugInformation>', tostring(cfg.flags.Symbols ~= nil))
+		_p(3,'<GenerateDebugInformation>%s</GenerateDebugInformation>',
+			iif(cfg.flags.Symbols ~= nil, iif(_ACTION:sub(3) ~= "llvm", "true", "DebugFull"), "false")
+			)
+
+		if  cfg.flags.Symbols
+		and (_ACTION:sub(3) == "2017" or _ACTION:sub(3) == "llvm")
+		then
+			_p(3, '<ProgramDataBaseFileName>$(OutDir)%s.pdb</ProgramDataBaseFileName>'
+				, path.getbasename(cfg.buildtarget.name)
+				)
+		end
 
 		if premake.config.isoptimizedbuild(cfg.flags) then
 			_p(3,'<EnableCOMDATFolding>true</EnableCOMDATFolding>')
@@ -667,7 +696,7 @@
 					,premake.esc(cfginfo.name))
 				vs10_clcompile(cfg)
 				resource_compile(cfg)
-				item_def_lib(cfg)
+				item_def_lib(prj, cfg)
 				vc2010.link(cfg)
 				event_hooks(cfg)
 				vs10_masm(prj, cfg)
@@ -1122,9 +1151,12 @@
 --
 
 	function vc2010.debugdir(cfg)
-		_p(2, '<DebuggerFlavor>%s</DebuggerFlavor>'
-			, iif(cfg.platform == "Orbis", 'ORBISDebugger', 'WindowsLocalDebugger')
-			)
+		local debuggerFlavor =
+			  iif(cfg.platform == "Orbis",   'ORBISDebugger'
+			, iif(cfg.platform == "Durango", 'XboxOneVCppDebugger'
+			,                                'WindowsLocalDebugger'
+			))
+		_p(2, '<DebuggerFlavor>%s</DebuggerFlavor>', debuggerFlavor)
 
 		if cfg.debugdir and not vstudio.iswinrt() then
 			_p(2, '<LocalDebuggerWorkingDirectory>%s</LocalDebuggerWorkingDirectory>'

@@ -2,11 +2,10 @@
 // copyright-holders:Miodrag Milanovic, Robbbert
 /***************************************************************************
 
-        MITS Altair 680b
+MITS Altair 680b
 
-        03/12/2009 Skeleton driver.
-
-        08/June/2011 connected to a terminal
+2009-12-03 Skeleton driver.
+2011-06-08 Connected to a terminal
 
 Monitor Commands:
 J
@@ -17,39 +16,33 @@ P this does a rti and causes a momentary crash. Weird.
 
 
 ToDo:
-- Hook ACIA back up, when there is some way to use it.
 
 
 ****************************************************************************/
 
 #include "emu.h"
 #include "cpu/m6800/m6800.h"
-#include "machine/mos6551.h"
-#include "machine/terminal.h"
+#include "machine/6850acia.h"
+#include "bus/rs232/rs232.h"
+#include "machine/clock.h"
 
-#define TERMINAL_TAG "terminal"
 
 class mits680b_state : public driver_device
 {
 public:
 	mits680b_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+	{ }
 
-	DECLARE_READ8_MEMBER(terminal_status_r);
-	DECLARE_READ8_MEMBER(terminal_r);
+	void mits680b(machine_config &config);
+
+private:
 	DECLARE_READ8_MEMBER(status_check_r);
-	void kbd_put(u8 data);
 
-protected:
-	virtual void machine_reset() override;
+	void mem_map(address_map &map);
 
 	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
-	uint8_t m_term_data;
 };
 
 READ8_MEMBER( mits680b_state::status_check_r )
@@ -57,64 +50,47 @@ READ8_MEMBER( mits680b_state::status_check_r )
 	return 0; // crashes at start if bit 7 high
 }
 
-READ8_MEMBER( mits680b_state::terminal_status_r )
+
+void mits680b_state::mem_map(address_map &map)
 {
-	return (m_term_data) ? 3 : 2;
+	map.unmap_value_high();
+	map(0x0000, 0x03ff).ram(); // 1024 bytes RAM
+	map(0xf000, 0xf001).rw("acia", FUNC(acia6850_device::read), FUNC(acia6850_device::write));
+	map(0xf002, 0xf002).r(FUNC(mits680b_state::status_check_r));
+	map(0xff00, 0xffff).rom().region("roms", 0);
 }
-
-READ8_MEMBER( mits680b_state::terminal_r )
-{
-	uint8_t ret = m_term_data;
-	m_term_data = 0;
-	return ret;
-}
-
-
-static ADDRESS_MAP_START(mits680b_mem, AS_PROGRAM, 8, mits680b_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE( 0x0000, 0x03ff ) AM_RAM // 1024 bytes RAM
-	//AM_RANGE( 0xf000, 0xf003 ) AM_DEVREADWRITE("acia",  mos6551_device, read, write )
-	AM_RANGE( 0xf000, 0xf000 ) AM_READ(terminal_status_r)
-	AM_RANGE( 0xf001, 0xf001 ) AM_READ(terminal_r) AM_DEVWRITE(TERMINAL_TAG, generic_terminal_device, write)
-	AM_RANGE( 0xf002, 0xf002 ) AM_READ(status_check_r)
-	AM_RANGE( 0xff00, 0xffff ) AM_ROM
-ADDRESS_MAP_END
 
 /* Input ports */
 static INPUT_PORTS_START( mits680b )
 INPUT_PORTS_END
 
 
-void mits680b_state::machine_reset()
+void mits680b_state::mits680b(machine_config &config)
 {
-	m_term_data = 0;
-}
-
-void mits680b_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-}
-
-static MACHINE_CONFIG_START( mits680b )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu",M6800, XTAL_1MHz / 2)
-	MCFG_CPU_PROGRAM_MAP(mits680b_mem)
+	M6800(config, m_maincpu, XTAL(1'000'000) / 2);
+	m_maincpu->set_addrmap(AS_PROGRAM, &mits680b_state::mem_map);
 
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(mits680b_state, kbd_put))
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 153600));
+	uart_clock.signal_handler().set("acia", FUNC(acia6850_device::write_txc));
+	uart_clock.signal_handler().append("acia", FUNC(acia6850_device::write_rxc));
 
-	/* acia */
-	//MCFG_ACIA6551_ADD("acia")
-MACHINE_CONFIG_END
+	acia6850_device &acia(ACIA6850(config, "acia", 0));
+	acia.txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
+	acia.rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("acia", FUNC(acia6850_device::write_rxd));
+	rs232.cts_handler().set("acia", FUNC(acia6850_device::write_cts));
+}
 
 /* ROM definition */
 ROM_START( mits680b )
-	ROM_REGION( 0x10000, "maincpu", ROMREGION_ERASEFF )
-	ROM_LOAD( "mits680b.bin", 0xff00, 0x0100, CRC(397e717f) SHA1(257d3eb1343b8611dc05455aeed33615d581f29c))
+	ROM_REGION( 0x100, "roms", ROMREGION_ERASEFF )
+	ROM_LOAD( "mits680b.bin", 0x0000, 0x0100, CRC(397e717f) SHA1(257d3eb1343b8611dc05455aeed33615d581f29c))
 ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE    INPUT     STATE           INIT  COMPANY  FULLNAME       FLAGS
-COMP( 1976, mits680b, 0,      0,      mits680b,  mits680b, mits680b_state, 0,    "MITS",  "Altair 680b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)
+//    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     CLASS           INIT        COMPANY  FULLNAME       FLAGS
+COMP( 1976, mits680b, 0,      0,      mits680b, mits680b, mits680b_state, empty_init, "MITS",  "Altair 680b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND)

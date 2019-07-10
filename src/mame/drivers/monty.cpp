@@ -21,8 +21,6 @@
     TODO:
     - Need instructions
     - Proper SED1503F emulation (it's simulated in-driver for now)
-    - After each keypress it hits a HALT instruction. I guess the controller's
-      sync pin is involved somehow.
     - When it wants tiles, put 64 into FD1B (monty), 7D1B (mmonty) and press
       Enter.
 
@@ -45,21 +43,33 @@ public:
 		, m_speaker(*this, "speaker")
 		, m_sed0(*this, "sed1520_0")
 		, m_writeUpper(false)
+		, m_halt(0)
 	{
 		for (auto & elem : m_pixels)
 			elem = 0xff000000;
 	}
 
+	DECLARE_WRITE_LINE_MEMBER(key_pressed);
+
+	void monty(machine_config &config);
+	void mmonty(machine_config &config);
+
+private:
 	DECLARE_WRITE8_MEMBER(sound_w);
 	DECLARE_WRITE8_MEMBER(ioDisplayWrite_w);
 	DECLARE_WRITE8_MEMBER(ioCommandWrite0_w);
 	DECLARE_WRITE8_MEMBER(ioCommandWrite1_w);
+	DECLARE_WRITE_LINE_MEMBER(halt_changed);
 
 	// screen updates
 	uint32_t lcd_update(screen_device& screen, bitmap_rgb32& bitmap, const rectangle& cliprect);
+	SED1520_UPDATE_CB(screen_update);
 
-private:
-	required_device<cpu_device> m_maincpu;
+	void mmonty_mem(address_map &map);
+	void monty_io(address_map &map);
+	void monty_mem(address_map &map);
+
+	required_device<z80_device> m_maincpu;
 	required_device<speaker_sound_device> m_speaker;
 	required_device<sed1520_device> m_sed0;     // TODO: This isn't actually a SED1520, it's a SED1503F
 	//required_device<sed1520_device> m_sed1;   // TODO: Also, there are 2 SED1503Fs on the board - one is flipped upside down
@@ -69,89 +79,93 @@ private:
 	uint32_t m_pixels[42*32];
 	bool m_sound_sw;
 	bool m_dirty;
+	int m_halt;
 };
 
 
-static ADDRESS_MAP_START( monty_mem, AS_PROGRAM, 8, monty_state )
-	AM_RANGE(0x0000, 0xbfff) AM_ROM
+void monty_state::monty_mem(address_map &map)
+{
+	map(0x0000, 0xbfff).rom();
 	//AM_RANGE(0x4000, 0x4000) // The main rom checks to see if another program is here on startup
-	AM_RANGE(0xf800, 0xffff) AM_RAM
-ADDRESS_MAP_END
+	map(0xf800, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START( mmonty_mem, AS_PROGRAM, 8, monty_state )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM
+void monty_state::mmonty_mem(address_map &map)
+{
+	map(0x0000, 0x3fff).rom();
 	//AM_RANGE(0xc000, 0xc000) // The main rom checks to see if another program is here on startup
-	AM_RANGE(0x8000, 0xffff) AM_ROM
-	AM_RANGE(0x7800, 0x7fff) AM_RAM
-ADDRESS_MAP_END
+	map(0x8000, 0xffff).rom();
+	map(0x7800, 0x7fff).ram();
+}
 
 
-static ADDRESS_MAP_START( monty_io, AS_IO, 8, monty_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x00) AM_WRITE(ioCommandWrite0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(sound_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(ioCommandWrite1_w)
-	AM_RANGE(0x80, 0xff) AM_WRITE(ioDisplayWrite_w)
+void monty_state::monty_io(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x00).w(FUNC(monty_state::ioCommandWrite0_w));
+	map(0x01, 0x01).w(FUNC(monty_state::sound_w));
+	map(0x02, 0x02).w(FUNC(monty_state::ioCommandWrite1_w));
+	map(0x80, 0xff).w(FUNC(monty_state::ioDisplayWrite_w));
 
 	// 7 reads from a bit shifted IO port
-	AM_RANGE(0x01, 0x01) AM_READ_PORT("X1")
-	AM_RANGE(0x02, 0x02) AM_READ_PORT("X2")
-	AM_RANGE(0x04, 0x04) AM_READ_PORT("X3")
-	AM_RANGE(0x08, 0x08) AM_READ_PORT("X4")
-	AM_RANGE(0x10, 0x10) AM_READ_PORT("X5")
-	AM_RANGE(0x20, 0x20) AM_READ_PORT("X6")
-	AM_RANGE(0x40, 0x40) AM_READ_PORT("X7")
-ADDRESS_MAP_END
+	map(0x01, 0x01).portr("X1");
+	map(0x02, 0x02).portr("X2");
+	map(0x04, 0x04).portr("X3");
+	map(0x08, 0x08).portr("X4");
+	map(0x10, 0x10).portr("X5");
+	map(0x20, 0x20).portr("X6");
+	map(0x40, 0x40).portr("X7");
+}
 
 
 // Input ports
 static INPUT_PORTS_START( monty )
 	PORT_START("X1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Return") PORT_CODE(KEYCODE_ENTER) PORT_CHAR(13)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Left") PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(8)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Space") PORT_CODE(KEYCODE_SPACE) PORT_CHAR(' ')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("-") PORT_CODE(KEYCODE_MINUS) PORT_CHAR('-')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Z") PORT_CODE(KEYCODE_Z) PORT_CHAR('Z')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Return") PORT_CODE(KEYCODE_ENTER) PORT_CHAR(13) PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Left") PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(8) PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Space") PORT_CODE(KEYCODE_SPACE) PORT_CHAR(' ') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("-") PORT_CODE(KEYCODE_MINUS) PORT_CHAR('-') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Z") PORT_CODE(KEYCODE_Z) PORT_CHAR('Z') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Y") PORT_CODE(KEYCODE_Y) PORT_CHAR('Y')
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("X") PORT_CODE(KEYCODE_X) PORT_CHAR('X')
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("W") PORT_CODE(KEYCODE_W) PORT_CHAR('W')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("V") PORT_CODE(KEYCODE_V) PORT_CHAR('V')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("U") PORT_CODE(KEYCODE_U) PORT_CHAR('U')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Y") PORT_CODE(KEYCODE_Y) PORT_CHAR('Y') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("X") PORT_CODE(KEYCODE_X) PORT_CHAR('X') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("W") PORT_CODE(KEYCODE_W) PORT_CHAR('W') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("V") PORT_CODE(KEYCODE_V) PORT_CHAR('V') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("U") PORT_CODE(KEYCODE_U) PORT_CHAR('U') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X3")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("T") PORT_CODE(KEYCODE_T) PORT_CHAR('T')
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("S") PORT_CODE(KEYCODE_S) PORT_CHAR('S')
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("R") PORT_CODE(KEYCODE_R) PORT_CHAR('R')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Q") PORT_CODE(KEYCODE_Q) PORT_CHAR('Q')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("P") PORT_CODE(KEYCODE_P) PORT_CHAR('P')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("T") PORT_CODE(KEYCODE_T) PORT_CHAR('T') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("S") PORT_CODE(KEYCODE_S) PORT_CHAR('S') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("R") PORT_CODE(KEYCODE_R) PORT_CHAR('R') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("Q") PORT_CODE(KEYCODE_Q) PORT_CHAR('Q') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("P") PORT_CODE(KEYCODE_P) PORT_CHAR('P') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X4")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("O") PORT_CODE(KEYCODE_O) PORT_CHAR('O')
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("N") PORT_CODE(KEYCODE_N) PORT_CHAR('N')
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("M") PORT_CODE(KEYCODE_M) PORT_CHAR('M')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("L") PORT_CODE(KEYCODE_L) PORT_CHAR('L')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("K") PORT_CODE(KEYCODE_K) PORT_CHAR('K')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("O") PORT_CODE(KEYCODE_O) PORT_CHAR('O') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("N") PORT_CODE(KEYCODE_N) PORT_CHAR('N') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("M") PORT_CODE(KEYCODE_M) PORT_CHAR('M') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("L") PORT_CODE(KEYCODE_L) PORT_CHAR('L') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("K") PORT_CODE(KEYCODE_K) PORT_CHAR('K') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X5")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("J") PORT_CODE(KEYCODE_J) PORT_CHAR('J')
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("I") PORT_CODE(KEYCODE_I) PORT_CHAR('I')
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("H") PORT_CODE(KEYCODE_H) PORT_CHAR('H')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("G") PORT_CODE(KEYCODE_G) PORT_CHAR('G')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("F") PORT_CODE(KEYCODE_F) PORT_CHAR('F')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("J") PORT_CODE(KEYCODE_J) PORT_CHAR('J') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("I") PORT_CODE(KEYCODE_I) PORT_CHAR('I') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("H") PORT_CODE(KEYCODE_H) PORT_CHAR('H') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("G") PORT_CODE(KEYCODE_G) PORT_CHAR('G') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("F") PORT_CODE(KEYCODE_F) PORT_CHAR('F') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X6")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("E") PORT_CODE(KEYCODE_E) PORT_CHAR('E')
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("D") PORT_CODE(KEYCODE_D) PORT_CHAR('D')
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("C") PORT_CODE(KEYCODE_C) PORT_CHAR('C')
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("B") PORT_CODE(KEYCODE_B) PORT_CHAR('B')
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("A") PORT_CODE(KEYCODE_A) PORT_CHAR('A')
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("E") PORT_CODE(KEYCODE_E) PORT_CHAR('E') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("D") PORT_CODE(KEYCODE_D) PORT_CHAR('D') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("C") PORT_CODE(KEYCODE_C) PORT_CHAR('C') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("B") PORT_CODE(KEYCODE_B) PORT_CHAR('B') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_KEYBOARD ) PORT_NAME("A") PORT_CODE(KEYCODE_A) PORT_CHAR('A') PORT_WRITE_LINE_DEVICE_MEMBER(DEVICE_SELF, monty_state, key_pressed)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START("X7")
@@ -204,6 +218,19 @@ WRITE8_MEMBER( monty_state::ioDisplayWrite_w )
 }
 
 
+WRITE_LINE_MEMBER( monty_state::halt_changed )
+{
+	m_halt = state;
+}
+
+
+WRITE_LINE_MEMBER( monty_state::key_pressed )
+{
+	if (!state && m_halt)
+		m_maincpu->pulse_input_line(INPUT_LINE_RESET, attotime::zero);
+}
+
+
 uint32_t monty_state::lcd_update(screen_device& screen, bitmap_rgb32& bitmap, const rectangle& cliprect)
 {
 	if (!m_dirty)
@@ -229,7 +256,7 @@ uint32_t monty_state::lcd_update(screen_device& screen, bitmap_rgb32& bitmap, co
 }
 
 
-SED1520_UPDATE_CB(monty_screen_update)
+SED1520_UPDATE_CB(monty_state::screen_update)
 {
 	// TODO: Not really a SED1520 - there are two SED1503s
 	return 0x00;
@@ -237,33 +264,35 @@ SED1520_UPDATE_CB(monty_screen_update)
 
 
 // TODO: Additional machine definition - Master Monty has a different memory layout
-static MACHINE_CONFIG_START( monty )
+void monty_state::monty(machine_config &config)
+{
 	// Basic machine hardware
-	MCFG_CPU_ADD("maincpu", Z80, 3580000)       // Ceramic resonator labeled 3.58MT
-	MCFG_CPU_PROGRAM_MAP(monty_mem)
-	MCFG_CPU_IO_MAP(monty_io)
+	Z80(config, m_maincpu, 3580000);       // Ceramic resonator labeled 3.58MT
+	m_maincpu->set_addrmap(AS_PROGRAM, &monty_state::monty_mem);
+	m_maincpu->set_addrmap(AS_IO, &monty_state::monty_io);
+	m_maincpu->halt_cb().set(FUNC(monty_state::halt_changed));
 
 	// Video hardware
-	MCFG_SCREEN_ADD("screen", LCD)
-	MCFG_SCREEN_REFRESH_RATE(50)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) // Not accurate
-	MCFG_SCREEN_SIZE(50, 32)    // Two SED1503s (42x16 pixels) control the top and bottom halves
-	MCFG_SCREEN_VISIBLE_AREA(0, 50-1, 0, 32-1)
-	MCFG_SCREEN_UPDATE_DRIVER(monty_state, lcd_update)
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_LCD));
+	screen.set_refresh_hz(50);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500)); // Not accurate
+	screen.set_size(50, 32); // Two SED1503s (42x16 pixels) control the top and bottom halves
+	screen.set_visarea(0, 50-1, 0, 32-1);
+	screen.set_screen_update(FUNC(monty_state::lcd_update));
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	SPEAKER(config, "mono").front_center();
+	SPEAKER_SOUND(config, m_speaker).add_route(ALL_OUTPUTS, "mono", 0.50);
 
 	// LCD controller interfaces
-	MCFG_SED1520_ADD("sed1520_0", monty_screen_update)
-MACHINE_CONFIG_END
+	SED1520(config, m_sed0).set_screen_update_cb(FUNC(monty_state::screen_update));
+}
 
-static MACHINE_CONFIG_DERIVED( mmonty, monty )
-	MCFG_CPU_MODIFY( "maincpu" )
-	MCFG_CPU_PROGRAM_MAP(mmonty_mem)
-MACHINE_CONFIG_END
+void monty_state::mmonty(machine_config &config)
+{
+	monty(config);
+	m_maincpu->set_addrmap(AS_PROGRAM, &monty_state::mmonty_mem);
+}
 
 
 // ROM definitions
@@ -272,7 +301,6 @@ ROM_START( monty )
 	ROM_LOAD( "monty_main.bin",    0x0000, 0x4000, CRC(720b4f55) SHA1(0106eb88d3fbbf25a745b9b6ee785ba13689d095) )   // 27128
 	ROM_LOAD( "monty_module1.bin", 0x4000, 0x4000, CRC(2725d8c3) SHA1(8273b9779c0915f9c7c43ea4fb460f43ce036358) )   // 27128
 	ROM_LOAD( "monty_module2.bin", 0x8000, 0x4000, CRC(db672e47) SHA1(bb14fe86df06cfa4b19625ba417d1a5bc8eae155) )   // 27128
-	ROM_FILL( 0x1193, 1, 0x00 ) // patch out HALT so we can type in our names
 ROM_END
 
 ROM_START( mmonty )
@@ -280,11 +308,10 @@ ROM_START( mmonty )
 	ROM_LOAD( "master_monty_main.bin", 0x0000, 0x8000, CRC(bb5ef4d4) SHA1(ba2c759e429f8740df419f9abb60832eddfba8ab) )   // 27C256
 	ROM_LOAD( "monty_module1.bin",     0x8000, 0x4000, CRC(2725d8c3) SHA1(8273b9779c0915f9c7c43ea4fb460f43ce036358) )   // 27128
 	ROM_LOAD( "monty_module2.bin",     0xc000, 0x4000, CRC(db672e47) SHA1(bb14fe86df06cfa4b19625ba417d1a5bc8eae155) )   // 27128
-	ROM_FILL( 0x1487, 1, 0x00 ) // patch out HALT so we can type in our names
 ROM_END
 
 
 // Drivers
-//    YEAR  NAME     PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY   FULLNAME                 FLAGS
-COMP( 1980, monty,   0,      0,       monty,     monty,  monty_state,  0,    "Ritam",  "Monty Plays Scrabble",  MACHINE_NOT_WORKING )
-COMP( 1982, mmonty,  0,      0,       mmonty,    monty,  monty_state,  0,    "Ritam",  "Master Monty",          MACHINE_NOT_WORKING )
+//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  CLASS        INIT        COMPANY  FULLNAME                FLAGS
+COMP( 1980, monty,  0,      0,      monty,   monty, monty_state, empty_init, "Ritam", "Monty Plays Scrabble", MACHINE_NOT_WORKING )
+COMP( 1982, mmonty, 0,      0,      mmonty,  monty, monty_state, empty_init, "Ritam", "Master Monty",         MACHINE_NOT_WORKING )

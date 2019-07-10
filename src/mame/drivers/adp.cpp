@@ -2,7 +2,7 @@
 // copyright-holders:Tomasz Slanina
 /*
 
-ADP (Merkur?) games from '90 running on similar hardware.
+adp Gauselmann (Merkur) games from '90 running on similar hardware.
 (68k + HD63484 + YM2149)
 
 Skeleton driver by TS -  analog at op.pl
@@ -17,7 +17,6 @@ Supported games :
 - Skat TV           ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
 - Skat TV v. TS3  ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1995")
 - Fashion Gambler ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1997")
-- Backgammon        ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
 - Funny Land de Luxe ("Copyright 1992-99 by Stella International Germany")
 - Fun Station Spielekoffer 9 Spiele ("COPYRIGHT BY ADP LUEBBECKE GERMANY 2000")
 
@@ -84,14 +83,15 @@ Connectors:
 
 Sound  and I/O board:
 ---------------------
+"Steuereinheit 68000"
  _________________________________________________________________________________
  |                        TS271CN    74HC02                        ****  ****    |
- |*                      ________________                          P1    P2     *|
- |*         74HC574      | YM2149F      |                                       *|
- |*                  ||| |______________|   74HC393  74HC4015 |||               *|
- |P3        74HC245  |||                                      |||              P6|
- |*                  ||| ________________          X          ||| TL7705ACP     *|
- |*                  ||| |SCN68681C1N40 |                     |||               *|
+ |*         74HC573      ________________                          P1    P2     *|
+ |*                      | YM2149F      |                                       *|
+ |*         74HC574  ||| |______________|   74HC393  74HC4015 ||| MX7224KN      *|
+ |P3                 |||                                      |||              P6|
+ |*         74HC245  ||| ________________   3.6864M  74HC125  ||| TL7705ACP     *|
+ |*   L4974A         ||| |SCN68681C1N40 |                     |||               *|
  |*                  ||| |______________|   74HC32   74AC138  |||               *|
  |P7                 |||                                      |||              P8|
  |*                        TC428CPA                                             *|
@@ -105,33 +105,34 @@ Parts:
  YM2149F         - Yamaha PSG
  SCN68681C1N40   - Dual Asynchronous Receiver/transmitter (DUART);
  TS271CN         - Programmable Low Power CMOS Single Op-amp
+ MX7224KN        - Maxim CMOS 8-bit DAC with Output Amplifier
  TL7705ACP       - Supply Voltage Supervisor
  TC428CPA        - Dual CMOS High-speed Driver
- OO              - LEDs (red)
- X               - 3.6864MHz xtal
+ L4974A          - ST 3.5A Switching Regulator
+ OO              - LEDs (red); "Fehelerdiagnose siehe Fehlertable"
 
 Connectors:
 
  Two connectors to link with Video Board
- P1  - Tueroeffn
- P2  - PSG In/Out
- P3  - Lautsprecher
- P6  - Service - Tast.
- P7  - Maschine (barely readable)
- P8  - Muenzeinheit
- P9  - Atzepter
- P10 - Reset Fadenfoul
- P11 - Netzteil
- P12 - Serienplan
- P13 - Serienplan 2
- P14 - Muenzeinheit 2
- P15 - I2C Bus
- P16 - Kodierg.
- P17 - TTL Ein-Aueg.
- P18 - Out
- P19 - In
- P20 - Serielle-S.
- P21 - Tuerschalter
+ P1  - Türöffnungen [1-6]
+ P2  - PSG In/Out [1-6]
+ P3  - Lautsprecher [1-6]
+ P6  - Service - Test gerät [1-6]
+ P7  - Maschine [1-8]
+ P8  - Münzeinheit [1-8]
+ P9  - Akzeptor [1-4]
+ P10 - Fadenfoul [1-4]
+ P11 - Netzteil [1-5]
+ P12 - Serienplan [1-8]
+ P13 - Serienplan 2 [1-8]
+ P14 - Münzeinheit 2 [1-8]
+ P15 - I2C-Bus [1-4]
+ P16 - Kodierg. [1-4]
+ P17 - TTL-Ein-/Ausgänge (PSG-Port) [1-10]
+ P18 - RS485 Aus [1-2]
+ P19 - RS485 Ein [1-2]
+ P20 - Serielle-S. [1-5]
+ P21 - Türschalter [1-4]
 
 There's also (external) JAMMA adapter - 4th board filled with resistors and diodes.
 
@@ -163,6 +164,7 @@ Quick Jack administration/service mode:
 #include "sound/ay8910.h"
 #include "video/hd63484.h"
 #include "video/ramdac.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -170,19 +172,31 @@ Quick Jack administration/service mode:
 class adp_state : public driver_device
 {
 public:
-	adp_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	adp_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_microtouch(*this, "microtouch"),
 		m_maincpu(*this, "maincpu"),
-		m_duart(*this, "duart68681"),
+		m_duart(*this, "duart"),
+		m_acrtc(*this, "acrtc"),
 		m_palette(*this, "palette"),
+		m_nvram(*this, "nvram"),
 		m_in0(*this, "IN0")
 	{ }
 
+	void skattv(machine_config &config);
+	void quickjac(machine_config &config);
+	void fashiong(machine_config &config);
+	void fstation(machine_config &config);
+	void funland(machine_config &config);
+	void skattva(machine_config &config);
+
+private:
 	required_device<microtouch_device> m_microtouch;
 	required_device<cpu_device> m_maincpu;
 	required_device<mc68681_device> m_duart;
+	required_device<hd63484_device> m_acrtc;
 	required_device<palette_device> m_palette;
+	required_device<nvram_device> m_nvram;
 	required_ioport m_in0;
 
 	/* misc */
@@ -193,11 +207,21 @@ public:
 	DECLARE_WRITE16_MEMBER(input_w);
 	DECLARE_MACHINE_START(skattv);
 	DECLARE_MACHINE_RESET(skattv);
-	DECLARE_PALETTE_INIT(adp);
-	DECLARE_PALETTE_INIT(fstation);
-	DECLARE_WRITE_LINE_MEMBER(duart_irq_handler);
+	void adp_palette(palette_device &device) const;
+	void fstation_palette(palette_device &device) const;
 	//INTERRUPT_GEN_MEMBER(adp_int);
 	void skattva_nvram_init(nvram_device &nvram, void *base, size_t size);
+
+	void adp_hd63484_map(address_map &map);
+	void fc7_map(address_map &map);
+	void fashiong_hd63484_map(address_map &map);
+	void fstation_hd63484_map(address_map &map);
+	void fstation_mem(address_map &map);
+	void funland_mem(address_map &map);
+	void quickjac_mem(address_map &map);
+	void ramdac_map(address_map &map);
+	void skattv_mem(address_map &map);
+	void skattva_mem(address_map &map);
 };
 
 void adp_state::skattva_nvram_init(nvram_device &nvram, void *base, size_t size)
@@ -224,9 +248,9 @@ void adp_state::skattva_nvram_init(nvram_device &nvram, void *base, size_t size)
 
 ***************************************************************************/
 
-WRITE_LINE_MEMBER(adp_state::duart_irq_handler)
+void adp_state::fc7_map(address_map &map)
 {
-	m_maincpu->set_input_line_and_vector(4, state, m_duart->get_irq_vector());
+	map(0xfffff9, 0xfffff9).r(m_duart, FUNC(mc68681_device::get_irq_vector));
 }
 
 MACHINE_START_MEMBER(adp_state,skattv)
@@ -239,35 +263,19 @@ MACHINE_RESET_MEMBER(adp_state,skattv)
 	m_mux_data = 0;
 }
 
-PALETTE_INIT_MEMBER(adp_state,adp)
+void adp_state::adp_palette(palette_device &palette) const
 {
-	int i;
-
-	for (i = 0; i < palette.entries(); i++)
+	for (int i = 0; i < palette.entries(); i++)
 	{
-		int bit0, bit1, bit2, r, g, b;
+		int const r = 0x21 * BIT(i, 0) + 0x47 * BIT(i, 3) + 0x97 * BIT(i, 0);
+		int const g = 0x21 * BIT(i, 1) + 0x47 * BIT(i, 3) + 0x97 * BIT(i, 1);
+		int const b = 0x21 * BIT(i, 2) + 0x47 * BIT(i, 3) + 0x97 * BIT(i, 2);
 
-		// red component
-		bit0 = (i >> 0) & 0x01;
-		bit1 = (i >> 3) & 0x01;
-		bit2 = (i >> 0) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		// green component
-		bit0 = (i >> 1) & 0x01;
-		bit1 = (i >> 3) & 0x01;
-		bit2 = (i >> 1) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		// blue component
-		bit0 = (i >> 2) & 0x01;
-		bit1 = (i >> 3) & 0x01;
-		bit2 = (i >> 2) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-		palette.set_pen_color(i, rgb_t(r,g,b));
+		palette.set_pen_color(i, rgb_t(r, g, b));
 	}
 }
 
-PALETTE_INIT_MEMBER(adp_state,fstation)
+void adp_state::fstation_palette(palette_device &palette) const
 {
 	for (int i = 0; i < palette.entries(); i++)
 		palette.set_pen_color(i, rgb_t(pal3bit(i>>5), pal3bit(i>>2), pal2bit(i>>0)));
@@ -288,70 +296,66 @@ WRITE16_MEMBER(adp_state::input_w)
 	m_mux_data &= 0x0f;
 }
 
-static ADDRESS_MAP_START( skattv_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x800080, 0x800081) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w)
-	AM_RANGE(0x800082, 0x800083) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w)
-	AM_RANGE(0x800100, 0x800101) AM_READWRITE(input_r, input_w)
-	AM_RANGE(0x800140, 0x800143) AM_DEVREADWRITE8("aysnd", ay8910_device, data_r, address_data_w, 0x00ff) //18b too
-	AM_RANGE(0x800180, 0x80019f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_SHARE("nvram")
-ADDRESS_MAP_END
+void adp_state::skattv_mem(address_map &map)
+{
+	map(0x000000, 0x0fffff).rom();
+	map(0x800080, 0x800081).rw(m_acrtc, FUNC(hd63484_device::status16_r), FUNC(hd63484_device::address16_w));
+	map(0x800082, 0x800083).rw(m_acrtc, FUNC(hd63484_device::data16_r), FUNC(hd63484_device::data16_w));
+	map(0x800100, 0x800101).rw(FUNC(adp_state::input_r), FUNC(adp_state::input_w));
+	map(0x800140, 0x800143).rw("aysnd", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w)).umask16(0x00ff); //18b too
+	map(0x800180, 0x80019f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0xffc000, 0xffffff).ram().share("nvram");
+}
 
-static ADDRESS_MAP_START( skattva_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x03ffff) AM_ROM
-	AM_RANGE(0x400000, 0x40001f) AM_DEVREADWRITE8("rtc",msm6242_device, read, write, 0x00ff)
-	AM_RANGE(0x800080, 0x800081) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w)
-	AM_RANGE(0x800082, 0x800083) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w)
-	AM_RANGE(0x800100, 0x800101) AM_READ_PORT("IN0")
-	AM_RANGE(0x800140, 0x800143) AM_DEVREADWRITE8("aysnd", ay8910_device, data_r, address_data_w, 0x00ff) //18b too
-	AM_RANGE(0x800180, 0x80019f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0xffc000, 0xffffff) AM_RAM AM_SHARE("nvram")
-ADDRESS_MAP_END
+void adp_state::skattva_mem(address_map &map)
+{
+	map(0x000000, 0x03ffff).rom();
+	map(0x400000, 0x40001f).rw("rtc", FUNC(msm6242_device::read), FUNC(msm6242_device::write)).umask16(0x00ff);
+	map(0x800080, 0x800081).rw(m_acrtc, FUNC(hd63484_device::status16_r), FUNC(hd63484_device::address16_w));
+	map(0x800082, 0x800083).rw(m_acrtc, FUNC(hd63484_device::data16_r), FUNC(hd63484_device::data16_w));
+	map(0x800100, 0x800101).portr("IN0");
+	map(0x800140, 0x800143).rw("aysnd", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w)).umask16(0x00ff); //18b too
+	map(0x800180, 0x80019f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0xffc000, 0xffffff).ram().share("nvram");
+}
 
-static ADDRESS_MAP_START( quickjac_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x01ffff) AM_ROM
-	AM_RANGE(0x400000, 0x40001f) AM_DEVREADWRITE8("rtc",msm6242_device, read, write, 0x00ff)
-	AM_RANGE(0x800080, 0x800081) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w) // bad
-	AM_RANGE(0x800082, 0x800083) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w) // bad
-	AM_RANGE(0x800100, 0x800101) AM_READ_PORT("IN0")
-	AM_RANGE(0x800140, 0x800143) AM_DEVREADWRITE8("aysnd", ay8910_device, data_r, address_data_w, 0x00ff) //18b too
-	AM_RANGE(0x800180, 0x80019f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0xff0000, 0xffffff) AM_RAM AM_SHARE("nvram")
-ADDRESS_MAP_END
+void adp_state::quickjac_mem(address_map &map)
+{
+	map(0x000000, 0x01ffff).rom();
+	map(0x400000, 0x40001f).rw("rtc", FUNC(msm6242_device::read), FUNC(msm6242_device::write)).umask16(0x00ff);
+	map(0x800080, 0x800081).rw(m_acrtc, FUNC(hd63484_device::status16_r), FUNC(hd63484_device::address16_w)); // bad
+	map(0x800082, 0x800083).rw(m_acrtc, FUNC(hd63484_device::data16_r), FUNC(hd63484_device::data16_w)); // bad
+	map(0x800100, 0x800101).portr("IN0");
+	map(0x800140, 0x800143).rw("aysnd", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w)).umask16(0x00ff); //18b too
+	map(0x800180, 0x80019f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0xff0000, 0xffffff).ram().share("nvram");
+}
 
-static ADDRESS_MAP_START( backgamn_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x01ffff) AM_ROM
-	AM_RANGE(0x100000, 0x10003f) AM_RAM
-	AM_RANGE(0x200000, 0x20003f) AM_RAM
-	AM_RANGE(0x400000, 0x40001f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0x500000, 0x503fff) AM_RAM AM_SHARE("nvram") //work RAM
-	AM_RANGE(0x600006, 0x600007) AM_NOP //(r) is discarded (watchdog?)
-ADDRESS_MAP_END
+void adp_state::funland_mem(address_map &map)
+{
+	map(0x000000, 0x0fffff).rom();
+	map(0x400000, 0x40001f).rw("rtc", FUNC(msm6242_device::read), FUNC(msm6242_device::write)).umask16(0x00ff);
+	map(0x800080, 0x800081).rw(m_acrtc, FUNC(hd63484_device::status16_r), FUNC(hd63484_device::address16_w));
+	map(0x800082, 0x800083).rw(m_acrtc, FUNC(hd63484_device::data16_r), FUNC(hd63484_device::data16_w));
+	map(0x800089, 0x800089).w("ramdac", FUNC(ramdac_device::index_w));
+	map(0x80008b, 0x80008b).w("ramdac", FUNC(ramdac_device::pal_w));
+	map(0x80008d, 0x80008d).w("ramdac", FUNC(ramdac_device::mask_w));
+	map(0x800100, 0x800101).portr("IN0");
+	map(0x800140, 0x800143).rw("aysnd", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w)).umask16(0x00ff); //18b too
+	map(0x800180, 0x80019f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0xfc0000, 0xffffff).ram().share("nvram");
+}
 
-static ADDRESS_MAP_START( funland_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x400000, 0x40001f) AM_DEVREADWRITE8("rtc",msm6242_device, read, write, 0x00ff)
-	AM_RANGE(0x800080, 0x800081) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w)
-	AM_RANGE(0x800082, 0x800083) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w)
-	AM_RANGE(0x800088, 0x800089) AM_DEVWRITE8("ramdac", ramdac_device, index_w, 0x00ff)
-	AM_RANGE(0x80008a, 0x80008b) AM_DEVWRITE8("ramdac", ramdac_device, pal_w, 0x00ff)
-	AM_RANGE(0x80008c, 0x80008d) AM_DEVWRITE8("ramdac", ramdac_device, mask_w, 0x00ff)
-	AM_RANGE(0x800100, 0x800101) AM_READ_PORT("IN0")
-	AM_RANGE(0x800140, 0x800143) AM_DEVREADWRITE8("aysnd", ay8910_device, data_r, address_data_w, 0x00ff) //18b too
-	AM_RANGE(0x800180, 0x80019f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE("nvram")
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fstation_mem, AS_PROGRAM, 16, adp_state )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x800080, 0x800081) AM_DEVREADWRITE("hd63484", hd63484_device, status_r, address_w)
-	AM_RANGE(0x800082, 0x800083) AM_DEVREADWRITE("hd63484", hd63484_device, data_r, data_w)
-	AM_RANGE(0x800100, 0x800101) AM_READWRITE(input_r, input_w)
-	AM_RANGE(0x800140, 0x800143) AM_DEVREADWRITE8("aysnd", ay8910_device, data_r, address_data_w, 0x00ff) //18b too
-	AM_RANGE(0x800180, 0x80019f) AM_DEVREADWRITE8("duart68681", mc68681_device, read, write, 0xff )
-	AM_RANGE(0xfc0000, 0xffffff) AM_RAM AM_SHARE("nvram")
-ADDRESS_MAP_END
+void adp_state::fstation_mem(address_map &map)
+{
+	map(0x000000, 0x0fffff).rom();
+	map(0x800080, 0x800081).rw(m_acrtc, FUNC(hd63484_device::status16_r), FUNC(hd63484_device::address16_w));
+	map(0x800082, 0x800083).rw(m_acrtc, FUNC(hd63484_device::data16_r), FUNC(hd63484_device::data16_w));
+	map(0x800100, 0x800101).rw(FUNC(adp_state::input_r), FUNC(adp_state::input_w));
+	map(0x800140, 0x800143).rw("aysnd", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w)).umask16(0x00ff); //18b too
+	map(0x800180, 0x80019f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0xfc0000, 0xffffff).ram().share("nvram");
+}
 
 
 static INPUT_PORTS_START( quickjac )
@@ -518,116 +522,112 @@ INTERRUPT_GEN_MEMBER(adp_state::adp_int)
 }
 */
 
-static ADDRESS_MAP_START( adp_hd63484_map, 0, 16, adp_state )
-	AM_RANGE(0x00000, 0x1ffff) AM_MIRROR(0x60000) AM_RAM
-	AM_RANGE(0x80000, 0x9ffff) AM_MIRROR(0x60000) AM_ROM AM_REGION("gfx1", 0)
-ADDRESS_MAP_END
+void adp_state::adp_hd63484_map(address_map &map)
+{
+	map(0x00000, 0x1ffff).mirror(0x60000).ram();
+	map(0x80000, 0x9ffff).mirror(0x60000).rom().region("gfx1", 0);
+}
 
-static ADDRESS_MAP_START( fashiong_hd63484_map, 0, 16, adp_state )
-	AM_RANGE(0x00000, 0x1ffff) AM_MIRROR(0x60000) AM_RAM
-	AM_RANGE(0x80000, 0xfffff) AM_ROM AM_REGION("gfx1", 0)
-ADDRESS_MAP_END
+void adp_state::fashiong_hd63484_map(address_map &map)
+{
+	map(0x00000, 0x1ffff).mirror(0x60000).ram();
+	map(0x80000, 0xfffff).rom().region("gfx1", 0);
+}
 
-static ADDRESS_MAP_START( fstation_hd63484_map, 0, 16, adp_state )
-	AM_RANGE(0x00000, 0x7ffff) AM_ROM AM_REGION("gfx1", 0)
-	AM_RANGE(0x80000, 0xfffff) AM_RAM
-ADDRESS_MAP_END
+void adp_state::fstation_hd63484_map(address_map &map)
+{
+	map(0x00000, 0x7ffff).rom().region("gfx1", 0);
+	map(0x80000, 0xfffff).ram();
+}
 
-static MACHINE_CONFIG_START( quickjac )
-
-	MCFG_CPU_ADD("maincpu", M68000, 8000000)
-	MCFG_CPU_PROGRAM_MAP(quickjac_mem)
-	//MCFG_CPU_VBLANK_INT_DRIVER("screen", adp_state,  adp_int)
+void adp_state::quickjac(machine_config &config)
+{
+	M68000(config, m_maincpu, 8000000);
+	m_maincpu->set_addrmap(AS_PROGRAM, &adp_state::quickjac_mem);
+	m_maincpu->set_addrmap(m68000_device::AS_CPU_SPACE, &adp_state::fc7_map);
 
 	MCFG_MACHINE_START_OVERRIDE(adp_state,skattv)
 	MCFG_MACHINE_RESET_OVERRIDE(adp_state,skattv)
 
-	MCFG_MC68681_ADD( "duart68681", XTAL_8_664MHz / 2 )
-	MCFG_MC68681_IRQ_CALLBACK(WRITELINE(adp_state, duart_irq_handler))
-	MCFG_MC68681_A_TX_CALLBACK(DEVWRITELINE("microtouch", microtouch_device, rx))
-	MCFG_MC68681_INPORT_CALLBACK(IOPORT("DSW1"))
+	MC68681(config, m_duart, XTAL(8'664'000) / 2);
+	m_duart->irq_cb().set_inputline(m_maincpu, M68K_IRQ_4);
+	m_duart->a_tx_cb().set(m_microtouch, FUNC(microtouch_device::rx));
+	m_duart->inport_cb().set_ioport("DSW1");
 
-	MCFG_MICROTOUCH_ADD( "microtouch", 9600, DEVWRITELINE("duart68681", mc68681_device, rx_a_w) )
+	MICROTOUCH(config, m_microtouch, 9600).stx().set(m_duart, FUNC(mc68681_device::rx_a_w));
 
-	MCFG_NVRAM_ADD_NO_FILL("nvram")
+	NVRAM(config, m_nvram, nvram_device::DEFAULT_NONE);
 
-	MCFG_DEVICE_ADD("rtc", MSM6242, XTAL_32_768kHz)
-	//MCFG_MSM6242_OUT_INT_HANDLER(WRITELINE(adp_state, rtc_irq))
+	MSM6242(config, "rtc", XTAL(32'768));
+	//rtc.out_int_handler().set(FUNC(adp_state::rtc_irq));
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500))
-	MCFG_SCREEN_SIZE(384, 280)
-	MCFG_SCREEN_VISIBLE_AREA(0, 384-1, 0, 280-1)
-	MCFG_SCREEN_UPDATE_DEVICE("hd63484", hd63484_device, update_screen)
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500));
+	screen.set_size(384, 280);
+	screen.set_visarea_full();
+	screen.set_screen_update("acrtc", FUNC(hd63484_device::update_screen));
+	screen.set_palette(m_palette);
 
-	MCFG_PALETTE_ADD("palette", 0x10)
+	PALETTE(config, m_palette, FUNC(adp_state::adp_palette), 0x10);
 
-	MCFG_PALETTE_INIT_OWNER(adp_state,adp)
+	HD63484(config, m_acrtc, 0).set_addrmap(0, &adp_state::adp_hd63484_map);
 
-	MCFG_HD63484_ADD("hd63484", 0, adp_hd63484_map)
+	SPEAKER(config, "mono").front_center();
+	ym2149_device &aysnd(YM2149(config, "aysnd", 3686400/2));
+	aysnd.port_a_read_callback().set_ioport("PA");
+	aysnd.add_route(ALL_OUTPUTS, "mono", 0.10);
+}
 
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("aysnd", AY8910, 3686400/2)
-	MCFG_AY8910_PORT_A_READ_CB(IOPORT("PA"))
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
+void adp_state::skattv(machine_config &config)
+{
+	quickjac(config);
+	m_maincpu->set_addrmap(AS_PROGRAM, &adp_state::skattv_mem);
+}
 
-MACHINE_CONFIG_END
+void adp_state::skattva(machine_config &config)
+{
+	quickjac(config);
+	m_maincpu->set_addrmap(AS_PROGRAM, &adp_state::skattva_mem);
+	m_nvram->set_custom_handler(FUNC(adp_state::skattva_nvram_init));
+}
 
-static MACHINE_CONFIG_DERIVED( skattv, quickjac )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(skattv_mem)
-MACHINE_CONFIG_END
+void adp_state::fashiong(machine_config &config)
+{
+	skattv(config);
+	m_acrtc->set_addrmap(0, &adp_state::fashiong_hd63484_map);
+}
 
-static MACHINE_CONFIG_DERIVED( skattva, quickjac )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(skattva_mem)
+void adp_state::ramdac_map(address_map &map)
+{
+	map(0x000, 0x3ff).rw("ramdac", FUNC(ramdac_device::ramdac_pal_r), FUNC(ramdac_device::ramdac_rgb666_w));
+}
 
-	MCFG_NVRAM_REPLACE_CUSTOM_DRIVER("nvram", adp_state, skattva_nvram_init)
-MACHINE_CONFIG_END
+void adp_state::funland(machine_config &config)
+{
+	quickjac(config);
 
-static MACHINE_CONFIG_DERIVED( backgamn, skattv )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(backgamn_mem)
+	m_maincpu->set_addrmap(AS_PROGRAM, &adp_state::funland_mem);
 
-	MCFG_SCREEN_MODIFY("screen")
-	MCFG_SCREEN_SIZE(640, 480)
-	MCFG_SCREEN_VISIBLE_AREA(0, 640-1, 0, 480-1)
-MACHINE_CONFIG_END
+	PALETTE(config.replace(), m_palette, palette_device::BLACK, 0x100);
+	ramdac_device &ramdac(RAMDAC(config, "ramdac", 0, m_palette));
+	ramdac.set_addrmap(0, &adp_state::ramdac_map);
 
-static MACHINE_CONFIG_DERIVED( fashiong, skattv )
-	MCFG_DEVICE_MODIFY("hd63484")
-	MCFG_HD63484_ADDRESS_MAP(fashiong_hd63484_map)
-MACHINE_CONFIG_END
+	m_acrtc->set_addrmap(0, &adp_state::fstation_hd63484_map);
+}
 
-static ADDRESS_MAP_START( ramdac_map, 0, 8, adp_state )
-	AM_RANGE(0x000, 0x3ff) AM_DEVREADWRITE("ramdac",ramdac_device,ramdac_pal_r,ramdac_rgb666_w)
-ADDRESS_MAP_END
+void adp_state::fstation(machine_config &config)
+{
+	funland(config);
 
-static MACHINE_CONFIG_DERIVED( funland, quickjac )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(funland_mem)
+	m_maincpu->set_addrmap(AS_PROGRAM, &adp_state::fstation_mem);
 
-	MCFG_DEVICE_REMOVE("palette")
-	MCFG_PALETTE_ADD_INIT_BLACK("palette", 0x100)
-	MCFG_RAMDAC_ADD("ramdac", ramdac_map, "palette")
+	screen_device &screen(*subdevice<screen_device>("screen"));
+	screen.set_size(640, 480);
+	screen.set_visarea_full();
 
-	MCFG_DEVICE_MODIFY("hd63484")
-	MCFG_HD63484_ADDRESS_MAP(fstation_hd63484_map)
-MACHINE_CONFIG_END
-
-static MACHINE_CONFIG_DERIVED( fstation, funland )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(fstation_mem)
-
-	MCFG_SCREEN_MODIFY("screen")
-	MCFG_SCREEN_SIZE(640, 480)
-	MCFG_SCREEN_VISIBLE_AREA(0, 640-1, 0, 480-1)
-
-	MCFG_PALETTE_MODIFY("palette")
-	MCFG_PALETTE_INIT_OWNER(adp_state, fstation)
-MACHINE_CONFIG_END
+	m_palette->set_init(FUNC(adp_state::fstation_palette));
+}
 
 
 ROM_START( quickjac )
@@ -658,16 +658,6 @@ ROM_START( skattva )
 	ROM_REGION16_BE( 0x40000, "gfx1", 0 )
 	ROM_LOAD16_BYTE( "skat_tv_videoprom_t2.1.u2.bin", 0x00000, 0x20000, CRC(de6f275b) SHA1(0c396fa4d1975c8ccc4967d330b368c0697d2124) )
 	ROM_LOAD16_BYTE( "skat_tv_videoprom_t2.2.u5.bin", 0x00001, 0x20000, CRC(af3e60f9) SHA1(c88976ea42cf29a092fdee18377b32ffe91e9f33) )
-ROM_END
-
-ROM_START( backgamn )
-	ROM_REGION( 0x100000, "maincpu", 0 )
-	ROM_LOAD16_BYTE( "b_f2_i.bin", 0x00000, 0x10000, CRC(9e42937c) SHA1(85d462a560b85b03ee9d341e18815b7c396118ac) )
-	ROM_LOAD16_BYTE( "b_f2_ii.bin", 0x00001, 0x10000, CRC(8e0ee50c) SHA1(2a05c337db1131b873646aa4109593636ebaa356) )
-
-	ROM_REGION16_BE( 0x40000, "gfx1", 0 )
-	ROM_LOAD16_BYTE( "b_f1_i.bin", 0x00000, 0x20000, NO_DUMP )
-	ROM_LOAD16_BYTE( "b_f1_ii.bin", 0x00001, 0x20000, NO_DUMP )
 ROM_END
 
 ROM_START( fashiong )
@@ -721,11 +711,10 @@ ROM_START( fstation )
 ROM_END
 
 
-GAME( 1990, backgamn,  0,        backgamn,    skattv,   adp_state, 0, ROT0,  "ADP",     "Backgammon",                        MACHINE_NOT_WORKING )
-GAME( 1993, quickjac,  0,        quickjac,    quickjac, adp_state, 0, ROT0,  "ADP",     "Quick Jack",                        MACHINE_NOT_WORKING )
-GAME( 1994, skattv,    0,        skattv,      skattv,   adp_state, 0, ROT0,  "ADP",     "Skat TV",                           MACHINE_NOT_WORKING )
-GAME( 1995, skattva,   skattv,   skattva,     skattva,  adp_state, 0, ROT0,  "ADP",     "Skat TV (version TS3)",             MACHINE_NOT_WORKING )
-GAME( 1997, fashiong,  0,        fashiong,    skattv,   adp_state, 0, ROT0,  "ADP",     "Fashion Gambler (set 1)",           MACHINE_NOT_WORKING )
-GAME( 1997, fashiong2, fashiong, fashiong,    skattv,   adp_state, 0, ROT0,  "ADP",     "Fashion Gambler (set 2)",           MACHINE_NOT_WORKING )
-GAME( 1999, funlddlx,  0,        funland,     skattv,   adp_state, 0, ROT0,  "Stella",  "Funny Land de Luxe",                MACHINE_NOT_WORKING )
-GAME( 2000, fstation,  0,        fstation,    fstation, adp_state, 0, ROT0,  "ADP",     "Fun Station Spielekoffer 9 Spiele", MACHINE_NOT_WORKING )
+GAME( 1993, quickjac,  0,        quickjac, quickjac, adp_state, empty_init, ROT0, "ADP",     "Quick Jack",                        MACHINE_NOT_WORKING )
+GAME( 1994, skattv,    0,        skattv,   skattv,   adp_state, empty_init, ROT0, "ADP",     "Skat TV",                           MACHINE_NOT_WORKING )
+GAME( 1995, skattva,   skattv,   skattva,  skattva,  adp_state, empty_init, ROT0, "ADP",     "Skat TV (version TS3)",             MACHINE_NOT_WORKING )
+GAME( 1997, fashiong,  0,        fashiong, skattv,   adp_state, empty_init, ROT0, "ADP",     "Fashion Gambler (set 1)",           MACHINE_NOT_WORKING )
+GAME( 1997, fashiong2, fashiong, fashiong, skattv,   adp_state, empty_init, ROT0, "ADP",     "Fashion Gambler (set 2)",           MACHINE_NOT_WORKING )
+GAME( 1999, funlddlx,  0,        funland,  skattv,   adp_state, empty_init, ROT0, "Stella",  "Funny Land de Luxe",                MACHINE_NOT_WORKING )
+GAME( 2000, fstation,  0,        fstation, fstation, adp_state, empty_init, ROT0, "ADP",     "Fun Station Spielekoffer 9 Spiele", MACHINE_NOT_WORKING )

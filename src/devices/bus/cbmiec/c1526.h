@@ -32,6 +32,7 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
+	void c1526_mem(address_map &map);
 };
 
 
@@ -79,7 +80,6 @@ protected:
 // device type definition
 DECLARE_DEVICE_TYPE(C1526, c1526_device)
 DECLARE_DEVICE_TYPE(C4023, c4023_device)
-extern const device_type MPS802;
 
 
 #endif // MAME_BUS_CBMIEC_C1626_H

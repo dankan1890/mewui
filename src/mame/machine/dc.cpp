@@ -9,7 +9,7 @@
 #include "emu.h"
 #include "debugger.h"
 #include "includes/dc.h"
-#include "cpu/sh4/sh4.h"
+#include "cpu/sh/sh4.h"
 #include "cpu/arm7/arm7core.h"
 #include "machine/mie.h"
 #include "machine/naomig1.h"
@@ -177,12 +177,14 @@ WRITE8_MEMBER(dc_state::pvr_irq)
 	dc_update_interrupt_status();
 }
 
-void dc_maple_irq(running_machine &machine)
+WRITE8_MEMBER(dc_state::maple_irq)
 {
-	dc_state *state = machine.driver_data<dc_state>();
-
-	state->dc_sysctrl_regs[SB_ISTNRM] |= IST_DMA_MAPLE;
-	state->dc_update_interrupt_status();
+	switch(data) {
+	case maple_dc_device::DMA_MAPLE_IRQ:
+		dc_sysctrl_regs[SB_ISTNRM] |= IST_DMA_MAPLE;
+		break;
+	}
+	dc_update_interrupt_status();
 }
 
 TIMER_CALLBACK_MEMBER(dc_state::ch2_dma_irq)
@@ -375,7 +377,7 @@ READ64_MEMBER(dc_state::dc_sysctrl_r )
 	#if DEBUG_SYSCTRL
 	if ((reg != 0x40) && (reg != 0x41) && (reg != 0x42) && (reg != 0x23) && (reg > 2))  // filter out IRQ status reads
 	{
-		osd_printf_verbose("%s",string_format("SYSCTRL: [%08x] read %x @ %x (reg %x: %s), mask %I64x (PC=%x)\n", 0x5f6800+reg*4, dc_sysctrl_regs[reg], offset, reg, sysctrl_names[reg], mem_mask, space.device().safe_pc()).c_str());
+		osd_printf_verbose("%s",string_format("SYSCTRL: [%08x] read %x @ %x (reg %x: %s), mask %x (PC=%x)\n", 0x5f6800+reg*4, dc_sysctrl_regs[reg], offset, reg, sysctrl_names[reg], mem_mask, m_maincpu->pc()).c_str());
 	}
 	#endif
 
@@ -473,7 +475,7 @@ WRITE64_MEMBER(dc_state::dc_sysctrl_w )
 	#if DEBUG_SYSCTRL
 	if ((reg != 0x40) && (reg != 0x42) && (reg > 2))    // filter out IRQ acks and ch2 dma
 	{
-		osd_printf_verbose("%s",string_format("SYSCTRL: write %I64x to %x (reg %x), mask %I64x\n", data>>shift, offset, reg, /*sysctrl_names[reg],*/ mem_mask).c_str());
+		osd_printf_verbose("%s",string_format("SYSCTRL: write %x to %x (reg %x), mask %x\n", data>>shift, offset, reg, /*sysctrl_names[reg],*/ mem_mask).c_str());
 	}
 	#endif
 }
@@ -514,7 +516,7 @@ WRITE64_MEMBER(dc_state::dc_gdrom_w )
 		off=offset << 1;
 	}
 
-	osd_printf_verbose("%s",string_format("GDROM: [%08x=%x]write %I64x to %x, mask %I64x\n", 0x5f7000+off*4, dat, data, offset, mem_mask).c_str());
+	osd_printf_verbose("%s",string_format("GDROM: [%08x=%x]write %x to %x, mask %x\n", 0x5f7000+off*4, dat, data, offset, mem_mask).c_str());
 }
 
 READ64_MEMBER(dc_state::dc_g2_ctrl_r )
@@ -633,7 +635,7 @@ WRITE64_MEMBER(dc_state::dc_modem_w )
 
 	reg = decode_reg32_64(offset, mem_mask, &shift);
 	dat = (uint32_t)(data >> shift);
-	osd_printf_verbose("%s",string_format("MODEM: [%08x=%x] write %I64x to %x, mask %I64x\n", 0x600000+reg*4, dat, data, offset, mem_mask).c_str());
+	osd_printf_verbose("%s",string_format("MODEM: [%08x=%x] write %x to %x, mask %x\n", 0x600000+reg*4, dat, data, offset, mem_mask).c_str());
 }
 
 #define SAVE_G2DMA(x) \
@@ -652,10 +654,12 @@ void dc_state::machine_start()
 	if(m_naomig1)
 		m_naomig1->set_dma_cb(naomi_g1_device::dma_cb(&dc_state::generic_dma, this));
 
+	m_maincpu->sh2drc_set_options(SH2DRC_STRICT_VERIFY | SH2DRC_STRICT_PCREL);
+	m_maincpu->sh2drc_add_fastram(0x0c000000, 0x0cffffff, false, dc_ram);
+
 	// save states
 	save_pointer(NAME(dc_sysctrl_regs), 0x200/4);
 	save_pointer(NAME(g2bus_regs), 0x100/4);
-	save_pointer(NAME(dc_sound_ram.target()),dc_sound_ram.bytes());
 	SAVE_G2DMA(0)
 	SAVE_G2DMA(1)
 	SAVE_G2DMA(2)
@@ -675,12 +679,12 @@ void dc_state::machine_reset()
 
 READ32_MEMBER(dc_state::dc_aica_reg_r)
 {
-//  osd_printf_verbose("%s",string_format("AICA REG: [%08x] read %I64x, mask %I64x\n", 0x700000+reg*4, (uint64_t)offset, mem_mask).c_str());
+//  osd_printf_verbose("%s",string_format("AICA REG: [%08x] read %x, mask %x\n", 0x700000+reg*4, (uint64_t)offset, mem_mask).c_str());
 
 	if(offset == 0x2c00/4)
 		return m_armrst;
 
-	return m_aica->read(space, offset*2, 0xffff);
+	return m_aica->read(offset*2);
 }
 
 WRITE32_MEMBER(dc_state::dc_aica_reg_w)
@@ -704,29 +708,29 @@ WRITE32_MEMBER(dc_state::dc_aica_reg_w)
 		}
 	}
 
-	m_aica->write(space, offset*2, data, 0xffff);
+	m_aica->write(offset*2, data, 0xffff);
 
-//  osd_printf_verbose("%s",string_format("AICA REG: [%08x=%x] write %x to %x, mask %I64x\n", 0x700000+reg*4, data, offset, mem_mask).c_str());
+//  osd_printf_verbose("%s",string_format("AICA REG: [%08x=%x] write %x to %x, mask %x\n", 0x700000+reg*4, data, offset, mem_mask).c_str());
 }
 
 READ32_MEMBER(dc_state::dc_arm_aica_r)
 {
-	return m_aica->read(space, offset*2, 0xffff) & 0xffff;
+	return m_aica->read(offset*2) & 0xffff;
 }
 
 WRITE32_MEMBER(dc_state::dc_arm_aica_w)
 {
-	m_aica->write(space, offset*2, data, mem_mask&0xffff);
+	m_aica->write(offset*2, data, mem_mask&0xffff);
 }
 
-READ64_MEMBER(dc_state::sh4_soundram_r )
+READ16_MEMBER(dc_state::soundram_r )
 {
-	return *((uint64_t *)dc_sound_ram.target()+offset);
+	return dc_sound_ram[offset];
 }
 
-WRITE64_MEMBER(dc_state::sh4_soundram_w )
+WRITE16_MEMBER(dc_state::soundram_w )
 {
-	COMBINE_DATA((uint64_t *)dc_sound_ram.target() + offset);
+	COMBINE_DATA(&dc_sound_ram[offset]);
 }
 
 WRITE_LINE_MEMBER(dc_state::aica_irq)
@@ -747,18 +751,10 @@ WRITE_LINE_MEMBER(dc_state::sh4_aica_irq)
 MACHINE_RESET_MEMBER(dc_state,dc_console)
 {
 	dc_state::machine_reset();
-	m_aica->set_ram_base(dc_sound_ram, 2*1024*1024);
+	m_maincpu->sh2drc_set_options(SH2DRC_STRICT_VERIFY | SH2DRC_STRICT_PCREL);
 }
 
 TIMER_DEVICE_CALLBACK_MEMBER(dc_state::dc_scanline)
 {
 	m_powervr2->pvr_scanline_timer(param);
-}
-
-// crude cheat pending SH4 DRC, especially useful for inp playback
-INPUT_CHANGED_MEMBER(dc_state::mastercpu_cheat_r)
-{
-	const u32 CPU_CLOCK = (200000000);
-	const u32 timing_value[4] = { CPU_CLOCK, CPU_CLOCK/2, CPU_CLOCK/4, CPU_CLOCK/16 };
-	m_maincpu->set_unscaled_clock(timing_value[newval]);
 }

@@ -22,17 +22,27 @@
 /***************************************************************
  * Input a byte from given I/O port
  ***************************************************************/
-#define IN(port)                                                \
-	(((port ^ IO_IOCR) & 0xffc0) == 0) ?                        \
-		z180_readcontrol(port) : m_iospace->read_byte(port)
+inline u8 z180_device::IN(u16 port)
+{
+	if (is_internal_io_address(port))
+		return z180_readcontrol(port);
+	m_extra_cycles += io_wait_states();
+	return m_iospace->read_byte(port);
+}
 
 /***************************************************************
  * Output a byte to given I/O port
  ***************************************************************/
-#define OUT(port,value)                                         \
-	if (((port ^ IO_IOCR) & 0xffc0) == 0)                       \
-		z180_writecontrol(port,value);                          \
-	else m_iospace->write_byte(port,value)
+inline void z180_device::OUT(u16 port, u8 value)
+{
+	if (is_internal_io_address(port))
+		z180_writecontrol(port,value);
+	else
+	{
+		m_extra_cycles += io_wait_states();
+		m_iospace->write_byte(port, value);
+	}
+}
 
 /***************************************************************
  * MMU calculate the memory management lookup table
@@ -46,17 +56,17 @@
 void z180_device::z180_mmu()
 {
 	offs_t addr, page, bb, cb;
-	bb = IO_CBAR & 15;
-	cb = IO_CBAR >> 4;
+	bb = m_mmu_cbar & 15;
+	cb = m_mmu_cbar >> 4;
 	for( page = 0; page < 16; page++ )
 	{
 		addr = page << 12;
 		if (page >= bb)
 		{
 			if (page >= cb)
-				addr += (IO_CBR << 12);
+				addr += (m_mmu_cbr << 12);
 			else
-				addr += (IO_BBR << 12);
+				addr += (m_mmu_bbr << 12);
 		}
 		m_mmu[page] = (addr & 0xfffff);
 	}
@@ -68,12 +78,16 @@ void z180_device::z180_mmu()
 /***************************************************************
  * Read a byte from given memory location
  ***************************************************************/
-#define RM(addr) m_program->read_byte(MMU_REMAP_ADDR(addr))
+inline u8 z180_device::RM(offs_t addr)
+{
+	m_extra_cycles += memory_wait_states();
+	return m_program->read_byte(MMU_REMAP_ADDR(addr));
+}
 
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(addr,value) m_program->write_byte(MMU_REMAP_ADDR(addr),value)
+#define WM(addr,value) m_extra_cycles += memory_wait_states(); m_program->write_byte(MMU_REMAP_ADDR(addr),value)
 
 /***************************************************************
  * Read a word from given memory location
@@ -102,7 +116,8 @@ uint8_t z180_device::ROP()
 {
 	offs_t addr = _PCD;
 	_PC++;
-	return m_odirect->read_byte(MMU_REMAP_ADDR(addr));
+	m_extra_cycles += memory_wait_states();
+	return m_ocache->read_byte(MMU_REMAP_ADDR(addr));
 }
 
 /****************************************************************
@@ -115,14 +130,16 @@ uint8_t z180_device::ARG()
 {
 	offs_t addr = _PCD;
 	_PC++;
-	return m_direct->read_byte(MMU_REMAP_ADDR(addr));
+	m_extra_cycles += memory_wait_states();
+	return m_cache->read_byte(MMU_REMAP_ADDR(addr));
 }
 
 uint32_t z180_device::ARG16()
 {
 	offs_t addr = _PCD;
 	_PC += 2;
-	return m_direct->read_byte(MMU_REMAP_ADDR(addr)) | (m_direct->read_byte(MMU_REMAP_ADDR(addr+1)) << 8);
+	m_extra_cycles += memory_wait_states() * 2;
+	return m_cache->read_byte(MMU_REMAP_ADDR(addr)) | (m_cache->read_byte(MMU_REMAP_ADDR(addr+1)) << 8);
 }
 
 /***************************************************************

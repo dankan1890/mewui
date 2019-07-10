@@ -6,34 +6,80 @@
 #include "emu.h"
 #include "includes/neogeo.h"
 
+#include "bus/neogeo/prot_pcm2.h"
+#include "bus/neogeo/prot_cmc.h"
+#include "bus/neogeo/prot_pvc.h"
+
+
+class neopcb_state : public ngarcade_base_state
+{
+public:
+	neopcb_state(const machine_config &mconfig, device_type type, const char *tag)
+		: ngarcade_base_state(mconfig, type, tag)
+		, m_cmc_prot(*this, "cmc50")
+		, m_pcm2_prot(*this, "pcm2")
+		, m_pvc_prot(*this, "pvc")
+	{
+	}
+
+	DECLARE_INPUT_CHANGED_MEMBER(select_bios);
+
+	void init_ms5pcb();
+	void init_svcpcb();
+	void init_kf2k3pcb();
+
+	void neopcb(machine_config &config);
+
+protected:
+	// device overrides
+	virtual void machine_start() override;
+
+	virtual void device_post_load() override;
+
+	DECLARE_WRITE16_MEMBER(write_bankpvc);
+
+	void install_common();
+	void install_banked_bios();
+
+	// non-carts
+	void svcpcb_gfx_decrypt();
+	void svcpcb_s1data_decrypt();
+	void kf2k3pcb_gfx_decrypt();
+	void kf2k3pcb_decrypt_s1data();
+	void kf2k3pcb_sp1_decrypt();
+
+private:
+	required_device<cmc_prot_device> m_cmc_prot;
+	required_device<pcm2_prot_device> m_pcm2_prot;
+	required_device<pvc_prot_device> m_pvc_prot;
+};
+
 
 void neopcb_state::machine_start()
 {
-	m_type = NEOGEO_MVS;
-	common_machine_start();
-
-	// enable rtc and serial mode
-	m_upd4990a->cs_w(1);
-	m_upd4990a->oe_w(1);
-	m_upd4990a->c0_w(1);
-	m_upd4990a->c1_w(1);
-	m_upd4990a->c2_w(1);
+	ngarcade_base_state::machine_start();
 
 	m_sprgen->set_screen(m_screen);
 }
 
-void neopcb_state::neopcb_postload()
+void neopcb_state::device_post_load()
 {
-	m_bank_audio_main->set_entry(m_use_cart_audio);
+	ngarcade_base_state::device_post_load();
+
 	membank("cpu_bank")->set_base(m_region_maincpu->base() + m_bank_base);
-	set_outputs();
 }
 
-static MACHINE_CONFIG_DERIVED( neopcb, neogeo_arcade )
-	MCFG_CMC_PROT_ADD("cmc50")
-	MCFG_PCM2_PROT_ADD("pcm2")
-	MCFG_PVC_PROT_ADD("pvc")
-MACHINE_CONFIG_END
+void neopcb_state::neopcb(machine_config &config)
+{
+	neogeo_arcade(config);
+	neogeo_mono(config);
+
+	NEOGEO_CTRL_EDGE_CONNECTOR(config, m_edge, neogeo_arc_edge, "joy", true);
+
+	NG_CMC_PROT(config, "cmc50", 0);
+	NG_PCM2_PROT(config, "pcm2", 0);
+	NG_PVC_PROT(config, "pvc", 0);
+}
 
 
 // Game specific input definitions
@@ -61,7 +107,7 @@ INPUT_PORTS_END
  *************************************/
 
 #define ROM_Y_ZOOM \
-	ROM_REGION( 0x20000, "zoomy", 0 ) \
+	ROM_REGION( 0x20000, "spritegen:zoomy", 0 ) \
 	ROM_LOAD( "000-lo.lo", 0x00000, 0x20000, CRC(5a86cff2) SHA1(5992277debadeb64d1c1c64b0a92d9293eaf7e4a) )
 
 
@@ -250,7 +296,7 @@ void neopcb_state::svcpcb_gfx_decrypt()
 	for (int i = 0; i < rom_size; i += 4)
 	{
 		uint32_t rom32 = rom[i] | rom[i+1]<<8 | rom[i+2]<<16 | rom[i+3]<<24;
-		rom32 = BITSWAP32(rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16);
+		rom32 = bitswap<32>(rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16);
 		buf[i]   = rom32       & 0xff;
 		buf[i+1] = (rom32>>8)  & 0xff;
 		buf[i+2] = (rom32>>16) & 0xff;
@@ -259,7 +305,7 @@ void neopcb_state::svcpcb_gfx_decrypt()
 
 	for (int i = 0; i < rom_size / 4; i++)
 	{
-		int ofst =  BITSWAP24((i & 0x1fffff), 0x17, 0x16, 0x15, 0x04, 0x0b, 0x0e, 0x08, 0x0c, 0x10, 0x00, 0x0a, 0x13, 0x03, 0x06, 0x02, 0x07, 0x0d, 0x01, 0x11, 0x09, 0x14, 0x0f, 0x12, 0x05);
+		int ofst =  bitswap<24>((i & 0x1fffff), 0x17, 0x16, 0x15, 0x04, 0x0b, 0x0e, 0x08, 0x0c, 0x10, 0x00, 0x0a, 0x13, 0x03, 0x06, 0x02, 0x07, 0x0d, 0x01, 0x11, 0x09, 0x14, 0x0f, 0x12, 0x05);
 		ofst ^= 0x0c8923;
 		ofst += (i & 0xffe00000);
 		memcpy(&rom[i * 4], &buf[ofst * 4], 0x04);
@@ -274,7 +320,7 @@ void neopcb_state::svcpcb_s1data_decrypt()
 	size_t s1_size = memregion("fixed")->bytes();
 
 	for (int i = 0; i < s1_size; i++) // Decrypt S
-		s1[i] = BITSWAP8(s1[i] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3);
+		s1[i] = bitswap<8>(s1[i] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3);
 
 }
 
@@ -294,7 +340,7 @@ void neopcb_state::kf2k3pcb_gfx_decrypt()
 	for (int i = 0; i < rom_size; i +=4)
 	{
 		uint32_t rom32 = rom[i] | rom[i+1]<<8 | rom[i+2]<<16 | rom[i+3]<<24;
-		rom32 = BITSWAP32(rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16);
+		rom32 = bitswap<32>(rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16);
 		buf[i]   =  rom32      & 0xff;
 		buf[i+1] = (rom32>>8)  & 0xff;
 		buf[i+2] = (rom32>>16) & 0xff;
@@ -303,7 +349,7 @@ void neopcb_state::kf2k3pcb_gfx_decrypt()
 
 	for (int i = 0; i < rom_size; i+=4)
 	{
-		int ofst = BITSWAP24((i & 0x7fffff), 0x17, 0x15, 0x0a, 0x14, 0x13, 0x16, 0x12, 0x11, 0x10, 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00);
+		int ofst = bitswap<24>((i & 0x7fffff), 0x17, 0x15, 0x0a, 0x14, 0x13, 0x16, 0x12, 0x11, 0x10, 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00);
 		ofst ^= 0x000000;
 		ofst += (i & 0xff800000);
 		memcpy(&rom[ofst], &buf[i], 0x04);
@@ -333,7 +379,7 @@ void neopcb_state::kf2k3pcb_decrypt_s1data()
 	dst = memregion("fixed")->base();
 
 	for (int i = 0; i < tx_size; i++)
-		dst[i] = BITSWAP8(dst[i] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3);
+		dst[i] = bitswap<8>(dst[i] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3);
 }
 
 
@@ -430,7 +476,7 @@ void neopcb_state::install_common()
 	m_bank_base = 0;
 	init_audio();
 	m_audiocpu->reset();
-	init_ym();
+	m_ym->reset();
 	init_sprites();
 }
 
@@ -442,9 +488,8 @@ void neopcb_state::install_banked_bios()
 
 }
 
-DRIVER_INIT_MEMBER(neopcb_state, ms5pcb)
+void neopcb_state::init_ms5pcb()
 {
-	DRIVER_INIT_CALL(neogeo);
 	install_common();
 	install_banked_bios();
 
@@ -462,9 +507,8 @@ DRIVER_INIT_MEMBER(neopcb_state, ms5pcb)
 }
 
 
-DRIVER_INIT_MEMBER(neopcb_state, svcpcb)
+void neopcb_state::init_svcpcb()
 {
-	DRIVER_INIT_CALL(neogeo);
 	install_common();
 	install_banked_bios();
 
@@ -482,9 +526,8 @@ DRIVER_INIT_MEMBER(neopcb_state, svcpcb)
 }
 
 
-DRIVER_INIT_MEMBER(neopcb_state, kf2k3pcb)
+void neopcb_state::init_kf2k3pcb()
 {
-	DRIVER_INIT_CALL(neogeo);
 	install_common();
 
 	m_sprgen->m_fixed_layer_bank_type = 2;
@@ -498,7 +541,7 @@ DRIVER_INIT_MEMBER(neopcb_state, kf2k3pcb)
 	// incorrect
 	uint8_t* rom = memregion("audiocpu")->base();
 	for (int i = 0; i < 0x90000; i++)
-		rom[i] = BITSWAP8(rom[i], 5, 6, 1, 4, 3, 0, 7, 2);
+		rom[i] = bitswap<8>(rom[i], 5, 6, 1, 4, 3, 0, 7, 2);
 
 	kf2k3pcb_gfx_decrypt();
 	m_cmc_prot->cmc50_gfx_decrypt(spr_region, spr_region_size, KOF2003_GFX_KEY);
@@ -509,7 +552,7 @@ DRIVER_INIT_MEMBER(neopcb_state, kf2k3pcb)
 }
 
 
-GAME( 2003, ms5pcb,     0,        neopcb,   dualbios, neopcb_state, ms5pcb,   ROT0, "SNK Playmore", "Metal Slug 5 (JAMMA PCB)", MACHINE_SUPPORTS_SAVE )
-GAME( 2003, svcpcb,     0,        neopcb,   dualbios, neopcb_state, svcpcb,   ROT0, "SNK Playmore", "SNK vs. Capcom - SVC Chaos (JAMMA PCB, set 1)", MACHINE_SUPPORTS_SAVE )
-GAME( 2003, svcpcba,    svcpcb,   neopcb,   dualbios, neopcb_state, svcpcb,   ROT0, "SNK Playmore", "SNK vs. Capcom - SVC Chaos (JAMMA PCB, set 2)" , MACHINE_SUPPORTS_SAVE ) /* Encrypted Code */
-GAME( 2003, kf2k3pcb,   0,        neopcb,   neogeo,   neopcb_state, kf2k3pcb, ROT0, "SNK Playmore", "The King of Fighters 2003 (Japan, JAMMA PCB)", MACHINE_SUPPORTS_SAVE )
+GAME( 2003, ms5pcb,     0,        neopcb,   dualbios, neopcb_state, init_ms5pcb,   ROT0, "SNK Playmore", "Metal Slug 5 (JAMMA PCB)", MACHINE_SUPPORTS_SAVE )
+GAME( 2003, svcpcb,     0,        neopcb,   dualbios, neopcb_state, init_svcpcb,   ROT0, "Playmore / Capcom", "SNK vs. Capcom - SVC Chaos (JAMMA PCB, set 1)", MACHINE_SUPPORTS_SAVE )
+GAME( 2003, svcpcba,    svcpcb,   neopcb,   dualbios, neopcb_state, init_svcpcb,   ROT0, "Playmore / Capcom", "SNK vs. Capcom - SVC Chaos (JAMMA PCB, set 2)", MACHINE_SUPPORTS_SAVE ) /* Encrypted Code */
+GAME( 2003, kf2k3pcb,   0,        neopcb,   neogeo,   neopcb_state, init_kf2k3pcb, ROT0, "SNK Playmore", "The King of Fighters 2003 (Japan, JAMMA PCB)", MACHINE_SUPPORTS_SAVE )

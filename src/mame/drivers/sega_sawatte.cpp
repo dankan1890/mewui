@@ -35,6 +35,7 @@ public:
 		: driver_device(mconfig, type, tag)
 	{ }
 
+	void sawatte(machine_config &config);
 protected:
 };
 
@@ -43,12 +44,13 @@ static INPUT_PORTS_START( sawatte )
 INPUT_PORTS_END
 
 
-static MACHINE_CONFIG_START( sawatte )
-	MCFG_SOFTWARE_LIST_ADD("cart_list", "sawatte")
-MACHINE_CONFIG_END
+void sawatte_state::sawatte(machine_config &config)
+{
+	SOFTWARE_LIST(config, "cart_list").set_original("sawatte");
+}
 
 ROM_START( sawatte )
 ROM_END
 
 
-CONS( 1996?, sawatte, 0, 0, sawatte,  sawatte, sawatte_state,  0, "Sega", "Sawatte", MACHINE_IS_SKELETON )
+CONS( 1996?, sawatte, 0, 0, sawatte,  sawatte, sawatte_state, empty_init, "Sega", "Sawatte", MACHINE_IS_SKELETON )

@@ -1,30 +1,39 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef NANOVG_BGFX_H_HEADER_GUARD
 #define NANOVG_BGFX_H_HEADER_GUARD
 
-#include "bgfx/bgfx.h"
+#include <bgfx/bgfx.h>
 
 namespace bx { struct AllocatorI; }
 
 struct NVGcontext;
 
-struct NVGLUframebuffer {
+struct NVGLUframebuffer
+{
   NVGcontext* ctx;
   bgfx::FrameBufferHandle handle;
   int image;
-  uint8_t viewId;
+  bgfx::ViewId viewId;
 };
-typedef struct NVGLUframebuffer NVGLUframebuffer;
 
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId, bx::AllocatorI* _allocator);
-NVGcontext* nvgCreate(int edgeaa, unsigned char _viewId);
-void nvgDelete(struct NVGcontext* ctx);
-uint8_t nvgViewId(struct NVGcontext* ctx);
-void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
+///
+NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId, bx::AllocatorI* _allocator);
+
+///
+NVGcontext* nvgCreate(int32_t _edgeaa, bgfx::ViewId _viewId);
+
+///
+void nvgDelete(NVGcontext* _ctx);
+
+///
+void nvgSetViewId(NVGcontext* _ctx, bgfx::ViewId _viewId);
+
+///
+uint16_t nvgGetViewId(struct NVGcontext* _ctx);
 
 // Helper functions to create bgfx framebuffer to render to.
 // Example:
@@ -45,10 +54,20 @@ void nvgViewId(struct NVGcontext* ctx, unsigned char _viewId);
 //		nvgFillPaint(ctx, paint);
 //		nvgFill(ctx);
 //		nvgEndFrame(ctx);
-NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags, uint8_t viewId);
-NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* ctx, int width, int height, int imageFlags);
-void nvgluBindFramebuffer(NVGLUframebuffer* framebuffer);
-void nvgluDeleteFramebuffer(NVGLUframebuffer* framebuffer);
-void nvgluSetViewFramebuffer(uint8_t viewId, NVGLUframebuffer* framebuffer);
+
+///
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int32_t _width, int32_t _height, int32_t _imageFlags, bgfx::ViewId _viewId);
+
+///
+NVGLUframebuffer* nvgluCreateFramebuffer(NVGcontext* _ctx, int32_t _width, int32_t _height, int32_t _imageFlags);
+
+///
+void nvgluBindFramebuffer(NVGLUframebuffer* _framebuffer);
+
+///
+void nvgluDeleteFramebuffer(NVGLUframebuffer* _framebuffer);
+
+///
+void nvgluSetViewFramebuffer(bgfx::ViewId _viewId, NVGLUframebuffer* _framebuffer);
 
 #endif // NANOVG_BGFX_H_HEADER_GUARD

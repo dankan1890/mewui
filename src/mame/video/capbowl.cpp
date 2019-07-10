@@ -28,7 +28,7 @@ WRITE8_MEMBER(capbowl_state::tms34061_w)
 		col ^= 2;
 
 	/* Row address (RA0-RA8) is not dependent on the offset */
-	m_tms34061->write(space, col, *m_rowaddress, func, data);
+	m_tms34061->write(col, *m_rowaddress, func, data);
 }
 
 
@@ -43,7 +43,7 @@ READ8_MEMBER(capbowl_state::tms34061_r)
 		col ^= 2;
 
 	/* Row address (RA0-RA8) is not dependent on the offset */
-	return m_tms34061->read(space, col, *m_rowaddress, func);
+	return m_tms34061->read(col, *m_rowaddress, func);
 }
 
 
@@ -71,7 +71,7 @@ WRITE8_MEMBER(capbowl_state::bowlrama_blitter_w)
 			break;
 
 		default:
-			logerror("PC=%04X Write to unsupported blitter address %02X Data=%02X\n", space.device().safe_pc(), offset, data);
+			logerror("PC=%04X Write to unsupported blitter address %02X Data=%02X\n", m_maincpu->pc(), offset, data);
 			break;
 	}
 }
@@ -102,7 +102,7 @@ READ8_MEMBER(capbowl_state::bowlrama_blitter_r)
 			break;
 
 		default:
-			logerror("PC=%04X Read from unsupported blitter address %02X\n", space.device().safe_pc(), offset);
+			logerror("PC=%04X Read from unsupported blitter address %02X\n", m_maincpu->pc(), offset);
 			break;
 	}
 

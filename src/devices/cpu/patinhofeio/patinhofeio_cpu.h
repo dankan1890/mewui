@@ -5,15 +5,6 @@
 
 #pragma once
 
-#define MCFG_PATINHO_RC_READ_CB(_devcb) \
-	devcb = &patinho_feio_cpu_device::set_rc_read_callback(*device, DEVCB_##_devcb);
-#define MCFG_PATINHO_BUTTONS_READ_CB(_devcb) \
-	devcb = &patinho_feio_cpu_device::set_buttons_read_callback(*device, DEVCB_##_devcb);
-#define MCFG_PATINHO_IODEV_READ_CB(devnumber, _devcb) \
-	devcb = &patinho_feio_cpu_device::set_iodev_read_callback(*device, devnumber, DEVCB_##_devcb);
-#define MCFG_PATINHO_IODEV_WRITE_CB(devnumber, _devcb) \
-	devcb = &patinho_feio_cpu_device::set_iodev_write_callback(*device, devnumber, DEVCB_##_devcb);
-
 /* register IDs */
 enum
 {
@@ -53,19 +44,20 @@ public:
 	// construction/destruction
 	patinho_feio_cpu_device(const machine_config &mconfig, const char *_tag, device_t *_owner, uint32_t _clock);
 
-	template <class Object> static devcb_base &set_rc_read_callback(device_t &device, Object &&cb) { return downcast<patinho_feio_cpu_device &>(device).m_rc_read_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_buttons_read_callback(device_t &device, Object &&cb) { return downcast<patinho_feio_cpu_device &>(device).m_buttons_read_cb.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_iodev_read_callback(device_t &device, int devnumber, Object &&cb) { return downcast<patinho_feio_cpu_device &>(device).m_iodev_read_cb[devnumber].set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_iodev_write_callback(device_t &device, int devnumber, Object &&cb) { return downcast<patinho_feio_cpu_device &>(device).m_iodev_write_cb[devnumber].set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &set_iodev_status_callback(device_t &device, int devnumber, Object &&cb) { return downcast<patinho_feio_cpu_device &>(device).m_iodev_status_cb[devnumber].set_callback(std::forward<Object>(cb)); }
+	auto rc_read() { return m_rc_read_cb.bind(); }
+	auto buttons_read() { return m_buttons_read_cb.bind(); }
+	template <std::size_t DevNumber> auto iodev_read() { return m_iodev_read_cb[DevNumber].bind(); }
+	template <std::size_t DevNumber> auto iodev_write() { return m_iodev_write_cb[DevNumber].bind(); }
+	template <std::size_t DevNumber> auto iodev_status() { return m_iodev_status_cb[DevNumber].bind(); }
 
 	void transfer_byte_from_external_device(uint8_t channel, uint8_t data);
 	void set_iodev_status(uint8_t channel, bool status) { m_iodev_status[channel] = status; }
 
+	void prog_8bit(address_map &map);
 protected:
 
 	virtual void execute_run() override;
-	virtual offs_t disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options) override;
+	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 	address_space_config m_program_config;
 
@@ -120,10 +112,6 @@ protected:
 
 	// device_memory_interface overrides
 	virtual space_config_vector memory_space_config() const override;
-
-	// device_disasm_interface overrides
-	virtual uint32_t disasm_min_opcode_bytes() const override { return 1; }
-	virtual uint32_t disasm_max_opcode_bytes() const override { return 2; }
 
 private:
 	void execute_instruction();

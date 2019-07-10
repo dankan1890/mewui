@@ -37,6 +37,7 @@
 
 void harddriv_state::device_start()
 {
+	m_lamps.resolve();
 	//atarigen_state::machine_start();
 
 	/* predetermine memory regions */
@@ -143,7 +144,7 @@ READ16_MEMBER( harddriv_state::hd68k_gsp_io_r )
 	uint16_t result;
 	offset = (offset / 2) ^ 1;
 	m_hd34010_host_access = true;
-	result = m_gsp->host_r(space, offset, 0xffff);
+	result = m_gsp->host_r(offset);
 	m_hd34010_host_access = false;
 	return result;
 }
@@ -153,7 +154,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_gsp_io_w )
 {
 	offset = (offset / 2) ^ 1;
 	m_hd34010_host_access = true;
-	m_gsp->host_w(space, offset, data, 0xffff);
+	m_gsp->host_w(offset, data);
 	m_hd34010_host_access = false;
 }
 
@@ -170,7 +171,7 @@ READ16_MEMBER( harddriv_state::hd68k_msp_io_r )
 	uint16_t result;
 	offset = (offset / 2) ^ 1;
 	m_hd34010_host_access = true;
-	result = m_msp.found() ? m_msp->host_r(space, offset, 0xffff) : 0xffff;
+	result = m_msp.found() ? m_msp->host_r(offset) : 0xffff;
 	m_hd34010_host_access = false;
 	return result;
 }
@@ -182,7 +183,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_msp_io_w )
 	if (m_msp.found())
 	{
 		m_hd34010_host_access = true;
-		m_msp->host_w(space, offset, data, 0xffff);
+		m_msp->host_w(offset, data);
 		m_hd34010_host_access = false;
 	}
 }
@@ -221,7 +222,7 @@ READ16_MEMBER( harddriv_state::hd68k_port0_r )
 
 	int temp = (m_sw1.read_safe(0xff) << 8) | m_in0->read();
 	if (get_hblank(scr)) temp ^= 0x0002;
-	temp ^= 0x0018;     /* both EOCs always high for now */
+	temp ^= 0x0008;     /* 12-bit EOC always high for now */
 	return temp;
 }
 
@@ -272,7 +273,7 @@ READ16_MEMBER( harddriv_state::hdc68k_wheel_r )
 	uint16_t new_wheel = m_12badc[0].read_safe(0xffff);
 
 	/* hack to display the wheel position */
-	if (space.machine().input().code_pressed(KEYCODE_LSHIFT))
+	if (machine().input().code_pressed(KEYCODE_LSHIFT))
 		popmessage("%04X", new_wheel);
 
 	/* if we crossed the center line, latch the edge bit */
@@ -282,12 +283,6 @@ READ16_MEMBER( harddriv_state::hdc68k_wheel_r )
 	/* remember the last value and return the low 8 bits */
 	m_hdc68k_last_wheel = new_wheel;
 	return (new_wheel << 8) | 0xff;
-}
-
-
-READ16_MEMBER( harddriv_state::hd68k_adc8_r )
-{
-	return m_adc8_data;
 }
 
 
@@ -317,11 +312,8 @@ WRITE16_MEMBER( harddriv_state::hd68k_adc_control_w )
 	COMBINE_DATA(&m_adc_control);
 
 	/* handle a write to the 8-bit ADC address select */
-	if (m_adc_control & 0x08)
-	{
-		m_adc8_select = m_adc_control & 0x07;
-		m_adc8_data = m_8badc[m_adc8_select].read_safe(0xffff);
-	}
+	m_adc8->address_w(m_adc_control & 0x07);
+	m_adc8->start_w(BIT(m_adc_control, 3));
 
 	/* handle a write to the 12-bit ADC address select */
 	if (m_adc_control & 0x40)
@@ -356,7 +348,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_wr0_write )
 
 		case 6: /* CC1 */
 		case 7: /* CC2 */
-			space.machine().bookkeeping().coin_counter_w(offset - 6, data);
+			machine().bookkeeping().coin_counter_w(offset - 6, data);
 			break;
 
 		default:
@@ -424,11 +416,11 @@ WRITE16_MEMBER( harddriv_state::hd68k_nwr_w )
 			break;
 		case 2: /* LC1 */
 			// used for seat locking on harddriv
-			machine().output().set_led_value(1, data);
+			m_lamps[0] = data;
 			break;
 		case 3: /* LC2 */
 			// used for "abort" button lamp
-			machine().output().set_led_value(2, data);
+			m_lamps[1] = data;
 			break;
 		case 4: /* ZP1 */
 			m_m68k_zp1 = data;
@@ -472,7 +464,7 @@ READ16_MEMBER( harddriv_state::hd68k_zram_r )
 		data |= m_210e->read(space, offset, mem_mask);
 
 	if (ACCESSING_BITS_8_15)
-		data |= m_200e->read(space, offset, mem_mask >> 8) << 8;
+		data |= m_200e->read(offset) << 8;
 
 	return data;
 }
@@ -486,7 +478,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_zram_w )
 			m_210e->write(space, offset, data, mem_mask);
 
 		if (ACCESSING_BITS_8_15)
-			m_200e->write(space, offset, data >> 8, mem_mask >> 8);
+			m_200e->write(offset, data >> 8);
 	}
 }
 
@@ -511,7 +503,7 @@ WRITE_LINE_MEMBER(harddriv_state::harddriv_duart_irq_handler)
  *
  *************************************/
 
-WRITE16_MEMBER( harddriv_state::hdgsp_io_w )
+void harddriv_state::hdgsp_io_w(offs_t offset, u16 data, u16 mem_mask)
 {
 	/* detect an enabling of the shift register and force yielding */
 	if (offset == REG_DPYCTL)
@@ -521,17 +513,15 @@ WRITE16_MEMBER( harddriv_state::hdgsp_io_w )
 		{
 			m_last_gsp_shiftreg = new_shiftreg;
 			if (new_shiftreg)
-				space.device().execute().yield();
+				m_gsp->yield();
 		}
 	}
 
 	screen_device &scr = m_gsp->screen();
 
 	/* detect changes to HEBLNK and HSBLNK and force an update before they change */
-	if ((offset == REG_HEBLNK || offset == REG_HSBLNK) && data != m_gsp->io_register_r(space, offset, 0xffff))
+	if ((offset == REG_HEBLNK || offset == REG_HSBLNK) && data != m_gsp->io_register_r(offset))
 		scr.update_partial(scr.vpos() - 1);
-
-	m_gsp->io_register_w(space, offset, data, mem_mask);
 }
 
 
@@ -611,12 +601,12 @@ WRITE16_MEMBER( harddriv_state::hd68k_adsp_data_w )
 	/* any write to $1FFF is taken to be a trigger; synchronize the CPUs */
 	if (offset == 0x1fff)
 	{
-		logerror("%06X:ADSP sync address written (%04X)\n", space.device().safe_pcbase(), data);
-		space.machine().scheduler().synchronize();
+		logerror("%06X:ADSP sync address written (%04X)\n", m_maincpu->pcbase(), data);
+		machine().scheduler().synchronize();
 		m_adsp->signal_interrupt_trigger();
 	}
 	else
-		logerror("%06X:ADSP W@%04X (%04X)\n", space.device().safe_pcbase(), offset, data);
+		logerror("%06X:ADSP W@%04X (%04X)\n", m_maincpu->pcbase(), offset, data);
 }
 
 
@@ -714,7 +704,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_adsp_control_w )
 
 		case 3:
 			logerror("ADSP bank = %d (deferred)\n", val);
-			space.machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::deferred_adsp_bank_switch),this), val);
+			machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::deferred_adsp_bank_switch),this), val);
 			break;
 
 		case 5:
@@ -730,7 +720,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_adsp_control_w )
 				/* a yield in this case is not enough */
 				/* we would need to increase the interleaving otherwise */
 				/* note that this only affects the test mode */
-				space.device().execute().spin();
+				m_maincpu->spin();
 			}
 			break;
 
@@ -747,14 +737,14 @@ WRITE16_MEMBER( harddriv_state::hd68k_adsp_control_w )
 				/* a yield in this case is not enough */
 				/* we would need to increase the interleaving otherwise */
 				/* note that this only affects the test mode */
-				space.device().execute().spin();
+				m_maincpu->spin();
 			}
 			break;
 
 		case 7:
 			logerror("ADSP reset = %d\n", val);
 			m_adsp->set_input_line(INPUT_LINE_RESET, val ? CLEAR_LINE : ASSERT_LINE);
-			space.device().execute().yield();
+			m_maincpu->yield();
 			break;
 
 		default:
@@ -766,7 +756,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_adsp_control_w )
 
 WRITE16_MEMBER( harddriv_state::hd68k_adsp_irq_clear_w )
 {
-	logerror("%06X:68k clears ADSP interrupt\n", space.device().safe_pcbase());
+	logerror("%06X:68k clears ADSP interrupt\n", m_maincpu->pcbase());
 	m_adsp_irq_state = 0;
 	update_interrupts();
 }
@@ -777,7 +767,7 @@ READ16_MEMBER( harddriv_state::hd68k_adsp_irq_state_r )
 	int result = 0xfffd;
 	if (m_adsp_xflag) result ^= 2;
 	if (m_adsp_irq_state) result ^= 1;
-	logerror("%06X:68k reads ADSP interrupt state = %04x\n", space.device().safe_pcbase(), result);
+	logerror("%06X:68k reads ADSP interrupt state = %04x\n", m_maincpu->pcbase(), result);
 	return result;
 }
 
@@ -809,7 +799,7 @@ READ16_MEMBER( harddriv_state::hdadsp_special_r )
 			break;
 
 		default:
-			logerror("%04X:hdadsp_special_r(%04X)\n", space.device().safe_pcbase(), offset);
+			logerror("%04X:hdadsp_special_r(%04X)\n", m_adsp->pcbase(), offset);
 			break;
 	}
 	return 0;
@@ -837,7 +827,7 @@ WRITE16_MEMBER( harddriv_state::hdadsp_special_w )
 			break;
 
 		case 6: /* /GINT */
-			logerror("%04X:ADSP signals interrupt\n", space.device().safe_pcbase());
+			logerror("%04X:ADSP signals interrupt\n", m_adsp->pcbase());
 			m_adsp_irq_state = 1;
 			update_interrupts();
 			break;
@@ -847,7 +837,7 @@ WRITE16_MEMBER( harddriv_state::hdadsp_special_w )
 			break;
 
 		default:
-			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", space.device().safe_pcbase(), offset, data);
+			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", m_adsp->pcbase(), offset, data);
 			break;
 	}
 }
@@ -907,7 +897,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_ds3_control_w )
 					update_ds3_sirq();
 				}
 				m_ds3_sreset = val;
-				space.device().execute().yield();
+				m_maincpu->yield();
 			}
 			break;
 
@@ -932,7 +922,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_ds3_control_w )
 				/* a yield in this case is not enough */
 				/* we would need to increase the interleaving otherwise */
 				/* note that this only affects the test mode */
-				space.device().execute().spin();
+				m_maincpu->spin();
 			}
 			break;
 
@@ -948,7 +938,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_ds3_control_w )
 				update_ds3_irq();
 			}
 			m_ds3_reset = val;
-			space.device().execute().yield();
+			m_maincpu->yield();
 			logerror("DS III reset = %d\n", val);
 			break;
 
@@ -983,15 +973,15 @@ READ16_MEMBER( harddriv_state::hd68k_ds3_girq_state_r )
 
 READ16_MEMBER( harddriv_state::hd68k_ds3_gdata_r )
 {
-	offs_t pc = space.device().safe_pc();
+	offs_t pc = m_maincpu->pc();
 
 	m_ds3_gflag = 0;
 	update_ds3_irq();
 
-	logerror("%06X:hd68k_ds3_gdata_r(%04X)\n", space.device().safe_pcbase(), m_ds3_gdata);
+	logerror("%06X:hd68k_ds3_gdata_r(%04X)\n", m_maincpu->pcbase(), m_ds3_gdata);
 
 	/* attempt to optimize the transfer if conditions are right */
-	if (&space.device() == m_maincpu && pc == m_ds3_transfer_pc &&
+	if (pc == m_ds3_transfer_pc &&
 		!(!m_ds3_g68flag && m_ds3_g68irqs) && !(m_ds3_gflag && m_ds3_gfirqs))
 	{
 		uint32_t destaddr = m_maincpu->state_int(M68K_A1);
@@ -1000,12 +990,13 @@ READ16_MEMBER( harddriv_state::hd68k_ds3_gdata_r )
 		uint16_t i6 = m_adsp->state_int((mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC);
 		uint16_t l6 = m_adsp->state_int(ADSP2100_L6) - 1;
 		uint16_t m7 = m_adsp->state_int(ADSP2100_M7);
+		auto &mspace = m_maincpu->space(AS_PROGRAM);
 
 		logerror("%06X:optimizing 68k transfer, %d words\n", m_maincpu->pcbase(), count68k);
 
 		while (count68k > 0 && m_adsp_data_memory[0x16e6] > 0)
 		{
-			space.write_word(destaddr, m_ds3_gdata);
+			mspace.write_word(destaddr, m_ds3_gdata);
 			{
 				m_adsp_data_memory[0x16e6]--;
 				m_ds3_gdata = m_adsp_pgm_memory[i6] >> 8;
@@ -1021,8 +1012,8 @@ READ16_MEMBER( harddriv_state::hd68k_ds3_gdata_r )
 	/* if we just cleared the IRQ, we are going to do some VERY timing critical reads */
 	/* it is important that all the CPUs be in sync before we continue, so spin a little */
 	/* while to let everyone else catch up */
-	space.device().execute().spin_until_trigger(DS3_TRIGGER);
-	space.machine().scheduler().trigger(DS3_TRIGGER, attotime::from_usec(5));
+	m_maincpu->spin_until_trigger(DS3_TRIGGER);
+	machine().scheduler().trigger(DS3_TRIGGER, attotime::from_usec(5));
 
 	return m_ds3_gdata;
 }
@@ -1030,7 +1021,7 @@ READ16_MEMBER( harddriv_state::hd68k_ds3_gdata_r )
 
 WRITE16_MEMBER( harddriv_state::hd68k_ds3_gdata_w )
 {
-	logerror("%06X:hd68k_ds3_gdata_w(%04X)\n", space.device().safe_pcbase(), m_ds3_gdata);
+	logerror("%06X:hd68k_ds3_gdata_w(%04X)\n", m_maincpu->pcbase(), m_ds3_gdata);
 
 	COMBINE_DATA(&m_ds3_g68data);
 	m_ds3_g68flag = 1;
@@ -1049,7 +1040,7 @@ WRITE16_MEMBER( harddriv_state::hd68k_ds3_gdata_w )
 
 WRITE16_MEMBER( harddriv_state::hd68k_ds3_sirq_clear_w )
 {
-	logerror("%06X:68k clears ADSP interrupt\n", space.device().safe_pcbase());
+	logerror("%06X:68k clears ADSP interrupt\n", m_maincpu->pcbase());
 	m_sound_int_state = 0;
 	update_interrupts();
 }
@@ -1074,8 +1065,8 @@ READ16_MEMBER( harddriv_state::hd68k_ds3_sdata_r )
 	/* if we just cleared the IRQ, we are going to do some VERY timing critical reads */
 	/* it is important that all the CPUs be in sync before we continue, so spin a little */
 	/* while to let everyone else catch up */
-	space.device().execute().spin_until_trigger(DS3_STRIGGER);
-	space.machine().scheduler().trigger(DS3_STRIGGER, attotime::from_usec(5));
+	m_maincpu->spin_until_trigger(DS3_STRIGGER);
+	machine().scheduler().trigger(DS3_STRIGGER, attotime::from_usec(5));
 
 	return m_ds3_sdata;
 }
@@ -1141,7 +1132,7 @@ WRITE16_MEMBER( harddriv_state::hdds3_sdsp_special_w )
 			update_ds3_sirq();
 
 			/* once we've written data, trigger the main CPU to wake up again */
-			space.machine().scheduler().trigger(DS3_STRIGGER);
+			machine().scheduler().trigger(DS3_STRIGGER);
 			break;
 
 		case 1:
@@ -1225,7 +1216,7 @@ WRITE16_MEMBER( harddriv_state::hdds3_sdsp_control_w )
 			{
 				uint32_t page = (data >> 6) & 7;
 				m_ds3sdsp->load_boot_data(m_ds3sdsp_region->base() + (0x2000 * page), m_ds3sdsp_pgm_memory);
-				m_ds3sdsp->set_input_line(INPUT_LINE_RESET, PULSE_LINE);
+				m_ds3sdsp->pulse_input_line(INPUT_LINE_RESET, attotime::zero);
 				data &= ~0x200;
 			}
 
@@ -1425,17 +1416,17 @@ WRITE16_MEMBER( harddriv_state::hdds3_special_w )
 	switch (offset & 7)
 	{
 		case 0:
-			logerror("%04X:ADSP sets gdata to %04X\n", space.device().safe_pcbase(), data);
+			logerror("%s:ADSP sets gdata to %04X\n", machine().describe_context(), data);
 			m_ds3_gdata = data;
 			m_ds3_gflag = 1;
 			update_ds3_irq();
 
 			/* once we've written data, trigger the main CPU to wake up again */
-			space.machine().scheduler().trigger(DS3_TRIGGER);
+			machine().scheduler().trigger(DS3_TRIGGER);
 			break;
 
 		case 1:
-			logerror("%04X:ADSP sets interrupt = %d\n", space.device().safe_pcbase(), (data >> 1) & 1);
+			logerror("%s:ADSP sets interrupt = %d\n", machine().describe_context(), (data >> 1) & 1);
 			m_adsp_irq_state = (data >> 1) & 1;
 			update_interrupts();
 			break;
@@ -1650,7 +1641,7 @@ WRITE32_MEMBER( harddriv_state::rddsp32_sync0_w )
 		COMBINE_DATA(&newdata);
 		m_dataptr[m_next_msp_sync % MAX_MSP_SYNC] = dptr;
 		m_dataval[m_next_msp_sync % MAX_MSP_SYNC] = newdata;
-		space.machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::rddsp32_sync_cb),this), m_next_msp_sync++ % MAX_MSP_SYNC);
+		machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::rddsp32_sync_cb),this), m_next_msp_sync++ % MAX_MSP_SYNC);
 	}
 	else
 		COMBINE_DATA(&m_rddsp32_sync[0][offset]);
@@ -1666,7 +1657,7 @@ WRITE32_MEMBER( harddriv_state::rddsp32_sync1_w )
 		COMBINE_DATA(&newdata);
 		m_dataptr[m_next_msp_sync % MAX_MSP_SYNC] = dptr;
 		m_dataval[m_next_msp_sync % MAX_MSP_SYNC] = newdata;
-		space.machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::rddsp32_sync_cb),this), m_next_msp_sync++ % MAX_MSP_SYNC);
+		machine().scheduler().synchronize(timer_expired_delegate(FUNC(harddriv_state::rddsp32_sync_cb),this), m_next_msp_sync++ % MAX_MSP_SYNC);
 	}
 	else
 		COMBINE_DATA(&m_rddsp32_sync[1][offset]);
@@ -1860,10 +1851,10 @@ READ16_MEMBER( harddriv_state::hdgsp_speedup_r )
 	/* if both this address and the other important address are not $ffff */
 	/* then we can spin until something gets written */
 	if (result != 0xffff && m_gsp_speedup_addr[1][0] != 0xffff &&
-		&space.device() == m_gsp && space.device().safe_pc() == m_gsp_speedup_pc)
+		m_gsp->pc() == m_gsp_speedup_pc)
 	{
 		m_gsp_speedup_count[0]++;
-		space.device().execute().spin_until_interrupt();
+		m_gsp->spin_until_interrupt();
 	}
 
 	return result;
@@ -1904,11 +1895,11 @@ READ16_MEMBER( harddriv_state::rdgsp_speedup1_r )
 	uint16_t result = m_gsp_speedup_addr[0][offset];
 
 	/* if this address is equal to $f000, spin until something gets written */
-	if (&space.device() == m_gsp && space.device().safe_pc() == m_gsp_speedup_pc &&
-		(uint8_t)result < space.device().state().state_int(TMS34010_A1))
+	if (m_gsp->pc() == m_gsp_speedup_pc &&
+		(uint8_t)result < m_gsp->state_int(TMS34010_A1))
 	{
 		m_gsp_speedup_count[0]++;
-		space.device().execute().spin_until_interrupt();
+		m_gsp->spin_until_interrupt();
 	}
 
 	return result;
@@ -1918,8 +1909,6 @@ READ16_MEMBER( harddriv_state::rdgsp_speedup1_r )
 WRITE16_MEMBER( harddriv_state::rdgsp_speedup1_w )
 {
 	COMBINE_DATA(&m_gsp_speedup_addr[0][offset]);
-	if (&space.device() != m_gsp)
-		m_gsp->signal_interrupt_trigger();
 }
 
 
@@ -1939,10 +1928,10 @@ READ16_MEMBER( harddriv_state::hdmsp_speedup_r )
 {
 	int data = m_msp_speedup_addr[offset];
 
-	if (data == 0 && &space.device() == m_msp && space.device().safe_pc() == m_msp_speedup_pc)
+	if (data == 0 && m_msp->pc() == m_msp_speedup_pc)
 	{
 		m_msp_speedup_count[0]++;
-		space.device().execute().spin_until_interrupt();
+		m_msp->spin_until_interrupt();
 	}
 
 	return data;
@@ -1972,10 +1961,10 @@ READ16_MEMBER( harddriv_state::hdadsp_speedup_r )
 {
 	int data = m_adsp_data_memory[0x1fff];
 
-	if (data == 0xffff && &space.device() == m_adsp && space.device().safe_pc() <= 0x3b)
+	if (data == 0xffff && m_adsp->pc() <= 0x3b)
 	{
 		m_adsp_speedup_count[0]++;
-		space.device().execute().spin_until_interrupt();
+		m_adsp->spin_until_interrupt();
 	}
 
 	return data;
@@ -1986,10 +1975,10 @@ READ16_MEMBER( harddriv_state::hdds3_speedup_r )
 {
 	int data = *m_ds3_speedup_addr;
 
-	if (data != 0 && &space.device() == m_adsp && space.device().safe_pc() == m_ds3_speedup_pc)
+	if (data != 0 && m_adsp->pc() == m_ds3_speedup_pc)
 	{
 		m_adsp_speedup_count[2]++;
-		space.device().execute().spin_until_interrupt();
+		m_adsp->spin_until_interrupt();
 	}
 
 	return data;

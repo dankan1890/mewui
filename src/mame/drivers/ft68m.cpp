@@ -15,47 +15,34 @@ Interrupts: INT6 is output of Timer 2, INT7 is output of Timer 3 (refresh),
 
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/terminal.h"
-
-#define TERMINAL_TAG "terminal"
+#include "bus/rs232/rs232.h"
+#include "machine/am9513.h"
+#include "machine/z80sio.h"
 
 class ft68m_state : public driver_device
 {
 public:
-	ft68m_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	ft68m_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_p_base(*this, "rambase"),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
+		m_maincpu(*this, "maincpu")
 	{
 	}
 
-	void kbd_put(u8 data);
-	DECLARE_READ16_MEMBER(keyin_r);
-	DECLARE_READ16_MEMBER(status_r);
-	DECLARE_READ16_MEMBER(switches_r);
+	void ft68m(machine_config &config);
 
 private:
-	uint8_t m_term_data;
+	DECLARE_READ16_MEMBER(switches_r);
+
+	void mem_map(address_map &map);
+
+	virtual void machine_start() override;
 	virtual void machine_reset() override;
 
 	required_shared_ptr<uint16_t> m_p_base;
 
 	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
 };
-
-READ16_MEMBER( ft68m_state::keyin_r )
-{
-	uint16_t ret = m_term_data;
-	m_term_data = 0;
-	return ret << 8;
-}
-
-READ16_MEMBER( ft68m_state::status_r )
-{
-	return (m_term_data) ? 0x500 : 0x400;
-}
 
 READ16_MEMBER( ft68m_state::switches_r )
 {
@@ -63,20 +50,19 @@ READ16_MEMBER( ft68m_state::switches_r )
 }
 
 
-static ADDRESS_MAP_START(ft68m_mem, AS_PROGRAM, 16, ft68m_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	ADDRESS_MAP_GLOBAL_MASK(0xffffff)
-	AM_RANGE(0x000000, 0x1fffff) AM_RAM AM_SHARE("rambase")
-	AM_RANGE(0x200000, 0x201fff) AM_ROM AM_REGION("roms", 0x0000)
-	AM_RANGE(0x400000, 0x401fff) AM_ROM AM_REGION("roms", 0x2000)
-	AM_RANGE(0x600000, 0x600001) AM_READ(keyin_r) AM_DEVWRITE8(TERMINAL_TAG, generic_terminal_device, write, 0xff00)
-	AM_RANGE(0x600002, 0x600003) AM_READ(status_r)
-	//AM_RANGE(0x600000, 0x600003) AM_MIRROR(0x1ffffc) uPD7201 SIO
-	//AM_RANGE(0x800000, 0x800003) AM_MIRROR(0x1ffffc) AM9513 Timer
-	AM_RANGE(0xa00000, 0xbfffff) AM_RAM //Page Map
-	AM_RANGE(0xc00000, 0xdfffff) AM_RAM //Segment Map
-	AM_RANGE(0xe00000, 0xffffff) AM_READ(switches_r) //Context Register
-ADDRESS_MAP_END
+void ft68m_state::mem_map(address_map &map)
+{
+	map.unmap_value_high();
+	map.global_mask(0xffffff);
+	map(0x000000, 0x1fffff).ram().share("rambase");
+	map(0x200000, 0x201fff).rom().region("roms", 0x0000);
+	map(0x400000, 0x401fff).rom().region("roms", 0x2000);
+	map(0x600000, 0x600007).mirror(0x1ffff8).rw("mpsc", FUNC(upd7201_new_device::ba_cd_r), FUNC(upd7201_new_device::ba_cd_w)).umask16(0xff00);
+	map(0x800000, 0x800003).mirror(0x1ffffc).rw("stc", FUNC(am9513_device::read16), FUNC(am9513_device::write16));
+	map(0xa00000, 0xbfffff).ram(); //Page Map
+	map(0xc00000, 0xdfffff).ram(); //Segment Map
+	map(0xe00000, 0xffffff).r(FUNC(ft68m_state::switches_r)); //Context Register
+}
 
 
 /* Input ports */
@@ -84,28 +70,47 @@ static INPUT_PORTS_START( ft68m )
 INPUT_PORTS_END
 
 
+void ft68m_state::machine_start()
+{
+	// GATE 1 is tied to Vcc; other GATE and SRC pins are all grounded
+	subdevice<am9513_device>("stc")->gate1_w(1);
+}
+
 void ft68m_state::machine_reset()
 {
 	uint8_t* ROM = memregion("roms")->base();
 	memcpy(m_p_base, ROM, 8);
-	m_maincpu->reset();
 }
 
-void ft68m_state::kbd_put(u8 data)
+void ft68m_state::ft68m(machine_config &config)
 {
-	m_term_data = data;
-}
-
-static MACHINE_CONFIG_START( ft68m )
-
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", M68000, XTAL_19_6608MHz / 2)
-	MCFG_CPU_PROGRAM_MAP(ft68m_mem)
+	M68000(config, m_maincpu, XTAL(19'660'800) / 2);
+	m_maincpu->set_addrmap(AS_PROGRAM, &ft68m_state::mem_map);
 
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(ft68m_state, kbd_put))
-MACHINE_CONFIG_END
+	upd7201_new_device& mpsc(UPD7201_NEW(config, "mpsc", 0));
+	mpsc.out_txda_callback().set("rs232a", FUNC(rs232_port_device::write_txd));
+	mpsc.out_dtra_callback().set("rs232a", FUNC(rs232_port_device::write_dtr));
+	mpsc.out_rtsa_callback().set("rs232a", FUNC(rs232_port_device::write_rts));
+	mpsc.out_txdb_callback().set("rs232b", FUNC(rs232_port_device::write_txd));
+	mpsc.out_int_callback().set_inputline(m_maincpu, M68K_IRQ_5);
+
+	am9513_device &stc(AM9513A(config, "stc", XTAL(19'660'800) / 8));
+	stc.out2_cb().set_inputline(m_maincpu, M68K_IRQ_6);
+	stc.out3_cb().set_inputline(m_maincpu, M68K_IRQ_7);
+	stc.out4_cb().set("mpsc", FUNC(upd7201_new_device::rxca_w));
+	stc.out4_cb().append("mpsc", FUNC(upd7201_new_device::txca_w));
+	stc.out5_cb().set("mpsc", FUNC(upd7201_new_device::rxcb_w));
+	stc.out5_cb().append("mpsc", FUNC(upd7201_new_device::txcb_w));
+
+	rs232_port_device &rs232a(RS232_PORT(config, "rs232a", default_rs232_devices, "terminal"));
+	rs232a.rxd_handler().set("mpsc", FUNC(upd7201_new_device::rxa_w));
+	rs232a.dsr_handler().set("mpsc", FUNC(upd7201_new_device::dcda_w));
+	rs232a.cts_handler().set("mpsc", FUNC(upd7201_new_device::ctsa_w));
+
+	rs232_port_device &rs232b(RS232_PORT(config, "rs232b", default_rs232_devices, nullptr));
+	rs232b.rxd_handler().set("mpsc", FUNC(upd7201_new_device::rxb_w));
+}
 
 /* ROM definition */
 ROM_START( ft68m )
@@ -127,5 +132,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME   PARENT  COMPAT  MACHINE INPUT   CLASS        INIT  COMPANY               FULLNAME  FLAGS
-COMP( 198?, ft68m, 0,      0,      ft68m,  ft68m,  ft68m_state, 0,    "Forward Technology", "FT-68M", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+//    YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT   CLASS        INIT        COMPANY               FULLNAME  FLAGS
+COMP( 198?, ft68m, 0,      0,      ft68m,   ft68m,  ft68m_state, empty_init, "Forward Technology", "FT-68M", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )

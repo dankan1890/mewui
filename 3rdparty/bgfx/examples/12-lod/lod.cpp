@@ -9,6 +9,9 @@
 
 #include <bx/readerwriter.h>
 
+namespace
+{
+
 struct KnightPos
 {
 	int32_t m_x;
@@ -25,17 +28,28 @@ static const KnightPos knightTour[8*4] =
 
 class ExampleLod : public entry::AppI
 {
-	void init(int _argc, char** _argv) BX_OVERRIDE
+public:
+	ExampleLod(const char* _name, const char* _description)
+		: entry::AppI(_name, _description)
+	{
+	}
+
+	void init(int32_t _argc, const char* const* _argv, uint32_t _width, uint32_t _height) override
 	{
 		Args args(_argc, _argv);
 
-		m_width  = 1280;
-		m_height = 720;
-		m_debug  = BGFX_DEBUG_TEXT;
+		m_width  = _width;
+		m_height = _height;
+		m_debug  = BGFX_DEBUG_NONE;
 		m_reset  = BGFX_RESET_VSYNC;
 
-		bgfx::init(args.m_type, args.m_pciId);
-		bgfx::reset(m_width, m_height, m_reset);
+		bgfx::Init init;
+		init.type     = args.m_type;
+		init.vendorId = args.m_pciId;
+		init.resolution.width  = m_width;
+		init.resolution.height = m_height;
+		init.resolution.reset  = m_reset;
+		bgfx::init(init);
 
 		// Enable debug text.
 		bgfx::setDebug(m_debug);
@@ -67,7 +81,7 @@ class ExampleLod : public entry::AppI
 
 		m_textureStipple = bgfx::createTexture2D(8, 4, false, 1
 			, bgfx::TextureFormat::R8
-			, BGFX_TEXTURE_MAG_POINT|BGFX_TEXTURE_MIN_POINT
+			, BGFX_SAMPLER_MAG_POINT|BGFX_SAMPLER_MIN_POINT
 			, stippleTex
 			);
 
@@ -90,7 +104,7 @@ class ExampleLod : public entry::AppI
 		m_targetLod       = 0;
 	}
 
-	virtual int shutdown() BX_OVERRIDE
+	virtual int shutdown() override
 	{
 		imguiDestroy();
 
@@ -101,15 +115,15 @@ class ExampleLod : public entry::AppI
 		}
 
 		// Cleanup.
-		bgfx::destroyProgram(m_program);
+		bgfx::destroy(m_program);
 
-		bgfx::destroyUniform(s_texColor);
-		bgfx::destroyUniform(s_texStipple);
-		bgfx::destroyUniform(u_stipple);
+		bgfx::destroy(s_texColor);
+		bgfx::destroy(s_texStipple);
+		bgfx::destroy(u_stipple);
 
-		bgfx::destroyTexture(m_textureStipple);
-		bgfx::destroyTexture(m_textureLeafs);
-		bgfx::destroyTexture(m_textureBark);
+		bgfx::destroy(m_textureStipple);
+		bgfx::destroy(m_textureLeafs);
+		bgfx::destroy(m_textureBark);
 
 		// Shutdown bgfx.
 		bgfx::shutdown();
@@ -117,7 +131,7 @@ class ExampleLod : public entry::AppI
 		return 0;
 	}
 
-	bool update() BX_OVERRIDE
+	bool update() override
 	{
 		if (!entry::processEvents(m_width, m_height, m_debug, m_reset, &m_mouseState) )
 		{
@@ -131,18 +145,28 @@ class ExampleLod : public entry::AppI
 				, uint16_t(m_height)
 			);
 
-			imguiBeginScrollArea("Toggle transitions", m_width - m_width / 5 - 10, 10, m_width / 5, m_height / 6, &m_scrollArea);
-			imguiSeparatorLine();
+			showExampleDialog(this);
 
-			if (imguiButton(m_transitions ? "ON" : "OFF") )
-			{
-				m_transitions = !m_transitions;
-			}
+			ImGui::SetNextWindowPos(
+				  ImVec2(m_width - m_width / 5.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				  ImVec2(m_width / 5.0f, m_height / 2.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+
+			ImGui::Checkbox("Transition", &m_transitions);
 
 			static float distance = 2.0f;
-			imguiSlider("Distance", distance, 2.0f, 6.0f, 0.01f);
+			ImGui::SliderFloat("Distance", &distance, 2.0f, 6.0f);
 
-			imguiEndScrollArea();
+			ImGui::End();
+
 			imguiEndFrame();
 
 			// Set view 0 default viewport.
@@ -152,37 +176,10 @@ class ExampleLod : public entry::AppI
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency() );
-			const double toMs = 1000.0/freq;
-
-			// Use debug font to print information about this example.
-			bgfx::dbgTextClear();
-			bgfx::dbgTextPrintf(0, 1, 0x4f, "bgfx/examples/12-lod");
-			bgfx::dbgTextPrintf(0, 2, 0x6f, "Description: Mesh LOD transitions.");
-			bgfx::dbgTextPrintf(0, 3, 0x0f, "Frame: % 7.3f[ms]", double(frameTime)*toMs);
-
-			float at[3]  = { 0.0f, 1.0f,      0.0f };
-			float eye[3] = { 0.0f, 2.0f, -distance };
+			const bx::Vec3 at  = { 0.0f, 1.0f,      0.0f };
+			const bx::Vec3 eye = { 0.0f, 2.0f, -distance };
 
 			// Set view and projection matrix for view 0.
-			const bgfx::HMD* hmd = bgfx::getHMD();
-			if (NULL != hmd && 0 != (hmd->flags & BGFX_HMD_RENDERING) )
-			{
-				float view[16];
-				bx::mtxQuatTranslationHMD(view, hmd->eye[0].rotation, eye);
-				bgfx::setViewTransform(0, view, hmd->eye[0].projection, BGFX_VIEW_STEREO, hmd->eye[1].projection);
-
-				// Set view 0 default viewport.
-				//
-				// Use HMD's m_width/m_height since HMD's internal frame buffer size
-				// might be much larger than window size.
-				bgfx::setViewRect(0, 0, 0, hmd->width, hmd->height);
-			}
-			else
 			{
 				float view[16];
 				bx::mtxLookAt(view, eye, at);
@@ -213,8 +210,8 @@ class ExampleLod : public entry::AppI
 			stippleInv[2] = (float(m_transitionFrame)*4.0f/255.0f) - (1.0f/255.0f);
 
 			const uint64_t stateTransparent = 0
-				| BGFX_STATE_RGB_WRITE
-				| BGFX_STATE_ALPHA_WRITE
+				| BGFX_STATE_WRITE_RGB
+				| BGFX_STATE_WRITE_A
 				| BGFX_STATE_DEPTH_TEST_LESS
 				| BGFX_STATE_CULL_CCW
 				| BGFX_STATE_MSAA
@@ -248,12 +245,12 @@ class ExampleLod : public entry::AppI
 			}
 
 			int lod = 0;
-			if (eye[2] < -2.5f)
+			if (eye.z < -2.5f)
 			{
 				lod = 1;
 			}
 
-			if (eye[2] < -5.0f)
+			if (eye.z < -5.0f)
 			{
 				lod = 2;
 			}
@@ -312,4 +309,6 @@ class ExampleLod : public entry::AppI
 	bool    m_transitions;
 };
 
-ENTRY_IMPLEMENT_MAIN(ExampleLod);
+} // namespace
+
+ENTRY_IMPLEMENT_MAIN(ExampleLod, "12-lod", "Mesh LOD transitions.");

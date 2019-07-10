@@ -26,14 +26,14 @@
 //  DEVICE DEFINITIONS
 //**************************************************************************
 
-DEFINE_DEVICE_TYPE(SAA5050, saa5050_device, "saa5050", "Mullard SA5050")
-DEFINE_DEVICE_TYPE(SAA5051, saa5051_device, "saa5051", "Mullard SA5051")
-DEFINE_DEVICE_TYPE(SAA5052, saa5052_device, "saa5052", "Mullard SA5052")
-DEFINE_DEVICE_TYPE(SAA5053, saa5053_device, "saa5053", "Mullard SA5053")
-DEFINE_DEVICE_TYPE(SAA5054, saa5054_device, "saa5054", "Mullard SA5054")
-DEFINE_DEVICE_TYPE(SAA5055, saa5055_device, "saa5055", "Mullard SA5055")
-DEFINE_DEVICE_TYPE(SAA5056, saa5056_device, "saa5056", "Mullard SA5056")
-DEFINE_DEVICE_TYPE(SAA5057, saa5057_device, "saa5057", "Mullard SA5057")
+DEFINE_DEVICE_TYPE(SAA5050, saa5050_device, "saa5050", "SAA5050 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5051, saa5051_device, "saa5051", "SAA5051 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5052, saa5052_device, "saa5052", "SAA5052 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5053, saa5053_device, "saa5053", "SAA5053 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5054, saa5054_device, "saa5054", "SAA5054 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5055, saa5055_device, "saa5055", "SAA5055 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5056, saa5056_device, "saa5056", "SAA5056 Teletext Character Generator")
+DEFINE_DEVICE_TYPE(SAA5057, saa5057_device, "saa5057", "SAA5057 Teletext Character Generator")
 
 
 //-------------------------------------------------
@@ -42,7 +42,7 @@ DEFINE_DEVICE_TYPE(SAA5057, saa5057_device, "saa5057", "Mullard SA5057")
 
 ROM_START( saa5050 )
 	ROM_REGION( 0x500, "chargen", 0 )
-	ROM_LOAD("saa5050", 0x0140, 0x03c0, BAD_DUMP CRC(6298fc0b) SHA1(ae38e7f51dd33733bacfa896425ca105682b31d6))
+	ROM_LOAD("saa5050", 0x0140, 0x03c0, CRC(201490f3) SHA1(6c8daba70374e5aa3a6402f24cdc5f8677d58a0f)) // verified both from datasheet listing and decap
 ROM_END
 
 
@@ -52,7 +52,7 @@ ROM_END
 
 ROM_START( saa5051 )
 	ROM_REGION( 0x500, "chargen", 0 )
-	ROM_LOAD("saa5051", 0x0140, 0x03c0, BAD_DUMP CRC(a770611c) SHA1(9ab9d24b845fe2964fba2f4770d54025d2c8026a))
+	ROM_LOAD("saa5051", 0x0140, 0x03c0, BAD_DUMP CRC(0e55088b) SHA1(07cd9b7edbed6ef7b527622533d6957f5d56aa91)) // verified from datasheet listing
 ROM_END
 
 

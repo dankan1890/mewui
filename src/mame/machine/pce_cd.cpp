@@ -6,10 +6,10 @@ PC Engine CD HW notes:
 
 TODO:
 - Dragon Ball Z: ADPCM dies after the first upload;
-- Dragon Slayer - The Legend of Heroes: black screen;
-- Mirai Shonen Conan: dies at new game selection;
+- Dragon Slayer - The Legend of Heroes: black screen; (actually timing/raster irq)
+- Mirai Shonen Conan: dies at new game selection; (actually timing/raster irq)
 - Snatcher: black screen after Konami logo, tries set up CD-DA
-            while transferring data?
+            while transferring data? (fixed)
 - Steam Heart's: needs transfer ready irq to get past the
                  gameplay hang, don't know exactly when it should fire
 - Steam Heart's: bad ADPCM irq, dialogue is cutted due of it;
@@ -134,8 +134,8 @@ void pce_cd_device::device_start()
 
 	// TODO: add proper restore for the cd data...
 	save_item(NAME(m_regs));
-	save_pointer(NAME(m_bram.get()), PCE_BRAM_SIZE * 2);
-	save_pointer(NAME(m_adpcm_ram.get()), PCE_ADPCM_RAM_SIZE);
+	save_pointer(NAME(m_bram), PCE_BRAM_SIZE * 2);
+	save_pointer(NAME(m_adpcm_ram), PCE_ADPCM_RAM_SIZE);
 	save_item(NAME(m_bram_locked));
 	save_item(NAME(m_adpcm_read_ptr));
 	save_item(NAME(m_adpcm_read_buf));
@@ -161,16 +161,16 @@ void pce_cd_device::device_start()
 	save_item(NAME(m_scsi_last_RST));
 	save_item(NAME(m_cd_motor_on));
 	save_item(NAME(m_selected));
-	save_pointer(NAME(m_command_buffer.get()), PCE_CD_COMMAND_BUFFER_SIZE);
+	save_pointer(NAME(m_command_buffer), PCE_CD_COMMAND_BUFFER_SIZE);
 	save_item(NAME(m_command_buffer_index));
 	save_item(NAME(m_status_sent));
 	save_item(NAME(m_message_after_status));
 	save_item(NAME(m_message_sent));
-	save_pointer(NAME(m_data_buffer.get()), 8192);
+	save_pointer(NAME(m_data_buffer), 8192);
 	save_item(NAME(m_data_buffer_size));
 	save_item(NAME(m_data_buffer_index));
 	save_item(NAME(m_data_transferred));
-	save_pointer(NAME(m_acard_ram.get()), PCE_ACARD_RAM_SIZE);
+	save_pointer(NAME(m_acard_ram), PCE_ACARD_RAM_SIZE);
 	save_item(NAME(m_acard_latch));
 	save_item(NAME(m_acard_ctrl));
 	save_item(NAME(m_acard_base_addr));
@@ -183,7 +183,7 @@ void pce_cd_device::device_start()
 	save_item(NAME(m_last_frame));
 	save_item(NAME(m_cdda_status));
 	save_item(NAME(m_cdda_play_mode));
-	save_pointer(NAME(m_subcode_buffer.get()), 96);
+	save_pointer(NAME(m_subcode_buffer), 96);
 	save_item(NAME(m_end_mark));
 	save_item(NAME(m_cdda_volume));
 	save_item(NAME(m_adpcm_volume));
@@ -241,23 +241,22 @@ void pce_cd_device::nvram_init(nvram_device &nvram, void *data, size_t size)
 }
 
 // TODO: left and right speaker tags should be passed from the parent config, instead of using the hard-coded ones below!?!
- MACHINE_CONFIG_MEMBER( pce_cd_device::device_add_mconfig )
-	MCFG_NVRAM_ADD_CUSTOM_DRIVER("bram", pce_cd_device, nvram_init)
+void pce_cd_device::device_add_mconfig(machine_config &config)
+{
+	NVRAM(config, m_nvram).set_custom_handler(FUNC(pce_cd_device::nvram_init));
 
-	MCFG_CDROM_ADD("cdrom")
-	MCFG_CDROM_INTERFACE("pce_cdrom")
+	CDROM(config, m_cdrom).set_interface("pce_cdrom");
 
-	MCFG_SOUND_ADD( "msm5205", MSM5205, PCE_CD_CLOCK / 6 )
-	MCFG_MSM5205_VCLK_CB(WRITELINE(pce_cd_device, msm5205_int)) /* interrupt function */
-	MCFG_MSM5205_PRESCALER_SELECTOR(S48_4B)      /* 1/48 prescaler, 4bit data */
-	MCFG_SOUND_ROUTE( ALL_OUTPUTS, "^:lspeaker", 0.50 )
-	MCFG_SOUND_ROUTE( ALL_OUTPUTS, "^:rspeaker", 0.50 )
+	MSM5205(config, m_msm, PCE_CD_CLOCK / 6);
+	m_msm->vck_legacy_callback().set(FUNC(pce_cd_device::msm5205_int)); /* interrupt function */
+	m_msm->set_prescaler_selector(msm5205_device::S48_4B);  /* 1/48 prescaler, 4bit data */
+	m_msm->add_route(ALL_OUTPUTS, "^lspeaker", 0.50);
+	m_msm->add_route(ALL_OUTPUTS, "^rspeaker", 0.50);
 
-	MCFG_SOUND_ADD( "cdda", CDDA, 0 )
-	MCFG_SOUND_ROUTE( 0, "^:lspeaker", 1.00 )
-	MCFG_SOUND_ROUTE( 1, "^:rspeaker", 1.00 )
-MACHINE_CONFIG_END
-
+	CDDA(config, m_cdda);
+	m_cdda->add_route(0, "^lspeaker", 1.00);
+	m_cdda->add_route(1, "^rspeaker", 1.00);
+}
 
 void pce_cd_device::adpcm_stop(uint8_t irq_flag)
 {
@@ -297,7 +296,7 @@ WRITE_LINE_MEMBER( pce_cd_device::msm5205_int )
 	/* Supply new ADPCM data */
 	msm_data = (m_msm_nibble) ? (m_adpcm_ram[m_msm_start_addr] & 0x0f) : ((m_adpcm_ram[m_msm_start_addr] & 0xf0) >> 4);
 
-	m_msm->data_w(msm_data);
+	m_msm->write_data(msm_data);
 	m_msm_nibble ^= 1;
 
 	if (m_msm_nibble == 0)
@@ -439,18 +438,21 @@ void pce_cd_device::nec_set_audio_start_position()
 
 	m_current_frame = frame;
 
-	if (m_cdda_status == PCE_CD_CDDA_PAUSED)
-	{
-		m_cdda_status = PCE_CD_CDDA_OFF;
-		m_cdda->stop_audio();
-		m_end_frame = m_last_frame;
-		m_end_mark = 0;
-	}
-	else
+	m_cdda_status = PCE_CD_CDDA_PAUSED;
+
+	// old code for reference, seems unlikely that this puts status in standby (and breaks Snatcher at the title screen)
+//  if (m_cdda_status == PCE_CD_CDDA_PAUSED)
+//  {
+//      m_cdda_status = PCE_CD_CDDA_OFF;
+//      m_cdda->stop_audio();
+//      m_end_frame = m_last_frame;
+//      m_end_mark = 0;
+//  }
+//  else
 	{
 		if (m_command_buffer[1] & 0x03)
 		{
-			m_cdda_status = PCE_CD_CDDA_PLAYING;
+			//m_cdda_status = PCE_CD_CDDA_PLAYING;
 			m_end_frame = m_last_frame; //get the end of the CD
 			m_cdda->start_audio(m_current_frame, m_end_frame - m_current_frame);
 			m_cdda_play_mode = (m_command_buffer[1] & 0x02) ? 2 : 3; // mode 2 sets IRQ at end
@@ -458,7 +460,7 @@ void pce_cd_device::nec_set_audio_start_position()
 		}
 		else
 		{
-			m_cdda_status = PCE_CD_CDDA_PLAYING;
+			//m_cdda_status = PCE_CD_CDDA_PLAYING;
 			m_end_frame = m_toc->tracks[ cdrom_get_track(m_cd_file, m_current_frame) + 1 ].logframeofs; //get the end of THIS track
 			m_cdda->start_audio(m_current_frame, m_end_frame - m_current_frame);
 			m_end_mark = 0;
@@ -960,6 +962,8 @@ TIMER_CALLBACK_MEMBER(pce_cd_device::data_timer_callback)
 			/* We are done, disable the timer */
 			logerror("Last frame read from CD\n");
 			m_data_transferred = 1;
+			// data transfer is done, issue a pause
+			m_cdda_status = PCE_CD_CDDA_PAUSED;
 			m_data_timer->adjust(attotime::never);
 		}
 		else
@@ -1067,7 +1071,7 @@ TIMER_CALLBACK_MEMBER(pce_cd_device::adpcm_fadein_callback)
 
 WRITE8_MEMBER(pce_cd_device::intf_w)
 {
-	logerror("%04X: write to CD interface offset %02X, data %02X\n", space.device().safe_pc(), offset, data);
+	logerror("%s write to CD interface offset %02X, data %02X\n", machine().describe_context(), offset, data);
 
 	switch (offset & 0xf)
 	{
@@ -1302,7 +1306,7 @@ READ8_MEMBER(pce_cd_device::intf_r)
 {
 	uint8_t data = m_regs[offset & 0x0F];
 
-	logerror("%04X: read from CD interface offset %02X\n", space.device().safe_pc(), offset );
+	logerror("%s: read from CD interface offset %02X\n", machine().describe_context(), offset );
 
 	switch (offset & 0xf)
 	{

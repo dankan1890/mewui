@@ -18,19 +18,11 @@
 
 
 //**************************************************************************
-//  DEVICE CONFIGURATION MACROS
-//**************************************************************************
-
-#define MCFG_LASERDISC_22VP931_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, PHILLIPS_22VP931, 0)
-
-
-//**************************************************************************
 //  GLOBAL VARIABLES
 //**************************************************************************
 
 // device type definition
-DECLARE_DEVICE_TYPE(PHILLIPS_22VP931, phillips_22vp931_device)
+DECLARE_DEVICE_TYPE(PHILIPS_22VP931, philips_22vp931_device)
 
 
 
@@ -38,17 +30,17 @@ DECLARE_DEVICE_TYPE(PHILLIPS_22VP931, phillips_22vp931_device)
 //  TYPE DEFINITIONS
 //**************************************************************************
 
-// ======================> phillips_22vp931_device
+// ======================> philips_22vp931_device
 
 // base _22vp931 class
-class phillips_22vp931_device : public laserdisc_device
+class philips_22vp931_device : public laserdisc_device
 {
 public:
 	// types
-	typedef delegate<void (phillips_22vp931_device &, int)> data_ready_delegate;
+	typedef delegate<void (philips_22vp931_device &, int)> data_ready_delegate;
 
 	// construction/destruction
-	phillips_22vp931_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	philips_22vp931_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// input and output
 	void data_w(uint8_t data) { synchronize(TID_DEFERRED_DATA, data); }
@@ -84,7 +76,7 @@ protected:
 	virtual int32_t player_update(const vbi_metadata &vbi, int fieldnum, const attotime &curtime) override;
 	virtual void player_overlay(bitmap_yuy16 &bitmap) override { }
 
-public:
+private:
 	// internal read/write handlers
 	DECLARE_WRITE8_MEMBER( i8049_output0_w );
 	DECLARE_WRITE8_MEMBER( i8049_output1_w );
@@ -94,15 +86,14 @@ public:
 	DECLARE_READ8_MEMBER( i8049_datic_r );
 	DECLARE_READ8_MEMBER( i8049_from_controller_r );
 	DECLARE_WRITE8_MEMBER( i8049_to_controller_w );
-
-private:
-	// internal read/write handlers
 	DECLARE_READ8_MEMBER( i8049_port1_r );
 	DECLARE_WRITE8_MEMBER( i8049_port1_w );
 	DECLARE_READ8_MEMBER( i8049_port2_r );
 	DECLARE_WRITE8_MEMBER( i8049_port2_w );
 	DECLARE_READ_LINE_MEMBER( i8049_t0_r );
 	DECLARE_READ_LINE_MEMBER( i8049_t1_r );
+
+	void vp931_portmap(address_map &map);
 
 	// internal state
 	required_device<i8049_device> m_i8049_cpu;      // CPU index of the 8049

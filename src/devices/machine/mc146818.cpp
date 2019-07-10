@@ -412,31 +412,7 @@ void mc146818_device::update_timer()
 {
 	int bypass;
 
-	switch (m_data[REG_A] & (REG_A_DV2 | REG_A_DV1 | REG_A_DV0))
-	{
-	case 0:
-		bypass = 0;
-		break;
-
-	case REG_A_DV0:
-		bypass = 2;
-		break;
-
-	case REG_A_DV1:
-		bypass = 7;
-		break;
-
-	case REG_A_DV2 | REG_A_DV1:
-	case REG_A_DV2 | REG_A_DV1 | REG_A_DV0:
-		bypass = 22;
-		break;
-
-	default:
-		// TODO: other combinations of divider bits are used for test purposes only
-		bypass = 22;
-		break;
-	}
-
+	bypass = get_timer_bypass();
 
 	attotime update_period = attotime::never;
 	attotime update_interval = attotime::never;
@@ -472,6 +448,41 @@ void mc146818_device::update_timer()
 	m_periodic_timer->adjust(periodic_period, 0, periodic_interval);
 }
 
+//---------------------------------------------------------------
+//  get_timer_bypass - get main clock divisor based on A register
+//---------------------------------------------------------------
+
+int mc146818_device::get_timer_bypass()
+{
+	int bypass;
+
+	switch (m_data[REG_A] & (REG_A_DV2 | REG_A_DV1 | REG_A_DV0))
+	{
+	case 0:
+		bypass = 0;
+		break;
+
+	case REG_A_DV0:
+		bypass = 2;
+		break;
+
+	case REG_A_DV1:
+		bypass = 7;
+		break;
+
+	case REG_A_DV2 | REG_A_DV1:
+	case REG_A_DV2 | REG_A_DV1 | REG_A_DV0:
+		bypass = 22;
+		break;
+
+	default:
+		// TODO: other combinations of divider bits are used for test purposes only
+		bypass = 22;
+		break;
+	}
+
+	return bypass;
+}
 
 //-------------------------------------------------
 //  update_irq - Update irq based on B & C register
@@ -479,18 +490,17 @@ void mc146818_device::update_timer()
 
 void mc146818_device::update_irq()
 {
-	// IRQ line is active low
 	if (((m_data[REG_C] & REG_C_UF) && (m_data[REG_B] & REG_B_UIE)) ||
 		((m_data[REG_C] & REG_C_AF) && (m_data[REG_B] & REG_B_AIE)) ||
 		((m_data[REG_C] & REG_C_PF) && (m_data[REG_B] & REG_B_PIE)))
 	{
 		m_data[REG_C] |= REG_C_IRQF;
-		m_write_irq(CLEAR_LINE);
+		m_write_irq(ASSERT_LINE);
 	}
 	else
 	{
-		m_data[REG_C] &= REG_C_IRQF;
-		m_write_irq(ASSERT_LINE);
+		m_data[REG_C] &= ~REG_C_IRQF;
+		m_write_irq(CLEAR_LINE);
 	}
 }
 
@@ -500,7 +510,7 @@ void mc146818_device::update_irq()
 //  read - I/O handler for reading
 //-------------------------------------------------
 
-READ8_MEMBER( mc146818_device::read )
+uint8_t mc146818_device::read(offs_t offset)
 {
 	uint8_t data = 0;
 	switch (offset)
@@ -510,51 +520,57 @@ READ8_MEMBER( mc146818_device::read )
 		break;
 
 	case 1:
-		switch (m_index)
-		{
-		case REG_A:
-			data = m_data[REG_A];
-			// Update In Progress (UIP) time for 32768 Hz is 244+1984usec
-			/// TODO: support other dividers
-			/// TODO: don't set this if update is stopped
-			if ((space.machine().time() - m_last_refresh) < attotime::from_usec(244+1984))
-				data |= REG_A_UIP;
-			break;
-
-		case REG_C:
-			// the unused bits b0 ... b3 are always read as 0
-			data = m_data[REG_C] & (REG_C_IRQF | REG_C_PF | REG_C_AF | REG_C_UF);
-			// read 0x0c will clear all IRQ flags in register 0x0c
-			m_data[REG_C] &= ~(REG_C_IRQF | REG_C_PF | REG_C_AF | REG_C_UF);
-			update_irq();
-			break;
-
-		case REG_D:
-			/* battery ok */
-			data = m_data[REG_D] | REG_D_VRT;
-			break;
-
-		default:
-			data = m_data[m_index];
-			break;
-		}
+		data = read_direct(m_index);
 		break;
 	}
-
-	LOG("mc146818_port_r(): index=0x%02x data=0x%02x\n", m_index, data);
 
 	return data;
 }
 
+uint8_t mc146818_device::read_direct(offs_t offset)
+{
+	uint8_t data = 0;
+
+	switch (offset)
+	{
+	case REG_A:
+		data = m_data[REG_A];
+		// Update In Progress (UIP) time for 32768 Hz is 244+1984usec
+		/// TODO: support other dividers
+		/// TODO: don't set this if update is stopped
+		if ((machine().time() - m_last_refresh) < attotime::from_usec(244+1984))
+			data |= REG_A_UIP;
+		break;
+
+	case REG_C:
+		// the unused bits b0 ... b3 are always read as 0
+		data = m_data[REG_C] & (REG_C_IRQF | REG_C_PF | REG_C_AF | REG_C_UF);
+		// read 0x0c will clear all IRQ flags in register 0x0c
+		m_data[REG_C] &= ~(REG_C_IRQF | REG_C_PF | REG_C_AF | REG_C_UF);
+		update_irq();
+		break;
+
+	case REG_D:
+		/* battery ok */
+		data = m_data[REG_D] | REG_D_VRT;
+		break;
+
+	default:
+		data = m_data[offset];
+		break;
+	}
+
+	LOG("mc146818_port_r(): offset=0x%02x data=0x%02x\n", offset, data);
+
+	return data;
+}
 
 //-------------------------------------------------
 //  write - I/O handler for writing
 //-------------------------------------------------
 
-WRITE8_MEMBER( mc146818_device::write )
+void mc146818_device::write(offs_t offset, uint8_t data)
 {
-	LOG("mc146818_port_w(): index=0x%02x data=0x%02x\n", m_index, data);
-
 	switch (offset)
 	{
 	case 0:
@@ -562,36 +578,46 @@ WRITE8_MEMBER( mc146818_device::write )
 		break;
 
 	case 1:
-		switch (m_index)
-		{
-		case REG_SECONDS:
-			// top bit of SECONDS is read only
-			m_data[REG_SECONDS] = data & ~0x80;
-			break;
+		write_direct(m_index, data);
+		break;
+	}
+}
 
-		case REG_A:
-			// top bit of A is read only
+void mc146818_device::write_direct(offs_t offset, uint8_t data)
+{
+	LOG("mc146818_port_w(): offset=0x%02x data=0x%02x\n", offset, data);
+
+	switch (offset)
+	{
+	case REG_SECONDS:
+		// top bit of SECONDS is read only
+		m_data[REG_SECONDS] = data & ~0x80;
+		break;
+
+	case REG_A:
+		// top bit of A is read only
+		if ((data ^ m_data[REG_A]) & ~REG_A_UIP)
+		{
 			m_data[REG_A] = data & ~REG_A_UIP;
 			update_timer();
-			break;
-
-		case REG_B:
-			if ((data & REG_B_SET) && !(m_data[REG_B] & REG_B_SET))
-				data &= ~REG_B_UIE;
-
-			m_data[REG_B] = data;
-			update_irq();
-			break;
-
-		case REG_C:
-		case REG_D:
-			// register C & D is readonly
-			break;
-
-		default:
-			m_data[m_index] = data;
-			break;
 		}
+		break;
+
+	case REG_B:
+		if ((data & REG_B_SET) && !(m_data[REG_B] & REG_B_SET))
+			data &= ~REG_B_UIE;
+
+		m_data[REG_B] = data;
+		update_irq();
+		break;
+
+	case REG_C:
+	case REG_D:
+		// register C & D is readonly
+		break;
+
+	default:
+		m_data[offset] = data;
 		break;
 	}
 }

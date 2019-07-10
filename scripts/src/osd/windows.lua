@@ -16,9 +16,6 @@ function maintargetosdoptions(_target,_subtarget)
 	osdmodulestargetconf()
 
 	configuration { "mingw*" }
-		linkoptions {
-			"-municode",
-		}
 		links {
 			"mingw32",
 		}
@@ -47,6 +44,7 @@ function maintargetosdoptions(_target,_subtarget)
 		"comdlg32",
 		"psapi",
 		"ole32",
+		"shlwapi",
 	}
 end
 

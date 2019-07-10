@@ -8,7 +8,7 @@
  */
 
 #include "emu.h"
-#include "8x300.h"
+#include "8x300dasm.h"
 
 #define SRC    ((opcode & 0x1f00) >> 8)
 #define DST    (opcode & 0x001f)
@@ -16,16 +16,16 @@
 #define IMM8   (opcode & 0x00ff)
 #define IMM5   (opcode & 0x001f)
 
-static const char *reg_names[32] =
+const char *const n8x300_disassembler::reg_names[32] =
 {
 	"AUX", "R1", "R2", "R3", "R4", "R5", "R6", "IVL", "OVF", "R11",
-	"Unused12", "Unused13", "Unused14", "Unused15", "Unused16", "IVR",
+	"R12", "R13", "R14", "R15", "R16", "IVR",
 	"LIV0", "LIV1", "LIV2", "LIV3", "LIV4", "LIV5", "LIV6", "LIV7",
 	"RIV0", "RIV1", "RIV2", "RIV3", "RIV4", "RIV5", "RIV6", "RIV7"
 };
 
 // determines if right rotate or I/O field length is to be used
-static inline bool is_rot(uint16_t opcode)
+bool n8x300_disassembler::is_rot(uint16_t opcode)
 {
 	if((opcode & 0x1000) || (opcode & 0x0010))
 		return false;
@@ -33,7 +33,7 @@ static inline bool is_rot(uint16_t opcode)
 		return true;
 }
 
-static inline bool is_src_rot(uint16_t opcode)
+bool n8x300_disassembler::is_src_rot(uint16_t opcode)
 {
 	if((opcode & 0x1000))
 		return false;
@@ -41,12 +41,17 @@ static inline bool is_src_rot(uint16_t opcode)
 		return true;
 }
 
-CPU_DISASSEMBLE(n8x300)
+u32 n8x300_disassembler::opcode_alignment() const
+{
+	return 1;
+}
+
+offs_t n8x300_disassembler::disassemble(std::ostream &stream, offs_t pc, const data_buffer &opcodes, const data_buffer &params)
 {
 	unsigned startpc = pc;
-	uint16_t opcode = (oprom[pc - startpc] << 8) | oprom[pc+1 - startpc];
+	uint16_t opcode = opcodes.r16(pc);
 	uint8_t inst = opcode >> 13;
-	pc+=2;
+	pc+=1;
 
 	// determine instruction
 	switch (inst)
@@ -122,7 +127,7 @@ CPU_DISASSEMBLE(n8x300)
 		}
 		break;
 	case 0x07:
-		util::stream_format(stream, "JMP  %04XH", (opcode & 0x1fff) << 1);
+		util::stream_format(stream, "JMP  %04XH", (opcode & 0x1fff));
 		break;
 	}
 

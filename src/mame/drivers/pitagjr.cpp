@@ -7,7 +7,7 @@
     Type:            First steps (4-6 years old) laptop.
     Language:        Spanish.
     Description:     23 didactic games with voice and sounds for 1 or 2 players.
-                     (simple maths operations, spell, hang man, letters, numbers, etc)
+                     (simple maths operations, spell, hangman, letters, numbers, etc)
 
     Docs by Roberto Fresca.
 
@@ -31,7 +31,7 @@
    12  - Redondeando cifras.         Rounding numbers.
    13  - Encuentra el signo.         Find the sign.
    14  - Calculadora.                Calculator.
-   15  - Tres en raya.               Three in a raw.
+   15  - Tres en raya.               Three in a row.
    16  - El juego de los puntos.     The dot's game.
    17  - El juego del squash.        The squash game.
    18  - El juego del arquero.       The archer game.
@@ -153,7 +153,7 @@
 #include "emu.h"
 #include "cpu/m6805/m6805.h"
 
-#include "rendlay.h"
+#include "emupal.h"
 #include "screen.h"
 
 
@@ -166,20 +166,27 @@ public:
 		, m_rombank(*this, "rombank")
 	{ }
 
+	void pitajr(machine_config &config);
+
+protected:
+	virtual void machine_start() override;
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_memory_bank m_rombank;
 
-	virtual void machine_start() override;
-	DECLARE_PALETTE_INIT(pitagjr);
+	void pitagjr_palette(palette_device &palette) const;
 	uint32_t screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
+	void pitajr_mem(address_map &map);
 };
 
 
-static ADDRESS_MAP_START(pitajr_mem, AS_PROGRAM, 8, pitagjr_state)
-	AM_RANGE(0x0000, 0x00ff) AM_RAM
-	AM_RANGE(0x1000, 0x1fff) AM_ROM // boot ROM ???
-	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK("rombank")
-ADDRESS_MAP_END
+void pitagjr_state::pitajr_mem(address_map &map)
+{
+	map(0x0000, 0x00ff).ram();
+	map(0x1000, 0x1fff).rom(); // boot ROM ???
+	map(0x2000, 0x3fff).bankr("rombank");
+}
 
 /* Input ports */
 INPUT_PORTS_START( pitajr )
@@ -191,7 +198,7 @@ void pitagjr_state::machine_start()
 	m_rombank->set_entry(1);
 }
 
-PALETTE_INIT_MEMBER(pitagjr_state, pitagjr)
+void pitagjr_state::pitagjr_palette(palette_device &palette) const
 {
 	palette.set_pen_color(0, rgb_t(138, 146, 148));
 	palette.set_pen_color(1, rgb_t(92, 83, 88));
@@ -202,25 +209,23 @@ uint32_t pitagjr_state::screen_update(screen_device &screen, bitmap_ind16 &bitma
 	return 0;
 }
 
-static MACHINE_CONFIG_START( pitajr )
+void pitagjr_state::pitajr(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", HD63705, XTAL_2MHz)   // probably a m6805-based MCU with internal boot ROM
-	MCFG_CPU_PROGRAM_MAP(pitajr_mem)
+	HD63705(config, m_maincpu, XTAL(2'000'000));   // probably a m6805-based MCU with internal boot ROM
+	m_maincpu->set_addrmap(AS_PROGRAM, &pitagjr_state::pitajr_mem);
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", LCD)
-	MCFG_SCREEN_REFRESH_RATE(50)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
-	MCFG_SCREEN_UPDATE_DRIVER(pitagjr_state, screen_update)
-	MCFG_SCREEN_SIZE( 200, 100 )    // FIXME
-	MCFG_SCREEN_VISIBLE_AREA( 0, 200-1, 0, 100-1 )
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_LCD));
+	screen.set_refresh_hz(50);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500)); /* not accurate */
+	screen.set_screen_update(FUNC(pitagjr_state::screen_update));
+	screen.set_size(200, 100);    // FIXME
+	screen.set_visarea(0, 200-1, 0, 100-1);
+	screen.set_palette("palette");
 
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
-
-	MCFG_PALETTE_ADD("palette", 2)
-	MCFG_PALETTE_INIT_OWNER(pitagjr_state, pitagjr)
-MACHINE_CONFIG_END
+	PALETTE(config, "palette", FUNC(pitagjr_state::pitagjr_palette), 2);
+}
 
 /* ROM definition */
 
@@ -231,5 +236,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME      PARENT  COMPAT  MACHINE  INPUT   STATE          INIT  COMPANY  FULLNAME            FLAGS
-COMP( 199?, pitagjr,  0,      0,      pitajr,  pitajr, pitagjr_state, 0,    "VTech", "Pitagorin Junior", MACHINE_IS_SKELETON )
+//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT   CLASS          INIT        COMPANY  FULLNAME            FLAGS
+COMP( 199?, pitagjr, 0,      0,      pitajr,  pitajr, pitagjr_state, empty_init, "VTech", "Pitagorin Junior", MACHINE_IS_SKELETON )

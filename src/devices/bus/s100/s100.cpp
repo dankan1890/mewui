@@ -41,7 +41,7 @@ device_s100_card_interface::device_s100_card_interface(const machine_config &mco
 s100_slot_device::s100_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
 	device_t(mconfig, S100_SLOT, tag, owner, clock),
 	device_slot_interface(mconfig, *this),
-	m_bus(nullptr)
+	m_bus(*this, DEVICE_SELF_OWNER)
 {
 }
 
@@ -52,7 +52,6 @@ s100_slot_device::s100_slot_device(const machine_config &mconfig, const char *ta
 
 void s100_slot_device::device_start()
 {
-	m_bus = machine().device<s100_bus_device>(S100_TAG);
 	device_s100_card_interface *dev = dynamic_cast<device_s100_card_interface *>(get_card_device());
 	if (dev) m_bus->add_card(dev);
 }
@@ -136,15 +135,15 @@ void s100_bus_device::add_card(device_s100_card_interface *card)
 //  smemr_r - memory read
 //-------------------------------------------------
 
-READ8_MEMBER( s100_bus_device::smemr_r )
+uint8_t s100_bus_device::smemr_r(offs_t offset)
 {
-	uint8_t data = 0;
+	uint8_t data = 0xff;
 
 	device_s100_card_interface *entry = m_device_list.first();
 
 	while (entry)
 	{
-		data |= entry->s100_smemr_r(space, offset);
+		data &= entry->s100_smemr_r(offset);
 		entry = entry->next();
 	}
 
@@ -156,13 +155,13 @@ READ8_MEMBER( s100_bus_device::smemr_r )
 //  mwrt_w - memory write
 //-------------------------------------------------
 
-WRITE8_MEMBER( s100_bus_device::mwrt_w )
+void s100_bus_device::mwrt_w(offs_t offset, uint8_t data)
 {
 	device_s100_card_interface *entry = m_device_list.first();
 
 	while (entry)
 	{
-		entry->s100_mwrt_w(space, offset, data);
+		entry->s100_mwrt_w(offset, data);
 		entry = entry->next();
 	}
 }
@@ -172,15 +171,15 @@ WRITE8_MEMBER( s100_bus_device::mwrt_w )
 //  sinp_r - I/O read
 //-------------------------------------------------
 
-READ8_MEMBER( s100_bus_device::sinp_r )
+uint8_t s100_bus_device::sinp_r(offs_t offset)
 {
-	uint8_t data = 0;
+	uint8_t data = 0xff;
 
 	device_s100_card_interface *entry = m_device_list.first();
 
 	while (entry)
 	{
-		data |= entry->s100_sinp_r(space, offset);
+		data &= entry->s100_sinp_r(offset);
 		entry = entry->next();
 	}
 
@@ -192,13 +191,13 @@ READ8_MEMBER( s100_bus_device::sinp_r )
 //  sout_w - I/O write
 //-------------------------------------------------
 
-WRITE8_MEMBER( s100_bus_device::sout_w )
+void s100_bus_device::sout_w(offs_t offset, uint8_t data)
 {
 	device_s100_card_interface *entry = m_device_list.first();
 
 	while (entry)
 	{
-		entry->s100_sout_w(space, offset, data);
+		entry->s100_sout_w(offset, data);
 		entry = entry->next();
 	}
 }

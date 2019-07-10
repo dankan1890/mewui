@@ -29,10 +29,6 @@ public:
 	// construction/destruction
 	c64_cpm_cartridge_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	// not really public
-	DECLARE_READ8_MEMBER( dma_r );
-	DECLARE_WRITE8_MEMBER( dma_w );
-
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -42,7 +38,7 @@ protected:
 	virtual void device_add_mconfig(machine_config &config) override;
 
 	// device_c64_expansion_card_interface overrides
-	virtual void c64_cd_w(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2) override;
+	virtual void c64_cd_w(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2) override;
 	virtual int c64_game_r(offs_t offset, int sphi2, int ba, int rw) override;
 
 private:
@@ -54,6 +50,12 @@ private:
 	int m_ba;
 
 	int m_reset;
+
+	DECLARE_READ8_MEMBER( dma_r );
+	DECLARE_WRITE8_MEMBER( dma_w );
+
+	void z80_io(address_map &map);
+	void z80_mem(address_map &map);
 };
 
 

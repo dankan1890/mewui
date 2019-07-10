@@ -31,7 +31,25 @@ public:
 	// construction/destruction
 	wangpc_wdc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	// not really public
+protected:
+	// device-level overrides
+	virtual void device_start() override;
+	virtual void device_reset() override;
+	virtual const tiny_rom_entry *device_rom_region() const override;
+	virtual void device_add_mconfig(machine_config &config) override;
+
+	// device_wangpcbus_card_interface overrides
+	virtual uint16_t wangpcbus_mrdc_r(offs_t offset, uint16_t mem_mask) override;
+	virtual void wangpcbus_amwc_w(offs_t offset, uint16_t mem_mask, uint16_t data) override;
+	virtual uint16_t wangpcbus_iorc_r(offs_t offset, uint16_t mem_mask) override;
+	virtual void wangpcbus_aiowc_w(offs_t offset, uint16_t mem_mask, uint16_t data) override;
+	virtual uint8_t wangpcbus_dack_r(int line) override;
+	virtual void wangpcbus_dack_w(int line, uint8_t data) override;
+	virtual bool wangpcbus_have_dack(int line) override;
+
+private:
+	inline void set_irq(int state);
+
 	DECLARE_READ8_MEMBER( port_r );
 	DECLARE_WRITE8_MEMBER( status_w );
 	DECLARE_READ8_MEMBER( ctc_ch0_r );
@@ -43,26 +61,10 @@ public:
 	DECLARE_READ8_MEMBER( ctc_ch3_r );
 	DECLARE_WRITE8_MEMBER( ctc_ch3_w );
 
-protected:
-	// device-level overrides
-	virtual void device_start() override;
-	virtual void device_reset() override;
-	virtual const tiny_rom_entry *device_rom_region() const override;
-	virtual void device_add_mconfig(machine_config &config) override;
+	void wangpc_wdc_io(address_map &map);
+	void wangpc_wdc_mem(address_map &map);
 
-	// device_wangpcbus_card_interface overrides
-	virtual uint16_t wangpcbus_mrdc_r(address_space &space, offs_t offset, uint16_t mem_mask) override;
-	virtual void wangpcbus_amwc_w(address_space &space, offs_t offset, uint16_t mem_mask, uint16_t data) override;
-	virtual uint16_t wangpcbus_iorc_r(address_space &space, offs_t offset, uint16_t mem_mask) override;
-	virtual void wangpcbus_aiowc_w(address_space &space, offs_t offset, uint16_t mem_mask, uint16_t data) override;
-	virtual uint8_t wangpcbus_dack_r(address_space &space, int line) override;
-	virtual void wangpcbus_dack_w(address_space &space, int line, uint8_t data) override;
-	virtual bool wangpcbus_have_dack(int line) override;
-
-private:
-	inline void set_irq(int state);
-
-	required_device<cpu_device> m_maincpu;
+	required_device<z80_device> m_maincpu;
 	required_device<z80ctc_device> m_ctc;
 
 	uint8_t m_status;

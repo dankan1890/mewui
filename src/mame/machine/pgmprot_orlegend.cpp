@@ -18,7 +18,7 @@
 
 void pgm_asic3_state::asic3_compute_hold(int y, int z)
 {
-	unsigned short old = m_asic3_hold;
+	const u16 old = m_asic3_hold;
 
 	m_asic3_hold = ((old << 1) | (old >> 15));
 
@@ -27,7 +27,7 @@ void pgm_asic3_state::asic3_compute_hold(int y, int z)
 	m_asic3_hold ^= BIT(m_asic3_x, 2) << 10;
 	m_asic3_hold ^= BIT(old, 5);
 
-	switch (ioport("Region")->read()) // The mode is dependent on the region
+	switch (m_region->read()) // The mode is dependent on the region
 	{
 		case 0:
 		case 1:
@@ -52,16 +52,16 @@ READ16_MEMBER(pgm_asic3_state::pgm_asic3_r)
 	switch (m_asic3_reg)
 	{
 		case 0x00: // region is supplied by the protection device
-			return (m_asic3_latch[0] & 0xf7) | ((ioport("Region")->read() << 3) & 0x08);
+			return (m_asic3_latch[0] & 0xf7) | ((m_region->read() << 3) & 0x08);
 
 		case 0x01:
 			return m_asic3_latch[1];
 
 		case 0x02: // region is supplied by the protection device
-			return (m_asic3_latch[2] & 0x7f) | ((ioport("Region")->read() << 6) & 0x80);
+			return (m_asic3_latch[2] & 0x7f) | ((m_region->read() << 6) & 0x80);
 
 		case 0x03:
-			return BITSWAP8(m_asic3_hold, 5,2,9,7,10,13,12,15);
+			return bitswap<8>(m_asic3_hold, 5,2,9,7,10,13,12,15);
 
 		// case $157674, expected return $157686
 		case 0x20: return 0x49; // "IGS"
@@ -87,7 +87,7 @@ READ16_MEMBER(pgm_asic3_state::pgm_asic3_r)
 		case 0x34: return 0x32;
 
 	//  default:
-	//       logerror("ASIC3 R: CMD %2.2X PC: %6.6x\n", m_asic3_reg, space.device().safe_pc());
+	//       logerror("ASIC3 R: CMD %2.2X %s\n", m_asic3_reg, machine().describe_context());
 	}
 
 	return 0;
@@ -95,7 +95,8 @@ READ16_MEMBER(pgm_asic3_state::pgm_asic3_r)
 
 WRITE16_MEMBER(pgm_asic3_state::pgm_asic3_w)
 {
-	if (offset == 0) {
+	if (offset == 0)
+	{
 		m_asic3_reg = data;
 		return;
 	}
@@ -155,13 +156,13 @@ WRITE16_MEMBER(pgm_asic3_state::pgm_asic3_w)
 		break;
 
 		default:
-				logerror("ASIC3 W: CMD %2.2X DATA: %4.4x, PC: %6.6x\n", m_asic3_reg, data, space.device().safe_pc());
+			logerror("ASIC3 W: CMD %2.2X DATA: %4.4x %s\n", m_asic3_reg, data, machine().describe_context());
 	}
 }
 
 /* Oriental Legend INIT */
 
-DRIVER_INIT_MEMBER(pgm_asic3_state,orlegend)
+void pgm_asic3_state::init_orlegend()
 {
 	pgm_basic_init();
 
@@ -220,6 +221,7 @@ INPUT_PORTS_START( orlegendk )
 INPUT_PORTS_END
 
 
-MACHINE_CONFIG_START( pgm_asic3 )
-	MCFG_FRAGMENT_ADD(pgmbase)
-MACHINE_CONFIG_END
+void pgm_asic3_state::pgm_asic3(machine_config &config)
+{
+	pgmbase(config);
+}

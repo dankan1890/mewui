@@ -64,15 +64,15 @@ static const res_net_info mario_net_info_std =
   bit 0 -- 470 ohm resistor -- inverter  -- BLUE
 
 ***************************************************************************/
-PALETTE_INIT_MEMBER(mario_state, mario)
+void mario_state::mario_palette(palette_device &palette) const
 {
-	const uint8_t *color_prom = memregion("proms")->base();
-	std::vector<rgb_t> rgb;
+	uint8_t const *const color_prom = memregion("proms")->base();
 
+	std::vector<rgb_t> rgb;
 	if (m_monitor == 0)
 		compute_res_net_all(rgb, color_prom, mario_decode_info, mario_net_info);
 	else
-		compute_res_net_all(rgb, color_prom+256, mario_decode_info, mario_net_info_std);
+		compute_res_net_all(rgb, color_prom + 256, mario_decode_info, mario_net_info_std);
 
 	palette.set_pen_colors(0, rgb);
 	palette.palette()->normalize_range(0, 255);
@@ -84,22 +84,16 @@ WRITE8_MEMBER(mario_state::mario_videoram_w)
 	m_bg_tilemap->mark_tile_dirty(offset);
 }
 
-WRITE8_MEMBER(mario_state::mario_gfxbank_w)
+WRITE_LINE_MEMBER(mario_state::gfx_bank_w)
 {
-	if (m_gfx_bank != (data & 0x01))
-	{
-		m_gfx_bank = data & 0x01;
-		machine().tilemap().mark_all_dirty();
-	}
+	m_gfx_bank = state;
+	machine().tilemap().mark_all_dirty();
 }
 
-WRITE8_MEMBER(mario_state::mario_palettebank_w)
+WRITE_LINE_MEMBER(mario_state::palette_bank_w)
 {
-	if (m_palette_bank != (data & 0x01))
-	{
-		m_palette_bank = data & 0x01;
-		machine().tilemap().mark_all_dirty();
-	}
+	m_palette_bank = state;
+	machine().tilemap().mark_all_dirty();
 }
 
 WRITE8_MEMBER(mario_state::mario_scroll_w)
@@ -107,17 +101,14 @@ WRITE8_MEMBER(mario_state::mario_scroll_w)
 	m_gfx_scroll = data + 17;
 }
 
-WRITE8_MEMBER(mario_state::mario_flip_w)
+WRITE_LINE_MEMBER(mario_state::flip_w)
 {
-	if (m_flip != (data & 0x01))
-	{
-		m_flip = data & 0x01;
-		if (m_flip)
-			machine().tilemap().set_flip_all(TILEMAP_FLIPX | TILEMAP_FLIPY);
-		else
-			machine().tilemap().set_flip_all(0);
-		machine().tilemap().mark_all_dirty();
-	}
+	m_flip = state;
+	if (m_flip)
+		machine().tilemap().set_flip_all(TILEMAP_FLIPX | TILEMAP_FLIPY);
+	else
+		machine().tilemap().set_flip_all(0);
+	machine().tilemap().mark_all_dirty();
 }
 
 TILE_GET_INFO_MEMBER(mario_state::get_bg_tile_info)
@@ -221,13 +212,11 @@ void mario_state::draw_sprites(bitmap_ind16 &bitmap, const rectangle &cliprect)
 
 uint32_t mario_state::screen_update(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
 {
-	int t;
-
-	t = ioport("MONITOR")->read();
+	int const t = ioport("MONITOR")->read();
 	if (t != m_monitor)
 	{
 		m_monitor = t;
-		PALETTE_INIT_NAME(mario)(*m_palette);
+		mario_palette(*m_palette);
 	}
 
 	m_bg_tilemap->set_scrolly(0, m_gfx_scroll);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -11,21 +11,6 @@
 #if BX_PLATFORM_WINDOWS
 #	include <sal.h>
 #	include <d3d9.h>
-
-#elif BX_PLATFORM_XBOX360
-#	include <xgraphics.h>
-#	define D3DUSAGE_DYNAMIC 0 // not supported on X360
-#	define D3DLOCK_DISCARD 0 // not supported on X360
-#	define D3DERR_DEVICEHUNG D3DERR_DEVICELOST // not supported on X360
-#	define D3DERR_DEVICEREMOVED D3DERR_DEVICELOST // not supported on X360
-#	define D3DMULTISAMPLE_8_SAMPLES D3DMULTISAMPLE_4_SAMPLES
-#	define D3DMULTISAMPLE_16_SAMPLES D3DMULTISAMPLE_4_SAMPLES
-
-#	define D3DFMT_DF24 D3DFMT_D24FS8
-
-#	define _PIX_SETMARKER(_col, _name) BX_NOOP()
-#	define _PIX_BEGINEVENT(_col, _name) BX_NOOP()
-#	define _PIX_ENDEVENT() BX_NOOP
 #endif // BX_PLATFORM_
 
 #ifndef D3DSTREAMSOURCE_INDEXEDDATA
@@ -38,6 +23,7 @@
 
 #include "renderer.h"
 #include "renderer_d3d.h"
+#include "nvapi.h"
 
 namespace bgfx { namespace d3d9
 {
@@ -128,15 +114,21 @@ namespace bgfx { namespace d3d9
 	{
 		IndexBufferD3D9()
 			: m_ptr(NULL)
+			, m_dynamic(NULL)
 			, m_size(0)
 			, m_flags(BGFX_BUFFER_NONE)
-			, m_dynamic(false)
 		{
 		}
 
 		void create(uint32_t _size, void* _data, uint16_t _flags);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
+			if (NULL  != m_dynamic
+			&&  _data != m_dynamic)
+			{
+				bx::memCopy(&m_dynamic[_offset], _data, _size);
+			}
+
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
@@ -154,7 +146,12 @@ namespace bgfx { namespace d3d9
 			if (NULL != m_ptr)
 			{
 				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
+
+				if (NULL != m_dynamic)
+				{
+					BX_FREE(g_allocator, m_dynamic);
+					m_dynamic = NULL;
+				}
 			}
 		}
 
@@ -162,22 +159,29 @@ namespace bgfx { namespace d3d9
 		void postReset();
 
 		IDirect3DIndexBuffer9* m_ptr;
+		uint8_t* m_dynamic;
 		uint32_t m_size;
 		uint16_t m_flags;
-		bool m_dynamic;
 	};
 
 	struct VertexBufferD3D9
 	{
 		VertexBufferD3D9()
 			: m_ptr(NULL)
-			, m_dynamic(false)
+			, m_dynamic(NULL)
+			, m_size(0)
 		{
 		}
 
 		void create(uint32_t _size, void* _data, VertexDeclHandle _declHandle);
 		void update(uint32_t _offset, uint32_t _size, void* _data, bool _discard = false)
 		{
+			if (NULL  != m_dynamic
+			&&  _data != m_dynamic)
+			{
+				bx::memCopy(&m_dynamic[_offset], _data, _size);
+			}
+
 			void* buffer;
 			DX_CHECK(m_ptr->Lock(_offset
 				, _size
@@ -195,7 +199,12 @@ namespace bgfx { namespace d3d9
 			if (NULL != m_ptr)
 			{
 				DX_RELEASE(m_ptr, 0);
-				m_dynamic = false;
+
+				if (NULL != m_dynamic)
+				{
+					BX_FREE(g_allocator, m_dynamic);
+					m_dynamic = NULL;
+				}
 			}
 		}
 
@@ -203,27 +212,9 @@ namespace bgfx { namespace d3d9
 		void postReset();
 
 		IDirect3DVertexBuffer9* m_ptr;
+		uint8_t* m_dynamic;
 		uint32_t m_size;
 		VertexDeclHandle m_decl;
-		bool m_dynamic;
-	};
-
-	struct VertexDeclD3D9
-	{
-		VertexDeclD3D9()
-			: m_ptr(NULL)
-		{
-		}
-
-		void create(const VertexDecl& _decl);
-
-		void destroy()
-		{
-			DX_RELEASE(m_ptr, 0);
-		}
-
-		IDirect3DVertexDeclaration9* m_ptr;
-		VertexDecl m_decl;
 	};
 
 	struct ShaderD3D9
@@ -249,7 +240,7 @@ namespace bgfx { namespace d3d9
 
 			switch (m_type)
 			{
-			case 0:  DX_RELEASE(m_vertexShader, 0);
+			case 0:  DX_RELEASE(m_vertexShader, 0); BX_FALLTHROUGH;
 			default: DX_RELEASE(m_pixelShader,  0);
 			}
 		}
@@ -268,17 +259,19 @@ namespace bgfx { namespace d3d9
 
 	struct ProgramD3D9
 	{
-		void create(const ShaderD3D9& _vsh, const ShaderD3D9& _fsh)
+		void create(const ShaderD3D9* _vsh, const ShaderD3D9* _fsh)
 		{
-			BX_CHECK(NULL != _vsh.m_vertexShader, "Vertex shader doesn't exist.");
-			m_vsh = &_vsh;
+			m_vsh = _vsh;
+			m_fsh = _fsh;
 
-			BX_CHECK(NULL != _fsh.m_pixelShader, "Fragment shader doesn't exist.");
-			m_fsh = &_fsh;
+			bx::memCopy(&m_predefined[0], _vsh->m_predefined, _vsh->m_numPredefined*sizeof(PredefinedUniform) );
+			m_numPredefined = _vsh->m_numPredefined;
 
-			bx::memCopy(&m_predefined[0], _vsh.m_predefined, _vsh.m_numPredefined*sizeof(PredefinedUniform) );
-			bx::memCopy(&m_predefined[_vsh.m_numPredefined], _fsh.m_predefined, _fsh.m_numPredefined*sizeof(PredefinedUniform) );
-			m_numPredefined = _vsh.m_numPredefined + _fsh.m_numPredefined;
+			if (NULL != _fsh)
+			{
+				bx::memCopy(&m_predefined[_vsh->m_numPredefined], _fsh->m_predefined, _fsh->m_numPredefined*sizeof(PredefinedUniform) );
+				m_numPredefined += _fsh->m_numPredefined;
+			}
 		}
 
 		void destroy()
@@ -321,11 +314,11 @@ namespace bgfx { namespace d3d9
 		void dirty(uint8_t _side, const Rect& _rect, uint16_t _z, uint16_t _depth);
 		IDirect3DSurface9* getSurface(uint8_t _side = 0, uint8_t _mip = 0) const;
 
-		void create(const Memory* _mem, uint32_t _flags, uint8_t _skip);
+		void create(const Memory* _mem, uint64_t _flags, uint8_t _skip);
 
 		void destroy(bool _resize = false)
 		{
-			if (0 == (m_flags & BGFX_TEXTURE_INTERNAL_SHARED) )
+			if (0 == (m_flags & BGFX_SAMPLER_INTERNAL_SHARED) )
 			{
 				if (_resize)
 				{
@@ -347,7 +340,7 @@ namespace bgfx { namespace d3d9
 		void overrideInternal(uintptr_t _ptr)
 		{
 			destroy();
-			m_flags |= BGFX_TEXTURE_INTERNAL_SHARED;
+			m_flags |= BGFX_SAMPLER_INTERNAL_SHARED;
 			m_ptr = (IDirect3DBaseTexture9*)_ptr;
 		}
 
@@ -355,7 +348,7 @@ namespace bgfx { namespace d3d9
 		void update(uint8_t _side, uint8_t _mip, const Rect& _rect, uint16_t _z, uint16_t _depth, uint16_t _pitch, const Memory* _mem);
 		void updateEnd();
 		void commit(uint8_t _stage, uint32_t _flags, const float _palette[][4]);
-		void resolve() const;
+		void resolve(uint8_t _resolve) const;
 
 		void preReset();
 		void postReset();
@@ -378,7 +371,7 @@ namespace bgfx { namespace d3d9
 			IDirect3DCubeTexture9*   m_stagingCube;
 		};
 
-		uint32_t m_flags;
+		uint64_t m_flags;
 		uint32_t m_width;
 		uint32_t m_height;
 		uint32_t m_depth;
@@ -402,7 +395,7 @@ namespace bgfx { namespace d3d9
 		}
 
 		void create(uint8_t _num, const Attachment* _attachment);
-		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _depthFormat);
+		void create(uint16_t _denseIdx, void* _nwh, uint32_t _width, uint32_t _height, TextureFormat::Enum _format, TextureFormat::Enum _depthFormat);
 		uint16_t destroy();
 		HRESULT present();
 		void resolve() const;
@@ -429,30 +422,45 @@ namespace bgfx { namespace d3d9
 	struct TimerQueryD3D9
 	{
 		TimerQueryD3D9()
-			: m_control(BX_COUNTOF(m_frame) )
+			: m_control(BX_COUNTOF(m_query) )
 		{
 		}
 
 		void postReset();
 		void preReset();
-		void begin();
-		void end();
-		bool get();
+		uint32_t begin(uint32_t _resultIdx);
+		void end(uint32_t _idx);
+		bool update();
 
-		struct Frame
+		struct Query
 		{
 			IDirect3DQuery9* m_disjoint;
 			IDirect3DQuery9* m_begin;
 			IDirect3DQuery9* m_end;
 			IDirect3DQuery9* m_freq;
+			uint32_t         m_resultIdx;
+			bool             m_ready;
 		};
 
-		uint64_t m_begin;
-		uint64_t m_end;
-		uint64_t m_elapsed;
-		uint64_t m_frequency;
+		struct Result
+		{
+			void reset()
+			{
+				m_begin     = 0;
+				m_end       = 0;
+				m_frequency = 1;
+				m_pending   = 0;
+			}
 
-		Frame m_frame[4];
+			uint64_t m_begin;
+			uint64_t m_end;
+			uint64_t m_frequency;
+			uint32_t m_pending;
+		};
+
+		Result m_result[BGFX_CONFIG_MAX_VIEWS+1];
+
+		Query m_query[BGFX_CONFIG_MAX_VIEWS*4];
 		bx::RingBufferControl m_control;
 	};
 

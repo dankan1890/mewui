@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -7,6 +7,7 @@
 #define BX_OS_H_HEADER_GUARD
 
 #include "debug.h"
+#include "filepath.h"
 
 #if BX_PLATFORM_OSX
 #	define BX_DL_EXT "dylib"
@@ -18,20 +19,6 @@
 
 namespace bx
 {
-	struct FileInfo
-	{
-		enum Enum
-		{
-			Regular,
-			Directory,
-
-			Count
-		};
-
-		uint64_t m_size;
-		Enum m_type;
-	};
-
 	///
 	void sleep(uint32_t _ms);
 
@@ -45,34 +32,22 @@ namespace bx
 	size_t getProcessMemoryUsed();
 
 	///
-	void* dlopen(const char* _filePath);
+	void* dlopen(const FilePath& _filePath);
 
 	///
 	void dlclose(void* _handle);
 
 	///
-	void* dlsym(void* _handle, const char* _symbol);
+	void* dlsym(void* _handle, const StringView& _symbol);
 
 	///
-	bool getenv(const char* _name, char* _out, uint32_t* _inOutSize);
+	bool getEnv(char* _out, uint32_t* _inOutSize, const StringView& _name);
 
 	///
-	void setenv(const char* _name, const char* _value);
-
-	///
-	void unsetenv(const char* _name);
+	void setEnv(const StringView& _name, const StringView& _value);
 
 	///
 	int chdir(const char* _path);
-
-	///
-	char* pwd(char* _buffer, uint32_t _size);
-
-	///
-	bool getTempPath(char* _out, uint32_t* _inOutSize);
-
-	///
-	bool stat(const char* _filePath, FileInfo& _fileInfo);
 
 	///
 	void* exec(const char* const* _argv);

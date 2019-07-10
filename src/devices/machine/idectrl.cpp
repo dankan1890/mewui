@@ -32,64 +32,59 @@ ide_controller_device::ide_controller_device(const machine_config &mconfig, cons
 }
 
 ide_controller_device::ide_controller_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	ata_interface_device(mconfig, type, tag, owner, clock)
+	abstract_ata_interface_device(mconfig, type, tag, owner, clock)
 {
 }
 
-READ16_MEMBER( ide_controller_device::read_cs0 )
+uint16_t ide_controller_device::read_cs0(offs_t offset, uint16_t mem_mask)
 {
-	if (mem_mask == 0xffff && offset == 1)
+	if (ACCESSING_BITS_0_7)
 	{
-		offset = 0;
-		popmessage( "requires ide_controller_32_device" );
-	}
-	if (mem_mask == 0xff00)
-	{
-		return ata_interface_device::read_cs0(space, (offset * 2) + 1, 0xff) << 8;
+		if (ACCESSING_BITS_8_15 && offset == 1) { offset = 0; popmessage("requires ide_controller_32_device"); }
+		return internal_read_cs0(offset * 2, mem_mask);
 	}
 	else
 	{
-		return ata_interface_device::read_cs0(space, offset * 2, mem_mask);
+		return internal_read_cs0((offset * 2) + 1, 0xff) << 8;
 	}
 }
 
-READ16_MEMBER( ide_controller_device::read_cs1 )
+uint16_t ide_controller_device::read_cs1(offs_t offset, uint16_t mem_mask)
 {
-	if (mem_mask == 0xff00)
+	if (ACCESSING_BITS_0_7)
 	{
-		return ata_interface_device::read_cs1(space, (offset * 2) + 1, 0xff) << 8;
+		return internal_read_cs1(offset * 2, mem_mask);
 	}
 	else
 	{
-		return ata_interface_device::read_cs1(space, offset * 2, mem_mask);
+		return internal_read_cs1((offset * 2) + 1, mem_mask >> 8) << 8;
 	}
 }
 
-WRITE16_MEMBER( ide_controller_device::write_cs0 )
+void ide_controller_device::write_cs0(offs_t offset, uint16_t data, uint16_t mem_mask)
 {
-	if (mem_mask == 0xffff && offset == 1 ){ offset = 0; popmessage( "requires ide_controller_32_device" ); }
-	if (mem_mask == 0xff00)
+	if (ACCESSING_BITS_0_7)
 	{
-		return ata_interface_device::write_cs0(space, (offset * 2) + 1, data >> 8, 0xff);
+		if (ACCESSING_BITS_8_15 && offset == 1) { offset = 0; popmessage("requires ide_controller_32_device"); }
+		return internal_write_cs0(offset * 2, data, mem_mask);
 	}
 	else
 	{
-		return ata_interface_device::write_cs0(space, offset * 2, data, mem_mask);
+		return internal_write_cs0((offset * 2) + 1, data >> 8, mem_mask >> 8);
 	}
 }
 
-WRITE16_MEMBER( ide_controller_device::write_cs1 )
+void ide_controller_device::write_cs1(offs_t offset, uint16_t data, uint16_t mem_mask)
 {
-	if (mem_mask == 0xff00)
+	if (ACCESSING_BITS_0_7)
 	{
-		return ata_interface_device::write_cs1(space, (offset * 2) + 1, data >> 8, 0xff);
+		return internal_write_cs1(offset * 2, data, mem_mask);
 	}
 	else
 	{
-		return ata_interface_device::write_cs1(space, offset * 2, data, mem_mask);
+		return internal_write_cs1((offset * 2) + 1, data >> 8, mem_mask >> 8);
 	}
 }
-
 
 DEFINE_DEVICE_TYPE(IDE_CONTROLLER_32, ide_controller_32_device, "idectrl32", "IDE Controller (32-bit)")
 
@@ -99,72 +94,125 @@ ide_controller_32_device::ide_controller_32_device(const machine_config &mconfig
 }
 
 ide_controller_32_device::ide_controller_32_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
-	ide_controller_device(mconfig, type, tag, owner, clock)
+	abstract_ata_interface_device(mconfig, type, tag, owner, clock)
 {
 }
 
-READ32_MEMBER(ide_controller_32_device::read_cs0)
+uint32_t ide_controller_32_device::read_cs0(offs_t offset, uint32_t mem_mask)
 {
-	uint32_t data = 0;
-
 	if (ACCESSING_BITS_0_15)
 	{
-		data = ide_controller_device::read_cs0(space, (offset * 2), mem_mask);
+		if (ACCESSING_BITS_0_7)
+		{
+			uint32_t data = internal_read_cs0((offset * 4), mem_mask);
 
-		if (offset == 0 && ACCESSING_BITS_16_31)
-			data |= ide_controller_device::read_cs0(space, (offset * 2), mem_mask >> 16) << 16;
+			if (offset == 0 && ACCESSING_BITS_16_31)
+				data |= internal_read_cs0((offset * 4), mem_mask >> 16) << 16;
+
+			return data;
+		}
+		else
+		{
+			return internal_read_cs0((offset * 4) + 1, mem_mask >> 8) << 8;
+		}
 	}
 	else if (ACCESSING_BITS_16_31)
 	{
-		data = ide_controller_device::read_cs0(space, (offset * 2) + 1, mem_mask >> 16) << 16;
+		if (ACCESSING_BITS_16_23)
+		{
+			return internal_read_cs0((offset * 4) + 2, mem_mask >> 16) << 16;
+		}
+		else
+		{
+			return internal_read_cs0((offset * 4) + 3, mem_mask >> 24) << 24;
+		}
 	}
 
-	return data;
+	return 0;
 }
 
-READ32_MEMBER(ide_controller_32_device::read_cs1)
-{
-	uint32_t data = 0;
-
-	if (ACCESSING_BITS_0_15)
-	{
-		data = ide_controller_device::read_cs1(space, (offset * 2), mem_mask);
-	}
-	else if (ACCESSING_BITS_16_23)
-	{
-		data = ide_controller_device::read_cs1(space, (offset * 2) + 1, mem_mask >> 16) << 16;
-	}
-
-	return data;
-}
-
-WRITE32_MEMBER(ide_controller_32_device::write_cs0)
+uint32_t ide_controller_32_device::read_cs1(offs_t offset, uint32_t mem_mask)
 {
 	if (ACCESSING_BITS_0_15)
 	{
-		ide_controller_device::write_cs0(space, (offset * 2), data, mem_mask);
-
-		if (offset == 0 && ACCESSING_BITS_16_31)
-			ata_interface_device::write_cs0(space, (offset * 2), data >> 16, mem_mask >> 16);
+		if (ACCESSING_BITS_0_7)
+		{
+			return internal_read_cs1((offset * 4), mem_mask);
+		}
+		else
+		{
+			return internal_read_cs1((offset * 4) + 1, mem_mask >> 8) << 8;
+		}
 	}
 	else if (ACCESSING_BITS_16_31)
 	{
-		ide_controller_device::write_cs0(space, (offset * 2) + 1, data >> 16, mem_mask >> 16);
+		if (ACCESSING_BITS_16_23)
+		{
+			return internal_read_cs1((offset * 4) + 2, mem_mask >> 16) << 16;
+		}
+		else
+		{
+			return internal_read_cs1((offset * 4) + 3, mem_mask >> 24) << 24;
+		}
 	}
+
+	return 0;
 }
 
-WRITE32_MEMBER(ide_controller_32_device::write_cs1)
+void ide_controller_32_device::write_cs0(offs_t offset, uint32_t data, uint32_t mem_mask)
 {
 	if (ACCESSING_BITS_0_15)
 	{
-		ide_controller_device::write_cs1(space, (offset * 2), data, mem_mask);
+		if (ACCESSING_BITS_0_7)
+		{
+			internal_write_cs0((offset * 4), data, mem_mask);
+
+			if (offset == 0 && ACCESSING_BITS_16_31)
+				internal_write_cs0((offset * 4), data >> 16, mem_mask >> 16);
+		}
+		else
+		{
+			internal_write_cs0((offset * 4) + 1, data >> 8, mem_mask >> 8);
+		}
 	}
 	else if (ACCESSING_BITS_16_31)
 	{
-		ide_controller_device::write_cs1(space, (offset * 2) + 1, data >> 16, mem_mask >> 16);
+		if (ACCESSING_BITS_16_23)
+		{
+			internal_write_cs0((offset * 4) + 2, data >> 16, mem_mask >> 16);
+		}
+		else
+		{
+			internal_write_cs0((offset * 4) + 3, data >> 24, mem_mask >> 24);
+		}
 	}
 }
 
+void ide_controller_32_device::write_cs1(offs_t offset, uint32_t data, uint32_t mem_mask)
+{
+	if (ACCESSING_BITS_0_15)
+	{
+		if (ACCESSING_BITS_0_7)
+		{
+			internal_write_cs1((offset * 4), data, mem_mask);
+		}
+		else
+		{
+			internal_write_cs1((offset * 4) + 1, data >> 8, mem_mask >> 8);
+		}
+	}
+	else if (ACCESSING_BITS_16_31)
+	{
+		if (ACCESSING_BITS_16_23)
+		{
+			internal_write_cs1((offset * 4) + 2, data >> 16, mem_mask >> 16);
+		}
+		else
+		{
+			internal_write_cs1((offset * 4) + 3, data >> 24, mem_mask >> 24);
+		}
+	}
+}
 
 #define IDE_BUSMASTER_STATUS_ACTIVE         0x01
 #define IDE_BUSMASTER_STATUS_ERROR          0x02
@@ -174,6 +222,7 @@ DEFINE_DEVICE_TYPE(BUS_MASTER_IDE_CONTROLLER, bus_master_ide_controller_device, 
 
 bus_master_ide_controller_device::bus_master_ide_controller_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
 	ide_controller_32_device(mconfig, BUS_MASTER_IDE_CONTROLLER, tag, owner, clock),
+	m_dma_space(*this, finder_base::DUMMY_TAG, -1, 32),
 	m_dma_address(0),
 	m_dma_bytes_left(0),
 	m_dma_descriptor(0),
@@ -191,17 +240,7 @@ void bus_master_ide_controller_device::device_start()
 	ide_controller_32_device::device_start();
 
 	/* find the bus master space */
-	if (m_bmcpu != nullptr)
-	{
-		device_t *bmtarget = machine().device(m_bmcpu);
-		if (bmtarget == nullptr)
-			throw emu_fatalerror("IDE controller '%s' bus master target '%s' doesn't exist!", tag(), m_bmcpu);
-		device_memory_interface *memory;
-		if (!bmtarget->interface(memory))
-			throw emu_fatalerror("IDE controller '%s' bus master target '%s' has no memory!", tag(), m_bmcpu);
-		m_dma_space = &memory->space(m_bmspace);
-		m_dma_address_xor = (m_dma_space->endianness() == ENDIANNESS_LITTLE) ? 0 : 3;
-	}
+	m_dma_address_xor = (m_dma_space->endianness() == ENDIANNESS_LITTLE) ? 0 : 3;
 
 	save_item(NAME(m_dma_address));
 	save_item(NAME(m_dma_bytes_left));
@@ -214,7 +253,7 @@ void bus_master_ide_controller_device::device_start()
 
 void bus_master_ide_controller_device::set_irq(int state)
 {
-	ata_interface_device::set_irq(state);
+	abstract_ata_interface_device::set_irq(state);
 
 	if (m_irq != state)
 	{
@@ -227,7 +266,7 @@ void bus_master_ide_controller_device::set_irq(int state)
 
 void bus_master_ide_controller_device::set_dmarq(int state)
 {
-	ata_interface_device::set_dmarq(state);
+	abstract_ata_interface_device::set_dmarq(state);
 
 	if (m_dmarq != state)
 	{
@@ -245,20 +284,25 @@ void bus_master_ide_controller_device::set_dmarq(int state)
 
 READ32_MEMBER( bus_master_ide_controller_device::bmdma_r )
 {
-	LOG("%s:ide_bus_master32_r(%d, %08x)\n", machine().describe_context(), offset, mem_mask);
-
+	uint32_t result = 0;
 	switch( offset )
 	{
 	case 0:
 		/* command register/status register */
-		return m_bus_master_command | (m_bus_master_status << 16);
-
+		result = m_bus_master_command | (m_bus_master_status << 16);
+		break;
 	case 1:
 		/* descriptor table register */
-		return m_bus_master_descriptor;
+		result = m_bus_master_descriptor;
+		break;
+	default:
+		result = 0xffffffff;
+		break;
 	}
 
-	return 0xffffffff;
+	LOG("%s:ide_bus_master32_r(%d, %08x, %08x)\n", machine().describe_context(), offset, mem_mask, result);
+
+	return result;
 }
 
 
@@ -357,8 +401,7 @@ void bus_master_ide_controller_device::execute_dma()
 			m_dma_bytes_left &= 0xfffe;
 			if (m_dma_bytes_left == 0)
 				m_dma_bytes_left = 0x10000;
-
-//          LOG("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", m_dma_address, m_dma_bytes_left, m_dma_last_buffer);
+			LOG("New DMA descriptor: address = %08X  bytes = %04X  last = %d time: %s\n", m_dma_address, m_dma_bytes_left, m_dma_last_buffer, machine().time().as_string());
 		}
 
 		if (m_bus_master_command & 8)
@@ -385,7 +428,7 @@ void bus_master_ide_controller_device::execute_dma()
 		if (m_dma_bytes_left == 0 && m_dma_last_buffer)
 		{
 			m_bus_master_status &= ~IDE_BUSMASTER_STATUS_ACTIVE;
-
+			LOG("DMA Complete time: %s\n", machine().time().as_string());
 			if (m_dmarq)
 			{
 				LOG("DMA Out of buffer space!\n");

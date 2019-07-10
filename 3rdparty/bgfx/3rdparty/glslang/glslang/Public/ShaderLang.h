@@ -40,6 +40,7 @@
 #include "../MachineIndependent/Versions.h"
 
 #include <cstring>
+#include <vector>
 
 #ifdef _WIN32
 #define C_DECL __cdecl
@@ -66,16 +67,20 @@
     extern "C" {
 #endif
 
+// This should always increase, as some paths to do not consume
+// a more major number.
+// It should increment by one when new functionality is added.
+#define GLSLANG_MINOR_VERSION 11
+
 //
-// Driver must call this first, once, before doing any other
-// compiler/linker operations.
+// Call before doing any other compiler/linker operations.
 //
 // (Call once per process, not once per thread.)
 //
 SH_IMPORT_EXPORT int ShInitialize();
 
 //
-// Driver should call this at process shutdown.
+// Call this at process shutdown to clean up memory.
 //
 SH_IMPORT_EXPORT int __fastcall ShFinalize();
 
@@ -89,6 +94,14 @@ typedef enum {
     EShLangGeometry,
     EShLangFragment,
     EShLangCompute,
+    EShLangRayGenNV,
+    EShLangIntersectNV,
+    EShLangAnyHitNV,
+    EShLangClosestHitNV,
+    EShLangMissNV,
+    EShLangCallableNV,
+    EShLangTaskNV,
+    EShLangMeshNV,
     EShLangCount,
 } EShLanguage;         // would be better as stage, but this is ancient now
 
@@ -99,6 +112,14 @@ typedef enum {
     EShLangGeometryMask       = (1 << EShLangGeometry),
     EShLangFragmentMask       = (1 << EShLangFragment),
     EShLangComputeMask        = (1 << EShLangCompute),
+    EShLangRayGenNVMask       = (1 << EShLangRayGenNV),
+    EShLangIntersectNVMask    = (1 << EShLangIntersectNV),
+    EShLangAnyHitNVMask       = (1 << EShLangAnyHitNV),
+    EShLangClosestHitNVMask   = (1 << EShLangClosestHitNV),
+    EShLangMissNVMask         = (1 << EShLangMissNV),
+    EShLangCallableNVMask     = (1 << EShLangCallableNV),
+    EShLangTaskNVMask         = (1 << EShLangTaskNV),
+    EShLangMeshNVMask         = (1 << EShLangMeshNV),
 } EShLanguageMask;
 
 namespace glslang {
@@ -109,7 +130,62 @@ typedef enum {
     EShSourceNone,
     EShSourceGlsl,
     EShSourceHlsl,
-} EShSource;          // if EShLanguage were EShStage, this could be EShLanguage instead
+} EShSource;                  // if EShLanguage were EShStage, this could be EShLanguage instead
+
+typedef enum {
+    EShClientNone,
+    EShClientVulkan,
+    EShClientOpenGL,
+} EShClient;
+
+typedef enum {
+    EShTargetNone,
+    EShTargetSpv,                 // preferred spelling
+    EshTargetSpv = EShTargetSpv,  // legacy spelling
+} EShTargetLanguage;
+
+typedef enum {
+    EShTargetVulkan_1_0 = (1 << 22),
+    EShTargetVulkan_1_1 = (1 << 22) | (1 << 12),
+    EShTargetOpenGL_450 = 450,
+} EShTargetClientVersion;
+
+typedef EShTargetClientVersion EshTargetClientVersion;
+
+typedef enum {
+    EShTargetSpv_1_0 = (1 << 16),
+    EShTargetSpv_1_1 = (1 << 16) | (1 << 8),
+    EShTargetSpv_1_2 = (1 << 16) | (2 << 8),
+    EShTargetSpv_1_3 = (1 << 16) | (3 << 8),
+    EShTargetSpv_1_4 = (1 << 16) | (4 << 8),
+} EShTargetLanguageVersion;
+
+struct TInputLanguage {
+    EShSource languageFamily; // redundant information with other input, this one overrides when not EShSourceNone
+    EShLanguage stage;        // redundant information with other input, this one overrides when not EShSourceNone
+    EShClient dialect;
+    int dialectVersion;       // version of client's language definition, not the client (when not EShClientNone)
+};
+
+struct TClient {
+    EShClient client;
+    EShTargetClientVersion version;   // version of client itself (not the client's input dialect)
+};
+
+struct TTarget {
+    EShTargetLanguage language;
+    EShTargetLanguageVersion version; // version to target, if SPIR-V, defined by "word 1" of the SPIR-V header
+    bool hlslFunctionality1;          // can target hlsl_functionality1 extension(s)
+};
+
+// All source/client/target versions and settings.
+// Can override previous methods of setting, when items are set here.
+// Expected to grow, as more are added, rather than growing parameter lists.
+struct TEnvironment {
+    TInputLanguage input;     // definition of the input language
+    TClient client;           // what client is the overall compilation being done for?
+    TTarget target;           // what to generate
+};
 
 const char* StageName(EShLanguage);
 
@@ -134,6 +210,14 @@ typedef enum {
 } EShOptimizationLevel;
 
 //
+// Texture and Sampler transformation mode.
+//
+typedef enum {
+    EShTexSampTransKeep,   // keep textures and samplers as is (default)
+    EShTexSampTransUpgradeTextureRemoveSampler,  // change texture w/o embeded sampler into sampled texture and throw away all samplers
+} EShTextureSamplerTransformMode;
+
+//
 // Message choices for what errors and warnings are given.
 //
 enum EShMessages {
@@ -147,6 +231,10 @@ enum EShMessages {
     EShMsgReadHlsl         = (1 << 6),  // use HLSL parsing rules and semantics
     EShMsgCascadingErrors  = (1 << 7),  // get cascading errors; risks error-recovery issues, instead of an early exit
     EShMsgKeepUncalled     = (1 << 8),  // for testing, don't eliminate uncalled functions
+    EShMsgHlslOffsets      = (1 << 9),  // allow block offsets to follow HLSL rules instead of GLSL rules
+    EShMsgDebugInfo        = (1 << 10), // save debug information
+    EShMsgHlslEnable16BitTypes  = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL
+    EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
 };
 
 //
@@ -242,7 +330,7 @@ SH_IMPORT_EXPORT int ShGetUniformLocation(const ShHandle uniformMap, const char*
 // Deferred-Lowering C++ Interface
 // -----------------------------------
 //
-// Below is a new alternate C++ interface that might potentially replace the above
+// Below is a new alternate C++ interface, which deprecates the above
 // opaque handle-based interface.
 //
 // The below is further designed to handle multiple compilation units per stage, where
@@ -276,11 +364,26 @@ bool InitializeProcess();
 // Call once per process to tear down everything
 void FinalizeProcess();
 
-// Make one TShader per shader that you will link into a program.  Then provide
-// the shader through setStrings() or setStringsWithLengths(), then call parse(),
-// then query the info logs.
-// Optionally use setPreamble() to set a special shader string that will be
-// processed before all others but won't affect the validity of #version.
+// Resource type for IO resolver
+enum TResourceType {
+    EResSampler,
+    EResTexture,
+    EResImage,
+    EResUbo,
+    EResSsbo,
+    EResUav,
+    EResCount
+};
+
+// Make one TShader per shader that you will link into a program. Then
+//  - provide the shader through setStrings() or setStringsWithLengths()
+//  - optionally call setEnv*(), see below for more detail
+//  - optionally use setPreamble() to set a special shader string that will be
+//    processed before all others but won't affect the validity of #version
+//  - call parse(): source language and target environment must be selected
+//    either by correct setting of EShMessages sent to parse(), or by
+//    explicitly calling setEnv*()
+//  - query the info logs
 //
 // N.B.: Does not yet support having the same TShader instance being linked into
 // multiple programs.
@@ -298,14 +401,52 @@ public:
     void setPreamble(const char* s) { preamble = s; }
     void setEntryPoint(const char* entryPoint);
     void setSourceEntryPoint(const char* sourceEntryPointName);
-    void setShiftSamplerBinding(unsigned int base);
-    void setShiftTextureBinding(unsigned int base);
-    void setShiftImageBinding(unsigned int base);
-    void setShiftUboBinding(unsigned int base);
-    void setShiftSsboBinding(unsigned int base);
+    void addProcesses(const std::vector<std::string>&);
+
+    // IO resolver binding data: see comments in ShaderLang.cpp
+    void setShiftBinding(TResourceType res, unsigned int base);
+    void setShiftSamplerBinding(unsigned int base);  // DEPRECATED: use setShiftBinding
+    void setShiftTextureBinding(unsigned int base);  // DEPRECATED: use setShiftBinding
+    void setShiftImageBinding(unsigned int base);    // DEPRECATED: use setShiftBinding
+    void setShiftUboBinding(unsigned int base);      // DEPRECATED: use setShiftBinding
+    void setShiftUavBinding(unsigned int base);      // DEPRECATED: use setShiftBinding
+    void setShiftCbufferBinding(unsigned int base);  // synonym for setShiftUboBinding
+    void setShiftSsboBinding(unsigned int base);     // DEPRECATED: use setShiftBinding
+    void setShiftBindingForSet(TResourceType res, unsigned int base, unsigned int set);
+    void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
+    void setAutoMapLocations(bool map);
+    void addUniformLocationOverride(const char* name, int loc);
+    void setUniformLocationBase(int base);
+    void setInvertY(bool invert);
+    void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
     void setNoStorageFormat(bool useUnknownFormat);
+    void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode);
+
+    // For setting up the environment (cleared to nothingness in the constructor).
+    // These must be called so that parsing is done for the right source language and
+    // target environment, either indirectly through TranslateEnvironment() based on
+    // EShMessages et. al., or directly by the user.
+    void setEnvInput(EShSource lang, EShLanguage envStage, EShClient client, int version)
+    {
+        environment.input.languageFamily = lang;
+        environment.input.stage = envStage;
+        environment.input.dialect = client;
+        environment.input.dialectVersion = version;
+    }
+    void setEnvClient(EShClient client, EShTargetClientVersion version)
+    {
+        environment.client.client = client;
+        environment.client.version = version;
+    }
+    void setEnvTarget(EShTargetLanguage lang, EShTargetLanguageVersion version)
+    {
+        environment.target.language = lang;
+        environment.target.version = version;
+    }
+    void setEnvTargetHlslFunctionality1() { environment.target.hlslFunctionality1 = true; }
+    bool getEnvTargetHlslFunctionality1() const { return environment.target.hlslFunctionality1; }
 
     // Interface to #include handlers.
     //
@@ -390,6 +531,9 @@ public:
         virtual void releaseInclude(IncludeResult*) override { }
     };
 
+    bool parse(const TBuiltInResource*, int defaultVersion, EProfile defaultProfile, bool forceDefaultVersionAndProfile,
+               bool forwardCompatible, EShMessages, Includer&);
+
     bool parse(const TBuiltInResource* res, int defaultVersion, EProfile defaultProfile, bool forceDefaultVersionAndProfile,
                bool forwardCompatible, EShMessages messages)
     {
@@ -397,12 +541,20 @@ public:
         return parse(res, defaultVersion, defaultProfile, forceDefaultVersionAndProfile, forwardCompatible, messages, includer);
     }
 
-    bool parse(const TBuiltInResource*, int defaultVersion, EProfile defaultProfile, bool forceDefaultVersionAndProfile,
-               bool forwardCompatible, EShMessages, Includer&);
-
     // Equivalent to parse() without a default profile and without forcing defaults.
-    // Provided for backwards compatibility.
-    bool parse(const TBuiltInResource*, int defaultVersion, bool forwardCompatible, EShMessages);
+    bool parse(const TBuiltInResource* builtInResources, int defaultVersion, bool forwardCompatible, EShMessages messages)
+    {
+        return parse(builtInResources, defaultVersion, ENoProfile, false, forwardCompatible, messages);
+    }
+
+    bool parse(const TBuiltInResource* builtInResources, int defaultVersion, bool forwardCompatible, EShMessages messages,
+               Includer& includer)
+    {
+        return parse(builtInResources, defaultVersion, ENoProfile, false, forwardCompatible, messages, includer);
+    }
+
+    // NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+    // is not an officially supported or fully working path.
     bool preprocess(const TBuiltInResource* builtInResources,
                     int defaultVersion, EProfile defaultProfile, bool forceDefaultVersionAndProfile,
                     bool forwardCompatible, EShMessages message, std::string* outputString,
@@ -410,8 +562,8 @@ public:
 
     const char* getInfoLog();
     const char* getInfoDebugLog();
-
     EShLanguage getStage() const { return stage; }
+    TIntermediate* getIntermediate() const { return intermediate; }
 
 protected:
     TPoolAllocator* pool;
@@ -437,6 +589,8 @@ protected:
     // a function in the source string can be renamed FROM this TO the name given in setEntryPoint.
     std::string sourceEntryPointName;
 
+    TEnvironment environment;
+
     friend class TProgram;
 
 private:
@@ -448,9 +602,10 @@ class TIoMapper;
 
 // Allows to customize the binding layout after linking.
 // All used uniform variables will invoke at least validateBinding.
-// If validateBinding returned true then the other resolveBinding
-// and resolveSet are invoked to resolve the binding and descriptor
-// set index respectively.
+// If validateBinding returned true then the other resolveBinding,
+// resolveSet, and resolveLocation are invoked to resolve the binding
+// and descriptor set index respectively.
+//
 // Invocations happen in a particular order:
 // 1) all shader inputs
 // 2) all shader outputs
@@ -459,6 +614,13 @@ class TIoMapper;
 // 5) all uniforms with set but no binding defined
 // 6) all uniforms with no binding and no set defined
 //
+// mapIO will use this resolver in two phases. The first
+// phase is a notification phase, calling the corresponging
+// notifiy callbacks, this phase ends with a call to endNotifications.
+// Phase two starts directly after the call to endNotifications
+// and calls all other callbacks to validate and to get the
+// bindings, sets, locations, component and color indices. 
+//
 // NOTE: that still limit checks are applied to bindings and sets
 // and may result in an error.
 class TIoMapResolver
@@ -466,27 +628,42 @@ class TIoMapResolver
 public:
   virtual ~TIoMapResolver() {}
 
-  // Should return true if the resulting/current binding would be ok.
+  // Should return true if the resulting/current binding would be okay.
   // Basic idea is to do aliasing binding checks with this.
   virtual bool validateBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
   // Should return a value >= 0 if the current binding should be overridden.
   // Return -1 if the current binding (including no binding) should be kept.
   virtual int resolveBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
-  // Should return a value >= 0 if the current set should be overriden.
+  // Should return a value >= 0 if the current set should be overridden.
   // Return -1 if the current set (including no set) should be kept.
   virtual int resolveSet(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
-  // Should return true if the resuling/current setup would be ok.
+  // Should return a value >= 0 if the current location should be overridden.
+  // Return -1 if the current location (including no location) should be kept.
+  virtual int resolveUniformLocation(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Should return true if the resulting/current setup would be okay.
   // Basic idea is to do aliasing checks and reject invalid semantic names.
   virtual bool validateInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
-  // Should return a value >= 0 if the current location should be overriden.
+  // Should return a value >= 0 if the current location should be overridden.
   // Return -1 if the current location (including no location) should be kept.
   virtual int resolveInOutLocation(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
-  // Should return a value >= 0 if the current component index should be overriden.
+  // Should return a value >= 0 if the current component index should be overridden.
   // Return -1 if the current component index (including no index) should be kept.
   virtual int resolveInOutComponent(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
-  // Should return a value >= 0 if the current color index should be overriden.
+  // Should return a value >= 0 if the current color index should be overridden.
   // Return -1 if the current color index (including no index) should be kept.
   virtual int resolveInOutIndex(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Notification of a uniform variable
+  virtual void notifyBinding(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Notification of a in or out variable
+  virtual void notifyInOut(EShLanguage stage, const char* name, const TType& type, bool is_live) = 0;
+  // Called by mapIO when it has finished the notify pass
+  virtual void endNotifications(EShLanguage stage) = 0;
+  // Called by mapIO when it starts its notify pass for the given stage
+  virtual void beginNotifications(EShLanguage stage) = 0;
+  // Called by mipIO when it starts its resolve pass for the given stage
+  virtual void beginResolve(EShLanguage stage) = 0;
+  // Called by mapIO when it has finished the resolve pass
+  virtual void endResolve(EShLanguage stage) = 0;
 };
 
 // Make one TProgram per set of shaders that will get linked together.  Add all
@@ -516,7 +693,11 @@ public:
     const char* getUniformBlockName(int blockIndex) const; // can be used for glGetActiveUniformBlockName()
     int getUniformBlockSize(int blockIndex) const;         // can be used for glGetActiveUniformBlockiv(UNIFORM_BLOCK_DATA_SIZE)
     int getUniformIndex(const char* name) const;           // can be used for glGetUniformIndices()
+    int getUniformBinding(int index) const;                // returns the binding number
+    EShLanguageMask getUniformStages(int index) const;     // returns Shaders Stages where a Uniform is present
+    int getUniformBlockBinding(int index) const;           // returns the block binding number
     int getUniformBlockIndex(int index) const;             // can be used for glGetActiveUniformsiv(GL_UNIFORM_BLOCK_INDEX)
+    int getUniformBlockCounterIndex(int index) const;      // returns block index of associated counter.
     int getUniformType(int index) const;                   // can be used for glGetActiveUniformsiv(GL_UNIFORM_TYPE)
     int getUniformBufferOffset(int index) const;           // can be used for glGetActiveUniformsiv(GL_UNIFORM_OFFSET)
     int getUniformArraySize(int index) const;              // can be used for glGetActiveUniformsiv(GL_UNIFORM_SIZE)

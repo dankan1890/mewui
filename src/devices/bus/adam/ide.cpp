@@ -62,12 +62,14 @@ const tiny_rom_entry *powermate_ide_device::device_rom_region() const
 //  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( powermate_ide_device::device_add_mconfig )
-	MCFG_ATA_INTERFACE_ADD(ATA_TAG, ata_devices, "hdd", nullptr, false)
-	MCFG_CENTRONICS_ADD(CENTRONICS_TAG, centronics_devices, "printer")
+void powermate_ide_device::device_add_mconfig(machine_config &config)
+{
+	ATA_INTERFACE(config, m_ata).options(ata_devices, "hdd", nullptr, false);
+	centronics_device &centronics(CENTRONICS(config, CENTRONICS_TAG, centronics_devices, "printer"));
 
-	MCFG_CENTRONICS_OUTPUT_LATCH_ADD("cent_data_out", CENTRONICS_TAG)
-MACHINE_CONFIG_END
+	OUTPUT_LATCH(config, m_cent_data_out);
+	centronics.set_output_latch(*m_cent_data_out);
+}
 
 
 
@@ -101,7 +103,7 @@ void powermate_ide_device::device_start()
 //  adam_bd_r - buffered data read
 //-------------------------------------------------
 
-uint8_t powermate_ide_device::adam_bd_r(address_space &space, offs_t offset, uint8_t data, int bmreq, int biorq, int aux_rom_cs, int cas1, int cas2)
+uint8_t powermate_ide_device::adam_bd_r(offs_t offset, uint8_t data, int bmreq, int biorq, int aux_rom_cs, int cas1, int cas2)
 {
 	if (!biorq)
 	{
@@ -114,7 +116,7 @@ uint8_t powermate_ide_device::adam_bd_r(address_space &space, offs_t offset, uin
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			data = m_ata->read_cs0(space, offset & 0x07, 0xff);
+			data = m_ata->read_cs0(offset & 0x07, 0xff);
 			break;
 
 		case 0x40: // Printer status
@@ -135,7 +137,7 @@ uint8_t powermate_ide_device::adam_bd_r(address_space &space, offs_t offset, uin
 			break;
 
 		case 0x58:
-			m_ata_data = m_ata->read_cs0(space, 0, 0xffff);
+			m_ata_data = m_ata->read_cs0(0);
 
 			data = m_ata_data & 0xff;
 			break;
@@ -145,7 +147,7 @@ uint8_t powermate_ide_device::adam_bd_r(address_space &space, offs_t offset, uin
 			break;
 
 		case 0x5a:
-			data = m_ata->read_cs1(space, 6, 0xff);
+			data = m_ata->read_cs1(6, 0xff);
 			break;
 
 		case 0x5b: // Digital Input Register
@@ -162,7 +164,7 @@ uint8_t powermate_ide_device::adam_bd_r(address_space &space, offs_t offset, uin
 //  adam_bd_w - buffered data write
 //-------------------------------------------------
 
-void powermate_ide_device::adam_bd_w(address_space &space, offs_t offset, uint8_t data, int bmreq, int biorq, int aux_rom_cs, int cas1, int cas2)
+void powermate_ide_device::adam_bd_w(offs_t offset, uint8_t data, int bmreq, int biorq, int aux_rom_cs, int cas1, int cas2)
 {
 	if (!biorq)
 	{
@@ -174,11 +176,11 @@ void powermate_ide_device::adam_bd_w(address_space &space, offs_t offset, uint8_
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			m_ata->write_cs0(space, offset & 0x07, data, 0xff);
+			m_ata->write_cs0(offset & 0x07, data, 0xff);
 			break;
 
 		case 0x40:
-			m_cent_data_out->write(space, 0, data);
+			m_cent_data_out->write(data);
 			break;
 
 		case 0x42: // Bank Number
@@ -186,7 +188,7 @@ void powermate_ide_device::adam_bd_w(address_space &space, offs_t offset, uint8_
 
 		case 0x58:
 			m_ata_data |= data;
-			m_ata->write_cs0(space, 0, m_ata_data, 0xffff);
+			m_ata->write_cs0(0, m_ata_data);
 			break;
 
 		case 0x59:

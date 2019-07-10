@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2012-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -15,12 +15,24 @@ TEST_CASE("commandLine", "")
 		"--long",
 		"--platform",
 		"x",
+		"--num", "1389",
+		"--foo",
+		"--", // it should not parse arguments after argument terminator
+		"--bar",
 	};
 
 	bx::CommandLine cmdLine(BX_COUNTOF(args), args);
 
-	REQUIRE(cmdLine.hasArg("long") );
-	REQUIRE(cmdLine.hasArg('s') );
+	REQUIRE( cmdLine.hasArg("long") );
+	REQUIRE( cmdLine.hasArg('s') );
+
+	int32_t num;
+	REQUIRE(cmdLine.hasArg(num, '\0', "num") );
+	REQUIRE(1389 == num);
+
+	// test argument terminator
+	REQUIRE( cmdLine.hasArg("foo") );
+	REQUIRE(!cmdLine.hasArg("bar") );
 
 	// non-existing argument
 	REQUIRE(!cmdLine.hasArg('x') );
@@ -46,7 +58,7 @@ static bool test(const char* _input, int32_t _argc, ...)
 	for (int32_t ii = 0; ii < _argc; ++ii)
 	{
 		const char* arg = va_arg(argList, const char*);
-		if (0 != bx::strncmp(argv[ii], arg) )
+		if (0 != bx::strCmp(argv[ii], arg) )
 		{
 			return false;
 		}

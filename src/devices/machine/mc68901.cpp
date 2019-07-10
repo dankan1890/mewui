@@ -211,10 +211,6 @@ inline void mc68901_device::rx_error()
 	{
 		take_interrupt(IR_RCV_ERROR);
 	}
-	else
-	{
-		rx_buffer_full();
-	}
 }
 
 inline void mc68901_device::timer_count(int index)
@@ -348,6 +344,7 @@ mc68901_device::mc68901_device(const machine_config &mconfig, const char *tag, d
 		m_out_so_cb(*this),
 		//m_out_rr_cb(*this),
 		//m_out_tr_cb(*this),
+		m_iack_chain_cb(*this),
 		m_aer(0),
 		m_ier(0),
 		m_gpio_input(0),
@@ -374,6 +371,7 @@ void mc68901_device::device_start()
 	m_out_so_cb.resolve_safe();
 	//m_out_rr_cb.resolve_safe();
 	//m_out_tr_cb.resolve_safe();
+	m_iack_chain_cb.resolve();
 
 	/* create the timers */
 	m_timer[TIMER_A] = timer_alloc(TIMER_A);
@@ -414,7 +412,7 @@ void mc68901_device::device_start()
 	save_item(NAME(m_transmit_buffer));
 	save_item(NAME(m_transmit_pending));
 	save_item(NAME(m_receive_buffer));
-	save_item(NAME(m_receive_pending));
+	save_item(NAME(m_overrun_pending));
 	save_item(NAME(m_gpio_input));
 	save_item(NAME(m_gpio_output));
 	save_item(NAME(m_rsr_read));
@@ -429,7 +427,8 @@ void mc68901_device::device_start()
 void mc68901_device::device_reset()
 {
 	m_tsr = 0;
-	m_transmit_pending = 0;
+	m_transmit_pending = false;
+	m_overrun_pending = false;
 
 	// Avoid read-before-write
 	m_ipr = m_imr = 0;
@@ -496,7 +495,7 @@ void mc68901_device::tra_complete()
 		if (m_transmit_pending)
 		{
 			transmit_register_setup(m_transmit_buffer);
-			m_transmit_pending = 0;
+			m_transmit_pending = false;
 			m_tsr |= TSR_BUFFER_EMPTY;
 
 			if (m_ier & IR_XMIT_BUFFER_EMPTY)
@@ -524,11 +523,31 @@ void mc68901_device::tra_complete()
 void mc68901_device::rcv_complete()
 {
 	receive_register_extract();
-	m_receive_buffer = get_received_char();
-	//if (m_receive_pending) TODO: error?
+	if (m_rsr & RSR_BUFFER_FULL)
+	{
+		m_overrun_pending = true;
+	}
+	else
+	{
+		m_receive_buffer = get_received_char();
+		m_rsr |= RSR_BUFFER_FULL;
+		LOG("Received Character: %02x\n", m_receive_buffer);
 
-	m_receive_pending = 1;
-	rx_buffer_full();
+		if (is_receive_framing_error())
+			m_rsr |= RSR_FRAME_ERROR;
+		else
+			m_rsr &= ~RSR_FRAME_ERROR;
+
+		if (is_receive_parity_error())
+			m_rsr |= RSR_PARITY_ERROR;
+		else
+			m_rsr &= ~RSR_PARITY_ERROR;
+
+		if ((m_rsr & (RSR_FRAME_ERROR | RSR_PARITY_ERROR)) && (m_ier & IR_RCV_ERROR))
+			rx_error();
+		else
+			rx_buffer_full();
+	}
 }
 
 
@@ -565,19 +584,34 @@ READ8_MEMBER( mc68901_device::read )
 
 	case REGISTER_SCR:   return m_scr;
 	case REGISTER_UCR:   return m_ucr;
-	case REGISTER_RSR:   return m_rsr;
+	case REGISTER_RSR:
+		{
+			uint8_t rsr = m_rsr;
+			if (!machine().side_effects_disabled())
+				m_rsr &= ~RSR_OVERRUN_ERROR;
+			return rsr;
+		}
 
 	case REGISTER_TSR:
 		{
 			/* clear UE bit (in reality, this won't be cleared until one full clock cycle of the transmitter has passed since the bit was set) */
 			uint8_t tsr = m_tsr;
-			m_tsr &= ~TSR_UNDERRUN_ERROR;
-
+			if (!machine().side_effects_disabled())
+				m_tsr &= ~TSR_UNDERRUN_ERROR;
 			return tsr;
 		}
 
 	case REGISTER_UDR:
-		m_receive_pending = 0;
+		if (!machine().side_effects_disabled())
+		{
+			m_rsr &= ~RSR_BUFFER_FULL;
+			if (m_overrun_pending)
+			{
+				m_overrun_pending = false;
+				m_rsr |= RSR_OVERRUN_ERROR;
+				rx_error();
+			}
+		}
 		return m_receive_buffer;
 
 	default:                      return 0;
@@ -789,7 +823,7 @@ void mc68901_device::register_w(offs_t offset, uint8_t data)
 		break;
 
 	case REGISTER_TCDCR:
-		m_tcdcr = data & 0x6f;
+		m_tcdcr = data & 0x77;
 
 		switch (m_tcdcr & 0x07)
 		{
@@ -966,6 +1000,7 @@ void mc68901_device::register_w(offs_t offset, uint8_t data)
 		}
 
 		set_data_frame(start_bits, data_bit_count, parity, stop_bits);
+		receive_register_reset();
 
 		m_ucr = data;
 		}
@@ -1052,22 +1087,23 @@ void mc68901_device::register_w(offs_t offset, uint8_t data)
 			if (m_transmit_pending && is_transmit_register_empty())
 			{
 				transmit_register_setup(m_transmit_buffer);
-				m_transmit_pending = 0;
-				m_tsr |= TSR_BUFFER_EMPTY;
+				m_transmit_pending = false;
 			}
+			if (!m_transmit_pending)
+				m_tsr |= TSR_BUFFER_EMPTY;
 		}
 		break;
 
 	case REGISTER_UDR:
 		LOG("MC68901 UDR %x\n", data);
 		m_transmit_buffer = data;
-		m_transmit_pending = 1;
+		m_transmit_pending = true;
 		m_tsr &= ~TSR_BUFFER_EMPTY;
 
 		if ((m_tsr & TSR_XMIT_ENABLE) && is_transmit_register_empty())
 		{
 			transmit_register_setup(m_transmit_buffer);
-			m_transmit_pending = 0;
+			m_transmit_pending = false;
 			m_tsr |= TSR_BUFFER_EMPTY;
 		}
 		break;
@@ -1080,30 +1116,34 @@ WRITE8_MEMBER( mc68901_device::write )
 }
 
 
-int mc68901_device::get_vector()
+uint8_t mc68901_device::get_vector()
 {
-	int ch;
-
-	for (ch = 15; ch >= 0; ch--)
+	for (int ch = 15; ch >= 0; ch--)
 	{
 		if (BIT(m_imr, ch) && BIT(m_ipr, ch))
 		{
-			if (m_vr & VR_S)
+			if (!machine().side_effects_disabled())
 			{
-				/* set interrupt-in-service bit */
-				m_isr |= (1 << ch);
+				if (m_vr & VR_S)
+				{
+					/* set interrupt-in-service bit */
+					m_isr |= (1 << ch);
+				}
+
+				/* clear interrupt pending bit */
+				m_ipr &= ~(1 << ch);
+
+				check_interrupts();
 			}
-
-			/* clear interrupt pending bit */
-			m_ipr &= ~(1 << ch);
-
-			check_interrupts();
 
 			return (m_vr & 0xf0) | ch;
 		}
 	}
 
-	return M68K_INT_ACK_SPURIOUS;
+	if (!m_iack_chain_cb.isnull())
+		return m_iack_chain_cb();
+	else
+		return 0x18; // Spurious irq
 }
 
 WRITE_LINE_MEMBER( mc68901_device::i0_w ) { gpio_input(0, state); }

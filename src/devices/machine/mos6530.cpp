@@ -2,7 +2,8 @@
 // copyright-holders:Curt Coder
 /***************************************************************************
 
-  MIOT 6530 emulation
+  MOS 6530 MIOT emulation
+  Memory, I/O, Timer Array (Rockwell calls it RRIOT: ROM, RAM, I/O, Timer)
 
 The timer seems to follow these rules:
 - When the timer flag changes from 0 to 1 the timer continues to count
@@ -38,7 +39,7 @@ enum
     DEVICE INTERFACE
 ***************************************************************************/
 
-DEFINE_DEVICE_TYPE(MOS6530, mos6530_device, "mos6530", "MOS 6530 RRIOT")
+DEFINE_DEVICE_TYPE(MOS6530, mos6530_device, "mos6530", "MOS 6530 MIOT")
 
 mos6530_device::mos6530_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, MOS6530, tag, owner, clock),
@@ -199,7 +200,7 @@ WRITE8_MEMBER( mos6530_device::write )
 	if (offset & 0x04)
 	{
 		static const uint8_t timershift[4] = { 0, 3, 6, 10 };
-		attotime curtime = space.machine().time();
+		attotime curtime = machine().time();
 		int64_t target;
 
 		/* A0-A1 contain the timer divisor */

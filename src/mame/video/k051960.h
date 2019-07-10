@@ -18,21 +18,6 @@ enum
 typedef device_delegate<void (int *code, int *color, int *priority, int *shadow)> k051960_cb_delegate;
 #define K051960_CB_MEMBER(_name)   void _name(int *code, int *color, int *priority, int *shadow)
 
-#define MCFG_K051960_CB(_class, _method) \
-	k051960_device::set_k051960_callback(*device, k051960_cb_delegate(&_class::_method, #_class "::" #_method, downcast<_class *>(owner)));
-
-#define MCFG_K051960_PLANEORDER(_order) \
-	k051960_device::set_plane_order(*device, _order);
-
-#define MCFG_K051960_SCREEN_TAG(_tag) \
-	k051960_device::set_screen_tag(*device, "^" _tag);
-
-#define MCFG_K051960_IRQ_HANDLER(_devcb) \
-	devcb = &k051960_device::set_irq_handler(*device, DEVCB_##_devcb);
-
-#define MCFG_K051960_NMI_HANDLER(_devcb) \
-	devcb = &k051960_device::set_nmi_handler(*device, DEVCB_##_devcb);
-
 
 class k051960_device : public device_t, public device_gfx_interface
 {
@@ -46,16 +31,17 @@ class k051960_device : public device_t, public device_gfx_interface
 public:
 	k051960_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &set_irq_handler(device_t &device, Object &&cb)
-	{ return downcast<k051960_device &>(device).m_irq_handler.set_callback(std::forward<Object>(cb)); }
+	auto irq_handler() { return m_irq_handler.bind(); }
 
-	template <class Object> static devcb_base &set_nmi_handler(device_t &device, Object &&cb)
-	{ return downcast<k051960_device &>(device).m_nmi_handler.set_callback(std::forward<Object>(cb)); }
+	auto nmi_handler() { return m_nmi_handler.bind(); }
+
+	auto vreg_contrast_handler() { return m_vreg_contrast_handler.bind(); }
+
 
 	// static configuration
-	static void set_k051960_callback(device_t &device, k051960_cb_delegate callback) { downcast<k051960_device &>(device).m_k051960_cb = callback; }
-	static void set_plane_order(device_t &device, int order);
-	static void set_screen_tag(device_t &device, const char *tag);
+	template <typename... T> void set_sprite_callback(T &&... args) { m_k051960_cb = k051960_cb_delegate(std::forward<T>(args)...); }
+	void set_plane_order(int order);
+	template <typename T> void set_screen_tag(T &&tag) { m_screen.set_tag(std::forward<T>(tag)); }
 
 	/*
 	The callback is passed:
@@ -71,11 +57,11 @@ public:
 	  the game has special treatment (Aliens)
 	*/
 
-	DECLARE_READ8_MEMBER( k051960_r );
-	DECLARE_WRITE8_MEMBER( k051960_w );
+	u8 k051960_r(offs_t offset);
+	void k051960_w(offs_t offset, u8 data);
 
-	DECLARE_READ8_MEMBER( k051937_r );
-	DECLARE_WRITE8_MEMBER( k051937_w );
+	u8 k051937_r(offs_t offset);
+	void k051937_w(offs_t offset, u8 data);
 
 	void k051960_sprites_draw(bitmap_ind16 &bitmap, const rectangle &cliprect, bitmap_ind8 &priority_bitmap, int min_priority, int max_priority);
 
@@ -98,8 +84,10 @@ private:
 	k051960_cb_delegate m_k051960_cb;
 
 	devcb_write_line m_irq_handler;
+	// TODO: is this even used by anything?
 	devcb_write_line m_firq_handler;
 	devcb_write_line m_nmi_handler;
+	devcb_write_line m_vreg_contrast_handler;
 
 	uint8_t    m_spriterombank[3];
 	int      m_romoffset;

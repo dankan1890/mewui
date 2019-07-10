@@ -2,7 +2,7 @@
 // copyright-holders:<author_name>
 /***************************************************************************
 
-Template for squeleton device
+Template for skeleton device
 
 ***************************************************************************/
 
@@ -17,8 +17,6 @@ Template for squeleton device
 //  INTERFACE CONFIGURATION MACROS
 //**************************************************************************
 
-#define MCFG_XXX_ADD(tag, freq) \
-		MCFG_DEVICE_ADD((tag), XXX, (freq))
 
 
 //**************************************************************************
@@ -40,7 +38,7 @@ public:
 protected:
 	// device-level overrides
 	//virtual void device_validity_check(validity_checker &valid) const override;
-	virtual void device_add_mconfig() override;
+	virtual void device_add_mconfig(machine_config &config) override;
 	virtual void device_start() override;
 	virtual void device_reset() override;
 };

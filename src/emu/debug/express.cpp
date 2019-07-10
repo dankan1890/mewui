@@ -114,7 +114,7 @@ public:
 	// construction/destruction
 	integer_symbol_entry(symbol_table &table, const char *name, symbol_table::read_write rw, u64 *ptr = nullptr);
 	integer_symbol_entry(symbol_table &table, const char *name, u64 constval);
-	integer_symbol_entry(symbol_table &table, const char *name, void *ref, symbol_table::getter_func getter, symbol_table::setter_func setter, const std::string &format);
+	integer_symbol_entry(symbol_table &table, const char *name, symbol_table::getter_func getter, symbol_table::setter_func setter, const std::string &format);
 
 	// symbol access
 	virtual bool is_lval() const override;
@@ -122,10 +122,6 @@ public:
 	virtual void set_value(u64 newvalue) override;
 
 private:
-	// internal helpers
-	static u64 internal_getter(symbol_table &table, void *symref);
-	static void internal_setter(symbol_table &table, void *symref, u64 value);
-
 	// internal state
 	symbol_table::getter_func   m_getter;
 	symbol_table::setter_func   m_setter;
@@ -138,7 +134,7 @@ class function_symbol_entry : public symbol_entry
 {
 public:
 	// construction/destruction
-	function_symbol_entry(symbol_table &table, const char *name, void *ref, int minparams, int maxparams, symbol_table::execute_func execute);
+	function_symbol_entry(symbol_table &table, const char *name, int minparams, int maxparams, symbol_table::execute_func execute);
 
 	// symbol access
 	virtual bool is_lval() const override;
@@ -203,13 +199,12 @@ const char *expression_error::code_string() const
 //  symbol_entry - constructor
 //-------------------------------------------------
 
-symbol_entry::symbol_entry(symbol_table &table, symbol_type type, const char *name, const std::string &format, void *ref)
+symbol_entry::symbol_entry(symbol_table &table, symbol_type type, const char *name, const std::string &format)
 	: m_next(nullptr),
 		m_table(table),
 		m_type(type),
 		m_name(name),
-		m_format(format),
-		m_ref(ref)
+		m_format(format)
 {
 }
 
@@ -233,25 +228,31 @@ symbol_entry::~symbol_entry()
 //-------------------------------------------------
 
 integer_symbol_entry::integer_symbol_entry(symbol_table &table, const char *name, symbol_table::read_write rw, u64 *ptr)
-	: symbol_entry(table, SMT_INTEGER, name, "", (ptr == nullptr) ? &m_value : ptr),
-		m_getter(internal_getter),
-		m_setter((rw == symbol_table::READ_ONLY) ? nullptr : internal_setter),
+	: symbol_entry(table, SMT_INTEGER, name, ""),
+		m_getter(ptr
+				? symbol_table::getter_func([ptr] (symbol_table &table) { return *ptr; })
+				: symbol_table::getter_func([this] (symbol_table &table) { return m_value; })),
+		m_setter((rw == symbol_table::READ_ONLY)
+				? symbol_table::setter_func(nullptr)
+				: ptr
+				? symbol_table::setter_func([ptr] (symbol_table &table, u64 value) { *ptr = value; })
+				: symbol_table::setter_func([this] (symbol_table &table, u64 value) { m_value = value; })),
 		m_value(0)
 {
 }
 
 
 integer_symbol_entry::integer_symbol_entry(symbol_table &table, const char *name, u64 constval)
-	: symbol_entry(table, SMT_INTEGER, name, "", &m_value),
-		m_getter(internal_getter),
+	: symbol_entry(table, SMT_INTEGER, name, ""),
+		m_getter([this] (symbol_table &table) { return m_value; }),
 		m_setter(nullptr),
 		m_value(constval)
 {
 }
 
 
-integer_symbol_entry::integer_symbol_entry(symbol_table &table, const char *name, void *ref, symbol_table::getter_func getter, symbol_table::setter_func setter, const std::string &format)
-	: symbol_entry(table, SMT_INTEGER, name, format, ref),
+integer_symbol_entry::integer_symbol_entry(symbol_table &table, const char *name, symbol_table::getter_func getter, symbol_table::setter_func setter, const std::string &format)
+	: symbol_entry(table, SMT_INTEGER, name, format),
 		m_getter(getter),
 		m_setter(setter),
 		m_value(0)
@@ -275,7 +276,7 @@ bool integer_symbol_entry::is_lval() const
 
 u64 integer_symbol_entry::value() const
 {
-	return m_getter(m_table, m_ref);
+	return m_getter(m_table);
 }
 
 
@@ -286,31 +287,9 @@ u64 integer_symbol_entry::value() const
 void integer_symbol_entry::set_value(u64 newvalue)
 {
 	if (m_setter != nullptr)
-		m_setter(m_table, m_ref, newvalue);
+		m_setter(m_table, newvalue);
 	else
 		throw emu_fatalerror("Symbol '%s' is read-only", m_name.c_str());
-}
-
-
-//-------------------------------------------------
-//  internal_getter - internal helper for
-//  returning the value of a variable
-//-------------------------------------------------
-
-u64 integer_symbol_entry::internal_getter(symbol_table &table, void *symref)
-{
-	return *(u64 *)symref;
-}
-
-
-//-------------------------------------------------
-//  internal_setter - internal helper for setting
-//  the value of a variable
-//-------------------------------------------------
-
-void integer_symbol_entry::internal_setter(symbol_table &table, void *symref, u64 value)
-{
-	*(u64 *)symref = value;
 }
 
 
@@ -323,8 +302,8 @@ void integer_symbol_entry::internal_setter(symbol_table &table, void *symref, u6
 //  function_symbol_entry - constructor
 //-------------------------------------------------
 
-function_symbol_entry::function_symbol_entry(symbol_table &table, const char *name, void *ref, int minparams, int maxparams, symbol_table::execute_func execute)
-	: symbol_entry(table, SMT_FUNCTION, name, "", ref),
+function_symbol_entry::function_symbol_entry(symbol_table &table, const char *name, int minparams, int maxparams, symbol_table::execute_func execute)
+	: symbol_entry(table, SMT_FUNCTION, name, ""),
 		m_minparams(minparams),
 		m_maxparams(maxparams),
 		m_execute(execute)
@@ -372,7 +351,7 @@ u64 function_symbol_entry::execute(int numparams, const u64 *paramlist)
 		throw emu_fatalerror("Function '%s' requires at least %d parameters", m_name.c_str(), m_minparams);
 	if (numparams > m_maxparams)
 		throw emu_fatalerror("Function '%s' accepts no more than %d parameters", m_name.c_str(), m_maxparams);
-	return m_execute(m_table, m_ref, numparams, paramlist);
+	return m_execute(m_table, numparams, paramlist);
 }
 
 
@@ -435,10 +414,10 @@ void symbol_table::add(const char *name, u64 value)
 //  add - add a new register symbol
 //-------------------------------------------------
 
-void symbol_table::add(const char *name, void *ref, getter_func getter, setter_func setter, const std::string &format_string)
+void symbol_table::add(const char *name, getter_func getter, setter_func setter, const std::string &format_string)
 {
 	m_symlist.erase(name);
-	m_symlist.emplace(name, std::make_unique<integer_symbol_entry>(*this, name, ref, getter, setter, format_string));
+	m_symlist.emplace(name, std::make_unique<integer_symbol_entry>(*this, name, getter, setter, format_string));
 }
 
 
@@ -446,10 +425,10 @@ void symbol_table::add(const char *name, void *ref, getter_func getter, setter_f
 //  add - add a new function symbol
 //-------------------------------------------------
 
-void symbol_table::add(const char *name, void *ref, int minparams, int maxparams, execute_func execute)
+void symbol_table::add(const char *name, int minparams, int maxparams, execute_func execute)
 {
 	m_symlist.erase(name);
-	m_symlist.emplace(name, std::make_unique<function_symbol_entry>(*this, name, ref, minparams, maxparams, execute));
+	m_symlist.emplace(name, std::make_unique<function_symbol_entry>(*this, name, minparams, maxparams, execute));
 }
 
 
@@ -560,8 +539,7 @@ void symbol_table::set_memory_value(const char *name, expression_space space, u3
 //-------------------------------------------------
 
 parsed_expression::parsed_expression(symbol_table *symtable, const char *expression, u64 *result)
-	: m_symtable(symtable),
-	m_token_stack_ptr(0)
+	: m_symtable(symtable)
 {
 	// if we got an expression parse it
 	if (expression != nullptr)
@@ -1180,7 +1158,7 @@ void parsed_expression::parse_memory_operator(parse_token &token, const char *st
 	}
 
 	// configure the token
-	token.configure_operator(TVL_MEMORYAT, 2).set_memory_size(memsize).set_memory_space(memspace).set_memory_source(namestring).set_memory_side_effect(disable_se);
+	token.configure_operator(TVL_MEMORYAT, 2).set_memory_size(memsize).set_memory_space(memspace).set_memory_source(namestring).set_memory_side_effects(disable_se);
 }
 
 
@@ -1231,15 +1209,13 @@ void parsed_expression::normalize_operator(parse_token *prevtoken, parse_token &
 
 		// Determine if , refers to a function parameter
 		case TVL_COMMA:
-			for (int lookback = 0; lookback < MAX_STACK_DEPTH; lookback++)
+			for (auto lookback = m_token_stack.rbegin(); lookback != m_token_stack.rend(); ++lookback)
 			{
-				parse_token *peek = peek_token(lookback);
-				if (peek == nullptr)
-					break;
+				parse_token &peek = *lookback;
 
 				// if we hit an execute function operator, or else a left parenthesis that is
 				// already tagged, then tag us as well
-				if (peek->is_operator(TVL_EXECUTEFUNC) || (peek->is_operator(TVL_LPAREN) && peek->is_function_separator()))
+				if (peek.is_operator(TVL_EXECUTEFUNC) || (peek.is_operator(TVL_LPAREN) && peek.is_function_separator()))
 				{
 					thistoken.set_function_separator();
 					break;
@@ -1353,11 +1329,11 @@ void parsed_expression::infix_to_postfix()
 inline void parsed_expression::push_token(parse_token &token)
 {
 	// check for overflow
-	if (m_token_stack_ptr >= MAX_STACK_DEPTH)
+	if (m_token_stack.size() >= m_token_stack.max_size())
 		throw expression_error(expression_error::STACK_OVERFLOW, token.offset());
 
 	// push
-	m_token_stack[m_token_stack_ptr++] = token;
+	m_token_stack.push_back(token);
 }
 
 
@@ -1368,24 +1344,12 @@ inline void parsed_expression::push_token(parse_token &token)
 inline void parsed_expression::pop_token(parse_token &token)
 {
 	// check for underflow
-	if (m_token_stack_ptr == 0)
+	if (m_token_stack.empty())
 		throw expression_error(expression_error::STACK_UNDERFLOW, token.offset());
 
 	// pop
-	token = m_token_stack[--m_token_stack_ptr];
-}
-
-
-//-------------------------------------------------
-//  peek_token - look at a token some number of
-//  entries up the stack
-//-------------------------------------------------
-
-inline parsed_expression::parse_token *parsed_expression::peek_token(int count)
-{
-	if (m_token_stack_ptr <= count)
-		return nullptr;
-	return &m_token_stack[m_token_stack_ptr - count - 1];
+	token = std::move(m_token_stack.back());
+	m_token_stack.pop_back();
 }
 
 
@@ -1433,7 +1397,7 @@ inline void parsed_expression::pop_token_rval(parse_token &token)
 u64 parsed_expression::execute_tokens()
 {
 	// reset the token stack
-	m_token_stack_ptr = 0;
+	m_token_stack.clear();
 
 	// loop over the entire sequence
 	parse_token t1, t2, result;
@@ -1683,7 +1647,7 @@ u64 parsed_expression::execute_tokens()
 	pop_token_rval(result);
 
 	// error if our stack isn't empty
-	if (peek_token(0) != nullptr)
+	if (!m_token_stack.empty())
 		throw expression_error(expression_error::SYNTAX, 0);
 
 	return result.value();
@@ -1724,7 +1688,7 @@ u64 parsed_expression::parse_token::get_lval_value(symbol_table *table)
 
 	// or get the value from the memory callbacks
 	else if (is_memory() && table != nullptr) {
-		return table->memory_value(m_string, memory_space(), address(), 1 << memory_size(), memory_side_effect());
+		return table->memory_value(m_string, memory_space(), address(), 1 << memory_size(), memory_side_effects());
 	}
 
 	return 0;
@@ -1744,7 +1708,7 @@ inline void parsed_expression::parse_token::set_lval_value(symbol_table *table, 
 
 	// or set the value via the memory callbacks
 	else if (is_memory() && table != nullptr)
-		table->set_memory_value(m_string, memory_space(), address(), 1 << memory_size(), value, memory_side_effect());
+		table->set_memory_value(m_string, memory_space(), address(), 1 << memory_size(), value, memory_side_effects());
 }
 
 
@@ -1762,18 +1726,17 @@ void parsed_expression::execute_function(parse_token &token)
 	while (paramcount < MAX_FUNCTION_PARAMS)
 	{
 		// peek at the next token on the stack
-		parse_token *peek = peek_token(0);
-		if (peek == nullptr)
+		if (m_token_stack.empty())
 			throw expression_error(expression_error::INVALID_PARAM_COUNT, token.offset());
+		parse_token &peek = m_token_stack.back();
 
 		// if it is a function symbol, break out of the loop
-		if (peek->is_symbol())
+		if (peek.is_symbol())
 		{
-			symbol = peek->symbol();
+			symbol = peek.symbol();
 			if (symbol->is_function())
 			{
-				parse_token t1;
-				pop_token(t1);
+				m_token_stack.pop_back();
 				break;
 			}
 		}

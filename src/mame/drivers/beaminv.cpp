@@ -90,6 +90,9 @@ public:
 	TIMER_CALLBACK_MEMBER(interrupt_callback);
 	void create_interrupt_timer();
 	void start_interrupt_timer();
+	void beaminv(machine_config &config);
+	void main_io_map(address_map &map);
+	void main_map(address_map &map);
 };
 
 
@@ -238,15 +241,16 @@ READ8_MEMBER(beaminv_state::controller_r)
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_map, AS_PROGRAM, 8, beaminv_state )
-	AM_RANGE(0x0000, 0x17ff) AM_ROM
-	AM_RANGE(0x1800, 0x1fff) AM_RAM
-	AM_RANGE(0x2400, 0x2400) AM_MIRROR(0x03ff) AM_READ_PORT("DSW")
-	AM_RANGE(0x2800, 0x2800) AM_MIRROR(0x03ff) AM_READ_PORT("INPUTS")
-	AM_RANGE(0x3400, 0x3400) AM_MIRROR(0x03ff) AM_READ(controller_r)
-	AM_RANGE(0x3800, 0x3800) AM_MIRROR(0x03ff) AM_READ(v128_r)
-	AM_RANGE(0x4000, 0x5fff) AM_RAM AM_SHARE("videoram")
-ADDRESS_MAP_END
+void beaminv_state::main_map(address_map &map)
+{
+	map(0x0000, 0x17ff).rom();
+	map(0x1800, 0x1fff).ram();
+	map(0x2400, 0x2400).mirror(0x03ff).portr("DSW");
+	map(0x2800, 0x2800).mirror(0x03ff).portr("INPUTS");
+	map(0x3400, 0x3400).mirror(0x03ff).r(FUNC(beaminv_state::controller_r));
+	map(0x3800, 0x3800).mirror(0x03ff).r(FUNC(beaminv_state::v128_r));
+	map(0x4000, 0x5fff).ram().share("videoram");
+}
 
 
 
@@ -256,10 +260,11 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_io_map, AS_IO, 8, beaminv_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x00) AM_WRITE(controller_select_w) /* to be confirmed */
-ADDRESS_MAP_END
+void beaminv_state::main_io_map(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x00).w(FUNC(beaminv_state::controller_select_w)); /* to be confirmed */
+}
 
 
 
@@ -335,22 +340,21 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static MACHINE_CONFIG_START( beaminv )
-
+void beaminv_state::beaminv(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, 2000000)   /* 2 MHz ? */
-	MCFG_CPU_PROGRAM_MAP(main_map)
-	MCFG_CPU_IO_MAP(main_io_map)
+	Z80(config, m_maincpu, 2000000);   /* 2 MHz ? */
+	m_maincpu->set_addrmap(AS_PROGRAM, &beaminv_state::main_map);
+	m_maincpu->set_addrmap(AS_IO, &beaminv_state::main_io_map);
 
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_SIZE(256, 256)
-	MCFG_SCREEN_VISIBLE_AREA(0, 247, 16, 231)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_UPDATE_DRIVER(beaminv_state, screen_update_beaminv)
-
-MACHINE_CONFIG_END
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_size(256, 256);
+	m_screen->set_visarea(0, 247, 16, 231);
+	m_screen->set_refresh_hz(60);
+	m_screen->set_screen_update(FUNC(beaminv_state::screen_update_beaminv));
+}
 
 
 
@@ -389,5 +393,5 @@ ROM_END
  *
  *************************************/
 
-GAMEL( 1979, beaminv,  0,       beaminv, beaminv,  beaminv_state, 0, ROT270, "Teknon Kogyo",      "Beam Invader",  MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_beaminv )
-GAMEL( 1979, pacominv, beaminv, beaminv, pacominv, beaminv_state, 0, ROT270, "Pacom Corporation", "Pacom Invader", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_beaminv )
+GAMEL( 1979, beaminv,  0,       beaminv, beaminv,  beaminv_state, empty_init, ROT270, "Teknon Kogyo",      "Beam Invader",  MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_beaminv )
+GAMEL( 1979, pacominv, beaminv, beaminv, pacominv, beaminv_state, empty_init, ROT270, "Pacom Corporation", "Pacom Invader", MACHINE_NO_SOUND | MACHINE_SUPPORTS_SAVE, layout_beaminv )

@@ -15,22 +15,21 @@
 
 #pragma once
 
-
-
-/***************************************************************************
-    MACROS
-***************************************************************************/
-
 class ds1315_device : public device_t
 {
 public:
 	ds1315_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	~ds1315_device() {}
 
-	DECLARE_READ8_MEMBER(read_0);
-	DECLARE_READ8_MEMBER(read_1);
-	DECLARE_READ8_MEMBER(read_data);
-	DECLARE_READ8_MEMBER(write_data);
+	auto read_backing() { return m_backing_read.bind(); }
+
+	// this handler automates the bits 0/2 stuff
+	uint8_t read(offs_t offset);
+
+	uint8_t read_0();
+	uint8_t read_1();
+	uint8_t read_data();
+	uint8_t write_data(offs_t offset);
 
 	bool chip_enable();
 	void chip_reset();
@@ -41,6 +40,8 @@ protected:
 	virtual void device_reset() override;
 
 private:
+	devcb_read8 m_backing_read;
+
 	enum mode_t : u8
 	{
 		DS_SEEK_MATCHING,
@@ -60,13 +61,5 @@ private:
 ALLOW_SAVE_TYPE(ds1315_device::mode_t);
 
 DECLARE_DEVICE_TYPE(DS1315, ds1315_device)
-
-/***************************************************************************
-    DEVICE CONFIGURATION MACROS
-***************************************************************************/
-
-#define MCFG_DS1315_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, DS1315, 0)
-
 
 #endif // MAME_MACHINE_DS1315_H

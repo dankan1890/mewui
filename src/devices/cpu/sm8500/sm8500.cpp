@@ -21,10 +21,11 @@ they are internally.
 
 #include "emu.h"
 #include "sm8500.h"
+#include "sm8500d.h"
 #include "debugger.h"
 
 
-DEFINE_DEVICE_TYPE(SM8500, sm8500_cpu_device, "sm8500", "SM8500")
+DEFINE_DEVICE_TYPE(SM8500, sm8500_cpu_device, "sm8500", "Sharp SM8500")
 
 
 static constexpr uint8_t sm8500_b2w[8] = {
@@ -145,7 +146,7 @@ void sm8500_cpu_device::device_start()
 	state_add(STATE_GENPCBASE, "CURPC", m_PC).formatstr("%8s").noshow();
 	state_add(STATE_GENFLAGS, "GENFLAGS", m_PS1).formatstr("%8s").noshow();
 
-	m_icountptr = &m_icount;
+	set_icountptr(m_icount);
 }
 
 
@@ -283,56 +284,56 @@ void sm8500_cpu_device::process_interrupts()
 					break;
 				case DMA_INT:
 					m_IR0 |= 0x80;
-					if ( ( m_IE0 & 0x80 ) && ( ( m_PS0 & 0x07 ) < 8 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE0, 7) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1000 );
 					}
 					break;
 				case TIM0_INT:
 					m_IR0 |= 0x40;
-					if ( ( m_IE0 & 0x40 ) && ( ( m_PS0 & 0x07 ) < 8 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE0, 6) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1002 );
 					}
 					break;
 				case EXT_INT:
 					m_IR0 |= 0x10;
-					if ( ( m_IE0 & 0x10 ) && ( ( m_PS0 & 0x07 ) < 7 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE0, 4) && ( ( m_PS0 & 0x07 ) < 7 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1006 );
 					}
 					break;
 				case UART_INT:
 					m_IR0 |= 0x08;
-					if ( ( m_IE0 & 0x08 ) && ( ( m_PS0 & 0x07 ) < 6 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE0, 3) && ( ( m_PS0 & 0x07 ) < 6 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1008 );
 					}
 					break;
 				case LCDC_INT:
 					m_IR0 |= 0x01;
-					if ( ( m_IE0 & 0x01 ) && ( ( m_PS0 & 0x07 ) < 5 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE0, 0) && ( ( m_PS0 & 0x07 ) < 5 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x100E );
 					}
 					break;
 				case TIM1_INT:
 					m_IR1 |= 0x40;
-					if ( ( m_IE1 & 0x40 ) && ( ( m_PS0 & 0x07 ) < 4 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE1, 6) && ( ( m_PS0 & 0x07 ) < 4 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1012 );
 					}
 					break;
 				case CK_INT:
 					m_IR1 |= 0x10;
-					if ( ( m_IE1 & 0x10 ) && ( ( m_PS0 & 0x07 ) < 3 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE1, 4) && ( ( m_PS0 & 0x07 ) < 3 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x1016 );
 					}
 					break;
 				case PIO_INT:
 					m_IR1 |= 0x04;
-					if ( ( m_IE1 & 0x04 ) && ( ( m_PS0 & 0x07 ) < 2 ) && ( m_PS1 & 0x01 ) )
+					if ( BIT( m_IE1, 2) && ( ( m_PS0 & 0x07 ) < 2 ) && BIT( m_PS1, 0) )
 					{
 						take_interrupt( 0x101A );
 					}
@@ -348,10 +349,9 @@ void sm8500_cpu_device::process_interrupts()
 }
 
 
-offs_t sm8500_cpu_device::disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options)
+std::unique_ptr<util::disasm_interface> sm8500_cpu_device::create_disassembler()
 {
-	extern CPU_DISASSEMBLE( sm8500 );
-	return CPU_DISASSEMBLE_NAME(sm8500)(this, stream, pc, oprom, opram, options);
+	return std::make_unique<sm8500_disassembler>();
 }
 
 
@@ -365,7 +365,7 @@ void sm8500_cpu_device::execute_run()
 		uint32_t  d1,d2;
 		uint32_t  res;
 
-		debugger_instruction_hook(this, m_PC);
+		debugger_instruction_hook(m_PC);
 		m_oldpc = m_PC;
 		process_interrupts();
 		if ( !m_halted ) {

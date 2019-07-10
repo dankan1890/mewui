@@ -12,6 +12,8 @@
 #pragma once
 
 #include "expansion.h"
+#include "imagedev/floppy.h"
+#include "machine/timer.h"
 #include "machine/wd_fdc.h"
 #include "bus/generic/slot.h"
 
@@ -28,14 +30,6 @@ public:
 	// construction/destruction
 	cgenie_fdc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	DECLARE_ADDRESS_MAP(mmio, 8);
-
-	TIMER_DEVICE_CALLBACK_MEMBER(timer_callback);
-
-	DECLARE_READ8_MEMBER(irq_r);
-	DECLARE_WRITE8_MEMBER(select_w);
-	DECLARE_WRITE8_MEMBER(command_w);
-
 protected:
 	virtual const tiny_rom_entry *device_rom_region() const override;
 	virtual void device_add_mconfig(machine_config &config) override;
@@ -47,9 +41,17 @@ private:
 
 	DECLARE_WRITE_LINE_MEMBER(intrq_w);
 
+	TIMER_DEVICE_CALLBACK_MEMBER(timer_callback);
+
+	DECLARE_READ8_MEMBER(irq_r);
+	DECLARE_WRITE8_MEMBER(select_w);
+	DECLARE_WRITE8_MEMBER(command_w);
+
+	void mmio(address_map &map);
+
 	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
-	required_device<fd1793_device> m_fdc;
+	required_device<wd2793_device> m_fdc;
 	required_device<floppy_connector> m_floppy0;
 	required_device<floppy_connector> m_floppy1;
 	required_device<floppy_connector> m_floppy2;

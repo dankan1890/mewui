@@ -15,27 +15,6 @@
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
 
-uint8_t i8086_common_cpu_device::read_byte(uint32_t addr)
-{
-	return m_program->read_byte(addr);
-}
-
-uint16_t i8086_common_cpu_device::read_word(uint32_t addr)
-{
-	return m_program->read_word_unaligned(addr);
-}
-
-void i8086_common_cpu_device::write_byte(uint32_t addr, uint8_t data)
-{
-	m_program->write_byte(addr, data);
-}
-
-
-void i8086_common_cpu_device::write_word(uint32_t addr, uint16_t data)
-{
-	m_program->write_word_unaligned(addr, data);
-}
-
 inline uint16_t i8086_common_cpu_device::fetch_word()
 {
 	uint16_t data = fetch();
@@ -96,6 +75,8 @@ inline void i8086_common_cpu_device::CLKM(uint8_t op_reg, uint8_t op_mem)
 
 inline uint32_t i8086_common_cpu_device::get_ea(int size, int op)
 {
+	uint16_t e16;
+
 	switch( m_modrm & 0xc7 )
 	{
 	case 0x00:
@@ -182,54 +163,53 @@ inline uint32_t i8086_common_cpu_device::get_ea(int size, int op)
 
 	case 0x80:
 		m_icount -= 11;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BX] + m_regs.w[SI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BX] + m_regs.w[SI] + (int16_t)e16;
 		m_ea = calc_addr(DS, m_eo, size, op);
 		break;
 	case 0x81:
 		m_icount -= 12;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BX] + m_regs.w[DI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BX] + m_regs.w[DI] + (int16_t)e16;
 		m_ea = calc_addr(DS, m_eo, size, op);
 		break;
 	case 0x82:
 		m_icount -= 11;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BP] + m_regs.w[SI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BP] + m_regs.w[SI] + (int16_t)e16;
 		m_ea = calc_addr(SS, m_eo, size, op);
 		break;
 	case 0x83:
 		m_icount -= 11;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BP] + m_regs.w[DI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BP] + m_regs.w[DI] + (int16_t)e16;
 		m_ea = calc_addr(SS, m_eo, size, op);
 		break;
 	case 0x84:
 		m_icount -= 9;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[SI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[SI] + (int16_t)e16;
 		m_ea = calc_addr(DS, m_eo, size, op);
 		break;
 	case 0x85:
 		m_icount -= 9;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[DI] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[DI] + (int16_t)e16;
 		m_ea = calc_addr(DS, m_eo, size, op);
 		break;
 	case 0x86:
 		m_icount -= 9;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BP] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BP] + (int16_t)e16;
 		m_ea = calc_addr(SS, m_eo, size, op);
 		break;
 	case 0x87:
 		m_icount -= 9;
-		m_e16 = fetch_word();
-		m_eo = m_regs.w[BX] + (int16_t)m_e16;
+		e16 = fetch_word();
+		m_eo = m_regs.w[BX] + (int16_t)e16;
 		m_ea = calc_addr(DS, m_eo, size, op);
 		break;
 	}
-
 	return m_ea;
 }
 
@@ -242,7 +222,7 @@ inline void i8086_common_cpu_device::PutbackRMByte(uint8_t data)
 	}
 	else
 	{
-		write_byte( m_ea, data );
+		write_byte(m_ea, data);
 	}
 }
 
@@ -255,7 +235,7 @@ inline void i8086_common_cpu_device::PutbackRMWord(uint16_t data)
 	}
 	else
 	{
-		write_word( m_ea, data );
+		write_word(m_ea, data);
 	}
 }
 
@@ -268,7 +248,7 @@ inline void i8086_common_cpu_device::PutImmRMWord()
 	else
 	{
 		uint32_t addr = get_ea(2, I8086_WRITE);
-		write_word( addr, fetch_word() );
+		write_word(addr, fetch_word());
 	}
 }
 
@@ -280,7 +260,7 @@ inline void i8086_common_cpu_device::PutRMWord(uint16_t val)
 	}
 	else
 	{
-		write_word( get_ea(2, I8086_WRITE), val );
+		write_word(get_ea(2, I8086_WRITE), val);
 	}
 }
 
@@ -293,7 +273,7 @@ inline void i8086_common_cpu_device::PutRMByte(uint8_t val)
 	}
 	else
 	{
-		write_byte( get_ea(1, I8086_WRITE), val );
+		write_byte(get_ea(1, I8086_WRITE), val);
 	}
 }
 
@@ -307,7 +287,7 @@ inline void i8086_common_cpu_device::PutImmRMByte()
 	else
 	{
 		uint32_t addr = get_ea(1, I8086_WRITE);
-		write_byte( addr, fetch() );
+		write_byte(addr, fetch());
 	}
 }
 
@@ -391,16 +371,14 @@ inline uint16_t i8086_common_cpu_device::GetRMWord()
 	}
 	else
 	{
-		return read_word( get_ea(2, I8086_READ) );
+		return read_word(get_ea(2, I8086_READ));
 	}
 }
 
 
 inline uint16_t i8086_common_cpu_device::GetnextRMWord()
 {
-	uint32_t addr = ( m_ea & ~0xffff ) | ( ( m_ea + 2 ) & 0xffff );
-
-	return read_word( addr );
+	return read_word((m_ea & ~0xffff) | ((m_ea + 2) & 0xffff));
 }
 
 
@@ -412,32 +390,32 @@ inline uint8_t i8086_common_cpu_device::GetRMByte()
 	}
 	else
 	{
-		return read_byte( get_ea(1, I8086_READ) );
+		return read_byte(get_ea(1, I8086_READ));
 	}
 }
 
 
 inline void i8086_common_cpu_device::PutMemB(int seg, uint16_t offset, uint8_t data)
 {
-	write_byte( calc_addr(seg, offset, 1, I8086_WRITE), data);
+	write_byte(calc_addr(seg, offset, 1, I8086_WRITE), data);
 }
 
 
 inline void i8086_common_cpu_device::PutMemW(int seg, uint16_t offset, uint16_t data)
 {
-	write_word( calc_addr( seg, offset, 2, I8086_WRITE), data);
+	write_word(calc_addr(seg, offset, 2, I8086_WRITE), data);
 }
 
 
 inline uint8_t i8086_common_cpu_device::GetMemB(int seg, uint16_t offset)
 {
-	return read_byte( calc_addr(seg, offset, 1, I8086_READ) );
+	return read_byte(calc_addr(seg, offset, 1, I8086_READ));
 }
 
 
 inline uint16_t i8086_common_cpu_device::GetMemW(int seg, uint16_t offset)
 {
-	return read_word( calc_addr(seg, offset, 2, I8086_READ) );
+	return read_word(calc_addr(seg, offset, 2, I8086_READ));
 }
 
 

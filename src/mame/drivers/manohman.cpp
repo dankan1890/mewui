@@ -8,7 +8,7 @@
   Preliminary driver by Roberto Fresca.
 
 
-  German board game similar to Ludo, derivated from the indian game Parchisi.
+  German board game similar to Ludo, derived from the Indian game Parchisi.
   Coin-operated machine for 1-4 players. No screen, just artwork and lamps.
   The machine was designed for pubs, etc...
 
@@ -133,36 +133,65 @@
 
 #include "emu.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/68230pit.h"
+#include "machine/mc68681.h"
+#include "machine/msm6242.h"
+#include "machine/nvram.h"
 #include "sound/saa1099.h"
 #include "speaker.h"
-
-#define MASTER_CLOCK        XTAL_8MHz
-#define SECONDARY_CLOCK     XTAL_3_6864MHz
 
 
 class manohman_state : public driver_device
 {
 public:
-	manohman_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu") { }
+	manohman_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
+		m_maincpu(*this, "maincpu"),
+		m_duart(*this, "duart"),
+		m_pit(*this, "pit")
+	{ }
+
+	void manohman(machine_config &config);
+
+private:
+	virtual void machine_start() override;
+	void mem_map(address_map &map);
+	void cpu_space_map(address_map &map);
 
 	required_device<cpu_device> m_maincpu;
+	required_device<mc68681_device> m_duart;
+	required_device<pit68230_device> m_pit;
 };
+
+
+void manohman_state::machine_start()
+{
+}
 
 
 /*********************************************
 *           Memory Map Definition            *
 *********************************************/
 
-static ADDRESS_MAP_START( manohman_map, AS_PROGRAM, 16, manohman_state )
-	AM_RANGE(0x000000, 0x01ffff) AM_ROM
-	AM_RANGE(0x100000, 0x100001) AM_NOP     // smell to MAX696 watchdog...
-	AM_RANGE(0x300000, 0x300003) AM_DEVWRITE8("saa", saa1099_device, write, 0x00ff)
-	AM_RANGE(0x500000, 0x503fff) AM_RAM
-	AM_RANGE(0x600006, 0x600007) AM_RAM     // write bitpatterns to compare with the 500000-503ff8 RAM testing.
-//  AM_RANGE(0xYYYYYY, 0xYYYYYY) AM_RAM
-ADDRESS_MAP_END
+void manohman_state::mem_map(address_map &map)
+{
+	map(0x000000, 0x01ffff).rom();
+	map(0x100000, 0x10003f).rw(m_pit, FUNC(pit68230_device::read), FUNC(pit68230_device::write)).umask16(0x00ff);
+	map(0x200000, 0x20001f).rw(m_duart, FUNC(mc68681_device::read), FUNC(mc68681_device::write)).umask16(0x00ff);
+	map(0x300000, 0x300003).w("saa", FUNC(saa1099_device::write)).umask16(0x00ff).nopr();
+	map(0x400000, 0x40001f).rw("rtc", FUNC(msm6242_device::read), FUNC(msm6242_device::write)).umask16(0x00ff);
+	map(0x500000, 0x503fff).ram().share("nvram"); //work RAM
+	map(0x600002, 0x600003).nopw(); // output through shift register?
+	map(0x600004, 0x600005).nopr();
+	map(0x600006, 0x600007).noprw(); //(r) is discarded (watchdog?)
+}
+
+void manohman_state::cpu_space_map(address_map &map)
+{
+	map(0xfffff0, 0xffffff).m(m_maincpu, FUNC(m68000_base_device::autovectors_map));
+	map(0xfffff4, 0xfffff5).r(m_pit, FUNC(pit68230_device::irq_tiack));
+	map(0xfffff8, 0xfffff9).r(m_duart, FUNC(mc68681_device::get_irq_vector));
+}
 
 /*
 
@@ -208,16 +237,25 @@ INPUT_PORTS_END
 *               Machine Config               *
 *********************************************/
 
-static MACHINE_CONFIG_START( manohman )
-	// basic machine hardware
-	MCFG_CPU_ADD("maincpu", M68000, MASTER_CLOCK)   // 8 MHz
-	MCFG_CPU_PROGRAM_MAP(manohman_map)
+void manohman_state::manohman(machine_config &config)
+{
+	M68000(config, m_maincpu, XTAL(8'000'000)); // MC68000P8
+	m_maincpu->set_addrmap(AS_PROGRAM, &manohman_state::mem_map);
+	m_maincpu->set_addrmap(m68000_base_device::AS_CPU_SPACE, &manohman_state::cpu_space_map);
 
-	// sound hardware
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SAA1099_ADD("saa", MASTER_CLOCK)  // guess
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-MACHINE_CONFIG_END
+	PIT68230(config, m_pit, XTAL(8'000'000)); // MC68230P8
+	m_pit->timer_irq_callback().set_inputline("maincpu", M68K_IRQ_2);
+
+	MC68681(config, m_duart, XTAL(3'686'400));
+	m_duart->irq_cb().set_inputline(m_maincpu, M68K_IRQ_4);
+
+	MSM6242(config, "rtc", XTAL(32'768)); // M62X42B
+
+	NVRAM(config, "nvram", nvram_device::DEFAULT_NONE); // KM6264BL-10 x2 + MAX696CFL + battery
+
+	SPEAKER(config, "mono").front_center();
+	SAA1099(config, "saa", XTAL(8'000'000) / 2).add_route(ALL_OUTPUTS, "mono", 0.10); // clock not verified
+}
 
 
 /*********************************************
@@ -225,9 +263,15 @@ MACHINE_CONFIG_END
 *********************************************/
 
 ROM_START( manohman )
-	ROM_REGION( 0x100000, "maincpu", 0 )    /* 68000 code */
-	ROM_LOAD16_BYTE( "mom_austria_vorserie_ii.bin", 0x000000, 0x010000, CRC(4b57409c) SHA1(0438f5d52f4de2ece8fb684cf2d82bdea0eacf0b) )
-	ROM_LOAD16_BYTE( "mom_austria_vorserie_i.bin",  0x000001, 0x010000, CRC(3c9507f9) SHA1(489a6aadfb7d61be0873bf48d428e9d915268f95) )
+	ROM_REGION( 0x20000, "maincpu", 0 )
+	ROM_LOAD16_BYTE( "mom_austria_vorserie_ii.bin", 0x00000, 0x10000, CRC(4b57409c) SHA1(0438f5d52f4de2ece8fb684cf2d82bdea0eacf0b) )
+	ROM_LOAD16_BYTE( "mom_austria_vorserie_i.bin",  0x00001, 0x10000, CRC(3c9507f9) SHA1(489a6aadfb7d61be0873bf48d428e9d915268f95) )
+ROM_END
+
+ROM_START( backgamn )
+	ROM_REGION( 0x20000, "maincpu", 0 )
+	ROM_LOAD16_BYTE( "b_f2_i.bin",  0x00000, 0x10000, CRC(9e42937c) SHA1(85d462a560b85b03ee9d341e18815b7c396118ac) )
+	ROM_LOAD16_BYTE( "b_f2_ii.bin", 0x00001, 0x10000, CRC(8e0ee50c) SHA1(2a05c337db1131b873646aa4109593636ebaa356) )
 ROM_END
 
 
@@ -235,5 +279,6 @@ ROM_END
 *                Game Drivers                *
 *********************************************/
 
-//    YEAR  NAME      PARENT  MACHINE   INPUT     STATE           INIT    ROT   COMPANY   FULLNAME         FLAGS
-GAME( 199?, manohman, 0,      manohman, manohman, manohman_state, 0,      ROT0, "Merkur", "Mann, oh-Mann", MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_REQUIRES_ARTWORK )
+//    YEAR  NAME      PARENT  MACHINE   INPUT     STATE           INIT        ROT   COMPANY   FULLNAME         FLAGS
+GAME( 199?, manohman, 0,      manohman, manohman, manohman_state, empty_init, ROT0, "Merkur", "Mann, oh-Mann", MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_REQUIRES_ARTWORK )
+GAME( 1990, backgamn, 0,      manohman, manohman, manohman_state, empty_init, ROT0, "Merkur", "Backgammon",    MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_REQUIRES_ARTWORK )

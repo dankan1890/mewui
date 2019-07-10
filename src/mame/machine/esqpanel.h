@@ -8,53 +8,10 @@
 #include "machine/esqvfd.h"
 #include "machine/esqlcd.h"
 
+#include "diserial.h"
+
 #include <vector>
 
-//**************************************************************************
-//  INTERFACE CONFIGURATION MACROS
-//**************************************************************************
-
-#define MCFG_ESQPANEL1X22_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, ESQPANEL1X22, 0)
-
-#define MCFG_ESQPANEL1X22_REPLACE(_tag) \
-	MCFG_DEVICE_REPLACE(_tag, ESQPANEL1X22, 0)
-
-#define MCFG_ESQPANEL1X22_REMOVE(_tag) \
-	MCFG_DEVICE_REMOVE(_tag)
-
-#define MCFG_ESQPANEL2X40_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, ESQPANEL2X40, 0)
-
-#define MCFG_ESQPANEL2X40_REPLACE(_tag) \
-	MCFG_DEVICE_REPLACE(_tag, ESQPANEL2X40, 0)
-
-#define MCFG_ESQPANEL2X40_REMOVE(_tag) \
-	MCFG_DEVICE_REMOVE(_tag)
-
-#define MCFG_ESQPANEL2X40_VFX_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, ESQPANEL2X40_VFX, 0)
-
-#define MCFG_ESQPANEL2X40_VFX_REPLACE(_tag) \
-	MCFG_DEVICE_REPLACE(_tag, ESQPANEL2X40_VFX, 0)
-
-#define MCFG_ESQPANEL2X40_VFX_REMOVE(_tag) \
-	MCFG_DEVICE_REMOVE(_tag)
-
-#define MCFG_ESQPANEL2X16_SQ1_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, ESQPANEL2X16_SQ1, 0)
-
-#define MCFG_ESQPANEL2X16_SQ1_REPLACE(_tag) \
-	MCFG_DEVICE_REPLACE(_tag, ESQPANEL2X16_SQ1, 0)
-
-#define MCFG_ESQPANEL2X16_SQ1_REMOVE(_tag) \
-	MCFG_DEVICE_REMOVE(_tag)
-
-#define MCFG_ESQPANEL_TX_CALLBACK(_write) \
-	devcb = &esqpanel_device::set_tx_wr_callback(*device, DEVCB_##_write);
-
-#define MCFG_ESQPANEL_ANALOG_CALLBACK(_write) \
-	devcb = &esqpanel_device::set_analog_wr_callback(*device, DEVCB_##_write);
 
 //**************************************************************************
 //  TYPE DEFINITIONS
@@ -62,20 +19,15 @@
 
 // ======================> esqpanel_device
 
-class esqpanel_external_panel_server;
+namespace esqpanel {
+	class external_panel_server;
+}
 
 class esqpanel_device : public device_t, public device_serial_interface
 {
 public:
-	template <class Object>
-	static devcb_base &set_tx_wr_callback(device_t &device, Object &&cb) {
-		return downcast<esqpanel_device &>(device).m_write_tx.set_callback(std::forward<Object>(cb));
-	}
-
-	template <class Object>
-	static devcb_base &set_analog_wr_callback(device_t &device, Object &&cb) {
-		return downcast<esqpanel_device &>(device).m_write_analog.set_callback(std::forward<Object>(cb));
-	}
+	auto write_tx() { return m_write_tx.bind(); }
+	auto write_analog() { return m_write_analog.bind(); }
 
 	void xmit_char(uint8_t data);
 	void set_analog_value(offs_t offset, uint16_t value);
@@ -107,7 +59,7 @@ protected:
 
 	bool m_eps_mode;
 
-	esqpanel_external_panel_server *m_external_panel_server;
+	esqpanel::external_panel_server *m_external_panel_server;
 
 private:
 	static const int XMIT_RING_SIZE = 16;
@@ -126,7 +78,7 @@ private:
 
 class esqpanel1x22_device : public esqpanel_device {
 public:
-	esqpanel1x22_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	esqpanel1x22_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;
@@ -138,7 +90,7 @@ protected:
 
 class esqpanel2x40_device : public esqpanel_device {
 public:
-	esqpanel2x40_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	esqpanel2x40_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;
@@ -150,7 +102,7 @@ protected:
 
 class esqpanel2x40_vfx_device : public esqpanel_device {
 public:
-	esqpanel2x40_vfx_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	esqpanel2x40_vfx_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;
@@ -162,15 +114,11 @@ protected:
 	virtual bool write_contents(std::ostream &o) override;
 
 	required_device<esq2x40_device> m_vfd;
-
-private:
-	static const char *html;
-	static const char *js;
 };
 
 class esqpanel2x40_sq1_device : public esqpanel_device {
 public:
-	esqpanel2x40_sq1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	esqpanel2x40_sq1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;
@@ -183,7 +131,7 @@ protected:
 // --- SQ1 - Parduz --------------------------------------------------------------------------------------------------------------------------
 class esqpanel2x16_sq1_device : public esqpanel_device {
 public:
-	esqpanel2x16_sq1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	esqpanel2x16_sq1_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;

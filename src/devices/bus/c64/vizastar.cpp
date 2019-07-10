@@ -36,10 +36,10 @@
 //**************************************************************************
 
 #define UNSCRAMBLE_ADDRESS(_offset) \
-	BITSWAP16(_offset,15,14,13,12,5,0,7,10,11,9,8,6,4,3,2,1)
+	bitswap<16>(_offset,15,14,13,12,5,0,7,10,11,9,8,6,4,3,2,1)
 
 #define UNSCRAMBLE_DATA(_data) \
-	BITSWAP8(_data,7,6,0,5,1,4,2,3)
+	bitswap<8>(_data,7,6,0,5,1,4,2,3)
 
 
 
@@ -79,7 +79,7 @@ void c64_vizastar_cartridge_device::device_start()
 //  c64_cd_r - cartridge data read
 //-------------------------------------------------
 
-uint8_t c64_vizastar_cartridge_device::c64_cd_r(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+uint8_t c64_vizastar_cartridge_device::c64_cd_r(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!roml)
 	{

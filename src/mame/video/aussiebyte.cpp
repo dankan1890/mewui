@@ -76,7 +76,7 @@ MC6845_ON_UPDATE_ADDR_CHANGED( aussiebyte_state::crtc_update_addr )
 
 WRITE8_MEMBER( aussiebyte_state::address_w )
 {
-	m_crtc->address_w( space, 0, data );
+	m_crtc->address_w(data);
 
 	m_video_index = data & 0x1f;
 
@@ -100,7 +100,7 @@ WRITE8_MEMBER( aussiebyte_state::address_w )
 
 WRITE8_MEMBER( aussiebyte_state::register_w )
 {
-	m_crtc->register_w( space, 0, data );
+	m_crtc->register_w(data);
 	uint16_t temp = m_alpha_address;
 
 	// Get transparent address
@@ -140,7 +140,7 @@ uint8_t aussiebyte_state::crt8002(uint8_t ac_ra, uint8_t ac_chr, uint8_t ac_attr
 			}
 			break;
 		case 1: // external mode
-			gfx = BITSWAP8(ac_chr, 0,1,2,3,4,5,6,7);
+			gfx = bitswap<8>(ac_chr, 0,1,2,3,4,5,6,7);
 			break;
 		case 2: // thin gfx
 			break;

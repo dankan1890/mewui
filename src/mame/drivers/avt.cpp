@@ -63,8 +63,8 @@
   across and 5 columns of symbols down. The object of the game is to line up the winning symbols
   either horizontally or diagonally in the shortest amount of time with the least amount of moves.
 
-  The winning symbols are selected at random at the start of the game and displayed with a dis-
-  tinctive yellow color surrounding that symbol in each column.
+  The winning symbols are selected at random at the start of the game and displayed with a
+  distinctive yellow color surrounding that symbol in each column.
 
 
   HOW TO PLAY THE GAME:
@@ -72,23 +72,23 @@
   The player must first insert coins to obtain points to play the game. Once points are on the
   screen the player may then press the play button one time for each point available up to the
   coin multiplier limit (except when lockouts are in effect) at which time the game will auto
-  start. If the player wants to start before the coin max, he may press the start button to i-
-  nitiate play. At the start of the game arrows are displayed at the top of columns to show the
+  start. If the player wants to start before the coin max, he may press the start button to
+  initiate play. At the start of the game arrows are displayed at the top of columns to show the
   direction to move that column in order to get the winning symbol on screen, in the event that
-  particular winning symbol is already on screen, that symbol will appear at the top of the co-
-  lumn instead of the arrow. When the player has all the winning symbols on the screen an align-
-  ment of winning symbols, either horizontally or diagonally, should be done with the least a-
-  mount of moves in the shortest amount of time. In the event the lockout mode is engaged the
+  particular winning symbol is already on screen, that symbol will appear at the top of the
+  column instead of the arrow. When the player has all the winning symbols on the screen an
+  alignment of winning symbols, either horizontally or diagonally, should be done with the least
+  amount of moves in the shortest amount of time. In the event the lockout mode is engaged the
   game will accept coins up to the lockout limit and will then auto start.
 
   The game has two different win modes defined as follows. If an alignment is obtained in 13
   moves or less, the player will be awarded points defined by the award tables. If alignment
-  is obtained from 14 to 32, moves stars will then be awarded for the amount of moves as de-
-  fined by the awards table. A bonus of 3 stars will be awarded if game is completed in 3 se-
-  conds or less and 100 stars equals 1 point.
+  is obtained from 14 to 32, moves stars will then be awarded for the amount of moves as
+  defined by the awards table. A bonus of 3 stars will be awarded if game is completed in 3
+  seconds or less and 100 stars equals 1 point.
 
-  Time is also an element in this game. When the game is started the player has a specific a-
-  mount of time to complete the game, also the arrows have a time limit. These time factors
+  Time is also an element in this game. When the game is started the player has a specific
+  amount of time to complete the game, also the arrows have a time limit. These time factors
   are variable and may be adjusted in the setup mode. The game also show how the game may be
   played.
 
@@ -116,8 +116,8 @@
   color band around one of the selections. This band indicates which module is to be selected
   to enter that particular mode. This band may be moved by depressing either the first column
   up or down arrow on your front panel. To enter a particular mode just depress the PLAY button
-  on your front panel. To exit a mode just depress the START button on your front panel. To ad-
-  just an entry in one of the modules use the second up or down arrow on your front panel. Now
+  on your front panel. To exit a mode just depress the START button on your front panel. To
+  adjust an entry in one of the modules use the second up or down arrow on your front panel. Now
   lets go through each module so you know how to customize your game for a particular location.
 
   Let's get into the first module on the menu which is the ACCOUNTING MODE. Remember to depress
@@ -178,8 +178,8 @@
   To change the POINT MULTIPLIER, enter this module and use the first up or down button on your
   front panel to increment or decrement this value.
 
-  To change PLAY TIME SETUP, enter this module and you may change PLAY TIME or ARROW TIME (the a-
-  mount of time arrows are allowed to stay on screen during play). To enable the lockout mode, you
+  To change PLAY TIME SETUP, enter this module and you may change PLAY TIME or ARROW TIME (the
+  amount of time arrows are allowed to stay on screen during play). To enable the lockout mode, you
   may set the lockout number to 1 or 2 or 3 or 4 and 0 if no lockout is desired. To disable the
   STARS set the STAR MODE to OFF. To adjust the UP AWARDS set to ON for more upper awards and to
   OFF for less upper awards table wins.
@@ -187,8 +187,8 @@
   The default name used in BUSINESS NAME SETUP is "THE MANAGEMENT". If you want to put a location
   name in the attract mode, enter the business name setup and use the second up and down arrows to
   select from the alphabet. In the event you make a mistake you can backup by selecting the first
-  up arrow. When you are finished with your message just exit by pressing START button and the me-
-  ssage will automatically center when you exit.
+  up arrow. When you are finished with your message just exit by pressing START button and the
+  message will automatically center when you exit.
 
 
   SYSTEM TESTS
@@ -402,20 +402,34 @@
   - Inputs
 
 
+* avtbingo, avtsym14 will accept coins. PIO-1 is programmed to cause an interrupt
+  when coin1 is pressed (port02).
+
+* avtnfl, you need to set it up before it can accept coins. However, it is random if it works
+  after doing that. If you want to try, press 7 to enter setup, press 6 to select the adjustments
+  screen, choose items with 2 and adjust them with 4. Press 6 until you exit. If you're lucky enough
+  to get it to work, 2 will enter coins, 3 will tilt (don't do that!), 6 is Draft, 1,2,4 (at least)
+  will remove cards. Don't know what the aim of the game is though.
+
+* avtsym25 has mismatched program roms so cannot work.
+
+
 ************************************************************************************************/
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
+#include "machine/z80daisy.h"
 #include "machine/nvram.h"
 #include "sound/ay8910.h"
 #include "video/mc6845.h"
-//#include "machine/z80ctc.h"
-//#include "machine/z80pio.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
 
-#define MASTER_CLOCK    XTAL_16MHz          /* unknown */
+#define MASTER_CLOCK    XTAL(16'000'000)          /* unknown */
 #define CPU_CLOCK       MASTER_CLOCK/4      /* guess... seems accurate */
 #define CRTC_CLOCK      MASTER_CLOCK/24     /* it gives 63.371293 Hz. with current settings */
 
@@ -424,35 +438,48 @@ class avt_state : public driver_device
 {
 public:
 	avt_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this,"maincpu"),
-		m_crtc(*this, "crtc"),
-		m_videoram(*this, "videoram"),
-		m_colorram(*this, "colorram"),
-		m_gfxdecode(*this, "gfxdecode"),
-		m_palette(*this, "palette")  { }
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_crtc(*this, "crtc")
+		, m_pio0(*this, "pio0")
+		, m_pio1(*this, "pio1")
+		, m_videoram(*this, "videoram")
+		, m_colorram(*this, "colorram")
+		, m_gfxdecode(*this, "gfxdecode")
+		, m_palette(*this, "palette")
+	{ }
 
-	required_device<cpu_device> m_maincpu;
-	required_device<mc6845_device> m_crtc;
-	required_shared_ptr<uint8_t> m_videoram;
-	required_shared_ptr<uint8_t> m_colorram;
-	required_device<gfxdecode_device> m_gfxdecode;
-	required_device<palette_device> m_palette;
+	void avtnfl(machine_config &config);
+	void avt(machine_config &config);
 
+protected:
+	virtual void video_start() override;
+
+private:
 	DECLARE_WRITE8_MEMBER(avt_6845_address_w);
 	DECLARE_WRITE8_MEMBER(avt_6845_data_w);
 	DECLARE_READ8_MEMBER( avt_6845_data_r );
 	DECLARE_WRITE8_MEMBER(avt_videoram_w);
 	DECLARE_WRITE8_MEMBER(avt_colorram_w);
+	DECLARE_WRITE_LINE_MEMBER(avtnfl_w);
+	DECLARE_WRITE_LINE_MEMBER(avtbingo_w);
+	TILE_GET_INFO_MEMBER(get_bg_tile_info);
+	void avt_palette(palette_device &palette) const;
+	uint32_t screen_update_avt(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+
+	void avt_map(address_map &map);
+	void avt_portmap(address_map &map);
 
 	tilemap_t *m_bg_tilemap;
 	uint8_t m_crtc_vreg[0x100],m_crtc_index;
-
-	TILE_GET_INFO_MEMBER(get_bg_tile_info);
-	virtual void video_start() override;
-	DECLARE_PALETTE_INIT(avt);
-	uint32_t screen_update_avt(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	INTERRUPT_GEN_MEMBER(avt_vblank_irq);
+	required_device<z80_device> m_maincpu;
+	required_device<mc6845_device> m_crtc;
+	required_device<z80pio_device> m_pio0;
+	required_device<z80pio_device> m_pio1;
+	required_shared_ptr<uint8_t> m_videoram;
+	required_shared_ptr<uint8_t> m_colorram;
+	required_device<gfxdecode_device> m_gfxdecode;
+	required_device<palette_device> m_palette;
 };
 
 #define mc6845_h_char_total     (m_crtc_vreg[0])
@@ -513,7 +540,7 @@ void avt_state::video_start()
 }
 
 
-uint32_t avt_state::screen_update_avt(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
+uint32_t avt_state::screen_update_avt(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 {
 	int x,y;
 	int count;
@@ -538,50 +565,43 @@ uint32_t avt_state::screen_update_avt(screen_device &screen, bitmap_ind16 &bitma
 }
 
 
-PALETTE_INIT_MEMBER(avt_state, avt)
+void avt_state::avt_palette(palette_device &palette) const
 {
-	const uint8_t *color_prom = memregion("proms")->base();
-/*  prom bits
-    7654 3210
-    ---- ---x   Intensity?.
-    ---- --x-   Red component.
-    ---- -x--   Green component.
-    ---- x---   Blue component.
-    xxxx ----   Unused.
-*/
-	int j;
+	/*  prom bits
+	    7654 3210
+	    ---- ---x   Intensity?.
+	    ---- --x-   Red component.
+	    ---- -x--   Green component.
+	    ---- x---   Blue component.
+	    xxxx ----   Unused.
+	*/
 
 	/* 0000BGRI */
-	if (color_prom == nullptr) return;
+	const uint8_t *color_prom = memregion("proms")->base();
+	if (!color_prom)
+		return;
 
-	for (j = 0; j < palette.entries(); j++)
+	for (int j = 0; j < palette.entries(); j++)
 	{
-		int bit1, bit2, bit3, r, g, b, inten, intenmin, intenmax, i;
+		constexpr int intenmin = 0xe0;
+		constexpr int intenmax = 0xff;
 
-		intenmin = 0xe0;
-		intenmax = 0xff;
+		int const i = ((j & 0x7) << 4) | ((j & 0x78) >> 3);
 
-		i = ((j & 0x7) << 4) | ((j & 0x78) >> 3);
+		// intensity component
+//      int const inten = BIT(~color_prom[i], 0);
+		int const inten = BIT(color_prom[i], 0);
 
+		// red component
+		int const r = BIT(color_prom[i], 1) * (inten ? intenmax : intenmin);
 
-		/* intensity component */
-//      inten = 1 - (color_prom[i] & 0x01);
-		inten = (color_prom[i] & 0x01);
+		// green component
+		int const g = BIT(color_prom[i], 2) * (inten ? intenmax : intenmin);
 
-		/* red component */
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		r = (bit1 * intenmin) + (inten * (bit1 * (intenmax - intenmin)));
+		// blue component
+		int const b = BIT(color_prom[i], 3) * (inten ? intenmax : intenmin);
 
-		/* green component */
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		g = (bit2 * intenmin) + (inten * (bit2 * (intenmax - intenmin)));
-
-		/* blue component */
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		b = (bit3 * intenmin) + (inten * (bit3 * (intenmax - intenmin)));
-
-
-		/* hack to switch cyan->magenta for highlighted background */
+		// hack to switch cyan->magenta for highlighted background
 		if (j == 0x40)
 			palette.set_pen_color(j, rgb_t(g, r, b)); // Why this one has R-G swapped?...
 		else
@@ -604,19 +624,19 @@ PALETTE_INIT_MEMBER(avt_state, avt)
 WRITE8_MEMBER( avt_state::avt_6845_address_w )
 {
 	m_crtc_index = data;
-	m_crtc->address_w(space, offset, data);
+	m_crtc->address_w(data);
 }
 
 WRITE8_MEMBER( avt_state::avt_6845_data_w )
 {
 	m_crtc_vreg[m_crtc_index] = data;
-	m_crtc->register_w(space, offset, data);
+	m_crtc->register_w(data);
 }
 
 READ8_MEMBER( avt_state::avt_6845_data_r )
 {
 	//m_crtc_vreg[m_crtc_index] = data;
-	return m_crtc->register_r(space, offset);
+	return m_crtc->register_r();
 }
 
 /*********************************************
@@ -624,33 +644,31 @@ READ8_MEMBER( avt_state::avt_6845_data_r )
 *********************************************/
 
 /* avtnfl, avtbingo */
-static ADDRESS_MAP_START( avt_map, AS_PROGRAM, 8, avt_state )
-	AM_RANGE(0x0000, 0x5fff) AM_ROM
-	AM_RANGE(0x6000, 0x7fff) AM_RAM
-	AM_RANGE(0x8000, 0x9fff) AM_RAM // AM_SHARE("nvram")
-	AM_RANGE(0xa000, 0xa7ff) AM_RAM_WRITE(avt_videoram_w) AM_SHARE("videoram")
-	AM_RANGE(0xc000, 0xc7ff) AM_RAM_WRITE(avt_colorram_w) AM_SHARE("colorram")
-ADDRESS_MAP_END
+void avt_state::avt_map(address_map &map)
+{
+	map(0x0000, 0x5fff).rom();
+	map(0x6000, 0x7fff).ram();
+	map(0x8000, 0x9fff).ram(); // AM_SHARE("nvram")
+	map(0xa000, 0xa7ff).ram().w(FUNC(avt_state::avt_videoram_w)).share("videoram");
+	map(0xc000, 0xc7ff).ram().w(FUNC(avt_state::avt_colorram_w)).share("colorram");
+}
 
-static ADDRESS_MAP_START( avt_portmap, AS_IO, 8, avt_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-//  AM_RANGE(0x00, 0x03) unk, maybe IO
-//  AM_RANGE(0x00, 0x00)  AM_READ_PORT("DSW1")
-//  AM_RANGE(0x01, 0x01)  AM_READ_PORT("IN1")
-	AM_RANGE(0x02, 0x02)  AM_READ_PORT("IN0")
-//  AM_RANGE(0x08, 0x0b) unk, maybe IO
-//  AM_RANGE(0x08, 0x08)  AM_READ_PORT("IN2")
-//  AM_RANGE(0x09, 0x09)  AM_READ_PORT("IN3")
-	AM_RANGE(0x21, 0x21) AM_DEVWRITE("aysnd", ay8910_device, data_w)     /* AY8910 data */
-	AM_RANGE(0x23, 0x23) AM_DEVWRITE("aysnd", ay8910_device, address_w)      /* AY8910 control */
-	AM_RANGE(0x28, 0x28) AM_WRITE(avt_6845_address_w)
-	AM_RANGE(0x29, 0x29) AM_READWRITE(avt_6845_data_r,avt_6845_data_w)
-ADDRESS_MAP_END
+void avt_state::avt_portmap(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x03).rw(m_pio0, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
+	map(0x08, 0x0b).rw(m_pio1, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
+	map(0x0c, 0x0f).rw("ctc0", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
+	map(0x21, 0x21).w("aysnd", FUNC(ay8910_device::data_w));     /* AY8910 data */
+	map(0x23, 0x23).w("aysnd", FUNC(ay8910_device::address_w));      /* AY8910 control */
+	map(0x28, 0x28).w(FUNC(avt_state::avt_6845_address_w));
+	map(0x29, 0x29).rw(FUNC(avt_state::avt_6845_data_r), FUNC(avt_state::avt_6845_data_w));
+}
 
 /* I/O byte R/W
   (from avtbingo)
 
-  inputs are throusg port 02h, masked with 0x3F & 0x40.
+  inputs are through port 02h, masked with 0x3F & 0x40.
 
   02C3: DB 02         in   a,($02)
   02C5: 2F            cpl
@@ -674,6 +692,7 @@ ADDRESS_MAP_END
   1ACE: CD B6 2D      call $2DB6 ----> nothing there!!!
 
 
+  This changes which lamps are lit depending on which ones are lit now..
   poll the port 00h and compare with 0x03
 
   1379: 0E 00         ld   c,$00
@@ -717,7 +736,7 @@ ADDRESS_MAP_END
   all access a000/c000 with an offset of 0x800 for video.
   avtnfl and avtbingo use 28/29 for CRTC.
 
-*/
+  */
 
 /*********************************************
 *                Input Ports                 *
@@ -726,12 +745,12 @@ ADDRESS_MAP_END
 static INPUT_PORTS_START( symbols )
 	PORT_START("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_1) PORT_NAME("IN0-1")
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_2) PORT_NAME("IN0-2")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_3) PORT_NAME("IN0-3")
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_4) PORT_NAME("IN0-4")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_5) PORT_NAME("IN0-5")
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_6) PORT_NAME("IN0-6")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_7) PORT_NAME("IN0-7")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_2) PORT_NAME("IN0-2") // avtnfl: down/accept
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_3) PORT_NAME("IN0-3") // avtnfl: up
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_4) PORT_NAME("IN0-5") // avtnfl: adjust setting
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_6) PORT_NAME("IN0-6") // avtnfl: go back a screen
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_7) PORT_NAME("IN0-7") // avtnfl: enter setup menu   avtsym14:hold down while booting to enter setup
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_8) PORT_NAME("IN0-8")
 
 	PORT_START("IN1")
@@ -885,10 +904,10 @@ static INPUT_PORTS_START( avtbingo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_POKER_HOLD3 ) PORT_NAME("Column 3 UP")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_POKER_HOLD2 ) PORT_NAME("Column 2 UP")
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_POKER_HOLD1 ) PORT_NAME("Column 1 UP")
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_POKER_HOLD5 ) PORT_NAME("Column 5 UP")
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_POKER_HOLD4 ) PORT_NAME("Column 4 UP")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_7) PORT_NAME("IN0-7")  // Used. Masked 0x40. See code at PC=0338.
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_CODE(KEYCODE_7) PORT_NAME("IN0-7")  // Used. Masked 0x40. See code at PC=0338. (SW2 to enter setup)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -914,7 +933,7 @@ static const gfx_layout tilelayout =
 *           Graphics Decode Information           *
 **************************************************/
 
-static GFXDECODE_START( avt )
+static GFXDECODE_START( gfx_avt )
 	GFXDECODE_ENTRY( "gfx1", 0, tilelayout, 0, 16 )
 GFXDECODE_END
 
@@ -922,44 +941,88 @@ GFXDECODE_END
 *              Machine Drivers               *
 *********************************************/
 
-/* IM 2 */
-INTERRUPT_GEN_MEMBER(avt_state::avt_vblank_irq)
+static const z80_daisy_config daisy_chain[] =
 {
-	m_maincpu->set_input_line_and_vector(0, HOLD_LINE, 0x06);
+	{ "ctc0" },
+	{ "pio1" },
+	{ "pio0" },
+	{ nullptr }
+};
+
+// our pio cannot detect a static interrupt, so we push the current switch state in, then it will work
+WRITE_LINE_MEMBER( avt_state::avtbingo_w )
+{
+	if (state)
+		m_pio0->port_b_write(ioport("IN0")->read());
 }
 
-static MACHINE_CONFIG_START( avt )
-
+void avt_state::avt(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, CPU_CLOCK) /* guess */
-	MCFG_CPU_PROGRAM_MAP(avt_map)
-	MCFG_CPU_IO_MAP(avt_portmap)
-	MCFG_CPU_VBLANK_INT_DRIVER("screen", avt_state,  avt_vblank_irq)
+	Z80(config, m_maincpu, CPU_CLOCK); /* guess */
+	m_maincpu->set_daisy_config(daisy_chain);
+	m_maincpu->set_addrmap(AS_PROGRAM, &avt_state::avt_map);
+	m_maincpu->set_addrmap(AS_IO, &avt_state::avt_portmap);
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)  /* 240x224 (through CRTC) */
-	MCFG_SCREEN_UPDATE_DRIVER(avt_state, screen_update_avt)
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+	screen.set_size(32*8, 32*8);
+	screen.set_visarea_full();  /* 240x224 (through CRTC) */
+	screen.set_screen_update(FUNC(avt_state::screen_update_avt));
 
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", avt)
+	GFXDECODE(config, m_gfxdecode, m_palette, gfx_avt);
+	PALETTE(config, m_palette, FUNC(avt_state::avt_palette), 8*16);
 
-	MCFG_PALETTE_ADD("palette", 8*16)
-	MCFG_PALETTE_INIT_OWNER(avt_state, avt)
-
-	MCFG_MC6845_ADD("crtc", MC6845, "screen", CRTC_CLOCK)    /* guess */
-	MCFG_MC6845_SHOW_BORDER_AREA(false)
-	MCFG_MC6845_CHAR_WIDTH(8)
+	mc6845_device &crtc(MC6845(config, "crtc", CRTC_CLOCK)); // guess
+	crtc.set_screen("screen");
+	crtc.set_show_border_area(false);
+	crtc.set_char_width(8);
+	crtc.out_vsync_callback().set("ctc0", FUNC(z80ctc_device::trg3));
+	crtc.out_vsync_callback().append(FUNC(avt_state::avtbingo_w));
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("aysnd", AY8910, CPU_CLOCK/2)    /* 1.25 MHz.?? */
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
-MACHINE_CONFIG_END
+	SPEAKER(config, "mono").front_center();
+	AY8910(config, "aysnd", CPU_CLOCK/2).add_route(ALL_OUTPUTS, "mono", 1.00);    /* 1.25 MHz.?? */
 
+	// device never addressed by cpu
+	z80ctc_device& ctc(Z80CTC(config, "ctc0", CPU_CLOCK)); // U27
+	ctc.intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	ctc.zc_callback<0>().set("ctc0", FUNC(z80ctc_device::trg1));
+	// ZC1 not connected
+	// TRG2 to TP18; ZC2 to TP9; TRG3 to VSYNC; TRG0 to cpu_clock/4
+
+	Z80PIO(config, m_pio0, CPU_CLOCK); // U23
+	m_pio0->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_pio0->in_pb_callback().set_ioport("IN0");
+	// PORT A appears to be lamp drivers
+	// PORT B d0-d5 = muxed inputs; d6 = SW2 pushbutton; d7 = ?
+
+	Z80PIO(config, m_pio1, CPU_CLOCK); // U22
+	m_pio1->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	// PORT A d0-d7 = TP13,TP12,TP11,TP10,TP8,TP7,TP5,TP3
+	// PORT B d0-d7 = "Player2", DCOM, CCOM, BCOM, ACOM, LOCKOUT/TP6, TP4, 50/60HZ (held high, jumper on JP13 grounds it)
+	// DCOM,CCOM,BCOM,ACOM appear to be muxes
+}
+
+// Leave avtnfl as it was until more is learnt.
+WRITE_LINE_MEMBER( avt_state::avtnfl_w )
+{
+	m_pio1->port_b_write((m_pio1->port_b_read() & 0xbf) | (state ? 0x40 : 0));
+}
+
+void avt_state::avtnfl(machine_config &config)
+{
+	avt(config);
+
+	mc6845_device &crtc(MC6845(config.replace(), "crtc", CRTC_CLOCK)); // guess
+	crtc.set_screen("screen");
+	crtc.set_show_border_area(false);
+	crtc.set_char_width(8);
+	crtc.out_vsync_callback().set("ctc0", FUNC(z80ctc_device::trg3));
+	crtc.out_vsync_callback().append(FUNC(avt_state::avtnfl_w));
+}
 
 /*********************************************
 *                  Rom Load                  *
@@ -981,7 +1044,7 @@ ROM_START( avtsym14 )
 ROM_END
 
 ROM_START( avtsym25 )
-	ROM_REGION( 0x10000, "maincpu", 0 )
+	ROM_REGION( 0x10000, "maincpu", 0 ) // These 2 roms are from different sets and cannot work together
 	ROM_LOAD( "u38-2.51.u38", 0x0000, 0x2000, CRC(230a43df) SHA1(395508d5824b50210d6341b958049da10c067201) )
 	ROM_LOAD( "u39-2.52.u39", 0x2000, 0x2000, CRC(a1a8f8f6) SHA1(96798fae534bdef6126eeb3e497fab47a4badae9) )
 
@@ -1031,8 +1094,8 @@ ROM_END
 *                Game Drivers                *
 *********************************************/
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     STATE       INIT  ROT   COMPANY                      FULLNAME             FLAGS */
-GAME( 1985, avtsym14, 0,        avt,      symbols,  avt_state,  0,    ROT0, "Advanced Video Technology", "Symbols (ver 1.4)", MACHINE_NOT_WORKING )
-GAME( 1985, avtsym25, avtsym14, avt,      symbols,  avt_state,  0,    ROT0, "Advanced Video Technology", "Symbols (ver 2.5)", MACHINE_NOT_WORKING )
-GAME( 1985, avtbingo, 0,        avt,      avtbingo, avt_state,  0,    ROT0, "Advanced Video Technology", "Arrow Bingo",       MACHINE_NOT_WORKING )
-GAME( 1989, avtnfl,   0,        avt,      symbols,  avt_state,  0,    ROT0, "Advanced Video Technology", "NFL (ver 109)",     MACHINE_NOT_WORKING )
+/*    YEAR  NAME      PARENT    MACHINE   INPUT     STATE       INIT        ROT   COMPANY                      FULLNAME             FLAGS */
+GAME( 1985, avtsym14, 0,        avt,      symbols,  avt_state,  empty_init, ROT0, "Advanced Video Technology", "Symbols (ver 1.4)", MACHINE_NOT_WORKING )
+GAME( 1985, avtsym25, avtsym14, avt,      symbols,  avt_state,  empty_init, ROT0, "Advanced Video Technology", "Symbols (ver 2.5)", MACHINE_NOT_WORKING )
+GAME( 1985, avtbingo, 0,        avt,      avtbingo, avt_state,  empty_init, ROT0, "Advanced Video Technology", "Arrow Bingo",       MACHINE_NOT_WORKING )
+GAME( 1989, avtnfl,   0,        avtnfl,   symbols,  avt_state,  empty_init, ROT0, "Advanced Video Technology", "NFL (ver 109)",     MACHINE_NOT_WORKING )

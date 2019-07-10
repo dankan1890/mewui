@@ -46,12 +46,13 @@ DEFINE_DEVICE_TYPE(C64_IDE64, c64_ide64_cartridge_device, "c64_ide64", "C64 IDE6
 //  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( c64_ide64_cartridge_device::device_add_mconfig )
-	MCFG_ATMEL_29C010_ADD(AT29C010A_TAG)
-	MCFG_DS1302_ADD(DS1302_TAG, XTAL_32_768kHz)
+void c64_ide64_cartridge_device::device_add_mconfig(machine_config &config)
+{
+	ATMEL_29C010(config, m_flash_rom);
+	DS1302(config, m_rtc, 32.768_kHz_XTAL);
 
-	MCFG_ATA_INTERFACE_ADD(ATA_TAG, ata_devices, "hdd", nullptr, false)
-MACHINE_CONFIG_END
+	ATA_INTERFACE(config, m_ata).options(ata_devices, "hdd", nullptr, false);
+}
 
 
 //-------------------------------------------------
@@ -133,7 +134,7 @@ void c64_ide64_cartridge_device::device_reset()
 //  c64_cd_r - cartridge data read
 //-------------------------------------------------
 
-uint8_t c64_ide64_cartridge_device::c64_cd_r(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+uint8_t c64_ide64_cartridge_device::c64_cd_r(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!m_enable) return data;
 
@@ -172,13 +173,13 @@ uint8_t c64_ide64_cartridge_device::c64_cd_r(address_space &space, offs_t offset
 
 		if (io1_offset >= 0x20 && io1_offset < 0x28)
 		{
-			m_ata_data = m_ata->read_cs0(space, offset & 0x07, 0xffff);
+			m_ata_data = m_ata->read_cs0(offset & 0x07);
 
 			data = m_ata_data & 0xff;
 		}
 		else if (io1_offset >= 0x28 && io1_offset < 0x30)
 		{
-			m_ata_data = m_ata->read_cs1(space, offset & 0x07, 0xffff);
+			m_ata_data = m_ata->read_cs1(offset & 0x07);
 
 			data = m_ata_data & 0xff;
 		}
@@ -239,7 +240,7 @@ uint8_t c64_ide64_cartridge_device::c64_cd_r(address_space &space, offs_t offset
 //  c64_cd_w - cartridge data write
 //-------------------------------------------------
 
-void c64_ide64_cartridge_device::c64_cd_w(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+void c64_ide64_cartridge_device::c64_cd_w(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!m_enable) return;
 
@@ -275,13 +276,13 @@ void c64_ide64_cartridge_device::c64_cd_w(address_space &space, offs_t offset, u
 		{
 			m_ata_data = (m_ata_data & 0xff00) | data;
 
-			m_ata->write_cs0(space, offset & 0x07, m_ata_data, 0xffff);
+			m_ata->write_cs0(offset & 0x07, m_ata_data);
 		}
 		else if (io1_offset >= 0x28 && io1_offset < 0x30)
 		{
 			m_ata_data = (m_ata_data & 0xff00) | data;
 
-			m_ata->write_cs1(space, offset & 0x07, m_ata_data, 0xffff);
+			m_ata->write_cs1(offset & 0x07, m_ata_data);
 		}
 		else if (io1_offset == 0x31)
 		{

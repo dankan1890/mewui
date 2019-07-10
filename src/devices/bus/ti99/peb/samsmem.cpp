@@ -36,6 +36,7 @@ sams_memory_expansion_device::sams_memory_expansion_device(const machine_config 
 	device_t(mconfig, TI99_SAMSMEM, tag, owner, clock),
 	device_ti99_peribox_card_interface(mconfig, *this),
 	m_ram(*this, RAM_TAG),
+	m_crulatch(*this, "crulatch"),
 	m_map_mode(false), m_access_mapper(false)
 {
 }
@@ -69,7 +70,7 @@ READ8Z_MEMBER(sams_memory_expansion_device::readz)
 	}
 }
 
-WRITE8_MEMBER(sams_memory_expansion_device::write)
+void sams_memory_expansion_device::write(offs_t offset, uint8_t data)
 {
 	int base;
 
@@ -103,20 +104,30 @@ READ8Z_MEMBER(sams_memory_expansion_device::crureadz)
 /*
     CRU write. Turns on the mapper and allows to change it.
 */
-WRITE8_MEMBER(sams_memory_expansion_device::cruwrite)
+void sams_memory_expansion_device::cruwrite(offs_t offset, uint8_t data)
 {
 	if ((offset & 0xff00)==SAMS_CRU_BASE)
-	{
-		if ((offset & 0x000e)==0) m_access_mapper = (data!=0);
-		if ((offset & 0x000e)==2) m_map_mode = (data!=0);
-	}
+		m_crulatch->write_bit((offset & 0x000e) >> 1, data);
 }
 
-MACHINE_CONFIG_MEMBER( sams_memory_expansion_device::device_add_mconfig )
-	MCFG_RAM_ADD(RAM_TAG)
-	MCFG_RAM_DEFAULT_SIZE("1M")
-	MCFG_RAM_DEFAULT_VALUE(0)
-MACHINE_CONFIG_END
+WRITE_LINE_MEMBER(sams_memory_expansion_device::access_mapper_w)
+{
+	m_access_mapper = state;
+}
+
+WRITE_LINE_MEMBER(sams_memory_expansion_device::map_mode_w)
+{
+	m_map_mode = state;
+}
+
+void sams_memory_expansion_device::device_add_mconfig(machine_config &config)
+{
+	RAM(config, RAM_TAG).set_default_size("1M").set_default_value(0);
+
+	LS259(config, m_crulatch); // U8
+	m_crulatch->q_out_cb<0>().set(FUNC(sams_memory_expansion_device::access_mapper_w));
+	m_crulatch->q_out_cb<1>().set(FUNC(sams_memory_expansion_device::map_mode_w));
+}
 
 void sams_memory_expansion_device::device_start()
 {
@@ -128,8 +139,6 @@ void sams_memory_expansion_device::device_start()
 void sams_memory_expansion_device::device_reset()
 {
 	// Resetting values
-	m_map_mode = false;
-	m_access_mapper = false;
 	for (auto & elem : m_mapper) elem = 0;
 }
 

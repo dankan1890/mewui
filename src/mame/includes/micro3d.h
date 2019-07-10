@@ -13,7 +13,10 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/mcs51/mcs51.h"
 #include "sound/upd7759.h"
+#include "machine/adc0844.h"
+#include "machine/mc2661.h"
 #include "machine/mc68681.h"
+#include "emupal.h"
 
 
 #define HOST_MONITOR_DISPLAY        0
@@ -21,52 +24,71 @@
 #define DRMATH_MONITOR_DISPLAY      0
 
 
-struct micro3d_vtx
-{
-	int32_t x, y, z;
-};
-
-enum planes
-{
-		CLIP_Z_MIN,
-		CLIP_Z_MAX,
-		CLIP_X_MIN,
-		CLIP_X_MAX,
-		CLIP_Y_MIN,
-		CLIP_Y_MAX
-};
-
 class micro3d_sound_device;
 
 class micro3d_state : public driver_device
 {
 public:
-	enum
-	{
-		TIMER_MAC_DONE,
-		TIMER_ADC_DONE
-	};
-
-	micro3d_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	micro3d_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
 		m_upd7759(*this, "upd7759"),
 		m_drmath(*this, "drmath"),
 		m_vgb(*this, "vgb"),
 		m_palette(*this, "palette"),
-		m_duart68681(*this, "duart68681"),
+		m_duart(*this, "duart"),
 		m_noise_1(*this, "noise_1"),
 		m_noise_2(*this, "noise_2"),
+		m_adc(*this, "adc"),
 		m_vertex(*this, "vertex"),
 		m_sound_sw(*this, "SOUND_SW"),
 		m_volume(*this, "VOLUME"),
 		m_joystick_x(*this, "JOYSTICK_X"),
 		m_joystick_y(*this, "JOYSTICK_Y"),
-		m_throttle(*this, "THROTTLE"),
 		m_shared_ram(*this, "shared_ram"),
 		m_mac_sram(*this, "mac_sram"),
-		m_sprite_vram(*this, "sprite_vram") { }
+		m_sprite_vram(*this, "sprite_vram"),
+		m_vgb_uart(*this, "uart")
+	{ }
+
+	void micro3d(machine_config &config);
+	void botss11(machine_config &config);
+
+	void init_micro3d();
+	void init_botss();
+
+	DECLARE_CUSTOM_INPUT_MEMBER(botss_hwchk_r);
+
+protected:
+	enum
+	{
+		TIMER_MAC_DONE
+	};
+
+	virtual void machine_reset() override;
+	virtual void video_start() override;
+	virtual void video_reset() override;
+
+	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
+
+private:
+	enum planes
+	{
+		CLIP_Z_MIN,
+		CLIP_Z_MAX,
+		CLIP_X_MIN,
+		CLIP_X_MAX,
+		CLIP_Y_MIN,
+		CLIP_Y_MAX
+	};
+
+	struct micro3d_vtx
+	{
+		int32_t x, y, z;
+
+		constexpr int64_t dot_product(micro3d_vtx const &that) const;
+	};
 
 	required_device<cpu_device> m_maincpu;
 	required_device<i8051_device> m_audiocpu;
@@ -74,30 +96,22 @@ public:
 	required_device<cpu_device> m_drmath;
 	required_device<tms34010_device> m_vgb;
 	required_device<palette_device> m_palette;
-	required_device<mc68681_device> m_duart68681;
+	required_device<mc68681_device> m_duart;
 	required_device<micro3d_sound_device> m_noise_1;
 	required_device<micro3d_sound_device> m_noise_2;
+	optional_device<adc0844_device> m_adc;
 	required_memory_region m_vertex;
 
 	required_ioport m_sound_sw;
 	required_ioport m_volume;
 	optional_ioport m_joystick_x;
 	optional_ioport m_joystick_y;
-	optional_ioport m_throttle;
 
 	required_shared_ptr<uint16_t> m_shared_ram;
 	uint8_t               m_m68681_tx0;
 
 	/* Sound */
 	uint8_t               m_sound_port_latch[4];
-
-	/* TI UART */
-	uint8_t               m_ti_uart[9];
-	int                 m_ti_uart_mode_cycle;
-	int                 m_ti_uart_sync_cycle;
-
-	/* ADC */
-	uint8_t               m_adc_val;
 
 	/* Hardware version-check latch for BOTSS 1.1a */
 	uint8_t               m_botss_latch;
@@ -138,17 +152,14 @@ public:
 	int                 m_drawing_buffer;
 	int                 m_display_buffer;
 
-	DECLARE_WRITE16_MEMBER(micro3d_ti_uart_w);
-	DECLARE_READ16_MEMBER(micro3d_ti_uart_r);
-	DECLARE_WRITE32_MEMBER(micro3d_scc_w);
-	DECLARE_READ32_MEMBER(micro3d_scc_r);
+	DECLARE_WRITE8_MEMBER(vgb_uart_w);
+	DECLARE_READ8_MEMBER(vgb_uart_r);
 	DECLARE_WRITE32_MEMBER(micro3d_mac1_w);
 	DECLARE_READ32_MEMBER(micro3d_mac2_r);
 	DECLARE_WRITE32_MEMBER(micro3d_mac2_w);
 	DECLARE_READ16_MEMBER(micro3d_encoder_h_r);
 	DECLARE_READ16_MEMBER(micro3d_encoder_l_r);
-	DECLARE_READ16_MEMBER(micro3d_adc_r);
-	DECLARE_WRITE16_MEMBER(micro3d_adc_w);
+	DECLARE_READ8_MEMBER(adc_volume_r);
 	DECLARE_READ16_MEMBER(botss_140000_r);
 	DECLARE_READ16_MEMBER(botss_180000_r);
 	DECLARE_WRITE16_MEMBER(micro3d_reset_w);
@@ -162,19 +173,14 @@ public:
 	DECLARE_WRITE32_MEMBER(micro3d_fifo_w);
 	DECLARE_WRITE32_MEMBER(micro3d_alt_fifo_w);
 	DECLARE_READ32_MEMBER(micro3d_pipe_r);
-	DECLARE_CUSTOM_INPUT_MEMBER(botss_hwchk_r);
 	DECLARE_WRITE8_MEMBER(micro3d_snd_dac_a);
 	DECLARE_WRITE8_MEMBER(micro3d_snd_dac_b);
-	DECLARE_WRITE8_MEMBER(micro3d_sound_io_w);
-	DECLARE_READ8_MEMBER(micro3d_sound_io_r);
-	DECLARE_DRIVER_INIT(micro3d);
-	DECLARE_DRIVER_INIT(botss);
-	virtual void machine_reset() override;
-	virtual void video_start() override;
-	virtual void video_reset() override;
+	DECLARE_WRITE8_MEMBER(micro3d_sound_p1_w);
+	DECLARE_WRITE8_MEMBER(micro3d_sound_p3_w);
+	DECLARE_READ8_MEMBER(micro3d_sound_p1_r);
+	DECLARE_READ8_MEMBER(micro3d_sound_p3_r);
 	INTERRUPT_GEN_MEMBER(micro3d_vblank);
 	TIMER_CALLBACK_MEMBER(mac_done_callback);
-	TIMER_CALLBACK_MEMBER(adc_done_callback);
 	DECLARE_WRITE8_MEMBER(micro3d_upd7759_w);
 	DECLARE_WRITE8_MEMBER(data_from_i8031);
 	DECLARE_READ8_MEMBER(data_to_i8031);
@@ -194,9 +200,15 @@ public:
 	int clip_triangle(micro3d_vtx *v, micro3d_vtx *vout, int num_vertices, enum planes plane);
 	void draw_triangles(uint32_t attr);
 
+	void cpu_space_map(address_map &map);
+	void drmath_data(address_map &map);
+	void drmath_prg(address_map &map);
+	void hostmem(address_map &map);
+	void soundmem_io(address_map &map);
+	void soundmem_prg(address_map &map);
+	void vgbmem(address_map &map);
 
-protected:
-	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
+	required_device<mc2661_device> m_vgb_uart;
 };
 
 #endif // MAME_INCLUDES_MICRO3D_H

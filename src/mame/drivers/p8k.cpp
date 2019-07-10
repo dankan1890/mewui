@@ -42,63 +42,85 @@
     TODO:
       * properly implement Z80 daisy chain in 16 bit board
       * Find out how to enter hardware check on 16 bit board
-      * hook the sio back up when it becomes usable
-
 
 ****************************************************************************/
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "cpu/z80/z80daisy.h"
+#include "machine/z80daisy.h"
 #include "cpu/z8000/z8000.h"
-#include "machine/terminal.h"
+#include "imagedev/floppy.h"
 #include "machine/upd765.h"
 #include "machine/z80ctc.h"
-#include "machine/z80dart.h"
+#include "machine/z80sio.h"
 #include "machine/z80dma.h"
 #include "machine/z80pio.h"
 #include "sound/beep.h"
 #include "speaker.h"
+#include "machine/clock.h"
+#include "bus/rs232/rs232.h"
 
+class p8k_16_daisy_device : public device_t, public z80_daisy_chain_interface
+{
+public:
+	p8k_16_daisy_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	IRQ_CALLBACK_MEMBER(irq_callback) {
+		if(!irqline) return 0;
+		device_z80daisy_interface *intf = daisy_get_irq_device();
+		return intf ? intf->z80daisy_irq_ack() >> 1 : 0;
+	}
+	DECLARE_WRITE8_MEMBER(reti_w) { if(data == 0x4d) daisy_call_reti_device(); }
+protected:
+	void device_start() override {}
+};
 
-#define TERMINAL_TAG "terminal"
+DEFINE_DEVICE_TYPE(P8K_16_DAISY, p8k_16_daisy_device, "p8k_16_daisy", "P8000 16-bit daisy chain device")
+
+p8k_16_daisy_device::p8k_16_daisy_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: device_t(mconfig, P8K_16_DAISY, tag, owner, clock)
+	, z80_daisy_chain_interface(mconfig, *this) {}
+
 
 class p8k_state : public driver_device
 {
 public:
 	p8k_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_daisy(*this, "p8k_16_daisy")
+		, m_pio2(*this, "pio2")
+		, m_i8272(*this, "i8272")
+	{ }
 
+	void p8k(machine_config &config);
+	void p8k_16(machine_config &config);
+
+	void init_p8k();
+
+private:
 	DECLARE_READ8_MEMBER(p8k_port0_r);
 	DECLARE_WRITE8_MEMBER(p8k_port0_w);
-	DECLARE_READ8_MEMBER(p8k_port24_r);
-	DECLARE_WRITE8_MEMBER(p8k_port24_w);
-	DECLARE_READ16_MEMBER(portff82_r);
-	DECLARE_WRITE16_MEMBER(portff82_w);
-	void kbd_put(u8 data);
-	void kbd_put_16(u8 data);
-	uint8_t m_term_data;
-	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
-	DECLARE_DRIVER_INIT(p8k);
 	DECLARE_MACHINE_RESET(p8k);
-	DECLARE_MACHINE_RESET(p8k_16);
 
 	DECLARE_WRITE_LINE_MEMBER(fdc_irq);
-
-	virtual void machine_start() override;
-
-	DECLARE_WRITE_LINE_MEMBER( p8k_daisy_interrupt );
-	DECLARE_WRITE_LINE_MEMBER( p8k_dma_irq_w );
-	DECLARE_WRITE_LINE_MEMBER( p8k_16_daisy_interrupt );
+	DECLARE_WRITE_LINE_MEMBER(p8k_daisy_interrupt);
+	DECLARE_WRITE_LINE_MEMBER(p8k_dma_irq_w);
+	DECLARE_WRITE_LINE_MEMBER(p8k_16_daisy_interrupt );
 	DECLARE_READ8_MEMBER(memory_read_byte);
 	DECLARE_WRITE8_MEMBER(memory_write_byte);
 	DECLARE_READ8_MEMBER(io_read_byte);
 	DECLARE_WRITE8_MEMBER(io_write_byte);
+
+	void p8k_16_datamap(address_map &map);
+	void p8k_16_iomap(address_map &map);
+	void p8k_16_memmap(address_map &map);
+	void p8k_iomap(address_map &map);
+	void p8k_memmap(address_map &map);
+
+	required_device<cpu_device> m_maincpu; // Z80 or Z8001 depending on the machine
+	optional_device<p8k_16_daisy_device> m_daisy;
+	optional_device<z80pio_device> m_pio2;
+	optional_device<i8272a_device> m_i8272;
 };
 
 /***************************************************************************
@@ -107,39 +129,40 @@ public:
 
 ****************************************************************************/
 
-static ADDRESS_MAP_START(p8k_memmap, AS_PROGRAM, 8, p8k_state)
-	AM_RANGE(0x0000, 0x0FFF) AM_RAMBANK("bank0")
-	AM_RANGE(0x1000, 0x1FFF) AM_RAMBANK("bank1")
-	AM_RANGE(0x2000, 0x2FFF) AM_RAMBANK("bank2")
-	AM_RANGE(0x3000, 0x3FFF) AM_RAMBANK("bank3")
-	AM_RANGE(0x4000, 0x4FFF) AM_RAMBANK("bank4")
-	AM_RANGE(0x5000, 0x5FFF) AM_RAMBANK("bank5")
-	AM_RANGE(0x6000, 0x6FFF) AM_RAMBANK("bank6")
-	AM_RANGE(0x7000, 0x7FFF) AM_RAMBANK("bank7")
-	AM_RANGE(0x8000, 0x8FFF) AM_RAMBANK("bank8")
-	AM_RANGE(0x9000, 0x9FFF) AM_RAMBANK("bank9")
-	AM_RANGE(0xA000, 0xAFFF) AM_RAMBANK("bank10")
-	AM_RANGE(0xB000, 0xBFFF) AM_RAMBANK("bank11")
-	AM_RANGE(0xC000, 0xCFFF) AM_RAMBANK("bank12")
-	AM_RANGE(0xD000, 0xDFFF) AM_RAMBANK("bank13")
-	AM_RANGE(0xE000, 0xEFFF) AM_RAMBANK("bank14")
-	AM_RANGE(0xF000, 0xFFFF) AM_RAMBANK("bank15")
-ADDRESS_MAP_END
+void p8k_state::p8k_memmap(address_map &map)
+{
+	map(0x0000, 0x0FFF).bankrw("bank0");
+	map(0x1000, 0x1FFF).bankrw("bank1");
+	map(0x2000, 0x2FFF).bankrw("bank2");
+	map(0x3000, 0x3FFF).bankrw("bank3");
+	map(0x4000, 0x4FFF).bankrw("bank4");
+	map(0x5000, 0x5FFF).bankrw("bank5");
+	map(0x6000, 0x6FFF).bankrw("bank6");
+	map(0x7000, 0x7FFF).bankrw("bank7");
+	map(0x8000, 0x8FFF).bankrw("bank8");
+	map(0x9000, 0x9FFF).bankrw("bank9");
+	map(0xA000, 0xAFFF).bankrw("bank10");
+	map(0xB000, 0xBFFF).bankrw("bank11");
+	map(0xC000, 0xCFFF).bankrw("bank12");
+	map(0xD000, 0xDFFF).bankrw("bank13");
+	map(0xE000, 0xEFFF).bankrw("bank14");
+	map(0xF000, 0xFFFF).bankrw("bank15");
+}
 
-static ADDRESS_MAP_START(p8k_iomap, AS_IO, 8, p8k_state)
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x07) AM_READWRITE(p8k_port0_r,p8k_port0_w) // MH7489
-	AM_RANGE(0x08, 0x0b) AM_DEVREADWRITE("z80ctc_0", z80ctc_device, read, write)
-	AM_RANGE(0x0c, 0x0f) AM_DEVREADWRITE("z80pio_0", z80pio_device, read_alt, write_alt)
-	AM_RANGE(0x18, 0x1b) AM_DEVREADWRITE("z80pio_1", z80pio_device, read_alt, write_alt)
-	AM_RANGE(0x1c, 0x1f) AM_DEVREADWRITE("z80pio_2", z80pio_device, read_alt, write_alt)
-	AM_RANGE(0x20, 0x21) AM_DEVICE("i8272", i8272a_device, map)
-	//AM_RANGE(0x24, 0x27) AM_DEVREADWRITE("z80sio_0", z80sio0_device, ba_cd_r, ba_cd_w)
-	AM_RANGE(0x24, 0x27) AM_READWRITE(p8k_port24_r,p8k_port24_w)
-	AM_RANGE(0x28, 0x2b) AM_DEVREADWRITE("z80sio_1", z80sio0_device, ba_cd_r, ba_cd_w)
-	AM_RANGE(0x2c, 0x2f) AM_DEVREADWRITE("z80ctc_1", z80ctc_device, read, write)
-	AM_RANGE(0x3c, 0x3c) AM_DEVREADWRITE("z80dma", z80dma_device, read, write)
-ADDRESS_MAP_END
+void p8k_state::p8k_iomap(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x07).rw(FUNC(p8k_state::p8k_port0_r), FUNC(p8k_state::p8k_port0_w)); // MH7489
+	map(0x08, 0x0b).rw("ctc0", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
+	map(0x0c, 0x0f).rw("pio0", FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
+	map(0x18, 0x1b).rw("pio1", FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
+	map(0x1c, 0x1f).rw(m_pio2, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
+	map(0x20, 0x21).m(m_i8272, FUNC(i8272a_device::map));
+	map(0x24, 0x27).rw("sio", FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w));
+	map(0x28, 0x2b).rw("sio1", FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w));
+	map(0x2c, 0x2f).rw("ctc1", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
+	map(0x3c, 0x3c).rw("dma", FUNC(z80dma_device::bus_r), FUNC(z80dma_device::bus_w));
+}
 
 
 
@@ -173,38 +196,6 @@ WRITE8_MEMBER( p8k_state::p8k_port0_w )
 		printf("Invalid data %X for bank %d\n",data,breg);
 }
 
-READ8_MEMBER( p8k_state::p8k_port24_r )
-{
-	if (offset == 3)
-		return 0xff;
-	if (offset == 2)
-		return m_term_data;
-
-	return 0;
-}
-
-WRITE8_MEMBER( p8k_state::p8k_port24_w )
-{
-	if (offset == 2)
-		m_terminal->write(space, 0, data);
-}
-
-void p8k_state::kbd_put(u8 data)
-{
-	address_space &mem = m_maincpu->space(AS_PROGRAM);
-	m_term_data = data;
-	// This is a dreadful hack..
-	// simulate interrupt by saving current pc on
-	// the stack and jumping to interrupt handler.
-	uint16_t spreg = m_maincpu->state_int(Z80_SP);
-	uint16_t pcreg = m_maincpu->state_int(Z80_PC);
-	spreg--;
-	mem.write_byte(spreg, pcreg >> 8);
-	spreg--;
-	mem.write_byte(spreg, pcreg);
-	m_maincpu->set_state_int(Z80_SP, spreg);
-	m_maincpu->set_state_int(Z80_PC, 0x078A);
-}
 
 /***************************************************************************
 
@@ -221,9 +212,7 @@ WRITE_LINE_MEMBER( p8k_state::p8k_daisy_interrupt )
 
 WRITE_LINE_MEMBER( p8k_state::p8k_dma_irq_w )
 {
-	i8272a_device *i8272 = machine().device<i8272a_device>("i8272");
-	i8272->tc_w(state);
-
+	m_i8272->tc_w(state);
 	p8k_daisy_interrupt(state);
 }
 
@@ -256,14 +245,14 @@ WRITE8_MEMBER(p8k_state::io_write_byte)
 
 static const z80_daisy_config p8k_daisy_chain[] =
 {
-	{ "z80dma" },   /* FDC related */
-	{ "z80pio_2" },
-	{ "z80ctc_0" },
-	{ "z80sio_0" },
-	{ "z80sio_1" },
-	{ "z80pio_0" },
-	{ "z80pio_1" },
-	{ "z80ctc_1" },
+	{ "dma" },   /* FDC related */
+	{ "pio2" },
+	{ "ctc0" },
+	{ "sio" },
+	{ "sio1" },
+	{ "pio0" },
+	{ "pio1" },
+	{ "ctc1" },
 	{ nullptr }
 };
 
@@ -271,18 +260,13 @@ static const z80_daisy_config p8k_daisy_chain[] =
 
 DECLARE_WRITE_LINE_MEMBER( p8k_state::fdc_irq )
 {
-	z80pio_device *z80pio = machine().device<z80pio_device>("z80pio_2");
-
-	z80pio->port_b_write(state ? 0x10 : 0x00);
+	m_pio2->port_b_write(state ? 0x10 : 0x00);
 }
 
-void p8k_state::machine_start()
+static void p8k_floppies(device_slot_interface &device)
 {
+	device.option_add("525hd", FLOPPY_525_HD);
 }
-
-static SLOT_INTERFACE_START( p8k_floppies )
-	SLOT_INTERFACE( "525hd", FLOPPY_525_HD )
-SLOT_INTERFACE_END
 
 /* Input ports */
 static INPUT_PORTS_START( p8k )
@@ -314,7 +298,7 @@ MACHINE_RESET_MEMBER(p8k_state,p8k)
 	membank("bank15")->set_entry(0);
 }
 
-DRIVER_INIT_MEMBER(p8k_state,p8k)
+void p8k_state::init_p8k()
 {
 	uint8_t *RAM = memregion("maincpu")->base();
 	membank("bank0")->configure_entries(0, 48, &RAM[0x0000], 0x1000);
@@ -342,72 +326,39 @@ DRIVER_INIT_MEMBER(p8k_state,p8k)
 
 ****************************************************************************/
 
-void p8k_state::kbd_put_16(u8 data)
+void p8k_state::p8k_16_memmap(address_map &map)
 {
-	address_space &mem = m_maincpu->space(AS_DATA);
-	// keyboard int handler is at 0x0700
-	m_term_data = data;
-	// This is another dire hack..
-	uint8_t offs = mem.read_byte(0x43a5);
-	uint16_t addr = 0x41b0 + (uint16_t) offs;
-	mem.write_byte(addr, data);
-	mem.write_byte(0x43a0, 1);
+	map(0x00000, 0x03fff).rom().share("share0");
+	map(0x04000, 0x07fff).ram().share("share1");
+	map(0x08000, 0xfffff).ram().share("share2");
 }
 
-MACHINE_RESET_MEMBER(p8k_state,p8k_16)
+void p8k_state::p8k_16_datamap(address_map &map)
 {
+	map(0x00000, 0x03fff).rom().share("share0");
+	map(0x04000, 0x07fff).ram().share("share1");
+	map(0x08000, 0xfffff).ram().share("share2");
 }
 
-READ16_MEMBER( p8k_state::portff82_r )
+
+void p8k_state::p8k_16_iomap(address_map &map)
 {
-	if (offset == 3) // FF87
-		return 0xff;
-	else
-	if (offset == 1) // FF83
-		return m_term_data;
-	return 0;
-}
-
-WRITE16_MEMBER( p8k_state::portff82_w )
-{
-	if (offset == 1) // FF83
-	{
-		address_space &mem = m_maincpu->space(AS_PROGRAM);
-		m_terminal->write(mem, 0, data);
-	}
-}
-
-static ADDRESS_MAP_START(p8k_16_memmap, AS_PROGRAM, 16, p8k_state)
-	AM_RANGE(0x00000, 0x03fff) AM_ROM AM_SHARE("share0")
-	AM_RANGE(0x04000, 0x07fff) AM_RAM AM_SHARE("share1")
-	AM_RANGE(0x08000, 0xfffff) AM_RAM AM_SHARE("share2")
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START(p8k_16_datamap, AS_DATA, 16, p8k_state)
-	AM_RANGE(0x00000, 0x03fff) AM_ROM AM_SHARE("share0")
-	AM_RANGE(0x04000, 0x07fff) AM_RAM AM_SHARE("share1")
-	AM_RANGE(0x08000, 0xfffff) AM_RAM AM_SHARE("share2")
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START(p8k_16_iomap, AS_IO, 16, p8k_state)
 //  AM_RANGE(0x0fef0, 0x0feff) // clock
-	//AM_RANGE(0x0ff80, 0x0ff87) AM_DEVREADWRITE8("z80sio_0", z80sio0_device, ba_cd_r, ba_cd_w, 0xff)
-	AM_RANGE(0x0ff80, 0x0ff87) AM_READWRITE(portff82_r,portff82_w)
-	AM_RANGE(0x0ff88, 0x0ff8f) AM_DEVREADWRITE8("z80sio_1", z80sio0_device, ba_cd_r, ba_cd_w, 0xff)          //"z80sio_1",
-	AM_RANGE(0x0ff90, 0x0ff97) AM_DEVREADWRITE8("z80pio_0", z80pio_device, read_alt, write_alt, 0xff)          //"z80pio_0",
-	AM_RANGE(0x0ff98, 0x0ff9f) AM_DEVREADWRITE8("z80pio_1", z80pio_device, read_alt, write_alt, 0xff)          //"z80pio_1",
-	AM_RANGE(0x0ffa0, 0x0ffa7) AM_DEVREADWRITE8("z80pio_2", z80pio_device, read_alt, write_alt, 0xff)          //"z80pio_2",
-	AM_RANGE(0x0ffa8, 0x0ffaf) AM_DEVREADWRITE8("z80ctc_0", z80ctc_device, read, write, 0xff)        //"z80ctc_0",
-	AM_RANGE(0x0ffb0, 0x0ffb7) AM_DEVREADWRITE8("z80ctc_1", z80ctc_device, read, write, 0xff)        //"z80ctc_1",
+	map(0x0ff80, 0x0ff87).rw("sio", FUNC(z80sio_device::cd_ba_r), FUNC(z80sio_device::cd_ba_w)).umask16(0x00ff);
+	map(0x0ff88, 0x0ff8f).rw("sio1", FUNC(z80sio_device::cd_ba_r), FUNC(z80sio_device::cd_ba_w)).umask16(0x00ff);
+	map(0x0ff90, 0x0ff97).rw("pio0", FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt)).umask16(0x00ff);
+	map(0x0ff98, 0x0ff9f).rw("pio1", FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt)).umask16(0x00ff);
+	map(0x0ffa0, 0x0ffa7).rw(m_pio2, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt)).umask16(0x00ff);
+	map(0x0ffa8, 0x0ffaf).rw("ctc0", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)).umask16(0x00ff);
+	map(0x0ffb0, 0x0ffb7).rw("ctc1", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)).umask16(0x00ff);
 //  AM_RANGE(0x0ffc0, 0x0ffc1) // SCR
 //  AM_RANGE(0x0ffc8, 0x0ffc9) // SBR
 //  AM_RANGE(0x0ffd0, 0x0ffd1) // NBR
 //  AM_RANGE(0x0ffd8, 0x0ffd9) // SNVR
-//  AM_RANGE(0x0ffe0, 0x0ffe1) // RETI
+	map(0x0ffe1, 0x0ffe1).w(m_daisy, FUNC(p8k_16_daisy_device::reti_w));
 //  AM_RANGE(0x0fff0, 0x0fff1) // TRPL
 //  AM_RANGE(0x0fff8, 0x0fff9) // IF1L
-ADDRESS_MAP_END
+}
 
 
 /***************************************************************************
@@ -418,7 +369,7 @@ ADDRESS_MAP_END
 
 WRITE_LINE_MEMBER( p8k_state::p8k_16_daisy_interrupt )
 {
-	// this must be studied a little bit more :-)
+	m_maincpu->set_input_line(z8001_device::VI_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -426,13 +377,13 @@ WRITE_LINE_MEMBER( p8k_state::p8k_16_daisy_interrupt )
 
 static const z80_daisy_config p8k_16_daisy_chain[] =
 {
-	{ "z80ctc_0" },
-	{ "z80ctc_1" },
-	{ "z80sio_0" },
-	{ "z80sio_1" },
-	{ "z80pio_0" },
-	{ "z80pio_1" },
-	{ "z80pio_2" },
+	{ "ctc0" },
+	{ "ctc1" },
+	{ "sio" },
+	{ "sio1" },
+	{ "pio0" },
+	{ "pio1" },
+	{ "pio2" },
 	{ nullptr }
 };
 
@@ -465,105 +416,124 @@ GFXDECODE_END
 
 ****************************************************************************/
 
-static MACHINE_CONFIG_START( p8k )
+void p8k_state::p8k(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, XTAL_4MHz )
-	MCFG_Z80_DAISY_CHAIN(p8k_daisy_chain)
-	MCFG_CPU_PROGRAM_MAP(p8k_memmap)
-	MCFG_CPU_IO_MAP(p8k_iomap)
+	z80_device& maincpu(Z80(config, "maincpu", 16_MHz_XTAL / 4));
+	maincpu.set_daisy_config(p8k_daisy_chain);
+	maincpu.set_addrmap(AS_PROGRAM, &p8k_state::p8k_memmap);
+	maincpu.set_addrmap(AS_IO, &p8k_state::p8k_iomap);
+
 	MCFG_MACHINE_RESET_OVERRIDE(p8k_state,p8k)
 
 	/* peripheral hardware */
-	MCFG_DEVICE_ADD("z80dma", Z80DMA, XTAL_4MHz)
-	MCFG_Z80DMA_OUT_BUSREQ_CB(WRITELINE(p8k_state, p8k_dma_irq_w))
-	MCFG_Z80DMA_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80DMA_IN_MREQ_CB(READ8(p8k_state, memory_read_byte))
-	MCFG_Z80DMA_OUT_MREQ_CB(WRITE8(p8k_state, memory_write_byte))
-	MCFG_Z80DMA_IN_IORQ_CB(READ8(p8k_state, io_read_byte))
-	MCFG_Z80DMA_OUT_IORQ_CB(WRITE8(p8k_state, io_write_byte))
+	z80dma_device& dma(Z80DMA(config, "dma", 16_MHz_XTAL / 4));
+	dma.out_busreq_callback().set(FUNC(p8k_state::p8k_dma_irq_w));
+	dma.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	dma.in_mreq_callback().set(FUNC(p8k_state::memory_read_byte));
+	dma.out_mreq_callback().set(FUNC(p8k_state::memory_write_byte));
+	dma.in_iorq_callback().set(FUNC(p8k_state::io_read_byte));
+	dma.out_iorq_callback().set(FUNC(p8k_state::io_write_byte));
 
-	MCFG_DEVICE_ADD("z80ctc_0", Z80CTC, 1229000)    /* 1.22MHz clock */
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 307200));
+	uart_clock.signal_handler().set("sio", FUNC(z80sio_device::txcb_w));
+	uart_clock.signal_handler().append("sio", FUNC(z80sio_device::rxcb_w));
+
+	z80ctc_device& ctc0(Z80CTC(config, "ctc0", 1229000));    /* 1.22MHz clock */
 	// to implement: callbacks!
 	// manual states the callbacks should go to
 	// Baud Gen 3, FDC, System-Kanal
-	MCFG_Z80CTC_INTR_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	ctc0.intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD("z80ctc_1", Z80CTC, 1229000)    /* 1.22MHz clock */
+	z80ctc_device& ctc1(Z80CTC(config, "ctc1", 1229000));    /* 1.22MHz clock */
 	// to implement: callbacks!
 	// manual states the callbacks should go to
 	// Baud Gen 0, Baud Gen 1, Baud Gen 2,
-	MCFG_Z80CTC_INTR_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	ctc1.intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_Z80SIO0_ADD("z80sio_0", XTAL_4MHz, 0, 0, 0, 0)
-	MCFG_Z80DART_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80SIO0_ADD("z80sio_1", XTAL_4MHz, 0, 0, 0, 0)
-	MCFG_Z80DART_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	z80sio_device& sio(Z80SIO(config, "sio", 16_MHz_XTAL / 4));
+	sio.out_txdb_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	sio.out_dtrb_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	sio.out_rtsb_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+	sio.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD("z80pio_0", Z80PIO, 1229000)
-	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("sio", FUNC(z80sio_device::rxb_w));
+	rs232.cts_handler().set("sio", FUNC(z80sio_device::ctsb_w));
 
-	MCFG_DEVICE_ADD("z80pio_1", Z80PIO, 1229000)
-	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	z80sio_device& sio1(Z80SIO(config, "sio1", 16_MHz_XTAL / 4));
+	sio1.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD("z80pio_2", Z80PIO, 1229000)
-	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_IN_PA_CB(IOPORT("DSW"))
+	z80pio_device& pio0(Z80PIO(config, "pio0", 1229000));
+	pio0.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_I8272A_ADD("i8272", true)
-	MCFG_UPD765_DRQ_CALLBACK(DEVWRITELINE("z80dma", z80dma_device, rdy_w))
-	MCFG_FLOPPY_DRIVE_ADD("i8272:0", p8k_floppies, "525hd", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD("i8272:1", p8k_floppies, "525hd", floppy_image_device::default_floppy_formats)
+	z80pio_device& pio1(Z80PIO(config, "pio1", 1229000));
+	pio1.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+
+	Z80PIO(config, m_pio2, 1229000);
+	m_pio2->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_pio2->in_pa_callback().set_ioport("DSW");
+
+	I8272A(config, m_i8272, 16_MHz_XTAL / 2, true);
+	m_i8272->drq_wr_callback().set("dma", FUNC(z80dma_device::rdy_w));
+	FLOPPY_CONNECTOR(config, "i8272:0", p8k_floppies, "525hd", floppy_image_device::default_floppy_formats);
+	FLOPPY_CONNECTOR(config, "i8272:1", p8k_floppies, "525hd", floppy_image_device::default_floppy_formats);
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
+	SPEAKER(config, "mono").front_center();
 
-	MCFG_SOUND_ADD("beeper", BEEP, 3250)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
+	BEEP(config, "beeper", 3250).add_route(ALL_OUTPUTS, "mono", 0.5);
+}
 
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(p8k_state, kbd_put))
-MACHINE_CONFIG_END
-
-static MACHINE_CONFIG_START( p8k_16 )
+void p8k_state::p8k_16(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z8001, XTAL_4MHz )
-	MCFG_Z80_DAISY_CHAIN(p8k_16_daisy_chain)
-	MCFG_CPU_PROGRAM_MAP(p8k_16_memmap)
-	MCFG_CPU_DATA_MAP(p8k_16_datamap)
-	MCFG_CPU_IO_MAP(p8k_16_iomap)
-	MCFG_MACHINE_RESET_OVERRIDE(p8k_state,p8k_16)
+	Z8001(config, m_maincpu, XTAL(4'000'000));
+	m_maincpu->set_addrmap(AS_PROGRAM, &p8k_state::p8k_16_memmap);
+	m_maincpu->set_addrmap(AS_DATA, &p8k_state::p8k_16_datamap);
+	m_maincpu->set_addrmap(AS_IO, &p8k_state::p8k_16_iomap);
+	m_maincpu->set_irq_acknowledge_callback("p8k_16_daisy", FUNC(p8k_16_daisy_device::irq_callback));
+
+	P8K_16_DAISY(config, m_daisy, 0);
+	m_daisy->set_daisy_config(p8k_16_daisy_chain);
+
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 307200));
+	uart_clock.signal_handler().set("sio", FUNC(z80sio_device::txcb_w));
+	uart_clock.signal_handler().append("sio", FUNC(z80sio_device::rxcb_w));
 
 	/* peripheral hardware */
-	MCFG_DEVICE_ADD("z80ctc_0", Z80CTC, XTAL_4MHz)
-	MCFG_Z80CTC_INTR_CB(WRITELINE(p8k_state, p8k_16_daisy_interrupt))
+	z80ctc_device& ctc0(Z80CTC(config, "ctc0", XTAL(4'000'000)));
+	ctc0.intr_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
 
-	MCFG_DEVICE_ADD("z80ctc_1", Z80CTC, XTAL_4MHz)
-	MCFG_Z80CTC_INTR_CB(WRITELINE(p8k_state, p8k_16_daisy_interrupt))
+	z80ctc_device& ctc1(Z80CTC(config, "ctc1", XTAL(4'000'000)));
+	ctc1.intr_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
 
-	MCFG_Z80SIO0_ADD("z80sio_0", XTAL_4MHz, 0, 0, 0, 0)
-	MCFG_Z80DART_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80SIO0_ADD("z80sio_1", XTAL_4MHz, 0, 0, 0, 0)
-	MCFG_Z80DART_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	z80sio_device& sio(Z80SIO(config, "sio", XTAL(4'000'000)));
+	sio.out_txdb_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	sio.out_dtrb_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	sio.out_rtsb_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+	sio.out_int_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
 
-	MCFG_DEVICE_ADD("z80pio_0", Z80PIO, XTAL_4MHz)
-	MCFG_Z80PIO_OUT_INT_CB(WRITELINE(p8k_state, p8k_16_daisy_interrupt))
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("sio", FUNC(z80sio_device::rxb_w));
+	rs232.cts_handler().set("sio", FUNC(z80sio_device::ctsb_w));
 
-	MCFG_DEVICE_ADD("z80pio_1", Z80PIO, XTAL_4MHz)
-	MCFG_Z80PIO_OUT_INT_CB(WRITELINE(p8k_state, p8k_16_daisy_interrupt))
+	z80sio_device& sio1(Z80SIO(config, "sio1", XTAL(4'000'000)));
+	sio1.out_int_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
 
-	MCFG_DEVICE_ADD("z80pio_2", Z80PIO, XTAL_4MHz)
-	MCFG_Z80PIO_OUT_INT_CB(WRITELINE(p8k_state, p8k_16_daisy_interrupt))
+	z80pio_device& pio0(Z80PIO(config, "pio0", XTAL(4'000'000)));
+	pio0.out_int_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
+
+	z80pio_device& pio1(Z80PIO(config, "pio1", XTAL(4'000'000)));
+	pio1.out_int_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
+
+	Z80PIO(config, m_pio2, XTAL(4'000'000));
+	m_pio2->out_int_callback().set(FUNC(p8k_state::p8k_16_daisy_interrupt));
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("beeper", BEEP, 3250)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
-
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(p8k_state, kbd_put_16))
-MACHINE_CONFIG_END
+	SPEAKER(config, "mono").front_center();
+	BEEP(config, "beeper", 3250).add_route(ALL_OUTPUTS, "mono", 0.5);
+}
 
 /* ROM definition */
 ROM_START( p8000 )
@@ -575,6 +545,10 @@ ROM_START( p8000 )
 	ROM_REGION( 0x1000, "chargen", 0 )
 	ROM_LOAD("p8t_zs",    0x0000, 0x0800, CRC(f9321251) SHA1(a6a796b58d50ec4a416f2accc34bd76bc83f18ea))
 	ROM_LOAD("p8tdzs.2",  0x0800, 0x0800, CRC(32736503) SHA1(6a1d7c55dddc64a7d601dfdbf917ce1afaefbb0a))
+
+	ROM_REGION( 0x2000, "user1", 0 )
+	ROM_LOAD( "wdc4.2_1-2c43.bin", 0x0000, 0x1000, CRC(2646f1ee) SHA1(f62574ad57a2c8ac55c5df89256a707c0cafc0eb) )
+	ROM_LOAD( "wdc4.2_2-5d66.bin", 0x1000, 0x1000, CRC(5d496b65) SHA1(42166d7ec51fce086c65ea829d8a3d63088815ca) )
 ROM_END
 
 ROM_START( p8000_16 )
@@ -592,6 +566,6 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME        PARENT  COMPAT   MACHINE    INPUT  STATE      INIT    COMPANY                   FULLNAME               FLAGS
-COMP( 1989, p8000,      0,      0,       p8k,       p8k,   p8k_state, p8k,    "EAW electronic Treptow", "P8000 (8bit Board)",  MACHINE_NOT_WORKING)
-COMP( 1989, p8000_16,   p8000,  0,       p8k_16,    p8k,   p8k_state, 0,      "EAW electronic Treptow", "P8000 (16bit Board)", MACHINE_NOT_WORKING)
+//    YEAR  NAME      PARENT  COMPAT  MACHINE  INPUT  CLASS      INIT        COMPANY                   FULLNAME               FLAGS
+COMP( 1989, p8000,    0,      0,      p8k,     p8k,   p8k_state, init_p8k,   "EAW electronic Treptow", "P8000 (8bit Board)",  MACHINE_NOT_WORKING)
+COMP( 1989, p8000_16, p8000,  0,      p8k_16,  p8k,   p8k_state, empty_init, "EAW electronic Treptow", "P8000 (16bit Board)", MACHINE_NOT_WORKING)

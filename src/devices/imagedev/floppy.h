@@ -25,19 +25,6 @@
 #include "sound/samples.h"
 #include "softlist_dev.h"
 
-#define MCFG_FLOPPY_DRIVE_ADD(_tag, _slot_intf, _def_slot, _formats)  \
-	MCFG_DEVICE_ADD(_tag, FLOPPY_CONNECTOR, 0) \
-	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false) \
-	static_cast<floppy_connector *>(device)->set_formats(_formats);
-
-#define MCFG_FLOPPY_DRIVE_ADD_FIXED(_tag, _slot_intf, _def_slot, _formats)  \
-	MCFG_DEVICE_ADD(_tag, FLOPPY_CONNECTOR, 0) \
-	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, true) \
-	static_cast<floppy_connector *>(device)->set_formats(_formats);
-
-#define MCFG_FLOPPY_DRIVE_SOUND(_doit) \
-	static_cast<floppy_connector *>(device)->enable_sound(_doit);
-
 #define DECLARE_FLOPPY_FORMATS(_name) \
 	static const floppy_format_type _name []
 
@@ -76,6 +63,7 @@ public:
 	typedef delegate<void (floppy_image_device *, int)> index_pulse_cb;
 	typedef delegate<void (floppy_image_device *, int)> ready_cb;
 	typedef delegate<void (floppy_image_device *, int)> wpt_cb;
+	typedef delegate<void (floppy_image_device *, int)> led_cb;
 
 	// construction/destruction
 	virtual ~floppy_image_device();
@@ -109,12 +97,14 @@ public:
 	void setup_index_pulse_cb(index_pulse_cb cb);
 	void setup_ready_cb(ready_cb cb);
 	void setup_wpt_cb(wpt_cb cb);
+	void setup_led_cb(led_cb cb);
 
 	std::vector<uint32_t> &get_buffer() { return image->get_buffer(cyl, ss, subcyl); }
 	int get_cyl() { return cyl; }
 
 	void mon_w(int state);
 	bool ready_r();
+	void set_ready(bool state);
 	double get_pos();
 
 	bool wpt_r() { return wpt; }
@@ -128,9 +118,10 @@ public:
 	void seek_phase_w(int phases);
 	void stp_w(int state);
 	void dir_w(int state) { dir = state; }
-	void ss_w(int state) { ss = state; }
+	void ss_w(int state) { if (sides > 1) ss = state; }
 	void inuse_w(int state) { }
 	void dskchg_w(int state) { if (dskchg_writable) dskchg = state; }
+	void ds_w(int state) { ds = state; check_led(); }
 
 	void index_resync();
 	attotime time_next_index();
@@ -158,6 +149,8 @@ protected:
 
 	virtual void setup_characteristics() = 0;
 
+	void init_floppy_load(bool write_supported);
+
 	floppy_image_format_t *input_format;
 	floppy_image_format_t *output_format;
 	floppy_image          *image;
@@ -173,12 +166,15 @@ protected:
 	bool dskchg_writable;
 	bool has_trk00_sensor;
 
+	int drive_index;
+
 	/* state of input lines */
 	int dir;  /* direction */
 	int stp;  /* step */
 	int wtg;  /* write gate */
 	int mon;  /* motor on */
 	int ss; /* side select */
+	int ds; /* drive select */
 
 	/* state of output lines */
 	int idx;  /* index pulse */
@@ -195,6 +191,12 @@ protected:
 	uint32_t revolution_count;
 	int cyl, subcyl;
 
+	/* Current floppy zone cache */
+	attotime cache_start_time, cache_end_time, cache_weak_start;
+	int cache_index;
+	u32 cache_entry;
+	bool cache_weak;
+
 	bool image_dirty;
 	int ready_counter;
 
@@ -203,12 +205,23 @@ protected:
 	index_pulse_cb cur_index_pulse_cb;
 	ready_cb cur_ready_cb;
 	wpt_cb cur_wpt_cb;
+	led_cb cur_led_cb;
 
+	void check_led();
 	uint32_t find_position(attotime &base, const attotime &when);
-	int find_index(uint32_t position, const std::vector<uint32_t> &buf);
+	int find_index(uint32_t position, const std::vector<uint32_t> &buf) const;
+	bool test_track_last_entry_warps(const std::vector<uint32_t> &buf) const;
+	attotime position_to_time(const attotime &base, int position) const;
+
 	void write_zone(uint32_t *buf, int &cells, int &index, uint32_t spos, uint32_t epos, uint32_t mg);
 	void commit_image();
-	attotime get_next_index_time(std::vector<uint32_t> &buf, int index, int delta, attotime base);
+
+	u32 hash32(u32 val) const;
+
+	void cache_clear();
+	void cache_fill_index(const std::vector<uint32_t> &buf, int &index, attotime &base);
+	void cache_fill(const attotime &when);
+	void cache_weakness_setup();
 
 	// Sound
 	bool    m_make_sound;
@@ -252,6 +265,7 @@ DECLARE_FLOPPY_IMAGE_DEVICE(EPSON_SD_321,        epson_sd_321,        "floppy_5_
 DECLARE_FLOPPY_IMAGE_DEVICE(SONY_OA_D31V,        sony_oa_d31v,        "floppy_3_5")
 DECLARE_FLOPPY_IMAGE_DEVICE(SONY_OA_D32W,        sony_oa_d32w,        "floppy_3_5")
 DECLARE_FLOPPY_IMAGE_DEVICE(SONY_OA_D32V,        sony_oa_d32v,        "floppy_3_5")
+DECLARE_FLOPPY_IMAGE_DEVICE(TEAC_FD_30A,         teac_fd_30a,         "floppy_3")
 DECLARE_FLOPPY_IMAGE_DEVICE(TEAC_FD_55E,         teac_fd_55e,         "floppy_5_25")
 DECLARE_FLOPPY_IMAGE_DEVICE(TEAC_FD_55F,         teac_fd_55f,         "floppy_5_25")
 DECLARE_FLOPPY_IMAGE_DEVICE(TEAC_FD_55G,         teac_fd_55g,         "floppy_5_25")
@@ -304,10 +318,30 @@ class floppy_connector: public device_t,
 						public device_slot_interface
 {
 public:
-	floppy_connector(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	template <typename T>
+	floppy_connector(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt, const floppy_format_type formats[], bool fixed = false)
+		: floppy_connector(mconfig, tag, owner, 0)
+	{
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
+		set_formats(formats);
+	}
+	floppy_connector(const machine_config &mconfig, const char *tag, device_t *owner, const char *option, const device_type &devtype, bool is_default, const floppy_format_type formats[])
+		: floppy_connector(mconfig, tag, owner, 0)
+	{
+		option_reset();
+		option_add(option, devtype);
+		if(is_default)
+			set_default_option(option);
+		set_fixed(false);
+		set_formats(formats);
+	}
+	floppy_connector(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 	virtual ~floppy_connector();
 
-	void set_formats(const floppy_format_type *formats);
+	void set_formats(const floppy_format_type formats[]);
 	floppy_image_device *get_device();
 	void enable_sound(bool doit) { m_enable_sound = doit; }
 

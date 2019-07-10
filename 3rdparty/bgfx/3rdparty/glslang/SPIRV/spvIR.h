@@ -65,14 +65,24 @@ const Id NoResult = 0;
 const Id NoType = 0;
 
 const Decoration NoPrecision = DecorationMax;
+
+#ifdef __GNUC__
+#   define POTENTIALLY_UNUSED __attribute__((unused))
+#else
+#   define POTENTIALLY_UNUSED
+#endif
+
+POTENTIALLY_UNUSED
 const MemorySemanticsMask MemorySemanticsAllMemory =
-                (MemorySemanticsMask)(MemorySemanticsSequentiallyConsistentMask |
-                                      MemorySemanticsUniformMemoryMask |
-                                      MemorySemanticsSubgroupMemoryMask |
+                (MemorySemanticsMask)(MemorySemanticsUniformMemoryMask |
                                       MemorySemanticsWorkgroupMemoryMask |
-                                      MemorySemanticsCrossWorkgroupMemoryMask |
                                       MemorySemanticsAtomicCounterMemoryMask |
                                       MemorySemanticsImageMemoryMask);
+
+struct IdImmediate {
+    bool isId;      // true if word is an Id, false if word is an immediate
+    unsigned word;
+};
 
 //
 // SPIR-V IR instruction.
@@ -83,11 +93,16 @@ public:
     Instruction(Id resultId, Id typeId, Op opCode) : resultId(resultId), typeId(typeId), opCode(opCode), block(nullptr) { }
     explicit Instruction(Op opCode) : resultId(NoResult), typeId(NoType), opCode(opCode), block(nullptr) { }
     virtual ~Instruction() {}
-    void addIdOperand(Id id) { operands.push_back(id); }
-    void addImmediateOperand(unsigned int immediate) { operands.push_back(immediate); }
+    void addIdOperand(Id id) {
+        operands.push_back(id);
+        idOperand.push_back(true);
+    }
+    void addImmediateOperand(unsigned int immediate) {
+        operands.push_back(immediate);
+        idOperand.push_back(false);
+    }
     void addStringOperand(const char* str)
     {
-        originalString = str;
         unsigned int word;
         char* wordString = (char*)&word;
         char* wordPtr = wordString;
@@ -112,15 +127,25 @@ public:
             addImmediateOperand(word);
         }
     }
+    bool isIdOperand(int op) const { return idOperand[op]; }
     void setBlock(Block* b) { block = b; }
     Block* getBlock() const { return block; }
     Op getOpCode() const { return opCode; }
-    int getNumOperands() const { return (int)operands.size(); }
+    int getNumOperands() const
+    {
+        assert(operands.size() == idOperand.size());
+        return (int)operands.size();
+    }
     Id getResultId() const { return resultId; }
     Id getTypeId() const { return typeId; }
-    Id getIdOperand(int op) const { return operands[op]; }
-    unsigned int getImmediateOperand(int op) const { return operands[op]; }
-    const char* getStringOperand() const { return originalString.c_str(); }
+    Id getIdOperand(int op) const {
+        assert(idOperand[op]);
+        return operands[op];
+    }
+    unsigned int getImmediateOperand(int op) const {
+        assert(!idOperand[op]);
+        return operands[op];
+    }
 
     // Write out the binary form.
     void dump(std::vector<unsigned int>& out) const
@@ -150,8 +175,8 @@ protected:
     Id resultId;
     Id typeId;
     Op opCode;
-    std::vector<Id> operands;
-    std::string originalString;        // could be optimized away; convenience for getting string operand
+    std::vector<Id> operands;     // operands, both <id> and immediates (both are unsigned int)
+    std::vector<bool> idOperand;  // true for operands that are <id>, false for immediates
     Block* block;
 };
 
@@ -256,7 +281,8 @@ public:
             delete blocks[i];
     }
     Id getId() const { return functionInstruction.getResultId(); }
-    Id getParamId(int p) { return parameterInstructions[p]->getResultId(); }
+    Id getParamId(int p) const { return parameterInstructions[p]->getResultId(); }
+    Id getParamType(int p) const { return parameterInstructions[p]->getTypeId(); }
 
     void addBlock(Block* block) { blocks.push_back(block); }
     void removeBlock(Block* block)
@@ -328,7 +354,9 @@ public:
 
     Instruction* getInstruction(Id id) const { return idToInstruction[id]; }
     const std::vector<Function*>& getFunctions() const { return functions; }
-    spv::Id getTypeId(Id resultId) const { return idToInstruction[resultId]->getTypeId(); }
+    spv::Id getTypeId(Id resultId) const {
+        return idToInstruction[resultId] == nullptr ? NoType : idToInstruction[resultId]->getTypeId();
+    }
     StorageClass getStorageClass(Id typeId) const
     {
         assert(idToInstruction[typeId]->getOpCode() == spv::OpTypePointer);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -10,7 +10,8 @@
 namespace bx
 {
 	template <typename Ty>
-	inline MpScUnboundedQueueT<Ty>::MpScUnboundedQueueT()
+	inline MpScUnboundedQueueT<Ty>::MpScUnboundedQueueT(AllocatorI* _allocator)
+		: m_queue(_allocator)
 	{
 	}
 
@@ -39,7 +40,8 @@ namespace bx
 	}
 
 	template <typename Ty>
-	inline MpScUnboundedBlockingQueue<Ty>::MpScUnboundedBlockingQueue()
+	inline MpScUnboundedBlockingQueue<Ty>::MpScUnboundedBlockingQueue(AllocatorI* _allocator)
+		: m_queue(_allocator)
 	{
 	}
 

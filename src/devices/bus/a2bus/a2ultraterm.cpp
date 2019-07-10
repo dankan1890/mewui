@@ -104,17 +104,19 @@ ROM_END
 //  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( a2bus_videx160_device::device_add_mconfig )
-	MCFG_SCREEN_ADD( ULTRATERM_SCREEN_NAME, RASTER)
-	MCFG_SCREEN_RAW_PARAMS(CLOCK_LOW, 882, 0, 720, 370, 0, 350 )
-	MCFG_SCREEN_UPDATE_DEVICE( ULTRATERM_MC6845_NAME, mc6845_device, screen_update )
+void a2bus_videx160_device::device_add_mconfig(machine_config &config)
+{
+	screen_device &screen(SCREEN(config, ULTRATERM_SCREEN_NAME, SCREEN_TYPE_RASTER));
+	screen.set_raw(CLOCK_LOW, 882, 0, 720, 370, 0, 350);
+	screen.set_screen_update(ULTRATERM_MC6845_NAME, FUNC(mc6845_device::screen_update));
 
-	MCFG_MC6845_ADD(ULTRATERM_MC6845_NAME, MC6845, ULTRATERM_SCREEN_NAME, CLOCK_LOW/9)
-	MCFG_MC6845_SHOW_BORDER_AREA(false)
-	MCFG_MC6845_CHAR_WIDTH(8)
-	MCFG_MC6845_UPDATE_ROW_CB(a2bus_videx160_device, crtc_update_row)
-	MCFG_MC6845_OUT_VSYNC_CB(WRITELINE(a2bus_videx160_device, vsync_changed))
-MACHINE_CONFIG_END
+	MC6845(config, m_crtc, CLOCK_LOW/9);
+	m_crtc->set_screen(ULTRATERM_SCREEN_NAME);
+	m_crtc->set_show_border_area(false);
+	m_crtc->set_char_width(8);
+	m_crtc->set_update_row_callback(FUNC(a2bus_videx160_device::crtc_update_row), this);
+	m_crtc->out_vsync_callback().set(FUNC(a2bus_videx160_device::vsync_changed));
+}
 
 //-------------------------------------------------
 //  rom_region - device-specific ROM region
@@ -157,12 +159,9 @@ a2bus_ultratermenh_device::a2bus_ultratermenh_device(const machine_config &mconf
 
 void a2bus_videx160_device::device_start()
 {
-	// set_a2bus_device makes m_slot valid
-	set_a2bus_device();
+	m_rom = machine().root_device().memregion(this->subtag(ULTRATERM_ROM_REGION).c_str())->base();
 
-	m_rom = device().machine().root_device().memregion(this->subtag(ULTRATERM_ROM_REGION).c_str())->base();
-
-	m_chrrom = device().machine().root_device().memregion(this->subtag(ULTRATERM_GFX_REGION).c_str())->base();
+	m_chrrom = machine().root_device().memregion(this->subtag(ULTRATERM_GFX_REGION).c_str())->base();
 
 	memset(m_ram, 0, 256*16);
 
@@ -184,9 +183,9 @@ void a2bus_videx160_device::device_reset()
     read_c0nx - called for reads from this card's c0nx space
 -------------------------------------------------*/
 
-uint8_t a2bus_videx160_device::read_c0nx(address_space &space, uint8_t offset)
+uint8_t a2bus_videx160_device::read_c0nx(uint8_t offset)
 {
-//    printf("Read c0n%x (PC=%x)\n", offset, space.device().safe_pc());
+//    printf("%s Read c0n%x\n", machine().describe_context().c_str(), offset);
 
 	if (!(m_ctrl1 & CT1_VTEMU))
 	{
@@ -196,7 +195,7 @@ uint8_t a2bus_videx160_device::read_c0nx(address_space &space, uint8_t offset)
 	switch (offset)
 	{
 		case 1:
-			return m_crtc->register_r(space, offset);   // status_r?
+			return m_crtc->register_r();   // status_r?
 
 		case 2:
 			return m_ctrl1;
@@ -213,18 +212,18 @@ uint8_t a2bus_videx160_device::read_c0nx(address_space &space, uint8_t offset)
     write_c0nx - called for writes to this card's c0nx space
 -------------------------------------------------*/
 
-void a2bus_videx160_device::write_c0nx(address_space &space, uint8_t offset, uint8_t data)
+void a2bus_videx160_device::write_c0nx(uint8_t offset, uint8_t data)
 {
-//    printf("Write %02x to c0n%x (PC=%x)\n", data, offset, space.device().safe_pc());
+//    printf("%s Write %02x to c0n%x\n", machine().describe_context().c_str(), data, offset);
 
 	switch (offset)
 	{
 		case 0:
-			m_crtc->address_w(space, offset, data);
+			m_crtc->address_w(data);
 			break;
 
 		case 1:
-			m_crtc->register_w(space, offset, data);
+			m_crtc->register_w(data);
 			break;
 
 		case 2:
@@ -254,16 +253,16 @@ void a2bus_videx160_device::write_c0nx(address_space &space, uint8_t offset, uin
     read_cnxx - called for reads from this card's cnxx space
 -------------------------------------------------*/
 
-uint8_t a2bus_videx160_device::read_cnxx(address_space &space, uint8_t offset)
+uint8_t a2bus_videx160_device::read_cnxx(uint8_t offset)
 {
-	return m_rom[offset+(m_slot * 0x100)];
+	return m_rom[offset+(slotno() * 0x100)];
 }
 
 /*-------------------------------------------------
     write_cnxx - called for writes to this card's cnxx space
     the firmware writes here to switch in our $C800 a lot
 -------------------------------------------------*/
-void a2bus_videx160_device::write_cnxx(address_space &space, uint8_t offset, uint8_t data)
+void a2bus_videx160_device::write_cnxx(uint8_t offset, uint8_t data)
 {
 }
 
@@ -271,7 +270,7 @@ void a2bus_videx160_device::write_cnxx(address_space &space, uint8_t offset, uin
     read_c800 - called for reads from this card's c800 space
 -------------------------------------------------*/
 
-uint8_t a2bus_videx160_device::read_c800(address_space &space, uint16_t offset)
+uint8_t a2bus_videx160_device::read_c800(uint16_t offset)
 {
 	// ROM at c800-cbff
 	// bankswitched RAM at cc00-cdff
@@ -294,7 +293,7 @@ uint8_t a2bus_videx160_device::read_c800(address_space &space, uint16_t offset)
 /*-------------------------------------------------
     write_c800 - called for writes to this card's c800 space
 -------------------------------------------------*/
-void a2bus_videx160_device::write_c800(address_space &space, uint16_t offset, uint8_t data)
+void a2bus_videx160_device::write_c800(uint16_t offset, uint8_t data)
 {
 	if (offset >= 0x400)
 	{

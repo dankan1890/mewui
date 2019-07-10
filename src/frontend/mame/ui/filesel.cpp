@@ -47,14 +47,15 @@ namespace ui {
 
 menu_file_selector::menu_file_selector(mame_ui_manager &mui, render_container &container, device_image_interface *image, std::string &current_directory, std::string &current_file, bool has_empty, bool has_softlist, bool has_create, menu_file_selector::result &result)
 	: menu(mui, container)
+	, m_image(image)
 	, m_current_directory(current_directory)
 	, m_current_file(current_file)
+	, m_has_empty(has_empty)
+	, m_has_softlist(has_softlist)
+	, m_has_create(has_create)
 	, m_result(result)
 {
-	m_image = image;
-	m_has_empty = has_empty;
-	m_has_softlist = has_softlist;
-	m_has_create = has_create;
+	(void)m_image;
 }
 
 
@@ -82,11 +83,11 @@ void menu_file_selector::custom_render(void *selectedref, float top, float botto
 	extra_text_position(origx1, origx2, origy1, top, layout, -1, x1, y1, x2, y2);
 
 	// draw a box
-	ui().draw_outlined_box(container(), x1, y1, x2, y2, UI_BACKGROUND_COLOR);
+	ui().draw_outlined_box(container(), x1, y1, x2, y2, ui().colors().background_color());
 
 	// take off the borders
-	x1 += UI_BOX_LR_BORDER;
-	y1 += UI_BOX_TB_BORDER;
+	x1 += ui().box_lr_border();
+	y1 += ui().box_tb_border();
 
 	size_t hit_start = 0, hit_span = 0;
 	if (is_mouse_hit()
@@ -99,8 +100,8 @@ void menu_file_selector::custom_render(void *selectedref, float top, float botto
 		m_hover_directory = m_current_directory.substr(0, target_dir_end + strlen(PATH_SEPARATOR));
 
 		// highlight the text in question
-		rgb_t fgcolor = UI_MOUSEOVER_COLOR;
-		rgb_t bgcolor = UI_MOUSEOVER_BG_COLOR;
+		rgb_t fgcolor = ui().colors().mouseover_color();
+		rgb_t bgcolor = ui().colors().mouseover_bg_color();
 		layout.restyle(target_dir_start, target_dir_end - target_dir_start, &fgcolor, &bgcolor);
 	}
 	else
@@ -176,7 +177,9 @@ int menu_file_selector::compare_entries(const file_selector_entry *e1, const fil
 //-------------------------------------------------
 
 menu_file_selector::file_selector_entry &menu_file_selector::append_entry(
-	file_selector_entry_type entry_type, const std::string &entry_basename, const std::string &entry_fullpath)
+		file_selector_entry_type entry_type,
+		const std::string &entry_basename,
+		const std::string &entry_fullpath)
 {
 	return append_entry(entry_type, std::string(entry_basename), std::string(entry_fullpath));
 }
@@ -188,7 +191,9 @@ menu_file_selector::file_selector_entry &menu_file_selector::append_entry(
 //-------------------------------------------------
 
 menu_file_selector::file_selector_entry &menu_file_selector::append_entry(
-	file_selector_entry_type entry_type, std::string &&entry_basename, std::string &&entry_fullpath)
+		file_selector_entry_type entry_type,
+		std::string &&entry_basename,
+		std::string &&entry_fullpath)
 {
 	// allocate a new entry
 	file_selector_entry entry;
@@ -197,47 +202,41 @@ menu_file_selector::file_selector_entry &menu_file_selector::append_entry(
 	entry.fullpath = std::move(entry_fullpath);
 
 	// find the end of the list
-	m_entrylist.emplace_back(std::move(entry));
-	return m_entrylist[m_entrylist.size() - 1];
+	return *m_entrylist.emplace(m_entrylist.end(), std::move(entry));
 }
 
 
 //-------------------------------------------------
-//  append_entry_menu_item - appends
+//  append_dirent_entry - appends
 //  a menu item for a file selector entry
 //-------------------------------------------------
 
 menu_file_selector::file_selector_entry *menu_file_selector::append_dirent_entry(const osd::directory::entry *dirent)
 {
-	std::string buffer;
 	file_selector_entry_type entry_type;
-	file_selector_entry *entry;
-
-	switch(dirent->type)
+	switch (dirent->type)
 	{
-		case osd::directory::entry::entry_type::FILE:
-			entry_type = SELECTOR_ENTRY_TYPE_FILE;
-			break;
+	case osd::directory::entry::entry_type::FILE:
+		entry_type = SELECTOR_ENTRY_TYPE_FILE;
+		break;
 
-		case osd::directory::entry::entry_type::DIR:
-			entry_type = SELECTOR_ENTRY_TYPE_DIRECTORY;
-			break;
+	case osd::directory::entry::entry_type::DIR:
+		entry_type = SELECTOR_ENTRY_TYPE_DIRECTORY;
+		break;
 
-		default:
-			// exceptional case; do not add a menu item
-			return nullptr;
+	default:
+		// exceptional case; do not add a menu item
+		return nullptr;
 	}
 
 	// determine the full path
-	buffer = util::zippath_combine(m_current_directory, dirent->name);
+	std::string buffer = util::zippath_combine(m_current_directory, dirent->name);
 
 	// create the file selector entry
-	entry = &append_entry(
-		entry_type,
-		dirent->name,
-		std::move(buffer));
-
-	return entry;
+	return &append_entry(
+			entry_type,
+			dirent->name,
+			std::move(buffer));
 }
 
 
@@ -285,69 +284,155 @@ void menu_file_selector::append_entry_menu_item(const file_selector_entry *entry
 
 
 //-------------------------------------------------
+//  select_item
+//-------------------------------------------------
+
+void menu_file_selector::select_item(const file_selector_entry &entry)
+{
+	switch (entry.type)
+	{
+	case SELECTOR_ENTRY_TYPE_EMPTY:
+		// empty slot - unload
+		m_result = result::EMPTY;
+		stack_pop();
+		break;
+
+	case SELECTOR_ENTRY_TYPE_CREATE:
+		// create
+		m_result = result::CREATE;
+		stack_pop();
+		break;
+
+	case SELECTOR_ENTRY_TYPE_SOFTWARE_LIST:
+		m_result = result::SOFTLIST;
+		stack_pop();
+		break;
+
+	case SELECTOR_ENTRY_TYPE_DRIVE:
+	case SELECTOR_ENTRY_TYPE_DIRECTORY:
+		// drive/directory - first check the path
+		{
+			util::zippath_directory::ptr dir;
+			osd_file::error const err = util::zippath_directory::open(entry.fullpath, dir);
+			if (err != osd_file::error::NONE)
+			{
+				// this path is problematic; present the user with an error and bail
+				ui().popup_time(1, _("Error accessing %s"), entry.fullpath);
+				break;
+			}
+		}
+		m_current_directory.assign(entry.fullpath);
+		reset(reset_options::SELECT_FIRST);
+		break;
+
+	case SELECTOR_ENTRY_TYPE_FILE:
+		// file
+		m_current_file.assign(entry.fullpath);
+		m_result = result::FILE;
+		stack_pop();
+		break;
+	}
+}
+
+
+//-------------------------------------------------
+//  type_search_char
+//-------------------------------------------------
+
+void menu_file_selector::type_search_char(char32_t ch)
+{
+	std::string const current(m_filename);
+	if (input_character(m_filename, ch, uchar_is_printable))
+	{
+		ui().popup_time(ERROR_MESSAGE_TIME, "%s", m_filename.c_str());
+
+		file_selector_entry const *const cur_selected(reinterpret_cast<file_selector_entry const *>(get_selection_ref()));
+
+		// if it's a perfect match for the current selection, don't move it
+		if (!cur_selected || core_strnicmp(cur_selected->basename.c_str(), m_filename.c_str(), m_filename.size()))
+		{
+			std::string::size_type bestmatch(0);
+			file_selector_entry const *selected_entry(cur_selected);
+			for (auto &entry : m_entrylist)
+			{
+				// TODO: more efficient "common prefix" code
+				std::string::size_type match(0);
+				for (std::string::size_type i = 1; m_filename.size() >= i; ++i)
+				{
+					if (!core_strnicmp(entry.basename.c_str(), m_filename.c_str(), i))
+						match = i;
+					else
+						break;
+				}
+
+				if (match > bestmatch)
+				{
+					bestmatch = match;
+					selected_entry = &entry;
+				}
+			}
+
+			if (selected_entry && (selected_entry != cur_selected))
+			{
+				set_selection((void *)selected_entry);
+				centre_selection();
+			}
+		}
+	}
+}
+
+
+//-------------------------------------------------
 //  populate
 //-------------------------------------------------
 
 void menu_file_selector::populate(float &customtop, float &custombottom)
 {
-	util::zippath_directory *directory = nullptr;
-	osd_file::error err;
-	const osd::directory::entry *dirent;
-	const file_selector_entry *entry;
 	const file_selector_entry *selected_entry = nullptr;
-	int i;
-	const char *volume_name;
-	uint8_t first;
 
-	// open the directory
-	err = util::zippath_opendir(m_current_directory, &directory);
 
 	// clear out the menu entries
 	m_entrylist.clear();
 
+	// open the directory
+	util::zippath_directory::ptr directory;
+	osd_file::error const err = util::zippath_directory::open(m_current_directory, directory);
+
+	// add the "[empty slot]" entry if available
 	if (m_has_empty)
-	{
-		// add the "[empty slot]" entry
 		append_entry(SELECTOR_ENTRY_TYPE_EMPTY, "", "");
-	}
 
-	if (m_has_create && !util::zippath_is_zip(directory))
-	{
-		// add the "[create]" entry
+	// add the "[create]" entry
+	if (m_has_create && !directory->is_archive())
 		append_entry(SELECTOR_ENTRY_TYPE_CREATE, "", "");
-	}
 
+	// add and select the "[software list]" entry if available
 	if (m_has_softlist)
-	{
-		// add the "[software list]" entry
-		entry = &append_entry(SELECTOR_ENTRY_TYPE_SOFTWARE_LIST, "", "");
-		selected_entry = entry;
-	}
+		selected_entry = &append_entry(SELECTOR_ENTRY_TYPE_SOFTWARE_LIST, "", "");
 
 	// add the drives
-	i = 0;
-	while((volume_name = osd_get_volume_name(i))!=nullptr)
-	{
-		append_entry(SELECTOR_ENTRY_TYPE_DRIVE,
-			volume_name, volume_name);
-		i++;
-	}
+	int i = 0;
+	for (char const *volume_name = osd_get_volume_name(i); volume_name; volume_name = osd_get_volume_name(++i))
+		append_entry(SELECTOR_ENTRY_TYPE_DRIVE, volume_name, volume_name);
 
 	// mark first filename entry
-	first = m_entrylist.size() + 1;
+	std::size_t const first = m_entrylist.size() + 1;
 
 	// build the menu for each item
-	if (err == osd_file::error::NONE)
+	if (osd_file::error::NONE != err)
 	{
-		while((dirent = util::zippath_readdir(directory)) != nullptr)
+		osd_printf_verbose("menu_file_selector::populate: error opening directory '%s' (%d)\n", m_current_directory.c_str(), int(err));
+	}
+	else
+	{
+		for (osd::directory::entry const *dirent = directory->readdir(); dirent; dirent = directory->readdir())
 		{
 			// append a dirent entry
-			entry = append_dirent_entry(dirent);
-
-			if (entry != nullptr)
+			file_selector_entry const *entry = append_dirent_entry(dirent);
+			if (entry)
 			{
 				// set the selected item to be the first non-parent directory or file
-				if ((selected_entry == nullptr) && strcmp(dirent->name, ".."))
+				if (!selected_entry && strcmp(dirent->name, ".."))
 					selected_entry = entry;
 
 				// do we have to select this file?
@@ -356,29 +441,30 @@ void menu_file_selector::populate(float &customtop, float &custombottom)
 			}
 		}
 	}
+	directory.reset();
 
 	// sort the menu entries
-	const std::collate<wchar_t>& coll = std::use_facet<std::collate<wchar_t>>(std::locale());
-	std::sort(m_entrylist.begin()+first, m_entrylist.end(), [&coll](file_selector_entry const &x, file_selector_entry const &y)
-		{
-			std::wstring xstr = wstring_from_utf8(x.basename);
-			std::wstring ystr = wstring_from_utf8(y.basename);
-			return coll.compare(xstr.data(), xstr.data()+xstr.size(), ystr.data(), ystr.data()+ystr.size()) < 0;
-		} );
+	const std::collate<wchar_t> &coll = std::use_facet<std::collate<wchar_t>>(std::locale());
+	std::sort(
+			m_entrylist.begin() + first,
+			m_entrylist.end(),
+			[&coll] (file_selector_entry const &x, file_selector_entry const &y)
+			{
+				std::wstring const xstr = wstring_from_utf8(x.basename);
+				std::wstring const ystr = wstring_from_utf8(y.basename);
+				return coll.compare(xstr.data(), xstr.data()+xstr.size(), ystr.data(), ystr.data()+ystr.size()) < 0;
+			});
 
 	// append all of the menu entries
-	for (auto &entry : m_entrylist)
+	for (file_selector_entry const &entry : m_entrylist)
 		append_entry_menu_item(&entry);
 
 	// set the selection (if we have one)
-	if (selected_entry != nullptr)
-		set_selection((void *) selected_entry);
+	if (selected_entry)
+		set_selection((void *)selected_entry);
 
 	// set up custom render proc
-	customtop = ui().get_line_height() + 3.0f * UI_BOX_TB_BORDER;
-
-	if (directory != nullptr)
-		util::zippath_closedir(directory);
+	customtop = ui().get_line_height() + 3.0f * ui().box_tb_border();
 }
 
 
@@ -388,58 +474,14 @@ void menu_file_selector::populate(float &customtop, float &custombottom)
 
 void menu_file_selector::handle()
 {
-	osd_file::error err;
-	const file_selector_entry *selected_entry = nullptr;
-	int bestmatch = 0;
-
 	// process the menu
-	const event *event = process(0);
-	if (event != nullptr && event->itemref != nullptr)
+	event const *const event = process(0);
+	if (event && event->itemref)
 	{
 		// handle selections
 		if (event->iptkey == IPT_UI_SELECT)
 		{
-			auto entry = (const file_selector_entry *) event->itemref;
-			switch (entry->type)
-			{
-			case SELECTOR_ENTRY_TYPE_EMPTY:
-				// empty slot - unload
-				m_result = result::EMPTY;
-				stack_pop();
-				break;
-
-			case SELECTOR_ENTRY_TYPE_CREATE:
-				// create
-				m_result = result::CREATE;
-				stack_pop();
-				break;
-
-			case SELECTOR_ENTRY_TYPE_SOFTWARE_LIST:
-				m_result = result::SOFTLIST;
-				stack_pop();
-				break;
-
-			case SELECTOR_ENTRY_TYPE_DRIVE:
-			case SELECTOR_ENTRY_TYPE_DIRECTORY:
-				// drive/directory - first check the path
-				err = util::zippath_opendir(entry->fullpath, nullptr);
-				if (err != osd_file::error::NONE)
-				{
-					// this path is problematic; present the user with an error and bail
-					ui().popup_time(1, "Error accessing %s", entry->fullpath);
-					break;
-				}
-				m_current_directory.assign(entry->fullpath);
-				reset(reset_options::SELECT_FIRST);
-				break;
-
-			case SELECTOR_ENTRY_TYPE_FILE:
-				// file
-				m_current_file.assign(entry->fullpath);
-				m_result = result::FILE;
-				stack_pop();
-				break;
-			}
+			select_item(*reinterpret_cast<file_selector_entry const *>(event->itemref));
 
 			// reset the char buffer when pressing IPT_UI_SELECT
 			m_filename.clear();
@@ -447,38 +489,7 @@ void menu_file_selector::handle()
 		else if (event->iptkey == IPT_SPECIAL)
 		{
 			// if it's any other key and we're not maxed out, update
-			if (input_character(m_filename, event->unichar, uchar_is_printable))
-			{
-				ui().popup_time(ERROR_MESSAGE_TIME, "%s", m_filename.c_str());
-
-				file_selector_entry const *const cur_selected(reinterpret_cast<file_selector_entry const *>(get_selection_ref()));
-
-				// check for entries which matches our m_filename_buffer:
-				for (auto &entry : m_entrylist)
-				{
-					if (cur_selected != &entry)
-					{
-						int match = 0;
-						for (int i = 0; i < m_filename.size() + 1; i++)
-						{
-							if (core_strnicmp(entry.basename.c_str(), m_filename.c_str(), i) == 0)
-								match = i;
-						}
-
-						if (match > bestmatch)
-						{
-							bestmatch = match;
-							selected_entry = &entry;
-						}
-					}
-				}
-
-				if (selected_entry != nullptr && selected_entry != cur_selected)
-				{
-					set_selection((void *)selected_entry);
-					centre_selection();
-				}
-			}
+			type_search_char(event->unichar);
 		}
 		else if (event->iptkey == IPT_UI_CANCEL)
 		{

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -28,8 +28,9 @@
 
 #include <bgfx/platform.h>
 
-#include <bx/thread.h>
 #include <bx/handlealloc.h>
+#include <bx/thread.h>
+#include <bx/mutex.h>
 #include <tinystl/string.h>
 
 #include "dbg.h"
@@ -227,9 +228,9 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
 
 	enum MsgType
@@ -275,7 +276,7 @@ namespace entry
 	static void joystickCb(int _jid, int _action);
 
 	// Based on cutef8 by Jeff Bezanson (Public Domain)
-	static uint8_t encodeUTF8(uint8_t _chars[4], unsigned int _scancode)
+	static uint8_t encodeUTF8(uint8_t _chars[4], uint32_t _scancode)
 	{
 		uint8_t length = 0;
 
@@ -308,86 +309,92 @@ namespace entry
 	struct Context
 	{
 		Context()
-			: m_scrollPos(0.0)
+			: m_msgs(getAllocator() )
+			, m_scrollPos(0.0f)
 		{
 			bx::memSet(s_translateKey, 0, sizeof(s_translateKey));
-			s_translateKey[GLFW_KEY_ESCAPE]		  = Key::Esc;
-			s_translateKey[GLFW_KEY_ENTER]		  = Key::Return;
-			s_translateKey[GLFW_KEY_TAB]		  = Key::Tab;
-			s_translateKey[GLFW_KEY_BACKSPACE]	  = Key::Backspace;
-			s_translateKey[GLFW_KEY_SPACE]		  = Key::Space;
-			s_translateKey[GLFW_KEY_UP]			  = Key::Up;
-			s_translateKey[GLFW_KEY_DOWN]		  = Key::Down;
-			s_translateKey[GLFW_KEY_LEFT]		  = Key::Left;
-			s_translateKey[GLFW_KEY_RIGHT]		  = Key::Right;
-			s_translateKey[GLFW_KEY_PAGE_UP]	  = Key::PageUp;
-			s_translateKey[GLFW_KEY_PAGE_DOWN]	  = Key::PageDown;
-			s_translateKey[GLFW_KEY_HOME]		  = Key::Home;
-			s_translateKey[GLFW_KEY_END]		  = Key::End;
+			s_translateKey[GLFW_KEY_ESCAPE]       = Key::Esc;
+			s_translateKey[GLFW_KEY_ENTER]        = Key::Return;
+			s_translateKey[GLFW_KEY_TAB]          = Key::Tab;
+			s_translateKey[GLFW_KEY_BACKSPACE]    = Key::Backspace;
+			s_translateKey[GLFW_KEY_SPACE]        = Key::Space;
+			s_translateKey[GLFW_KEY_UP]           = Key::Up;
+			s_translateKey[GLFW_KEY_DOWN]         = Key::Down;
+			s_translateKey[GLFW_KEY_LEFT]         = Key::Left;
+			s_translateKey[GLFW_KEY_RIGHT]        = Key::Right;
+			s_translateKey[GLFW_KEY_PAGE_UP]      = Key::PageUp;
+			s_translateKey[GLFW_KEY_PAGE_DOWN]    = Key::PageDown;
+			s_translateKey[GLFW_KEY_HOME]         = Key::Home;
+			s_translateKey[GLFW_KEY_END]          = Key::End;
 			s_translateKey[GLFW_KEY_PRINT_SCREEN] = Key::Print;
-			s_translateKey[GLFW_KEY_KP_ADD]		  = Key::Plus;
+			s_translateKey[GLFW_KEY_KP_ADD]       = Key::Plus;
+			s_translateKey[GLFW_KEY_EQUAL]        = Key::Plus;
 			s_translateKey[GLFW_KEY_KP_SUBTRACT]  = Key::Minus;
-			s_translateKey[GLFW_KEY_F1]			  = Key::F1;
-			s_translateKey[GLFW_KEY_F2]			  = Key::F2;
-			s_translateKey[GLFW_KEY_F3]			  = Key::F3;
-			s_translateKey[GLFW_KEY_F4]			  = Key::F4;
-			s_translateKey[GLFW_KEY_F5]			  = Key::F5;
-			s_translateKey[GLFW_KEY_F6]			  = Key::F6;
-			s_translateKey[GLFW_KEY_F7]			  = Key::F7;
-			s_translateKey[GLFW_KEY_F8]			  = Key::F8;
-			s_translateKey[GLFW_KEY_F9]			  = Key::F9;
-			s_translateKey[GLFW_KEY_F10]		  = Key::F10;
-			s_translateKey[GLFW_KEY_F11]		  = Key::F11;
-			s_translateKey[GLFW_KEY_F12]		  = Key::F12;
-			s_translateKey[GLFW_KEY_KP_0]		  = Key::NumPad0;
-			s_translateKey[GLFW_KEY_KP_1]		  = Key::NumPad1;
-			s_translateKey[GLFW_KEY_KP_2]		  = Key::NumPad2;
-			s_translateKey[GLFW_KEY_KP_3]		  = Key::NumPad3;
-			s_translateKey[GLFW_KEY_KP_4]		  = Key::NumPad4;
-			s_translateKey[GLFW_KEY_KP_5]		  = Key::NumPad5;
-			s_translateKey[GLFW_KEY_KP_6]		  = Key::NumPad6;
-			s_translateKey[GLFW_KEY_KP_7]		  = Key::NumPad7;
-			s_translateKey[GLFW_KEY_KP_8]		  = Key::NumPad8;
-			s_translateKey[GLFW_KEY_KP_9]		  = Key::NumPad9;
-			s_translateKey[GLFW_KEY_0]			  = Key::Key0;
-			s_translateKey[GLFW_KEY_1]			  = Key::Key1;
-			s_translateKey[GLFW_KEY_2]			  = Key::Key2;
-			s_translateKey[GLFW_KEY_3]			  = Key::Key3;
-			s_translateKey[GLFW_KEY_4]			  = Key::Key4;
-			s_translateKey[GLFW_KEY_5]			  = Key::Key5;
-			s_translateKey[GLFW_KEY_6]			  = Key::Key6;
-			s_translateKey[GLFW_KEY_7]			  = Key::Key7;
-			s_translateKey[GLFW_KEY_8]			  = Key::Key8;
-			s_translateKey[GLFW_KEY_9]			  = Key::Key9;
-			s_translateKey[GLFW_KEY_A]			  = Key::KeyA;
-			s_translateKey[GLFW_KEY_B]			  = Key::KeyB;
-			s_translateKey[GLFW_KEY_C]			  = Key::KeyC;
-			s_translateKey[GLFW_KEY_D]			  = Key::KeyD;
-			s_translateKey[GLFW_KEY_E]			  = Key::KeyE;
-			s_translateKey[GLFW_KEY_F]			  = Key::KeyF;
-			s_translateKey[GLFW_KEY_G]			  = Key::KeyG;
-			s_translateKey[GLFW_KEY_H]			  = Key::KeyH;
-			s_translateKey[GLFW_KEY_I]			  = Key::KeyI;
-			s_translateKey[GLFW_KEY_J]			  = Key::KeyJ;
-			s_translateKey[GLFW_KEY_K]			  = Key::KeyK;
-			s_translateKey[GLFW_KEY_L]			  = Key::KeyL;
-			s_translateKey[GLFW_KEY_M]			  = Key::KeyM;
-			s_translateKey[GLFW_KEY_N]			  = Key::KeyN;
-			s_translateKey[GLFW_KEY_O]			  = Key::KeyO;
-			s_translateKey[GLFW_KEY_P]			  = Key::KeyP;
-			s_translateKey[GLFW_KEY_Q]			  = Key::KeyQ;
-			s_translateKey[GLFW_KEY_R]			  = Key::KeyR;
-			s_translateKey[GLFW_KEY_S]			  = Key::KeyS;
-			s_translateKey[GLFW_KEY_T]			  = Key::KeyT;
-			s_translateKey[GLFW_KEY_U]			  = Key::KeyU;
-			s_translateKey[GLFW_KEY_V]			  = Key::KeyV;
-			s_translateKey[GLFW_KEY_W]			  = Key::KeyW;
-			s_translateKey[GLFW_KEY_X]			  = Key::KeyX;
-			s_translateKey[GLFW_KEY_Y]			  = Key::KeyY;
-			s_translateKey[GLFW_KEY_Z]			  = Key::KeyZ;
+			s_translateKey[GLFW_KEY_MINUS]        = Key::Minus;
+			s_translateKey[GLFW_KEY_COMMA]        = Key::Comma;
+			s_translateKey[GLFW_KEY_PERIOD]       = Key::Period;
+			s_translateKey[GLFW_KEY_SLASH]        = Key::Slash;
+			s_translateKey[GLFW_KEY_F1]           = Key::F1;
+			s_translateKey[GLFW_KEY_F2]           = Key::F2;
+			s_translateKey[GLFW_KEY_F3]           = Key::F3;
+			s_translateKey[GLFW_KEY_F4]           = Key::F4;
+			s_translateKey[GLFW_KEY_F5]           = Key::F5;
+			s_translateKey[GLFW_KEY_F6]           = Key::F6;
+			s_translateKey[GLFW_KEY_F7]           = Key::F7;
+			s_translateKey[GLFW_KEY_F8]           = Key::F8;
+			s_translateKey[GLFW_KEY_F9]           = Key::F9;
+			s_translateKey[GLFW_KEY_F10]          = Key::F10;
+			s_translateKey[GLFW_KEY_F11]          = Key::F11;
+			s_translateKey[GLFW_KEY_F12]          = Key::F12;
+			s_translateKey[GLFW_KEY_KP_0]         = Key::NumPad0;
+			s_translateKey[GLFW_KEY_KP_1]         = Key::NumPad1;
+			s_translateKey[GLFW_KEY_KP_2]         = Key::NumPad2;
+			s_translateKey[GLFW_KEY_KP_3]         = Key::NumPad3;
+			s_translateKey[GLFW_KEY_KP_4]         = Key::NumPad4;
+			s_translateKey[GLFW_KEY_KP_5]         = Key::NumPad5;
+			s_translateKey[GLFW_KEY_KP_6]         = Key::NumPad6;
+			s_translateKey[GLFW_KEY_KP_7]         = Key::NumPad7;
+			s_translateKey[GLFW_KEY_KP_8]         = Key::NumPad8;
+			s_translateKey[GLFW_KEY_KP_9]         = Key::NumPad9;
+			s_translateKey[GLFW_KEY_0]            = Key::Key0;
+			s_translateKey[GLFW_KEY_1]            = Key::Key1;
+			s_translateKey[GLFW_KEY_2]            = Key::Key2;
+			s_translateKey[GLFW_KEY_3]            = Key::Key3;
+			s_translateKey[GLFW_KEY_4]            = Key::Key4;
+			s_translateKey[GLFW_KEY_5]            = Key::Key5;
+			s_translateKey[GLFW_KEY_6]            = Key::Key6;
+			s_translateKey[GLFW_KEY_7]            = Key::Key7;
+			s_translateKey[GLFW_KEY_8]            = Key::Key8;
+			s_translateKey[GLFW_KEY_9]            = Key::Key9;
+			s_translateKey[GLFW_KEY_A]            = Key::KeyA;
+			s_translateKey[GLFW_KEY_B]            = Key::KeyB;
+			s_translateKey[GLFW_KEY_C]            = Key::KeyC;
+			s_translateKey[GLFW_KEY_D]            = Key::KeyD;
+			s_translateKey[GLFW_KEY_E]            = Key::KeyE;
+			s_translateKey[GLFW_KEY_F]            = Key::KeyF;
+			s_translateKey[GLFW_KEY_G]            = Key::KeyG;
+			s_translateKey[GLFW_KEY_H]            = Key::KeyH;
+			s_translateKey[GLFW_KEY_I]            = Key::KeyI;
+			s_translateKey[GLFW_KEY_J]            = Key::KeyJ;
+			s_translateKey[GLFW_KEY_K]            = Key::KeyK;
+			s_translateKey[GLFW_KEY_L]            = Key::KeyL;
+			s_translateKey[GLFW_KEY_M]            = Key::KeyM;
+			s_translateKey[GLFW_KEY_N]            = Key::KeyN;
+			s_translateKey[GLFW_KEY_O]            = Key::KeyO;
+			s_translateKey[GLFW_KEY_P]            = Key::KeyP;
+			s_translateKey[GLFW_KEY_Q]            = Key::KeyQ;
+			s_translateKey[GLFW_KEY_R]            = Key::KeyR;
+			s_translateKey[GLFW_KEY_S]            = Key::KeyS;
+			s_translateKey[GLFW_KEY_T]            = Key::KeyT;
+			s_translateKey[GLFW_KEY_U]            = Key::KeyU;
+			s_translateKey[GLFW_KEY_V]            = Key::KeyV;
+			s_translateKey[GLFW_KEY_W]            = Key::KeyW;
+			s_translateKey[GLFW_KEY_X]            = Key::KeyX;
+			s_translateKey[GLFW_KEY_Y]            = Key::KeyY;
+			s_translateKey[GLFW_KEY_Z]            = Key::KeyZ;
 		}
 
-		int run(int _argc, char** _argv)
+		int run(int _argc, const char* const* _argv)
 		{
 			m_mte.m_argc = _argc;
 			m_mte.m_argv = _argv;
@@ -397,7 +404,7 @@ namespace entry
 			if (!glfwInit() )
 			{
 				DBG("glfwInit failed!");
-				return EXIT_FAILURE;
+				return bx::kExitFailure;
 			}
 
 			glfwSetJoystickCallback(joystickCb);
@@ -416,7 +423,7 @@ namespace entry
 			{
 				DBG("glfwCreateWindow failed!");
 				glfwTerminate();
-				return EXIT_FAILURE;
+				return bx::kExitFailure;
 			}
 
 			glfwSetKeyCallback(m_windows[0], keyCb);
@@ -425,6 +432,7 @@ namespace entry
 			glfwSetCursorPosCallback(m_windows[0], cursorPosCb);
 			glfwSetMouseButtonCallback(m_windows[0], mouseButtonCb);
 			glfwSetWindowSizeCallback(m_windows[0], windowSizeCb);
+			glfwSetDropCallback(m_windows[0], dropFileCb);
 
 			glfwSetWindow(m_windows[0]);
 			m_eventQueue.postSizeEvent(handle, ENTRY_DEFAULT_WIDTH, ENTRY_DEFAULT_HEIGHT);
@@ -484,6 +492,7 @@ namespace entry
 							glfwSetCursorPosCallback(window, cursorPosCb);
 							glfwSetMouseButtonCallback(window, mouseButtonCb);
 							glfwSetWindowSizeCallback(window, windowSizeCb);
+							glfwSetDropCallback(window, dropFileCb);
 
 							m_windows[msg->m_handle.idx] = window;
 							m_eventQueue.postSizeEvent(msg->m_handle, msg->m_width, msg->m_height);
@@ -533,17 +542,25 @@ namespace entry
 					case GLFW_WINDOW_TOGGLE_FULL_SCREEN:
 						{
 							GLFWwindow* window = m_windows[msg->m_handle.idx];
-							if (glfwGetWindowMonitor(window))
+							if (glfwGetWindowMonitor(window) )
 							{
-								int width, height;
-								glfwGetWindowSize(window, &width, &height);
-								glfwSetWindowMonitor(window, NULL, 0, 0, width, height, 0);
+								glfwSetWindowMonitor(window
+									, NULL
+									, m_oldX
+									, m_oldY
+									, m_oldWidth
+									, m_oldHeight
+									, 0
+									);
 							}
 							else
 							{
 								GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 								if (NULL != monitor)
 								{
+									glfwGetWindowPos(window, &m_oldX, &m_oldY);
+									glfwGetWindowSize(window, &m_oldWidth, &m_oldHeight);
+
 									const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 									glfwSetWindowMonitor(window
 										, monitor
@@ -604,12 +621,13 @@ namespace entry
 			return invalid;
 		}
 
-		static void keyCb(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods);
-		static void charCb(GLFWwindow* _window, unsigned int _scancode);
+		static void keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods);
+		static void charCb(GLFWwindow* _window, uint32_t _scancode);
 		static void scrollCb(GLFWwindow* _window, double _dx, double _dy);
 		static void cursorPosCb(GLFWwindow* _window, double _mx, double _my);
-		static void mouseButtonCb(GLFWwindow* _window, int _button, int _action, int _mods);
-		static void windowSizeCb(GLFWwindow* _window, int _width, int _height);
+		static void mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods);
+		static void windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height);
+		static void dropFileCb(GLFWwindow* _window, int32_t _count, const char** _filePaths);
 
 		MainThreadEntry m_mte;
 		bx::Thread m_thread;
@@ -624,12 +642,17 @@ namespace entry
 
 		bx::SpScUnboundedQueueT<Msg> m_msgs;
 
+		int32_t m_oldX;
+		int32_t m_oldY;
+		int32_t m_oldWidth;
+		int32_t m_oldHeight;
+
 		double m_scrollPos;
 	};
 
 	Context s_ctx;
 
-	void Context::keyCb(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
+	void Context::keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_t _action, int32_t _mods)
 	{
 		BX_UNUSED(_scancode);
 		if (_key == GLFW_KEY_UNKNOWN)
@@ -643,7 +666,7 @@ namespace entry
 		s_ctx.m_eventQueue.postKeyEvent(handle, key, mods, down);
 	}
 
-	void Context::charCb(GLFWwindow* _window, unsigned int _scancode)
+	void Context::charCb(GLFWwindow* _window, uint32_t _scancode)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
 		uint8_t chars[4];
@@ -680,7 +703,7 @@ namespace entry
 			);
 	}
 
-	void Context::mouseButtonCb(GLFWwindow* _window, int _button, int _action, int _mods)
+	void Context::mouseButtonCb(GLFWwindow* _window, int32_t _button, int32_t _action, int32_t _mods)
 	{
 		BX_UNUSED(_mods);
 		WindowHandle handle = s_ctx.findHandle(_window);
@@ -696,10 +719,19 @@ namespace entry
 			);
 	}
 
-	void Context::windowSizeCb(GLFWwindow* _window, int _width, int _height)
+	void Context::windowSizeCb(GLFWwindow* _window, int32_t _width, int32_t _height)
 	{
 		WindowHandle handle = s_ctx.findHandle(_window);
 		s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
+	}
+
+	void Context::dropFileCb(GLFWwindow* _window, int32_t _count, const char** _filePaths)
+	{
+		WindowHandle handle = s_ctx.findHandle(_window);
+		for (int32_t ii = 0; ii < _count; ++ii)
+		{
+			s_ctx.m_eventQueue.postDropFileEvent(handle, _filePaths[ii]);
+		}
 	}
 
 	static void joystickCb(int _jid, int _action)
@@ -793,12 +825,9 @@ namespace entry
 		glfwPostEmptyEvent();
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		Msg* msg = new Msg(GLFW_WINDOW_TOGGLE_FRAME);
-		msg->m_handle = _handle;
-		s_ctx.m_msgs.push(msg);
-		glfwPostEmptyEvent();
+		BX_UNUSED(_handle, _flags, _enabled);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)
@@ -818,8 +847,10 @@ namespace entry
 		glfwPostEmptyEvent();
 	}
 
-	int32_t MainThreadEntry::threadFunc(void* _userData)
+	int32_t MainThreadEntry::threadFunc(bx::Thread* _thread, void* _userData)
 	{
+		BX_UNUSED(_thread);
+
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
 
@@ -833,7 +864,7 @@ namespace entry
 	}
 }
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);

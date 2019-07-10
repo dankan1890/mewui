@@ -1,11 +1,12 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
 #ifndef BX_MPSCQUEUE_H_HEADER_GUARD
 #define BX_MPSCQUEUE_H_HEADER_GUARD
 
+#include "allocator.h"
 #include "mutex.h"
 #include "spscqueue.h"
 
@@ -22,7 +23,7 @@ namespace bx
 
 	public:
 		///
-		MpScUnboundedQueueT();
+		MpScUnboundedQueueT(AllocatorI* _allocator);
 
 		///
 		~MpScUnboundedQueueT();
@@ -52,7 +53,7 @@ namespace bx
 
 	public:
 		///
-		MpScUnboundedBlockingQueue();
+		MpScUnboundedBlockingQueue(AllocatorI* _allocator);
 
 		///
 		~MpScUnboundedBlockingQueue();

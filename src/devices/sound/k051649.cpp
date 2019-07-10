@@ -26,10 +26,19 @@
 
 #include "emu.h"
 #include "k051649.h"
+#include <algorithm>
 
 #define FREQ_BITS   16
 #define DEF_GAIN    8
 
+void k051649_device::scc_map(address_map &map)
+{
+	map(0x00, 0x7f).rw(FUNC(k051649_device::k051649_waveform_r), FUNC(k051649_device::k051649_waveform_w));
+	map(0x80, 0x89).w(FUNC(k051649_device::k051649_frequency_w));
+	map(0x8a, 0x8e).w(FUNC(k051649_device::k051649_volume_w));
+	map(0x8f, 0x8f).w(FUNC(k051649_device::k051649_keyonoff_w));
+	map(0xe0, 0xe0).mirror(0x1f).rw(FUNC(k051649_device::k051649_test_r), FUNC(k051649_device::k051649_test_w));
+}
 
 // device type definition
 DEFINE_DEVICE_TYPE(K051649, k051649_device, "k051649", "K051649 SCC1")
@@ -51,7 +60,6 @@ k051649_device::k051649_device(const machine_config &mconfig, const char *tag, d
 		m_rate(0),
 		m_mixer_table(nullptr),
 		m_mixer_lookup(nullptr),
-		m_mixer_buffer(nullptr),
 		m_test(0)
 {
 }
@@ -69,7 +77,7 @@ void k051649_device::device_start()
 	m_mclock = clock();
 
 	// allocate a buffer to mix into - 1 second's worth should be more than enough
-	m_mixer_buffer = std::make_unique<short[]>(2 * m_rate);
+	m_mixer_buffer.resize(2 * m_rate);
 
 	// build the mixer table
 	make_mixer_table(5);
@@ -97,13 +105,42 @@ void k051649_device::device_reset()
 
 
 //-------------------------------------------------
+//  device_post_load - device-specific post-load
+//-------------------------------------------------
+
+void k051649_device::device_post_load()
+{
+	device_clock_changed();
+}
+
+
+//-------------------------------------------------
+//  device_clock_changed - called if the clock
+//  changes
+//-------------------------------------------------
+
+void k051649_device::device_clock_changed()
+{
+	uint32_t old_rate = m_rate;
+	m_rate = clock()/16;
+	m_mclock = clock();
+
+	if (old_rate < m_rate)
+	{
+		m_mixer_buffer.resize(2 * m_rate, 0);
+	}
+	m_stream->set_sample_rate(m_rate);
+}
+
+
+//-------------------------------------------------
 //  sound_stream_update - handle a stream update
 //-------------------------------------------------
 
 void k051649_device::sound_stream_update(sound_stream &stream, stream_sample_t **inputs, stream_sample_t **outputs, int samples)
 {
 	// zap the contents of the mixer buffer
-	memset(m_mixer_buffer.get(), 0, samples * sizeof(short));
+	std::fill(m_mixer_buffer.begin(), m_mixer_buffer.end(), 0);
 
 	for (sound_channel &voice : m_channel_list)
 	{
@@ -115,8 +152,6 @@ void k051649_device::sound_stream_update(sound_stream &stream, stream_sample_t *
 			int c=voice.counter;
 			int step = ((int64_t(m_mclock) << FREQ_BITS) / float((voice.frequency + 1) * 16 * (m_rate / 32))) + 0.5f;
 
-			short *mix = m_mixer_buffer.get();
-
 			// add our contribution
 			for (int i = 0; i < samples; i++)
 			{
@@ -124,7 +159,7 @@ void k051649_device::sound_stream_update(sound_stream &stream, stream_sample_t *
 
 				c += step;
 				offs = (c >> FREQ_BITS) & 0x1f;
-				*mix++ += (w[offs] * v)>>3;
+				m_mixer_buffer[i] += (w[offs] * v)>>3;
 			}
 
 			// update the counter for this voice
@@ -134,16 +169,15 @@ void k051649_device::sound_stream_update(sound_stream &stream, stream_sample_t *
 
 	// mix it down
 	stream_sample_t *buffer = outputs[0];
-	short *mix = m_mixer_buffer.get();
 	for (int i = 0; i < samples; i++)
-		*buffer++ = m_mixer_lookup[*mix++];
+		*buffer++ = m_mixer_lookup[m_mixer_buffer[i]];
 }
 
 
 /********************************************************************************/
 
 
-WRITE8_MEMBER( k051649_device::k051649_waveform_w )
+void k051649_device::k051649_waveform_w(offs_t offset, uint8_t data)
 {
 	// waveram is read-only?
 	if (m_test & 0x40 || (m_test & 0x80 && offset >= 0x60))
@@ -162,7 +196,7 @@ WRITE8_MEMBER( k051649_device::k051649_waveform_w )
 }
 
 
-READ8_MEMBER ( k051649_device::k051649_waveform_r )
+uint8_t k051649_device::k051649_waveform_r(offs_t offset)
 {
 	// test-register bits 6/7 expose the internal counter
 	if (m_test & 0xc0)
@@ -178,7 +212,7 @@ READ8_MEMBER ( k051649_device::k051649_waveform_r )
 }
 
 
-WRITE8_MEMBER( k051649_device::k052539_waveform_w )
+void k051649_device::k052539_waveform_w(offs_t offset, uint8_t data)
 {
 	// waveram is read-only?
 	if (m_test & 0x40)
@@ -189,7 +223,7 @@ WRITE8_MEMBER( k051649_device::k052539_waveform_w )
 }
 
 
-READ8_MEMBER ( k051649_device::k052539_waveform_r )
+uint8_t k051649_device::k052539_waveform_r(offs_t offset)
 {
 	// test-register bit 6 exposes the internal counter
 	if (m_test & 0x40)
@@ -201,14 +235,14 @@ READ8_MEMBER ( k051649_device::k052539_waveform_r )
 }
 
 
-WRITE8_MEMBER( k051649_device::k051649_volume_w )
+void k051649_device::k051649_volume_w(offs_t offset, uint8_t data)
 {
 	m_stream->update();
 	m_channel_list[offset&0x7].volume=data&0xf;
 }
 
 
-WRITE8_MEMBER( k051649_device::k051649_frequency_w )
+void k051649_device::k051649_frequency_w(offs_t offset, uint8_t data)
 {
 	int freq_hi = offset & 1;
 	offset >>= 1;
@@ -229,7 +263,7 @@ WRITE8_MEMBER( k051649_device::k051649_frequency_w )
 }
 
 
-WRITE8_MEMBER( k051649_device::k051649_keyonoff_w )
+void k051649_device::k051649_keyonoff_w(uint8_t data)
 {
 	int i;
 	m_stream->update();
@@ -242,16 +276,17 @@ WRITE8_MEMBER( k051649_device::k051649_keyonoff_w )
 }
 
 
-WRITE8_MEMBER( k051649_device::k051649_test_w )
+void k051649_device::k051649_test_w(uint8_t data)
 {
 	m_test = data;
 }
 
 
-READ8_MEMBER ( k051649_device::k051649_test_r )
+uint8_t k051649_device::k051649_test_r()
 {
 	// reading the test register sets it to $ff!
-	k051649_test_w(space, offset, 0xff);
+	if (!machine().side_effects_disabled())
+		k051649_test_w(0xff);
 	return 0xff;
 }
 

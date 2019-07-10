@@ -21,6 +21,8 @@
 // Typedefs for dynamically loaded functions
 typedef HRESULT (WINAPI *d3dx_create_effect_from_file_fn)(LPDIRECT3DDEVICE9, LPCTSTR, const D3DXMACRO *, LPD3DXINCLUDE, DWORD, LPD3DXEFFECTPOOL, LPD3DXEFFECT *, LPD3DXBUFFER *);
 
+struct slider_state;
+
 class effect;
 class shaders;
 
@@ -99,6 +101,14 @@ public:
 		CU_POST_SCANLINE_BRIGHT_OFFSET,
 		CU_POST_POWER,
 		CU_POST_FLOOR,
+		CU_CHROMA_MODE,
+		CU_CHROMA_A,
+		CU_CHROMA_B,
+		CU_CHROMA_C,
+		CU_CHROMA_CONVERSION_GAIN,
+		CU_CHROMA_Y_GAIN,
+		CU_LUT_ENABLE,
+		CU_UI_LUT_ENABLE,
 
 		CU_COUNT
 	};
@@ -205,6 +215,12 @@ struct hlsl_options
 	float                   floor[3];
 	float                   phosphor[3];
 	float                   saturation;
+	int                     chroma_mode;
+	float                   chroma_a[2];
+	float                   chroma_b[2];
+	float                   chroma_c[2];
+	float                   chroma_conversion_gain[3];
+	float                   chroma_y_gain[3];
 
 	// NTSC
 	int                     yiq_enable;
@@ -239,6 +255,12 @@ struct hlsl_options
 	float                   bloom_level6_weight;
 	float                   bloom_level7_weight;
 	float                   bloom_level8_weight;
+
+	// Final
+	char lut_texture[1024];
+	int lut_enable;
+	char ui_lut_texture[1024];
+	int ui_lut_enable;
 };
 
 struct slider_desc
@@ -309,7 +331,7 @@ public:
 
 	// slider-related functions
 	virtual int32_t slider_changed(running_machine &machine, void *arg, int /*id*/, std::string *str, int32_t newval) override;
-	slider_state* slider_alloc(running_machine &machine, int id, const char *title, int32_t minval, int32_t defval, int32_t maxval, int32_t incval, void *arg);
+	std::unique_ptr<slider_state> slider_alloc(int id, const char *title, int32_t minval, int32_t defval, int32_t maxval, int32_t incval, void *arg);
 	void init_slider_list();
 	std::vector<ui::menu_item> get_slider_list() { return m_sliders; }
 	void *get_slider_option(int id, int index = 0);
@@ -330,11 +352,13 @@ private:
 	int                     color_convolution_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     prescale_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     deconverge_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
+	int                     scanline_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     defocus_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     phosphor_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     post_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum, bool prepare_bloom);
 	int                     downsample_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     bloom_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
+	int                     chroma_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     distortion_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     vector_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
 	int                     vector_buffer_pass(d3d_render_target *rt, int source_index, poly_info *poly, int vertnum);
@@ -354,6 +378,10 @@ private:
 	double                  delta_t;                    // data for delta_time
 	bitmap_argb32           shadow_bitmap;              // shadow mask bitmap for post-processing shader
 	texture_info *          shadow_texture;             // shadow mask texture for post-processing shader
+	bitmap_argb32           lut_bitmap;
+	texture_info *          lut_texture;
+	bitmap_argb32           ui_lut_bitmap;
+	texture_info *          ui_lut_texture;
 	hlsl_options *          options;                    // current options
 
 	IDirect3DSurface9 *     black_surface;              // black dummy surface
@@ -379,6 +407,7 @@ private:
 	effect *                prescale_effect;            // pointer to the prescale-effect object
 	effect *                post_effect;                // pointer to the post-effect object
 	effect *                distortion_effect;          // pointer to the distortion-effect object
+	effect *                scanline_effect;
 	effect *                focus_effect;               // pointer to the focus-effect object
 	effect *                phosphor_effect;            // pointer to the phosphor-effect object
 	effect *                deconverge_effect;          // pointer to the deconvergence-effect object
@@ -387,6 +416,7 @@ private:
 	effect *                bloom_effect;               // pointer to the bloom composite effect
 	effect *                downsample_effect;          // pointer to the bloom downsample effect
 	effect *                vector_effect;              // pointer to the vector-effect object
+	effect *                chroma_effect;
 
 	texture_info *          curr_texture;
 	d3d_render_target *     curr_render_target;
@@ -396,6 +426,7 @@ private:
 
 	std::vector<slider*>    internal_sliders;
 	std::vector<ui::menu_item> m_sliders;
+	std::vector<std::unique_ptr<slider_state>> m_core_sliders;
 
 	static slider_desc      s_sliders[];
 	static hlsl_options     last_options;               // last used options

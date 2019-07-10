@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx/blob/master/LICENSE
  */
 
@@ -11,7 +11,7 @@
 // necessary to use this header in conjunction with creating windows.
 
 #include <bx/platform.h>
-#include <bgfx/bgfx.h>
+#include "bgfx.h"
 
 namespace bgfx
 {
@@ -34,26 +34,19 @@ namespace bgfx
 
 	/// Render frame.
 	///
+	/// @param _msecs Timeout in milliseconds.
+	///
 	/// @returns Current renderer state. See: `bgfx::RenderFrame`.
+	///
+	/// @attention `bgfx::renderFrame` is blocking call. It waits for
+	///   `bgfx::frame` to be called from API thread to process frame.
+	///   If timeout value is passed call will timeout and return even
+	///   if `bgfx::frame` is not called.
 	///
 	/// @warning This call should be only used on platforms that don't
 	///   allow creating separate rendering thread. If it is called before
 	///   to bgfx::init, render thread won't be created by bgfx::init call.
-	RenderFrame::Enum renderFrame();
-
-	/// Platform data.
-	///
-	/// @attention C99 equivalent is `bgfx_platform_data_t`.
-	///
-	struct PlatformData
-	{
-		void* ndt;          //!< Native display type.
-		void* nwh;          //!< Native window handle.
-		void* context;      //!< GL context, or D3D device.
-		void* backBuffer;   //!< GL backbuffer, or D3D render target view.
-		void* backBufferDS; //!< Backbuffer depth/stencil.
-		void* session;      //!< ovrSession, for Oculus SDK
-	};
+	RenderFrame::Enum renderFrame(int32_t _msecs = -1);
 
 	/// Set platform data.
 	///
@@ -127,23 +120,8 @@ namespace bgfx
 	///
 	/// @attention C99 equivalent is `bgfx_override_internal_texture`.
 	///
-	uintptr_t overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_TEXTURE_NONE);
+	uintptr_t overrideInternal(TextureHandle _handle, uint16_t _width, uint16_t _height, uint8_t _numMips, TextureFormat::Enum _format, uint32_t _flags = BGFX_SAMPLER_NONE);
 
 } // namespace bgfx
-
-#if BX_PLATFORM_NACL
-#	include <ppapi/c/ppb_graphics_3d.h>
-#	include <ppapi/c/ppb_instance.h>
-
-namespace bgfx
-{
-	typedef void (*PostSwapBuffersFn)(uint32_t _width, uint32_t _height);
-
-	///
-	bool naclSetInterfaces(::PP_Instance, const ::PPB_Instance*, const ::PPB_Graphics3D*, PostSwapBuffersFn);
-
-} // namespace bgfx
-
-#endif // BX_PLATFORM_
 
 #endif // BGFX_PLATFORM_H_HEADER_GUARD

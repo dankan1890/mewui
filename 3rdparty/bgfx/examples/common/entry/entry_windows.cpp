@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -266,6 +266,7 @@ namespace entry
 		WM_USER_WINDOW_CREATE = WM_USER,
 		WM_USER_WINDOW_DESTROY,
 		WM_USER_WINDOW_SET_TITLE,
+		WM_USER_WINDOW_SET_FLAGS,
 		WM_USER_WINDOW_SET_POS,
 		WM_USER_WINDOW_SET_SIZE,
 		WM_USER_WINDOW_TOGGLE_FRAME,
@@ -311,9 +312,9 @@ namespace entry
 	struct MainThreadEntry
 	{
 		int m_argc;
-		char** m_argv;
+		const char* const* m_argv;
 
-		static int32_t threadFunc(void* _userData);
+		static int32_t threadFunc(bx::Thread* _thread, void* _userData);
 	};
 
 	struct Msg
@@ -324,6 +325,7 @@ namespace entry
 			, m_width(0)
 			, m_height(0)
 			, m_flags(0)
+			, m_flagsEnabled(false)
 		{
 		}
 
@@ -333,6 +335,7 @@ namespace entry
 		uint32_t m_height;
 		uint32_t m_flags;
 		tinystl::string m_title;
+		bool m_flagsEnabled;
 	};
 
 	static void mouseCapture(HWND _hwnd, bool _capture)
@@ -381,7 +384,7 @@ namespace entry
 			s_translateKey[VK_OEM_7]      = Key::Quote;
 			s_translateKey[VK_OEM_COMMA]  = Key::Comma;
 			s_translateKey[VK_OEM_PERIOD] = Key::Period;
-			s_translateKey[VK_DECIMAL] 	  = Key::Period;
+			s_translateKey[VK_DECIMAL]    = Key::Period;
 			s_translateKey[VK_OEM_2]      = Key::Slash;
 			s_translateKey[VK_OEM_5]      = Key::Backslash;
 			s_translateKey[VK_OEM_3]      = Key::Tilde;
@@ -445,7 +448,7 @@ namespace entry
 			s_translateKey[uint8_t('Z')]  = Key::KeyZ;
 		}
 
-		int32_t run(int _argc, char** _argv)
+		int32_t run(int _argc, const char* const* _argv)
 		{
 			SetDllDirectoryA(".");
 
@@ -466,7 +469,9 @@ namespace entry
 			RegisterClassExA(&wnd);
 
 			m_windowAlloc.alloc();
-			m_hwnd[0] = CreateWindowA("bgfx"
+			m_hwnd[0] = CreateWindowExA(
+				  WS_EX_ACCEPTFILES
+				, "bgfx"
 				, "BGFX"
 				, WS_OVERLAPPEDWINDOW|WS_VISIBLE
 				, 0
@@ -498,6 +503,8 @@ namespace entry
 			mte.m_argc = _argc;
 			mte.m_argv = _argv;
 
+			bgfx::renderFrame();
+
 			bx::Thread thread;
 			thread.init(mte.threadFunc, &mte);
 			m_init = true;
@@ -509,6 +516,8 @@ namespace entry
 
 			while (!m_exit)
 			{
+				bgfx::renderFrame();
+
 				s_xinput.update(m_eventQueue);
 				WaitForInputIdle(GetCurrentProcess(), 16);
 
@@ -518,6 +527,8 @@ namespace entry
 					DispatchMessage(&msg);
 				}
 			}
+
+			while (bgfx::RenderFrame::NoContext != bgfx::renderFrame() ) {};
 
 			thread.shutdown();
 
@@ -580,6 +591,23 @@ namespace entry
 					{
 						Msg* msg = (Msg*)_lparam;
 						SetWindowTextA(m_hwnd[_wparam], msg->m_title.c_str() );
+						delete msg;
+					}
+					break;
+
+				case WM_USER_WINDOW_SET_FLAGS:
+					{
+						Msg* msg = (Msg*)_lparam;
+
+						if (msg->m_flagsEnabled)
+						{
+							m_flags[_wparam] |= msg->m_flags;
+						}
+						else
+						{
+							m_flags[_wparam] &= ~msg->m_flags;
+						}
+
 						delete msg;
 					}
 					break;
@@ -661,13 +689,23 @@ namespace entry
 							}
 
 							// Recalculate position using different anchor points
-							switch(_wparam)
+							switch (_wparam)
 							{
-							case WMSZ_LEFT:
 							case WMSZ_TOPLEFT:
+								rect.left = rect.right - width - m_frameWidth;
+								rect.top = rect.bottom - height - m_frameHeight;
+							  break;
+
+							case WMSZ_TOP:
+							case WMSZ_TOPRIGHT:
+								rect.right = rect.left + width + m_frameWidth;
+								rect.top = rect.bottom - height - m_frameHeight;
+								break;
+
+							case WMSZ_LEFT:
 							case WMSZ_BOTTOMLEFT:
-								rect.left   = rect.right - width  - m_frameWidth;
-								rect.bottom = rect.top   + height + m_frameHeight;
+								rect.left = rect.right - width - m_frameWidth;
+								rect.bottom = rect.top + height + m_frameHeight;
 								break;
 
 							default:
@@ -822,6 +860,17 @@ namespace entry
 					}
 					break;
 
+				case WM_DROPFILES:
+					{
+						HDROP drop = (HDROP)_wparam;
+						char tmp[bx::kMaxFilePath];
+						uint32_t result = DragQueryFileA(drop, 0, tmp, sizeof(tmp) );
+						BX_UNUSED(result);
+						WindowHandle handle = findHandle(_hwnd);
+						m_eventQueue.postDropFileEvent(handle, tmp);
+					}
+					break;
+
 				default:
 					break;
 				}
@@ -855,6 +904,7 @@ namespace entry
 			HDC hdc = GetDC(_hwnd);
 			SelectObject(hdc, brush);
 			FillRect(hdc, &rect, brush);
+			ReleaseDC(_hwnd, hdc);
 		}
 
 		void adjust(HWND _hwnd, uint32_t _width, uint32_t _height, bool _windowFrame)
@@ -881,10 +931,6 @@ namespace entry
 			}
 			else
 			{
-#if defined(__MINGW32__)
-				rect  = m_rect;
-				style = m_style;
-#else
 				HMONITOR monitor = MonitorFromWindow(_hwnd, MONITOR_DEFAULTTONEAREST);
 				MONITORINFO mi;
 				mi.cbSize = sizeof(mi);
@@ -892,7 +938,6 @@ namespace entry
 				newrect = mi.rcMonitor;
 				rect = mi.rcMonitor;
 				m_aspectRatio = float(newrect.right  - newrect.left)/float(newrect.bottom - newrect.top);
-#endif // !defined(__MINGW__)
 			}
 
 			SetWindowLong(_hwnd, GWL_STYLE, style);
@@ -1070,9 +1115,12 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_TITLE, _handle.idx, (LPARAM)msg);
 	}
 
-	void toggleWindowFrame(WindowHandle _handle)
+	void setWindowFlags(WindowHandle _handle, uint32_t _flags, bool _enabled)
 	{
-		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_TOGGLE_FRAME, _handle.idx, 0);
+		Msg* msg = new Msg;
+		msg->m_flags = _flags;
+		msg->m_flagsEnabled = _enabled;
+		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_SET_FLAGS, _handle.idx, (LPARAM)msg);
 	}
 
 	void toggleFullscreen(WindowHandle _handle)
@@ -1085,7 +1133,7 @@ namespace entry
 		PostMessage(s_ctx.m_hwnd[0], WM_USER_WINDOW_MOUSE_LOCK, _handle.idx, _lock);
 	}
 
-	int32_t MainThreadEntry::threadFunc(void* _userData)
+	int32_t MainThreadEntry::threadFunc(bx::Thread* /*_thread*/, void* _userData)
 	{
 		MainThreadEntry* self = (MainThreadEntry*)_userData;
 		int32_t result = main(self->m_argc, self->m_argv);
@@ -1095,7 +1143,7 @@ namespace entry
 
 } // namespace entry
 
-int main(int _argc, char** _argv)
+int main(int _argc, const char* const* _argv)
 {
 	using namespace entry;
 	return s_ctx.run(_argc, _argv);

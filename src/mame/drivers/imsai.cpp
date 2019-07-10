@@ -18,61 +18,62 @@
 
 #include "emu.h"
 #include "cpu/i8085/i8085.h"
+//#include "bus/s100/s100.h"
 #include "machine/i8251.h"
 #include "machine/pit8253.h"
 #include "machine/terminal.h"
 
-#define TERMINAL_TAG "terminal"
 
 class imsai_state : public driver_device
 {
 public:
 	imsai_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG),
-		m_uart(*this, "uart"),
-		m_pit(*this, "pit")
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_terminal(*this, "terminal")
+		, m_pit(*this, "pit")
+	{ }
 
+	void imsai(machine_config &config);
+
+private:
 	void kbd_put(u8 data);
 	DECLARE_READ8_MEMBER(keyin_r);
 	DECLARE_READ8_MEMBER(status_r);
 	DECLARE_WRITE8_MEMBER(control_w);
-	DECLARE_WRITE_LINE_MEMBER(write_uart_clock);
 
-private:
+	void imsai_io(address_map &map);
+	void imsai_mem(address_map &map);
+
 	uint8_t m_term_data;
 	virtual void machine_reset() override;
 	required_device<cpu_device> m_maincpu;
 	required_device<generic_terminal_device> m_terminal;
-	required_device<i8251_device> m_uart;
 	required_device<pit8253_device> m_pit;
 };
 
 
-static ADDRESS_MAP_START(imsai_mem, AS_PROGRAM, 8, imsai_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x07ff) AM_ROM AM_REGION("roms", 0)
-	AM_RANGE(0xd000, 0xd0ff) AM_RAM
-	AM_RANGE(0xd100, 0xd103) AM_DEVREADWRITE("pit", pit8253_device, read, write)
-	AM_RANGE(0xd800, 0xdfff) AM_ROM AM_REGION("roms", 0)
-ADDRESS_MAP_END
+void imsai_state::imsai_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x07ff).rom().region("prom", 0);
+	map(0xd000, 0xd0ff).ram();
+	map(0xd100, 0xd103).rw(m_pit, FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0xd800, 0xdfff).rom().region("prom", 0);
+}
 
-static ADDRESS_MAP_START(imsai_io, AS_IO, 8, imsai_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x02, 0x02) AM_READ(keyin_r) AM_DEVWRITE(TERMINAL_TAG, generic_terminal_device, write)
-	AM_RANGE(0x03, 0x03) AM_READ(status_r)
-	AM_RANGE(0x04, 0x04) AM_DEVREADWRITE("uart", i8251_device, data_r, data_w)
-	AM_RANGE(0x05, 0x05) AM_DEVREADWRITE("uart", i8251_device, status_r, control_w)
-	AM_RANGE(0x12, 0x12) AM_DEVREADWRITE("uart", i8251_device, data_r, data_w)
-	AM_RANGE(0x13, 0x13) AM_DEVREADWRITE("uart", i8251_device, status_r, control_w)
-	AM_RANGE(0x14, 0x14) AM_READ(keyin_r) AM_DEVWRITE(TERMINAL_TAG, generic_terminal_device, write)
-	AM_RANGE(0x15, 0x15) AM_READ(status_r)
-	AM_RANGE(0xf3, 0xf3) AM_WRITE(control_w)
-ADDRESS_MAP_END
+void imsai_state::imsai_io(address_map &map)
+{
+	map.unmap_value_high();
+	map.global_mask(0xff);
+	map(0x02, 0x02).r(FUNC(imsai_state::keyin_r)).w(m_terminal, FUNC(generic_terminal_device::write));
+	map(0x03, 0x03).r(FUNC(imsai_state::status_r));
+	map(0x04, 0x05).rw("uart", FUNC(i8251_device::read), FUNC(i8251_device::write));
+	map(0x12, 0x13).rw("uart", FUNC(i8251_device::read), FUNC(i8251_device::write));
+	map(0x14, 0x14).r(FUNC(imsai_state::keyin_r)).w(m_terminal, FUNC(generic_terminal_device::write));
+	map(0x15, 0x15).r(FUNC(imsai_state::status_r));
+	map(0xf3, 0xf3).w(FUNC(imsai_state::control_w));
+}
 
 /* Input ports */
 static INPUT_PORTS_START( imsai )
@@ -95,12 +96,6 @@ void imsai_state::kbd_put(u8 data)
 	m_term_data = data;
 }
 
-WRITE_LINE_MEMBER(imsai_state::write_uart_clock)
-{
-	m_uart->write_txc(state);
-	m_uart->write_rxc(state);
-}
-
 WRITE8_MEMBER( imsai_state::control_w )
 {
 }
@@ -110,33 +105,41 @@ void imsai_state::machine_reset()
 	m_term_data = 0;
 }
 
-static MACHINE_CONFIG_START( imsai )
+void imsai_state::imsai(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu",I8085A, XTAL_6MHz)
-	MCFG_CPU_PROGRAM_MAP(imsai_mem)
-	MCFG_CPU_IO_MAP(imsai_io)
+	I8085A(config, m_maincpu, XTAL(6'000'000));
+	m_maincpu->set_addrmap(AS_PROGRAM, &imsai_state::imsai_mem);
+	m_maincpu->set_addrmap(AS_IO, &imsai_state::imsai_io);
 
 	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(imsai_state, kbd_put))
+	GENERIC_TERMINAL(config, m_terminal, 0);
+	m_terminal->set_keyboard_callback(FUNC(imsai_state::kbd_put));
 
 	/* Devices */
-	MCFG_DEVICE_ADD("uart", I8251, 0)
+	I8251(config, "uart", 0);
 
-	MCFG_DEVICE_ADD("pit", PIT8253, 0)
-	MCFG_PIT8253_CLK0(XTAL_6MHz / 3) /* Timer 0: baud rate gen for 8251 */
-	MCFG_PIT8253_OUT0_HANDLER(WRITELINE(imsai_state, write_uart_clock))
-	MCFG_PIT8253_CLK1(XTAL_6MHz / 3) /* Timer 1: user */
-	MCFG_PIT8253_CLK2(XTAL_6MHz / 3) /* Timer 2: user */
-MACHINE_CONFIG_END
+	PIT8253(config, m_pit, 0);
+	m_pit->set_clk<0>(6_MHz_XTAL / 3); // Timer 0: baud rate gen for 8251
+	m_pit->out_handler<0>().set("uart", FUNC(i8251_device::write_txc));
+	m_pit->out_handler<0>().append("uart", FUNC(i8251_device::write_rxc));
+	m_pit->set_clk<1>(6_MHz_XTAL / 3); // Timer 1: user
+	m_pit->set_clk<2>(6_MHz_XTAL / 3); // Timer 2: user
+}
 
 /* ROM definition */
 ROM_START( imsai )
-	ROM_REGION( 0x800, "roms", 0 )
+	ROM_REGION( 0x800, "prom", 0 ) // 2716 or 2708 program PROM
 	ROM_LOAD( "vdb-80.rom",   0x0000, 0x0800, CRC(0afc4683) SHA1(a5419aaee00badf339d7c627f50ef8b2538e42e2) )
+
+	ROM_REGION( 0x200, "decode", 0 ) // 512x4 address decoder ROM
+	ROM_LOAD( "3622.u31", 0x000, 0x200, NO_DUMP )
+
+	ROM_REGION( 0x20, "status", 0 ) // PROM for decoding 8085 status signals
+	ROM_LOAD( "74s288.u38", 0x00, 0x20, NO_DUMP )
 ROM_END
 
 /* Driver */
 
-//    YEAR  NAME     PARENT  COMPAT   MACHINE    INPUT  CLASS        INIT  COMPANY  FULLNAME  FLAGS
-COMP( 1978, imsai,   0,      0,       imsai,     imsai, imsai_state, 0,    "Imsai", "MPU-B",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+//    YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT  CLASS        INIT        COMPANY  FULLNAME  FLAGS
+COMP( 1978, imsai, 0,      0,      imsai,   imsai, imsai_state, empty_init, "Imsai", "MPU-B",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )

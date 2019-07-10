@@ -148,7 +148,17 @@ WRITE_LINE_MEMBER(upd4701_device::resety_w)
 //  reset_x - pulse the X counter reset line
 //-------------------------------------------------
 
-WRITE8_MEMBER(upd4701_device::reset_x)
+READ8_MEMBER(upd4701_device::reset_x_r)
+{
+	if (!machine().side_effects_disabled())
+	{
+		resetx_w(1);
+		resetx_w(0);
+	}
+	return space.unmap();
+}
+
+WRITE8_MEMBER(upd4701_device::reset_x_w)
 {
 	resetx_w(1);
 	resetx_w(0);
@@ -158,7 +168,17 @@ WRITE8_MEMBER(upd4701_device::reset_x)
 //  reset_y - pulse the Y counter reset line
 //-------------------------------------------------
 
-WRITE8_MEMBER(upd4701_device::reset_y)
+READ8_MEMBER(upd4701_device::reset_y_r)
+{
+	if (!machine().side_effects_disabled())
+	{
+		resety_w(1);
+		resety_w(0);
+	}
+	return space.unmap();
+}
+
+WRITE8_MEMBER(upd4701_device::reset_y_w)
 {
 	resety_w(1);
 	resety_w(0);
@@ -168,9 +188,9 @@ WRITE8_MEMBER(upd4701_device::reset_y)
 //  reset_xy - pulse the counter reset lines
 //-------------------------------------------------
 
-READ8_MEMBER(upd4701_device::reset_xy)
+READ8_MEMBER(upd4701_device::reset_xy_r)
 {
-	if (!machine().side_effect_disabled())
+	if (!machine().side_effects_disabled())
 	{
 		resetx_w(1);
 		resety_w(1);
@@ -180,7 +200,7 @@ READ8_MEMBER(upd4701_device::reset_xy)
 	return space.unmap();
 }
 
-WRITE8_MEMBER(upd4701_device::reset_xy)
+WRITE8_MEMBER(upd4701_device::reset_xy_w)
 {
 	resetx_w(1);
 	resety_w(1);
@@ -334,11 +354,12 @@ READ8_MEMBER(upd4701_device::read_y)
 
 READ8_MEMBER(upd4701_device::read_xy)
 {
+	bool old_cs = m_cs;
 	cs_w(0);
 	xy_w(BIT(offset, 1));
 	ul_w(BIT(offset, 0));
 	u8 result = d_r(space, 0);
-	cs_w(1);
+	cs_w(old_cs);
 	return result;
 }
 

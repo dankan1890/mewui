@@ -12,17 +12,18 @@
 
     TODO:
 
-    - does not boot
-    - interrupts
-    - vsync interrupt
-    - map ROM to 000000-000007 at boot
+    . does not boot
+    . interrupts
+    . vsync interrupt
+    . map ROM to 000000-000007 at boot
+    - NVRAM (= battery backed SRAM) at 0xE40xxx
     - floppy
     - bitmap display
     - Z mode read/write
     - color status write
     - bitmap roll
     - overlay roll
-    - keyboard
+    . keyboard
     - joystick
     - light pen
     - memory parity
@@ -33,11 +34,29 @@
     - HVG
     - OMTI Series 10 SCSI controller (8" Winchester HD)
 
+    docs:
+
+    bitsavers://pdf/chromatics/
+    http://z80cpu.eu/mirrors/oldcomputers.dyndns.org/public/pub/manuals/omti10a.pdf
+
+    how to:
+
+    C-u @ -- enter Terminal
+    C-u F -- use serial port from Terminal (null_modem has to be set up 9600, 7E1)
+    C-u M -- enter Monitor
+    C-u T -- enter Thaw (setup utility)
+    C-u d -- boot DOS
+    C-u Q 1 -- display clock
+
+    See User's Manual appendix A for more control sequences.
 */
 
 #include "emu.h"
 #include "includes/cgc7900.h"
 #include "speaker.h"
+
+#define VERBOSE 1
+#include "logmacro.h"
 
 
 
@@ -62,11 +81,16 @@
 #define INT_BINT1           0x4000
 #define INT_RS232_RXRDY     0x8000
 
-//static const int INT_LEVEL[] = { 5, 4, 5, 4, 4, 5, 4, 5, 5, 4, 5, 4, 4, 5, 4, 5 };
-
 /***************************************************************************
     READ/WRITE HANDLERS
 ***************************************************************************/
+
+void cgc7900_state::kbd_put(u8 data)
+{
+	kbd_ready = true;
+	kbd_data = data;
+	irq_encoder(7, ASSERT_LINE);
+}
 
 /*-------------------------------------------------
     keyboard_r - keyboard data read
@@ -74,6 +98,8 @@
 
 READ16_MEMBER( cgc7900_state::keyboard_r )
 {
+	u16 data;
+
 	/*
 
 	    bit     description
@@ -97,7 +123,23 @@ READ16_MEMBER( cgc7900_state::keyboard_r )
 
 	*/
 
-	return 0;
+	if (kbd_ready)
+	{
+		data = kbd_data | kbd_mods;
+		kbd_ready = false;
+		irq_encoder(7, CLEAR_LINE);
+	}
+	else
+	{
+		data = kbd_mods;
+	}
+
+	LOG("kbd == %04x\n", data);
+
+	if (kbd_mods)
+		kbd_mods = 0;
+
+	return data;
 }
 
 /*-------------------------------------------------
@@ -128,38 +170,85 @@ WRITE16_MEMBER( cgc7900_state::keyboard_w )
 	    15
 
 	*/
+
+	LOG("kbd <- %04x\n", data);
 }
 
 /*-------------------------------------------------
     interrupt_mask_w - interrupt mask write
 -------------------------------------------------*/
 
+static const int int_levels[16] = { 5, 4, 5, 4, 4, 5, 4, 5, 5, 4, 5, 4, 4, 5, 4, 5 };
+static const int int_vectors[16] = {
+	0x4b, 0x44, 0x4c, 0x43, 0x42, 0x4d, 0x45, 0x4a, 0x49, 0x46, 0x4e, 0x41, 0x40, 0x4f, 0x47, 0x48
+};
+
 WRITE16_MEMBER( cgc7900_state::interrupt_mask_w )
 {
 	/*
 
-	    bit     description
+	    bit     description     vec level
 
-	     0      real time clock
-	     1      RS-449 Tx ready
-	     2      BINT 2
-	     3      RS-232 Tx ready
-	     4      disk
-	     5      BINT 3
-	     6      bezel keys
-	     7      keyboard
-	     8      RS-449 Rx ready
-	     9      light pen
-	    10      BINT 4
-	    11      joystick
-	    12      vertical retrace
-	    13      BINT 5
-	    14      BINT 1
-	    15      RS-232 Rx ready
+	     0      real time clock 4b  5
+	     1      RS-449 Tx ready 44  4
+	     2      BINT 2          4c  5
+	     3      RS-232 Tx ready 43  4
+	     4      disk            42  4
+	     5      BINT 3          4d  5
+	     6      bezel keys      45  4
+	     7      keyboard        4a  5
+	     8      RS-449 Rx ready 49  5
+	     9      light pen       46  4
+	    10      BINT 4          4e  5
+	    11      joystick        41  4
+	    12      vert. retrace   40  4
+	    13      BINT 5          4f  5
+	    14      BINT 1          47  4
+	    15      RS-232 Rx ready 48  5
 
+	    default mask is 0x7e3f -- RS232 Rx, RS449 Rx, keyboard, bezel.
 	*/
 
+	if (m_int_mask != data)
+	{
+		u16 changed = m_int_mask ^ data;
+
+		LOG("i_mask: changed %04X -> %04X\n", m_int_mask, data);
+
+		for (int i = 0; i < 16; i++)
+		{
+			if (BIT(changed, i) && BIT(data, i))
+			{
+				LOG("i_mask: pin %d disabled, clearing irq\n", i);
+				irq_encoder(i, CLEAR_LINE);
+			}
+			if (BIT(changed, i) && !BIT(data, i))
+			{
+				LOG("i_mask: pin %d enabled, %s irq\n", i, BIT(m_int_active, i) ? "setting" : "clearing");
+				irq_encoder(i, BIT(m_int_active, i));
+			}
+		}
+	}
+
 	m_int_mask = data;
+}
+
+void cgc7900_state::cpu_space_map(address_map &map)
+{
+	map(0xfffff2, 0xffffff).lr16("interrupt", [] (offs_t offset) -> u16 { return int_vectors[offset+1]; });
+}
+
+void cgc7900_state::irq_encoder(int pin, int state)
+{
+	if (state == ASSERT_LINE)
+		m_int_active |= (1 << pin);
+	else
+		m_int_active &= ~(1 << pin);
+
+	if (!BIT(m_int_mask, pin))
+	{
+		m_maincpu->set_input_line(int_levels[pin], state);
+	}
 }
 
 /*-------------------------------------------------
@@ -219,6 +308,11 @@ WRITE16_MEMBER( cgc7900_state::disk_command_w )
 {
 }
 
+READ16_MEMBER(cgc7900_state::unmapped_r)
+{
+	return rand();
+}
+
 /***************************************************************************
     MEMORY MAPS
 ***************************************************************************/
@@ -227,71 +321,72 @@ WRITE16_MEMBER( cgc7900_state::disk_command_w )
     ADDRESS_MAP( cgc7900_mem )
 -------------------------------------------------*/
 
-static ADDRESS_MAP_START( cgc7900_mem, AS_PROGRAM, 16, cgc7900_state )
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x000000, 0x000007) AM_ROM AM_REGION(M68000_TAG, 0)
-	AM_RANGE(0x000008, 0x1fffff) AM_RAM AM_SHARE("chrom_ram")
-	AM_RANGE(0x800000, 0x80ffff) AM_ROM AM_REGION(M68000_TAG, 0)
-	AM_RANGE(0xa00000, 0xbfffff) AM_READWRITE(z_mode_r, z_mode_w)
-	AM_RANGE(0xc00000, 0xdfffff) AM_RAM AM_SHARE("plane_ram")
-	AM_RANGE(0xe00000, 0xe1ffff) AM_WRITE(color_status_w)
+void cgc7900_state::cgc7900_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x000000, 0x1fffff).ram().share("chrom_ram");
+	map(0x800000, 0x80ffff).rom().region(M68000_TAG, 0);
+	map(0x810000, 0x9fffff).r(FUNC(cgc7900_state::unmapped_r));
+	map(0xa00000, 0xbfffff).rw(FUNC(cgc7900_state::z_mode_r), FUNC(cgc7900_state::z_mode_w));
+	map(0xc00000, 0xdfffff).ram().share("plane_ram");
+	map(0xe00000, 0xe1ffff).w(FUNC(cgc7900_state::color_status_w));
 //  AM_RANGE(0xe20000, 0xe23fff) Raster Processor
-	AM_RANGE(0xe30000, 0xe303ff) AM_RAM AM_SHARE("clut_ram")
-	AM_RANGE(0xe38000, 0xe3bfff) AM_RAM AM_SHARE("overlay_ram")
-	AM_RANGE(0xe40000, 0xe40001) AM_RAM AM_SHARE("roll_bitmap")
-	AM_RANGE(0xe40002, 0xe40003) AM_RAM AM_SHARE("pan_x")
-	AM_RANGE(0xe40004, 0xe40005) AM_RAM AM_SHARE("pan_y")
-	AM_RANGE(0xe40006, 0xe40007) AM_RAM AM_SHARE("zoom")
-	AM_RANGE(0xe40008, 0xe40009) AM_RAM
-	AM_RANGE(0xe4000a, 0xe4000f) AM_RAM // Raster Processor
-	AM_RANGE(0xe40010, 0xe40011) AM_RAM AM_SHARE("blink_select")
-	AM_RANGE(0xe40012, 0xe40013) AM_RAM AM_SHARE("plane_select")
-	AM_RANGE(0xe40014, 0xe40015) AM_RAM AM_SHARE("plane_switch")
-	AM_RANGE(0xe40016, 0xe40017) AM_RAM AM_SHARE("color_status_fg")
-	AM_RANGE(0xe40018, 0xe40019) AM_RAM AM_SHARE("color_status_bg")
-	AM_RANGE(0xe4001a, 0xe4001b) AM_RAM AM_SHARE("roll_overlay")
-	AM_RANGE(0xe4001c, 0xe40fff) AM_RAM
+	map(0xe30000, 0xe303ff).ram().share("clut_ram");
+	map(0xe38000, 0xe3bfff).ram().share("overlay_ram");
+	map(0xe40000, 0xe40001).ram().share("roll_bitmap");
+	map(0xe40002, 0xe40003).ram().share("pan_x");
+	map(0xe40004, 0xe40005).ram().share("pan_y");
+	map(0xe40006, 0xe40007).ram().share("zoom");
+	map(0xe40008, 0xe40009).ram();
+	map(0xe4000a, 0xe4000f).ram(); // Raster Processor
+	map(0xe40010, 0xe40011).ram().share("blink_select");
+	map(0xe40012, 0xe40013).ram().share("plane_select");
+	map(0xe40014, 0xe40015).ram().share("plane_switch");
+	map(0xe40016, 0xe40017).ram().share("color_status_fg");
+	map(0xe40018, 0xe40019).ram().share("color_status_bg");
+	map(0xe4001a, 0xe4001b).ram().share("roll_overlay");
+	map(0xe4001c, 0xe40fff).ram();
 //  AM_RANGE(0xefc440, 0xefc441) HVG Load X
 //  AM_RANGE(0xefc442, 0xefc443) HVG Load Y
 //  AM_RANGE(0xefc444, 0xefc445) HVG Load dX
 //  AM_RANGE(0xefc446, 0xefc447) HVG Load dY
 //  AM_RANGE(0xefc448, 0xefc449) HVG Load Pixel Color
 //  AM_RANGE(0xefc44a, 0xefc44b) HVG Load Trip
-	AM_RANGE(0xff8000, 0xff8001) AM_DEVREADWRITE8(INS8251_0_TAG, i8251_device, data_r, data_w, 0xff00)
-	AM_RANGE(0xff8002, 0xff8003) AM_DEVREADWRITE8(INS8251_0_TAG, i8251_device, status_r, control_w, 0xff00)
-	AM_RANGE(0xff8040, 0xff8041) AM_DEVREADWRITE8(INS8251_1_TAG, i8251_device, data_r, data_w, 0xff00)
-	AM_RANGE(0xff8042, 0xff8043) AM_DEVREADWRITE8(INS8251_1_TAG, i8251_device, status_r, control_w, 0xff00)
-	AM_RANGE(0xff8080, 0xff8081) AM_READWRITE(keyboard_r, keyboard_w)
+	map(0xff8000, 0xff8003).rw(m_i8251_0, FUNC(i8251_device::read), FUNC(i8251_device::write)).umask16(0x00ff);
+	map(0xff8040, 0xff8043).rw(m_i8251_1, FUNC(i8251_device::read), FUNC(i8251_device::write)).umask16(0x00ff);
+	map(0xff8080, 0xff8081).rw(FUNC(cgc7900_state::keyboard_r), FUNC(cgc7900_state::keyboard_w));
 //  AM_RANGE(0xff80c6, 0xff80c7) Joystick X axis
 //  AM_RANGE(0xff80ca, 0xff80cb) Joystick Y axis
 //  AM_RANGE(0xff80cc, 0xff80cd) Joystick Z axis
-	AM_RANGE(0xff8100, 0xff8101) AM_READWRITE(disk_data_r, disk_data_w)
-	AM_RANGE(0xff8120, 0xff8121) AM_READWRITE(disk_status_r, disk_command_w)
-	AM_RANGE(0xff8140, 0xff8141) AM_READ_PORT("BEZEL")
-//  AM_RANGE(0xff8180, 0xff8181) AM_DEVWRITE8(K1135A_TAG, k1135a_w, 0xff00) Baud rate generator
-//  AM_RANGE(0xff81c0, 0xff81ff) AM_DEVREADWRITE8(MM58167_TAG, mm58167_r, mm58167_w, 0xff00)
-	AM_RANGE(0xff8200, 0xff8201) AM_WRITE(interrupt_mask_w)
+	map(0xff8100, 0xff8101).rw(FUNC(cgc7900_state::disk_data_r), FUNC(cgc7900_state::disk_data_w));
+	map(0xff8120, 0xff8121).rw(FUNC(cgc7900_state::disk_status_r), FUNC(cgc7900_state::disk_command_w));
+	map(0xff8140, 0xff8141).portr("BEZEL");
+	map(0xff8180, 0xff8180).w(K1135A_TAG, FUNC(com8116_device::stt_str_w));
+	map(0xff81c0, 0xff81ff).rw(MM58167_TAG, FUNC(mm58167_device::read), FUNC(mm58167_device::write)).umask16(0x00ff);
+	map(0xff8200, 0xff8201).w(FUNC(cgc7900_state::interrupt_mask_w));
 //  AM_RANGE(0xff8240, 0xff8241) Light Pen enable
 //  AM_RANGE(0xff8242, 0xff8243) Light Pen X value
 //  AM_RANGE(0xff8244, 0xff8245) Light Pen Y value
 //  AM_RANGE(0xff8246, 0xff8247) Buffer memory parity check
 //  AM_RANGE(0xff8248, 0xff8249) Buffer memory parity set/reset
-	AM_RANGE(0xff824a, 0xff824b) AM_READ(sync_r)
-	AM_RANGE(0xff83c0, 0xff83c1) AM_DEVWRITE8(AY8910_TAG, ay8910_device, address_w, 0xff00)
-	AM_RANGE(0xff83c2, 0xff83c3) AM_DEVREAD8(AY8910_TAG, ay8910_device, data_r, 0xff00)
-	AM_RANGE(0xff83c4, 0xff83c5) AM_DEVWRITE8(AY8910_TAG, ay8910_device, data_w, 0xff00)
+	map(0xff824a, 0xff824b).r(FUNC(cgc7900_state::sync_r));
+	map(0xff83c0, 0xff83c0).w(AY8910_TAG, FUNC(ay8910_device::address_w));
+	map(0xff83c2, 0xff83c2).r(AY8910_TAG, FUNC(ay8910_device::data_r));
+	map(0xff83c4, 0xff83c4).w(AY8910_TAG, FUNC(ay8910_device::data_w));
+	// DDMA option board
 //  AM_RANGE(0xff8500, 0xff8501) Disk DMA Command Register
 //  AM_RANGE(0xff8502, 0xff8503) Disk DMA Address Register
 //  AM_RANGE(0xff8507, 0xff8507) Disk DMA Control/Status Register
-ADDRESS_MAP_END
+}
 
 /*-------------------------------------------------
     ADDRESS_MAP( keyboard_mem )
 -------------------------------------------------*/
 
-static ADDRESS_MAP_START( keyboard_mem, AS_PROGRAM, 8, cgc7900_state )
-	AM_RANGE(0x000, 0x7ff) AM_ROM
-ADDRESS_MAP_END
+void cgc7900_state::keyboard_mem(address_map &map)
+{
+	map(0x000, 0x7ff).rom();
+}
 
 /***************************************************************************
     INPUT PORTS
@@ -345,6 +440,17 @@ void cgc7900_state::machine_start()
 
 void cgc7900_state::machine_reset()
 {
+	uint8_t *user1 = memregion(M68000_TAG)->base();
+
+	memcpy((uint8_t *)m_chrom_ram.target(), user1, 8); // not really what happens but...
+
+	kbd_mods = 0x300; // forces cold boot -- initializes SRAM contents
+	kbd_data = 0;
+	kbd_ready = false;
+
+	m_i8251_0->write_cts(0);
+
+	m_int_active = 0;
 }
 
 /***************************************************************************
@@ -355,40 +461,63 @@ void cgc7900_state::machine_reset()
     MACHINE_DRIVER( cgc7900 )
 -------------------------------------------------*/
 
-static MACHINE_CONFIG_START( cgc7900 )
+void cgc7900_state::cgc7900(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD(M68000_TAG, M68000, XTAL_28_48MHz/4)
-	MCFG_CPU_PROGRAM_MAP(cgc7900_mem)
+	M68000(config, m_maincpu, XTAL(28'480'000)/4);
+	m_maincpu->set_addrmap(AS_PROGRAM, &cgc7900_state::cgc7900_mem);
+	m_maincpu->set_addrmap(m68000_base_device::AS_CPU_SPACE, &cgc7900_state::cpu_space_map);
 
-	MCFG_CPU_ADD(I8035_TAG, I8035, 1000000)
-	MCFG_CPU_PROGRAM_MAP(keyboard_mem)
-	//MCFG_MCS48_PORT_P1_IN_CB(READ8())
-	//MCFG_MCS48_PORT_P1_OUT_CB(WRITE8())
-	//MCFG_MCS48_PORT_P2_IN_CB(READ8())
-	//MCFG_MCS48_PORT_P2_OUT_CB(WRITE8())
-	//MCFG_MCS48_PORT_T1_IN_CB(READLINE())
-	//MCFG_MCS48_PORT_BUS_IN_CB(READ8())
-	//MCFG_MCS48_PORT_BUS_OUT_CB(WRITE8())
-	MCFG_DEVICE_DISABLE()
+	i8035_device &kbmcu(I8035(config, I8035_TAG, 1000000));
+	kbmcu.set_addrmap(AS_PROGRAM, &cgc7900_state::keyboard_mem);
+	kbmcu.set_disable();
 
-/*  MCFG_CPU_ADD(AM2910_TAG, AM2910, XTAL_17_36MHz)
-    MCFG_CPU_PROGRAM_MAP(omti10_mem)*/
+//  am2910_device &am2910(AM2910(config, AM2910_TAG, XTAL(17'360'000)));
+//  am2910.set_addrmap(AS_PROGRAM, &cgc7900_state::omti10_mem);
+
 
 	/* video hardware */
-	MCFG_FRAGMENT_ADD(cgc7900_video)
+	cgc7900_video(config);
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD(AY8910_TAG, AY8910, XTAL_28_48MHz/16)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	SPEAKER(config, "mono").front_center();
+	AY8910(config, AY8910_TAG, XTAL(28'480'000)/16).add_route(ALL_OUTPUTS, "mono", 0.25);
 
 	/* devices */
-	MCFG_DEVICE_ADD(INS8251_0_TAG, I8251, 0)
-	// rs232
+	generic_keyboard_device &keyboard(GENERIC_KEYBOARD(config, "keyboard", 0));
+	keyboard.set_keyboard_callback(FUNC(cgc7900_state::kbd_put));
 
-	MCFG_DEVICE_ADD(INS8251_1_TAG, I8251, 0)
-	// rs449
-MACHINE_CONFIG_END
+	mm58167_device &rtc(MM58167(config, MM58167_TAG, XTAL(32'768)));
+	rtc.irq().set(FUNC(cgc7900_state::irq<0x0>));
+
+	com8116_device &k1135a(COM8116(config, K1135A_TAG, XTAL(5'068'800)));
+	k1135a.fr_handler().set(m_i8251_0, FUNC(i8251_device::write_txc));
+	k1135a.fr_handler().append(m_i8251_0, FUNC(i8251_device::write_rxc));
+	k1135a.ft_handler().set(m_i8251_1, FUNC(i8251_device::write_txc));
+	k1135a.ft_handler().append(m_i8251_1, FUNC(i8251_device::write_rxc));
+
+	I8251(config, m_i8251_0, 0);
+	m_i8251_0->txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
+	m_i8251_0->dtr_handler().set("rs232", FUNC(rs232_port_device::write_dtr));
+	m_i8251_0->rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
+	m_i8251_0->rxrdy_handler().set(FUNC(cgc7900_state::irq<0xf>));
+	m_i8251_0->txrdy_handler().set(FUNC(cgc7900_state::irq<0x3>));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "null_modem"));
+	rs232.rxd_handler().set(m_i8251_0, FUNC(i8251_device::write_rxd));
+	rs232.dsr_handler().set(m_i8251_0, FUNC(i8251_device::write_dsr));
+
+	I8251(config, m_i8251_1, 0);
+	m_i8251_1->txd_handler().set("rs449", FUNC(rs232_port_device::write_txd));
+	m_i8251_1->dtr_handler().set("rs449", FUNC(rs232_port_device::write_dtr));
+	m_i8251_1->rts_handler().set("rs449", FUNC(rs232_port_device::write_rts));
+	m_i8251_1->rxrdy_handler().set(FUNC(cgc7900_state::irq<0x8>));
+	m_i8251_1->txrdy_handler().set(FUNC(cgc7900_state::irq<0x1>));
+
+	rs232_port_device &rs449(RS232_PORT(config, "rs449", default_rs232_devices, nullptr));
+	rs449.rxd_handler().set(m_i8251_1, FUNC(i8251_device::write_rxd));
+	rs449.dsr_handler().set(m_i8251_1, FUNC(i8251_device::write_dsr));
+}
 
 /***************************************************************************
     ROMS
@@ -441,5 +570,5 @@ ROM_END
     SYSTEM DRIVERS
 ***************************************************************************/
 
-/*    YEAR  NAME        PARENT  COMPAT  MACHINE     INPUT    STATE          INIT    COMPANY         FULLNAME    FLAGS */
-COMP( 1980, cgc7900,    0,      0,      cgc7900,    cgc7900, cgc7900_state, 0,      "Chromatics",   "CGC 7900", MACHINE_NOT_WORKING)
+/*    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    CLASS          INIT        COMPANY       FULLNAME    FLAGS */
+COMP( 1980, cgc7900, 0,      0,      cgc7900, cgc7900, cgc7900_state, empty_init, "Chromatics", "CGC 7900", MACHINE_NOT_WORKING)

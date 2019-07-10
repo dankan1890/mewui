@@ -138,11 +138,11 @@ void c64_stardos_cartridge_device::device_start()
 //  c64_cd_r - cartridge data read
 //-------------------------------------------------
 
-uint8_t c64_stardos_cartridge_device::c64_cd_r(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+uint8_t c64_stardos_cartridge_device::c64_cd_r(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!roml || !romh)
 	{
-		// TODO BITSWAP8(7,6,5,4,3,1,2,0) ?
+		// TODO bitswap<8>(7,6,5,4,3,1,2,0) ?
 		data = m_roml[offset & 0x3fff];
 	}
 	else if (!io1)
@@ -162,7 +162,7 @@ uint8_t c64_stardos_cartridge_device::c64_cd_r(address_space &space, offs_t offs
 //  c64_cd_w - cartridge data write
 //-------------------------------------------------
 
-void c64_stardos_cartridge_device::c64_cd_w(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+void c64_stardos_cartridge_device::c64_cd_w(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!io1)
 	{

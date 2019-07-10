@@ -25,12 +25,12 @@ local function is_excluded(prj, cfg, file)
 end
 
 function cmake.excludedFiles(prj, cfg, src)
-	for _, v in ipairs(src) do
-		if (is_excluded(prj, cfg, v)) then
-			_p(1, 'list(REMOVE_ITEM source_list ../%s)', v)
-		end
+    for _, v in ipairs(src) do
+        if (is_excluded(prj, cfg, v)) then
+            _p(1, 'list(REMOVE_ITEM source_list ../%s)', v)
+        end
 
-	end
+    end
 end
 
 function cmake.list(value)
@@ -42,7 +42,7 @@ function cmake.list(value)
 end
 
 function cmake.files(prj)
-	local ret = {}
+    local ret = {}
     local tr = premake.project.buildsourcetree(prj)
     tree.traverse(tr, {
         onbranchenter = function(node, depth)
@@ -50,12 +50,12 @@ function cmake.files(prj)
         onbranchexit = function(node, depth)
         end,
         onleaf = function(node, depth)
-			table.insert(ret, node.cfg.name)
-			_p(1, '../%s', node.cfg.name)
+            table.insert(ret, node.cfg.name)
+            _p(1, '../%s', node.cfg.name)
         end,
     }, true, 1)
 
-	return ret
+    return ret
 end
 
 function cmake.header(prj)
@@ -118,8 +118,8 @@ end
 
 function cmake.depRules(prj)
     local maintable = {}
-    for _, dependency in ipairs(prj.dependency or {}) do
-        for _, dep in ipairs(dependency or {}) do
+    for _, dependency in ipairs(prj.dependency) do
+        for _, dep in ipairs(dependency) do
             if path.issourcefile(dep[1]) then
                 local dep1 = premake.esc(path.getrelative(prj.location, dep[1]))
                 local dep2 = premake.esc(path.getrelative(prj.location, dep[2]))
@@ -127,27 +127,27 @@ function cmake.depRules(prj)
                 table.insert(maintable[dep1], dep2)
             end
         end
-	end
+    end
 
     for key, _ in pairs(maintable) do
-		local deplist = {}
-		local depsname = string.format('%s_deps', path.getname(key))
+        local deplist = {}
+        local depsname = string.format('%s_deps', path.getname(key))
 
-		for _, d2 in pairs(maintable[key]) do
-			table.insert(deplist, d2)
-		end
-		_p('set(')
-		_p(1, depsname)
-		for _, v in pairs(deplist) do
-			_p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', v)
-		end
-		_p(')')
-		_p('')
-		_p('set_source_files_properties(')
-		_p(1, '\"${CMAKE_CURRENT_SOURCE_DIR}/../%s\"', key)
-		_p(1, 'PROPERTIES OBJECT_DEPENDS \"${%s}\"', depsname)
-		_p(')')
-		_p('')
+        for _, d2 in pairs(maintable[key]) do
+            table.insert(deplist, d2)
+        end
+        _p('set(')
+        _p(1, depsname)
+        for _, v in pairs(deplist) do
+            _p(1, '${CMAKE_CURRENT_SOURCE_DIR}/../%s', v)
+        end
+        _p(')')
+        _p('')
+        _p('set_source_files_properties(')
+        _p(1, '\"${CMAKE_CURRENT_SOURCE_DIR}/../%s\"', key)
+        _p(1, 'PROPERTIES OBJECT_DEPENDS \"${%s}\"', depsname)
+        _p(')')
+        _p('')
     end
 end
 
@@ -190,11 +190,11 @@ end
 function cmake.project(prj)
     io.indent = "  "
     cmake.header(prj)
-	_p('set(')
-	_p('source_list')
-	local source_files = cmake.files(prj)
-	_p(')')
-	_p('')
+    _p('set(')
+    _p('source_list')
+    local source_files = cmake.files(prj)
+    _p(')')
+    _p('')
 
     local nativeplatform = iif(os.is64bit(), "x64", "x32")
     local cc = premake.gettool(prj)
@@ -211,7 +211,7 @@ function cmake.project(prj)
                 table.insert(configurations, cfg)
             end
         end
-	end
+    end
 
     local commonIncludes = cmake.commonRules(configurations, includestr)
     local commonDefines = cmake.commonRules(configurations, definestr)
@@ -220,8 +220,8 @@ function cmake.project(prj)
     for _, cfg in ipairs(configurations) do
         _p('if(CMAKE_BUILD_TYPE MATCHES \"%s\")', cfg.name)
 
-		-- list excluded files
-		cmake.excludedFiles(prj, cfg, source_files)
+        -- list excluded files
+        cmake.excludedFiles(prj, cfg, source_files)
 
         -- add includes directories
         cmake.cfgRules(cfg.includedirs, commonIncludes, includestr)
@@ -264,7 +264,7 @@ function cmake.project(prj)
             _p(1, 'add_executable(%s ${source_list})', premake.esc(cfg.buildtarget.basename))
             _p(1, 'target_link_libraries(%s%s%s)', premake.esc(cfg.buildtarget.basename), cmake.list(premake.esc(premake.getlinks(cfg, "siblings", "basename"))), cmake.list(cc.getlinkflags(cfg)))
         end
-		_p('endif()')
+        _p('endif()')
         _p('')
     end
 end

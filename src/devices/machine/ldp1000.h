@@ -15,18 +15,10 @@
 
 
 //**************************************************************************
-//  INTERFACE CONFIGURATION MACROS
-//**************************************************************************
-
-#define MCFG_LASERDISC_LDP1000_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, SONY_LDP1000, 0)
-
-//**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
 
 // device type definition
-extern const device_type SONY_LDP1000;
 DECLARE_DEVICE_TYPE(SONY_LDP1000, sony_ldp1000_device)
 
 // ======================> sony_ldp1000_device

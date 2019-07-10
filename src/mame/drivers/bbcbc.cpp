@@ -31,7 +31,7 @@
 #include "cpu/z80/z80.h"
 #include "video/tms9928a.h"
 #include "machine/z80pio.h"
-#include "cpu/z80/z80daisy.h"
+#include "machine/z80daisy.h"
 #include "bus/generic/slot.h"
 #include "bus/generic/carts.h"
 #include "softlist.h"
@@ -40,55 +40,50 @@ class bbcbc_state : public driver_device
 {
 public:
 	bbcbc_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_pio(*this, "z80pio"),
-		m_cart(*this, "cartslot"),
-		m_buttons(*this, "BUTTONS.%u", 0)
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_z80pio(*this, "z80pio")
+		, m_buttons(*this, "BUTTONS.%u", 0)
 	{ }
 
-	required_device<cpu_device> m_maincpu;
-	required_device<z80pio_device> m_pio;
-	required_device<generic_slot_device> m_cart;
-	required_ioport_array<3> m_buttons;
-
-	uint8_t m_input_select;
-
-	virtual void machine_start() override;
-	virtual void machine_reset() override;
-
-	DECLARE_READ8_MEMBER(pio_r);
-	DECLARE_WRITE8_MEMBER(pio_w);
 	DECLARE_READ8_MEMBER(input_r);
 	DECLARE_WRITE8_MEMBER(input_select_w);
+
+	void bbcbc(machine_config &config);
+	void io_map(address_map &map);
+	void mem_map(address_map &map);
+private:
+	uint8_t m_input_select;
+	virtual void machine_start() override;
+	virtual void machine_reset() override;
+	required_device<z80_device> m_maincpu;
+	required_device<z80pio_device> m_z80pio;
+	required_ioport_array<3> m_buttons;
 };
 
 
-#define MAIN_CLOCK XTAL_4_433619MHz
+#define MAIN_CLOCK XTAL(4'433'619)
 
 
-READ8_MEMBER(bbcbc_state::pio_r)
+void bbcbc_state::mem_map(address_map &map)
 {
-	return m_pio->read(space, offset >> 5, mem_mask);
+	map(0x0000, 0x3fff).rom();
+	map(0x4000, 0xbfff).r("cartslot", FUNC(generic_slot_device::read_rom));
+	map(0xe000, 0xe7ff).ram();
 }
 
-WRITE8_MEMBER(bbcbc_state::pio_w)
+void bbcbc_state::io_map(address_map &map)
 {
-	m_pio->write(space, offset >> 5, data, mem_mask);
+	map.global_mask(0xff);
+	map(0x00, 0x7f).lrw8("z80pio_rw",
+						 [this](offs_t offset) {
+							 return m_z80pio->read(offset >> 5);
+						 },
+						 [this](offs_t offset, u8 data) {
+							 m_z80pio->write(offset >> 5, data);
+						 });
+	map(0x80, 0x81).rw("tms9129", FUNC(tms9129_device::read), FUNC(tms9129_device::write));
 }
-
-static ADDRESS_MAP_START( bbcbc_prg, AS_PROGRAM, 8, bbcbc_state )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0xbfff) AM_DEVREAD("cartslot", generic_slot_device, read_rom)
-	AM_RANGE(0xe000, 0xe7ff) AM_RAM
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bbcbc_io, AS_IO, 8, bbcbc_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x7f) AM_READWRITE(pio_r, pio_w) // actually only $00, $20, $40, $60
-	AM_RANGE(0x80, 0x80) AM_DEVREADWRITE("tms9129", tms9129_device, vram_read, vram_write)
-	AM_RANGE(0x81, 0x81) AM_DEVREADWRITE("tms9129", tms9129_device, register_read, register_write)
-ADDRESS_MAP_END
 
 // Input bits are read through the PIO four at a time, then stored individually in RAM at E030-E03B
 static INPUT_PORTS_START( bbcbc )
@@ -122,28 +117,28 @@ static const z80_daisy_config bbcbc_daisy_chain[] =
 };
 
 
-static MACHINE_CONFIG_START( bbcbc )
-	MCFG_CPU_ADD( "maincpu", Z80, MAIN_CLOCK / 8 )
-	MCFG_CPU_PROGRAM_MAP(bbcbc_prg)
-	MCFG_CPU_IO_MAP(bbcbc_io)
-	MCFG_Z80_DAISY_CHAIN(bbcbc_daisy_chain)
+void bbcbc_state::bbcbc(machine_config &config)
+{
+	Z80(config, m_maincpu, 10.6875_MHz_XTAL / 3);
+	m_maincpu->set_addrmap(AS_PROGRAM, &bbcbc_state::mem_map);
+	m_maincpu->set_addrmap(AS_IO, &bbcbc_state::io_map);
+	m_maincpu->set_daisy_config(bbcbc_daisy_chain);
 
-	MCFG_DEVICE_ADD("z80pio", Z80PIO, MAIN_CLOCK/8)
-	//MCFG_Z80PIO_OUT_PA_CB(???)
-	//MCFG_Z80PIO_IN_STROBE_CB(???)
-	MCFG_Z80PIO_IN_PB_CB(READ8(bbcbc_state, input_r))
-	MCFG_Z80PIO_OUT_PB_CB(WRITE8(bbcbc_state, input_select_w))
+	Z80PIO(config, m_z80pio, 10.6875_MHz_XTAL / 3);
+	//m_z80pio->out_pa_callback().set(???);
+	m_z80pio->in_pb_callback().set(FUNC(bbcbc_state::input_r));
+	m_z80pio->out_pb_callback().set(FUNC(bbcbc_state::input_select_w));
 
-	MCFG_DEVICE_ADD( "tms9129", TMS9129, XTAL_10_738635MHz / 2 )
-	MCFG_TMS9928A_VRAM_SIZE(0x4000)
-	MCFG_TMS9928A_OUT_INT_LINE_CB(INPUTLINE("maincpu", 0))
-	MCFG_TMS9928A_SCREEN_ADD_PAL( "screen" )
-	MCFG_SCREEN_UPDATE_DEVICE( "tms9129", tms9928a_device, screen_update )
+	tms9129_device &vdp(TMS9129(config, "tms9129", 10.6875_MHz_XTAL));
+	vdp.set_screen("screen");
+	vdp.set_vram_size(0x4000);
+	vdp.int_callback().set_inputline("maincpu", 0);
+	SCREEN(config, "screen", SCREEN_TYPE_RASTER);
 
 	// Software on ROM cartridges
-	MCFG_GENERIC_CARTSLOT_ADD("cartslot", generic_plain_slot, "bbcbc_cart")
-	MCFG_SOFTWARE_LIST_ADD("cart_list","bbcbc")
-MACHINE_CONFIG_END
+	GENERIC_CARTSLOT(config, "cartslot", generic_plain_slot, "bbcbc_cart");
+	SOFTWARE_LIST(config, "cart_list").set_original("bbcbc");
+}
 
 
 void bbcbc_state::machine_start()
@@ -189,5 +184,5 @@ ROM_END
 
 ***************************************************************************/
 
-//   YEAR  NAME   PARENT  COMPAT  MACHINE INPUT  CLASS        INIT  COMPANY    FULLNAME                FLAGS
-CONS(1985, bbcbc, 0,      0,      bbcbc,  bbcbc, bbcbc_state, 0,    "Unicard", "BBC Bridge Companion", MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE)
+//   YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT  CLASS        INIT        COMPANY    FULLNAME                FLAGS
+CONS(1985, bbcbc, 0,      0,      bbcbc,   bbcbc, bbcbc_state, empty_init, "Unicard", "BBC Bridge Companion", MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -27,6 +27,14 @@
 #else
 #	define EARLY_DEPTH_STENCIL
 #endif // BGFX_SHADER_LANGUAGE_HLSL > 3 && BGFX_SHADER_TYPE_FRAGMENT
+
+#if BGFX_SHADER_LANGUAGE_GLSL
+#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = _type[](
+#   define ARRAY_END() )
+#else
+#   define ARRAY_BEGIN(_type, _name, _count) _type _name[_count] = {
+#   define ARRAY_END() }
+#endif // BGFX_SHADER_LANGUAGE_GLSL
 
 #if BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
 #	define CONST(_x) static const _x
@@ -83,12 +91,12 @@ uint4 bitfieldReverse(uint4 _x) { return reversebits(_x); }
 #		if !BGFX_SHADER_LANGUAGE_SPIRV
 uint packHalf2x16(vec2 _x)
 {
-	return (f32tof16(_x.x)<<16) | f32tof16(_x.y);
+	return (f32tof16(_x.y)<<16) | f32tof16(_x.x);
 }
 
 vec2 unpackHalf2x16(uint _x)
 {
-	return vec2(f16tof32(_x >> 16), f16tof32(_x) );
+	return vec2(f16tof32(_x & 0xffff), f16tof32(_x >> 16) );
 }
 #		endif // !BGFX_SHADER_LANGUAGE_SPIRV
 
@@ -234,6 +242,13 @@ vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
 	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
 }
 
+vec2 bgfxTextureSize(BgfxSampler2D _sampler, int _lod)
+{
+	vec2 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y);
+	return result;
+}
+
 ivec4 bgfxTexelFetch(BgfxISampler2D _sampler, ivec2 _coord, int _lod)
 {
 	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
@@ -252,6 +267,13 @@ vec4 bgfxTexelFetch(BgfxSampler2DMS _sampler, ivec2 _coord, int _sampleIdx)
 vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 {
 	return _sampler.m_texture.Load(ivec4(_coord, _lod) );
+}
+
+vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
+{
+	vec3 result;
+	_sampler.m_texture.GetDimensions(result.x, result.y, result.z);
+	return result;
 }
 
 #		define SAMPLER2D(_name, _reg) \
@@ -314,6 +336,7 @@ vec4 bgfxTexelFetch(BgfxSampler3D _sampler, ivec3 _coord, int _lod)
 #		define textureCubeLod(_sampler, _coord, _level) bgfxTextureCubeLod(_sampler, _coord, _level)
 
 #		define texelFetch(_sampler, _coord, _lod) bgfxTexelFetch(_sampler, _coord, _lod)
+#		define textureSize(_sampler, _lod) bgfxTextureSize(_sampler, _lod)
 #	else
 
 #		define sampler2DShadow sampler2D
@@ -353,6 +376,10 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 #		define SAMPLER2DMS(_name, _reg) uniform sampler2DMS _name : REGISTER(s, _reg)
 #		define texture2D(_sampler, _coord) tex2D(_sampler, _coord)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
+
+#		define SAMPLER2DARRAY(_name, _reg) SAMPLER2D(_name, _reg)
+#		define texture2DArray(_sampler, _coord) texture2D(_sampler, (_coord).xy)
+#		define texture2DArrayLod(_sampler, _coord, _lod) texture2DLod(_sampler, _coord, _lod)
 
 #		define SAMPLER2DSHADOW(_name, _reg) uniform sampler2DShadow _name : REGISTER(s, _reg)
 #		define shadow2D(_sampler, _coord) bgfxShadow2D(_sampler, _coord)
@@ -433,12 +460,12 @@ vec4  mod(vec4  _a, vec4  _b) { return _a - _b * floor(_a / _b); }
 #	define SAMPLERCUBEARRAY(_name, _reg)     uniform samplerCubeArray _name
 #	define SAMPLER2DARRAYSHADOW(_name, _reg) uniform sampler2DArrayShadow _name
 
-#	if BGFX_SHADER_LANGUAGE_GLSL >= 130
-#		define ISAMPLER2D(_name, _reg) uniform isampler2D _name
-#		define USAMPLER2D(_name, _reg) uniform usampler2D _name
-#		define ISAMPLER3D(_name, _reg) uniform isampler3D _name
-#		define USAMPLER3D(_name, _reg) uniform usampler3D _name
+#	define ISAMPLER2D(_name, _reg) uniform isampler2D _name
+#	define USAMPLER2D(_name, _reg) uniform usampler2D _name
+#	define ISAMPLER3D(_name, _reg) uniform isampler3D _name
+#	define USAMPLER3D(_name, _reg) uniform usampler3D _name
 
+#	if BGFX_SHADER_LANGUAGE_GLSL >= 130
 #		define texture2D(_sampler, _coord)      texture(_sampler, _coord)
 #		define texture2DArray(_sampler, _coord) texture(_sampler, _coord)
 #		define texture3D(_sampler, _coord)      texture(_sampler, _coord)
@@ -464,6 +491,24 @@ uvec2 uvec2_splat(uint _x) { return uvec2(_x, _x); }
 uvec3 uvec3_splat(uint _x) { return uvec3(_x, _x, _x); }
 uvec4 uvec4_splat(uint _x) { return uvec4(_x, _x, _x, _x); }
 #endif // BGFX_SHADER_LANGUAGE_GLSL >= 130 || BGFX_SHADER_LANGUAGE_HLSL || BGFX_SHADER_LANGUAGE_PSSL || BGFX_SHADER_LANGUAGE_SPIRV
+
+mat4 mtxFromRows(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return transpose(mat4(_0, _1, _2, _3) );
+#else
+    return mat4(_0, _1, _2, _3);
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
+
+mat4 mtxFromCols(vec4 _0, vec4 _1, vec4 _2, vec4 _3)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    return mat4(_0, _1, _2, _3);
+#else
+    return transpose(mat4(_0, _1, _2, _3) );
+#endif // BGFX_SHADER_LANGUAGE_GLSL
+}
 
 uniform vec4  u_viewRect;
 uniform vec4  u_viewTexel;

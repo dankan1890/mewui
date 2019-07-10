@@ -20,7 +20,11 @@ TODO:
   * unknown reads and writes
   * should have a rombank somewhere
   * what causes the nmi?
-  * where's adpcm hooked up?
+  * what kind of device lives at C008-C009 and C00C-C00D? looks like a
+    Mitsubishi M66300 Parallel-In Serial-Out Data Buffer with FIFO
+    (each is initialized with 80 to control port, then operated by writing
+    0A, 08, 00 to control port and transferring five bytes from memory to
+    the data port, finishing by writing 01 to the control port)
   * 2 players, 1 7seg led on each cpanel, 3 7seg leds on cranes
 - get more dumps, find out technical differences between games and document them
 - the rest can come later
@@ -29,6 +33,7 @@ TODO:
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
+#include "machine/te7750.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
 #include "speaker.h"
@@ -42,8 +47,17 @@ public:
 		m_maincpu(*this, "maincpu")
 	{ }
 
+	DECLARE_WRITE8_MEMBER(output_w);
+
 	required_device<cpu_device> m_maincpu;
+	void cspin2(machine_config &config);
+	void cspin2_map(address_map &map);
 };
+
+WRITE8_MEMBER(capr1_state::output_w)
+{
+	// bit 7 = watchdog?
+}
 
 
 /***************************************************************************
@@ -52,16 +66,18 @@ public:
 
 ***************************************************************************/
 
-static ADDRESS_MAP_START( cspin2_map, AS_PROGRAM, 8, capr1_state )
-	AM_RANGE(0x0000, 0x7fff) AM_ROM
-	AM_RANGE(0x8000, 0x9fff) AM_RAM
-//  AM_RANGE(0xa000, 0xa01f) AM_RAM // wrong
-	AM_RANGE(0xc000, 0xc001) AM_DEVREADWRITE("ym", ym2203_device, read, write)
-//  AM_RANGE(0xc004, 0xc005) AM_WRITENOP
-//  AM_RANGE(0xc008, 0xc009) AM_WRITENOP
-//  AM_RANGE(0xc00c, 0xc00d) AM_WRITENOP
-//  AM_RANGE(0xc00d, 0xc00d) AM_DEVREADWRITE("oki", okim6295_device, read, write)
-ADDRESS_MAP_END
+void capr1_state::cspin2_map(address_map &map)
+{
+	map(0x0000, 0x7fff).rom();
+	map(0x8000, 0x9fff).ram();
+	map(0xa000, 0xa00f).rw("te7750", FUNC(te7750_device::read), FUNC(te7750_device::write));
+	map(0xc000, 0xc001).rw("ym", FUNC(ym2203_device::read), FUNC(ym2203_device::write));
+	map(0xc004, 0xc004).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));
+//  AM_RANGE(0xc008, 0xc009) AM_DEVWRITE("fifo1", m66300_device, write)
+//  AM_RANGE(0xc00c, 0xc00d) AM_DEVWRITE("fifo2", m66300_device, write)
+//  AM_RANGE(0xe000, 0xe001) AM_WRITENOP
+//  AM_RANGE(0xe002, 0xe004) AM_WRITENOP
+}
 
 
 
@@ -73,7 +89,7 @@ ADDRESS_MAP_END
 
 static INPUT_PORTS_START( cspin2 )
 	// just some test stuff
-	PORT_START("IN0")
+	PORT_START("INA")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -83,7 +99,7 @@ static INPUT_PORTS_START( cspin2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
 
-	PORT_START("IN1")
+	PORT_START("INB")
 	PORT_DIPUNKNOWN_DIPLOC( 0x01, 0x01, "SW1:1" )
 	PORT_DIPUNKNOWN_DIPLOC( 0x02, 0x02, "SW1:2" )
 	PORT_DIPUNKNOWN_DIPLOC( 0x04, 0x04, "SW1:3" )
@@ -92,6 +108,86 @@ static INPUT_PORTS_START( cspin2 )
 	PORT_DIPUNKNOWN_DIPLOC( 0x20, 0x20, "SW1:6" )
 	PORT_DIPUNKNOWN_DIPLOC( 0x40, 0x40, "SW1:7" )
 	PORT_DIPUNKNOWN_DIPLOC( 0x80, 0x80, "SW1:8" )
+
+	PORT_START("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN5")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN6")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN7")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START("IN8")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -102,30 +198,41 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static MACHINE_CONFIG_START( cspin2 )
-
+void capr1_state::cspin2(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, 4000000) // clock frequency unknown
-	MCFG_CPU_PROGRAM_MAP(cspin2_map)
-	//MCFG_CPU_PERIODIC_INT_DRIVER(capr1_state, nmi_line_pulse, 20)
+	Z80(config, m_maincpu, 4000000); // clock frequency unknown
+	m_maincpu->set_addrmap(AS_PROGRAM, &capr1_state::cspin2_map);
+	//m_maincpu->set_periodic_int(FUNC(capr1_state::nmi_line_pulse), attotime::from_hz(20));
+
+	te7750_device &te7750(TE7750(config, "te7750")); // guess
+	te7750.ios_cb().set_constant(7);
+	te7750.in_port1_cb().set_ioport("IN1");
+	te7750.in_port2_cb().set_ioport("IN2");
+	te7750.in_port3_cb().set_ioport("IN3");
+	te7750.in_port4_cb().set_ioport("IN4");
+	te7750.in_port5_cb().set_ioport("IN5");
+	te7750.in_port6_cb().set_ioport("IN6");
+	te7750.in_port7_cb().set_ioport("IN7");
+	te7750.in_port8_cb().set_ioport("IN8");
+	te7750.out_port9_cb().set(FUNC(capr1_state::output_w));
 
 	/* no video! */
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
+	SPEAKER(config, "mono").front_center();
 
-	MCFG_SOUND_ADD("ym", YM2203, 4000000) // clock frequency unknown
-	MCFG_YM2203_IRQ_HANDLER(INPUTLINE("maincpu", 0))
-	//MCFG_AY8910_PORT_A_READ_CB(IOPORT("IN0"))
-	//MCFG_AY8910_PORT_B_READ_CB(IOPORT("IN1"))
-	MCFG_SOUND_ROUTE(0, "mono", 0.15)
-	MCFG_SOUND_ROUTE(1, "mono", 0.15)
-	MCFG_SOUND_ROUTE(2, "mono", 0.15)
-	MCFG_SOUND_ROUTE(3, "mono", 0.40)
+	ym2203_device &ym(YM2203(config, "ym", 4000000)); // clock frequency unknown
+	ym.irq_handler().set_inputline(m_maincpu, 0);
+	ym.port_a_read_callback().set_ioport("INA");
+	ym.port_b_read_callback().set_ioport("INB");
+	ym.add_route(0, "mono", 0.15);
+	ym.add_route(1, "mono", 0.15);
+	ym.add_route(2, "mono", 0.15);
+	ym.add_route(3, "mono", 0.40);
 
-	MCFG_OKIM6295_ADD("oki", 1056000, PIN7_HIGH) // clock frequency & pin 7 not verified
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-MACHINE_CONFIG_END
+	OKIM6295(config, "oki", 1056000, okim6295_device::PIN7_HIGH).add_route(ALL_OUTPUTS, "mono", 0.50); // clock frequency & pin 7 not verified
+}
 
 
 
@@ -156,4 +263,4 @@ ROM_START( cspin2 )
 ROM_END
 
 
-GAME (1996, cspin2, 0, cspin2, cspin2, capr1_state, 0, ROT0, "Taito", "Capriccio Spin 2", MACHINE_IS_SKELETON_MECHANICAL )
+GAME( 1996, cspin2, 0, cspin2, cspin2, capr1_state, empty_init, ROT0, "Taito", "Capriccio Spin 2", MACHINE_IS_SKELETON_MECHANICAL )

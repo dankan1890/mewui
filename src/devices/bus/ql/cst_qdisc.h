@@ -36,14 +36,13 @@ protected:
 	virtual void device_start() override;
 
 	// device_ql_expansion_card_interface overrides
-	virtual uint8_t read(address_space &space, offs_t offset, uint8_t data) override;
-	virtual void write(address_space &space, offs_t offset, uint8_t data) override;
+	virtual uint8_t read(offs_t offset, uint8_t data) override;
+	virtual void write(offs_t offset, uint8_t data) override;
 };
 
 
 
 // device type definition
-extern const device_type CST_QL_DISC_INTERFACE;
 DECLARE_DEVICE_TYPE(CST_QL_DISC_INTERFACE, cst_ql_disc_interface_device)
 
 #endif // MAME_BUS_QL_CST_QDISC_H

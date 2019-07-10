@@ -6,6 +6,11 @@ STV - VDP1
 
 the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 
+-------------------------- WARNING WARNING WARNING --------------------------
+This is a legacy core, all game based notes are for a future device rewrite.
+Please don't remove them if for no reason you truly want to mess with this.
+-------------------------- WARNING WARNING WARNING --------------------------
+
 Framebuffer todo:
 - finish manual erase
 - add proper framebuffer erase
@@ -149,7 +154,7 @@ struct shaded_point
 
 READ16_MEMBER( saturn_state::saturn_vdp1_regs_r )
 {
-	//logerror ("cpu %s (PC=%08X) VDP1: Read from Registers, Offset %04x\n", space.device().tag(), space.device().safe_pc(), offset);
+	//logerror ("%s VDP1: Read from Registers, Offset %04x\n", machine().describe_context(), offset);
 
 	switch(offset)
 	{
@@ -175,8 +180,8 @@ READ16_MEMBER( saturn_state::saturn_vdp1_regs_r )
 
 			return modr;
 		default:
-			if(!machine().side_effect_disabled())
-				printf ("cpu %s (PC=%08X) VDP1: Read from Registers, Offset %04x\n", space.device().tag(), space.device().safe_pc(), offset*2);
+			if(!machine().side_effects_disabled())
+				logerror("%s VDP1: Read from Registers, Offset %04x\n", machine().describe_context(), offset*2);
 			break;
 	}
 
@@ -258,6 +263,8 @@ void saturn_state::stv_vdp1_change_framebuffers( void )
 {
 	m_vdp1.framebuffer_current_display ^= 1;
 	m_vdp1.framebuffer_current_draw ^= 1;
+	// "this bit is reset to 0 when the frame buffers are changed"
+	CEF_0;
 	if ( VDP1_LOG ) logerror( "Changing framebuffers: %d - draw, %d - display\n", m_vdp1.framebuffer_current_draw, m_vdp1.framebuffer_current_display );
 	stv_prepare_framebuffers();
 }
@@ -344,7 +351,7 @@ WRITE32_MEMBER ( saturn_state::saturn_vdp1_vram_w )
 
 //  if (((offset * 4) > 0xdf) && ((offset * 4) < 0x140))
 //  {
-//      logerror("cpu %s (PC=%08X): VRAM dword write to %08X = %08X & %08X\n", space.device().tag(), space.device().safe_pc(), offset*4, data, mem_mask);
+//      logerror("%s: VRAM dword write to %08X = %08X & %08X\n", machine().describe_context(), offset*4, data, mem_mask);
 //  }
 
 	data = m_vdp1_vram[offset];
@@ -867,8 +874,8 @@ void saturn_state::drawpixel_8bpp_trans(int x, int y, int patterndata, int offse
 {
 	uint16_t pix;
 
-	pix = m_vdp1.gfx_decode[patterndata+offsetcnt];
-	if ( pix & 0xff )
+	pix = m_vdp1.gfx_decode[patterndata+offsetcnt] & 0xff;
+	if ( pix != 0 )
 	{
 		m_vdp1.framebuffer_draw_lines[y][x] = pix | m_sprite_colorbank;
 	}
@@ -889,26 +896,32 @@ void saturn_state::drawpixel_4bpp_trans(int x, int y, int patterndata, int offse
 
 	pix = m_vdp1.gfx_decode[patterndata+offsetcnt/2];
 	pix = offsetcnt&1 ? (pix & 0x0f) : ((pix & 0xf0)>>4);
-	if ( pix )
+	if ( pix != 0 )
 		m_vdp1.framebuffer_draw_lines[y][x] = pix | m_sprite_colorbank;
 }
 
 void saturn_state::drawpixel_generic(int x, int y, int patterndata, int offsetcnt)
 {
-	int pix,mode,transmask, spd = stv2_current_sprite.CMDPMOD & 0x40;
+	int pix,transpen, spd = stv2_current_sprite.CMDPMOD & 0x40;
+//  int mode;
 	int mesh = stv2_current_sprite.CMDPMOD & 0x100;
-	int pix2;
+	int raw,endcode;
 
 	if ( mesh && !((x ^ y) & 1) )
 	{
 		return;
 	}
 
+	if(x >= 1024 || y >= 512)
+		return;
+
 	if ( stv2_current_sprite.ispoly )
 	{
-		pix = stv2_current_sprite.CMDCOLR&0xffff;
+		raw = pix = stv2_current_sprite.CMDCOLR&0xffff;
 
-		transmask = 0xffff;
+		transpen = 0;
+		endcode = 0xffff;
+		#if 0
 		if ( pix & 0x8000 )
 		{
 			mode = 5;
@@ -917,6 +930,7 @@ void saturn_state::drawpixel_generic(int x, int y, int patterndata, int offsetcn
 		{
 			mode = 1;
 		}
+		#endif
 	}
 	else
 	{
@@ -924,88 +938,108 @@ void saturn_state::drawpixel_generic(int x, int y, int patterndata, int offsetcn
 		{
 			case 0x0000: // mode 0 16 colour bank mode (4bits) (hanagumi blocks)
 				// most of the shienryu sprites use this mode
-				pix = m_vdp1.gfx_decode[(patterndata+offsetcnt/2) & 0xfffff];
-				pix = offsetcnt&1 ? (pix & 0x0f) : ((pix & 0xf0)>>4);
-				pix = pix+((stv2_current_sprite.CMDCOLR&0xfff0));
-				mode = 0;
-				transmask = 0xf;
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt/2) & 0xfffff];
+				raw = offsetcnt&1 ? (raw & 0x0f) : ((raw & 0xf0)>>4);
+				pix = raw+((stv2_current_sprite.CMDCOLR&0xfff0));
+				//mode = 0;
+				transpen = 0;
+				endcode = 0xf;
 				break;
 			case 0x0008: // mode 1 16 colour lookup table mode (4bits)
-				// shienryu explosisons (and some enemies) use this mode
-				pix2 = m_vdp1.gfx_decode[(patterndata+offsetcnt/2) & 0xfffff];
-				pix2 = offsetcnt&1 ? (pix2 & 0x0f) : ((pix2 & 0xf0)>>4);
-				pix = pix2&1 ?
-				((((m_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0x0000ffff) >> 0):
-				((((m_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0xffff0000) >> 16);
-
-				mode = 5;
-				transmask = 0xffff;
-
-				if ( !spd )
-				{
-					if ( (pix2 & 0xf) == 0 )
-					{
-						return;
-					}
-					else
-					{
-						spd = 1;
-					}
-				}
+				// shienryu explosions (and some enemies) use this mode
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt/2) & 0xfffff];
+				raw = offsetcnt&1 ? (raw & 0x0f) : ((raw & 0xf0)>>4);
+				pix = raw&1 ?
+				((((m_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((raw&0xfffe)/2)])) & 0x0000ffff) >> 0):
+				((((m_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((raw&0xfffe)/2)])) & 0xffff0000) >> 16);
+				//mode = 5;
+				transpen = 0;
+				endcode = 0xf;
 				break;
 			case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
-				pix = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff];
-				mode = 2;
-				pix = pix+(stv2_current_sprite.CMDCOLR&0xffc0);
-				transmask = 0x3f;
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff] & 0xff;
+				//mode = 2;
+				pix = raw+(stv2_current_sprite.CMDCOLR&0xffc0);
+				transpen = 0;
+				endcode = 0xff;
+				// Notes of interest:
+				// Scud: the disposable assassin wants transparent pen on 0
+				// sasissu: racing stage background clouds
 				break;
 			case 0x0018: // mode 3 128 colour bank mode (8bits) (little characters on hanagumi use this mode)
-				pix = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff];
-				pix = pix+(stv2_current_sprite.CMDCOLR&0xff80);
-				transmask = 0x7f;
-				mode = 3;
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff] & 0xff;
+				pix = raw+(stv2_current_sprite.CMDCOLR&0xff80);
+				transpen = 0;
+				endcode = 0xff;
+				//mode = 3;
 				break;
 			case 0x0020: // mode 4 256 colour bank mode (8bits) (hanagumi title)
-				pix = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff];
-				pix = pix+(stv2_current_sprite.CMDCOLR&0xff00);
-				transmask = 0xff;
-				mode = 4;
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt) & 0xfffff] & 0xff;
+				pix = raw+(stv2_current_sprite.CMDCOLR&0xff00);
+				transpen = 0;
+				endcode = 0xff;
+				//mode = 4;
 				break;
 			case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
-				pix = m_vdp1.gfx_decode[(patterndata+offsetcnt*2+1) & 0xfffff] | (m_vdp1.gfx_decode[(patterndata+offsetcnt*2) & 0xfffff]<<8) ;
-				mode = 5;
-				transmask = -1; /* TODO: check me */
+				raw = m_vdp1.gfx_decode[(patterndata+offsetcnt*2+1) & 0xfffff] | (m_vdp1.gfx_decode[(patterndata+offsetcnt*2) & 0xfffff]<<8);
+				//mode = 5;
+				// TODO: 0x1-0x7ffe reserved (color bank)
+				pix = raw;
+				transpen = 0;
+				endcode = 0x7fff;
+				break;
+			case 0x0038: // invalid
+				// game tengoku uses this on hi score screen (tate mode)
+				// according to Charles, reads from VRAM address 0
+				raw = pix = m_vdp1.gfx_decode[1] | (m_vdp1.gfx_decode[0]<<8) ;
+				// TODO: check transpen
+				transpen = 0;
+				endcode = -1;
 				break;
 			default: // other settings illegal
 				pix = machine().rand();
-				mode = 0;
-				transmask = 0xff;
-				popmessage("Illegal Sprite Mode, contact MAMEdev");
+				raw = pix & 0xff; // just mimic old driver behavior
+				//mode = 0;
+				transpen = 0;
+				endcode = 0xff;
+				popmessage("Illegal Sprite Mode %02x, contact MAMEdev",stv2_current_sprite.CMDPMOD&0x0038);
 		}
 
 
 		// preliminary end code disable support
 		if ( ((stv2_current_sprite.CMDPMOD & 0x80) == 0) &&
-			((pix & transmask) == transmask) )
+			(raw == endcode) )
 		{
 			return;
 		}
 	}
 
 	/* MSBON */
+	// TODO: does this always applies to the frame buffer regardless of the mode?
 	pix |= stv2_current_sprite.CMDPMOD & 0x8000;
+	/*
+	TODO: from docs:
+	"Except for the color calculation of replace and shadow, color calculation can only be performed when the color code of the original picture is RGB code.
+	Color calculation can be executed when the color code is color bank code, but the results are not guaranteed."
+	Currently no idea about the "result not guaranteed" part, let's disable this branch for the time being ...
+	*/
+	#if 0
 	if ( mode != 5 )
 	{
-		if ( (pix & transmask) || spd )
+		if ( (raw != transpen) || spd )
 		{
 			m_vdp1.framebuffer_draw_lines[y][x] = pix;
 		}
 	}
 	else
+	#endif
 	{
-		if ( (pix & transmask) || spd )
+		if ( (raw != transpen) || spd )
 		{
-			switch( stv2_current_sprite.CMDPMOD & 0x7 )
+			if ( stv2_current_sprite.CMDPMOD & 0x4 ) /* Gouraud shading */
+				pix = stv_vdp1_apply_gouraud_shading( x, y, pix );
+
+			switch( stv2_current_sprite.CMDPMOD & 0x3 )
 			{
 				case 0: /* replace */
 					m_vdp1.framebuffer_draw_lines[y][x] = pix;
@@ -1029,10 +1063,17 @@ void saturn_state::drawpixel_generic(int x, int y, int patterndata, int offsetcn
 						m_vdp1.framebuffer_draw_lines[y][x] = pix;
 					}
 					break;
-				case 4: /* Gouraud shading */
-					m_vdp1.framebuffer_draw_lines[y][x] = stv_vdp1_apply_gouraud_shading( x, y, pix );
-					break;
+				//case 4: /* Gouraud shading */
+				// TODO: Pro Yakyuu Team mo Tsukurou (during team creation, on PR girl select)
+				//case 6:
+				//  break;
+				//case 7: /* Gouraud-shading + half-transparent */
+					// Lupin the 3rd Pyramid no Kenja enemy shadows
+					// Death Crimson lives indicators
+					// TODO: latter looks really bad.
 				default:
+					// TODO: mode 5: prohibited, mode 6: gouraud shading + half-luminance, mode 7: gouraud-shading + half-transparent
+					popmessage("VDP1 PMOD = %02x, contact MAMEdev",stv2_current_sprite.CMDPMOD & 0x7);
 					m_vdp1.framebuffer_draw_lines[y][x] = pix;
 					break;
 			}
@@ -1055,7 +1096,14 @@ void saturn_state::stv_vdp1_set_drawpixel( void )
 		return;
 	}
 
-	if (sprite_type == 4 && ((stv2_current_sprite.CMDPMOD & 0x7) == 0))
+	if(stv2_current_sprite.CMDPMOD & 0x8000)
+	{
+		drawpixel = &saturn_state::drawpixel_generic;
+		return;
+	}
+
+	// polygon / polyline / line with replace case
+	if (sprite_type & 4 && ((stv2_current_sprite.CMDPMOD & 0x7) == 0))
 	{
 		drawpixel = &saturn_state::drawpixel_poly;
 	}
@@ -1757,7 +1805,7 @@ TIMER_CALLBACK_MEMBER(saturn_state::vdp1_draw_end )
 	#if 0
 	if(!(m_scu.ism & IRQ_VDP1_END))
 	{
-		m_maincpu->set_input_line_and_vector(0x2, HOLD_LINE, 0x4d);
+		m_maincpu->set_input_line_and_vector(0x2, HOLD_LINE, 0x4d); // SH2
 		scu_do_transfer(6);
 	}
 	else
@@ -1785,7 +1833,8 @@ void saturn_state::stv_vdp1_process_list( void )
 	/*Set CEF bit to 0*/
 	CEF_0;
 
-	while (spritecount<10000) // if its drawn this many sprites something is probably wrong or sega were crazy ;-)
+	// TODO: is there an actual limit for this?
+	while (spritecount<16383) // max 16383 with texture or max 16384 without texture - vitrually unlimited
 	{
 		int draw_this_sprite;
 
@@ -1985,10 +2034,12 @@ void saturn_state::stv_vdp1_process_list( void )
 					break;
 
 				default:
-					popmessage ("VDP1: Sprite List Illegal %02x, contact MAMEdev",stv2_current_sprite.CMDCTRL & 0xf);
+					popmessage ("VDP1: Sprite List Illegal %02x (%d), contact MAMEdev",stv2_current_sprite.CMDCTRL & 0xf,spritecount);
 					m_vdp1.lopr = (position * 0x20) >> 3;
-					m_vdp1.copr = (position * 0x20) >> 3;
-					return;
+					//m_vdp1.copr = (position * 0x20) >> 3;
+					// prematurely kill the VDP1 process if an illegal opcode is executed
+					// Sexy Parodius calls multiple illegals and expects VDP1 irq to be fired anyway!
+					goto end;
 			}
 		}
 
@@ -1998,7 +2049,10 @@ void saturn_state::stv_vdp1_process_list( void )
 	end:
 	m_vdp1.copr = (position * 0x20) >> 3;
 
+
 	/* TODO: what's the exact formula? Guess it should be a mix between number of pixels written and actual command data fetched. */
+	// if spritecount = 10000 don't send a vdp1 draw end
+//  if(spritecount < 10000)
 	machine().scheduler().timer_set(m_maincpu->cycles_to_attotime(spritecount*16), timer_expired_delegate(FUNC(saturn_state::vdp1_draw_end),this));
 
 	if (VDP1_LOG) logerror ("End of list processing!\n");
@@ -2079,11 +2133,11 @@ void saturn_state::video_update_vdp1( void )
 	{
 		case 0:/*Idle Mode*/
 			/*Set CEF bit to 0*/
-			CEF_0;
+			//CEF_0;
 			break;
 		case 1:/*Draw by request*/
 			/*Set CEF bit to 0*/
-			CEF_0;
+			//CEF_0;
 			break;
 		case 2:/*Automatic Draw*/
 			if ( framebuffer_changed || VDP1_LOG )
@@ -2149,8 +2203,8 @@ int saturn_state::stv_vdp1_start ( void )
 	m_vdp1.user_cliprect.set(0, 512, 0, 256);
 
 	// save state
-	save_pointer(NAME(m_vdp1_regs.get()), 0x020/2);
-	save_pointer(NAME(m_vdp1_vram.get()), 0x100000/4);
+	save_pointer(NAME(m_vdp1_regs), 0x020/2);
+	save_pointer(NAME(m_vdp1_vram), 0x100000/4);
 	save_item(NAME(m_vdp1.fbcr_accessed));
 	save_item(NAME(m_vdp1.framebuffer_current_display));
 	save_item(NAME(m_vdp1.framebuffer_current_draw));

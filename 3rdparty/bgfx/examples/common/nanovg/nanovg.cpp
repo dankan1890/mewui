@@ -37,47 +37,6 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wunused-result");
 #include "fontstash.h"
 BX_PRAGMA_DIAGNOSTIC_POP();
 
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4127) // warning C4127: conditional expression is constant
-#define LODEPNG_NO_COMPILE_ENCODER
-#define LODEPNG_NO_COMPILE_DISK
-#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
-#define LODEPNG_NO_COMPILE_ERROR_TEXT
-#define LODEPNG_NO_COMPILE_ALLOCATORS
-#define LODEPNG_NO_COMPILE_CPP
-#include <lodepng/lodepng.cpp>
-BX_PRAGMA_DIAGNOSTIC_POP();
-
-void* lodepng_malloc(size_t _size)
-{
-	return ::malloc(_size);
-}
-
-void* lodepng_realloc(void* _ptr, size_t _size)
-{
-	return ::realloc(_ptr, _size);
-}
-
-void lodepng_free(void* _ptr)
-{
-	::free(_ptr);
-}
-
-BX_PRAGMA_DIAGNOSTIC_PUSH();
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wmissing-field-initializers");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wint-to-pointer-cast")
-#if BX_COMPILER_GCC >= 60000
-BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wmisleading-indentation");
-BX_PRAGMA_DIAGNOSTIC_IGNORED_GCC("-Wshift-negative-value");
-#endif // BX_COMPILER_GCC >= 60000_
-#define STBI_MALLOC(_size)        lodepng_malloc(_size)
-#define STBI_REALLOC(_ptr, _size) lodepng_realloc(_ptr, _size)
-#define STBI_FREE(_ptr)           lodepng_free(_ptr)
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.c>
-BX_PRAGMA_DIAGNOSTIC_POP();
-
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter
 #pragma warning(disable: 4127)  // conditional expression is constant
@@ -118,6 +77,7 @@ enum NVGpointFlags
 
 struct NVGstate {
 	NVGcompositeOperationState compositeOperation;
+	int shapeAntiAlias;
 	NVGpaint fill;
 	NVGpaint stroke;
 	float strokeWidth;
@@ -696,6 +656,7 @@ void nvgReset(NVGcontext* ctx)
 	nvg__setPaintColor(&state->fill, nvgRGBA(255,255,255,255));
 	nvg__setPaintColor(&state->stroke, nvgRGBA(0,0,0,255));
 	state->compositeOperation = nvg__compositeOperationState(NVG_SOURCE_OVER);
+	state->shapeAntiAlias = 1;
 	state->strokeWidth = 1.0f;
 	state->miterLimit = 10.0f;
 	state->lineCap = NVG_BUTT;
@@ -715,6 +676,12 @@ void nvgReset(NVGcontext* ctx)
 }
 
 // State setting
+void nvgShapeAntiAlias(NVGcontext* ctx, int enabled)
+{
+	NVGstate* state = nvg__getState(ctx);
+	state->shapeAntiAlias = enabled;
+}
+
 void nvgStrokeWidth(NVGcontext* ctx, float width)
 {
 	NVGstate* state = nvg__getState(ctx);
@@ -829,35 +796,6 @@ void nvgFillPaint(NVGcontext* ctx, NVGpaint paint)
 	NVGstate* state = nvg__getState(ctx);
 	state->fill = paint;
 	nvgTransformMultiply(state->fill.xform, state->xform);
-}
-
-int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
-{
-	int w, h, n, image;
-	unsigned char* img;
-	stbi_set_unpremultiply_on_load(1);
-	stbi_convert_iphone_png_to_rgb(1);
-	img = stbi_load(filename, &w, &h, &n, 4);
-	if (img == NULL) {
-//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-		return 0;
-	}
-	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
-	return image;
-}
-
-int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int ndata)
-{
-	int w, h, n, image;
-	unsigned char* img = stbi_load_from_memory(data, ndata, &w, &h, &n, 4);
-	if (img == NULL) {
-//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-		return 0;
-	}
-	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
-	return image;
 }
 
 int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsigned char* data)
@@ -2253,7 +2191,7 @@ void nvgFill(NVGcontext* ctx)
 	int i;
 
 	nvg__flattenPaths(ctx);
-	if (ctx->params.edgeAntiAlias)
+	if (ctx->params.edgeAntiAlias && state->shapeAntiAlias)
 		nvg__expandFill(ctx, ctx->fringeWidth, NVG_MITER, 2.4f);
 	else
 		nvg__expandFill(ctx, 0.0f, NVG_MITER, 2.4f);
@@ -2298,7 +2236,7 @@ void nvgStroke(NVGcontext* ctx)
 
 	nvg__flattenPaths(ctx);
 
-	if (ctx->params.edgeAntiAlias)
+	if (ctx->params.edgeAntiAlias && state->shapeAntiAlias)
 		nvg__expandStroke(ctx, strokeWidth*0.5f + ctx->fringeWidth*0.5f, state->lineCap, state->lineJoin, state->miterLimit);
 	else
 		nvg__expandStroke(ctx, strokeWidth*0.5f, state->lineCap, state->lineJoin, state->miterLimit);
@@ -2483,7 +2421,7 @@ float nvgText(NVGcontext* ctx, float x, float y, const char* string, const char*
 	verts = nvg__allocTempVerts(ctx, cverts);
 	if (verts == NULL) return x;
 
-	fonsTextIterInit(ctx->fs, &iter, x*scale, y*scale, string, end);
+	fonsTextIterInit(ctx->fs, &iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_REQUIRED);
 	prevIter = iter;
 	while (fonsTextIterNext(ctx->fs, &iter, &q)) {
 		float c[4*2];
@@ -2521,7 +2459,7 @@ float nvgText(NVGcontext* ctx, float x, float y, const char* string, const char*
 
 	nvg__renderText(ctx, verts, nverts);
 
-	return iter.x;
+	return iter.nextx / scale;
 }
 
 void nvgTextBox(NVGcontext* ctx, float x, float y, float breakRowWidth, const char* string, const char* end)
@@ -2580,7 +2518,7 @@ int nvgTextGlyphPositions(NVGcontext* ctx, float x, float y, const char* string,
 	fonsSetAlign(ctx->fs, state->textAlign);
 	fonsSetFont(ctx->fs, state->fontId);
 
-	fonsTextIterInit(ctx->fs, &iter, x*scale, y*scale, string, end);
+	fonsTextIterInit(ctx->fs, &iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
 	while (fonsTextIterNext(ctx->fs, &iter, &q)) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?
@@ -2646,7 +2584,7 @@ int nvgTextBreakLines(NVGcontext* ctx, const char* string, const char* end, floa
 
 	breakRowWidth *= scale;
 
-	fonsTextIterInit(ctx->fs, &iter, 0, 0, string, end);
+	fonsTextIterInit(ctx->fs, &iter, 0, 0, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
 	while (fonsTextIterNext(ctx->fs, &iter, &q)) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?

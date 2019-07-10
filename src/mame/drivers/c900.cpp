@@ -1,93 +1,108 @@
 // license:BSD-3-Clause
-// copyright-holders:Curt Coder
+// copyright-holders:Curt Coder, Robbbert
 /******************************************************************************************
 
-    Commodore C900
-    UNIX prototype
+Commodore C900
+UNIX prototype
 
-    http://www.zimmers.net/cbmpics/c900.html
-    http://www.zimmers.net/cbmpics/cbm/900/c900-chips.txt
+http://www.zimmers.net/cbmpics/c900.html
+http://www.zimmers.net/cbmpics/cbm/900/c900-chips.txt
 
-    Chips: Z8001 CPU, Z8010 MMU, Z8030 SCC, Z8036 CIO. Crystal: 12MHz
+Chips: Z8001 CPU, Z8010 MMU, Z8030 SCC, Z8036 CIO. Crystal: 12MHz
 
-    The Z8030 runs 2 serial ports. The Z8036 runs the IEEE interface and the speaker.
+The Z8030 runs 2 serial ports. The Z8036 runs the IEEE interface and the speaker.
 
-    The FDC is an intelligent device that communicates with the main board via the MMU.
-    It has a 6508 CPU.
+The FDC is an intelligent device that communicates with the main board via the MMU.
+It has a 6508 CPU.
 
-    Disk drive is a Matsushita JA-560-012
+Disk drive is a Matsushita JA-560-012
+
+Increasing the amount of RAM stops the error message, however it still keeps running
+into the weeds (jumps to 00000). Due to lack of banking, the stack is pointing at rom.
+
+To Do:
+- Banking
+- Pretty much everything
+- Need schematics, technical manuals and so on.
+- Eventually, will need software.
+- Disassembler needs fixing
 
 *******************************************************************************************/
 
 
 #include "emu.h"
 #include "cpu/z8000/z8000.h"
-#include "machine/terminal.h"
+#include "cpu/m6502/m6510.h"
+#include "machine/z80scc.h"
+#include "bus/rs232/rs232.h"
+#include "machine/z8536.h"
+#include "sound/spkrdev.h"
+#include "emupal.h"
+#include "speaker.h"
 
-#define TERMINAL_TAG "terminal"
 
 class c900_state : public driver_device
 {
 public:
 	c900_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_fdcpu(*this, "fdcpu")
+		, m_spkrdev(*this, "speaker")
+	{ }
 
-	DECLARE_READ16_MEMBER(port1e_r);
-	DECLARE_READ16_MEMBER(key_r);
-	DECLARE_READ16_MEMBER(stat_r);
-	void kbd_put(u8 data);
+	void c900(machine_config &config);
 
 private:
-	uint8_t m_term_data;
+	void sound_pb_w(u8 data);
+
+	void data_map(address_map &map);
+	void io_map(address_map &map);
+	void special_io_map(address_map &map);
+	void mem_map(address_map &map);
+	void fdc_map(address_map &map);
+
 	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
+	required_device<cpu_device> m_fdcpu;
+	required_device<speaker_sound_device> m_spkrdev;
 };
 
-static ADDRESS_MAP_START(c900_mem, AS_PROGRAM, 16, c900_state)
-	AM_RANGE(0x00000, 0x07fff) AM_ROM AM_REGION("roms", 0)
-ADDRESS_MAP_END
+void c900_state::sound_pb_w(u8 data)
+{
+	m_spkrdev->level_w(BIT(data, 0));
+}
 
-static ADDRESS_MAP_START(c900_data, AS_DATA, 16, c900_state)
-	AM_RANGE(0x00000, 0x07fff) AM_ROM AM_REGION("roms", 0)
-	AM_RANGE(0x08000, 0x6ffff) AM_RAM
-ADDRESS_MAP_END
+void c900_state::mem_map(address_map &map)
+{
+	map(0x00000, 0x07fff).rom().region("roms", 0);
+}
 
-static ADDRESS_MAP_START(c900_io, AS_IO, 16, c900_state)
-	AM_RANGE(0x0010, 0x0011) AM_READ(stat_r)
-	AM_RANGE(0x001A, 0x001B) AM_READ(key_r)
-	AM_RANGE(0x001E, 0x001F) AM_READ(port1e_r)
-	AM_RANGE(0x0100, 0x0101) AM_READ(stat_r)
-	AM_RANGE(0x0110, 0x0111) AM_READ(key_r) AM_DEVWRITE8(TERMINAL_TAG, generic_terminal_device, write, 0x00ff)
-ADDRESS_MAP_END
+void c900_state::data_map(address_map &map)
+{
+	map(0x00000, 0x07fff).rom().region("roms", 0);
+	map(0x08000, 0x6ffff).ram();
+	map(0xf0000, 0xf1fff).ram();
+}
+
+void c900_state::io_map(address_map &map)
+{
+	map(0x0000, 0x007f).rw("cio", FUNC(z8036_device::read), FUNC(z8036_device::write)).umask16(0x00ff);
+	map(0x0100, 0x013f).rw("scc", FUNC(scc8030_device::zbus_r), FUNC(scc8030_device::zbus_w)).umask16(0x00ff);
+}
+
+void c900_state::special_io_map(address_map &map)
+{
+	// TODO: Z8010 MMU
+}
+
+void c900_state::fdc_map(address_map &map)
+{
+	map(0x0000, 0x01ff).noprw(); // internal
+	map(0xe000, 0xffff).rom().region("fdc", 0);
+}
 
 static INPUT_PORTS_START( c900 )
 INPUT_PORTS_END
-
-READ16_MEMBER( c900_state::port1e_r )
-{
-	return 0;
-}
-
-READ16_MEMBER( c900_state::key_r )
-{
-	uint8_t ret = m_term_data;
-	m_term_data = 0;
-	return ret;
-}
-
-READ16_MEMBER( c900_state::stat_r )
-{
-	return (m_term_data) ? 6 : 4;
-}
-
-void c900_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-}
 
 /* F4 Character Displayer */
 static const gfx_layout c900_charlayout =
@@ -103,22 +118,42 @@ static const gfx_layout c900_charlayout =
 	8*16                    /* every char takes 16 bytes */
 };
 
-static GFXDECODE_START( c900 )
+static GFXDECODE_START( gfx_c900 )
 	GFXDECODE_ENTRY( "chargen", 0x0000, c900_charlayout, 0, 1 )
 GFXDECODE_END
 
-static MACHINE_CONFIG_START( c900 )
+void c900_state::c900(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z8001, XTAL_12MHz / 2)
-	MCFG_CPU_PROGRAM_MAP(c900_mem)
-	MCFG_CPU_DATA_MAP(c900_data)
-	MCFG_CPU_IO_MAP(c900_io)
+	Z8001(config, m_maincpu, 12_MHz_XTAL / 2);
+	m_maincpu->set_addrmap(AS_PROGRAM, &c900_state::mem_map);
+	m_maincpu->set_addrmap(AS_DATA, &c900_state::data_map);
+	m_maincpu->set_addrmap(AS_IO, &c900_state::io_map);
+	m_maincpu->set_addrmap(z8001_device::AS_SIO, &c900_state::special_io_map);
 
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(c900_state, kbd_put))
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", c900)
-	MCFG_PALETTE_ADD_MONOCHROME("palette")
-MACHINE_CONFIG_END
+	M6508(config, m_fdcpu, 12_MHz_XTAL / 8); // PH1/PH2 = 1.5 MHz
+	m_fdcpu->set_addrmap(AS_PROGRAM, &c900_state::fdc_map);
+
+	GFXDECODE(config, "gfxdecode", "palette", gfx_c900);
+	PALETTE(config, "palette", palette_device::MONOCHROME);
+
+	z8036_device &cio(Z8036(config, "cio", 12_MHz_XTAL / 16)); // SNDCLK = 750kHz
+	cio.pb_wr_cb().set(FUNC(c900_state::sound_pb_w));
+
+	scc8030_device &scc(SCC8030(config, "scc", 12_MHz_XTAL / 2)); // 5'850'000 is the ideal figure
+	/* Port B */
+	scc.out_txdb_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	scc.out_dtrb_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	scc.out_rtsb_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+	//scc.out_int_callback().set("rs232", FUNC(c900_state::scc_int));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("scc", FUNC(scc8030_device::rxb_w));
+	rs232.cts_handler().set("scc", FUNC(scc8030_device::ctsb_w));
+
+	SPEAKER(config, "mono").front_center();
+	SPEAKER_SOUND(config, m_spkrdev).add_route(ALL_OUTPUTS, "mono", 0.05);
+}
 
 ROM_START( c900 )
 	ROM_REGION16_LE( 0x8000, "roms", 0 )
@@ -132,5 +167,5 @@ ROM_START( c900 )
 	ROM_LOAD( "380217-01.u2", 0x0000, 0x1000, CRC(64cb4171) SHA1(e60d796170addfd27e2c33090f9c512c7e3f99f5) )
 ROM_END
 
-/*    YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT   STATE       INIT  COMPANY      FULLNAME         FLAGS */
-COMP( 1985, c900,  0,      0,      c900,    c900,   c900_state, 0,    "Commodore", "Commodore 900", MACHINE_IS_SKELETON )
+/*    YEAR  NAME  PARENT  COMPAT  MACHINE  INPUT  CLASS       INIT        COMPANY      FULLNAME         FLAGS */
+COMP( 1985, c900, 0,      0,      c900,    c900,  c900_state, empty_init, "Commodore", "Commodore 900", MACHINE_IS_SKELETON )

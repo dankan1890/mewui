@@ -93,9 +93,9 @@ enum BREGS {
 
 #define SetRB(x)        do { m_RBW = (x) << 4; m_RBB = (x) << 5; } while (0)
 
-#define Sreg(x)         m_ram.w[m_RBW + (x)]
-#define Wreg(x)         m_ram.w[m_RBW + (x)]
-#define Breg(x)         m_ram.b[m_RBB + (x)]
+#define Sreg(x)         m_internal_ram[m_RBW + (x)]
+#define Wreg(x)         m_internal_ram[m_RBW + (x)]
+#define Breg(x)         reinterpret_cast<uint8_t *>(&m_internal_ram[0])[m_RBB + (x)]
 
 #define PC()       ((Sreg(PS)<<4)+m_ip)
 
@@ -121,7 +121,7 @@ enum BREGS {
 
 /************************************************************************/
 
-#define CHANGE_PC do { EMPTY_PREFETCH(); } while (0)
+#define CHANGE_PC do { EMPTY_PREfetch(); } while (0)
 
 #define SegBase(Seg) (Sreg(Seg) << 4)
 
@@ -135,15 +135,15 @@ enum BREGS {
 
 /* prefetch timing */
 
-#define FETCH()             fetch()
-#define FETCHWORD()         fetchword()
-#define EMPTY_PREFETCH()    m_prefetch_reset = 1
+#define EMPTY_PREfetch()    m_prefetch_reset = 1
 
 
 #define PUSH(val) { Wreg(SP) -= 2; write_mem_word(((Sreg(SS)<<4)+Wreg(SP)), val); }
 #define POP(var) { Wreg(SP) += 2; var = read_mem_word(((Sreg(SS)<<4) + ((Wreg(SP)-2) & 0xffff))); }
 
-#define GetModRM uint32_t ModRM=FETCH()
+#define BRKXA(xa) { logerror("%06x: %sXA instruction is V33 exclusive\n", PC(), xa ? "BRK" : "RET"); }
+
+#define GetModRM uint32_t ModRM=fetch()
 
 /* Cycle count macros:
     CLK  - cycle count is the same on all processors

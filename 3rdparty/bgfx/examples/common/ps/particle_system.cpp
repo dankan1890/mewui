@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
@@ -11,7 +11,6 @@
 #include "../packrect.h"
 
 #include <bx/easing.h>
-#include <bx/crtimpl.h>
 #include <bx/handlealloc.h>
 
 #include "vs_particle.bin.h"
@@ -24,52 +23,6 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] =
 
 	BGFX_EMBEDDED_SHADER_END()
 };
-
-static const bx::EaseFn s_easeFunc[] =
-{
-	bx::easeLinear,
-	bx::easeInQuad,
-	bx::easeOutQuad,
-	bx::easeInOutQuad,
-	bx::easeOutInQuad,
-	bx::easeInCubic,
-	bx::easeOutCubic,
-	bx::easeInOutCubic,
-	bx::easeOutInCubic,
-	bx::easeInQuart,
-	bx::easeOutQuart,
-	bx::easeInOutQuart,
-	bx::easeOutInQuart,
-	bx::easeInQuint,
-	bx::easeOutQuint,
-	bx::easeInOutQuint,
-	bx::easeOutInQuint,
-	bx::easeInSine,
-	bx::easeOutSine,
-	bx::easeInOutSine,
-	bx::easeOutInSine,
-	bx::easeInExpo,
-	bx::easeOutExpo,
-	bx::easeInOutExpo,
-	bx::easeOutInExpo,
-	bx::easeInCirc,
-	bx::easeOutCirc,
-	bx::easeInOutCirc,
-	bx::easeOutInCirc,
-	bx::easeInElastic,
-	bx::easeOutElastic,
-	bx::easeInOutElastic,
-	bx::easeOutInElastic,
-	bx::easeInBack,
-	bx::easeOutBack,
-	bx::easeInOutBack,
-	bx::easeOutInBack,
-	bx::easeInBounce,
-	bx::easeOutBounce,
-	bx::easeInOutBounce,
-	bx::easeOutInBounce,
-};
-BX_STATIC_ASSERT(BX_COUNTOF(s_easeFunc) == bx::Easing::Count);
 
 struct PosColorTexCoord0Vertex
 {
@@ -145,8 +98,8 @@ namespace ps
 {
 	struct Particle
 	{
-		float start[3];
-		float end[2][3];
+		bx::Vec3 start;
+		bx::Vec3 end[2];
 		float blendStart;
 		float blendEnd;
 		float scaleStart;
@@ -195,7 +148,7 @@ namespace ps
 
 		EmitterSpriteHandle create(uint16_t _width, uint16_t _height)
 		{
-			EmitterSpriteHandle handle = { bx::HandleAlloc::invalid };
+			EmitterSpriteHandle handle = { bx::kInvalidHandle };
 
 			if (m_handleAlloc.getNumHandles() < m_handleAlloc.getMaxHandles() )
 			{
@@ -234,8 +187,12 @@ namespace ps
 
 		void reset()
 		{
+			m_dt = 0.0f;
+			m_uniforms.reset();
 			m_num = 0;
 			bx::memSet(&m_aabb, 0, sizeof(Aabb) );
+
+			m_rng.reset();
 		}
 
 		void update(float _dt)
@@ -280,6 +237,8 @@ namespace ps
 			const uint32_t numParticles = uint32_t(m_dt / timePerParticle);
 			m_dt -= numParticles * timePerParticle;
 
+			constexpr bx::Vec3 up = { 0.0f, 1.0f, 0.0f };
+
 			float time = 0.0f;
 			for (uint32_t ii = 0
 				; ii < numParticles && m_num < m_max
@@ -289,94 +248,91 @@ namespace ps
 				Particle& particle = m_particles[m_num];
 				m_num++;
 
-				const float up[3] = { 0.0f, 1.0f, 0.0f };
-
-				float pos[3];
+				bx::Vec3 pos;
 				switch (m_shape)
 				{
 					default:
 					case EmitterShape::Sphere:
-						bx::randUnitSphere(pos, &m_rng);
+						pos = bx::randUnitSphere(&m_rng);
 						break;
 
 					case EmitterShape::Hemisphere:
-						bx::randUnitHemisphere(pos, &m_rng, up);
+						pos = bx::randUnitHemisphere(&m_rng, up);
 						break;
 
 					case EmitterShape::Circle:
-						bx::randUnitCircle(pos, &m_rng);
+						pos = bx::randUnitCircle(&m_rng);
 						break;
 
 					case EmitterShape::Disc:
 						{
-							float tmp[3];
-							bx::randUnitCircle(tmp, &m_rng);
-							bx::vec3Mul(pos, tmp, bx::frnd(&m_rng) );
+							const bx::Vec3 tmp = bx::randUnitCircle(&m_rng);
+							pos = bx::mul(tmp, bx::frnd(&m_rng) );
 						}
 						break;
 
 					case EmitterShape::Rect:
-						pos[0] = bx::frndh(&m_rng);
-						pos[1] = 0.0f;
-						pos[2] = bx::frndh(&m_rng);
+						pos =
+						{
+							bx::frndh(&m_rng),
+							0.0f,
+							bx::frndh(&m_rng),
+						};
 						break;
 				}
 
-				float dir[3];
+				bx::Vec3 dir;
 				switch (m_direction)
 				{
 					default:
 					case EmitterDirection::Up:
-						bx::vec3Move(dir, up);
+						dir = up;
 						break;
 
 					case EmitterDirection::Outward:
-						bx::vec3Norm(dir, pos);
+						dir = bx::normalize(pos);
 						break;
 				}
 
-				float start[3];
-				float end[3];
-				const float startOffset = bx::flerp(m_uniforms.m_offsetStart[0], m_uniforms.m_offsetStart[1], bx::frnd(&m_rng) );
-				bx::vec3Mul(start, pos, startOffset);
+				const float startOffset = bx::lerp(m_uniforms.m_offsetStart[0], m_uniforms.m_offsetStart[1], bx::frnd(&m_rng) );
+				const bx::Vec3 start = bx::mul(pos, startOffset);
 
-				const float endOffset = bx::flerp(m_uniforms.m_offsetEnd[0], m_uniforms.m_offsetEnd[1], bx::frnd(&m_rng) );
-				float tmp1[3];
-				bx::vec3Mul(tmp1, dir, endOffset);
-				bx::vec3Add(end, tmp1, start);
+				const float endOffset = bx::lerp(m_uniforms.m_offsetEnd[0], m_uniforms.m_offsetEnd[1], bx::frnd(&m_rng) );
+				const bx::Vec3 tmp1 = bx::mul(dir, endOffset);
+				const bx::Vec3 end  = bx::add(tmp1, start);
 
 				particle.life = time;
-				particle.lifeSpan = bx::flerp(m_uniforms.m_lifeSpan[0], m_uniforms.m_lifeSpan[1], bx::frnd(&m_rng) );
+				particle.lifeSpan = bx::lerp(m_uniforms.m_lifeSpan[0], m_uniforms.m_lifeSpan[1], bx::frnd(&m_rng) );
 
-				float gravity[3] = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::fsq(particle.lifeSpan), 0.0f };
+				const bx::Vec3 gravity = { 0.0f, -9.81f * m_uniforms.m_gravityScale * bx::square(particle.lifeSpan), 0.0f };
 
-				bx::vec3MulMtx(particle.start,  start, mtx);
-				bx::vec3MulMtx(particle.end[0], end,   mtx);
-				bx::vec3Add(particle.end[1], particle.end[0], gravity);
+				particle.start  = bx::mul(start, mtx);
+				particle.end[0] = bx::mul(end,   mtx);
+				particle.end[1] = bx::add(particle.end[0], gravity);
 
 				bx::memCopy(particle.rgba, m_uniforms.m_rgba, BX_COUNTOF(m_uniforms.m_rgba)*sizeof(uint32_t) );
 
-				particle.blendStart = bx::flerp(m_uniforms.m_blendStart[0], m_uniforms.m_blendStart[1], bx::frnd(&m_rng) );
-				particle.blendEnd   = bx::flerp(m_uniforms.m_blendEnd[0],   m_uniforms.m_blendEnd[1],   bx::frnd(&m_rng) );
+				particle.blendStart = bx::lerp(m_uniforms.m_blendStart[0], m_uniforms.m_blendStart[1], bx::frnd(&m_rng) );
+				particle.blendEnd   = bx::lerp(m_uniforms.m_blendEnd[0],   m_uniforms.m_blendEnd[1],   bx::frnd(&m_rng) );
 
-				particle.scaleStart = bx::flerp(m_uniforms.m_scaleStart[0], m_uniforms.m_scaleStart[1], bx::frnd(&m_rng) );
-				particle.scaleEnd   = bx::flerp(m_uniforms.m_scaleEnd[0],   m_uniforms.m_scaleEnd[1],   bx::frnd(&m_rng) );
+				particle.scaleStart = bx::lerp(m_uniforms.m_scaleStart[0], m_uniforms.m_scaleStart[1], bx::frnd(&m_rng) );
+				particle.scaleEnd   = bx::lerp(m_uniforms.m_scaleEnd[0],   m_uniforms.m_scaleEnd[1],   bx::frnd(&m_rng) );
 
 				time += timePerParticle;
 			}
 		}
 
-		uint32_t render(const float _uv[4], const float* _mtxView, const float* _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
+		uint32_t render(const float _uv[4], const float* _mtxView, const bx::Vec3& _eye, uint32_t _first, uint32_t _max, ParticleSort* _outSort, PosColorTexCoord0Vertex* _outVertices)
 		{
-			bx::EaseFn easeRgba  = s_easeFunc[m_uniforms.m_easeRgba];
-			bx::EaseFn easePos   = s_easeFunc[m_uniforms.m_easePos];
-			bx::EaseFn easeBlend = s_easeFunc[m_uniforms.m_easeBlend];
-			bx::EaseFn easeScale = s_easeFunc[m_uniforms.m_easeScale];
+			bx::EaseFn easeRgba  = bx::getEaseFunc(m_uniforms.m_easeRgba);
+			bx::EaseFn easePos   = bx::getEaseFunc(m_uniforms.m_easePos);
+			bx::EaseFn easeBlend = bx::getEaseFunc(m_uniforms.m_easeBlend);
+			bx::EaseFn easeScale = bx::getEaseFunc(m_uniforms.m_easeScale);
 
 			Aabb aabb =
 			{
-				{  bx::huge,  bx::huge,  bx::huge },
-				{ -bx::huge, -bx::huge, -bx::huge },
+				{  bx::kInfinity,  bx::kInfinity,  bx::kInfinity },
+				{ -bx::kInfinity, -bx::kInfinity, -bx::kInfinity },
 			};
 
 			for (uint32_t jj = 0, num = m_num, current = _first
@@ -388,45 +344,38 @@ namespace ps
 
 				const float ttPos   = easePos(particle.life);
 				const float ttScale = easeScale(particle.life);
-				const float ttBlend = bx::fsaturate(easeBlend(particle.life) );
-				const float ttRgba  = bx::fsaturate(easeRgba(particle.life) );
+				const float ttBlend = bx::clamp(easeBlend(particle.life), 0.0f, 1.0f);
+				const float ttRgba  = bx::clamp(easeRgba(particle.life),  0.0f, 1.0f);
 
-				float p0[3];
-				bx::vec3Lerp(p0, particle.start, particle.end[0], ttPos);
-
-				float p1[3];
-				bx::vec3Lerp(p1, particle.end[0], particle.end[1], ttPos);
-
-				float pos[3];
-				bx::vec3Lerp(pos, p0, p1, ttPos);
+				const bx::Vec3 p0  = bx::lerp(particle.start,  particle.end[0], ttPos);
+				const bx::Vec3 p1  = bx::lerp(particle.end[0], particle.end[1], ttPos);
+				const bx::Vec3 pos = bx::lerp(p0, p1, ttPos);
 
 				ParticleSort& sort = _outSort[current];
-				float tmp[3];
-				bx::vec3Sub(tmp, _eye, pos);
-				sort.dist = bx::fsqrt(bx::vec3Dot(tmp, tmp) );
+				const bx::Vec3 tmp0 = bx::sub(_eye, pos);
+				sort.dist = bx::length(tmp0);
 				sort.idx  = current;
 
 				uint32_t idx = uint32_t(ttRgba*4);
-				float ttmod = bx::fmod(ttRgba, 0.25f)/0.25f;
+				float ttmod = bx::mod(ttRgba, 0.25f)/0.25f;
 				uint32_t rgbaStart = particle.rgba[idx];
 				uint32_t rgbaEnd   = particle.rgba[idx+1];
 
-				float rr = bx::flerp( ( (uint8_t*)&rgbaStart)[0], ( (uint8_t*)&rgbaEnd)[0], ttmod)/255.0f;
-				float gg = bx::flerp( ( (uint8_t*)&rgbaStart)[1], ( (uint8_t*)&rgbaEnd)[1], ttmod)/255.0f;
-				float bb = bx::flerp( ( (uint8_t*)&rgbaStart)[2], ( (uint8_t*)&rgbaEnd)[2], ttmod)/255.0f;
-				float aa = bx::flerp( ( (uint8_t*)&rgbaStart)[3], ( (uint8_t*)&rgbaEnd)[3], ttmod)/255.0f;
+				float rr = bx::lerp( ( (uint8_t*)&rgbaStart)[0], ( (uint8_t*)&rgbaEnd)[0], ttmod)/255.0f;
+				float gg = bx::lerp( ( (uint8_t*)&rgbaStart)[1], ( (uint8_t*)&rgbaEnd)[1], ttmod)/255.0f;
+				float bb = bx::lerp( ( (uint8_t*)&rgbaStart)[2], ( (uint8_t*)&rgbaEnd)[2], ttmod)/255.0f;
+				float aa = bx::lerp( ( (uint8_t*)&rgbaStart)[3], ( (uint8_t*)&rgbaEnd)[3], ttmod)/255.0f;
 
-				float blend = bx::flerp(particle.blendStart, particle.blendEnd, ttBlend);
-				float scale = bx::flerp(particle.scaleStart, particle.scaleEnd, ttScale);
+				float blend = bx::lerp(particle.blendStart, particle.blendEnd, ttBlend);
+				float scale = bx::lerp(particle.scaleStart, particle.scaleEnd, ttScale);
 
 				uint32_t abgr = toAbgr(rr, gg, bb, aa);
 
-				float udir[3] = { _mtxView[0]*scale, _mtxView[4]*scale, _mtxView[8]*scale };
-				float vdir[3] = { _mtxView[1]*scale, _mtxView[5]*scale, _mtxView[9]*scale };
+				const bx::Vec3 udir = { _mtxView[0]*scale, _mtxView[4]*scale, _mtxView[8]*scale };
+				const bx::Vec3 vdir = { _mtxView[1]*scale, _mtxView[5]*scale, _mtxView[9]*scale };
 
 				PosColorTexCoord0Vertex* vertex = &_outVertices[current*4];
-				bx::vec3Sub(tmp, pos, udir);
-				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::sub(bx::sub(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
@@ -434,8 +383,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Add(tmp, pos, udir);
-				bx::vec3Sub(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::sub(bx::add(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
@@ -443,8 +391,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Add(tmp, pos, udir);
-				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::add(bx::add(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[2];
@@ -452,8 +399,7 @@ namespace ps
 				vertex->m_blend = blend;
 				++vertex;
 
-				bx::vec3Sub(tmp, pos, udir);
-				bx::vec3Add(&vertex->m_x, tmp, vdir);
+				bx::store(&vertex->m_x, bx::add(bx::sub(pos, udir), vdir) );
 				aabbExpand(aabb, &vertex->m_x);
 				vertex->m_abgr  = abgr;
 				vertex->m_u     = _uv[0];
@@ -494,13 +440,11 @@ namespace ps
 		{
 			m_allocator = _allocator;
 
-#if BX_CONFIG_ALLOCATOR_CRT
 			if (NULL == _allocator)
 			{
-				static bx::CrtAllocator allocator;
+				static bx::DefaultAllocator allocator;
 				m_allocator = &allocator;
 			}
-#endif // BX_CONFIG_ALLOCATOR_CRT
 
 			m_emitterAlloc = bx::createHandleAlloc(m_allocator, _maxEmitters);
 			m_emitter = (Emitter*)BX_ALLOC(m_allocator, sizeof(Emitter)*_maxEmitters);
@@ -528,9 +472,9 @@ namespace ps
 
 		void shutdown()
 		{
-			bgfx::destroyProgram(m_particleProgram);
-			bgfx::destroyTexture(m_texture);
-			bgfx::destroyUniform(s_texColor);
+			bgfx::destroy(m_particleProgram);
+			bgfx::destroy(m_texture);
+			bgfx::destroy(s_texColor);
 
 			bx::destroyHandleAlloc(m_allocator, m_emitterAlloc);
 			BX_FREE(m_allocator, m_emitter);
@@ -579,7 +523,7 @@ namespace ps
 			m_num = numParticles;
 		}
 
-		void render(uint8_t _view, const float* _mtxView, const float* _eye)
+		void render(uint8_t _view, const float* _mtxView, const bx::Vec3& _eye)
 		{
 			if (0 != m_num)
 			{
@@ -649,13 +593,13 @@ namespace ps
 					BX_FREE(m_allocator, particleSort);
 
 					bgfx::setState(0
-						| BGFX_STATE_RGB_WRITE
-						| BGFX_STATE_ALPHA_WRITE
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
 						| BGFX_STATE_DEPTH_TEST_LESS
 						| BGFX_STATE_CULL_CW
 						| BGFX_STATE_BLEND_NORMAL
 						);
-					bgfx::setVertexBuffer(&tvb);
+					bgfx::setVertexBuffer(0, &tvb);
 					bgfx::setIndexBuffer(&tib);
 					bgfx::setTexture(0, s_texColor, m_texture);
 					bgfx::submit(_view, m_particleProgram);
@@ -733,13 +677,11 @@ namespace ps
 
 	void Emitter::create(EmitterShape::Enum _shape, EmitterDirection::Enum _direction, uint32_t _maxParticles)
 	{
-		m_dt = 0.0f;
-		m_uniforms.reset();
+		reset();
+
 		m_shape     = _shape;
 		m_direction = _direction;
-
-		m_num = 0;
-		m_max = _maxParticles;
+		m_max       = _maxParticles;
 		m_particles = (Particle*)BX_ALLOC(s_ctx.m_allocator, m_max*sizeof(Particle) );
 	}
 
@@ -798,7 +740,7 @@ void psUpdate(float _dt)
 	s_ctx.update(_dt);
 }
 
-void psRender(uint8_t _view, const float* _mtxView, const float* _eye)
+void psRender(uint8_t _view, const float* _mtxView, const bx::Vec3& _eye)
 {
 	s_ctx.render(_view, _mtxView, _eye);
 }

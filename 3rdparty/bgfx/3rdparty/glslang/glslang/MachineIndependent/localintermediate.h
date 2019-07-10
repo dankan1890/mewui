@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2016 LunarG, Inc.
+// Copyright (C) 2017 ARM Limited.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,8 +41,11 @@
 #include "../Public/ShaderLang.h"
 #include "Versions.h"
 
+#include <string>
+#include <vector>
 #include <algorithm>
 #include <set>
+#include <array>
 
 class TInfoSink;
 
@@ -77,7 +81,7 @@ public:
         assert(i < MaxSwizzleSelectors);
         return components[i];
     }
-    
+
 private:
     int size_;
     selectorType components[MaxSwizzleSelectors];
@@ -150,9 +154,68 @@ struct TXfbBuffer {
     bool containsDouble;
 };
 
+// Track a set of strings describing how the module was processed.
+// Using the form:
+//   process arg0 arg1 arg2 ...
+//   process arg0 arg1 arg2 ...
+// where everything is textual, and there can be zero or more arguments
+class TProcesses {
+public:
+    TProcesses() {}
+    ~TProcesses() {}
+
+    void addProcess(const char* process)
+    {
+        processes.push_back(process);
+    }
+    void addProcess(const std::string& process)
+    {
+        processes.push_back(process);
+    }
+    void addArgument(int arg)
+    {
+        processes.back().append(" ");
+        std::string argString = std::to_string(arg);
+        processes.back().append(argString);
+    }
+    void addArgument(const char* arg)
+    {
+        processes.back().append(" ");
+        processes.back().append(arg);
+    }
+    void addArgument(const std::string& arg)
+    {
+        processes.back().append(" ");
+        processes.back().append(arg);
+    }
+    void addIfNonZero(const char* process, int value)
+    {
+        if (value != 0) {
+            addProcess(process);
+            addArgument(value);
+        }
+    }
+
+    const std::vector<std::string>& getProcesses() const { return processes; }
+
+private:
+    std::vector<std::string> processes;
+};
+
 class TSymbolTable;
 class TSymbol;
 class TVariable;
+
+#ifdef NV_EXTENSIONS
+//
+// Texture and Sampler transformation mode.
+//
+enum ComputeDerivativeMode {
+    LayoutDerivativeNone,         // default layout as SPV_NV_compute_shader_derivatives not enabled
+    LayoutDerivativeGroupQuads,   // derivative_group_quadsNV
+    LayoutDerivativeGroupLinear,  // derivative_group_linearNV
+};
+#endif
 
 //
 // Set of helper functions to help parse and build the tree.
@@ -160,24 +223,37 @@ class TVariable;
 class TIntermediate {
 public:
     explicit TIntermediate(EShLanguage l, int v = 0, EProfile p = ENoProfile) :
+        implicitThisName("@this"), implicitCounterName("@count"),
         language(l), source(EShSourceNone), profile(p), version(v), treeRoot(0),
         numEntryPoints(0), numErrors(0), numPushConstants(0), recursive(false),
-        invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet), inputPrimitive(ElgNone), outputPrimitive(ElgNone),
+        invocations(TQualifier::layoutNotSet), vertices(TQualifier::layoutNotSet),
+        inputPrimitive(ElgNone), outputPrimitive(ElgNone),
         pixelCenterInteger(false), originUpperLeft(false),
-        vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false), depthLayout(EldNone), depthReplacing(false), blendEquations(0),
-        xfbMode(false), multiStream(false),
+        vertexSpacing(EvsNone), vertexOrder(EvoNone), pointMode(false), earlyFragmentTests(false),
+        postDepthCoverage(false), depthLayout(EldNone), depthReplacing(false),
+        hlslFunctionality1(false),
+        blendEquations(0), xfbMode(false), multiStream(false),
 #ifdef NV_EXTENSIONS
         layoutOverrideCoverage(false),
         geoPassthroughEXT(false),
+        numShaderRecordNVBlocks(0),
+        computeDerivativeMode(LayoutDerivativeNone),
+        primitives(TQualifier::layoutNotSet),
+        numTaskNVBlocks(0),
 #endif
-        shiftSamplerBinding(0),
-        shiftTextureBinding(0),
-        shiftImageBinding(0),
-        shiftUboBinding(0),
-        shiftSsboBinding(0),
         autoMapBindings(false),
+        autoMapLocations(false),
+        invertY(false),
         flattenUniformArrays(false),
-        useUnknownFormat(false)
+        useUnknownFormat(false),
+        hlslOffsets(false),
+        useStorageBuffer(false),
+        useVulkanMemoryModel(false),
+        hlslIoMapping(false),
+        textureSamplerTransformMode(EShTexSampTransKeep),
+        needToLegalize(false),
+        binaryDoubleOutput(false),
+        uniformLocationBase(0)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -186,6 +262,8 @@ public:
         localSizeSpecId[1] = TQualifier::layoutNotSet;
         localSizeSpecId[2] = TQualifier::layoutNotSet;
         xfbBuffers.resize(TQualifier::layoutXfbBufferEnd);
+
+        shiftBinding.fill(0);
     }
     void setLimits(const TBuiltInResource& r) { resources = r; }
 
@@ -195,33 +273,153 @@ public:
 
     void setSource(EShSource s) { source = s; }
     EShSource getSource() const { return source; }
-    void setEntryPointName(const char* ep) { entryPointName = ep; }
+    void setEntryPointName(const char* ep)
+    {
+        entryPointName = ep;
+        processes.addProcess("entry-point");
+        processes.addArgument(entryPointName);
+    }
     void setEntryPointMangledName(const char* ep) { entryPointMangledName = ep; }
     const std::string& getEntryPointName() const { return entryPointName; }
     const std::string& getEntryPointMangledName() const { return entryPointMangledName; }
 
-    void setShiftSamplerBinding(unsigned int shift) { shiftSamplerBinding = shift; }
-    unsigned int getShiftSamplerBinding() const { return shiftSamplerBinding; }
-    void setShiftTextureBinding(unsigned int shift) { shiftTextureBinding = shift; }
-    unsigned int getShiftTextureBinding() const { return shiftTextureBinding; }
-    void setShiftImageBinding(unsigned int shift) { shiftImageBinding = shift; }
-    unsigned int getShiftImageBinding() const { return shiftImageBinding; }
-    void setShiftUboBinding(unsigned int shift)     { shiftUboBinding = shift; }
-    unsigned int getShiftUboBinding()     const { return shiftUboBinding; }
-    void setShiftSsboBinding(unsigned int shift)     { shiftSsboBinding = shift; }
-    unsigned int getShiftSsboBinding()  const { return shiftSsboBinding; }
-    void setAutoMapBindings(bool map)               { autoMapBindings = map; }
-    bool getAutoMapBindings()             const { return autoMapBindings; }
-    void setFlattenUniformArrays(bool flatten)      { flattenUniformArrays = flatten; }
-    bool getFlattenUniformArrays()        const { return flattenUniformArrays; }
-    void setNoStorageFormat(bool b)             { useUnknownFormat = b; }
-    bool getNoStorageFormat()             const { return useUnknownFormat; }
+    void setShiftBinding(TResourceType res, unsigned int shift)
+    {
+        shiftBinding[res] = shift;
+
+        const char* name = getResourceName(res);
+        if (name != nullptr)
+            processes.addIfNonZero(name, shift);
+    }
+
+    unsigned int getShiftBinding(TResourceType res) const { return shiftBinding[res]; }
+
+    void setShiftBindingForSet(TResourceType res, unsigned int shift, unsigned int set)
+    {
+        if (shift == 0) // ignore if there's no shift: it's a no-op.
+            return;
+
+        shiftBindingForSet[res][set] = shift;
+
+        const char* name = getResourceName(res);
+        if (name != nullptr) {
+            processes.addProcess(name);
+            processes.addArgument(shift);
+            processes.addArgument(set);
+        }
+    }
+
+    int getShiftBindingForSet(TResourceType res, unsigned int set) const
+    {
+        const auto shift = shiftBindingForSet[res].find(set);
+        return shift == shiftBindingForSet[res].end() ? -1 : shift->second;
+    }
+    bool hasShiftBindingForSet(TResourceType res) const { return !shiftBindingForSet[res].empty(); }
+
+    void setResourceSetBinding(const std::vector<std::string>& shift)
+    {
+        resourceSetBinding = shift;
+        if (shift.size() > 0) {
+            processes.addProcess("resource-set-binding");
+            for (int s = 0; s < (int)shift.size(); ++s)
+                processes.addArgument(shift[s]);
+        }
+    }
+    const std::vector<std::string>& getResourceSetBinding() const { return resourceSetBinding; }
+    void setAutoMapBindings(bool map)
+    {
+        autoMapBindings = map;
+        if (autoMapBindings)
+            processes.addProcess("auto-map-bindings");
+    }
+    bool getAutoMapBindings() const { return autoMapBindings; }
+    void setAutoMapLocations(bool map)
+    {
+        autoMapLocations = map;
+        if (autoMapLocations)
+            processes.addProcess("auto-map-locations");
+    }
+    bool getAutoMapLocations() const { return autoMapLocations; }
+    void setInvertY(bool invert)
+    {
+        invertY = invert;
+        if (invertY)
+            processes.addProcess("invert-y");
+    }
+    bool getInvertY() const { return invertY; }
+
+    void setFlattenUniformArrays(bool flatten)
+    {
+        flattenUniformArrays = flatten;
+        if (flattenUniformArrays)
+            processes.addProcess("flatten-uniform-arrays");
+    }
+    bool getFlattenUniformArrays() const { return flattenUniformArrays; }
+    void setNoStorageFormat(bool b)
+    {
+        useUnknownFormat = b;
+        if (useUnknownFormat)
+            processes.addProcess("no-storage-format");
+    }
+    bool getNoStorageFormat() const { return useUnknownFormat; }
+    void setHlslOffsets()
+    {
+        hlslOffsets = true;
+        if (hlslOffsets)
+            processes.addProcess("hlsl-offsets");
+    }
+    bool usingHlslOffsets() const { return hlslOffsets; }
+    void setUseStorageBuffer()
+    {
+        useStorageBuffer = true;
+        processes.addProcess("use-storage-buffer");
+    }
+    bool usingStorageBuffer() const { return useStorageBuffer; }
+    void setHlslIoMapping(bool b)
+    {
+        hlslIoMapping = b;
+        if (hlslIoMapping)
+            processes.addProcess("hlsl-iomap");
+    }
+    bool usingHlslIoMapping() { return hlslIoMapping; }
+    void setUseVulkanMemoryModel()
+    {
+        useVulkanMemoryModel = true;
+        processes.addProcess("use-vulkan-memory-model");
+    }
+    bool usingVulkanMemoryModel() const { return useVulkanMemoryModel; }
+
+    template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
+    bool hasCounterBufferName(const TString& name) const {
+        size_t len = strlen(implicitCounterName);
+        return name.size() > len &&
+               name.compare(name.size() - len, len, implicitCounterName) == 0;
+    }
+
+    void setTextureSamplerTransformMode(EShTextureSamplerTransformMode mode) { textureSamplerTransformMode = mode; }
 
     void setVersion(int v) { version = v; }
     int getVersion() const { return version; }
     void setProfile(EProfile p) { profile = p; }
     EProfile getProfile() const { return profile; }
-    void setSpv(const SpvVersion& s) { spvVersion = s; }
+    void setSpv(const SpvVersion& s)
+    {
+        spvVersion = s;
+
+        // client processes
+        if (spvVersion.vulkan > 0)
+            processes.addProcess("client vulkan100");
+        if (spvVersion.openGl > 0)
+            processes.addProcess("client opengl100");
+
+        // target-environment processes
+        if (spvVersion.vulkan > 0)
+            processes.addProcess("target-env vulkan1.0");
+        else if (spvVersion.vulkan > 0)
+            processes.addProcess("target-env vulkanUnknown");
+        if (spvVersion.openGl > 0)
+            processes.addProcess("target-env opengl");
+    }
     const SpvVersion& getSpv() const { return spvVersion; }
     EShLanguage getStage() const { return language; }
     void addRequestedExtension(const char* extension) { requestedExtensions.insert(extension); }
@@ -233,6 +431,11 @@ public:
     int getNumEntryPoints() const { return numEntryPoints; }
     int getNumErrors() const { return numErrors; }
     void addPushConstantCount() { ++numPushConstants; }
+#ifdef NV_EXTENSIONS
+    void addShaderRecordNVCount() { ++numShaderRecordNVBlocks; }
+    void addTaskNVCount() { ++numTaskNVBlocks; }
+#endif
+
     bool isRecursive() const { return recursive; }
 
     TIntermSymbol* addSymbol(const TVariable&);
@@ -240,13 +443,21 @@ public:
     TIntermSymbol* addSymbol(const TType&, const TSourceLoc&);
     TIntermSymbol* addSymbol(const TIntermSymbol&);
     TIntermTyped* addConversion(TOperator, const TType&, TIntermTyped*) const;
-    TIntermTyped* addShapeConversion(TOperator, const TType&, TIntermTyped*);
+    std::tuple<TIntermTyped*, TIntermTyped*> addConversion(TOperator op, TIntermTyped* node0, TIntermTyped* node1) const;
+    TIntermTyped* addUniShapeConversion(TOperator, const TType&, TIntermTyped*);
+    void addBiShapeConversion(TOperator, TIntermTyped*& lhsNode, TIntermTyped*& rhsNode);
+    TIntermTyped* addShapeConversion(const TType&, TIntermTyped*);
     TIntermTyped* addBinaryMath(TOperator, TIntermTyped* left, TIntermTyped* right, TSourceLoc);
     TIntermTyped* addAssign(TOperator op, TIntermTyped* left, TIntermTyped* right, TSourceLoc);
     TIntermTyped* addIndex(TOperator op, TIntermTyped* base, TIntermTyped* index, TSourceLoc);
     TIntermTyped* addUnaryMath(TOperator, TIntermTyped* child, TSourceLoc);
     TIntermTyped* addBuiltInFunctionCall(const TSourceLoc& line, TOperator, bool unary, TIntermNode*, const TType& returnType);
     bool canImplicitlyPromote(TBasicType from, TBasicType to, TOperator op = EOpNull) const;
+    bool isIntegralPromotion(TBasicType from, TBasicType to) const;
+    bool isFPPromotion(TBasicType from, TBasicType to) const;
+    bool isIntegralConversion(TBasicType from, TBasicType to) const;
+    bool isFPConversion(TBasicType from, TBasicType to) const;
+    bool isFPIntegralConversion(TBasicType from, TBasicType to) const;
     TOperator mapTypeToConstructorOp(const TType&) const;
     TIntermAggregate* growAggregate(TIntermNode* left, TIntermNode* right);
     TIntermAggregate* growAggregate(TIntermNode* left, TIntermNode* right, const TSourceLoc&);
@@ -255,11 +466,15 @@ public:
     TIntermAggregate* makeAggregate(const TSourceLoc&);
     TIntermTyped* setAggregateOperator(TIntermNode*, TOperator, const TType& type, TSourceLoc);
     bool areAllChildConst(TIntermAggregate* aggrNode);
-    TIntermTyped* addSelection(TIntermTyped* cond, TIntermNodePair code, const TSourceLoc&);
+    TIntermSelection* addSelection(TIntermTyped* cond, TIntermNodePair code, const TSourceLoc&);
     TIntermTyped* addSelection(TIntermTyped* cond, TIntermTyped* trueBlock, TIntermTyped* falseBlock, const TSourceLoc&);
     TIntermTyped* addComma(TIntermTyped* left, TIntermTyped* right, const TSourceLoc&);
     TIntermTyped* addMethod(TIntermTyped*, const TType&, const TString*, const TSourceLoc&);
     TIntermConstantUnion* addConstantUnion(const TConstUnionArray&, const TType&, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(signed char, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(unsigned char, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(signed short, const TSourceLoc&, bool literal = false) const;
+    TIntermConstantUnion* addConstantUnion(unsigned short, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(int, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(unsigned int, const TSourceLoc&, bool literal = false) const;
     TIntermConstantUnion* addConstantUnion(long long, const TSourceLoc&, bool literal = false) const;
@@ -270,7 +485,8 @@ public:
     TIntermTyped* promoteConstantUnion(TBasicType, TIntermConstantUnion*) const;
     bool parseConstTree(TIntermNode*, TConstUnionArray, TOperator, const TType&, bool singleConstantParam = false);
     TIntermLoop* addLoop(TIntermNode*, TIntermTyped*, TIntermTyped*, bool testFirst, const TSourceLoc&);
-    TIntermAggregate* addForLoop(TIntermNode*, TIntermNode*, TIntermTyped*, TIntermTyped*, bool testFirst, const TSourceLoc&);
+    TIntermAggregate* addForLoop(TIntermNode*, TIntermNode*, TIntermTyped*, TIntermTyped*, bool testFirst,
+        const TSourceLoc&, TIntermLoop*&);
     TIntermBranch* addBranch(TOperator, const TSourceLoc&);
     TIntermBranch* addBranch(TOperator, TIntermTyped*, const TSourceLoc&);
     template<typename selectorType> TIntermTyped* addSwizzle(TSwizzleSelectors<selectorType>&, const TSourceLoc&);
@@ -281,9 +497,6 @@ public:
     TIntermBinary* addBinaryNode(TOperator op, TIntermTyped* left, TIntermTyped* right, TSourceLoc, const TType&) const;
     TIntermUnary* addUnaryNode(TOperator op, TIntermTyped* child, TSourceLoc) const;
     TIntermUnary* addUnaryNode(TOperator op, TIntermTyped* child, TSourceLoc, const TType&) const;
-
-    // Add conversion from node's type to given basic type.
-    TIntermTyped* convertToBasicType(TOperator op, TBasicType basicType, TIntermTyped* node) const;
 
     // Constant folding (in Constant.cpp)
     TIntermTyped* fold(TIntermAggregate* aggrNode);
@@ -377,6 +590,8 @@ public:
     bool getPixelCenterInteger() const { return pixelCenterInteger; }
     void setEarlyFragmentTests() { earlyFragmentTests = true; }
     bool getEarlyFragmentTests() const { return earlyFragmentTests; }
+    void setPostDepthCoverage() { postDepthCoverage = true; }
+    bool getPostDepthCoverage() const { return postDepthCoverage; }
     bool setDepth(TLayoutDepth d)
     {
         if (depthLayout != EldNone)
@@ -387,6 +602,9 @@ public:
     TLayoutDepth getDepth() const { return depthLayout; }
     void setDepthReplacing() { depthReplacing = true; }
     bool isDepthReplacing() const { return depthReplacing; }
+
+    void setHlslFunctionality1() { hlslFunctionality1 = true; }
+    bool getHlslFunctionality1() const { return hlslFunctionality1; }
 
     void addBlendEquation(TBlendEquationShift b) { blendEquations |= (1 << b); }
     unsigned int getBlendEquations() const { return blendEquations; }
@@ -402,7 +620,8 @@ public:
     int checkLocationRange(int set, const TIoRange& range, const TType&, bool& typeCollision);
     int addUsedOffsets(int binding, int offset, int numOffsets);
     bool addUsedConstantId(int id);
-    int computeTypeLocationSize(const TType&) const;
+    static int computeTypeLocationSize(const TType&, EShLanguage);
+    static int computeTypeUniformLocationSize(const TType&);
 
     bool setXfbBufferStride(int buffer, unsigned stride)
     {
@@ -411,9 +630,14 @@ public:
         xfbBuffers[buffer].stride = stride;
         return true;
     }
+    unsigned getXfbStride(int buffer) const { return xfbBuffers[buffer].stride; }
     int addXfbBufferOffset(const TType&);
     unsigned int computeTypeXfbSize(const TType&, bool& containsDouble) const;
-    static int getBaseAlignment(const TType&, int& size, int& stride, bool std140, bool rowMajor);
+    static int getBaseAlignmentScalar(const TType&, int& size);
+    static int getBaseAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
+    static int getScalarAlignment(const TType&, int& size, int& stride, bool rowMajor);
+    static int getMemberAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
+    static bool improperStraddle(const TType& type, int size, int offset);
     bool promote(TIntermOperator*);
 
 #ifdef NV_EXTENSIONS
@@ -421,6 +645,16 @@ public:
     bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
     void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
     bool getGeoPassthroughEXT() const { return geoPassthroughEXT; }
+    void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
+    ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    bool setPrimitives(int m)
+    {
+        if (primitives != TQualifier::layoutNotSet)
+            return primitives == m;
+        primitives = m;
+        return true;
+    }
+    int getPrimitives() const { return primitives; }
 #endif
 
     const char* addSemanticName(const TString& name)
@@ -428,12 +662,56 @@ public:
         return semanticNameSet.insert(name).first->c_str();
     }
 
-    const char* const implicitThisName = "@this";
+    void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
+    const std::string& getSourceFile() const { return sourceFile; }
+    void addSourceText(const char* text) { sourceText = sourceText + text; }
+    const std::string& getSourceText() const { return sourceText; }
+    void addProcesses(const std::vector<std::string>& p)
+    {
+        for (int i = 0; i < (int)p.size(); ++i)
+            processes.addProcess(p[i]);
+    }
+    void addProcess(const std::string& process) { processes.addProcess(process); }
+    void addProcessArgument(const std::string& arg) { processes.addArgument(arg); }
+    const std::vector<std::string>& getProcesses() const { return processes.getProcesses(); }
+
+    void addUniformLocationOverride(const char* nameStr, int location)
+    {
+        std::string name = nameStr;
+        uniformLocationOverrides[name] = location;
+    }
+
+    int getUniformLocationOverride(const char* nameStr) const
+    {
+        std::string name = nameStr;
+        auto pos = uniformLocationOverrides.find(name);
+        if (pos == uniformLocationOverrides.end())
+            return -1;
+        else
+            return pos->second;
+    }
+
+    void setUniformLocationBase(int base) { uniformLocationBase = base; }
+    int getUniformLocationBase() const { return uniformLocationBase; }
+
+    void setNeedsLegalization() { needToLegalize = true; }
+    bool needsLegalization() const { return needToLegalize; }
+
+    void setBinaryDoubleOutput() { binaryDoubleOutput = true; }
+    bool getBinaryDoubleOutput() { return binaryDoubleOutput; }
+
+    const char* const implicitThisName;
+    const char* const implicitCounterName;
 
 protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);
     void warn(TInfoSink& infoSink, const char*);
+    void mergeCallGraphs(TInfoSink&, TIntermediate&);
+    void mergeModes(TInfoSink&, TIntermediate&);
+    void mergeTrees(TInfoSink&, TIntermediate&);
+    void seedIdMap(TMap<TString, int>& idMap, int& maxId);
+    void remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate&);
     void mergeBodies(TInfoSink&, TIntermSequence& globals, const TIntermSequence& unitGlobals);
     void mergeLinkerObjects(TInfoSink&, TIntermSequence& linkerObjects, const TIntermSequence& unitLinkerObjects);
     void mergeImplicitArraySizes(TType&, const TType&);
@@ -441,10 +719,10 @@ protected:
     void checkCallGraphCycles(TInfoSink&);
     void checkCallGraphBodies(TInfoSink&, bool keepUncalled);
     void inOutLocationCheck(TInfoSink&);
-    TIntermSequence& findLinkerObjects() const;
+    TIntermAggregate* findLinkerObjects() const;
     bool userOutputUsed() const;
-    static int getBaseAlignmentScalar(const TType&, int& size);
     bool isSpecializationOperation(const TIntermOperator&) const;
+    bool isNonuniformPropagating(TOperator) const;
     bool promoteUnary(TIntermUnary&);
     bool promoteBinary(TIntermBinary&);
     void addSymbolLinkageNode(TIntermAggregate*& linkage, TSymbolTable&, const TString&);
@@ -452,14 +730,22 @@ protected:
     void pushSelector(TIntermSequence&, const TVectorSelector&, const TSourceLoc&);
     void pushSelector(TIntermSequence&, const TMatrixSelector&, const TSourceLoc&);
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
+    void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
+    bool isConversionAllowed(TOperator op, TIntermTyped* node) const;
+    TIntermTyped* createConversion(TBasicType convertTo, TIntermTyped* node) const;
+    std::tuple<TBasicType, TBasicType> getConversionDestinatonType(TBasicType type0, TBasicType type1, TOperator op) const;
+    bool extensionRequested(const char *extension) const {return requestedExtensions.find(extension) != requestedExtensions.end();}
+    static const char* getResourceName(TResourceType);
 
     const EShLanguage language;  // stage, known at construction time
     EShSource source;            // source language, known a bit later
     std::string entryPointName;
     std::string entryPointMangledName;
+    typedef std::list<TCall> TGraph;
+    TGraph callGraph;
 
-    EProfile profile;
-    int version;
+    EProfile profile;                           // source profile
+    int version;                                // source version
     SpvVersion spvVersion;
     TIntermNode* treeRoot;
     std::set<std::string> requestedExtensions;  // cumulation of all enabled or required extensions; not connected to what subset of the shader used them
@@ -480,35 +766,61 @@ protected:
     int localSize[3];
     int localSizeSpecId[3];
     bool earlyFragmentTests;
+    bool postDepthCoverage;
     TLayoutDepth depthLayout;
     bool depthReplacing;
+    bool hlslFunctionality1;
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;
+    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     bool multiStream;
 
 #ifdef NV_EXTENSIONS
     bool layoutOverrideCoverage;
     bool geoPassthroughEXT;
+    int numShaderRecordNVBlocks;
+    ComputeDerivativeMode computeDerivativeMode;
+    int primitives;
+    int numTaskNVBlocks;
 #endif
 
-    unsigned int shiftSamplerBinding;
-    unsigned int shiftTextureBinding;
-    unsigned int shiftImageBinding;
-    unsigned int shiftUboBinding;
-    unsigned int shiftSsboBinding;
+    // Base shift values
+    std::array<unsigned int, EResCount> shiftBinding;
+
+    // Per-descriptor-set shift values
+    std::array<std::map<int, int>, EResCount> shiftBindingForSet;
+
+    std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
+    bool autoMapLocations;
+    bool invertY;
     bool flattenUniformArrays;
     bool useUnknownFormat;
-
-    typedef std::list<TCall> TGraph;
-    TGraph callGraph;
+    bool hlslOffsets;
+    bool useStorageBuffer;
+    bool useVulkanMemoryModel;
+    bool hlslIoMapping;
 
     std::set<TString> ioAccessed;           // set of names of statically read/written I/O that might need extra checking
     std::vector<TIoRange> usedIo[4];        // sets of used locations, one for each of in, out, uniform, and buffers
     std::vector<TOffsetRange> usedAtomics;  // sets of bindings used by atomic counters
-    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     std::unordered_set<int> usedConstantId; // specialization constant ids used
     std::set<TString> semanticNameSet;
+
+    EShTextureSamplerTransformMode textureSamplerTransformMode;
+
+    // source code of shader, useful as part of debug information
+    std::string sourceFile;
+    std::string sourceText;
+
+    // for OpModuleProcessed, or equivalent
+    TProcesses processes;
+
+    bool needToLegalize;
+    bool binaryDoubleOutput;
+
+    std::unordered_map<std::string, int> uniformLocationOverrides;
+    int uniformLocationBase;
 
 private:
     void operator=(TIntermediate&); // prevent assignments

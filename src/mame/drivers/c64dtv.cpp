@@ -1,5 +1,16 @@
 // license:BSD-3-Clause
 // copyright-holders:Curt Coder
+/*************************************************************************************************************
+
+Commodore 64 Direct-to-TV
+It looks like a fat joystick.
+
+Chips: All unmarked. According to Wikipedia an ASIC contains an entire
+       Commodore 64 (6510 CPU, VIC-II, SID, CIA, PLA) running at 32MHz. The
+       6510 CPU portion runs at 1MHz.
+Crystals: 32.720 (X1), unmarked (X2).
+
+*************************************************************************************************************/
 #include "emu.h"
 #include "screen.h"
 
@@ -20,6 +31,7 @@ public:
 		bitmap.fill(rgb_t::black(), cliprect);
 		return 0;
 	}
+	void c64dtv(machine_config &config);
 };
 
 
@@ -37,14 +49,15 @@ INPUT_PORTS_END
 //  MACHINE DRIVERS
 //**************************************************************************
 
-static MACHINE_CONFIG_START( c64dtv )
+void c64dtv_state::c64dtv(machine_config &config)
+{
 	// video hardware
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_UPDATE_DRIVER(c64dtv_state, screen_update)
-	MCFG_SCREEN_SIZE(640,480)
-	MCFG_SCREEN_VISIBLE_AREA(0,639, 0,479)
-	MCFG_SCREEN_REFRESH_RATE(30)
-MACHINE_CONFIG_END
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_screen_update(FUNC(c64dtv_state::screen_update));
+	screen.set_size(640,480);
+	screen.set_visarea_full();
+	screen.set_refresh_hz(30);
+}
 
 
 
@@ -66,4 +79,4 @@ ROM_END
 //  GAME DRIVERS
 //**************************************************************************
 
-CONS( 2005, c64dtv,  0,  0,    c64dtv,     c64dtv, c64dtv_state,     0,     "The Toy:Lobster Company", "Commodore 64 Direct-to-TV (Version 2 050711) (PAL)", MACHINE_NOT_WORKING | MACHINE_NO_SOUND )
+CONS( 2005, c64dtv, 0, 0, c64dtv, c64dtv, c64dtv_state, empty_init, "The Toy:Lobster Company", "Commodore 64 Direct-to-TV (Version 2 050711) (PAL)", MACHINE_IS_SKELETON )

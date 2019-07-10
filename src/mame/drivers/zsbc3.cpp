@@ -36,82 +36,80 @@
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/terminal.h"
+#include "machine/z80ctc.h"
+#include "machine/z80sio.h"
+#include "machine/z80pio.h"
+#include "bus/rs232/rs232.h"
 
-#define TERMINAL_TAG "terminal"
 
 class zsbc3_state : public driver_device
 {
 public:
 	zsbc3_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_terminal(*this, TERMINAL_TAG)
-	{
-	}
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+	{ }
 
-	DECLARE_READ8_MEMBER(zsbc3_28_r);
-	DECLARE_READ8_MEMBER(zsbc3_2a_r);
-	void kbd_put(u8 data);
+	void zsbc3(machine_config &config);
 
 private:
-	uint8_t m_term_data;
-	virtual void machine_reset() override;
+	void zsbc3_io(address_map &map);
+	void zsbc3_mem(address_map &map);
+
 	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
 };
 
 
-READ8_MEMBER( zsbc3_state::zsbc3_28_r )
+void zsbc3_state::zsbc3_mem(address_map &map)
 {
-	uint8_t ret = m_term_data;
-	m_term_data = 0;
-	return ret;
+	map.unmap_value_high();
+	map(0x0000, 0x07ff).rom();
+	map(0x0800, 0xffff).ram();
 }
 
-READ8_MEMBER( zsbc3_state::zsbc3_2a_r )
+void zsbc3_state::zsbc3_io(address_map &map)
 {
-	return (m_term_data) ? 5 : 4;
+	map.unmap_value_high();
+	map.global_mask(0xff);
+	map(0x08, 0x0b); //AM_DEVREADWRITE("pio", z80pio_device, read, write) // the control bytes appear to be for a PIO
+	map(0x28, 0x2b).rw("sio", FUNC(z80sio_device::cd_ba_r), FUNC(z80sio_device::cd_ba_w));
+	map(0x30, 0x33).rw("ctc", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
+	map(0x38, 0x38); // unknown device, init byte = C3
 }
-
-static ADDRESS_MAP_START(zsbc3_mem, AS_PROGRAM, 8, zsbc3_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE( 0x0000, 0x07ff ) AM_ROM
-	AM_RANGE( 0x0800, 0xffff ) AM_RAM
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START(zsbc3_io, AS_IO, 8, zsbc3_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x28, 0x28) AM_READ(zsbc3_28_r) AM_DEVWRITE(TERMINAL_TAG, generic_terminal_device, write)
-	AM_RANGE(0x2a, 0x2a) AM_READ(zsbc3_2a_r)
-ADDRESS_MAP_END
 
 /* Input ports */
 static INPUT_PORTS_START( zsbc3 )
 INPUT_PORTS_END
 
 
-void zsbc3_state::machine_reset()
+void zsbc3_state::zsbc3(machine_config &config)
 {
-}
-
-void zsbc3_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-}
-
-
-static MACHINE_CONFIG_START( zsbc3 )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu",Z80, XTAL_16MHz /4)
-	MCFG_CPU_PROGRAM_MAP(zsbc3_mem)
-	MCFG_CPU_IO_MAP(zsbc3_io)
+	Z80(config, m_maincpu, 16_MHz_XTAL / 4);
+	m_maincpu->set_addrmap(AS_PROGRAM, &zsbc3_state::zsbc3_mem);
+	m_maincpu->set_addrmap(AS_IO, &zsbc3_state::zsbc3_io);
 
-	/* video hardware */
-	MCFG_DEVICE_ADD(TERMINAL_TAG, GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(zsbc3_state, kbd_put))
-MACHINE_CONFIG_END
+	z80ctc_device &ctc(Z80CTC(config, "ctc", 16_MHz_XTAL / 4));
+	ctc.set_clk<0>(16_MHz_XTAL / 8);
+	ctc.set_clk<1>(16_MHz_XTAL / 8);
+	ctc.set_clk<2>(16_MHz_XTAL / 8);
+	ctc.set_clk<3>(16_MHz_XTAL / 8);
+	ctc.zc_callback<0>().set("sio", FUNC(z80sio_device::txca_w));
+	ctc.zc_callback<0>().append("sio", FUNC(z80sio_device::rxca_w));
+
+	z80sio_device &sio(Z80SIO(config, "sio", 16_MHz_XTAL / 4));
+	//sio.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);  // no evidence of a daisy chain because IM2 is not set
+	sio.out_txda_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	sio.out_dtra_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	sio.out_rtsa_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("sio", FUNC(z80sio_device::rxa_w));
+	rs232.cts_handler().set("sio", FUNC(z80sio_device::ctsa_w));
+
+	/*z80pio_device &pio(*/Z80PIO(config, "pio", 16_MHz_XTAL / 4)/*)*/;
+	//pio.out_int_callback.set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+}
 
 /* ROM definition */
 ROM_START( zsbc3 )
@@ -124,5 +122,5 @@ ROM_END
 
 /* Driver */
 
-/*    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY                  FULLNAME  FLAGS */
-COMP( 1980, zsbc3,  0,      0,       zsbc3,     zsbc3,  zsbc3_state,  0,    "Digital Microsystems",  "ZSBC-3", MACHINE_NO_SOUND_HW)
+/*    YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT  STATE        INIT        COMPANY                 FULLNAME  FLAGS */
+COMP( 1980, zsbc3, 0,      0,      zsbc3,   zsbc3, zsbc3_state, empty_init, "Digital Microsystems", "ZSBC-3", MACHINE_NO_SOUND_HW)

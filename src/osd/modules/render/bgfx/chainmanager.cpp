@@ -10,7 +10,7 @@
 //============================================================
 
 #include <bx/readerwriter.h>
-#include <bx/crtimpl.h>
+#include <bx/file.h>
 
 #include "emu.h"
 #include "../frontend/mame/ui/slider.h"
@@ -143,7 +143,7 @@ bgfx_chain* chain_manager::load_chain(std::string name, uint32_t screen_index)
 	osd_subst_env(path, util::string_format("%s" PATH_SEPARATOR "chains" PATH_SEPARATOR, m_options.bgfx_path()));
 	path += name;
 
-	bx::CrtFileReader reader;
+	bx::FileReader reader;
 	if (!bx::open(&reader, path.c_str()))
 	{
 		printf("Unable to open chain file %s, falling back to no post processing\n", path.c_str());
@@ -184,6 +184,9 @@ bgfx_chain* chain_manager::load_chain(std::string name, uint32_t screen_index)
 void chain_manager::parse_chain_selections(std::string chain_str)
 {
 	std::vector<std::string> chain_names = split_option_string(chain_str);
+
+	if (chain_names.empty())
+		chain_names.push_back("default");
 
 	while (m_current_chain.size() != chain_names.size())
 	{
@@ -294,7 +297,7 @@ void chain_manager::process_screen_quad(uint32_t view, uint32_t screen, render_p
 		tex_width, tex_height, prim->texture.rowpixels, prim->texture.palette, prim->texture.base);
 
 	std::string full_name = "screen" + std::to_string(screen);
-	bgfx_texture *texture = new bgfx_texture(full_name, bgfx::TextureFormat::RGBA8, tex_width, tex_height, mem, BGFX_TEXTURE_U_CLAMP | BGFX_TEXTURE_V_CLAMP | BGFX_TEXTURE_MIN_POINT | BGFX_TEXTURE_MAG_POINT | BGFX_TEXTURE_MIP_POINT);
+	bgfx_texture *texture = new bgfx_texture(full_name, bgfx::TextureFormat::RGBA8, tex_width, tex_height, mem, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT);
 	m_textures.add_provider(full_name, texture);
 
 	const bool any_targets_rebuilt = m_targets.update_target_sizes(screen, tex_width, tex_height, TARGET_STYLE_GUEST);
@@ -394,9 +397,7 @@ void chain_manager::create_selection_slider(uint32_t screen_index)
 		return;
 	}
 
-	std::string description = "Window " + std::to_string(m_window_index) + ", Screen " + std::to_string(screen_index) + " Effect:";
-	size_t size = sizeof(slider_state) + description.length();
-	slider_state *state = reinterpret_cast<slider_state *>(auto_alloc_array_clear(m_machine, uint8_t, size));
+	std::unique_ptr<slider_state> state = make_unique_clear<slider_state>();
 
 	state->minval = 0;
 	state->defval = m_current_chain[screen_index];
@@ -407,15 +408,16 @@ void chain_manager::create_selection_slider(uint32_t screen_index)
 	state->update = std::bind(&chain_manager::slider_changed, this, _1, _2, _3, _4, _5);
 	state->arg = this;
 	state->id = screen_index;
-	strcpy(state->description, description.c_str());
+	state->description = "Window " + std::to_string(m_window_index) + ", Screen " + std::to_string(screen_index) + " Effect:";
 
 	ui::menu_item item;
 	item.text = state->description;
 	item.subtext = "";
 	item.flags = 0;
-	item.ref = state;
+	item.ref = state.get();
 	item.type = ui::menu_item_type::SLIDER;
 	m_selection_sliders.push_back(item);
+	m_core_sliders.push_back(std::move(state));
 }
 
 uint32_t chain_manager::handle_screen_chains(uint32_t view, render_primitive *starting_prim, osd_window& window)

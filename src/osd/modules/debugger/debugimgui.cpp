@@ -173,7 +173,7 @@ private:
 	void refresh_typelist();
 	void update_cpu_view(device_t* device);
 	static bool get_view_source(void* data, int idx, const char** out_text);
-	static int history_set(ImGuiTextEditCallbackData* data);
+	static int history_set(ImGuiInputTextCallbackData* data);
 
 	running_machine* m_machine;
 	int32_t            m_mouse_x;
@@ -184,7 +184,6 @@ private:
 	const char*      font_name;
 	float            font_size;
 	ImVec2           m_text_size;  // size of character (assumes monospaced font is in use)
-	ImguiFontHandle  m_font;
 	uint8_t            m_key_char;
 	bool             m_hide;
 	int              m_win_count;  // number of active windows, does not decrease, used to ID individual windows
@@ -358,7 +357,7 @@ void debug_imgui::handle_keys()
 	{
 		switch (event.event_type)
 		{
-		case UI_EVENT_CHAR:
+			case ui_event::IME_CHAR:
 			m_key_char = event.ch;
 			if(focus_view != nullptr)
 				focus_view->view->process_char(m_key_char);
@@ -532,7 +531,7 @@ void debug_imgui::handle_console(running_machine* machine)
 	}
 }
 
-int debug_imgui::history_set(ImGuiTextEditCallbackData* data)
+int debug_imgui::history_set(ImGuiInputTextCallbackData* data)
 {
 	if(view_main_console->console_history.size() == 0)
 		return 0;
@@ -677,7 +676,7 @@ void debug_imgui::draw_view(debug_area* view_ptr, bool exp_change)
 
 void debug_imgui::draw_bpoints(debug_area* view_ptr, bool* opened)
 {
-	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiCond_Once);
 	if(ImGui::Begin(view_ptr->title.c_str(),opened))
 	{
 		view_ptr->is_collapsed = false;
@@ -723,7 +722,7 @@ void debug_imgui::add_wpoints(int id)
 
 void debug_imgui::draw_log(debug_area* view_ptr, bool* opened)
 {
-	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiCond_Once);
 	if(ImGui::Begin(view_ptr->title.c_str(),opened))
 	{
 		view_ptr->is_collapsed = false;
@@ -757,7 +756,7 @@ void debug_imgui::draw_disasm(debug_area* view_ptr, bool* opened)
 {
 	const debug_view_source* src;
 
-	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiCond_Once);
 	if(ImGui::Begin(view_ptr->title.c_str(),opened,ImGuiWindowFlags_MenuBar))
 	{
 		int idx;
@@ -844,7 +843,7 @@ void debug_imgui::draw_memory(debug_area* view_ptr, bool* opened)
 {
 	const debug_view_source* src;
 
-	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(view_ptr->width,view_ptr->height + ImGui::GetTextLineHeight()),ImGuiCond_Once);
 	if(ImGui::Begin(view_ptr->title.c_str(),opened,ImGuiWindowFlags_MenuBar))
 	{
 		int idx;
@@ -960,7 +959,10 @@ void debug_imgui::mount_image()
 		{
 			case file_entry_type::DRIVE:
 			case file_entry_type::DIRECTORY:
-				err = util::zippath_opendir(m_selected_file->fullpath.c_str(), nullptr);
+				{
+					util::zippath_directory::ptr dir;
+					err = util::zippath_directory::open(m_selected_file->fullpath.c_str(), dir);
+				}
 				if(err == osd_file::error::NONE)
 				{
 					m_filelist_refresh = true;
@@ -995,22 +997,19 @@ void debug_imgui::create_image()
 
 void debug_imgui::refresh_filelist()
 {
-	int x;
-	osd_file::error err;
-	util::zippath_directory* dir = nullptr;
-	const char *volume_name;
-	const osd::directory::entry *dirent;
 	uint8_t first = 0;
 
 	// todo
 	m_filelist.clear();
 	m_filelist_refresh = false;
 
-	err = util::zippath_opendir(m_path,&dir);
+	util::zippath_directory::ptr dir;
+	osd_file::error const err = util::zippath_directory::open(m_path,dir);
 	if(err == osd_file::error::NONE)
 	{
-		x = 0;
+		int x = 0;
 		// add drives
+		const char *volume_name;
 		while((volume_name = osd_get_volume_name(x))!=nullptr)
 		{
 			file_entry temp;
@@ -1021,7 +1020,8 @@ void debug_imgui::refresh_filelist()
 			x++;
 		}
 		first = m_filelist.size();
-		while((dirent = util::zippath_readdir(dir)) != nullptr)
+		const osd::directory::entry *dirent;
+		while((dirent = dir->readdir()) != nullptr)
 		{
 			file_entry temp;
 			switch(dirent->type)
@@ -1040,8 +1040,7 @@ void debug_imgui::refresh_filelist()
 			m_filelist.emplace_back(std::move(temp));
 		}
 	}
-	if (dir != nullptr)
-		util::zippath_closedir(dir);
+	dir.reset();
 
 	// sort file list, as it is not guaranteed to be in any particular order
 	std::sort(m_filelist.begin()+first,m_filelist.end(),[](file_entry x, file_entry y) { return x.basename < y.basename; } );
@@ -1237,11 +1236,9 @@ void debug_imgui::draw_create_dialog(const char* label)
 
 void debug_imgui::draw_console()
 {
-	rgb_t bg, fg;
-	rgb_t base(0xe6, 0xff, 0xff, 0xff);
 	ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-	ImGui::SetNextWindowSize(ImVec2(view_main_regs->width + view_main_disasm->width,view_main_disasm->height + view_main_console->height + ImGui::GetTextLineHeight()*3),ImGuiSetCond_Once);
+	ImGui::SetNextWindowSize(ImVec2(view_main_regs->width + view_main_disasm->width,view_main_disasm->height + view_main_console->height + ImGui::GetTextLineHeight()*3),ImGuiCond_Once);
 	if(ImGui::Begin(view_main_console->title.c_str(), nullptr,flags))
 	{
 		std::string str;
@@ -1344,7 +1341,7 @@ void debug_imgui::draw_console()
 		ImGui::PushItemWidth(-1.0f);
 		if(ImGui::InputText("##console_input",view_main_console->console_input,512,flags,history_set))
 			view_main_console->exec_cmd = true;
-		if ((ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
+		if ((ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
 			ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 		if(m_mount_open)
 		{
@@ -1383,7 +1380,6 @@ void debug_imgui::update()
 	ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered,ImVec4(0.7f,0.7f,0.7f,0.8f));
 	ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive,ImVec4(0.9f,0.9f,0.9f,0.8f));
 	ImGui::PushStyleColor(ImGuiCol_Border,ImVec4(0.7f,0.7f,0.7f,0.8f));
-	ImGui::PushStyleColor(ImGuiCol_ComboBg,ImVec4(0.4f,0.4f,0.4f,0.9f));
 	m_text_size = ImGui::CalcTextSize("A");  // hopefully you're using a monospaced font...
 	draw_console();  // We'll always have a console window
 
@@ -1425,7 +1421,7 @@ void debug_imgui::update()
 		global_free(to_delete);
 	}
 
-	ImGui::PopStyleColor(13);
+	ImGui::PopStyleColor(12);
 }
 
 void debug_imgui::init_debugger(running_machine &machine)
@@ -1478,8 +1474,7 @@ void debug_imgui::init_debugger(running_machine &machine)
 		io.Fonts->AddFontDefault();
 	else
 		io.Fonts->AddFontFromFileTTF(font_name,font_size);  // for now, font name must be a path to a TTF file
-	m_font = imguiCreate();
-	imguiSetFont(m_font);
+	imguiCreate();
 }
 
 void debug_imgui::wait_for_debugger(device_t &device, bool firststop)

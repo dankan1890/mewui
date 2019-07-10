@@ -2,30 +2,34 @@
 // copyright-holders:Robbbert
 /***************************************************************************************************
 
-    Skeleton driver for Memorex 2178
+Skeleton driver for Memorex 2178
 
-    Chips: Z80A, N8X305N, 2x B8452A, 4x D4016C-3, 2x HD468A50P, HD46505SP-1
-    Crystal: 18.8696MHz
-    There is a large piezo-beeper.
+Chips: Z80A, N8X305N, 2x B8452A, 4x D4016C-3, 2x HD468A50P, HD46505SP-1
+Crystal: 18.8696MHz
+There is a large piezo-beeper.
 
-    TODO:
-    - Connect up the beeper
-    - RS232 not working (6850 parameters are /64, 8 bit, 2 stop bit, IRQ when key pressed)
-    - Unknown port i/o 80
-    - Unknown memory i/o C000, 4000
-    - Need schematic / tech manual
-    - Gets stuck waiting for E011 to become zero somehow. If you skip that, a status line appears.
-    - Doesn't seem to be any dips, looks like all settings and modes are controlled by keystrokes.
+TODO:
+- Connect up the beeper
+- Unknown memory i/o C000, 4000
+- Need schematic / tech manual
+- Doesn't seem to be any dips, looks like all settings and modes are controlled by keystrokes.
+- 8X305 is a 16-bit bipolar processor which appears to use four external PROMs (undumped). It
+  would communicate with the Z80 via a common 8-bit I/O bus. No idea what it is used for here,
+  but in another system it acts as the floppy disk controller.
+- Debug trick: set pc=809 to see the test menu.
+- It shows the status line but keystrokes are ignored. After 20 minutes of inactivity, the screen
+  goes blank. Pressing a key will restore it.
 
 ***************************************************************************************************/
 
 #include "emu.h"
-#include "bus/rs232/rs232.h"
 #include "cpu/z80/z80.h"
+//#include "cpu/8x300/8x300.h" // device = N8X300
 #include "machine/6850acia.h"
+#include "bus/rs232/rs232.h"
 #include "machine/clock.h"
-#include "machine/keyboard.h"
 #include "video/mc6845.h"
+#include "emupal.h"
 #include "screen.h"
 
 
@@ -37,65 +41,46 @@ public:
 		, m_palette(*this, "palette")
 		, m_p_videoram(*this, "videoram")
 		, m_maincpu(*this, "maincpu")
-		, m_acia(*this, "acia")
 		, m_p_chargen(*this, "chargen")
-	{
-	}
+	{ }
 
-	DECLARE_READ8_MEMBER(keyin_r);
-	void kbd_put(u8 data);
-	DECLARE_WRITE_LINE_MEMBER(write_acia_clock);
-	MC6845_UPDATE_ROW(crtc_update_row);
+	void mx2178(machine_config &config);
 
 private:
-	uint8_t m_term_data;
+	MC6845_UPDATE_ROW(crtc_update_row);
+
+	void mx2178_io(address_map &map);
+	void mx2178_mem(address_map &map);
+
 	virtual void machine_reset() override;
 	required_device<palette_device> m_palette;
-	required_shared_ptr<uint8_t> m_p_videoram;
+	required_shared_ptr<u8> m_p_videoram;
 	required_device<z80_device> m_maincpu;
-	required_device<acia6850_device> m_acia;
 	required_region_ptr<u8> m_p_chargen;
 };
 
-static ADDRESS_MAP_START(mx2178_mem, AS_PROGRAM, 8, mx2178_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x1fff) AM_ROM AM_REGION("roms", 0)
-	AM_RANGE(0x2000, 0x27ff) AM_RAM AM_SHARE("videoram")
-	AM_RANGE(0x6000, 0x6fff) AM_RAM
-	AM_RANGE(0xe000, 0xe7ff) AM_RAM
-ADDRESS_MAP_END
+void mx2178_state::mx2178_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x1fff).rom().region("roms", 0);
+	map(0x2000, 0x27ff).ram().share("videoram");
+	map(0x6000, 0x6fff).ram();
+	map(0xe000, 0xe7ff).ram();
+}
 
-static ADDRESS_MAP_START(mx2178_io, AS_IO, 8, mx2178_state)
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0x00, 0x00) AM_DEVWRITE("crtc", mc6845_device, address_w)
-	AM_RANGE(0x01, 0x01) AM_DEVREADWRITE("crtc", mc6845_device, register_r, register_w)
-	//AM_RANGE(0xa0, 0xa0) AM_DEVREADWRITE("acia", acia6850_device, status_r, control_w)
-	//AM_RANGE(0xa1, 0xa1) AM_DEVREADWRITE("acia", acia6850_device, data_r, data_w)
-	AM_RANGE(0xa0, 0xa1) AM_READ(keyin_r)
-ADDRESS_MAP_END
+void mx2178_state::mx2178_io(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x00).rw("crtc", FUNC(mc6845_device::status_r), FUNC(mc6845_device::address_w));
+	map(0x01, 0x01).rw("crtc", FUNC(mc6845_device::register_r), FUNC(mc6845_device::register_w));
+	map(0x80, 0x81).rw("acia1", FUNC(acia6850_device::read), FUNC(acia6850_device::write));
+	map(0xa0, 0xa1).rw("acia2", FUNC(acia6850_device::read), FUNC(acia6850_device::write));
+}
 
 
 /* Input ports */
 static INPUT_PORTS_START( mx2178 )
 INPUT_PORTS_END
-
-READ8_MEMBER( mx2178_state::keyin_r )
-{
-	if (offset)
-	{
-		uint8_t ret = m_term_data;
-		m_term_data = 0;
-		return ret;
-	}
-	else
-		return (m_term_data) ? 0x83 : 0x82;
-}
-
-void mx2178_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-	m_maincpu->set_input_line(0, HOLD_LINE);
-}
 
 MC6845_UPDATE_ROW( mx2178_state::crtc_update_row )
 {
@@ -138,7 +123,7 @@ static const gfx_layout mx2178_charlayout =
 	8*16                    /* every char takes 8 bytes */
 };
 
-static GFXDECODE_START( mx2178 )
+static GFXDECODE_START( gfx_mx2178 )
 	GFXDECODE_ENTRY( "chargen", 0x0000, mx2178_charlayout, 0, 1 )
 GFXDECODE_END
 
@@ -146,56 +131,72 @@ void mx2178_state::machine_reset()
 {
 }
 
-WRITE_LINE_MEMBER(mx2178_state::write_acia_clock)
+void mx2178_state::mx2178(machine_config &config)
 {
-	m_acia->write_txc(state);
-	m_acia->write_rxc(state);
-}
-
-static MACHINE_CONFIG_START( mx2178 )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, 18869600/5) // guess
-	MCFG_CPU_PROGRAM_MAP(mx2178_mem)
-	MCFG_CPU_IO_MAP(mx2178_io)
+	Z80(config, m_maincpu, XTAL(18'869'600) / 5); // guess
+	m_maincpu->set_addrmap(AS_PROGRAM, &mx2178_state::mx2178_mem);
+	m_maincpu->set_addrmap(AS_IO, &mx2178_state::mx2178_io);
 
 	/* video hardware */
-	MCFG_SCREEN_ADD_MONOCHROME("screen", RASTER, rgb_t::green())
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) // not correct
-	MCFG_SCREEN_UPDATE_DEVICE("crtc", mc6845_device, screen_update)
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", mx2178)
-	MCFG_PALETTE_ADD_MONOCHROME("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER, rgb_t::green()));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500)); // not correct
+	screen.set_screen_update("crtc", FUNC(mc6845_device::screen_update));
+	screen.set_size(32*8, 32*8);
+	screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+	GFXDECODE(config, "gfxdecode", m_palette, gfx_mx2178);
+	PALETTE(config, m_palette, palette_device::MONOCHROME);
 
 	/* Devices */
-	MCFG_MC6845_ADD("crtc", MC6845, "screen", 18869600 / 8) // clk unknown
-	MCFG_MC6845_SHOW_BORDER_AREA(false)
-	MCFG_MC6845_CHAR_WIDTH(8)
-	MCFG_MC6845_UPDATE_ROW_CB(mx2178_state, crtc_update_row)
+	mc6845_device &crtc(MC6845(config, "crtc", XTAL(18'869'600) / 8)); // clk unknown
+	crtc.set_screen("screen");
+	crtc.set_show_border_area(false);
+	crtc.set_char_width(8);
+	crtc.set_update_row_callback(FUNC(mx2178_state::crtc_update_row), this);
+	crtc.out_vsync_callback().set_inputline(m_maincpu, INPUT_LINE_NMI);
 
-	MCFG_DEVICE_ADD("acia", ACIA6850, 0)
+	clock_device &acia_clock(CLOCK(config, "acia_clock", XTAL(18'869'600) / 30));
+	acia_clock.signal_handler().set("acia1", FUNC(acia6850_device::write_txc));
+	acia_clock.signal_handler().append("acia1", FUNC(acia6850_device::write_rxc));
+	acia_clock.signal_handler().append("acia2", FUNC(acia6850_device::write_txc));
+	acia_clock.signal_handler().append("acia2", FUNC(acia6850_device::write_rxc));
 
-	/// TODO: hook up acia to keyboard and memory map
+	acia6850_device &acia1(ACIA6850(config, "acia1", 0));
+	acia1.txd_handler().set("rs232a", FUNC(rs232_port_device::write_txd));
+	acia1.rts_handler().set("rs232a", FUNC(rs232_port_device::write_rts));
+	acia1.irq_handler().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD("keyboard", GENERIC_KEYBOARD, 0)
-	MCFG_GENERIC_KEYBOARD_CB(PUT(mx2178_state, kbd_put))
+	rs232_port_device &rs232a(RS232_PORT(config, "rs232a", default_rs232_devices, nullptr));
+	rs232a.rxd_handler().set("acia1", FUNC(acia6850_device::write_rxd));
+	rs232a.cts_handler().set("acia1", FUNC(acia6850_device::write_cts));
 
-	MCFG_DEVICE_ADD("acia_clock", CLOCK, 614400)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE(mx2178_state, write_acia_clock))
+	acia6850_device &acia2(ACIA6850(config, "acia2", 0));
+	acia2.txd_handler().set("rs232b", FUNC(rs232_port_device::write_txd));
+	acia2.rts_handler().set("rs232b", FUNC(rs232_port_device::write_rts));
+	acia2.irq_handler().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-MACHINE_CONFIG_END
+	rs232_port_device &rs232b(RS232_PORT(config, "rs232b", default_rs232_devices, "keyboard"));
+	rs232b.rxd_handler().set("acia2", FUNC(acia6850_device::write_rxd));
+	rs232b.cts_handler().set("acia2", FUNC(acia6850_device::write_cts));
+}
 
 /* ROM definition */
 ROM_START( mx2178 )
-	ROM_REGION(0x2000, "roms", 0)
-	ROM_LOAD( "96274139.bin", 0x000000, 0x002000, CRC(eb471a27) SHA1(433abefd1a72653d0bf35bcaaeccf9943b96260b) )
+	ROM_REGION(0x2000, "roms", 0) // MBM2764-25
+	ROM_LOAD( "96274139.u9", 0x000000, 0x002000, CRC(eb471a27) SHA1(433abefd1a72653d0bf35bcaaeccf9943b96260b) )
 
-	ROM_REGION(0x1000, "chargen", 0)
-	ROM_LOAD( "96273883.bin", 0x000000, 0x001000, CRC(8311fadd) SHA1(573bbad23e893ad9374edc929642dc1cba3452d2) )
+	ROM_REGION(0x800, "proms", 0) // MB7122E - actual mapping not known
+	ROMX_LOAD( "96270350.q2", 0x0000, 0x0400, NO_DUMP, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1) )
+	ROMX_LOAD( "96270368.r2", 0x0000, 0x0400, NO_DUMP, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1) )
+	ROMX_LOAD( "96270376.s2", 0x0001, 0x0400, NO_DUMP, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1) )
+	ROMX_LOAD( "96270384.t2", 0x0001, 0x0400, NO_DUMP, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1) )
+
+	ROM_REGION(0x1000, "chargen", 0) // D2732A-3
+	ROM_LOAD( "96273883.c7", 0x000000, 0x001000, CRC(8311fadd) SHA1(573bbad23e893ad9374edc929642dc1cba3452d2) )
 ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT   STATE         INIT  COMPANY    FULLNAME        FLAGS
-COMP( 1984, mx2178, 0,      0,       mx2178,    mx2178, mx2178_state, 0,    "Memorex", "Memorex 2178", MACHINE_IS_SKELETON )
+//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT   CLASS         INIT        COMPANY    FULLNAME        FLAGS
+COMP( 1984, mx2178, 0,      0,      mx2178,  mx2178, mx2178_state, empty_init, "Memorex", "Memorex 2178", MACHINE_IS_SKELETON )

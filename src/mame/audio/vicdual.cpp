@@ -58,7 +58,7 @@ static const discrete_mixer_desc frogsMixer =
 	0, RES_K(56), 0, CAP_U(0.1), 0, 10000
 };
 
-static DISCRETE_SOUND_START(frogs)
+static DISCRETE_SOUND_START(frogs_discrete)
 	/************************************************
 	 * Input register mapping for frogs
 	 *
@@ -111,16 +111,16 @@ static const char *const frogs_sample_names[] =
 };
 
 
-MACHINE_CONFIG_START( frogs_audio )
-	MCFG_SOUND_ADD("samples", SAMPLES, 0)
-	MCFG_SAMPLES_CHANNELS(5)
-	MCFG_SAMPLES_NAMES(frogs_sample_names)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
+void vicdual_state::frogs_audio(machine_config &config)
+{
+	SAMPLES(config, m_samples);
+	m_samples->set_channels(5);
+	m_samples->set_samples_names(frogs_sample_names);
+	m_samples->add_route(ALL_OUTPUTS, "mono", 0.35);
 
-	MCFG_SOUND_ADD("discrete", DISCRETE, 0)
-	MCFG_DISCRETE_INTF(frogs)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-MACHINE_CONFIG_END
+	DISCRETE(config, m_discrete, frogs_discrete);
+	m_discrete->add_route(ALL_OUTPUTS, "mono", 1.0);
+}
 
 
 TIMER_CALLBACK_MEMBER( vicdual_state::frogs_croak_callback )
@@ -144,12 +144,12 @@ WRITE8_MEMBER( vicdual_state::frogs_audio_w )
 	int new_croak = data & 0x08;
 	int new_buzzz = data & 0x10;
 
-//  m_discrete->write(space, FROGS_HOP_EN, data & 0x01);
-//  m_discrete->write(space, FROGS_JUMP_EN, data & 0x02);
-	m_discrete->write(space, FROGS_TONGUE_EN, data & 0x04);
-//  m_discrete->write(space, FROGS_CAPTURE_EN, data & 0x08);
-//  m_discrete->write(space, FROGS_FLY_EN, data & 0x10);
-//  m_discrete->write(space, FROGS_SPLASH_EN, data & 0x80);
+//  m_discrete->write(FROGS_HOP_EN, data & 0x01);
+//  m_discrete->write(FROGS_JUMP_EN, data & 0x02);
+	m_discrete->write(FROGS_TONGUE_EN, data & 0x04);
+//  m_discrete->write(FROGS_CAPTURE_EN, data & 0x08);
+//  m_discrete->write(FROGS_FLY_EN, data & 0x10);
+//  m_discrete->write(FROGS_SPLASH_EN, data & 0x80);
 
 	if (data & 0x01)
 		m_samples->start(3, 3);   // Hop
@@ -313,7 +313,7 @@ static const discrete_op_amp_filt_info headon_sallen_key_info =
 	CAP_N(470), CAP_N(47), 0
 };
 
-static DISCRETE_SOUND_START(headon)
+static DISCRETE_SOUND_START(headon_discrete)
 	/************************************************
 	 * Input register mapping for headon
 	 *
@@ -445,24 +445,23 @@ static DISCRETE_SOUND_START(headon)
 
 DISCRETE_SOUND_END
 
-MACHINE_CONFIG_START( headon_audio )
-
-	MCFG_SOUND_ADD("discrete", DISCRETE, 0)
-	MCFG_DISCRETE_INTF(headon)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-MACHINE_CONFIG_END
+void vicdual_state::headon_audio(machine_config &config)
+{
+	DISCRETE(config, m_discrete, headon_discrete);
+	m_discrete->add_route(ALL_OUTPUTS, "mono", 1.0);
+}
 
 WRITE8_MEMBER( vicdual_state::headon_audio_w )
 {
 	if (m_discrete == nullptr)
 		return;
-	m_discrete->write(space, HEADON_HISPEED_PC_EN, data & 0x01);
-	m_discrete->write(space, HEADON_SCREECH1_EN, data & 0x02);
-	m_discrete->write(space, HEADON_CRASH_EN, data & 0x04);
-	m_discrete->write(space, HEADON_HISPEED_CC_EN, data & 0x08);
-	m_discrete->write(space, HEADON_SCREECH2_EN, data & 0x10);
-	m_discrete->write(space, HEADON_BONUS_EN, data & 0x20);
-	m_discrete->write(space, HEADON_CAR_ON_EN, data & 0x40);
+	m_discrete->write(HEADON_HISPEED_PC_EN, data & 0x01);
+	m_discrete->write(HEADON_SCREECH1_EN, data & 0x02);
+	m_discrete->write(HEADON_CRASH_EN, data & 0x04);
+	m_discrete->write(HEADON_HISPEED_CC_EN, data & 0x08);
+	m_discrete->write(HEADON_SCREECH2_EN, data & 0x10);
+	m_discrete->write(HEADON_BONUS_EN, data & 0x20);
+	m_discrete->write(HEADON_CAR_ON_EN, data & 0x40);
 
 }
 
@@ -470,13 +469,13 @@ WRITE8_MEMBER( vicdual_state::invho2_audio_w )
 {
 	if (m_discrete == nullptr)
 		return;
-	m_discrete->write(space, HEADON_HISPEED_PC_EN, data & 0x10);
-	m_discrete->write(space, HEADON_SCREECH1_EN, data & 0x08);
-	m_discrete->write(space, HEADON_CRASH_EN, data & 0x80);
-	m_discrete->write(space, HEADON_HISPEED_CC_EN, data & 0x40);
-	m_discrete->write(space, HEADON_SCREECH2_EN, data & 0x04);
-	m_discrete->write(space, HEADON_BONUS_EN, data & 0x02);
-	m_discrete->write(space, HEADON_CAR_ON_EN, data & 0x20);
+	m_discrete->write(HEADON_HISPEED_PC_EN, data & 0x10);
+	m_discrete->write(HEADON_SCREECH1_EN, data & 0x08);
+	m_discrete->write(HEADON_CRASH_EN, data & 0x80);
+	m_discrete->write(HEADON_HISPEED_CC_EN, data & 0x40);
+	m_discrete->write(HEADON_SCREECH2_EN, data & 0x04);
+	m_discrete->write(HEADON_BONUS_EN, data & 0x02);
+	m_discrete->write(HEADON_CAR_ON_EN, data & 0x20);
 
 }
 
@@ -507,7 +506,7 @@ WRITE8_MEMBER( vicdual_state::invho2_audio_w )
 #define BRDRLINE_WALK_TRG_SND       NODE_97
 #define BRDRLINE_CRY_TRG_SND        NODE_98
 
-DISCRETE_SOUND_START(brdrline)
+DISCRETE_SOUND_START(brdrline_discrete)
 	/************************************************
 	 * Input register mapping
 	 ************************************************/
@@ -577,3 +576,57 @@ DISCRETE_SOUND_START(brdrline)
 
 DISCRETE_SOUND_END
 #endif
+
+static const char *const brdrline_sample_names[] =
+{
+	"*brdrline",
+	"boot_and_start",
+	"coin",
+	"crashes",
+	"end_level",
+	"engine_noise",
+	"field",
+	"fire",
+	nullptr
+};
+
+
+void vicdual_state::brdrline_audio(machine_config &config)
+{
+	SAMPLES(config, m_samples);
+	m_samples->set_channels(7);
+	m_samples->set_samples_names(brdrline_sample_names);
+	m_samples->add_route(ALL_OUTPUTS, "mono", 0.35);
+}
+
+WRITE8_MEMBER( vicdual_state::brdrline_audio_w )
+{
+	uint8_t res = data ^ 0xff;
+
+//  if(res & 2) // low fuel, MISSING
+
+	if(res & 8) // end level
+		m_samples->start(3, 3);
+
+	if(res & 0x10)  // moving in the brush
+		m_samples->start(5, 5);
+
+	if(res & 0x20) // fire
+		m_samples->start(6, 6);
+
+	if(res & 0x40)  // car engine noise
+		m_samples->start(4, 4);
+
+	if(res & 0x80)  // crashes
+		m_samples->start(2, 2);
+
+	//printf("%02x\n",res);
+}
+
+WRITE8_MEMBER( vicdual_state::brdrline_audio_aux_w )
+{
+	if(data & 0xfc) // coin, unknown which is the trigger
+		m_samples->start(1, 1);
+	else // boot sample
+		m_samples->start(0, 0);
+}

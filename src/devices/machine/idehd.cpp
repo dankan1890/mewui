@@ -27,7 +27,8 @@ ata_mass_storage_device::ata_mass_storage_device(const machine_config &mconfig, 
 	m_num_sectors(0),
 	m_num_heads(0), m_cur_lba(0), m_block_count(0), m_sectors_until_int(0), m_master_password_enable(0), m_user_password_enable(0),
 	m_master_password(nullptr),
-	m_user_password(nullptr)
+	m_user_password(nullptr),
+	m_dma_transfer_time(attotime::zero)
 {
 }
 
@@ -111,7 +112,7 @@ void ata_mass_storage_device::ide_build_identify_device()
 			"1.0", 4);
 	swap_strncpy(&m_identify_buffer[27],               /* 27-46: model number */
 			"MAME Compressed Hard Disk", 20);
-	m_identify_buffer[47] = 0x8001;                    /* 47: read/write multiple support */
+	m_identify_buffer[47] = 0x8010;                    /* 47: read/write multiple support, value from Seagate Quantum Fireball */
 	m_identify_buffer[48] = 0;                         /* 48: reserved */
 	m_identify_buffer[49] = 0x0f03;                    /* 49: capabilities */
 	m_identify_buffer[50] = 0;                         /* 50: reserved */
@@ -406,6 +407,18 @@ void ata_mass_storage_device::fill_buffer()
 	case IDE_COMMAND_IDENTIFY_DEVICE:
 		break;
 
+	case IDE_COMMAND_READ_MULTIPLE:
+		/* if there is more data to read, keep going */
+		if (m_sector_count > 0)
+			m_sector_count--;
+
+		if (m_sector_count > 0)
+		{
+			// Read the next sector with no delay
+			finished_read();
+		}
+		break;
+
 	default:
 		/* if there is more data to read, keep going */
 		if (m_sector_count > 0)
@@ -414,7 +427,10 @@ void ata_mass_storage_device::fill_buffer()
 		if (m_sector_count > 0)
 		{
 			set_dasp(ASSERT_LINE);
-			start_busy(TIME_BETWEEN_SECTORS, PARAM_COMMAND);
+			if (m_command == IDE_COMMAND_READ_DMA)
+				start_busy(TIME_BETWEEN_SECTORS + m_dma_transfer_time, PARAM_COMMAND);
+			else
+				start_busy(TIME_BETWEEN_SECTORS, PARAM_COMMAND);
 		}
 		break;
 	}
@@ -423,23 +439,23 @@ void ata_mass_storage_device::fill_buffer()
 
 void ata_mass_storage_device::finished_read()
 {
-	int lba = lba_address(), count;
+	int lba = lba_address(), read_status;
 
 	set_dasp(CLEAR_LINE);
 
 	/* now do the read */
-	count = read_sector(lba, &m_buffer[0]);
+	read_status = read_sector(lba, &m_buffer[0]);
 
 	/* if we succeeded, advance to the next sector and set the nice bits */
-	if (count == 1)
+	if (read_status)
 	{
 		/* advance the pointers, unless this is the last sector */
 		/* Gauntlet: Dark Legacy checks to make sure we stop on the last sector */
 		if (m_sector_count != 1)
 			next_sector();
 
-		/* signal an interrupt */
-		if (--m_sectors_until_int == 0 || m_sector_count == 1)
+		/* signal an interrupt, IDE_COMMAND_READ_MULTIPLE sets the interrupt at the start the block */
+		if (--m_sectors_until_int == 0 || (m_sector_count == 1 && m_command != IDE_COMMAND_READ_MULTIPLE))
 		{
 			m_sectors_until_int = ((m_command == IDE_COMMAND_READ_MULTIPLE) ? m_block_count : 1);
 			set_irq(ASSERT_LINE);
@@ -620,7 +636,7 @@ void ata_mass_storage_device::process_command()
 	{
 	case IDE_COMMAND_READ_SECTORS:
 	case IDE_COMMAND_READ_SECTORS_NORETRY:
-		LOGPRINT(("IDE Read multiple: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Read multiple: C=%u H=%d S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		m_sectors_until_int = 1;
@@ -630,7 +646,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_READ_MULTIPLE:
-		LOGPRINT(("IDE Read multiple block: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Read multiple block: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		m_sectors_until_int = 1;
@@ -641,7 +657,7 @@ void ata_mass_storage_device::process_command()
 
 	case IDE_COMMAND_VERIFY_SECTORS:
 	case IDE_COMMAND_VERIFY_SECTORS_NORETRY:
-		LOGPRINT(("IDE Read verify multiple with/without retries: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Read verify multiple with/without retries: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		/* reset the buffer */
@@ -652,7 +668,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_READ_DMA:
-		LOGPRINT(("IDE Read multiple DMA: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Read multiple DMA: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		/* reset the buffer */
@@ -664,7 +680,7 @@ void ata_mass_storage_device::process_command()
 
 	case IDE_COMMAND_WRITE_SECTORS:
 	case IDE_COMMAND_WRITE_SECTORS_NORETRY:
-		LOGPRINT(("IDE Write multiple: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Write multiple: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		/* reset the buffer */
@@ -675,7 +691,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_WRITE_MULTIPLE:
-		LOGPRINT(("IDE Write multiple block: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Write multiple block: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		/* reset the buffer */
@@ -686,7 +702,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_WRITE_DMA:
-		LOGPRINT(("IDE Write multiple DMA: C=%d H=%d S=%d LBA=%d count=%d\n",
+		LOGPRINT(("IDE Write multiple DMA: C=%u H=%u S=%u LBA=%u count=%u\n",
 			(m_cylinder_high << 8) | m_cylinder_low, m_device_head & IDE_DEVICE_HEAD_HS, m_sector_number, lba_address(), m_sector_count));
 
 		/* reset the buffer */
@@ -733,7 +749,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_SET_CONFIG:
-		LOGPRINT(("IDE Set configuration (%d heads, %d sectors)\n", (m_device_head & IDE_DEVICE_HEAD_HS) + 1, m_sector_count));
+		LOGPRINT(("IDE Set configuration (%u heads, %u sectors)\n", (m_device_head & IDE_DEVICE_HEAD_HS) + 1, m_sector_count));
 
 		start_busy(MINIMUM_COMMAND_TIME, PARAM_COMMAND);
 		break;
@@ -746,7 +762,7 @@ void ata_mass_storage_device::process_command()
 		break;
 
 	case IDE_COMMAND_SET_BLOCK_COUNT:
-		LOGPRINT(("IDE Set block count (%02X)\n", m_sector_count));
+		LOGPRINT(("IDE Set block count (%u)\n", m_sector_count));
 
 		m_block_count = m_sector_count;
 
@@ -816,8 +832,8 @@ void ide_hdd_device::device_reset()
 			m_num_cylinders = hdinfo->cylinders;
 			m_num_sectors = hdinfo->sectors;
 			m_num_heads = hdinfo->heads;
-			if (PRINTF_IDE_COMMANDS) osd_printf_debug("CHS: %d %d %d\n", m_num_cylinders, m_num_heads, m_num_sectors);
-			osd_printf_debug("CHS: %d %d %d\n", m_num_cylinders, m_num_heads, m_num_sectors);
+			if (PRINTF_IDE_COMMANDS) osd_printf_debug("CHS: %u %u %u\n", m_num_cylinders, m_num_heads, m_num_sectors);
+			osd_printf_debug("CHS: %u %u %u\n", m_num_cylinders, m_num_heads, m_num_sectors);
 		}
 
 		// build the features page
@@ -857,6 +873,7 @@ uint8_t ide_hdd_device::calculate_status()
 //  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( ide_hdd_device::device_add_mconfig )
-	MCFG_HARDDISK_ADD( "image" )
-MACHINE_CONFIG_END
+void ide_hdd_device::device_add_mconfig(machine_config &config)
+{
+	HARDDISK(config, "image");
+}

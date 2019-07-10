@@ -4,10 +4,42 @@
 
     RCA CDP1861 Video Display Controller emulation
 
+Timing: The 1861 interrupts the CPU to signal that DMA will be starting
+in exactly 29 cycles. The CPU must set R0 as the pointer to the first of
+8 sequential bytes to be transferred. After the DMA, exactly 6 cycles will
+elapse before the next DMA. This process continues until the 1861 is within
+4 lines of the end of the visible area, when it will assert EFx. When the
+CPU sees this, it can finish up the interrupt routine. The 1861 will clear
+EFx at the last visible line. The original IRQ request is cleared 28 cycles
+after it was asserted. EFx is also asserted 4 lines before the first visible
+scanline and ends 4 lines later, but this is usually ignored.
+
+Timing as it applies to the Studio II:
+- The usage of EFx before the visible area is not used.
+- R1 is preset with the value 001C, the interrupt vector.
+- When the interrupt from the 1861 occurs, R1 becomes the P register, so
+  causing a jump to 001C.
+- This is followed by 13 2-cycle instructions and one 3-cycle instruction,
+  giving us the required 29 cycles.
+- The first DMA therefore will occur just after the PLO at 002D.
+- This is followed by 3 2-cycle instructions, giving the required 6 cycles.
+- The 1861 will draw 128 scanlines, but due to memory constraints, the
+  Studio II can only do 32 lines, and so each group of 4 scanlines is
+  DMA'd from the same part of memory.
+- Each DMA will automatically add 8 to R0, and so this needs to be reset
+  for each of the 4 lines. After this, the new R0 value can be used for
+  the next group of 4 scanlines.
+- After the 4 scanlines are done, EF1 is checked to see if the bottom of
+  the display is being reached. If not, more lines can be processed.
+- At the end, the random number seed (not part of video drawing) gets
+  updated and the interrupt routine ends.
+
 **********************************************************************/
 
 #include "emu.h"
 #include "cdp1861.h"
+
+#include "screen.h"
 
 
 
@@ -41,7 +73,7 @@ DEFINE_DEVICE_TYPE(CDP1861, cdp1861_device, "cdp1861", "RCA CDP1861")
 cdp1861_device::cdp1861_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, CDP1861, tag, owner, clock)
 	, device_video_interface(mconfig, *this)
-	, m_write_irq(*this)
+	, m_write_int(*this)
 	, m_write_dma_out(*this)
 	, m_write_efx(*this)
 	, m_disp(0)
@@ -53,13 +85,32 @@ cdp1861_device::cdp1861_device(const machine_config &mconfig, const char *tag, d
 
 
 //-------------------------------------------------
+//  device_config_complete - perform any
+//  operations now that the configuration is
+//  complete
+//-------------------------------------------------
+
+void cdp1861_device::device_config_complete()
+{
+	if (!has_screen())
+		return;
+
+	if (!screen().refresh_attoseconds())
+		screen().set_raw(clock(), SCREEN_WIDTH, HBLANK_END, HBLANK_START, TOTAL_SCANLINES, SCANLINE_VBLANK_END, SCANLINE_VBLANK_START);
+
+	if (!screen().has_screen_update())
+		screen().set_screen_update(screen_update_rgb32_delegate(FUNC(cdp1861_device::screen_update), this));
+}
+
+
+//-------------------------------------------------
 //  device_start - device-specific startup
 //-------------------------------------------------
 
 void cdp1861_device::device_start()
 {
 	// resolve callbacks
-	m_write_irq.resolve_safe();
+	m_write_int.resolve_safe();
 	m_write_dma_out.resolve_safe();
 	m_write_efx.resolve_safe();
 
@@ -69,7 +120,7 @@ void cdp1861_device::device_start()
 	m_dma_timer = timer_alloc(TIMER_DMA);
 
 	// find devices
-	m_screen->register_screen_bitmap(m_bitmap);
+	screen().register_screen_bitmap(m_bitmap);
 
 	// register for state saving
 	save_item(NAME(m_disp));
@@ -85,15 +136,15 @@ void cdp1861_device::device_start()
 
 void cdp1861_device::device_reset()
 {
-	m_int_timer->adjust(m_screen->time_until_pos(SCANLINE_INT_START, 0));
-	m_efx_timer->adjust(m_screen->time_until_pos(SCANLINE_EFX_TOP_START, 0));
+	m_int_timer->adjust(screen().time_until_pos(SCANLINE_INT_START, 0));
+	m_efx_timer->adjust(screen().time_until_pos(SCANLINE_EFX_TOP_START, 0));
 	m_dma_timer->adjust(clocks_to_attotime(CDP1861_CYCLES_DMA_START));
 
 	m_disp = 0;
 	m_dmaout = 0;
 	m_dispon = 0;
 
-	m_write_irq(CLEAR_LINE);
+	m_write_int(CLEAR_LINE);
 	m_write_dma_out(CLEAR_LINE);
 	m_write_efx(CLEAR_LINE);
 }
@@ -105,7 +156,7 @@ void cdp1861_device::device_reset()
 
 void cdp1861_device::device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr)
 {
-	int scanline = m_screen->vpos();
+	int scanline = screen().vpos();
 
 	switch (id)
 	{
@@ -114,19 +165,19 @@ void cdp1861_device::device_timer(emu_timer &timer, device_timer_id id, int para
 		{
 			if (m_disp)
 			{
-				m_write_irq(ASSERT_LINE);
+				m_write_int(ASSERT_LINE);
 			}
 
-			m_int_timer->adjust(m_screen->time_until_pos( SCANLINE_INT_END, 0));
+			m_int_timer->adjust(screen().time_until_pos( SCANLINE_INT_END, 0));
 		}
 		else
 		{
 			if (m_disp)
 			{
-				m_write_irq(CLEAR_LINE);
+				m_write_int(CLEAR_LINE);
 			}
 
-			m_int_timer->adjust(m_screen->time_until_pos(SCANLINE_INT_START, 0));
+			m_int_timer->adjust(screen().time_until_pos(SCANLINE_INT_START, 0));
 		}
 		break;
 
@@ -135,22 +186,22 @@ void cdp1861_device::device_timer(emu_timer &timer, device_timer_id id, int para
 		{
 		case SCANLINE_EFX_TOP_START:
 			m_write_efx(ASSERT_LINE);
-			m_efx_timer->adjust(m_screen->time_until_pos(SCANLINE_EFX_TOP_END, 0));
+			m_efx_timer->adjust(screen().time_until_pos(SCANLINE_EFX_TOP_END, 0));
 			break;
 
 		case SCANLINE_EFX_TOP_END:
 			m_write_efx(CLEAR_LINE);
-			m_efx_timer->adjust(m_screen->time_until_pos(SCANLINE_EFX_BOTTOM_START, 0));
+			m_efx_timer->adjust(screen().time_until_pos(SCANLINE_EFX_BOTTOM_START, 0));
 			break;
 
 		case SCANLINE_EFX_BOTTOM_START:
 			m_write_efx(ASSERT_LINE);
-			m_efx_timer->adjust(m_screen->time_until_pos(SCANLINE_EFX_BOTTOM_END, 0));
+			m_efx_timer->adjust(screen().time_until_pos(SCANLINE_EFX_BOTTOM_END, 0));
 			break;
 
 		case SCANLINE_EFX_BOTTOM_END:
 			m_write_efx(CLEAR_LINE);
-			m_efx_timer->adjust(m_screen->time_until_pos(SCANLINE_EFX_TOP_START, 0));
+			m_efx_timer->adjust(screen().time_until_pos(SCANLINE_EFX_TOP_START, 0));
 			break;
 		}
 		break;
@@ -195,8 +246,8 @@ void cdp1861_device::device_timer(emu_timer &timer, device_timer_id id, int para
 
 WRITE8_MEMBER( cdp1861_device::dma_w )
 {
-	int sx = m_screen->hpos() + 4;
-	int y = m_screen->vpos();
+	int sx = screen().hpos() + 4;
+	int y = screen().vpos();
 	int x;
 
 	for (x = 0; x < 8; x++)
@@ -230,7 +281,7 @@ WRITE_LINE_MEMBER( cdp1861_device::disp_off_w )
 
 	m_dispoff = state;
 
-	m_write_irq(CLEAR_LINE);
+	m_write_int(CLEAR_LINE);
 	m_write_dma_out(CLEAR_LINE);
 }
 

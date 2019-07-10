@@ -80,6 +80,7 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stack>
 #include <unordered_map>
+#include <sstream>
 
 #include "../ParseHelper.h"
 
@@ -92,13 +93,16 @@ namespace glslang {
 
 class TPpToken {
 public:
-    TPpToken() : space(false), ival(0), dval(0.0), i64val(0)
+    TPpToken() { clear(); }
+    void clear()
     {
+        space = false;
+        i64val = 0;
         loc.init();
         name[0] = 0;
     }
 
-    // This is used for comparing macro definitions, so checks what is relevant for that.
+    // Used for comparing macro definitions, so checks what is relevant for that.
     bool operator==(const TPpToken& right)
     {
         return space == right.space &&
@@ -108,11 +112,17 @@ public:
     bool operator!=(const TPpToken& right) { return ! operator==(right); }
 
     TSourceLoc loc;
-    bool   space;  // true if a space (for white space or a removed comment) should also be recognized, in front of the token returned
-    int    ival;
-    double dval;
-    long long i64val;
-    char   name[MaxTokenLength + 1];
+    // True if a space (for white space or a removed comment) should also be
+    // recognized, in front of the token returned:
+    bool space;
+    // Numeric value of the token:
+    union {
+        int ival;
+        double dval;
+        long long i64val;
+    };
+    // Text string of the token:
+    char name[MaxTokenLength + 1];
 };
 
 class TStringAtomMap {
@@ -173,6 +183,13 @@ protected:
 
 class TInputScanner;
 
+enum MacroExpandResult {
+    MacroExpandNotStarted, // macro not expanded, which might not be an error
+    MacroExpandError,      // a clear error occurred while expanding, no expansion
+    MacroExpandStarted,    // macro expansion process has started
+    MacroExpandUndef       // macro is undefined and will be expanded
+};
+
 // This class is the result of turning a huge pile of C code communicating through globals
 // into a class.  This was done to allowing instancing to attain thread safety.
 // Don't expect too much in terms of OO design.
@@ -196,6 +213,7 @@ public:
         virtual void ungetch() = 0;
         virtual bool peekPasting() { return false; }          // true when about to see ##
         virtual bool endOfReplacementList() { return false; } // true when at the end of a macro replacement list (RHS of #define)
+        virtual bool isMacroInput() { return false; }
 
         // Will be called when we start reading tokens from this instance
         virtual void notifyActivated() {}
@@ -249,12 +267,12 @@ public:
     //
 
     struct MacroSymbol {
-        MacroSymbol() : emptyArgs(0), busy(0), undef(0) { }
+        MacroSymbol() : functionLike(0), busy(0), undef(0) { }
         TVector<int> args;
         TokenStream body;
-        unsigned emptyArgs : 1;
-        unsigned busy      : 1;
-        unsigned undef     : 1;
+        unsigned functionLike : 1;  // 0 means object-like, 1 means function-like
+        unsigned busy         : 1;
+        unsigned undef        : 1;
     };
 
     typedef TMap<int, MacroSymbol> TSymbolMap;
@@ -302,8 +320,9 @@ protected:
     void ungetChar() { inputStack.back()->ungetch(); }
     bool peekPasting() { return !inputStack.empty() && inputStack.back()->peekPasting(); }
     bool endOfReplacementList() { return inputStack.empty() || inputStack.back()->endOfReplacementList(); }
+    bool isMacroInput() { return inputStack.size() > 0 && inputStack.back()->isMacroInput(); }
 
-    static const int maxIfNesting = 64;
+    static const int maxIfNesting = 65;
 
     int ifdepth;                  // current #if-#else-#endif nesting in the cpp.c file (pre-processor)
     bool elseSeen[maxIfNesting];  // Keep a track of whether an else has been seen at a particular depth
@@ -325,6 +344,7 @@ protected:
         virtual void ungetch() override { assert(0); }
         bool peekPasting() override { return prepaste; }
         bool endOfReplacementList() override { return mac->body.atEnd(); }
+        bool isMacroInput() override { return true; }
 
         MacroSymbol *mac;
         TVector<TokenStream*> args;
@@ -387,7 +407,7 @@ protected:
     int readCPPline(TPpToken * ppToken);
     int scanHeaderName(TPpToken* ppToken, char delimit);
     TokenStream* PrescanMacroArg(TokenStream&, TPpToken*, bool newLineOkay);
-    int MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
+    MacroExpandResult MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay);
 
     //
     // From PpTokens.cpp
@@ -584,6 +604,7 @@ protected:
     int ScanFromString(char* s);
     void missingEndifCheck();
     int lFloatConst(int len, int ch, TPpToken* ppToken);
+    int characterLiteral(TPpToken* ppToken);
 
     void push_include(TShader::Includer::IncludeResult* result)
     {
@@ -607,6 +628,8 @@ protected:
     std::string rootFileName;
     std::stack<TShader::Includer::IncludeResult*> includeStack;
     std::string currentSourceFile;
+
+    std::istringstream strtodStream;
 };
 
 } // end namespace glslang

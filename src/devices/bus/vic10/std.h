@@ -33,13 +33,12 @@ protected:
 	virtual void device_start() override;
 
 	// device_vic10_expansion_card_interface overrides
-	virtual uint8_t vic10_cd_r(address_space &space, offs_t offset, uint8_t data, int lorom, int uprom, int exram) override;
-	virtual void vic10_cd_w(address_space &space, offs_t offset, uint8_t data, int lorom, int uprom, int exram) override;
+	virtual uint8_t vic10_cd_r(offs_t offset, uint8_t data, int lorom, int uprom, int exram) override;
+	virtual void vic10_cd_w(offs_t offset, uint8_t data, int lorom, int uprom, int exram) override;
 };
 
 
 // device type definition
-extern const device_type VIC10_STD;
 DECLARE_DEVICE_TYPE(VIC10_STD, vic10_standard_cartridge_device)
 
 #endif // MAME_BUS_VIC10_STD_H

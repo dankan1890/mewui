@@ -5,24 +5,29 @@
     Combat School
 
 *************************************************************************/
+#ifndef MAME_INCLUDES_COMBATSC_H
+#define MAME_INCLUDES_COMBATSC_H
+
+#pragma once
 
 #include "machine/gen_latch.h"
 #include "sound/upd7759.h"
 #include "sound/msm5205.h"
 #include "video/k007121.h"
+#include "emupal.h"
 #include "screen.h"
 
 class combatsc_state : public driver_device
 {
 public:
-	combatsc_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	combatsc_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
 		m_k007121_1(*this, "k007121_1"),
 		m_k007121_2(*this, "k007121_2"),
 		m_upd7759(*this, "upd"),
-		m_msm5205(*this, "msm5205"),
+		m_msm(*this, "msm"),
 		m_screen(*this, "screen"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
@@ -64,7 +69,7 @@ public:
 	optional_device<k007121_device> m_k007121_1;
 	optional_device<k007121_device> m_k007121_2;
 	optional_device<upd7759_device> m_upd7759;
-	optional_device<msm5205_device> m_msm5205;
+	optional_device<msm5205_device> m_msm;
 	required_device<screen_device> m_screen;
 	required_device<gfxdecode_device> m_gfxdecode;
 	required_device<palette_device> m_palette;
@@ -73,7 +78,6 @@ public:
 	optional_ioport_array<4> m_track_ports;
 
 	DECLARE_WRITE8_MEMBER(combatsc_vreg_w);
-	DECLARE_WRITE8_MEMBER(combatscb_sh_irqtrigger_w);
 	DECLARE_READ8_MEMBER(combatscb_io_r);
 	DECLARE_WRITE8_MEMBER(combatscb_priority_w);
 	DECLARE_WRITE8_MEMBER(combatsc_bankselect_w);
@@ -95,8 +99,9 @@ public:
 	DECLARE_WRITE8_MEMBER(combatsc_play_w);
 	DECLARE_WRITE8_MEMBER(combatsc_voice_reset_w);
 	DECLARE_WRITE8_MEMBER(combatsc_portA_w);
-	DECLARE_WRITE8_MEMBER(combatscb_dac_w);
-	DECLARE_DRIVER_INIT(combatsc);
+	DECLARE_WRITE8_MEMBER(combatscb_msm_w);
+	DECLARE_WRITE8_MEMBER(combatscb_sound_irq_ack);
+	void init_combatsc();
 	TILE_GET_INFO_MEMBER(get_tile_info0);
 	TILE_GET_INFO_MEMBER(get_tile_info1);
 	TILE_GET_INFO_MEMBER(get_text_info);
@@ -106,12 +111,20 @@ public:
 	virtual void machine_reset() override;
 	DECLARE_MACHINE_START(combatsc);
 	DECLARE_VIDEO_START(combatsc);
-	DECLARE_PALETTE_INIT(combatsc);
+	void combatsc_palette(palette_device &palette) const;
 	DECLARE_MACHINE_START(combatscb);
 	DECLARE_VIDEO_START(combatscb);
-	DECLARE_PALETTE_INIT(combatscb);
+	void combatscb_palette(palette_device &palette) const;
 	uint32_t screen_update_combatsc(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	uint32_t screen_update_combatscb(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 	void draw_sprites( bitmap_ind16 &bitmap, const rectangle &cliprect, const uint8_t *source, int circuit, bitmap_ind8 &priority_bitmap, uint32_t pri_mask );
 	void bootleg_draw_sprites( bitmap_ind16 &bitmap, const rectangle &cliprect, const uint8_t *source, int circuit );
+	void combatscb(machine_config &config);
+	void combatsc(machine_config &config);
+	void combatsc_map(address_map &map);
+	void combatsc_sound_map(address_map &map);
+	void combatscb_map(address_map &map);
+	void combatscb_sound_map(address_map &map);
 };
+
+#endif // MAME_INCLUDES_COMBATSC_H

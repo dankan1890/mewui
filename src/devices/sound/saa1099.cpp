@@ -201,6 +201,19 @@ void saa1099_device::device_start()
 
 
 //-------------------------------------------------
+//  device_clock_changed
+//-------------------------------------------------
+
+void saa1099_device::device_clock_changed()
+{
+	m_master_clock = clock();
+	m_sample_rate = clock() / 256;
+
+	m_stream->set_sample_rate(m_sample_rate);
+}
+
+
+//-------------------------------------------------
 //  sound_stream_update - handle a stream update
 //-------------------------------------------------
 
@@ -345,12 +358,12 @@ void saa1099_device::envelope_w(int ch)
 }
 
 
-WRITE8_MEMBER( saa1099_device::control_w )
+void saa1099_device::control_w(u8 data)
 {
 	if ((data & 0xff) > 0x1c)
 	{
 		/* Error! */
-		logerror("%s: (SAA1099 '%s') Unknown register selected\n", machine().describe_context(), tag());
+		logerror("%s: Unknown register selected\n", machine().describe_context());
 	}
 
 	m_selected_reg = data & 0x1f;
@@ -365,7 +378,7 @@ WRITE8_MEMBER( saa1099_device::control_w )
 }
 
 
-WRITE8_MEMBER( saa1099_device::data_w )
+void saa1099_device::data_w(u8 data)
 {
 	int reg = m_selected_reg;
 	int ch;
@@ -435,7 +448,7 @@ WRITE8_MEMBER( saa1099_device::data_w )
 			int i;
 
 			/* Synch & Reset generators */
-			logerror("%s: (SAA1099 '%s') -reg 0x1c- Chip reset\n", machine().describe_context(), tag());
+			logerror("%s: -reg 0x1c- Chip reset\n", machine().describe_context());
 			for (i = 0; i < 6; i++)
 			{
 				m_channels[i].level = 0;
@@ -445,14 +458,14 @@ WRITE8_MEMBER( saa1099_device::data_w )
 		break;
 	default:    /* Error! */
 		if (data != 0)
-			logerror("%s: (SAA1099 '%s') Unknown operation (reg:%02x, data:%02x)\n", machine().describe_context(), tag(), reg, data);
+			logerror("%s: Unknown operation (reg:%02x, data:%02x)\n", machine().describe_context(), reg, data);
 	}
 }
 
-WRITE8_MEMBER(saa1099_device::write)
+void saa1099_device::write(offs_t offset, u8 data)
 {
 	if (offset & 1)
-		control_w(space, 0, data);
+		control_w(data);
 	else
-		data_w(space, 0, data);
+		data_w(data);
 }

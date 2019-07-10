@@ -32,11 +32,13 @@ function hiscore.startplugin()
 	local scores_have_been_read = false;
 	local mem_check_passed = false;
 	local found_hiscore_entry = false;
+	local timed_save = true;
+	local delaytime = 0;
 
 	local positions = {};
 	-- Configuration file will be searched in the first path defined
 	-- in mame inipath option.
-		local function read_config()
+	local function read_config()
 	  if config_read then return true end;
 	  local file = io.open( config_path, "r" );
 	  if file then
@@ -45,9 +47,10 @@ function hiscore.startplugin()
 		local _conf = {}
 		for line in io.lines(config_path) do
 		  token, value = string.match(line, '([^ ]+) ([^ ]+)');
-		  _conf[token] = lfs.env_replace(value);
+		  _conf[token] = value;
 		end
-		hiscore_path = _conf["hi_path"];
+		hiscore_path = lfs.env_replace(_conf["hi_path"] or hiscore_path);
+		timed_save = _conf["only_save_at_exit"] ~= "1"
 		-- hiscoredata_path = _conf["dat_path"]; -- don't know if I should do it, but wathever
 		return true
 	  end
@@ -57,31 +60,34 @@ function hiscore.startplugin()
 	local function parse_table ( dsting )
 	  local _table = {};
 	  for line in string.gmatch(dsting, '([^\n]+)') do
-		local cpu, mem;
-		cputag, space, offs, len, chk_st, chk_ed, fill = string.match(line, '^@([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),?(%x?%x?)');
-		cpu = manager:machine().devices[cputag];
-		if not cpu then
-		  emu.print_verbose("hiscore: " .. cputag .. " device not found")
-		  return nil
-		end
-		local rgnname, rgntype = space:match("([^/]*)/?([^/]*)")
-		if rgntype == "share" then
-			mem = manager:machine():memory().shares[rgnname]
+		local delay = line:match('^@delay=([.%d]*)')
+		if delay and #delay > 0 then
+			delaytime = emu.time() + tonumber(delay)
 		else
-			mem = cpu.spaces[space]
+			local cpu, mem;
+			local cputag, space, offs, len, chk_st, chk_ed, fill = string.match(line, '^@([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),?(%x?%x?)');
+			cpu = manager:machine().devices[cputag];
+			if not cpu then
+				error(cputag .. " device not found")
+			end
+			local rgnname, rgntype = space:match("([^/]*)/?([^/]*)")
+			if rgntype == "share" then
+				mem = manager:machine():memory().shares[rgnname]
+			else
+				mem = cpu.spaces[space]
+			end
+			if not mem then
+				error(space .. " space not found")
+			end
+			_table[ #_table + 1 ] = {
+				mem = mem,
+				addr = tonumber(offs, 16),
+				size = tonumber(len, 16),
+				c_start = tonumber(chk_st, 16),
+				c_end = tonumber(chk_ed, 16),
+				fill = tonumber(fill, 16)
+			};
 		end
-		if not mem then
-		  emu.print_verbose("hiscore: " .. space .. " space not found")
-		  return nil;
-		end
-		_table[ #_table + 1 ] = {
-		  mem = mem,
-		  addr = tonumber(offs, 16),
-		  size = tonumber(len, 16),
-		  c_start = tonumber(chk_st, 16),
-		  c_end = tonumber(chk_ed, 16),
-		  fill = tonumber(fill, 16)
-		};
 	  end
 	  return _table;
 	end
@@ -94,7 +100,8 @@ function hiscore.startplugin()
 		file = io.open( hiscore_plugin_path .. "/hiscore.dat", "r" );
 	  end
 	  if emu.softname() ~= "" then
-		rm_match = '^' .. emu.romname() .. ',' .. emu.softname() .. ':';
+		local soft = emu.softname():match("([^:]*)$")
+		rm_match = '^' .. emu.romname() .. ',' .. soft .. ':';
 	  else
 		rm_match = '^' .. emu.romname() .. ':';
 	  end
@@ -148,7 +155,8 @@ function hiscore.startplugin()
 	local function get_file_name ()
 	  local r;
 	  if emu.softname() ~= "" then
-		r = hiscore_path .. '/' .. emu.romname() .. "_" .. emu.softname() .. ".hi";
+		local soft = emu.softname():match("([^:]*)$")
+		r = hiscore_path .. '/' .. emu.romname() .. "_" .. soft .. ".hi";
 	  else
 		r = hiscore_path .. '/' .. emu.romname() .. ".hi";
 	  end
@@ -209,13 +217,13 @@ function hiscore.startplugin()
 
 	local function init ()
 	  if not scores_have_been_read then
-		if check_mem( positions ) then
+		if (delaytime <= emu.time()) and check_mem( positions ) then
 		  default_checksum = check_scores( positions );
 		  if read_scores( positions ) then
-			emu.print_verbose( "hiscore: scores read", "OK" );
+			emu.print_verbose( "hiscore: scores read OK" );
 		  else
 			-- likely there simply isn't a .hi file around yet
-			emu.print_verbose( "hiscore: scores read", "FAIL" );
+			emu.print_verbose( "hiscore: scores read FAIL" );
 		  end
 		  scores_have_been_read = true;
 		  current_checksum = check_scores( positions );
@@ -233,7 +241,7 @@ function hiscore.startplugin()
 	  -- set up scores if they have been
 	  init();
 	  -- only allow save check to run when
-	  if mem_check_passed then
+	  if mem_check_passed and timed_save then
 		-- The reason for this complicated mess is that
 		-- MAME does expose a hook for "exit". Once it does,
 		-- this should obviously just be done when the emulator
@@ -276,9 +284,9 @@ function hiscore.startplugin()
 		local dat = read_hiscore_dat()
 		if dat and dat ~= "" then
 			emu.print_verbose( "hiscore: found hiscore.dat entry for " .. emu.romname() );
-			positions = parse_table( dat );
-			if not positions then
-				emu.print_error("hiscore: hiscore.dat parse error");
+			res, positions = pcall(parse_table, dat);
+			if not res then
+				emu.print_error("hiscore: hiscore.dat parse error " .. positions);
 				return;
 			end
 			for i, row in pairs(positions) do

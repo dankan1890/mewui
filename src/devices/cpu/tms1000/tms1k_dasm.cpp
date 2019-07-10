@@ -7,23 +7,68 @@
 */
 
 #include "emu.h"
-#include "debugger.h"
-#include "tms1k_base.h"
+#include "tms1k_dasm.h"
 
+// constructor
 
-enum e_mnemonics
+tms1000_base_disassembler::tms1000_base_disassembler(const u8 *lut_mnemonic, bool opcode_9bits, int pc_bits) :
+	m_lut_mnemonic(lut_mnemonic),
+	m_opcode_9bits(opcode_9bits),
+	m_pc_bits(pc_bits)
 {
-	zILL = 0,
-	zA10AAC, zA6AAC, zA8AAC, zAC1AC, zACACC, zACNAA, zALEC, zALEM, zAMAAC, zBRANCH, zCALL, zCCLA,
-	zCLA, zCLO, zCOMC, zCOMX, zCOMX8, zCPAIZ, zCTMDYN, zDAN, zDMAN, zDMEA, zDNAA,
-	zDYN, zIA, zIMAC, zIYC, zKNEZ, zLDP, zLDX2, zLDX3, zLDX4, zMNEA, zMNEZ,
-	zNDMEA, zOFF, zRBIT, zREAC, zRETN, zRSTR, zSAL, zSAMAN, zSBIT,
-	zSBL, zSEAC, zSETR, zTAM, zTAMACS, zTAMDYN, zTAMIY, zTAMIYC, zTAMZA,
-	zTAY, zTBIT, zTCMIY, zTCY, zTDO, zTKA, zTKM, zTMA,
-	zTMY, zTYA, zXDA, zXMA, zYMCY, zYNEA, zYNEC
-};
+	// init lfsr pc lut
+	const u32 len = 1 << pc_bits;
+	m_l2r = std::make_unique<u8[]>(len);
+	m_r2l = std::make_unique<u8[]>(len);
 
-static const char *const s_mnemonic[] =
+	for (u32 i = 0, pc = 0; i < len; i++)
+	{
+		m_l2r[i] = pc;
+		m_r2l[pc] = i;
+
+		// see tms1k_base_device::next_pc()
+		u32 mask = (1 << pc_bits) - 1;
+		u32 high = 1 << (pc_bits - 1);
+		u32 fb = (pc << 1 & high) == (pc & high);
+
+		if (pc == (mask >> 1))
+			fb = 1;
+		else if (pc == mask)
+			fb = 0;
+
+		pc = (pc << 1 | fb) & mask;
+	}
+}
+
+tms1000_disassembler::tms1000_disassembler() : tms1000_base_disassembler(tms1000_mnemonic, false, 6)
+{ }
+
+tms1100_disassembler::tms1100_disassembler() : tms1000_base_disassembler(tms1100_mnemonic, false, 6)
+{ }
+
+tms0980_disassembler::tms0980_disassembler() : tms1000_base_disassembler(tms0980_mnemonic, true, 7)
+{ }
+
+tp0320_disassembler::tp0320_disassembler() : tms1000_base_disassembler(tp0320_mnemonic, true, 7)
+{ }
+
+
+offs_t tms1000_base_disassembler::pc_linear_to_real(offs_t pc) const
+{
+	const u32 mask = (1 << m_pc_bits) - 1;
+	return (pc & ~mask) | m_l2r[pc & mask];
+}
+
+offs_t tms1000_base_disassembler::pc_real_to_linear(offs_t pc) const
+{
+	const u32 mask = (1 << m_pc_bits) - 1;
+	return (pc & ~mask) | m_r2l[pc & mask];
+}
+
+
+// common lookup tables
+
+const char *const tms1000_base_disassembler::s_mnemonic[] =
 {
 	"?",
 	"A10AAC", "A6AAC", "A8AAC", "AC1AC", "ACACC", "ACNAA", "ALEC", "ALEM", "AMAAC", "BRANCH", "CALL", "CCLA",
@@ -35,29 +80,19 @@ static const char *const s_mnemonic[] =
 	"TMY", "TYA", "XDA", "XMA", "YMCY", "YNEA", "YNEC"
 };
 
-
-#define _OVER DASMFLAG_STEP_OVER
-#define _OUT  DASMFLAG_STEP_OUT
-
-static const u32 s_flags[] =
+const u32 tms1000_base_disassembler::s_flags[] =
 {
 	0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _OVER, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, STEP_OVER, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, _OUT, 0, 0, 0, 0,
+	0, 0, 0, 0, STEP_OUT, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0
 };
 
-
-enum e_addressing
-{
-	zB0 = 0, zI2, zI3, zI4, zB7
-};
-
-static const u8 s_addressing[] =
+const u8 tms1000_base_disassembler::s_addressing[] =
 {
 	zB0,
 	zB0, zB0, zB0, zI4, zI4, zI4, zI4, zB0, zB0, zB7, zB7, zB0,
@@ -70,10 +105,9 @@ static const u8 s_addressing[] =
 };
 
 
-
 // opcode luts
 
-static const u8 tms1000_mnemonic[256] =
+const u8 tms1000_disassembler::tms1000_mnemonic[256] =
 {
 /* 0x00 */
 	zCOMX,   zA8AAC,  zYNEA,   zTAM,    zTAMZA,  zA10AAC, zA6AAC,  zDAN,    zTKA,    zKNEZ,   zTDO,    zCLO,    zRSTR,   zSETR,   zIA,     zRETN,   // 0
@@ -96,8 +130,7 @@ static const u8 tms1000_mnemonic[256] =
 /*  0        1        2        3        4        5        6        7        8        9        A        B        C        D        E        F  */
 };
 
-
-static const u8 tms1100_mnemonic[256] =
+const u8 tms1100_disassembler::tms1100_mnemonic[256] =
 {
 /* 0x00 */
 	zMNEA,   zALEM,   zYNEA,   zXMA,    zDYN,    zIYC,    zAMAAC,  zDMAN,   zTKA,    zCOMX,   zTDO,    zCOMC,   zRSTR,   zSETR,   zKNEZ,   zRETN,   // 0
@@ -120,8 +153,7 @@ static const u8 tms1100_mnemonic[256] =
 /*  0        1        2        3        4        5        6        7        8        9        A        B        C        D        E        F  */
 };
 
-
-static const u8 tms0980_mnemonic[512] =
+const u8 tms0980_disassembler::tms0980_mnemonic[512] =
 {
 /* 0x000 */
 	zCOMX,   zALEM,   zYNEA,   zXMA,    zDYN,    zIYC,    zCLA,    zDMAN,   zTKA,    zMNEA,   zTKM,    0,       0,       zSETR,   zKNEZ,   0,       // 0
@@ -162,8 +194,7 @@ static const u8 tms0980_mnemonic[512] =
 /*  0        1        2        3        4        5        6        7        8        9        A        B        C        D        E        F  */
 };
 
-
-static const u8 tp0320_mnemonic[512] =
+const u8 tp0320_disassembler::tp0320_mnemonic[512] =
 {
 /* 0x000 */
 	0,       zALEM,   zYNEA,   zXMA,    zDYN,    zIYC,    zCLA,    zDMAN,   zTKA,    zMNEA,   zTKM,    0,       0,       zSETR,   zKNEZ,   0,       // 0
@@ -205,34 +236,29 @@ static const u8 tp0320_mnemonic[512] =
 };
 
 
-
 // disasm
 
-static const u8 i2_value[4] =
+const u8 tms1000_base_disassembler::i2_value[4] =
 {
 	0, 2, 1, 3
 };
 
-static const u8 i3_value[8] =
+const u8 tms1000_base_disassembler::i3_value[8] =
 {
 	0, 4, 2, 6, 1, 5, 3, 7
 };
 
-static const u8 i4_value[16] =
+const u8 tms1000_base_disassembler::i4_value[16] =
 {
 	0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf
 };
 
-static offs_t tms1k_dasm(std::ostream &stream, const u8 *oprom, const u8 *lut_mnemonic, u16 opcode_mask)
+offs_t tms1000_base_disassembler::disassemble(std::ostream &stream, offs_t pc, const data_buffer &opcodes, const data_buffer &params)
 {
-	// get current opcode
-	int pos = 0;
-	u16 op = oprom[pos++];
-	if (opcode_mask & 0x100)
-		op = (op << 8 | oprom[pos++]) & 0x1ff;
+	u16 op = m_opcode_9bits ? opcodes.r16(pc) & 0x1ff : opcodes.r8(pc);
 
 	// convert to mnemonic/param
-	u16 instr = lut_mnemonic[op];
+	u16 instr = m_lut_mnemonic[op];
 	util::stream_format(stream, "%-8s ", s_mnemonic[instr]);
 
 	switch( s_addressing[instr] )
@@ -247,35 +273,11 @@ static offs_t tms1k_dasm(std::ostream &stream, const u8 *oprom, const u8 *lut_mn
 			util::stream_format(stream, "%d", i4_value[op & 0x0f]);
 			break;
 		case zB7:
-			if (opcode_mask & 0x100)
-				util::stream_format(stream, "$%02X", op << 1 & 0xfe);
-			else
-				util::stream_format(stream, "$%02X", op & 0x3f);
+			util::stream_format(stream, "$%02X", op & (m_opcode_9bits ? 0x7f : 0x3f));
 			break;
 		default:
 			break;
 	}
 
-	return pos | s_flags[instr] | DASMFLAG_SUPPORTED;
-}
-
-
-CPU_DISASSEMBLE(tms1000)
-{
-	return tms1k_dasm(stream, oprom, tms1000_mnemonic, 0xff);
-}
-
-CPU_DISASSEMBLE(tms1100)
-{
-	return tms1k_dasm(stream, oprom, tms1100_mnemonic, 0xff);
-}
-
-CPU_DISASSEMBLE(tms0980)
-{
-	return tms1k_dasm(stream, oprom, tms0980_mnemonic, 0x1ff);
-}
-
-CPU_DISASSEMBLE(tp0320)
-{
-	return tms1k_dasm(stream, oprom, tp0320_mnemonic, 0x1ff);
+	return 1 | s_flags[instr] | SUPPORTED;
 }

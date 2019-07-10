@@ -1,28 +1,44 @@
 /*
- * Copyright 2011-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2011-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
 
 #ifndef BOUNDS_H_HEADER_GUARD
 #define BOUNDS_H_HEADER_GUARD
 
+#include <bx/math.h>
+
 struct Aabb
 {
-	float m_min[3];
-	float m_max[3];
+	bx::Vec3 m_min;
+	bx::Vec3 m_max;
 };
 
 struct Cylinder
 {
-	float m_pos[3];
-	float m_end[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
+	float m_radius;
+};
+
+struct Capsule
+{
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
+	float m_radius;
+};
+
+struct Cone
+{
+	bx::Vec3 m_pos;
+	bx::Vec3 m_end;
 	float m_radius;
 };
 
 struct Disk
 {
-	float m_center[3];
-	float m_normal[3];
+	bx::Vec3 m_center;
+	bx::Vec3 m_normal;
 	float m_radius;
 };
 
@@ -33,38 +49,41 @@ struct Obb
 
 struct Plane
 {
-	float m_normal[3];
+	bx::Vec3 m_normal;
 	float m_dist;
 };
 
 struct Ray
 {
-	float m_pos[3];
-	float m_dir[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_dir;
 };
 
 struct Sphere
 {
-	float m_center[3];
+	bx::Vec3 m_center;
 	float m_radius;
 };
 
 struct Tris
 {
-	float m_v0[3];
-	float m_v1[3];
-	float m_v2[3];
+	bx::Vec3 m_v0;
+	bx::Vec3 m_v1;
+	bx::Vec3 m_v2;
 };
 
-struct Intersection
+struct Hit
 {
-	float m_pos[3];
-	float m_normal[3];
+	bx::Vec3 m_pos;
+	bx::Vec3 m_normal;
 	float m_dist;
 };
 
 /// Convert axis aligned bounding box to oriented bounding box.
 void aabbToObb(Obb& _obb, const Aabb& _aabb);
+
+/// Convert oriented bounding box to axis aligned bounding box.
+void toAabb(Aabb& _aabb, const Obb& _obb);
 
 /// Convert sphere to axis aligned bounding box.
 void toAabb(Aabb& _aabb, const Sphere& _sphere);
@@ -107,27 +126,36 @@ void calcMinBoundingSphere(Sphere& _sphere, const void* _vertices, uint32_t _num
 void buildFrustumPlanes(Plane* _planes, const float* _viewProj);
 
 /// Returns point from 3 intersecting planes.
-void intersectPlanes(float _result[3], const Plane& _pa, const Plane& _pb, const Plane& _pc);
+bx::Vec3 intersectPlanes(const Plane& _pa, const Plane& _pb, const Plane& _pc);
 
 /// Make screen space ray from x, y coordinate and inverse view-projection matrix.
 Ray makeRay(float _x, float _y, const float* _invVp);
 
-/// Intersect ray / aabb.
-bool intersect(const Ray& _ray, const Aabb& _aabb, Intersection* _intersection = NULL);
+/// Intersect ray / AABB.
+bool intersect(const Ray& _ray, const Aabb& _aabb, Hit* _hit = NULL);
+
+/// Intersect ray / OBB.
+bool intersect(const Ray& _ray, const Obb& _obb, Hit* _hit = NULL);
 
 /// Intersect ray / cylinder.
-bool intersect(const Ray& _ray, const Cylinder& _cylinder, bool _capsule, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Cylinder& _cylinder, Hit* _hit = NULL);
+
+/// Intersect ray / capsule.
+bool intersect(const Ray& _ray, const Capsule& _capsule, Hit* _hit = NULL);
+
+/// Intersect ray / cone.
+bool intersect(const Ray& _ray, const Cone& _cone, Hit* _hit = NULL);
 
 /// Intersect ray / disk.
-bool intersect(const Ray& _ray, const Disk& _disk, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Disk& _disk, Hit* _hit = NULL);
 
 /// Intersect ray / plane.
-bool intersect(const Ray& _ray, const Plane& _plane, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Plane& _plane, Hit* _hit = NULL);
 
 /// Intersect ray / sphere.
-bool intersect(const Ray& _ray, const Sphere& _sphere, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Sphere& _sphere, Hit* _hit = NULL);
 
 /// Intersect ray / triangle.
-bool intersect(const Ray& _ray, const Tris& _triangle, Intersection* _intersection = NULL);
+bool intersect(const Ray& _ray, const Tris& _triangle, Hit* _hit = NULL);
 
 #endif // BOUNDS_H_HEADER_GUARD

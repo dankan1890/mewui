@@ -40,12 +40,13 @@ instructions separately from the data.
 2. Setup
 --------
 
-| std::vector<std::pair<int, const address_space_config *>>\ **memory_space_config**\ (int spacenum) const
+| std::vector<std::pair<int, const address_space_config \*>>\ **memory_space_config**\ (int spacenum) const
 
 The device must override that method to provide a vector of pairs
 comprising of a space number and its associated
 **address_space_config** describing its configuration.  Some examples
 to look up when needed:
+
 * Standard two-space vector: v60_device
 * Conditional AS_OPCODE: z80_device
 * Inherit config and add a space: m6801_device
@@ -69,7 +70,7 @@ Associating maps to spaces is done at the machine config level, after the device
 | **MCFG_DEVICE_PROGRAM_MAP**\ (_map)
 | **MCFG_DEVICE_DATA_MAP**\ (_map)
 | **MCFG_DEVICE_IO_MAP**\ (_map)
-| **MCFG_DEVICE_DECRYPTED_OPCODES_MAP**\ (_map)
+| **MCFG_DEVICE_OPCODES_MAP**\ (_map)
 
 The generic macro and the four specific ones associate a map to a
 given space. Address maps associated to non-existing spaces are
@@ -106,7 +107,7 @@ version tests for AS_PROGRAM/AS_0.
 
 Does a logical to physical address translation through the device's
 MMU.  spacenum gives the space number, intention the type of the
-future access (TRANSLATE_(READ|WRITE|FETCH)(|_USER|_DEBUG)) and
+future access (TRANSLATE_(READ\|WRITE\|FETCH)(\|_USER\|_DEBUG)) and
 address is an inout parameter with the address to translate and its
 translated version.  Should return true if the translation went
 correctly, false if the address is unmapped.

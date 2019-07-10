@@ -6,14 +6,21 @@
 2013-07-31 Connected to terminal [Robbbert]
 2016-07-11 After 10 seconds the monitor program will start [Robbbert]
 
+Commands: (no spaces allowed)
+B - Boot the disk
+D - Dump memory to screen
+F - Fill Memory
+G - Go To
+H - Help
+P - Alter port values
+S - Alter memory
+
 
 The photos show 3 boards:
-- A scsi board (all 74-series TTL)
+- A "SASI Interface" board (all 74-series TTL)
 - CPU board (64k dynamic RAM, Z80A CPU, 2x Z80CTC, 2x Z80SIO/0, MB8877A, Z80DMA, 4x MC1488,
   4x MC1489, XTALS 1.8432MHz and 24MHz)
-- ADES board (Adaptec Inc AIC-100, AIC-250, AIC-300, Intel D8086AH, unknown crystal)
-
-Both roms contain Z80 code.
+- ADES board (Adaptec Inc AIC-100, AIC-250, AIC-300, Intel D8085AH, unknown crystal)
 
 
 ********************************************************************************************************************/
@@ -21,7 +28,10 @@ Both roms contain Z80 code.
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "machine/terminal.h"
+#include "machine/z80daisy.h"
+#include "machine/z80ctc.h"
+#include "machine/z80sio.h"
+#include "bus/rs232/rs232.h"
 
 
 class dsb46_state : public driver_device
@@ -30,48 +40,46 @@ public:
 	dsb46_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
-		, m_terminal(*this, "terminal")
-	{
-	}
+	{ }
 
-	DECLARE_READ8_MEMBER(port00_r);
-	DECLARE_READ8_MEMBER(port01_r);
-	void kbd_put(u8 data);
-	DECLARE_WRITE8_MEMBER(port1a_w);
-	DECLARE_DRIVER_INIT(dsb46);
-	DECLARE_MACHINE_RESET(dsb46);
+	void dsb46(machine_config &config);
+
+	void init_dsb46();
+
+protected:
+	virtual void machine_reset() override;
+
 private:
-	uint8_t m_term_data;
-	required_device<cpu_device> m_maincpu;
-	required_device<generic_terminal_device> m_terminal;
+	DECLARE_WRITE8_MEMBER(port1a_w);
+	void dsb46_io(address_map &map);
+	void dsb46_mem(address_map &map);
+	required_device<z80_device> m_maincpu;
 };
 
-static ADDRESS_MAP_START( dsb46_mem, AS_PROGRAM, 8, dsb46_state )
-	AM_RANGE(0x0000, 0x07ff) AM_READ_BANK("read") AM_WRITE_BANK("write")
-	AM_RANGE(0x0800, 0xffff) AM_RAM
-ADDRESS_MAP_END
+void dsb46_state::dsb46_mem(address_map &map)
+{
+	map(0x0000, 0x07ff).bankr("read").bankw("write");
+	map(0x0800, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START( dsb46_io, AS_IO, 8, dsb46_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x00, 0x00) AM_READ(port00_r) AM_DEVWRITE("terminal", generic_terminal_device, write)
-	AM_RANGE(0x01, 0x01) AM_READ(port01_r)
-	AM_RANGE(0x1a, 0x1a) AM_WRITE(port1a_w)
-	//AM_RANGE(0x00, 0x01) uartch1
-	//AM_RANGE(0x02, 0x03) uartch2
-	//AM_RANGE(0x08, 0x08) ??
-	//AM_RANGE(0x0a, 0x0b) ??
+void dsb46_state::dsb46_io(address_map &map)
+{
+	map.global_mask(0xff);
+	map.unmap_value_high();
+	map(0x00, 0x03).rw("sio", FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w));
+	map(0x08, 0x0b).rw("ctc1", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
+	map(0x1a, 0x1a).w(FUNC(dsb46_state::port1a_w));
 	//AM_RANGE(0x10, 0x10) disk related
-	//AM_RANGE(0x14, 0x14) ??
+	//AM_RANGE(0x14, 0x14) ?? (read after CTC1 TRG3)
 	//AM_RANGE(0x18, 0x18) ??
 	//AM_RANGE(0x1c, 0x1c) disk data
 	//AM_RANGE(0x1d, 0x1d) disk status (FF = no fdc)
-ADDRESS_MAP_END
+}
 
 static INPUT_PORTS_START( dsb46 )
 INPUT_PORTS_END
 
-DRIVER_INIT_MEMBER(dsb46_state, dsb46)
+void dsb46_state::init_dsb46()
 {
 	uint8_t *RAM = memregion("maincpu")->base();
 	membank("read")->configure_entry(0, &RAM[0x10000]);
@@ -79,11 +87,10 @@ DRIVER_INIT_MEMBER(dsb46_state, dsb46)
 	membank("write")->configure_entry(0, &RAM[0x00000]);
 }
 
-MACHINE_RESET_MEMBER( dsb46_state,dsb46 )
+void dsb46_state::machine_reset()
 {
 	membank("read")->set_entry(0);
 	membank("write")->set_entry(0);
-	m_term_data = 0;
 	m_maincpu->reset();
 }
 
@@ -92,34 +99,42 @@ WRITE8_MEMBER( dsb46_state::port1a_w )
 	membank("read")->set_entry(data & 1);
 }
 
-READ8_MEMBER( dsb46_state::port01_r )
+static const z80_daisy_config daisy_chain[] =
 {
-	return (m_term_data) ? 5 : 4;
-}
+	{ "ctc1" },
+	{ "sio" },
+	{ nullptr }
+};
 
-READ8_MEMBER( dsb46_state::port00_r )
+
+void dsb46_state::dsb46(machine_config &config)
 {
-	uint8_t ret = m_term_data;
-	m_term_data = 0;
-	return ret;
-}
-
-void dsb46_state::kbd_put(u8 data)
-{
-	m_term_data = data;
-}
-
-static MACHINE_CONFIG_START( dsb46 )
 	// basic machine hardware
-	MCFG_CPU_ADD("maincpu", Z80, 4000000)
-	MCFG_CPU_PROGRAM_MAP(dsb46_mem)
-	MCFG_CPU_IO_MAP(dsb46_io)
-	MCFG_MACHINE_RESET_OVERRIDE(dsb46_state, dsb46)
+	Z80(config, m_maincpu, 24_MHz_XTAL / 6);
+	m_maincpu->set_addrmap(AS_PROGRAM, &dsb46_state::dsb46_mem);
+	m_maincpu->set_addrmap(AS_IO, &dsb46_state::dsb46_io);
+	m_maincpu->set_daisy_config(daisy_chain);
 
-	/* video hardware */
-	MCFG_DEVICE_ADD("terminal", GENERIC_TERMINAL, 0)
-	MCFG_GENERIC_TERMINAL_KEYBOARD_CB(PUT(dsb46_state, kbd_put))
-MACHINE_CONFIG_END
+	/* Devices */
+	z80sio_device& sio(Z80SIO(config, "sio", 24_MHz_XTAL / 6));
+	sio.out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	sio.out_txda_callback().set("rs232", FUNC(rs232_port_device::write_txd));
+	sio.out_dtra_callback().set("rs232", FUNC(rs232_port_device::write_dtr));
+	sio.out_rtsa_callback().set("rs232", FUNC(rs232_port_device::write_rts));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("sio", FUNC(z80sio_device::rxa_w));
+	rs232.cts_handler().set("sio", FUNC(z80sio_device::ctsa_w));
+
+	z80ctc_device &ctc1(Z80CTC(config, "ctc1", 24_MHz_XTAL / 6));
+	ctc1.intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	ctc1.set_clk<0>(1.8432_MHz_XTAL);
+	ctc1.zc_callback<0>().set("sio", FUNC(z80sio_device::rxca_w));
+	ctc1.zc_callback<0>().append("sio", FUNC(z80sio_device::txca_w));
+	ctc1.set_clk<2>(1.8432_MHz_XTAL);
+	ctc1.zc_callback<2>().set("sio", FUNC(z80sio_device::rxcb_w));
+	ctc1.zc_callback<2>().append("sio", FUNC(z80sio_device::txcb_w));
+}
 
 ROM_START( dsb46 )
 	ROM_REGION( 0x10800, "maincpu", 0 )
@@ -129,4 +144,4 @@ ROM_START( dsb46 )
 	ROM_LOAD( "ades.bin", 0x0000, 0x4000, CRC(d374abf0) SHA1(331f51a2bb81375aeffbe63c1ebc1d7cd779b9c3) )
 ROM_END
 
-COMP( 198?, dsb46, 0, 0, dsb46, dsb46, dsb46_state, dsb46, "Davidge", "DSB-4/6",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )
+COMP( 198?, dsb46, 0, 0, dsb46, dsb46, dsb46_state, init_dsb46, "Davidge", "DSB-4/6",  MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW )

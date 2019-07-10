@@ -22,12 +22,9 @@
 *             to select devices. A0-A9 address RAM. A0-A11 address ROM.
 *             A0 switches the ACIA between status/command, and data in/out.
 *
-*  Special codes: The Type 'N Talk will take notice of certain codes. They
-*                 are: 08, 0D, 1B, 20. I didn't investigate what the codes do.
 *
 *  ToDo:
 *  - Votrax device needs considerable improvement in sound quality.
-*
 *
 ******************************************************************************/
 
@@ -46,20 +43,23 @@
 class votrtnt_state : public driver_device
 {
 public:
-	votrtnt_state(const machine_config &mconfig, device_type type, const char *tag) :
-		driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_votrax(*this, "votrax"),
-		m_acia(*this, "acia")
-	{
-	}
+	votrtnt_state(const machine_config &mconfig, device_type type, const char *tag)
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_votrax(*this, "votrax")
+		, m_clock(*this, "acia_clock")
+	{ }
 
-	DECLARE_WRITE_LINE_MEMBER(write_acia_clock);
+	void votrtnt(machine_config &config);
 
 private:
+	virtual void machine_reset() override;
+
+	void _6802_mem(address_map &map);
+
 	required_device<cpu_device> m_maincpu;
 	required_device<votrax_sc01_device> m_votrax;
-	required_device<acia6850_device> m_acia;
+	required_device<clock_device> m_clock;
 };
 
 
@@ -81,14 +81,14 @@ private:
       x   1   1   x     *   *   *   *     *   *   *   *     *   *   *   *    R  ROM (2332 4kx8 Mask ROM, inside potted brick)
 */
 
-static ADDRESS_MAP_START(6802_mem, AS_PROGRAM, 8, votrtnt_state)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x03ff) AM_MIRROR(0x9c00) AM_RAM /* RAM, 2114*2 (0x400 bytes) mirrored 4x */
-	AM_RANGE(0x2000, 0x2000) AM_MIRROR(0x9ffe) AM_DEVREADWRITE("acia", acia6850_device, status_r, control_w)
-	AM_RANGE(0x2001, 0x2001) AM_MIRROR(0x9ffe) AM_DEVREADWRITE("acia", acia6850_device, data_r, data_w)
-	AM_RANGE(0x4000, 0x4000) AM_MIRROR(0x9fff) AM_DEVWRITE("votrax", votrax_sc01_device, write)
-	AM_RANGE(0x6000, 0x6fff) AM_MIRROR(0x9000) AM_ROM /* ROM in potted block */
-ADDRESS_MAP_END
+void votrtnt_state::_6802_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x03ff).mirror(0x9c00).ram(); /* RAM, 2114*2 (0x400 bytes) mirrored 4x */
+	map(0x2000, 0x2001).mirror(0x9ffe).rw("acia", FUNC(acia6850_device::read), FUNC(acia6850_device::write));
+	map(0x4000, 0x4000).mirror(0x9fff).w(m_votrax, FUNC(votrax_sc01_device::write));
+	map(0x6000, 0x6fff).mirror(0x9000).rom(); /* ROM in potted block */
+}
 
 
 /******************************************************************************
@@ -113,44 +113,57 @@ static INPUT_PORTS_START(votrtnt)
 	PORT_DIPSETTING(    0x80, "9600" )
 INPUT_PORTS_END
 
-
-WRITE_LINE_MEMBER(votrtnt_state::write_acia_clock)
+void votrtnt_state::machine_reset()
 {
-	m_acia->write_txc(state);
-	m_acia->write_rxc(state);
+	// Read the dips, whichever one is found to be on first is accepted
+	u8 dips = ioport("DSW1")->read();
+	u8 speed = 1;
+	for (u8 i = 0; i < 7; i++)
+	{
+		if (BIT(dips, i))
+		{
+			m_clock->set_unscaled_clock(75*speed*16);
+			return;
+		}
+		speed *= 2;
+	}
+	// if none are on we'll leave the default which is 9600 baud
 }
+
 
 
 /******************************************************************************
  Machine Drivers
 ******************************************************************************/
 
-static MACHINE_CONFIG_START( votrtnt )
+void votrtnt_state::votrtnt(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", M6802, XTAL_2_4576MHz)  /* 2.4576MHz XTAL, verified; divided by 4 inside the m6802*/
-	MCFG_CPU_PROGRAM_MAP(6802_mem)
+	M6802(config, m_maincpu, 2.4576_MHz_XTAL);  // 2.4576MHz XTAL, verified; divided by 4 inside the MC6802
+	m_maincpu->set_addrmap(AS_PROGRAM, &votrtnt_state::_6802_mem);
 
 	/* video hardware */
-	//MCFG_DEFAULT_LAYOUT(layout_votrtnt)
+	//config.set_default_layout(layout_votrtnt);
 
 	/* serial hardware */
-	MCFG_DEVICE_ADD("acia", ACIA6850, 0)
-	MCFG_ACIA6850_TXD_HANDLER(DEVWRITELINE("rs232", rs232_port_device, write_txd))
-	MCFG_ACIA6850_RTS_HANDLER(DEVWRITELINE("rs232", rs232_port_device, write_rts))
+	acia6850_device &acia(ACIA6850(config, "acia"));
+	acia.txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
+	acia.rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
 
-	MCFG_RS232_PORT_ADD("rs232", default_rs232_devices, "terminal")
-	MCFG_RS232_RXD_HANDLER(DEVWRITELINE("acia", acia6850_device, write_rxd))
-	MCFG_RS232_CTS_HANDLER(DEVWRITELINE("acia", acia6850_device, write_cts))
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("acia", FUNC(acia6850_device::write_rxd));
+	rs232.cts_handler().set("acia", FUNC(acia6850_device::write_cts));
 
-	MCFG_DEVICE_ADD("acia_clock", CLOCK, 153600)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE(votrtnt_state, write_acia_clock))
+	CLOCK(config, m_clock, 153600);
+	m_clock->signal_handler().set("acia", FUNC(acia6850_device::write_txc));
+	m_clock->signal_handler().append("acia", FUNC(acia6850_device::write_rxc));
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_DEVICE_ADD("votrax", VOTRAX_SC01, 720000) /* 720kHz? needs verify */
-	MCFG_VOTRAX_SC01_REQUEST_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
-MACHINE_CONFIG_END
+	SPEAKER(config, "mono").front_center();
+	VOTRAX_SC01(config, m_votrax, 720000); // 720kHz? needs verify
+	m_votrax->ar_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_votrax->add_route(ALL_OUTPUTS, "mono", 1.00);
+}
 
 
 
@@ -168,5 +181,5 @@ ROM_END
  Drivers
 ******************************************************************************/
 
-//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    CLASS          INIT  COMPANY   FULLNAME        FLAGS
-COMP( 1980, votrtnt, 0,      0,      votrtnt, votrtnt, votrtnt_state, 0,    "Votrax", "Type 'N Talk", MACHINE_NOT_WORKING )
+//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    CLASS          INIT        COMPANY   FULLNAME        FLAGS
+COMP( 1980, votrtnt, 0,      0,      votrtnt, votrtnt, votrtnt_state, empty_init, "Votrax", "Type 'N Talk", 0 )

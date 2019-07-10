@@ -15,24 +15,6 @@
 
 #include "softlist_dev.h"
 
-// The following are modules included by the various CoCo cartridge
-// devices.  For some reason, the build system will not necessarily
-// identify them as dependencies.  Adding these #include's here seems
-// to rectify the problem
-#include "cpu/tms7000/tms7000.h"
-#include "machine/mos6551.h"
-#include "machine/6850acia.h"
-#include "machine/msm6242.h"
-#include "machine/ds1315.h"
-#include "machine/wd_fdc.h"
-#include "sound/ay8910.h"
-#include "sound/sp0256.h"
-#include "sound/sn76496.h"
-#include "formats/dmk_dsk.h"
-#include "formats/sdf_dsk.h"
-#include "formats/jvc_dsk.h"
-#include "formats/vdk_dsk.h"
-
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -42,15 +24,6 @@
 
 // direct region update handler
 typedef delegate<void (uint8_t *)> cococart_base_update_delegate;
-
-#define MCFG_COCO_CARTRIDGE_CART_CB(_devcb) \
-	devcb = &cococart_slot_device::static_set_cart_callback(*device, DEVCB_##_devcb);
-
-#define MCFG_COCO_CARTRIDGE_NMI_CB(_devcb) \
-	devcb = &cococart_slot_device::static_set_nmi_callback(*device, DEVCB_##_devcb);
-
-#define MCFG_COCO_CARTRIDGE_HALT_CB(_devcb) \
-	devcb = &cococart_slot_device::static_set_halt_callback(*device, DEVCB_##_devcb);
 
 
 // ======================> cococart_slot_device
@@ -79,11 +52,20 @@ public:
 	};
 
 	// construction/destruction
+	template <typename T>
+	cococart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&opts, const char *dflt)
+		: cococart_slot_device(mconfig, tag, owner, clock)
+	{
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
+	}
 	cococart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	template <class Object> static devcb_base &static_set_cart_callback(device_t &device, Object &&cb) { return downcast<cococart_slot_device &>(device).m_cart_callback.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &static_set_nmi_callback(device_t &device, Object &&cb) { return downcast<cococart_slot_device &>(device).m_nmi_callback.set_callback(std::forward<Object>(cb)); }
-	template <class Object> static devcb_base &static_set_halt_callback(device_t &device, Object &&cb) { return downcast<cococart_slot_device &>(device).m_halt_callback.set_callback(std::forward<Object>(cb)); }
+	auto cart_callback() { return m_cart_callback.bind(); }
+	auto nmi_callback() { return m_nmi_callback.bind(); }
+	auto halt_callback() { return m_halt_callback.bind(); }
 
 	// device-level overrides
 	virtual void device_start() override;
@@ -106,6 +88,10 @@ public:
 	// slot interface overrides
 	virtual std::string get_default_card_software(get_default_card_software_hook &hook) const override;
 
+	// reading and writing to $C000-$FFEF
+	DECLARE_READ8_MEMBER(cts_read);
+	DECLARE_WRITE8_MEMBER(cts_write);
+
 	// reading and writing to $FF40-$FF5F
 	DECLARE_READ8_MEMBER(scs_read);
 	DECLARE_WRITE8_MEMBER(scs_write);
@@ -119,7 +105,8 @@ public:
 	void twiddle_q_lines();
 
 	// cart base
-	uint8_t* get_cart_base();
+	uint8_t *get_cart_base();
+	virtual uint32_t get_cart_size();
 	void set_cart_base_update(cococart_base_update_delegate update);
 
 private:
@@ -157,7 +144,6 @@ private:
 };
 
 // device type definition
-extern const device_type COCOCART_SLOT;
 DECLARE_DEVICE_TYPE(COCOCART_SLOT, cococart_slot_device)
 
 
@@ -179,12 +165,17 @@ public:
 	// construction/destruction
 	virtual ~device_cococart_interface();
 
+	virtual DECLARE_READ8_MEMBER(cts_read);
+	virtual DECLARE_WRITE8_MEMBER(cts_write);
 	virtual DECLARE_READ8_MEMBER(scs_read);
 	virtual DECLARE_WRITE8_MEMBER(scs_write);
 	virtual void set_sound_enable(bool sound_enable);
 
 	virtual uint8_t* get_cart_base();
+	virtual uint32_t get_cart_size();
 	void set_cart_base_update(cococart_base_update_delegate update);
+	virtual memory_region* get_cart_memregion();
+
 
 	virtual void interface_config_complete() override;
 	virtual void interface_pre_start() override;
@@ -202,9 +193,25 @@ protected:
 	// cartridges (e.g. - Orch-90, Multi-Pak interface) for their control registers, independently
 	// of the SCS or CTS lines
 	address_space &cartridge_space();
-	void install_read_handler(uint16_t addrstart, uint16_t addrend, read8_delegate rhandler);
-	void install_write_handler(uint16_t addrstart, uint16_t addrend, write8_delegate whandler);
-	void install_readwrite_handler(uint16_t addrstart, uint16_t addrend, read8_delegate rhandler, write8_delegate whandler);
+	template <typename R>
+	void install_read_handler(u16 addrstart, u16 addrend, R &&rhandler)
+	{
+		address_space &space(cartridge_space());
+		space.install_read_handler(addrstart, addrend, std::forward<R>(rhandler));
+	}
+	template <typename W>
+	void install_write_handler(u16 addrstart, u16 addrend, W &&whandler)
+	{
+		address_space &space(cartridge_space());
+		space.install_write_handler(addrstart, addrend, std::forward<W>(whandler));
+	}
+	template <typename R, typename W>
+	void install_readwrite_handler(u16 addrstart, u16 addrend, R &&rhandler, W &&whandler)
+	{
+		address_space &space(cartridge_space());
+		space.install_read_handler(addrstart, addrend, std::forward<R>(rhandler));
+		space.install_write_handler(addrstart, addrend, std::forward<W>(whandler));
+	}
 
 	// setting line values
 	void set_line_value(cococart_slot_device::line line, cococart_slot_device::line_value value);
@@ -218,44 +225,5 @@ private:
 	cococart_slot_device *           m_owning_slot;
 	device_cococart_host_interface * m_host;
 };
-
-
-/***************************************************************************
-    DEVICE CONFIGURATION MACROS
-***************************************************************************/
-
-#define MCFG_COCO_CARTRIDGE_ADD(_tag,_slot_intf,_def_slot) \
-	MCFG_DEVICE_ADD(_tag, COCOCART_SLOT, DERIVED_CLOCK(1, 1)) \
-	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false)
-
-#define MCFG_COCO_CARTRIDGE_REMOVE(_tag)        \
-	MCFG_DEVICE_REMOVE(_tag)
-
-
-/***************************************************************************
-    COCO CARTRIDGE DEVICES
-***************************************************************************/
-
-// device type definitions - CoCo FDC
-extern const device_type COCO_FDC;
-extern const device_type COCO_FDC_V11;
-extern const device_type COCO3_HDB1;
-extern const device_type CP400_FDC;
-
-// device type definitions - Dragon FDC
-extern const device_type DRAGON_FDC;
-extern const device_type SDTANDY_FDC;
-
-// device type definitions - other
-extern const device_type COCO_ORCH90;
-extern const device_type COCO_MULTIPAK;
-extern const device_type COCO_RS232;
-extern const device_type COCO_DCMODEM;
-extern const device_type COCO_SSC;
-extern const device_type COCO_PAK;
-extern const device_type COCO_PAK_BANKED;
-extern const device_type COCO_PAK_GMC;
-extern const device_type COCO_T4426;
-extern const device_type DRAGON_JCBSND;
 
 #endif // MAME_BUS_COCO_COCOCART_H

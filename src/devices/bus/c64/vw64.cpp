@@ -40,10 +40,10 @@
 //**************************************************************************
 
 #define UNSCRAMBLE_ADDRESS(_offset) \
-	BITSWAP16(_offset,15,14,13,12,6,2,8,10,11,9,7,5,4,3,1,0)
+	bitswap<16>(_offset,15,14,13,12,6,2,8,10,11,9,7,5,4,3,1,0)
 
 #define UNSCRAMBLE_DATA(_data) \
-	BITSWAP8(_data,7,6,0,5,1,4,2,3)
+	bitswap<8>(_data,7,6,0,5,1,4,2,3)
 
 
 // 74LS122 tW=0.45*R*C = 1.1844s
@@ -111,7 +111,7 @@ void c64_vizawrite_cartridge_device::device_timer(emu_timer &timer, device_timer
 //  c64_cd_r - cartridge data read
 //-------------------------------------------------
 
-uint8_t c64_vizawrite_cartridge_device::c64_cd_r(address_space &space, offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
+uint8_t c64_vizawrite_cartridge_device::c64_cd_r(offs_t offset, uint8_t data, int sphi2, int ba, int roml, int romh, int io1, int io2)
 {
 	if (!roml)
 	{

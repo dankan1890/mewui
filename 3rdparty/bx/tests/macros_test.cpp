@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -61,5 +61,5 @@ TEST(macros)
 	CHECK_EQUAL(5, BX_VA_ARGS_COUNT(1, 2, 3, 4, 5) );
 	CHECK_EQUAL(6, BX_VA_ARGS_COUNT(1, 2, 3, 4, 5, 6) );
 
-	CHECK_EQUAL(0, bx::strncmp(BX_STRINGIZE(TEST 1234 %^&*), "TEST 1234 %^&*") );
+	CHECK_EQUAL(0, bx::strCmp(BX_STRINGIZE(TEST 1234 %^&*), "TEST 1234 %^&*") );
 }

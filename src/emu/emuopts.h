@@ -51,6 +51,8 @@
 // core state/playback options
 #define OPTION_STATE                "state"
 #define OPTION_AUTOSAVE             "autosave"
+#define OPTION_REWIND               "rewind"
+#define OPTION_REWIND_CAPACITY      "rewind_capacity"
 #define OPTION_PLAYBACK             "playback"
 #define OPTION_RECORD               "record"
 #define OPTION_RECORD_TIMECODE      "record_timecode"
@@ -95,11 +97,8 @@
 
 // core artwork options
 #define OPTION_ARTWORK_CROP         "artwork_crop"
-#define OPTION_USE_BACKDROPS        "use_backdrops"
-#define OPTION_USE_OVERLAYS         "use_overlays"
-#define OPTION_USE_BEZELS           "use_bezels"
-#define OPTION_USE_CPANELS          "use_cpanels"
-#define OPTION_USE_MARQUEES         "use_marquees"
+#define OPTION_FALLBACK_ARTWORK     "fallback_artwork"
+#define OPTION_OVERRIDE_ARTWORK     "override_artwork"
 
 // core screen options
 #define OPTION_BRIGHTNESS           "brightness"
@@ -166,12 +165,14 @@
 #define OPTION_UI_FONT              "uifont"
 #define OPTION_UI                   "ui"
 #define OPTION_RAMSIZE              "ramsize"
+#define OPTION_NVRAM_SAVE           "nvram_save"
 
 // core comm options
 #define OPTION_COMM_LOCAL_HOST      "comm_localhost"
 #define OPTION_COMM_LOCAL_PORT      "comm_localport"
 #define OPTION_COMM_REMOTE_HOST     "comm_remotehost"
 #define OPTION_COMM_REMOTE_PORT     "comm_remoteport"
+#define OPTION_COMM_FRAME_SYNC      "comm_framesync"
 
 #define OPTION_CONFIRM_QUIT         "confirm_quit"
 #define OPTION_UI_MOUSE             "ui_mouse"
@@ -327,6 +328,8 @@ public:
 	// core state/playback options
 	const char *state() const { return value(OPTION_STATE); }
 	bool autosave() const { return bool_value(OPTION_AUTOSAVE); }
+	int rewind() const { return bool_value(OPTION_REWIND); }
+	int rewind_capacity() const { return int_value(OPTION_REWIND_CAPACITY); }
 	const char *playback() const { return value(OPTION_PLAYBACK); }
 	const char *record() const { return value(OPTION_RECORD); }
 	bool record_timecode() const { return bool_value(OPTION_RECORD_TIMECODE); }
@@ -371,11 +374,8 @@ public:
 
 	// core artwork options
 	bool artwork_crop() const { return bool_value(OPTION_ARTWORK_CROP); }
-	bool use_backdrops() const { return bool_value(OPTION_USE_BACKDROPS); }
-	bool use_overlays() const { return bool_value(OPTION_USE_OVERLAYS); }
-	bool use_bezels() const { return bool_value(OPTION_USE_BEZELS); }
-	bool use_cpanels() const { return bool_value(OPTION_USE_CPANELS); }
-	bool use_marquees() const { return bool_value(OPTION_USE_MARQUEES); }
+	const char *fallback_artwork() const { return value(OPTION_FALLBACK_ARTWORK); }
+	const char *override_artwork() const { return value(OPTION_OVERRIDE_ARTWORK); }
 
 	// core screen options
 	float brightness() const { return float_value(OPTION_BRIGHTNESS); }
@@ -440,12 +440,14 @@ public:
 	const char *ui_font() const { return value(OPTION_UI_FONT); }
 	ui_option ui() const { return m_ui; }
 	const char *ram_size() const { return value(OPTION_RAMSIZE); }
+	bool nvram_save() const { return bool_value(OPTION_NVRAM_SAVE); }
 
 	// core comm options
 	const char *comm_localhost() const { return value(OPTION_COMM_LOCAL_HOST); }
 	const char *comm_localport() const { return value(OPTION_COMM_LOCAL_PORT); }
 	const char *comm_remotehost() const { return value(OPTION_COMM_REMOTE_HOST); }
 	const char *comm_remoteport() const { return value(OPTION_COMM_REMOTE_PORT); }
+	bool comm_framesync() const { return bool_value(OPTION_COMM_FRAME_SYNC); }
 
 
 	bool confirm_quit() const { return bool_value(OPTION_CONFIRM_QUIT); }
@@ -522,5 +524,8 @@ private:
 	// special option; the software set name that we did specify
 	std::string                                         m_software_name;
 };
+
+// takes an existing emu_options and adds system specific options
+void osd_setup_osd_specific_emu_options(emu_options &opts);
 
 #endif  // MAME_EMU_EMUOPTS_H

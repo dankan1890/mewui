@@ -72,7 +72,9 @@ X - change banks
 
 #include "emu.h"
 #include "cpu/z80/z80.h"
-#include "cpu/z80/z80daisy.h"
+#include "imagedev/floppy.h"
+#include "machine/z80daisy.h"
+#include "machine/74259.h"
 #include "machine/clock.h"
 #include "machine/keyboard.h"
 #include "machine/wd_fdc.h"
@@ -81,6 +83,7 @@ X - change banks
 #include "machine/z80sio.h"
 #include "sound/beep.h"
 #include "video/mc6845.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -101,7 +104,7 @@ public:
 		, m_fdc(*this, "fdc")
 		, m_floppy0(*this, "fdc:0")
 		, m_floppy1(*this, "fdc:1")
-		, m_beeper(*this, "beeper")
+		, m_syslatch1(*this, "syslatch1")
 		, m_dsw(*this, "DSW")
 		, m_bankr(*this, "bankr")
 		, m_bankv(*this, "bankv")
@@ -109,11 +112,14 @@ public:
 	{
 	}
 
-	DECLARE_WRITE8_MEMBER(portc0_w );
-	DECLARE_WRITE8_MEMBER(portc8_w );
-	DECLARE_WRITE8_MEMBER(portcc_w );
-	DECLARE_READ8_MEMBER(portc4_r);
-	DECLARE_READ8_MEMBER(portd0_r);
+	DECLARE_WRITE_LINE_MEMBER(side_select_w);
+	DECLARE_WRITE_LINE_MEMBER(smc1_w);
+	DECLARE_WRITE_LINE_MEMBER(smc2_w);
+	DECLARE_WRITE_LINE_MEMBER(head_load_w);
+	DECLARE_WRITE_LINE_MEMBER(disk_motor_w);
+	DECLARE_WRITE8_MEMBER(syslatch2_w);
+	DECLARE_READ8_MEMBER(status_port_r);
+	DECLARE_READ8_MEMBER(kbd_r);
 	void kbd_put(u8 data);
 	DECLARE_WRITE_LINE_MEMBER(clock_w);
 	DECLARE_WRITE_LINE_MEMBER(busreq_w);
@@ -121,19 +127,21 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(sio_wrdya_w);
 	DECLARE_WRITE_LINE_MEMBER(sio_wrdyb_w);
 	DECLARE_WRITE_LINE_MEMBER(fdc_drq_w);
-	DECLARE_DRIVER_INIT(bigbord2);
+	void init_bigbord2();
 	DECLARE_READ8_MEMBER(memory_read_byte);
 	DECLARE_WRITE8_MEMBER(memory_write_byte);
 	DECLARE_READ8_MEMBER(io_read_byte);
 	DECLARE_WRITE8_MEMBER(io_write_byte);
 	MC6845_UPDATE_ROW(crtc_update_row);
 
+	void bigbord2(machine_config &config);
+	void bigbord2_io(address_map &map);
+	void bigbord2_mem(address_map &map);
 private:
 	u8 crt8002(u8 ac_ra, u8 ac_chr, u8 ac_attr, uint16_t ac_cnt, bool ac_curs);
 	u8 m_term_data;
 	u8 m_term_status;
 	uint16_t m_cnt;
-	bool m_c8[8];
 	bool m_cc[8];
 	floppy_image_device *m_floppy;
 	virtual void machine_start() override;
@@ -141,7 +149,7 @@ private:
 	address_space *m_mem;
 	address_space *m_io;
 	required_device<palette_device> m_palette;
-	required_device<cpu_device> m_maincpu;
+	required_device<z80_device> m_maincpu;
 	required_region_ptr<u8> m_p_ram;
 	required_region_ptr<u8> m_p_chargen;
 	required_device<z80ctc_device> m_ctc1;
@@ -151,17 +159,12 @@ private:
 	required_device<mb8877_device> m_fdc;
 	required_device<floppy_connector> m_floppy0;
 	required_device<floppy_connector> m_floppy1;
-	required_device<beep_device> m_beeper;
+	required_device<ls259_device> m_syslatch1;
 	required_ioport m_dsw;
 	required_memory_bank m_bankr;
 	required_memory_bank m_bankv;
 	required_memory_bank m_banka;
 };
-
-// Eprom programming port
-WRITE8_MEMBER( bigbord2_state::portc0_w )
-{
-}
 
 /* Status port
     0 = RXDA
@@ -173,16 +176,16 @@ WRITE8_MEMBER( bigbord2_state::portc0_w )
     6 = DIPSW 3
     7 = DIPSW 4 */
 
-READ8_MEMBER( bigbord2_state::portc4_r )
+READ8_MEMBER(bigbord2_state::status_port_r)
 {
-	u8 ret = m_term_status | 3 | (m_c8[6]<<2) | m_dsw->read();
+	u8 ret = m_term_status | 3 | (m_syslatch1->q6_r() << 2) | m_dsw->read();
 	m_term_status = 0;
 	return ret;
 }
 
 // KBD port - read ascii value of key pressed
 
-READ8_MEMBER( bigbord2_state::portd0_r )
+READ8_MEMBER(bigbord2_state::kbd_r)
 {
 	u8 ret = m_term_data;
 	m_term_data = 0;
@@ -249,73 +252,35 @@ WRITE8_MEMBER( bigbord2_state::io_write_byte )
 
 /* Read/Write Handlers */
 
-
-WRITE8_MEMBER( bigbord2_state::portc8_w )
+WRITE_LINE_MEMBER(bigbord2_state::side_select_w)
 {
-	/*
-
-	    This port uses a 74LS259, which allows individual bits
-	    to be switched on and off, while the other bits are
-	    unaffected.
-
-	    bit     signal      description
-
-	    0       D_S         memory bank
-	    1       SIDSEL      side select
-	    2       SMC1        u6 data separator pin 5
-	    3       SMC2        u6 data separator pin 6
-	    4       DDEN        density
-	    5       HLD         head load
-	    6       MOTOR       disk motor
-	    7       BELL        beeper pulse
-
-	*/
-
-	m_c8[data&7] = BIT(data, 3);
-
-	switch (data&7)
-	{
-		case 0:
-			// memory bank
-			m_bankr->set_entry(m_c8[0]);
-			m_bankv->set_entry(m_c8[0]);
-			m_banka->set_entry(m_c8[0]);
-			break;
-		case 1:
-			// side select
-			if (m_floppy)
-			{
-				m_floppy->ss_w(m_c8[1]);
-			}
-
-			break;
-
-		case 2:
-		case 3:
-			// these connect to "U6 (FDC9216B)" which drives the fdc "rawread" and "rclk" pins
-			break;
-		case 4:
-			// density
-			m_fdc->dden_w(m_c8[4]);
-			break;
-		case 5:
-			// connects to HLD pin on floppy drive
-			break;
-		case 6:
-			// motor on
-			if (m_floppy)
-			{
-				m_floppy->mon_w(m_c8[6]? 0 : 1);
-			}
-			break;
-		case 7:
-			// beeper
-			m_beeper->set_state(m_c8[7]);
-			break;
-	}
+	if (m_floppy)
+		m_floppy->ss_w(state);
 }
 
-WRITE8_MEMBER( bigbord2_state::portcc_w )
+WRITE_LINE_MEMBER(bigbord2_state::smc1_w)
+{
+	// connects to "U6 (FDC9216B)" which drives the fdc "rawread" and "rclk" pins
+}
+
+WRITE_LINE_MEMBER(bigbord2_state::smc2_w)
+{
+	// connects to "U6 (FDC9216B)" which drives the fdc "rawread" and "rclk" pins
+}
+
+WRITE_LINE_MEMBER(bigbord2_state::head_load_w)
+{
+	// connects to HLD pin on floppy drive
+}
+
+WRITE_LINE_MEMBER(bigbord2_state::disk_motor_w)
+{
+	// motor on
+	if (m_floppy)
+		m_floppy->mon_w(state ? 0 : 1);
+}
+
+WRITE8_MEMBER(bigbord2_state::syslatch2_w)
 {
 	/*
 
@@ -346,6 +311,11 @@ WRITE8_MEMBER( bigbord2_state::portcc_w )
 	//if (BIT(data, 4)) m_floppy = m_floppy3->get_device();
 
 	m_fdc->set_floppy(m_floppy);
+	if (m_floppy)
+	{
+		m_floppy->ss_w(m_syslatch1->q1_r());
+		m_floppy->mon_w(m_syslatch1->q6_r() ? 0 : 1);
+	}
 
 	m_dma->rdy_w(m_cc[data & 7]);
 }
@@ -354,32 +324,35 @@ WRITE8_MEMBER( bigbord2_state::portcc_w )
 
 /* Memory Maps */
 
-static ADDRESS_MAP_START( bigbord2_mem, AS_PROGRAM, 8, bigbord2_state )
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x0fff) AM_RAMBANK("bankr")
-	AM_RANGE(0x1000, 0x5fff) AM_RAM
-	AM_RANGE(0x6000, 0x6fff) AM_RAMBANK("bankv")
-	AM_RANGE(0x7000, 0x7fff) AM_RAMBANK("banka")
-	AM_RANGE(0x8000, 0xffff) AM_RAM
-ADDRESS_MAP_END
+void bigbord2_state::bigbord2_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x0fff).bankrw("bankr");
+	map(0x1000, 0x5fff).ram();
+	map(0x6000, 0x6fff).bankrw("bankv");
+	map(0x7000, 0x7fff).bankrw("banka");
+	map(0x8000, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START( bigbord2_io, AS_IO, 8, bigbord2_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x80, 0x83) AM_DEVREADWRITE("sio", z80sio_device, ba_cd_r, ba_cd_w) // u16
-	AM_RANGE(0x84, 0x87) AM_DEVREADWRITE("ctc1", z80ctc_device, read, write) // u37 has issues
-	AM_RANGE(0x88, 0x8b) AM_DEVREADWRITE("ctc2", z80ctc_device, read, write) // u21
-	AM_RANGE(0x8C, 0x8F) AM_DEVREADWRITE("dma", z80dma_device, read, write) // u62
-	AM_RANGE(0xC0, 0xC3) AM_WRITE(portc0_w) // eprom programming port
-	AM_RANGE(0xC4, 0xC7) AM_READ (portc4_r)
-	AM_RANGE(0xC8, 0xCB) AM_WRITE(portc8_w)
-	AM_RANGE(0xCC, 0xCF) AM_WRITE(portcc_w)
-	AM_RANGE(0xD0, 0xD3) AM_READ (portd0_r)
-	AM_RANGE(0xD4, 0xD7) AM_DEVREADWRITE("fdc", mb8877_device, read, write) // u10
-	//AM_RANGE(0xD8, 0xDB) AM_READWRITE(portd8_r, portd8_w) // various external data ports; DB = centronics printer
-	AM_RANGE(0xDC, 0xDC) AM_MIRROR(2) AM_DEVREADWRITE("crtc", mc6845_device, status_r, address_w) // u30
-	AM_RANGE(0xDD, 0xDD) AM_MIRROR(2) AM_DEVREADWRITE("crtc", mc6845_device, register_r, register_w)
-ADDRESS_MAP_END
+void bigbord2_state::bigbord2_io(address_map &map)
+{
+	map.global_mask(0xff);
+	map.unmap_value_high();
+	map(0x80, 0x83).rw(m_sio, FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w)); // u16
+	map(0x84, 0x87).rw(m_ctc1, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)); // u37 has issues
+	map(0x88, 0x8b).rw(m_ctc2, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)); // u21
+	map(0x8c, 0x8f).rw(m_dma, FUNC(z80dma_device::bus_r), FUNC(z80dma_device::bus_w)); // u62
+	map(0xc0, 0xc3).w("proglatch", FUNC(ls259_device::write_nibble_d3)); // u41 - eprom programming port
+	map(0xc4, 0xc7).r(FUNC(bigbord2_state::status_port_r)); // u11
+	map(0xc8, 0xcb).w(m_syslatch1, FUNC(ls259_device::write_nibble_d3)); // u14
+	map(0xcc, 0xcf).w(FUNC(bigbord2_state::syslatch2_w));
+	map(0xd0, 0xd3).r(FUNC(bigbord2_state::kbd_r)); // u1
+	map(0xd4, 0xd7).rw(m_fdc, FUNC(mb8877_device::read), FUNC(mb8877_device::write)); // u10
+	//AM_RANGE(0xd8, 0xdb) AM_READWRITE(portd8_r, portd8_w) // various external data ports; DB = centronics printer
+	map(0xd9, 0xd9).w("outlatch1", FUNC(ls259_device::write_nibble_d3)); // u96
+	map(0xdc, 0xdc).mirror(2).rw("crtc", FUNC(mc6845_device::status_r), FUNC(mc6845_device::address_w)); // u30
+	map(0xdd, 0xdd).mirror(2).rw("crtc", FUNC(mc6845_device::register_r), FUNC(mc6845_device::register_w));
+}
 
 
 /* Input Ports */
@@ -432,10 +405,10 @@ static const z80_daisy_config daisy_chain[] =
 
 /* WD1793 Interface */
 
-static SLOT_INTERFACE_START( bigbord2_floppies )
-	SLOT_INTERFACE( "drive0", FLOPPY_8_DSDD )
-	SLOT_INTERFACE( "drive1", FLOPPY_8_DSDD )
-SLOT_INTERFACE_END
+static void bigbord2_floppies(device_slot_interface &device)
+{
+	device.option_add("8dsdd", FLOPPY_8_DSDD);
+}
 
 
 /* Machine Initialization */
@@ -451,18 +424,14 @@ void bigbord2_state::machine_reset()
 {
 	u8 i;
 	for (i = 0; i < 8; i++)
-	{
-		m_c8[i] = 0;
 		m_cc[i] = 1;
-	}
 	m_cc[2] = 0;
-	m_beeper->set_state(0);
 	m_bankr->set_entry(0);
 	m_bankv->set_entry(0);
 	m_banka->set_entry(0);
 }
 
-DRIVER_INIT_MEMBER(bigbord2_state,bigbord2)
+void bigbord2_state::init_bigbord2()
 {
 	m_mem = &m_maincpu->space(AS_PROGRAM);
 	m_io = &m_maincpu->space(AS_IO);
@@ -488,7 +457,7 @@ static const gfx_layout crt8002_charlayout =
 	8*16                    /* every char takes 16 bytes */
 };
 
-static GFXDECODE_START( crt8002 )
+static GFXDECODE_START( gfx_crt8002 )
 	GFXDECODE_ENTRY( "chargen", 0x0000, crt8002_charlayout, 0, 1 )
 GFXDECODE_END
 
@@ -521,7 +490,7 @@ u8 bigbord2_state::crt8002(u8 ac_ra, u8 ac_chr, u8 ac_attr, uint16_t ac_cnt, boo
 			}
 			break;
 		case 1: // external mode
-			gfx = BITSWAP8(ac_chr, 0,1,2,3,4,5,6,7);
+			gfx = bitswap<8>(ac_chr, 0,1,2,3,4,5,6,7);
 			break;
 		case 2: // thin gfx
 			break;
@@ -577,71 +546,86 @@ MC6845_UPDATE_ROW( bigbord2_state::crtc_update_row )
 
 /* Machine Drivers */
 
-#define MAIN_CLOCK XTAL_8MHz / 2
+#define MAIN_CLOCK 8_MHz_XTAL / 2
 
-static MACHINE_CONFIG_START( bigbord2 )
+void bigbord2_state::bigbord2(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, MAIN_CLOCK)
-	MCFG_CPU_PROGRAM_MAP(bigbord2_mem)
-	MCFG_CPU_IO_MAP(bigbord2_io)
-	MCFG_Z80_DAISY_CHAIN(daisy_chain)
+	Z80(config, m_maincpu, MAIN_CLOCK);
+	m_maincpu->set_addrmap(AS_PROGRAM, &bigbord2_state::bigbord2_mem);
+	m_maincpu->set_addrmap(AS_IO, &bigbord2_state::bigbord2_io);
+	m_maincpu->set_daisy_config(daisy_chain);
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_RAW_PARAMS(XTAL_10_69425MHz, 700, 0, 560, 260, 0, 240)
-	MCFG_SCREEN_UPDATE_DEVICE("crtc", mc6845_device, screen_update)
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", crt8002)
-	MCFG_PALETTE_ADD_MONOCHROME("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_raw(10.69425_MHz_XTAL, 700, 0, 560, 260, 0, 240);
+	screen.set_screen_update("crtc", FUNC(mc6845_device::screen_update));
+	GFXDECODE(config, "gfxdecode", m_palette, gfx_crt8002);
+	PALETTE(config, m_palette, palette_device::MONOCHROME);
 
-	MCFG_DEVICE_ADD("ctc_clock", CLOCK, MAIN_CLOCK)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE(bigbord2_state, clock_w))
+	CLOCK(config, "ctc_clock", MAIN_CLOCK).signal_handler().set(FUNC(bigbord2_state::clock_w));
 
 	/* devices */
-	MCFG_DEVICE_ADD("dma", Z80DMA, MAIN_CLOCK)
-	MCFG_Z80DMA_OUT_BUSREQ_CB(WRITELINE(bigbord2_state, busreq_w))
-	MCFG_Z80DMA_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80DMA_IN_MREQ_CB(READ8(bigbord2_state, memory_read_byte))
-	MCFG_Z80DMA_OUT_MREQ_CB(WRITE8(bigbord2_state, memory_write_byte))
-	MCFG_Z80DMA_IN_IORQ_CB(READ8(bigbord2_state, io_read_byte))
-	MCFG_Z80DMA_OUT_IORQ_CB(WRITE8(bigbord2_state, io_write_byte))
+	Z80DMA(config, m_dma, MAIN_CLOCK);
+	m_dma->out_busreq_callback().set(FUNC(bigbord2_state::busreq_w));
+	m_dma->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_dma->in_mreq_callback().set(FUNC(bigbord2_state::memory_read_byte));
+	m_dma->out_mreq_callback().set(FUNC(bigbord2_state::memory_write_byte));
+	m_dma->in_iorq_callback().set(FUNC(bigbord2_state::io_read_byte));
+	m_dma->out_iorq_callback().set(FUNC(bigbord2_state::io_write_byte));
 
-	MCFG_Z80SIO_ADD("sio", MAIN_CLOCK, 0, 0, 0, 0)
-	MCFG_Z80SIO_OUT_INT_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80SIO_OUT_SYNCA_CB(DEVWRITELINE("ctc1", z80ctc_device, trg2))
-	MCFG_Z80SIO_OUT_WRDYA_CB(WRITELINE(bigbord2_state, sio_wrdya_w))
-	MCFG_Z80SIO_OUT_WRDYB_CB(WRITELINE(bigbord2_state, sio_wrdyb_w))
+	Z80SIO(config, m_sio, MAIN_CLOCK);
+	m_sio->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_sio->out_synca_callback().set(m_ctc1, FUNC(z80ctc_device::trg2));
+	m_sio->out_wrdya_callback().set(FUNC(bigbord2_state::sio_wrdya_w));
+	m_sio->out_wrdyb_callback().set(FUNC(bigbord2_state::sio_wrdyb_w));
 
-	MCFG_DEVICE_ADD("ctc1", Z80CTC, MAIN_CLOCK)
-	MCFG_Z80CTC_INTR_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
+	Z80CTC(config, m_ctc1, MAIN_CLOCK);
+	m_ctc1->intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD("ctc2", Z80CTC, MAIN_CLOCK)
-	MCFG_Z80CTC_INTR_CB(INPUTLINE("maincpu", INPUT_LINE_IRQ0))
-	MCFG_Z80CTC_ZC0_CB(DEVWRITELINE("sio", z80sio_device, rxtxcb_w))    // to SIO Ch B
-	MCFG_Z80CTC_ZC1_CB(WRITELINE(bigbord2_state, ctc_z1_w))  // to SIO Ch A
-	MCFG_Z80CTC_ZC2_CB(DEVWRITELINE("ctc2", z80ctc_device, trg3))
+	Z80CTC(config, m_ctc2, MAIN_CLOCK);
+	m_ctc2->intr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
+	m_ctc2->zc_callback<0>().set(m_sio, FUNC(z80sio_device::rxtxcb_w));    // to SIO Ch B
+	m_ctc2->zc_callback<1>().set(FUNC(bigbord2_state::ctc_z1_w));  // to SIO Ch A
+	m_ctc2->zc_callback<2>().set(m_ctc2, FUNC(z80ctc_device::trg3));
 
-	MCFG_MB8877_ADD("fdc", XTAL_16MHz / 8) // 2MHz for 8 inch, or 1MHz otherwise (jumper-selectable)
-	//MCFG_WD_FDC_INTRQ_CALLBACK(INPUTLINE("maincpu", ??)) // info missing from schematic
-	MCFG_FLOPPY_DRIVE_ADD("fdc:0", bigbord2_floppies, "drive0", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_SOUND(true)
-	MCFG_FLOPPY_DRIVE_ADD("fdc:1", bigbord2_floppies, "drive1", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_SOUND(true)
+	MB8877(config, m_fdc, 16_MHz_XTAL / 8); // 2MHz for 8 inch, or 1MHz otherwise (jumper-selectable)
+	//m_fdc->intrq_wr_callback().set_inputline(m_maincpu, ??); // info missing from schematic
+	FLOPPY_CONNECTOR(config, "fdc:0", bigbord2_floppies, "8dsdd", floppy_image_device::default_floppy_formats).enable_sound(true);
+	FLOPPY_CONNECTOR(config, "fdc:1", bigbord2_floppies, "8dsdd", floppy_image_device::default_floppy_formats).enable_sound(true);
 
-	MCFG_MC6845_ADD("crtc", MC6845, "screen", XTAL_16MHz / 8)
-	MCFG_MC6845_SHOW_BORDER_AREA(false)
-	MCFG_MC6845_CHAR_WIDTH(8)
-	MCFG_MC6845_UPDATE_ROW_CB(bigbord2_state, crtc_update_row)
-	MCFG_MC6845_OUT_VSYNC_CB(DEVWRITELINE("ctc1", z80ctc_device, trg3))
+	mc6845_device &crtc(MC6845(config, "crtc", 16_MHz_XTAL / 8));
+	crtc.set_screen("screen");
+	crtc.set_show_border_area(false);
+	crtc.set_char_width(8);
+	crtc.set_update_row_callback(FUNC(bigbord2_state::crtc_update_row), this);
+	crtc.out_vsync_callback().set(m_ctc1, FUNC(z80ctc_device::trg3));
+
+	ls259_device &proglatch(LS259(config, "proglatch")); // U41
+	proglatch.q_out_cb<6>().set("outlatch1", FUNC(ls259_device::clear_w)); // FCRST - also resets the 8877
+
+	LS259(config, m_syslatch1, 0); // U14
+	m_syslatch1->q_out_cb<0>().set_membank(m_bankr); // D_S
+	m_syslatch1->q_out_cb<0>().append_membank(m_bankv);
+	m_syslatch1->q_out_cb<0>().append_membank(m_banka);
+	m_syslatch1->q_out_cb<1>().set(FUNC(bigbord2_state::side_select_w)); // SIDSEL
+	m_syslatch1->q_out_cb<2>().set(FUNC(bigbord2_state::smc1_w)); // SMC1
+	m_syslatch1->q_out_cb<3>().set(FUNC(bigbord2_state::smc2_w)); // SMC2
+	m_syslatch1->q_out_cb<4>().set(m_fdc, FUNC(mb8877_device::dden_w)); // DDEN
+	m_syslatch1->q_out_cb<5>().set(FUNC(bigbord2_state::head_load_w)); // HLD
+	m_syslatch1->q_out_cb<6>().set(FUNC(bigbord2_state::disk_motor_w)); // MOTOR
+	m_syslatch1->q_out_cb<7>().set("beeper", FUNC(beep_device::set_state)); // BELL
+
+	LS259(config, "outlatch1", 0); // U96
 
 	/* keyboard */
-	MCFG_DEVICE_ADD("keyboard", GENERIC_KEYBOARD, 0)
-	MCFG_GENERIC_KEYBOARD_CB(PUT(bigbord2_state, kbd_put))
+	generic_keyboard_device &keyboard(GENERIC_KEYBOARD(config, "keyboard", 0));
+	keyboard.set_keyboard_callback(FUNC(bigbord2_state::kbd_put));
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("beeper", BEEP, 950) // actual frequency is unknown
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-MACHINE_CONFIG_END
+	SPEAKER(config, "mono").front_center();
+	BEEP(config, "beeper", 950).add_route(ALL_OUTPUTS, "mono", 0.50); // actual frequency is unknown
+}
 
 
 /* ROMs */
@@ -656,5 +640,5 @@ ROM_START( bigbord2 )
 ROM_END
 /* System Drivers */
 
-//    YEAR  NAME      PARENT    COMPAT  MACHINE   INPUT     STATE           INIT      COMPANY                       FULLNAME        FLAGS
-COMP( 1982, bigbord2, bigboard, 0,      bigbord2, bigbord2, bigbord2_state, bigbord2, "Digital Research Computers", "Big Board II", MACHINE_NOT_WORKING )
+//    YEAR  NAME      PARENT  COMPAT  MACHINE   INPUT     CLASS           INIT           COMPANY                       FULLNAME        FLAGS
+COMP( 1982, bigbord2, 0,      0,      bigbord2, bigbord2, bigbord2_state, init_bigbord2, "Digital Research Computers", "Big Board II", MACHINE_NOT_WORKING )

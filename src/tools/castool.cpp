@@ -23,6 +23,7 @@
 #include "formats/ace_tap.h"
 #include "formats/adam_cas.h"
 #include "formats/apf_apt.h"
+#include "formats/atom_tap.h"
 #include "formats/cbm_tap.h"
 #include "formats/cgen_cas.h"
 #include "formats/coco_cas.h"
@@ -69,6 +70,7 @@ struct SupportedCassetteFormats
 const struct SupportedCassetteFormats formats[] = {
 	{"a26", a26_cassette_formats               ,"Atari 2600 SuperCharger"},
 	{"apf", apf_cassette_formats               ,"APF Imagination Machine"},
+	{"atom", atom_cassette_formats             ,"Acorn Atom"},
 	{"bbc", bbc_cassette_formats               ,"Acorn BBC & Electron"},
 	{"cbm", cbm_cassette_formats               ,"Commodore 8-bit series"},
 	{"cdt", cdt_cassette_formats               ,"Amstrad CPC"},
@@ -110,7 +112,6 @@ const struct SupportedCassetteFormats formats[] = {
 	{"trs80l2", trs80l2_cassette_formats       ,"TRS-80 Level 2"},
 	{"tvc64", tvc64_cassette_formats           ,"Videoton TVC 64"},
 	{"tzx", tzx_cassette_formats               ,"Sinclair ZX Spectrum"},
-	{"uef", uef_cassette_formats               ,"Acorn Electron"},
 	{"vg5k", vg5k_cassette_formats             ,"Philips VG 5000"},
 	{"vtech1", vtech1_cassette_formats         ,"Video Technology Laser 110-310"},
 	{"vtech2", vtech2_cassette_formats         ,"Video Technology Laser 350-700"},
@@ -134,10 +135,10 @@ static std::string get_extension(const char *name)
 	return s ? std::string(s+1) : "";
 }
 
-static void display_usage(void)
+static void display_usage(const char *argv0)
 {
 	fprintf(stderr, "Usage: \n");
-	fprintf(stderr, "       castool.exe convert <format> <inputfile> <outputfile.wav>\n");
+	fprintf(stderr, "       %s convert <format> <inputfile> <outputfile.wav>\n", argv0);
 }
 
 static void display_formats(void)
@@ -167,7 +168,7 @@ int CLIB_DECL main(int argc, char *argv[])
 			// convert command
 			if (argc!=5) {
 				fprintf(stderr, "Wrong parameter number.\n\n");
-				display_usage();
+				display_usage(argv[0]);
 				return -1;
 			} else {
 				for (i = 0; formats[i].name; i++) {
@@ -178,7 +179,7 @@ int CLIB_DECL main(int argc, char *argv[])
 				}
 				if (found==0) {
 					fprintf(stderr, "Wrong format name.\n\n");
-					display_usage();
+					display_usage(argv[0]);
 					fprintf(stderr, "\n");
 					display_formats();
 					return -1;
@@ -205,12 +206,12 @@ int CLIB_DECL main(int argc, char *argv[])
 	}
 
 	/* Usage */
-	fprintf(stderr, "castool - Generic cassette manipulation tool for use with MESS\n\n");
-	display_usage();
+	fprintf(stderr, "castool - Generic cassette manipulation tool for use with MAME\n\n");
+	display_usage(argv[0]);
 	fprintf(stderr, "\n");
 	display_formats();
 	fprintf(stderr, "\nExample usage:\n");
-	fprintf(stderr, "        castool.exe convert tzx game.tzx game.wav\n\n");
+	fprintf(stderr, "        %s convert tzx game.tzx game.wav\n\n", argv[0]);
 
 theend :
 	return 0;

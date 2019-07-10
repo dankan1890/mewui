@@ -91,19 +91,21 @@
 
 DEFINE_DEVICE_TYPE(A2BUS_PCXPORTER, a2bus_pcxporter_device, "a2pcxport", "Applied Engineering PC Transporter")
 
-static ADDRESS_MAP_START( pc_map, AS_PROGRAM, 16, a2bus_pcxporter_device )
-	ADDRESS_MAP_UNMAP_HIGH
-ADDRESS_MAP_END
+void a2bus_pcxporter_device::pc_map(address_map &map)
+{
+	map.unmap_value_high();
+}
 
-static ADDRESS_MAP_START(pc_io, AS_IO, 16, a2bus_pcxporter_device )
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x000f) AM_DEVREADWRITE8("dma8237", am9517a_device, read, write, 0xffff)
-	AM_RANGE(0x0020, 0x002f) AM_DEVREADWRITE8("pic8259", pic8259_device, read, write, 0xffff)
-	AM_RANGE(0x0040, 0x004f) AM_DEVREADWRITE8("pit8253", pit8253_device, read, write, 0xffff)
-	AM_RANGE(0x0060, 0x0065) AM_READWRITE8(kbd_6502_r, kbd_6502_w, 0xffff)
-	AM_RANGE(0x0080, 0x008f) AM_WRITE8(pc_page_w, 0xffff)
-	AM_RANGE(0x00a0, 0x00a1) AM_WRITE8(nmi_enable_w, 0xffff)
-ADDRESS_MAP_END
+void a2bus_pcxporter_device::pc_io(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x000f).rw("dma8237", FUNC(am9517a_device::read), FUNC(am9517a_device::write));
+	map(0x0020, 0x002f).rw("pic8259", FUNC(pic8259_device::read), FUNC(pic8259_device::write));
+	map(0x0040, 0x004f).rw("pit8253", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0x0060, 0x0065).rw(FUNC(a2bus_pcxporter_device::kbd_6502_r), FUNC(a2bus_pcxporter_device::kbd_6502_w));
+	map(0x0080, 0x008f).w(FUNC(a2bus_pcxporter_device::pc_page_w));
+	map(0x00a0, 0x00a1).w(FUNC(a2bus_pcxporter_device::nmi_enable_w));
+}
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -113,65 +115,67 @@ ADDRESS_MAP_END
 //  device_add_mconfig - add device configuration
 //-------------------------------------------------
 
-MACHINE_CONFIG_MEMBER( a2bus_pcxporter_device::device_add_mconfig )
-	MCFG_CPU_ADD("v30", V30, XTAL_14_31818MHz/2)    // 7.16 MHz as per manual
-	MCFG_CPU_PROGRAM_MAP(pc_map)
-	MCFG_CPU_IO_MAP(pc_io)
-	MCFG_CPU_IRQ_ACKNOWLEDGE_DEVICE("pic8259", pic8259_device, inta_cb)
-	MCFG_DEVICE_DISABLE()
+void a2bus_pcxporter_device::device_add_mconfig(machine_config &config)
+{
+	V30(config, m_v30, A2BUS_7M_CLOCK);    // 7.16 MHz as per manual
+	m_v30->set_addrmap(AS_PROGRAM, &a2bus_pcxporter_device::pc_map);
+	m_v30->set_addrmap(AS_IO, &a2bus_pcxporter_device::pc_io);
+	m_v30->set_irq_acknowledge_callback("pic8259", FUNC(pic8259_device::inta_cb));
+	m_v30->set_disable();
 
-	MCFG_DEVICE_ADD("pit8253", PIT8253, 0)
-	MCFG_PIT8253_CLK0(XTAL_14_31818MHz/12.0) // heartbeat IRQ
-	MCFG_PIT8253_OUT0_HANDLER(DEVWRITELINE("pic8259", pic8259_device, ir0_w))
-	MCFG_PIT8253_CLK1(XTAL_14_31818MHz/12.0) // dram refresh
-	MCFG_PIT8253_OUT1_HANDLER(WRITELINE(a2bus_pcxporter_device, pc_pit8253_out1_changed))
-	MCFG_PIT8253_CLK2(XTAL_14_31818MHz/12.0) // pio port c pin 4, and speaker polling enough
-	MCFG_PIT8253_OUT2_HANDLER(WRITELINE(a2bus_pcxporter_device, pc_pit8253_out2_changed))
+	PIT8253(config, m_pit8253);
+	m_pit8253->set_clk<0>(A2BUS_7M_CLOCK / 6.0); // heartbeat IRQ
+	m_pit8253->out_handler<0>().set(m_pic8259, FUNC(pic8259_device::ir0_w));
+	m_pit8253->set_clk<1>(A2BUS_7M_CLOCK / 6.0); // DRAM refresh
+	m_pit8253->out_handler<1>().set(FUNC(a2bus_pcxporter_device::pc_pit8253_out1_changed));
+	m_pit8253->set_clk<2>(A2BUS_7M_CLOCK / 6.0); // PIO port C pin 4, and speaker polling enough
+	m_pit8253->out_handler<2>().set(FUNC(a2bus_pcxporter_device::pc_pit8253_out2_changed));
 
-	MCFG_DEVICE_ADD( "dma8237", PCXPORT_DMAC, XTAL_14_31818MHz/2 )
-	MCFG_I8237_OUT_HREQ_CB(WRITELINE(a2bus_pcxporter_device, pc_dma_hrq_changed))
-	MCFG_I8237_OUT_EOP_CB(WRITELINE(a2bus_pcxporter_device, pc_dma8237_out_eop))
-	MCFG_I8237_IN_MEMR_CB(READ8(a2bus_pcxporter_device, pc_dma_read_byte))
-	MCFG_I8237_OUT_MEMW_CB(WRITE8(a2bus_pcxporter_device, pc_dma_write_byte))
-	MCFG_I8237_IN_IOR_1_CB(READ8(a2bus_pcxporter_device, pc_dma8237_1_dack_r))
-	MCFG_I8237_IN_IOR_2_CB(READ8(a2bus_pcxporter_device, pc_dma8237_2_dack_r))
-	MCFG_I8237_IN_IOR_3_CB(READ8(a2bus_pcxporter_device, pc_dma8237_3_dack_r))
-	MCFG_I8237_OUT_IOW_0_CB(WRITE8(a2bus_pcxporter_device, pc_dma8237_0_dack_w))
-	MCFG_I8237_OUT_IOW_1_CB(WRITE8(a2bus_pcxporter_device, pc_dma8237_1_dack_w))
-	MCFG_I8237_OUT_IOW_2_CB(WRITE8(a2bus_pcxporter_device, pc_dma8237_2_dack_w))
-	MCFG_I8237_OUT_IOW_3_CB(WRITE8(a2bus_pcxporter_device, pc_dma8237_3_dack_w))
-	MCFG_I8237_OUT_DACK_0_CB(WRITELINE(a2bus_pcxporter_device, pc_dack0_w))
-	MCFG_I8237_OUT_DACK_1_CB(WRITELINE(a2bus_pcxporter_device, pc_dack1_w))
-	MCFG_I8237_OUT_DACK_2_CB(WRITELINE(a2bus_pcxporter_device, pc_dack2_w))
-	MCFG_I8237_OUT_DACK_3_CB(WRITELINE(a2bus_pcxporter_device, pc_dack3_w))
+	PCXPORT_DMAC(config, m_dma8237, A2BUS_7M_CLOCK / 2);
+	m_dma8237->out_hreq_callback().set(FUNC(a2bus_pcxporter_device::pc_dma_hrq_changed));
+	m_dma8237->out_eop_callback().set(FUNC(a2bus_pcxporter_device::pc_dma8237_out_eop));
+	m_dma8237->in_memr_callback().set(FUNC(a2bus_pcxporter_device::pc_dma_read_byte));
+	m_dma8237->out_memw_callback().set(FUNC(a2bus_pcxporter_device::pc_dma_write_byte));
+	m_dma8237->in_ior_callback<1>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_1_dack_r));
+	m_dma8237->in_ior_callback<2>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_2_dack_r));
+	m_dma8237->in_ior_callback<3>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_3_dack_r));
+	m_dma8237->out_iow_callback<0>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_0_dack_w));
+	m_dma8237->out_iow_callback<1>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_1_dack_w));
+	m_dma8237->out_iow_callback<2>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_2_dack_w));
+	m_dma8237->out_iow_callback<3>().set(FUNC(a2bus_pcxporter_device::pc_dma8237_3_dack_w));
+	m_dma8237->out_dack_callback<0>().set(FUNC(a2bus_pcxporter_device::pc_dack0_w));
+	m_dma8237->out_dack_callback<1>().set(FUNC(a2bus_pcxporter_device::pc_dack1_w));
+	m_dma8237->out_dack_callback<2>().set(FUNC(a2bus_pcxporter_device::pc_dack2_w));
+	m_dma8237->out_dack_callback<3>().set(FUNC(a2bus_pcxporter_device::pc_dack3_w));
 
-	MCFG_PIC8259_ADD( "pic8259", INPUTLINE("v30", 0), VCC, NOOP)
+	PIC8259(config, m_pic8259);
+	m_pic8259->out_int_callback().set_inputline(m_v30, 0);
 
-	MCFG_DEVICE_ADD("isa", ISA8, 0)
-	MCFG_ISA8_CPU("^v30")
-	MCFG_ISA_OUT_IRQ2_CB(DEVWRITELINE("pic8259", pic8259_device, ir2_w))
-	MCFG_ISA_OUT_IRQ3_CB(DEVWRITELINE("pic8259", pic8259_device, ir3_w))
-	MCFG_ISA_OUT_IRQ4_CB(DEVWRITELINE("pic8259", pic8259_device, ir4_w))
-	MCFG_ISA_OUT_IRQ5_CB(DEVWRITELINE("pic8259", pic8259_device, ir5_w))
-	MCFG_ISA_OUT_IRQ6_CB(DEVWRITELINE("pic8259", pic8259_device, ir6_w))
-	MCFG_ISA_OUT_IRQ7_CB(DEVWRITELINE("pic8259", pic8259_device, ir7_w))
-	MCFG_ISA_OUT_DRQ1_CB(DEVWRITELINE("dma8237", am9517a_device, dreq1_w))
-	MCFG_ISA_OUT_DRQ2_CB(DEVWRITELINE("dma8237", am9517a_device, dreq2_w))
-	MCFG_ISA_OUT_DRQ3_CB(DEVWRITELINE("dma8237", am9517a_device, dreq3_w))
+	ISA8(config, m_isabus, 0);
+	m_isabus->set_memspace(m_v30, AS_PROGRAM);
+	m_isabus->set_iospace(m_v30, AS_IO);
+	m_isabus->irq2_callback().set(m_pic8259, FUNC(pic8259_device::ir2_w));
+	m_isabus->irq3_callback().set(m_pic8259, FUNC(pic8259_device::ir3_w));
+	m_isabus->irq4_callback().set(m_pic8259, FUNC(pic8259_device::ir4_w));
+	m_isabus->irq5_callback().set(m_pic8259, FUNC(pic8259_device::ir5_w));
+	m_isabus->irq6_callback().set(m_pic8259, FUNC(pic8259_device::ir6_w));
+	m_isabus->irq7_callback().set(m_pic8259, FUNC(pic8259_device::ir7_w));
+	m_isabus->drq1_callback().set(m_dma8237, FUNC(am9517a_device::dreq1_w));
+	m_isabus->drq2_callback().set(m_dma8237, FUNC(am9517a_device::dreq2_w));
+	m_isabus->drq3_callback().set(m_dma8237, FUNC(am9517a_device::dreq3_w));
 
-	MCFG_DEVICE_ADD("pc_kbdc", PC_KBDC, 0)
-	MCFG_PC_KBDC_OUT_CLOCK_CB(WRITELINE(a2bus_pcxporter_device, keyboard_clock_w))
-	MCFG_PC_KBDC_OUT_DATA_CB(WRITELINE(a2bus_pcxporter_device, keyboard_data_w))
-	MCFG_PC_KBDC_SLOT_ADD("pc_kbdc", "kbd", pc_xt_keyboards, STR_KBD_KEYTRONIC_PC3270)
+	PC_KBDC(config, m_pc_kbdc, 0);
+	m_pc_kbdc->out_clock_cb().set(FUNC(a2bus_pcxporter_device::keyboard_clock_w));
+	m_pc_kbdc->out_data_cb().set(FUNC(a2bus_pcxporter_device::keyboard_data_w));
+	PC_KBDC_SLOT(config, "kbd", pc_xt_keyboards, STR_KBD_KEYTRONIC_PC3270).set_pc_kbdc_slot(m_pc_kbdc);
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	SPEAKER(config, "mono").front_center();
+	SPEAKER_SOUND(config, m_speaker).add_route(ALL_OUTPUTS, "mono", 1.00);
 
-	MCFG_ISA8_SLOT_ADD("isa", "isa1", pc_isa8_cards, "cga", true)
-	MCFG_ISA8_SLOT_ADD("isa", "isa2", pc_isa8_cards, "fdc_xt", true)
-MACHINE_CONFIG_END
+	ISA8_SLOT(config, "isa1", 0, m_isabus, pc_isa8_cards, "cga", true); // FIXME: determine ISA bus clock
+	ISA8_SLOT(config, "isa2", 0, m_isabus, pc_isa8_cards, "fdc_xt", true);
+}
 
 //**************************************************************************
 //  LIVE DEVICE
@@ -201,9 +205,6 @@ a2bus_pcxporter_device::a2bus_pcxporter_device(const machine_config &mconfig, co
 
 void a2bus_pcxporter_device::device_start()
 {
-	// set_a2bus_device makes m_slot valid
-	set_a2bus_device();
-
 	memset(m_ram, 0, 768*1024);
 	memset(m_regs, 0, 0x400);
 	m_offset = 0;
@@ -231,12 +232,12 @@ void a2bus_pcxporter_device::device_reset()
     read_c0nx - called for reads from this card's c0nx space
 -------------------------------------------------*/
 
-uint8_t a2bus_pcxporter_device::read_c0nx(address_space &space, uint8_t offset)
+uint8_t a2bus_pcxporter_device::read_c0nx(uint8_t offset)
 {
 	switch (offset)
 	{
 		default:
-			printf("Read c0n%x (PC=%x)\n", offset, space.device().safe_pc());
+			logerror("Read c0n%x (%s)\n", offset, machine().describe_context());
 			break;
 	}
 
@@ -248,12 +249,12 @@ uint8_t a2bus_pcxporter_device::read_c0nx(address_space &space, uint8_t offset)
     write_c0nx - called for writes to this card's c0nx space
 -------------------------------------------------*/
 
-void a2bus_pcxporter_device::write_c0nx(address_space &space, uint8_t offset, uint8_t data)
+void a2bus_pcxporter_device::write_c0nx(uint8_t offset, uint8_t data)
 {
 	switch (offset)
 	{
 		default:
-			printf("Write %02x to c0n%x (PC=%x)\n", data, offset, space.device().safe_pc());
+			logerror("Write %02x to c0n%x (%s)\n", data, offset, machine().describe_context());
 			break;
 	}
 }
@@ -262,24 +263,24 @@ void a2bus_pcxporter_device::write_c0nx(address_space &space, uint8_t offset, ui
     read_cnxx - called for reads from this card's cnxx space
 -------------------------------------------------*/
 
-uint8_t a2bus_pcxporter_device::read_cnxx(address_space &space, uint8_t offset)
+uint8_t a2bus_pcxporter_device::read_cnxx(uint8_t offset)
 {
 	// read only to trigger C800?
 	return 0xff;
 }
 
-void a2bus_pcxporter_device::write_cnxx(address_space &space, uint8_t offset, uint8_t data)
+void a2bus_pcxporter_device::write_cnxx(uint8_t offset, uint8_t data)
 {
-	printf("Write %02x to cn%02x (PC=%x)\n", data, offset, space.device().safe_pc());
+	logerror("Write %02x to cn%02x (%s)\n", data, offset, machine().describe_context());
 }
 
 /*-------------------------------------------------
     read_c800 - called for reads from this card's c800 space
 -------------------------------------------------*/
 
-uint8_t a2bus_pcxporter_device::read_c800(address_space &space, uint16_t offset)
+uint8_t a2bus_pcxporter_device::read_c800(uint16_t offset)
 {
-//  printf("Read C800 at %x\n", offset + 0xc800);
+//  logerror("Read C800 at %x\n", offset + 0xc800);
 
 	if (offset < 0x400)
 	{
@@ -303,7 +304,7 @@ uint8_t a2bus_pcxporter_device::read_c800(address_space &space, uint16_t offset)
 			case 0x703: // read with increment
 				rv = m_ram[m_offset];
 				// don't increment if the debugger's reading
-				if (!machine().side_effect_disabled())
+				if (!machine().side_effects_disabled())
 				{
 					m_offset++;
 				}
@@ -314,18 +315,18 @@ uint8_t a2bus_pcxporter_device::read_c800(address_space &space, uint16_t offset)
 				return rv;
 
 			default:
-				//printf("Read $C800 at %x\n", offset + 0xc800);
+				//logerror("Read $C800 at %x\n", offset + 0xc800);
 				break;
 		}
 
-		return m_regs[offset];
+		return m_regs[offset & 0x3ff];
 	}
 }
 
 /*-------------------------------------------------
     write_c800 - called for writes to this card's c800 space
 -------------------------------------------------*/
-void a2bus_pcxporter_device::write_c800(address_space &space, uint16_t offset, uint8_t data)
+void a2bus_pcxporter_device::write_c800(uint16_t offset, uint8_t data)
 {
 	if (offset < 0x400)
 	{
@@ -338,19 +339,19 @@ void a2bus_pcxporter_device::write_c800(address_space &space, uint16_t offset, u
 			case 0x700:
 				m_offset &= ~0xff;
 				m_offset |= data;
-//              printf("offset now %x (PC=%x)\n", m_offset, space.device().safe_pc());
+//              logerror("offset now %x (%s)\n", m_offset, machine().describe_context());
 				break;
 
 			case 0x701:
 				m_offset &= ~0xff00;
 				m_offset |= (data<<8);
-//              printf("offset now %x (PC=%x)\n", m_offset, space.device().safe_pc());
+//              logerror("offset now %x (%s)\n", m_offset, machine().describe_context());
 				break;
 
 			case 0x702:
 				m_offset &= ~0xff0000;
 				m_offset |= (data<<16);
-//              printf("offset now %x (PC=%x)\n", m_offset, space.device().safe_pc());
+//              logerror("offset now %x (%s)\n", m_offset, machine().describe_context());
 				break;
 
 			case 0x703: // write w/increment
@@ -434,8 +435,8 @@ void a2bus_pcxporter_device::write_c800(address_space &space, uint16_t offset, u
 				break;
 
 			default:
-//              printf("%02x to C800 at %x\n", data, offset + 0xc800);
-				m_regs[offset] = data;
+//              logerror("%02x to C800 at %x\n", data, offset + 0xc800);
+				m_regs[offset & 0x3ff] = data;
 				break;
 		}
 	}
@@ -632,5 +633,12 @@ WRITE_LINE_MEMBER( a2bus_pcxporter_device::keyboard_data_w )
 WRITE8_MEMBER( a2bus_pcxporter_device::nmi_enable_w )
 {
 	m_nmi_enabled = BIT(data,7);
-	m_isabus->set_nmi_state(m_nmi_enabled);
+	if (!m_nmi_enabled)
+		m_v30->set_input_line(INPUT_LINE_NMI, CLEAR_LINE);
+}
+
+WRITE_LINE_MEMBER( a2bus_pcxporter_device::iochck_w )
+{
+	if (m_nmi_enabled && !state)
+		m_v30->set_input_line(INPUT_LINE_NMI, ASSERT_LINE);
 }

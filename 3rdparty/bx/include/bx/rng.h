@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -7,7 +7,7 @@
 #define BX_RNG_H_HEADER_GUARD
 
 #include "bx.h"
-#include "fpumath.h"
+#include "math.h"
 #include "uint32_t.h"
 
 namespace bx
@@ -28,24 +28,6 @@ namespace bx
 	private:
 		uint32_t m_z;
 		uint32_t m_w;
-	};
-
-	/// George Marsaglia's FIB
-	class RngFib
-	{
-	public:
-		///
-		RngFib(uint32_t _a = 9983651, uint32_t _b = 95746118);
-
-		///
-		void reset(uint32_t _a = 9983651, uint32_t _b = 95746118);
-
-		///
-		uint32_t gen();
-
-	private:
-		uint32_t m_a;
-		uint32_t m_b;
 	};
 
 	/// George Marsaglia's SHR3
@@ -75,15 +57,15 @@ namespace bx
 
 	/// Generate random point on unit circle.
 	template <typename Rng>
-	void randUnitCircle(float _result[3], Rng* _rng);
+	bx::Vec3 randUnitCircle(Rng* _rng);
 
 	/// Generate random point on unit sphere.
 	template <typename Rng>
-	void randUnitSphere(float _result[3], Rng* _rng);
+	bx::Vec3 randUnitSphere(Rng* _rng);
 
 	/// Generate random point on unit hemisphere.
 	template <typename Ty>
-	void randUnitHemisphere(float _result[3], Ty* _rng, const float _normal[3]);
+	bx::Vec3 randUnitHemisphere(Ty* _rng, const bx::Vec3& _normal);
 
 	/// Sampling with Hammersley and Halton Points
 	/// http://www.cse.cuhk.edu.hk/~ttwong/papers/udpoint/udpoints.html

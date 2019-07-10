@@ -10,8 +10,7 @@ defines {
 configuration { "mingw* or vs*" }
 	defines {
 		"UNICODE",
-		"_UNICODE",
-		"main=utf8_main",
+		"_UNICODE"
 	}
 
 configuration { "vs*" }
@@ -42,6 +41,7 @@ if not _OPTIONS["DONT_USE_NETWORK"] then
 	defines {
 		"USE_NETWORK",
 		"OSD_NET_USE_PCAP",
+		"OSD_NET_USE_TAPTUN",
 	}
 end
 

@@ -30,9 +30,6 @@ public:
 	// construction/destruction
 	superpet_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	DECLARE_READ8_MEMBER( read );
-	DECLARE_WRITE8_MEMBER( write );
-
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -44,14 +41,19 @@ protected:
 	virtual ioport_constructor device_input_ports() const override;
 
 	// device_pet_expansion_card_interface overrides
-	virtual int pet_norom_r(address_space &space, offs_t offset, int sel) override;
-	virtual uint8_t pet_bd_r(address_space &space, offs_t offset, uint8_t data, int &sel) override;
-	virtual void pet_bd_w(address_space &space, offs_t offset, uint8_t data, int &sel) override;
+	virtual int pet_norom_r(offs_t offset, int sel) override;
+	virtual uint8_t pet_bd_r(offs_t offset, uint8_t data, int &sel) override;
+	virtual void pet_bd_w(offs_t offset, uint8_t data, int &sel) override;
 	virtual int pet_diag_r() override;
 	virtual void pet_irq_w(int state) override;
 
 private:
 	DECLARE_WRITE_LINE_MEMBER( acia_irq_w );
+
+	DECLARE_READ8_MEMBER( read );
+	DECLARE_WRITE8_MEMBER( write );
+
+	void superpet_mem(address_map &map);
 
 	required_device<cpu_device> m_maincpu;
 	required_device<mos6551_device> m_acia;

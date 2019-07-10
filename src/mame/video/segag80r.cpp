@@ -52,7 +52,14 @@ INTERRUPT_GEN_MEMBER(segag80r_state::segag80r_vblank_start)
 
 	/* if interrupts are enabled, clock one */
 	if (m_video_control & 0x04)
-		irq0_line_hold(device);
+		device.execute().set_input_line(0, ASSERT_LINE);
+}
+
+
+IRQ_CALLBACK_MEMBER(segag80r_state::segag80r_irq_ack)
+{
+	m_maincpu->set_input_line(0, CLEAR_LINE);
+	return 0xff;
 }
 
 
@@ -63,7 +70,7 @@ INTERRUPT_GEN_MEMBER(segag80r_state::sindbadm_vblank_start)
 	/* interrupts appear to always be enabled, but they have a manual */
 	/* acknowledge rather than an automatic ack; they are also not masked */
 	/* by bit 2 of video_control like a standard G80 */
-	irq0_line_assert(device);
+	device.execute().set_input_line(0, ASSERT_LINE);
 }
 
 
@@ -88,18 +95,18 @@ void segag80r_state::g80_set_palette_entry(int entry, uint8_t data)
 	bit0 = (r >> 0) & 0x01;
 	bit1 = (r >> 1) & 0x01;
 	bit2 = (r >> 2) & 0x01;
-	r = combine_3_weights(m_rweights, bit0, bit1, bit2);
+	r = combine_weights(m_rweights, bit0, bit1, bit2);
 
 	/* green component */
 	bit0 = (g >> 0) & 0x01;
 	bit1 = (g >> 1) & 0x01;
 	bit2 = (g >> 2) & 0x01;
-	g = combine_3_weights(m_gweights, bit0, bit1, bit2);
+	g = combine_weights(m_gweights, bit0, bit1, bit2);
 
 	/* blue component */
 	bit0 = (b >> 0) & 0x01;
 	bit1 = (b >> 1) & 0x01;
-	b = combine_2_weights(m_bweights, bit0, bit1);
+	b = combine_weights(m_bweights, bit0, bit1);
 
 	m_palette->set_pen_color(entry, rgb_t(r, g, b));
 }
@@ -131,17 +138,17 @@ void segag80r_state::spaceod_bg_init_palette()
 		/* red component */
 		bit0 = (r >> 0) & 0x01;
 		bit1 = (r >> 1) & 0x01;
-		r = combine_2_weights(trweights, bit0, bit1);
+		r = combine_weights(trweights, bit0, bit1);
 
 		/* green component */
 		bit0 = (g >> 0) & 0x01;
 		bit1 = (g >> 1) & 0x01;
-		g = combine_2_weights(tgweights, bit0, bit1);
+		g = combine_weights(tgweights, bit0, bit1);
 
 		/* blue component */
 		bit0 = (b >> 0) & 0x01;
 		bit1 = (b >> 1) & 0x01;
-		b = combine_2_weights(tbweights, bit0, bit1);
+		b = combine_weights(tbweights, bit0, bit1);
 
 		m_palette->set_pen_color(64 + i, rgb_t(r, g, b));
 	}
@@ -287,7 +294,7 @@ READ8_MEMBER(segag80r_state::segag80r_video_port_r)
 {
 	if (offset == 0)
 	{
-		logerror("%04X:segag80r_video_port_r(%d)\n", space.device().safe_pc(), offset);
+		logerror("%04X:segag80r_video_port_r(%d)\n", m_maincpu->pc(), offset);
 		return 0xff;
 	}
 	else
@@ -307,7 +314,7 @@ WRITE8_MEMBER(segag80r_state::segag80r_video_port_w)
 {
 	if (offset == 0)
 	{
-		logerror("%04X:segag80r_video_port_w(%d) = %02X\n", space.device().safe_pc(), offset, data);
+		logerror("%04X:segag80r_video_port_w(%d) = %02X\n", m_maincpu->pc(), offset, data);
 	}
 	else
 	{

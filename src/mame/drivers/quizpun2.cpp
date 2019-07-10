@@ -22,7 +22,7 @@ PCB Layout
 |      U28        6116        Z80             |
 |                         U2A     93C46   U111|
 |                                      6264   |
-|      U29                    *           8MHz|
+|      U29                    COP         8MHz|
 |  U20            6116                        |
 |                                6116         |
 |  U21 U30                                    |
@@ -32,8 +32,8 @@ PCB Layout
 |    YM3014     MAHJONG28                     |
 |---------------------------------------------|
 Notes:
-      * - Unknown DIP40 chip. +5V on pin 17, GND on pin 22
-          pins 4,3,2 of 93C46 tied to unknown chip on pins 23,24,25
+      COP - DIP40 identified as COP402 MCU (+5V on pin 17, GND on pin 22).
+          pins 4,3,2 of 93C46 tied to COP pins 23,24,25
       All clocks unknown, PCB not working
       Possibly Z80's @ 4MHz and YM2203 @ 2MHz
       PCB marked 'Ducksan Trading Co. Ltd. Made In Korea'
@@ -83,6 +83,7 @@ Notes:
 
 #include "emu.h"
 
+#include "cpu/cop400/cop400.h"
 #include "cpu/m6805/m68705.h"
 #include "cpu/z80/z80.h"
 
@@ -91,28 +92,16 @@ Notes:
 
 #include "sound/2203intf.h"
 
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
 
-// very preliminary quizpun2 protection simulation
-
-#define VERBOSE_PROTECTION_LOG 0
-
-enum prot_state { STATE_IDLE = 0, STATE_ADDR_R, STATE_ROM_R, STATE_EEPROM_R, STATE_EEPROM_W };
-struct prot_t {
-	prot_state state;
-	int wait_param;
-	int param;
-	int cmd;
-	int addr;
-};
-
 class quizpun2_state : public driver_device
 {
 public:
-	quizpun2_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	quizpun2_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
 		m_gfxdecode(*this, "gfxdecode"),
@@ -123,6 +112,16 @@ public:
 		m_bg_ram(*this, "bg_ram")
 	{ }
 
+	void quizpun2_base(machine_config &config);
+	void quizpun(machine_config &config);
+	void quizpun2(machine_config &config);
+
+protected:
+	virtual void machine_reset() override;
+	virtual void machine_start() override;
+	virtual void video_start() override;
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_audiocpu;
 	required_device<gfxdecode_device> m_gfxdecode;
@@ -136,6 +135,12 @@ public:
 	tilemap_t *m_fg_tmap;
 	uint8_t m_scroll;
 
+	uint8_t m_mcu_data_port;
+	uint8_t m_mcu_control_port;
+	bool m_mcu_pending;
+	bool m_mcu_written;
+	bool m_mcu_repeat;
+
 	TILE_GET_INFO_MEMBER(get_bg_tile_info);
 	TILE_GET_INFO_MEMBER(get_fg_tile_info);
 	DECLARE_WRITE8_MEMBER(bg_ram_w);
@@ -145,23 +150,16 @@ public:
 	DECLARE_WRITE8_MEMBER(irq_ack);
 	DECLARE_WRITE8_MEMBER(soundlatch_w);
 
-	virtual void machine_reset() override;
-	virtual void machine_start() override;
-	virtual void video_start() override;
 	uint32_t screen_update_quizpun2(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 
 	// quizpun2
-	void log_protection( address_space &space, const char *warning );
-	struct prot_t m_prot;
-	DECLARE_READ8_MEMBER(quizpun2_protection_r);
-	DECLARE_WRITE8_MEMBER(quizpun2_protection_w);
+	DECLARE_WRITE8_MEMBER(cop_d_w);
+	DECLARE_WRITE8_MEMBER(cop_g_w);
+	DECLARE_READ8_MEMBER(cop_l_r);
+	DECLARE_WRITE8_MEMBER(cop_l_w);
+	DECLARE_READ8_MEMBER(cop_in_r);
 
 	// quizpun
-	uint8_t m_port_a, m_port_b;
-	bool m_quizpun_pending;
-	bool m_quizpun_written;
-	bool m_quizpun_repeat;
-
 	DECLARE_READ8_MEMBER(quizpun_68705_port_a_r);
 	DECLARE_WRITE8_MEMBER(quizpun_68705_port_a_w);
 
@@ -173,6 +171,12 @@ public:
 
 	DECLARE_READ8_MEMBER(quizpun_protection_r);
 	DECLARE_WRITE8_MEMBER(quizpun_protection_w);
+
+	void quizpun2_cop_map(address_map &map);
+	void quizpun2_io_map(address_map &map);
+	void quizpun2_map(address_map &map);
+	void quizpun2_sound_io_map(address_map &map);
+	void quizpun2_sound_map(address_map &map);
 };
 
 /***************************************************************************
@@ -268,150 +272,42 @@ void quizpun2_state::machine_reset()
 {
 	membank("bank1")->set_entry(0);
 
-	// quizpun2
-	m_prot.state = STATE_IDLE;
-	m_prot.wait_param = 0;
-	m_prot.param = 0;
-	m_prot.cmd = 0;
-	m_prot.addr = 0;
-
 	// quizpun
-	m_port_a = m_port_b = 0;
-	m_quizpun_pending = m_quizpun_written = m_quizpun_repeat = false;
+	m_mcu_data_port = m_mcu_control_port = 0;
+	m_mcu_pending = m_mcu_written = m_mcu_repeat = false;
 }
 
-void quizpun2_state::log_protection( address_space &space, const char *warning )
+WRITE8_MEMBER(quizpun2_state::cop_d_w)
 {
-	logerror("%04x: protection - %s (state %x, wait %x, param %02x, cmd %02x, addr %02x)\n", space.device().safe_pc(), warning,
-		m_prot.state,
-		m_prot.wait_param,
-		m_prot.param,
-		m_prot.cmd,
-		m_prot.addr
-	);
+	m_eeprom->cs_write(BIT(data, 0));
+	// bit 1 used to control second EEPROM???
 }
 
-READ8_MEMBER(quizpun2_state::quizpun2_protection_r)
+WRITE8_MEMBER(quizpun2_state::cop_g_w)
 {
-	struct prot_t &prot = m_prot;
-	uint8_t ret;
-
-	switch ( prot.state )
+	if (BIT(m_mcu_control_port, 0) && !BIT(data, 0))
 	{
-		case STATE_ROM_R:       // Checksum of MCU addresses 0-ff (0x8e9c^0xffff expected)
-			if      (prot.addr == 0xfe) ret = 0x8e ^ 0xff;
-			else if (prot.addr == 0xff) ret = 0x9c ^ 0xff;
-			else                        ret = 0x00;
-			break;
-
-		case STATE_ADDR_R:      // Address to jump to (big endian!)
-			switch ( prot.param )
-			{
-				case 0x19:  // Print
-					ret = 0x0b95 >> ((prot.addr & 1) ? 0 : 8);
-					break;
-
-				case 0x44:  // Clear screen?
-					ret = 0x1bd9 >> ((prot.addr & 1) ? 0 : 8);  // needed, but should also clear the screen
-					break;
-
-				case 0x45:  // Backup RAM check
-					ret = 0x2242 >> ((prot.addr & 1) ? 0 : 8);
-					break;
-
-				default:
-					log_protection(space, "unknown address");
-					ret = 0x2e59 >> ((prot.addr & 1) ? 0 : 8);  // return the address of: XOR A, RET
-			}
-			break;
-
-		case STATE_EEPROM_R:        // EEPROM read
-		{
-			uint8_t *eeprom = memregion("eeprom")->base();
-			ret = eeprom[prot.addr];
-			break;
-		}
-
-		default:
-			log_protection(space, "unknown read");
-			ret = 0x00;
+		m_mcu_pending = false;
+		m_maincpu->set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
 	}
 
-#if VERBOSE_PROTECTION_LOG
-	log_protection(space, "info READ");
-#endif
-
-	prot.addr++;
-
-	return ret;
+	m_mcu_control_port = data;
 }
 
-WRITE8_MEMBER(quizpun2_state::quizpun2_protection_w)
+READ8_MEMBER(quizpun2_state::cop_l_r)
 {
-	struct prot_t &prot = m_prot;
+	return m_mcu_data_port;
+}
 
-	switch ( prot.state )
-	{
-		case STATE_EEPROM_W:
-		{
-			uint8_t *eeprom = memregion("eeprom")->base();
-			eeprom[prot.addr] = data;
-			prot.addr++;
-			if ((prot.addr % 8) == 0)
-				prot.state = STATE_IDLE;
-			break;
-		}
+WRITE8_MEMBER(quizpun2_state::cop_l_w)
+{
+	if (m_mcu_repeat)
+		m_mcu_data_port = data;
+}
 
-		default:
-			if (prot.wait_param)
-			{
-				prot.param = data;
-				prot.wait_param = 0;
-
-				// change state:
-
-				if (prot.cmd & 0x80)
-				{
-					if (prot.param == 0x00)
-					{
-						prot.state = STATE_ROM_R;
-						prot.addr = (prot.cmd & 0x7f) * 2;
-					}
-					else if (prot.cmd == 0x80)
-					{
-						prot.state = STATE_ADDR_R;
-						prot.addr = 0;
-					}
-					else
-						log_protection(space, "unknown command");
-				}
-				else if (prot.cmd >= 0x00 && prot.cmd <= 0x0f)
-				{
-					prot.state = STATE_EEPROM_W;
-					prot.addr = (prot.cmd & 0x0f) * 8;
-				}
-				else if (prot.cmd >= 0x20 && prot.cmd <= 0x2f)
-				{
-					prot.state = STATE_EEPROM_R;
-					prot.addr = (prot.cmd & 0x0f) * 8;
-				}
-				else
-				{
-					prot.state = STATE_IDLE;
-					log_protection(space, "unknown command");
-				}
-			}
-			else
-			{
-				prot.cmd = data;
-				prot.wait_param = 1;
-			}
-			break;
-	}
-
-#if VERBOSE_PROTECTION_LOG
-	log_protection(space, "info WRITE");
-#endif
+READ8_MEMBER(quizpun2_state::cop_in_r)
+{
+	return 8 | (m_mcu_written ? 4 : 2) | (m_mcu_pending ? 0 : 1);
 }
 
 /***************************************************************************
@@ -430,42 +326,45 @@ WRITE8_MEMBER(quizpun2_state::irq_ack)
 
 WRITE8_MEMBER(quizpun2_state::soundlatch_w)
 {
-	m_soundlatch->write(space, 0, data ^ 0x80);
-	m_audiocpu->set_input_line(INPUT_LINE_NMI, PULSE_LINE);
+	m_soundlatch->write(data ^ 0x80);
+	m_audiocpu->pulse_input_line(INPUT_LINE_NMI, attotime::zero);
 }
 
-static ADDRESS_MAP_START( quizpun2_map, AS_PROGRAM, 8, quizpun2_state )
-	AM_RANGE( 0x0000, 0x7fff ) AM_ROM
-	AM_RANGE( 0x8000, 0x9fff ) AM_ROMBANK("bank1")
+void quizpun2_state::quizpun2_map(address_map &map)
+{
+	map(0x0000, 0x7fff).rom();
+	map(0x8000, 0x9fff).bankr("bank1");
 
-	AM_RANGE( 0xa000, 0xbfff ) AM_RAM_WRITE(fg_ram_w) AM_SHARE("fg_ram")
-	AM_RANGE( 0xc000, 0xcfff ) AM_RAM_WRITE(bg_ram_w) AM_SHARE("bg_ram")
+	map(0xa000, 0xbfff).ram().w(FUNC(quizpun2_state::fg_ram_w)).share("fg_ram");
+	map(0xc000, 0xcfff).ram().w(FUNC(quizpun2_state::bg_ram_w)).share("bg_ram");
 
-	AM_RANGE( 0xd000, 0xd3ff ) AM_RAM_DEVWRITE("palette", palette_device, write) AM_SHARE("palette")
-	AM_RANGE( 0xe000, 0xffff ) AM_RAM
-ADDRESS_MAP_END
+	map(0xd000, 0xd3ff).ram().w(m_palette, FUNC(palette_device::write8)).share("palette");
+	map(0xe000, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START( common_io_map, AS_IO, 8, quizpun2_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE( 0x40, 0x40 ) AM_WRITE(irq_ack)
-	AM_RANGE( 0x50, 0x50 ) AM_WRITE(soundlatch_w)
-	AM_RANGE( 0x60, 0x60 ) AM_WRITE(rombank_w)
-	AM_RANGE( 0x70, 0x70 ) AM_WRITE(scroll_w)
-	AM_RANGE( 0x80, 0x80 ) AM_READ_PORT( "DSW" )
-	AM_RANGE( 0x90, 0x90 ) AM_READ_PORT( "IN0" )
-	AM_RANGE( 0xa0, 0xa0 ) AM_READ_PORT( "IN1" )
-ADDRESS_MAP_END
+void quizpun2_state::quizpun2_io_map(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x40, 0x40).w(FUNC(quizpun2_state::irq_ack));
+	map(0x50, 0x50).w(FUNC(quizpun2_state::soundlatch_w));
+	map(0x60, 0x60).w(FUNC(quizpun2_state::rombank_w));
+	map(0x70, 0x70).w(FUNC(quizpun2_state::scroll_w));
+	map(0x80, 0x80).portr("DSW");
+	map(0x90, 0x90).portr("IN0");
+	map(0xa0, 0xa0).portr("IN1");
+	map(0xe0, 0xe0).rw(FUNC(quizpun2_state::quizpun_protection_r), FUNC(quizpun2_state::quizpun_protection_w));
+}
 
-static ADDRESS_MAP_START( quizpun2_io_map, AS_IO, 8, quizpun2_state )
-	AM_IMPORT_FROM( common_io_map )
-	AM_RANGE( 0xe0, 0xe0 ) AM_READWRITE(quizpun2_protection_r, quizpun2_protection_w)
-ADDRESS_MAP_END
+void quizpun2_state::quizpun2_cop_map(address_map &map)
+{
+	map(0x000, 0x3ff).rom().region("cop", 0);
+}
 
 // quizpun
 
 READ8_MEMBER(quizpun2_state::quizpun_protection_r)
 {
-//  logerror("%s: port A read %02x\n", machine().describe_context(), m_port_a);
+//  logerror("%s: port A read %02x\n", machine().describe_context(), m_mcu_data_port);
 
 	/*
 	   Upon reading this port the main cpu is stalled until the mcu provides the value to read
@@ -477,38 +376,33 @@ READ8_MEMBER(quizpun2_state::quizpun_protection_r)
 	   It also decrements the main cpu PC back to the start of the read instruction.
 	   When the mcu un-stalls the Z80, the read happens again, returning the correct mcu-provided value this time
 	*/
-	if (m_quizpun_repeat)
+	if (m_mcu_repeat)
 	{
-		m_quizpun_repeat = false;
+		m_mcu_repeat = false;
 	}
 	else
 	{
-		m_quizpun_pending = true;
-		m_quizpun_written = false;
+		m_mcu_pending = true;
+		m_mcu_written = false;
 		m_maincpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
 		m_maincpu->yield();
 
 		m_maincpu->set_state_int(Z80_PC, m_maincpu->state_int(Z80_PC) - 2);
-		m_quizpun_repeat = true;
+		m_mcu_repeat = true;
 	}
 
-	return m_port_a;
+	return m_mcu_data_port;
 }
 
 WRITE8_MEMBER(quizpun2_state::quizpun_protection_w)
 {
 //  logerror("%s: port A write %02x\n", machine().describe_context(), data);
-	m_port_a = data;
-	m_quizpun_pending = true;
-	m_quizpun_written = true;
+	m_mcu_data_port = data;
+	m_mcu_pending = true;
+	m_mcu_written = true;
 	m_maincpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
 	m_maincpu->yield();
 }
-
-static ADDRESS_MAP_START( quizpun_io_map, AS_IO, 8, quizpun2_state )
-	AM_IMPORT_FROM( common_io_map )
-	AM_RANGE( 0xe0, 0xe0 ) AM_READWRITE(quizpun_protection_r, quizpun_protection_w )
-ADDRESS_MAP_END
 
 /***************************************************************************
                             Memory Maps - MCU
@@ -518,14 +412,14 @@ ADDRESS_MAP_END
 
 READ8_MEMBER(quizpun2_state::quizpun_68705_port_a_r)
 {
-//  logerror("%s: port A read %02x\n", machine().describe_context(), m_port_a);
-	return m_port_a;
+//  logerror("%s: port A read %02x\n", machine().describe_context(), m_mcu_data_port);
+	return m_mcu_data_port;
 }
 
 WRITE8_MEMBER(quizpun2_state::quizpun_68705_port_a_w)
 {
 //  logerror("%s: port A write %02x\n", machine().describe_context(), data);
-	m_port_a = data;
+	m_mcu_data_port = data;
 }
 
 // Port B - I/O with main cpu (status)
@@ -538,9 +432,9 @@ READ8_MEMBER(quizpun2_state::quizpun_68705_port_b_r)
 
 	uint8_t const ret =
 			0xf4 |
-			( m_quizpun_pending                        ? 0 : (1 << 3)) |
-			((m_quizpun_pending &&  m_quizpun_written) ? 0 : (1 << 1)) |
-			((m_quizpun_pending && !m_quizpun_written) ? 0 : (1 << 0));
+			( m_mcu_pending                        ? 0 : (1 << 3)) |
+			((m_mcu_pending &&  m_mcu_written) ? 0 : (1 << 1)) |
+			((m_mcu_pending && !m_mcu_written) ? 0 : (1 << 0));
 
 //  logerror("%s: port B read %02x\n", machine().describe_context(), ret);
 	return ret;
@@ -552,12 +446,12 @@ WRITE8_MEMBER(quizpun2_state::quizpun_68705_port_b_w)
 
 	// bit 2: 0->1 run main cpu
 
-	if (!BIT(m_port_b, 2) && BIT(data, 2))
+	if (!BIT(m_mcu_control_port, 2) && BIT(data, 2))
 	{
-		m_quizpun_pending = false;
+		m_mcu_pending = false;
 		m_maincpu->set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
 	}
-	m_port_b = data;
+	m_mcu_control_port = data;
 }
 
 // Port C - EEPROM
@@ -587,18 +481,20 @@ WRITE8_MEMBER(quizpun2_state::quizpun_68705_port_c_w)
                             Memory Maps - Sound CPU
 ***************************************************************************/
 
-static ADDRESS_MAP_START( quizpun2_sound_map, AS_PROGRAM, 8, quizpun2_state )
-	AM_RANGE( 0x0000, 0xf7ff ) AM_ROM
-	AM_RANGE( 0xf800, 0xffff ) AM_RAM
-ADDRESS_MAP_END
+void quizpun2_state::quizpun2_sound_map(address_map &map)
+{
+	map(0x0000, 0xf7ff).rom();
+	map(0xf800, 0xffff).ram();
+}
 
-static ADDRESS_MAP_START( quizpun2_sound_io_map, AS_IO, 8, quizpun2_state )
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE( 0x00, 0x00 ) AM_WRITENOP  // IRQ end
-	AM_RANGE( 0x20, 0x20 ) AM_WRITENOP  // NMI end
-	AM_RANGE( 0x40, 0x40 ) AM_DEVREAD("soundlatch", generic_latch_8_device, read)
-	AM_RANGE( 0x60, 0x61 ) AM_DEVREADWRITE("ymsnd", ym2203_device, read, write)
-ADDRESS_MAP_END
+void quizpun2_state::quizpun2_sound_io_map(address_map &map)
+{
+	map.global_mask(0xff);
+	map(0x00, 0x00).nopw();  // IRQ end
+	map(0x20, 0x20).nopw();  // NMI end
+	map(0x40, 0x40).r(m_soundlatch, FUNC(generic_latch_8_device::read));
+	map(0x60, 0x61).rw("ymsnd", FUNC(ym2203_device::read), FUNC(ym2203_device::write));
+}
 
 /***************************************************************************
                                 Input Ports
@@ -671,7 +567,7 @@ static const gfx_layout layout_16x16x1 =
 	16*16*1
 };
 
-static GFXDECODE_START( quizpun2 )
+static GFXDECODE_START( gfx_quizpun2 )
 	GFXDECODE_ENTRY( "bg",  0, layout_16x16x4,     0, 256/16 )
 	GFXDECODE_ENTRY( "fg",  0, layout_16x16x1, 0x100, 256/2  )
 	GFXDECODE_ENTRY( "fg2", 0, layout_16x16x1, 0x100, 256/2  )
@@ -681,55 +577,72 @@ GFXDECODE_END
                                 Machine Drivers
 ***************************************************************************/
 
-static MACHINE_CONFIG_START( quizpun2 )
+void quizpun2_state::quizpun2_base(machine_config &config)
+{
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", Z80, XTAL_8MHz / 2) // 4 MHz
-	MCFG_CPU_PROGRAM_MAP(quizpun2_map)
-	MCFG_CPU_IO_MAP(quizpun2_io_map)
-	MCFG_CPU_VBLANK_INT_DRIVER("screen", quizpun2_state,  irq0_line_hold)
+	Z80(config, m_maincpu, XTAL(8'000'000) / 2); // 4 MHz
+	m_maincpu->set_addrmap(AS_PROGRAM, &quizpun2_state::quizpun2_map);
+	m_maincpu->set_addrmap(AS_IO, &quizpun2_state::quizpun2_io_map);
+	m_maincpu->set_vblank_int("screen", FUNC(quizpun2_state::irq0_line_hold));
 
-	MCFG_CPU_ADD("audiocpu", Z80, XTAL_8MHz / 2)    // 4 MHz
-	MCFG_CPU_PROGRAM_MAP(quizpun2_sound_map)
-	MCFG_CPU_IO_MAP(quizpun2_sound_io_map)
-	MCFG_CPU_VBLANK_INT_DRIVER("screen", quizpun2_state,  irq0_line_hold)
+	Z80(config, m_audiocpu, XTAL(8'000'000) / 2); // 4 MHz
+	m_audiocpu->set_addrmap(AS_PROGRAM, &quizpun2_state::quizpun2_sound_map);
+	m_audiocpu->set_addrmap(AS_IO, &quizpun2_state::quizpun2_sound_io_map);
+	m_audiocpu->set_vblank_int("screen", FUNC(quizpun2_state::irq0_line_hold));
 	// NMI generated by main CPU
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	EEPROM_93C46_16BIT(config, "eeprom");
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(384, 256)
-	MCFG_SCREEN_VISIBLE_AREA(0, 384-1, 0, 256-1)
-	MCFG_SCREEN_UPDATE_DRIVER(quizpun2_state, screen_update_quizpun2)
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+	screen.set_size(384, 256);
+	screen.set_visarea(0, 384-1, 0, 256-1);
+	screen.set_screen_update(FUNC(quizpun2_state::screen_update_quizpun2));
+	screen.set_palette(m_palette);
 
-	MCFG_GFXDECODE_ADD("gfxdecode", "palette", quizpun2)
-	MCFG_PALETTE_ADD("palette", 0x200)
-	MCFG_PALETTE_FORMAT(xRRRRRGGGGGBBBBB)
+	GFXDECODE(config, m_gfxdecode, m_palette, gfx_quizpun2);
+	PALETTE(config, m_palette).set_format(palette_device::xRGB_555, 0x200);
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
+	SPEAKER(config, "mono").front_center();
 
-	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	GENERIC_LATCH_8(config, m_soundlatch);
 
-	MCFG_SOUND_ADD("ymsnd", YM2203, XTAL_8MHz / 2) // 4 MHz
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-MACHINE_CONFIG_END
+	ym2203_device &ymsnd(YM2203(config, "ymsnd", XTAL(8'000'000) / 2)); // 4 MHz
+	ymsnd.add_route(ALL_OUTPUTS, "mono", 1.0);
+}
 
-static MACHINE_CONFIG_DERIVED( quizpun, quizpun2 )
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_IO_MAP(quizpun_io_map)
+void quizpun2_state::quizpun2(machine_config &config)
+{
+	quizpun2_base(config);
 
-	MCFG_CPU_ADD("mcu", M68705P5, XTAL_4MHz) // xtal is 4MHz, divided by 4 internally
-	MCFG_M68705_PORTA_R_CB(READ8(quizpun2_state, quizpun_68705_port_a_r))
-	MCFG_M68705_PORTB_R_CB(READ8(quizpun2_state, quizpun_68705_port_b_r))
-	MCFG_M68705_PORTC_R_CB(READ8(quizpun2_state, quizpun_68705_port_c_r))
-	MCFG_M68705_PORTA_W_CB(WRITE8(quizpun2_state, quizpun_68705_port_a_w))
-	MCFG_M68705_PORTB_W_CB(WRITE8(quizpun2_state, quizpun_68705_port_b_w))
-	MCFG_M68705_PORTC_W_CB(WRITE8(quizpun2_state, quizpun_68705_port_c_w))
-MACHINE_CONFIG_END
+	cop402_cpu_device &cop(COP402(config, "cop", XTAL(8'000'000) / 2));
+	cop.set_addrmap(AS_PROGRAM, &quizpun2_state::quizpun2_cop_map);
+	cop.set_config(COP400_CKI_DIVISOR_16, COP400_CKO_OSCILLATOR_OUTPUT, false);
+	cop.write_d().set(FUNC(quizpun2_state::cop_d_w));
+	cop.write_g().set(FUNC(quizpun2_state::cop_g_w));
+	cop.read_l().set(FUNC(quizpun2_state::cop_l_r));
+	cop.write_l().set(FUNC(quizpun2_state::cop_l_w));
+	cop.read_in().set(FUNC(quizpun2_state::cop_in_r));
+	cop.read_si().set("eeprom", FUNC(eeprom_serial_93cxx_device::do_read));
+	cop.write_so().set("eeprom", FUNC(eeprom_serial_93cxx_device::di_write));
+	cop.write_sk().set("eeprom", FUNC(eeprom_serial_93cxx_device::clk_write));
+}
+
+void quizpun2_state::quizpun(machine_config &config)
+{
+	quizpun2_base(config);
+
+	m68705p5_device &mcu(M68705P5(config, "mcu", XTAL(4'000'000))); // xtal is 4MHz, divided by 4 internally
+	mcu.porta_r().set(FUNC(quizpun2_state::quizpun_68705_port_a_r));
+	mcu.portb_r().set(FUNC(quizpun2_state::quizpun_68705_port_b_r));
+	mcu.portc_r().set(FUNC(quizpun2_state::quizpun_68705_port_c_r));
+	mcu.porta_w().set(FUNC(quizpun2_state::quizpun_68705_port_a_w));
+	mcu.portb_w().set(FUNC(quizpun2_state::quizpun_68705_port_b_w));
+	mcu.portc_w().set(FUNC(quizpun2_state::quizpun_68705_port_c_w));
+}
 
 /***************************************************************************
                                 ROMs Loading
@@ -746,8 +659,8 @@ ROM_START( quizpun2 )
 	ROM_REGION( 0x10000, "audiocpu", 0 )
 	ROM_LOAD( "u22", 0x00000, 0x10000, CRC(f40768b5) SHA1(4410f71850357ec1d10a3a114bb540966e72781b) )
 
-	ROM_REGION( 0x1000, "mcu", 0 )
-	ROM_LOAD( "mcu.bin", 0x0000, 0x1000, NO_DUMP )
+	ROM_REGION( 0x2000, "cop", 0 )
+	ROM_LOAD( "u2a", 0x0000, 0x2000, CRC(13afc2bd) SHA1(0d9c8813525dfc7a844e72d2cf84261db3d10a23) ) // 111xxxxxxxxxx = 0xFF
 
 	ROM_REGION( 0x40000, "bg", 0 )    // 16x16x8
 	ROM_LOAD( "u21", 0x00000, 0x10000, CRC(8ac86759) SHA1(2eac9ceee4462ce905aa08ff4f5a6215e0b6672f) )
@@ -766,12 +679,6 @@ ROM_START( quizpun2 )
 	ROM_REGION( 0x20000, "fg2", 0 )    // 16x16x1
 	ROM_LOAD( "u1", 0x00000, 0x10000, CRC(58506040) SHA1(9d8bed2585e8f188a20270fccd9cfbdb91e48599) )
 	ROM_LOAD( "u2", 0x10000, 0x10000, CRC(9294a19c) SHA1(cd7109262e5f68b946c84aa390108bcc47ee1300) )
-
-	ROM_REGION16_BE( 0x80, "eeprom", 0 ) // EEPROM (tied to the unknown DIP40)
-	ROM_LOAD( "93c46", 0x00, 0x80, CRC(4d244cc8) SHA1(6593d5b7ac1ebb77fee4648ad1d3d9b59a25fdc8) BAD_DUMP ) // backup ram error
-
-	ROM_REGION( 0x2000, "unknown", 0 )
-	ROM_LOAD( "u2a", 0x0000, 0x2000, CRC(13afc2bd) SHA1(0d9c8813525dfc7a844e72d2cf84261db3d10a23) ) // 111xxxxxxxxxx = 0xFF
 ROM_END
 
 ROM_START( quizpun )
@@ -806,10 +713,7 @@ ROM_START( quizpun )
 	ROM_REGION( 0x20000, "fg2", 0 )    // 16x16x1
 	ROM_LOAD( "01.u1", 0x00000, 0x10000, CRC(58506040) SHA1(9d8bed2585e8f188a20270fccd9cfbdb91e48599) )
 	ROM_LOAD( "02.u2", 0x10000, 0x10000, CRC(9294a19c) SHA1(cd7109262e5f68b946c84aa390108bcc47ee1300) )
-
-	ROM_REGION16_BE( 0x80, "eeprom", 0 )
-	ROM_LOAD( "93c46eeprom.bin", 0, 0x80, CRC(4d244cc8) SHA1(6593d5b7ac1ebb77fee4648ad1d3d9b59a25fdc8) BAD_DUMP ) // backup ram error
 ROM_END
 
-GAME( 1988, quizpun,  0, quizpun,  quizpun2, quizpun2_state, 0, ROT270, "Space Computer", "Quiz Punch",    MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND )
-GAME( 1989, quizpun2, 0, quizpun2, quizpun2, quizpun2_state, 0, ROT270, "Space Computer", "Quiz Punch II", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND | MACHINE_UNEMULATED_PROTECTION )
+GAME( 1988, quizpun,  0, quizpun,  quizpun2, quizpun2_state, empty_init, ROT270, "Space Computer", "Quiz Punch",    MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND )
+GAME( 1989, quizpun2, 0, quizpun2, quizpun2, quizpun2_state, empty_init, ROT270, "Space Computer", "Quiz Punch II", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_GRAPHICS | MACHINE_IMPERFECT_SOUND )

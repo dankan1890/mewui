@@ -9,8 +9,8 @@
 
 ***************************************************************************/
 
-#ifndef __EIGCCPPC__
-#define __EIGCCPPC__
+#ifndef MAME_OSD_EIGCCPPC_H
+#define MAME_OSD_EIGCCPPC_H
 
 
 /***************************************************************************
@@ -275,13 +275,12 @@ _count_leading_ones(uint32_t value)
 	uint32_t result;
 
 	__asm__ (
-		" not     %[result], %[value]  \n"
 		" cntlzw  %[result], %[result] \n"
 		: [result] "=r" (result)    /* result can be in any register */
-		: [value]  "r"  (value)     /* 'value' can be in any register */
+		: [value]  "r"  (~value)    /* 'value' can be in any register */
 	);
 
 	return result;
 }
 
-#endif /* __EIGCCPPC__ */
+#endif // MAME_OSD_EIGCCPPC_H

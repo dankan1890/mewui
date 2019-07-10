@@ -143,6 +143,7 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["bool"] =                    EHTokBool;
     (*KeywordMap)["int"] =                     EHTokInt;
     (*KeywordMap)["uint"] =                    EHTokUint;
+    (*KeywordMap)["uint64_t"] =                EHTokUint64;
     (*KeywordMap)["dword"] =                   EHTokDword;
     (*KeywordMap)["half"] =                    EHTokHalf;
     (*KeywordMap)["float"] =                   EHTokFloat;
@@ -279,6 +280,22 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["float4x2"] =                EHTokFloat4x2;
     (*KeywordMap)["float4x3"] =                EHTokFloat4x3;
     (*KeywordMap)["float4x4"] =                EHTokFloat4x4;
+    (*KeywordMap)["half1x1"] =                 EHTokHalf1x1;
+    (*KeywordMap)["half1x2"] =                 EHTokHalf1x2;
+    (*KeywordMap)["half1x3"] =                 EHTokHalf1x3;
+    (*KeywordMap)["half1x4"] =                 EHTokHalf1x4;
+    (*KeywordMap)["half2x1"] =                 EHTokHalf2x1;
+    (*KeywordMap)["half2x2"] =                 EHTokHalf2x2;
+    (*KeywordMap)["half2x3"] =                 EHTokHalf2x3;
+    (*KeywordMap)["half2x4"] =                 EHTokHalf2x4;
+    (*KeywordMap)["half3x1"] =                 EHTokHalf3x1;
+    (*KeywordMap)["half3x2"] =                 EHTokHalf3x2;
+    (*KeywordMap)["half3x3"] =                 EHTokHalf3x3;
+    (*KeywordMap)["half3x4"] =                 EHTokHalf3x4;
+    (*KeywordMap)["half4x1"] =                 EHTokHalf4x1;
+    (*KeywordMap)["half4x2"] =                 EHTokHalf4x2;
+    (*KeywordMap)["half4x3"] =                 EHTokHalf4x3;
+    (*KeywordMap)["half4x4"] =                 EHTokHalf4x4;
     (*KeywordMap)["double1x1"] =               EHTokDouble1x1;
     (*KeywordMap)["double1x2"] =               EHTokDouble1x2;
     (*KeywordMap)["double1x3"] =               EHTokDouble1x3;
@@ -320,6 +337,8 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["RWTexture2DArray"] =        EHTokRWTexture2darray;
     (*KeywordMap)["RWTexture3D"] =             EHTokRWTexture3d;
     (*KeywordMap)["RWBuffer"] =                EHTokRWBuffer;
+    (*KeywordMap)["SubpassInput"] =            EHTokSubpassInput;
+    (*KeywordMap)["SubpassInputMS"] =          EHTokSubpassInputMS;
 
     (*KeywordMap)["AppendStructuredBuffer"] =  EHTokAppendStructuredBuffer;
     (*KeywordMap)["ByteAddressBuffer"] =       EHTokByteAddressBuffer;
@@ -327,13 +346,16 @@ void HlslScanContext::fillInKeywordMap()
     (*KeywordMap)["RWByteAddressBuffer"] =     EHTokRWByteAddressBuffer;
     (*KeywordMap)["RWStructuredBuffer"] =      EHTokRWStructuredBuffer;
     (*KeywordMap)["StructuredBuffer"] =        EHTokStructuredBuffer;
+    (*KeywordMap)["TextureBuffer"] =           EHTokTextureBuffer;
 
     (*KeywordMap)["class"] =                   EHTokClass;
     (*KeywordMap)["struct"] =                  EHTokStruct;
     (*KeywordMap)["cbuffer"] =                 EHTokCBuffer;
+    (*KeywordMap)["ConstantBuffer"] =          EHTokConstantBuffer;
     (*KeywordMap)["tbuffer"] =                 EHTokTBuffer;
     (*KeywordMap)["typedef"] =                 EHTokTypedef;
     (*KeywordMap)["this"] =                    EHTokThis;
+    (*KeywordMap)["namespace"] =               EHTokNamespace;
 
     (*KeywordMap)["true"] =                    EHTokBoolConstant;
     (*KeywordMap)["false"] =                   EHTokBoolConstant;
@@ -402,32 +424,6 @@ void HlslScanContext::fillInKeywordMap()
     }
 
     (*SemanticMap)["SV_POSITION"] =               EbvPosition;
-    (*SemanticMap)["SV_CLIPDISTANCE"] =           EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE0"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE1"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE2"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE3"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE4"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE5"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE6"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE7"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE8"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE9"] =          EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE10"] =         EbvClipDistance;
-    (*SemanticMap)["SV_CLIPDISTANCE11"] =         EbvClipDistance;
-    (*SemanticMap)["SV_CULLDISTANCE"] =           EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE0"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE1"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE2"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE3"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE4"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE5"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE6"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE7"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE8"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE9"] =          EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE10"] =         EbvCullDistance;
-    (*SemanticMap)["SV_CULLDISTANCE11"] =         EbvCullDistance;
     (*SemanticMap)["SV_VERTEXID"] =               EbvVertexIndex;
     (*SemanticMap)["SV_VIEWPORTARRAYINDEX"] =     EbvViewportIndex;
     (*SemanticMap)["SV_TESSFACTOR"] =             EbvTessLevelOuter;
@@ -448,7 +444,7 @@ void HlslScanContext::fillInKeywordMap()
     (*SemanticMap)["SV_COVERAGE"] =               EbvSampleMask;
     (*SemanticMap)["SV_DEPTHGREATEREQUAL"] =      EbvFragDepthGreater;
     (*SemanticMap)["SV_DEPTHLESSEQUAL"] =         EbvFragDepthLesser;
-    (*SemanticMap)["SV_STENCILREF"] =             EbvStencilRef;
+    (*SemanticMap)["SV_STENCILREF"] =             EbvFragStencilRef;
 }
 
 void HlslScanContext::deleteKeywordMap()
@@ -554,6 +550,7 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
 
         case PpAtomConstInt:           parserToken->i = ppToken.ival;       return EHTokIntConstant;
         case PpAtomConstUint:          parserToken->i = ppToken.ival;       return EHTokUintConstant;
+        case PpAtomConstFloat16:       parserToken->d = ppToken.dval;       return EHTokFloat16Constant;
         case PpAtomConstFloat:         parserToken->d = ppToken.dval;       return EHTokFloatConstant;
         case PpAtomConstDouble:        parserToken->d = ppToken.dval;       return EHTokDoubleConstant;
         case PpAtomIdentifier:
@@ -570,10 +567,15 @@ EHlslTokenClass HlslScanContext::tokenizeClass(HlslToken& token)
         case EndOfInput:               return EHTokNone;
 
         default:
-            char buf[2];
-            buf[0] = (char)token;
-            buf[1] = 0;
-            parseContext.error(loc, "unexpected token", buf, "");
+            if (token < PpAtomMaxSingle) {
+                char buf[2];
+                buf[0] = (char)token;
+                buf[1] = 0;
+                parseContext.error(loc, "unexpected token", buf, "");
+            } else if (tokenText[0] != 0)
+                parseContext.error(loc, "unexpected token", tokenText, "");
+            else
+                parseContext.error(loc, "unexpected token", "", "");
             break;
         }
     } while (true);
@@ -650,6 +652,7 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokBool:
     case EHTokInt:
     case EHTokUint:
+    case EHTokUint64:
     case EHTokDword:
     case EHTokHalf:
     case EHTokFloat:
@@ -771,6 +774,22 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokFloat4x2:
     case EHTokFloat4x3:
     case EHTokFloat4x4:
+    case EHTokHalf1x1:
+    case EHTokHalf1x2:
+    case EHTokHalf1x3:
+    case EHTokHalf1x4:
+    case EHTokHalf2x1:
+    case EHTokHalf2x2:
+    case EHTokHalf2x3:
+    case EHTokHalf2x4:
+    case EHTokHalf3x1:
+    case EHTokHalf3x2:
+    case EHTokHalf3x3:
+    case EHTokHalf3x4:
+    case EHTokHalf4x1:
+    case EHTokHalf4x2:
+    case EHTokHalf4x3:
+    case EHTokHalf4x4:
     case EHTokDouble1x1:
     case EHTokDouble1x2:
     case EHTokDouble1x3:
@@ -819,6 +838,9 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokRWByteAddressBuffer:
     case EHTokRWStructuredBuffer:
     case EHTokStructuredBuffer:
+    case EHTokTextureBuffer:
+    case EHTokSubpassInput:
+    case EHTokSubpassInputMS:
         return keyword;
 
     // variable, user type, ...
@@ -826,8 +848,10 @@ EHlslTokenClass HlslScanContext::tokenizeIdentifier()
     case EHTokStruct:
     case EHTokTypedef:
     case EHTokCBuffer:
+    case EHTokConstantBuffer:
     case EHTokTBuffer:
     case EHTokThis:
+    case EHTokNamespace:
         return keyword;
 
     case EHTokBoolConstant:
@@ -874,30 +898,6 @@ EHlslTokenClass HlslScanContext::reservedWord()
         parseContext.error(loc, "Reserved word.", tokenText, "", "");
 
     return EHTokNone;
-}
-
-EHlslTokenClass HlslScanContext::identifierOrReserved(bool reserved)
-{
-    if (reserved) {
-        reservedWord();
-
-        return EHTokNone;
-    }
-
-    if (parseContext.forwardCompatible)
-        parseContext.warn(loc, "using future reserved keyword", tokenText, "");
-
-    return identifierOrType();
-}
-
-// For a keyword that was never reserved, until it suddenly
-// showed up.
-EHlslTokenClass HlslScanContext::nonreservedKeyword(int version)
-{
-    if (parseContext.version < version)
-        return identifierOrType();
-
-    return keyword;
 }
 
 } // end namespace glslang

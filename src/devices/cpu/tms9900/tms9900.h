@@ -43,6 +43,8 @@ static const char opname[][5] =
 class tms99xx_device : public cpu_device
 {
 public:
+	static constexpr int AS_SETADDRESS = 4;
+
 	~tms99xx_device();
 
 	// READY input line. When asserted (high), the memory is ready for data exchange.
@@ -54,17 +56,15 @@ public:
 	void set_hold(int state);
 
 	// Callbacks
-	template<class _Object> static devcb_base &static_set_extop_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_external_operation.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_intlevel_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_get_intlevel.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_iaq_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_iaq_line.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_clkout_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_clock_out_line.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_wait_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_wait_line.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_holda_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_holda_line.set_callback(object); }
-	template<class _Object> static devcb_base &static_set_dbin_callback(device_t &device, _Object object) { return downcast<tms99xx_device &>(device).m_dbin_line.set_callback(object); }
+	auto extop_cb() { return m_external_operation.bind(); }
+	auto intlevel_cb() { return m_get_intlevel.bind(); }
+	auto clkout_cb() { return m_clock_out_line.bind(); }
+	auto wait_cb() { return m_wait_line.bind(); }
+	auto holda_cb() { return m_holda_line.bind(); }
 
 protected:
 	tms99xx_device(const machine_config &mconfig, device_type type,
-				const char *tag, int databus_width, int prg_addr_bits, int cru_addr_bits,
+				const char *tag, int data_width, int prg_addr_bits, int cru_addr_bits,
 				device_t *owner, uint32_t clock);
 
 	// device-level overrides
@@ -82,9 +82,7 @@ protected:
 	virtual void        execute_run() override;
 
 	// device_disasm_interface overrides
-	virtual uint32_t      disasm_min_opcode_bytes() const override;
-	virtual uint32_t      disasm_max_opcode_bytes() const override;
-	virtual offs_t      disasm_disassemble(std::ostream &stream, offs_t pc, const uint8_t *oprom, const uint8_t *opram, uint32_t options) override;
+	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 	virtual space_config_vector memory_space_config() const override;
 
@@ -95,8 +93,10 @@ protected:
 	void                decode(uint16_t inst);
 
 	const address_space_config  m_program_config;
+	const address_space_config  m_setaddress_config;
 	const address_space_config  m_io_config;
 	address_space*          m_prgspace;
+	address_space*          m_setaddr;
 	address_space*          m_cru;
 
 	virtual uint16_t  read_workspace_register_debug(int reg);
@@ -158,6 +158,9 @@ protected:
 	// Used to display the number of consumed cycles in the log.
 	int     m_first_cycle;
 
+	// Indicates the instruction acquision phase
+	bool    m_iaq;
+
 	/************************************************************************/
 
 	// Clock output. This is not a pin of the TMS9900 because the TMS9900
@@ -171,14 +174,8 @@ protected:
 	// HOLD Acknowledge line. When asserted (high), the CPU is in HOLD state.
 	devcb_write_line   m_holda_line;
 
-	// Signal to the outside world that we are now getting an instruction
-	devcb_write_line   m_iaq_line;
-
 	// Get the value of the interrupt level lines
 	devcb_read8    m_get_intlevel;
-
-	// DBIN line. When asserted (high), the CPU has disabled the data bus output buffers.
-	devcb_write_line   m_dbin_line;
 
 	// Trigger external operation. This is achieved by putting a special value in
 	// the most significant three bits of the address bus (TMS9995: data bus) and
@@ -221,7 +218,7 @@ private:
 
 	// State / debug management
 	uint16_t  m_state_any;
-	static const char* s_statename[];
+	static char const *const s_statename[];
 	virtual void state_import(const device_state_entry &entry) override;
 	virtual void state_export(const device_state_entry &entry) override;
 	virtual void state_string_export(const device_state_entry &entry, std::string &str) const override;
@@ -296,7 +293,6 @@ private:
 	void    alu_abs(void);
 	void    alu_x(void);
 	void    alu_b(void);
-	//void    alu_bl(void);
 	void    alu_blwp(void);
 	void    alu_ldcr(void);
 	void    alu_stcr(void);
@@ -328,6 +324,9 @@ private:
 
 	// Index of the interrupt program
 	int     m_interrupt_mp_index;
+
+	// For debugging only
+	bool    m_log_interrupt;
 
 	// State of the micro-operation. Needed for repeated ALU calls.
 	int     m_state;

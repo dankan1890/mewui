@@ -20,18 +20,6 @@
 
 
 //**************************************************************************
-//  DEVICE CONFIGURATION MACROS
-//**************************************************************************
-
-#define MCFG_LASERDISC_LDV1000_ADD(_tag) \
-	MCFG_DEVICE_ADD(_tag, PIONEER_LDV1000, 0)
-
-#define MCFG_LASERDISC_LDV1000_COMMAND_STROBE_CB(_cb) \
-	devcb = &downcast<pioneer_ldv1000_device *>(device)->set_command_strobe_callback(DEVCB_##_cb);
-
-
-
-//**************************************************************************
 //  GLOBAL VARIABLES
 //**************************************************************************
 
@@ -51,9 +39,9 @@ class pioneer_ldv1000_device : public laserdisc_device
 {
 public:
 	// construction/destruction
-	pioneer_ldv1000_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	pioneer_ldv1000_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
-	template <class cmd_strobe_cb> devcb_base &set_command_strobe_callback(cmd_strobe_cb &&latch) { return m_command_strobe_cb.set_callback(std::forward<cmd_strobe_cb>(latch)); }
+	auto command_strobe_callback() { return m_command_strobe_cb.bind(); }
 
 	// input and output
 	void data_w(uint8_t data);
@@ -83,19 +71,18 @@ protected:
 	virtual int32_t player_update(const vbi_metadata &vbi, int fieldnum, const attotime &curtime) override;
 	virtual void player_overlay(bitmap_yuy16 &bitmap) override { }
 
+private:
 	// internal helpers
 	bool focus_on() const { return !(m_portb1 & 0x01); }
 	bool spdl_on() const { return !(m_portb1 & 0x02); }
 	bool laser_on() const { return (m_portb1 & 0x40); }
 
-public:
 	// internal read/write handlers
 	DECLARE_WRITE8_MEMBER( z80_decoder_display_port_w );
 	DECLARE_READ8_MEMBER( z80_decoder_display_port_r );
 	DECLARE_READ8_MEMBER( z80_controller_r );
 	DECLARE_WRITE8_MEMBER( z80_controller_w );
 
-private:
 	// internal read/write handlers
 	DECLARE_WRITE_LINE_MEMBER( ctc_interrupt );
 	DECLARE_WRITE8_MEMBER( ppi0_porta_w );
@@ -105,6 +92,9 @@ private:
 	DECLARE_READ8_MEMBER( ppi1_porta_r );
 	DECLARE_WRITE8_MEMBER( ppi1_portb_w );
 	DECLARE_WRITE8_MEMBER( ppi1_portc_w );
+
+	void ldv1000_map(address_map &map);
+	void ldv1000_portmap(address_map &map);
 
 	// internal state
 	required_device<z80_device> m_z80_cpu;                  /* CPU index of the Z80 */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 Branimir Karadzic. All rights reserved.
+ * Copyright 2010-2018 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bx#license-bsd-2-clause
  */
 
@@ -26,6 +26,10 @@ namespace bx
 	}
 
 	inline WriterOpenI::~WriterOpenI()
+	{
+	}
+
+	inline ProcessOpenI::~ProcessOpenI()
 	{
 	}
 
@@ -97,15 +101,15 @@ namespace bx
 		switch (_whence)
 		{
 			case Whence::Begin:
-				m_pos = int64_clamp(_offset, 0, m_top);
+				m_pos = clamp<int64_t>(_offset, 0, m_top);
 				break;
 
 			case Whence::Current:
-				m_pos = int64_clamp(m_pos + _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_pos + _offset, 0, m_top);
 				break;
 
 			case Whence::End:
-				m_pos = int64_clamp(m_top - _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_top - _offset, 0, m_top);
 				break;
 		}
 
@@ -124,7 +128,7 @@ namespace bx
 		}
 
 		int64_t remainder = m_top-m_pos;
-		int32_t size = uint32_min(_size, uint32_t(int64_min(remainder, INT32_MAX) ) );
+		int32_t size = uint32_min(_size, uint32_t(min<int64_t>(remainder, INT32_MAX) ) );
 		m_pos += size;
 		if (size != _size)
 		{
@@ -149,15 +153,15 @@ namespace bx
 		switch (_whence)
 		{
 			case Whence::Begin:
-				m_pos = int64_clamp(_offset, 0, m_top);
+				m_pos = clamp<int64_t>(_offset, 0, m_top);
 				break;
 
 			case Whence::Current:
-				m_pos = int64_clamp(m_pos + _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_pos + _offset, 0, m_top);
 				break;
 
 			case Whence::End:
-				m_pos = int64_clamp(m_top - _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_top - _offset, 0, m_top);
 				break;
 		}
 
@@ -169,7 +173,7 @@ namespace bx
 		BX_CHECK(NULL != _err, "Reader/Writer interface calling functions must handle errors.");
 
 		int64_t remainder = m_top-m_pos;
-		int32_t size = uint32_min(_size, uint32_t(int64_min(remainder, INT32_MAX) ) );
+		int32_t size = uint32_min(_size, uint32_t(min<int64_t>(remainder, INT32_MAX) ) );
 		memCopy(_data, &m_data[m_pos], size);
 		m_pos += size;
 		if (size != _size)
@@ -196,10 +200,10 @@ namespace bx
 
 	inline MemoryWriter::MemoryWriter(MemoryBlockI* _memBlock)
 		: m_memBlock(_memBlock)
-		  , m_data(NULL)
-		  , m_pos(0)
-		  , m_top(0)
-		  , m_size(0)
+		, m_data(NULL)
+		, m_pos(0)
+		, m_top(0)
+		, m_size(0)
 	{
 	}
 
@@ -212,15 +216,15 @@ namespace bx
 		switch (_whence)
 		{
 			case Whence::Begin:
-				m_pos = int64_clamp(_offset, 0, m_top);
+				m_pos = clamp<int64_t>(_offset, 0, m_top);
 				break;
 
 			case Whence::Current:
-				m_pos = int64_clamp(m_pos + _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_pos + _offset, 0, m_top);
 				break;
 
 			case Whence::End:
-				m_pos = int64_clamp(m_top - _offset, 0, m_top);
+				m_pos = clamp<int64_t>(m_top - _offset, 0, m_top);
 				break;
 		}
 
@@ -241,10 +245,10 @@ namespace bx
 		}
 
 		int64_t remainder = m_size-m_pos;
-		int32_t size = uint32_min(_size, uint32_t(int64_min(remainder, INT32_MAX) ) );
+		int32_t size = uint32_min(_size, uint32_t(min<int64_t>(remainder, INT32_MAX) ) );
 		memCopy(&m_data[m_pos], _data, size);
 		m_pos += size;
-		m_top = int64_max(m_top, m_pos);
+		m_top = max(m_top, m_pos);
 		if (size != _size)
 		{
 			BX_ERROR_SET(_err, BX_ERROR_READERWRITER_WRITE, "MemoryWriter: write truncated.");
@@ -272,7 +276,7 @@ namespace bx
 	int32_t read(ReaderI* _reader, Ty& _value, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		return _reader->read(&_value, sizeof(Ty), _err);
 	}
 
@@ -280,7 +284,7 @@ namespace bx
 	int32_t readHE(ReaderI* _reader, Ty& _value, bool _fromLittleEndian, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		Ty value;
 		int32_t result = _reader->read(&value, sizeof(Ty), _err);
 		_value = toHostEndian(value, _fromLittleEndian);
@@ -291,6 +295,16 @@ namespace bx
 	{
 		BX_ERROR_SCOPE(_err);
 		return _writer->write(_data, _size, _err);
+	}
+
+	inline int32_t write(WriterI* _writer, const char* _str, Error* _err)
+	{
+		return write(_writer, _str, strLen(_str), _err);
+	}
+
+	inline int32_t write(WriterI* _writer, const StringView& _str, Error* _err)
+	{
+		return write(_writer, _str.getPtr(), _str.getLength(), _err);
 	}
 
 	inline int32_t writeRep(WriterI* _writer, uint8_t _byte, int32_t _size, Error* _err)
@@ -318,7 +332,7 @@ namespace bx
 	int32_t write(WriterI* _writer, const Ty& _value, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		return _writer->write(&_value, sizeof(Ty), _err);
 	}
 
@@ -326,7 +340,7 @@ namespace bx
 	int32_t writeLE(WriterI* _writer, const Ty& _value, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		Ty value = toLittleEndian(_value);
 		int32_t result = _writer->write(&value, sizeof(Ty), _err);
 		return result;
@@ -336,32 +350,10 @@ namespace bx
 	int32_t writeBE(WriterI* _writer, const Ty& _value, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		Ty value = toBigEndian(_value);
 		int32_t result = _writer->write(&value, sizeof(Ty), _err);
 		return result;
-	}
-
-	inline int32_t writePrintf(WriterI* _writer, const char* _format, ...)
-	{
-		va_list argList;
-		va_start(argList, _format);
-
-		char temp[2048];
-		char* out = temp;
-		int32_t max = sizeof(temp);
-		int32_t len = vsnprintf(out, max, _format, argList);
-		if (len > max)
-		{
-			out = (char*)alloca(len);
-			len = vsnprintf(out, len, _format, argList);
-		}
-
-		int32_t size = write(_writer, out, len);
-
-		va_end(argList);
-
-		return size;
 	}
 
 	inline int64_t skip(SeekerI* _seeker, int64_t _offset)
@@ -377,9 +369,17 @@ namespace bx
 	inline int64_t getSize(SeekerI* _seeker)
 	{
 		int64_t offset = _seeker->seek();
-		int64_t size = _seeker->seek(0, Whence::End);
+		int64_t size   = _seeker->seek(0, Whence::End);
 		_seeker->seek(offset, Whence::Begin);
 		return size;
+	}
+
+	inline int64_t getRemain(SeekerI* _seeker)
+	{
+		int64_t offset = _seeker->seek();
+		int64_t size   = _seeker->seek(0, Whence::End);
+		_seeker->seek(offset, Whence::Begin);
+		return size-offset;
 	}
 
 	inline int32_t peek(ReaderSeekerI* _reader, void* _data, int32_t _size, Error* _err)
@@ -395,7 +395,7 @@ namespace bx
 	int32_t peek(ReaderSeekerI* _reader, Ty& _value, Error* _err)
 	{
 		BX_ERROR_SCOPE(_err);
-		BX_STATIC_ASSERT(BX_TYPE_IS_POD(Ty) );
+		BX_STATIC_ASSERT(isTriviallyCopyable<Ty>() );
 		return peek(_reader, &_value, sizeof(Ty), _err);
 	}
 
@@ -432,16 +432,22 @@ namespace bx
 		return 0;
 	}
 
-	inline bool open(ReaderOpenI* _reader, const char* _filePath, Error* _err)
+	inline bool open(ReaderOpenI* _reader, const FilePath& _filePath, Error* _err)
 	{
 		BX_ERROR_USE_TEMP_WHEN_NULL(_err);
 		return _reader->open(_filePath, _err);
 	}
 
-	inline bool open(WriterOpenI* _writer, const char* _filePath, bool _append, Error* _err)
+	inline bool open(WriterOpenI* _writer, const FilePath& _filePath, bool _append, Error* _err)
 	{
 		BX_ERROR_USE_TEMP_WHEN_NULL(_err);
 		return _writer->open(_filePath, _append, _err);
+	}
+
+	inline bool open(ProcessOpenI* _process, const FilePath& _filePath, const StringView& _args, Error* _err)
+	{
+		BX_ERROR_USE_TEMP_WHEN_NULL(_err);
+		return _process->open(_filePath, _args, _err);
 	}
 
 	inline void close(CloserI* _reader)

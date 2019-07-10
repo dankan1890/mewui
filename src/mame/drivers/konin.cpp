@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Miodrag Milanovic, Robbbert
+// copyright-holders:Miodrag Milanovic
 /***************************************************************************
 
 Mera-Elzab Konin
@@ -43,10 +43,13 @@ Terminal settings: 8 data bits, 2 stop bits, no parity @ 9600
 ****************************************************************************/
 
 #include "emu.h"
-#include "cpu/z80/z80.h"
+#include "cpu/i8085/i8085.h"
+#include "machine/i8212.h"
+#include "machine/i8214.h"
 #include "machine/i8251.h"
+#include "machine/pit8253.h"
+#include "machine/i8255.h"
 #include "bus/rs232/rs232.h"
-#include "machine/clock.h"
 
 class konin_state : public driver_device
 {
@@ -54,74 +57,113 @@ public:
 	konin_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
-		, m_uart(*this, "uart")
+		, m_picu(*this, "picu")
+		, m_ioppi(*this, "ioppi")
+		, m_iopit(*this, "iopit")
 	{ }
 
-	DECLARE_WRITE_LINE_MEMBER(clock_w);
+	void konin(machine_config &config);
 
 private:
-	virtual void machine_reset() override;
+	DECLARE_WRITE8_MEMBER(picu_b_w);
+	DECLARE_WRITE_LINE_MEMBER(picu_r3_w);
+
+	void konin_io(address_map &map);
+	void konin_mem(address_map &map);
+
+	virtual void machine_start() override;
 	required_device<cpu_device> m_maincpu;
-	required_device<i8251_device> m_uart;
+	required_device<i8214_device> m_picu;
+	required_device<i8255_device> m_ioppi;
+	required_device<pit8253_device> m_iopit;
 };
 
-static ADDRESS_MAP_START( konin_mem, AS_PROGRAM, 8, konin_state )
-	ADDRESS_MAP_UNMAP_HIGH
-	AM_RANGE(0x0000, 0x4fff) AM_ROM
-	AM_RANGE(0x5000, 0xffff) AM_RAM
-ADDRESS_MAP_END
+WRITE8_MEMBER(konin_state::picu_b_w)
+{
+	m_picu->b_w(data ^ 7);
+}
 
-static ADDRESS_MAP_START( konin_io, AS_IO, 8, konin_state )
-	ADDRESS_MAP_UNMAP_HIGH
-	ADDRESS_MAP_GLOBAL_MASK(0xff)
-	AM_RANGE(0xf6, 0xf6) AM_DEVREADWRITE("uart", i8251_device, status_r, control_w)
-	AM_RANGE(0xf7, 0xf7) AM_DEVREADWRITE("uart", i8251_device, data_r, data_w)
-ADDRESS_MAP_END
+WRITE_LINE_MEMBER(konin_state::picu_r3_w)
+{
+	m_picu->r_w(3, !state);
+}
+
+void konin_state::konin_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x0000, 0x4fff).rom();
+	map(0x5000, 0x7fff).ram();
+	map(0xf200, 0xf200).nopw(); // watchdog?
+	map(0xf400, 0xfbff).ram();
+	map(0xfc80, 0xfc83).rw("mainppi", FUNC(i8255_device::read), FUNC(i8255_device::write));
+	map(0xfc84, 0xfc87).rw("mainpit", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0xff00, 0xffff).ram();
+}
+
+void konin_state::konin_io(address_map &map)
+{
+	map.unmap_value_high();
+	map.global_mask(0xff);
+	map(0x24, 0x24).w(FUNC(konin_state::picu_b_w));
+	map(0x80, 0x83).lrw8("ioppi_rw",
+		[this](offs_t offset) { return m_ioppi->read(offset^3); },
+		[this](offs_t offset, u8 data) { m_ioppi->write(offset^3, data); });
+	map(0xf6, 0xf6).rw("uart", FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
+	map(0xf7, 0xf7).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
+	map(0xf8, 0xfb).lrw8("iopit_rw",
+		[this](offs_t offset) { return m_iopit->read(offset^3); },
+		[this](offs_t offset, u8 data) { m_iopit->write(offset^3, data); });
+}
 
 /* Input ports */
 static INPUT_PORTS_START( konin )
 INPUT_PORTS_END
 
-static DEVICE_INPUT_DEFAULTS_START( konin )
-	DEVICE_INPUT_DEFAULTS( "RS232_TXBAUD", 0xff, RS232_BAUD_9600 )
-	DEVICE_INPUT_DEFAULTS( "RS232_RXBAUD", 0xff, RS232_BAUD_9600 )
-	DEVICE_INPUT_DEFAULTS( "RS232_STARTBITS", 0xff, RS232_STARTBITS_1 )
-	DEVICE_INPUT_DEFAULTS( "RS232_DATABITS", 0xff, RS232_DATABITS_8 )
-	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_NONE )
-	DEVICE_INPUT_DEFAULTS( "RS232_STOPBITS", 0xff, RS232_STOPBITS_2 )
-DEVICE_INPUT_DEFAULTS_END
 
-
-void konin_state::machine_reset()
+void konin_state::machine_start()
 {
 }
 
-WRITE_LINE_MEMBER( konin_state::clock_w )
+void konin_state::konin(machine_config &config)
 {
-	m_uart->write_txc(state);
-	m_uart->write_rxc(state);
-}
-
-static MACHINE_CONFIG_START( konin )
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu",Z80, XTAL_4MHz)
-	MCFG_CPU_PROGRAM_MAP(konin_mem)
-	MCFG_CPU_IO_MAP(konin_io)
+	i8080_cpu_device &maincpu(I8080(config, m_maincpu, XTAL(4'000'000)));
+	maincpu.set_addrmap(AS_PROGRAM, &konin_state::konin_mem);
+	maincpu.set_addrmap(AS_IO, &konin_state::konin_io);
+	maincpu.out_inte_func().set(m_picu, FUNC(i8214_device::inte_w));
+	maincpu.set_irq_acknowledge_callback(device_irq_acknowledge_delegate(FUNC(i8212_device::inta_cb), "intlatch", (i8212_device*)nullptr));
 
-	MCFG_DEVICE_ADD("uart", I8251, 0)
-	MCFG_I8251_TXD_HANDLER(DEVWRITELINE("rs232", rs232_port_device, write_txd))
-	MCFG_I8251_DTR_HANDLER(DEVWRITELINE("rs232", rs232_port_device, write_dtr))
-	MCFG_I8251_RTS_HANDLER(DEVWRITELINE("rs232", rs232_port_device, write_rts))
+	i8212_device &intlatch(I8212(config, "intlatch", 0));
+	intlatch.md_rd_callback().set_constant(0);
+	intlatch.di_rd_callback().set(m_picu, FUNC(i8214_device::vector_r));
+	intlatch.int_wr_callback().set_inputline("maincpu", I8085_INTR_LINE);
 
-	MCFG_RS232_PORT_ADD("rs232", default_rs232_devices, "terminal")
-	MCFG_RS232_RXD_HANDLER(DEVWRITELINE("uart", i8251_device, write_rxd))
-	MCFG_RS232_DSR_HANDLER(DEVWRITELINE("uart", i8251_device, write_dsr))
-	MCFG_RS232_CTS_HANDLER(DEVWRITELINE("uart", i8251_device, write_cts))
-	MCFG_DEVICE_CARD_DEVICE_INPUT_DEFAULTS("terminal", konin )
+	I8214(config, m_picu, XTAL(4'000'000));
+	m_picu->int_wr_callback().set("intlatch", FUNC(i8212_device::stb_w));
 
-	MCFG_DEVICE_ADD("uart_clock", CLOCK, 153600)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE(konin_state, clock_w))
-MACHINE_CONFIG_END
+	pit8253_device &mainpit(PIT8253(config, "mainpit", 0));
+	// wild guess at UART clock and source
+	mainpit.set_clk<0>(1536000);
+	mainpit.out_handler<0>().set("uart", FUNC(i8251_device::write_txc));
+	mainpit.out_handler<0>().append("uart", FUNC(i8251_device::write_rxc));
+
+	I8255(config, "mainppi", 0);
+
+	PIT8253(config, m_iopit, 0);
+
+	I8255(config, m_ioppi, 0);
+
+	i8251_device &uart(I8251(config, "uart", 0));
+	uart.txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
+	uart.dtr_handler().set("rs232", FUNC(rs232_port_device::write_dtr));
+	uart.rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
+	uart.rxrdy_handler().set(FUNC(konin_state::picu_r3_w));
+
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	rs232.rxd_handler().set("uart", FUNC(i8251_device::write_rxd));
+	rs232.dsr_handler().set("uart", FUNC(i8251_device::write_dsr));
+	rs232.cts_handler().set("uart", FUNC(i8251_device::write_cts));
+}
 
 /* ROM definition */
 ROM_START( konin )
@@ -140,5 +182,5 @@ ROM_END
 
 /* Driver */
 
-//    YEAR  NAME    PARENT  COMPAT   MACHINE    INPUT  STATE        INIT  COMPANY       FULLNAME  FLAGS
-COMP( 198?, konin,  0,      0,       konin,     konin, konin_state, 0,    "Mera-Elzab", "Konin",  MACHINE_IS_SKELETON )
+//    YEAR  NAME   PARENT  COMPAT  MACHINE  INPUT  CLASS        INIT        COMPANY       FULLNAME  FLAGS
+COMP( 198?, konin, 0,      0,      konin,   konin, konin_state, empty_init, "Mera-Elzab", "Konin",  MACHINE_IS_SKELETON )

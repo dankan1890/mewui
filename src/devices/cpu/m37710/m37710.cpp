@@ -6,7 +6,7 @@
     The 7700 series is based on the WDC 65C816 core, with the following
     notable changes:
 
-    - Second accumulator called "B" (on the 65816, "A" and "B" were the
+    - Second 16-bit accumulator called "B" (on the 65816, "A" and "B" were the
       two 8-bit halves of the 16-bit "C" accumulator).
     - 6502 emulation mode and XCE instruction are not present.
     - No NMI line.  BRK and the watchdog interrupt are non-maskable, but there
@@ -28,6 +28,9 @@
       not the upper 8 bits of X or Y when in 8-bit X.  The 7700 preserves
       the top bits of all registers in all modes (code in the C74 BIOS
       starting at d881 requires this!).
+    - Unlike the 65C816, the program bank register (known here as PG) is
+      incremented when PC overflows from 0xFFFF, and may be incremented or
+      decremented when the address for a relative branch is calculated.
 
     The various 7700 series models differ primarily by their on board
     peripherals.  The 7750 and later models do include some additional
@@ -275,17 +278,17 @@ const int m37710_cpu_device::m37710_int_reg_map[M37710_MASKABLE_INTERRUPTS] =
 	M37710_LINE_UART0RECV,  // level 8  (0x72)
 	M37710_LINE_UART1XMIT,  // level 5  (0x73)
 	M37710_LINE_UART1RECV,  // level 6  (0x74)
-	M37710_LINE_TIMERB2,    // level 16 (0x75)
-	M37710_LINE_TIMERB1,    // level 15 (0x76)
-	M37710_LINE_TIMERB0,    // level 14 (0x77)
-	M37710_LINE_TIMERA4,    // level 13 (0x78)
-	M37710_LINE_TIMERA3,    // level 12 (0x79)
-	M37710_LINE_TIMERA2,    // level 11 (0x7a)
-	M37710_LINE_TIMERA1,    // level 10 (0x7b)
-	M37710_LINE_TIMERA0,    // level 9  (0x7c)
-	M37710_LINE_IRQ2,       // level 19 (0x7d)
+	M37710_LINE_TIMERA0,    // level 16 (0x75)
+	M37710_LINE_TIMERA1,    // level 15 (0x76)
+	M37710_LINE_TIMERA2,    // level 14 (0x77)
+	M37710_LINE_TIMERA3,    // level 13 (0x78)
+	M37710_LINE_TIMERA4,    // level 12 (0x79)
+	M37710_LINE_TIMERB0,    // level 11 (0x7a)
+	M37710_LINE_TIMERB1,    // level 10 (0x7b)
+	M37710_LINE_TIMERB2,    // level 9  (0x7c)
+	M37710_LINE_IRQ0,       // level 19 (0x7d)
 	M37710_LINE_IRQ1,       // level 18 (0x7e)
-	M37710_LINE_IRQ0,       // level 17 (0x7f)
+	M37710_LINE_IRQ2,       // level 17 (0x7f)
 };
 
 const int m37710_cpu_device::m37710_irq_vectors[M37710_INTERRUPT_MAX] =
@@ -506,7 +509,7 @@ void m37710_cpu_device::port_w(offs_t offset, uint8_t data)
 		else
 		{
 			uint8_t d = m_port_dir[p];
-			if (d != 0xff)
+			if (d != 0)
 				m_port_out_cb[p](0, data & d, d);
 			m_port_regs[p] = data;
 		}
@@ -612,30 +615,30 @@ uint8_t m37710_cpu_device::uart0_ctrl_reg0_r()
 {
 	LOGMASKED(LOG_UART, "uart0_ctrl_reg0_r: UART0 transmit/recv ctrl 0 = %x (PC=%x)\n", m_uart_ctrl_reg0[0], REG_PB<<16 | REG_PC);
 
-	//return m_uart_ctrl_reg0[0];
-	return 0x08; // not hooked up yet
+	return m_uart_ctrl_reg0[0];
 }
 
 void m37710_cpu_device::uart0_ctrl_reg0_w(uint8_t data)
 {
 	LOGMASKED(LOG_UART, "uart0_ctrl_reg0_w %x: UART0 transmit/recv ctrl 0 = %x\n", data, m_uart_ctrl_reg0[0]);
 
-	m_uart_ctrl_reg0[0] = data;
+	// Tx empty flag is read-only
+	m_uart_ctrl_reg0[0] = (data & ~8) | (m_uart_ctrl_reg0[0] & 8);
 }
 
 uint8_t m37710_cpu_device::uart1_ctrl_reg0_r()
 {
 	LOGMASKED(LOG_UART, "uart1_ctrl_reg0_r: UART1 transmit/recv ctrl 0 = %x (PC=%x)\n", m_uart_ctrl_reg0[1], REG_PB<<16 | REG_PC);
 
-	//return m_uart_ctrl_reg0[1];
-	return 0xff; // not hooked up yet
+	return m_uart_ctrl_reg0[1];
 }
 
 void m37710_cpu_device::uart1_ctrl_reg0_w(uint8_t data)
 {
 	LOGMASKED(LOG_UART, "uart1_ctrl_reg0_w %x: UART1 transmit/recv ctrl 0 = %x\n", data, m_uart_ctrl_reg0[1]);
 
-	m_uart_ctrl_reg0[1] = data;
+	// Tx empty flag is read-only
+	m_uart_ctrl_reg0[1] = (data & ~8) | (m_uart_ctrl_reg0[1] & 8);
 }
 
 uint8_t m37710_cpu_device::uart0_ctrl_reg1_r()
@@ -647,9 +650,9 @@ uint8_t m37710_cpu_device::uart0_ctrl_reg1_r()
 
 void m37710_cpu_device::uart0_ctrl_reg1_w(uint8_t data)
 {
-	LOGMASKED(LOG_UART, "uart0_ctrl_reg0_w %x: UART0 transmit/recv ctrl 1 = %x\n", data, m_uart_ctrl_reg1[0]);
+	LOGMASKED(LOG_UART, "uart0_ctrl_reg1_w %x: UART0 transmit/recv ctrl 1 = %x\n", data, m_uart_ctrl_reg1[0]);
 
-	m_uart_ctrl_reg1[0] = data;
+	m_uart_ctrl_reg1[0] = (m_uart_ctrl_reg1[0] & (BIT(data, 2) ? 0xfa : 0x0a)) | (data & 0x05);
 }
 
 uint8_t m37710_cpu_device::uart1_ctrl_reg1_r()
@@ -663,7 +666,7 @@ void m37710_cpu_device::uart1_ctrl_reg1_w(uint8_t data)
 {
 	LOGMASKED(LOG_UART, "uart1_ctrl_reg1_w %x: UART1 transmit/recv ctrl 1 = %x\n", data, m_uart_ctrl_reg1[1]);
 
-	m_uart_ctrl_reg1[1] = data;
+	m_uart_ctrl_reg1[1] = (m_uart_ctrl_reg1[1] & (BIT(data, 2) ? 0xfa : 0x0a)) | (data & 0x05);
 }
 
 uint16_t m37710_cpu_device::uart0_rbuf_r()
@@ -938,6 +941,7 @@ void m37710_cpu_device::m37710i_update_irqs()
 				if (!FLAG_I && thispri > curpri && thispri > m_ipl)
 				{
 					// mark us as the best candidate
+					LOGMASKED(LOG_INT, "%s interrupt active with priority %d (PC=%x)\n", m37710_intnames[curirq], thispri, REG_PB<<16 | REG_PC);
 					wantedIRQ = curirq;
 					curpri = thispri;
 				}
@@ -945,6 +949,7 @@ void m37710_cpu_device::m37710i_update_irqs()
 			else
 			{
 				// non-maskable
+				LOGMASKED(LOG_INT, "%s interrupt active (PC=%x)\n", m37710_intnames[curirq], REG_PB<<16 | REG_PC);
 				wantedIRQ = curirq;
 				curpri = 7;
 				break;  // no more processing, NMIs always win

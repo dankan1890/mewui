@@ -30,10 +30,7 @@ How to play (quick guide)
 3. Computer plays black, it will work out its move and beep.
 4. Read the move in the display, or look for the flashing LEDs.
 5. Move the computer's piece in the same way you moved yours.
-6. If a piece is being taken, firstly click on the piece then click the blank
-    area at bottom right. This causes the piece to disappear. After that,
-    move the piece that took the other piece.
-7. You'll need to read the official user manual for advanced features, or if
+6. You'll need to read the official user manual for advanced features, or if
     you get messages such as "Err1".
 
 
@@ -84,8 +81,6 @@ protected:
 	uint8_t m_lcd_shift_counter;
 	uint8_t m_led7;
 	uint8_t m_key_select;
-
-private:
 };
 
 
@@ -317,7 +312,8 @@ void glasgow_state::glasgow(machine_config &config)
 	M68000(config, m_maincpu, 12_MHz_XTAL);
 	m_maincpu->set_addrmap(AS_PROGRAM, &glasgow_state::glasgow_mem);
 
-	MEPHISTO_SENSORS_BOARD(config, m_board, 0);
+	MEPHISTO_SENSORS_BOARD(config, m_board);
+	m_board->set_delay(attotime::from_msec(200));
 
 	/* video hardware */
 	config.set_default_layout(layout_glasgow);

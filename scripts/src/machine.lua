@@ -2224,9 +2224,6 @@ end
 --
 --@src/devices/machine/nscsi_bus.h,MACHINES["NSCSI"] = true
 --@src/devices/machine/nscsi_cb.h,MACHINES["NSCSI"] = true
---@src/devices/machine/nscsi_cd.h,MACHINES["NSCSI"] = true
---@src/devices/machine/nscsi_hd.h,MACHINES["NSCSI"] = true
---@src/devices/machine/nscsi_s1410.h,MACHINES["NSCSI"] = true
 ---------------------------------------------------
 
 if (MACHINES["NSCSI"]~=null) then
@@ -2235,12 +2232,18 @@ if (MACHINES["NSCSI"]~=null) then
 		MAME_DIR .. "src/devices/machine/nscsi_bus.h",
 		MAME_DIR .. "src/devices/machine/nscsi_cb.cpp",
 		MAME_DIR .. "src/devices/machine/nscsi_cb.h",
-		MAME_DIR .. "src/devices/machine/nscsi_cd.cpp",
-		MAME_DIR .. "src/devices/machine/nscsi_cd.h",
-		MAME_DIR .. "src/devices/machine/nscsi_hd.cpp",
-		MAME_DIR .. "src/devices/machine/nscsi_hd.h",
-		MAME_DIR .. "src/devices/machine/nscsi_s1410.cpp",
-		MAME_DIR .. "src/devices/machine/nscsi_s1410.h",
+	}
+end
+
+---------------------------------------------------
+--
+--@src/devices/machine/pcf8583.h,MACHINES["PCF8583"] = true
+---------------------------------------------------
+
+if (MACHINES["PCF8583"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/pcf8583.cpp",
+		MAME_DIR .. "src/devices/machine/pcf8583.h",
 	}
 end
 

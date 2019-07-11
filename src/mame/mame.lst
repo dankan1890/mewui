@@ -8994,6 +8994,9 @@ blktigerb1                      // bootleg
 blktigerb2                      // bootleg
 blktigerb3                      // bootleg?
 
+@source:blktiger_ms.cpp
+blktigerm
+
 @source:blmbycar.cpp
 blmbycar                        // (c) 1994 ABM & Gecas - uses same gfx chip as powerins?
 blmbycaru                       // (c) 1994 ABM & Gecas - uses same gfx chip as powerins?
@@ -9538,6 +9541,7 @@ caswin                          // (c) 1985
 rcasino                         // (c) 1984 Dyna Electronics (D-2608208A1-2)
 rcasino1                        // (c) 1984 Dyna Electronics (D-2608208A1-1, Larger Board)
 rcasinoo                        // (c) 1984 Dyna Electronics (D-2608208A1-1, Smaller Board)
+rcasino2                        // (c) 1984 Dyna Electronics
 
 @source:cat.cpp
 cat                             //
@@ -9735,6 +9739,10 @@ quizard3_32                     // (c) TAB Austria 1996
 quizard4                        // (c) TAB Austria 1998
 quizard4_40                     // (c) TAB Austria 1997
 quizard4_41                     // (c) TAB Austria 1998
+
+@source:cdr4210.cpp
+cdr4210                         //
+cw7501							// 1996 Panasonic
 
 @source:cedar_magnet.cpp
 cedmag
@@ -21995,7 +22003,9 @@ van32                           // 1991 Mephisto Vancouver 68020
 gen32                           // 1993 Mephisto Genius 68030
 lond020                         // 1996 Mephisto London 68020
 lond030                         // 1996 Mephisto Genius 68030 London Upgrade
+berl16                          // 1992 Mephisto Berlin 68000
 berlinp                         // 1994 Mephisto Berlin Pro 68020
+berl16l                         // 1996 Mephisto Berlin 68000 London Upgrade
 bpl32                           // 1996 Mephisto Berlin Pro London Upgrade
 
 @source:mod8.cpp
@@ -28293,6 +28303,7 @@ m5grusst04                      //
 m5gsstrk                        // Gold Super Streak (Barcrest)
 m5gsstrk07                      //
 m5gstrik                        // Gold Strike (Barcrest)
+m5gstriks                       // Gold Strike (Barcrest, V1.00, Spanish, Bilso S.A.)
 m5gstrik01                      //
 m5gstrik01a                     //
 m5gstrik02                      //
@@ -38611,6 +38622,9 @@ tvc64pru                        //
 @source:tvcapcom.cpp
 tvcapcom                        //
 
+@source:tvg01.cpp
+boatrace                        //
+
 @source:tvgame.cpp
 tvgame                          //
 
@@ -40153,6 +40167,9 @@ wrally                          // (c) 1993 - Ref 930705
 wrallya                         // (c) 1993 - Ref 930705
 wrallyat                        // (c) 1993 - Ref 930217
 wrallyb                         // (c) 1993 - Ref 930217
+
+@source:wrinkles.cpp
+wrinkles
 
 @source:wswan.cpp
 wscolor                         // Bandai WonderSwan Color Handheld

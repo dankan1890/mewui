@@ -9740,10 +9740,6 @@ quizard4                        // (c) TAB Austria 1998
 quizard4_40                     // (c) TAB Austria 1997
 quizard4_41                     // (c) TAB Austria 1998
 
-@source:cdr4210.cpp
-cdr4210                         //
-cw7501							// 1996 Panasonic
-
 @source:cedar_magnet.cpp
 cedmag
 mag_time
@@ -14225,6 +14221,7 @@ gjmovie                         // Genius Junior Movie (Germany)
 gjrstar                         // Genius Junior Redstar (Germany)
 gjrstar2                        // Genius Junior Redstar 2 (Germany)
 gjrstar3                        // Genius Junior Redstar 3 (Germany)
+pitagjr                         // Pitagorin Junior
 
 @source:genpc.cpp
 pc                              // 1987 PC with CGA
@@ -14586,6 +14583,7 @@ lucky8b                         // (c) 1989 Wing Co. Ltd
 lucky8c                         // (c) 1989 Wing Co. Ltd
 lucky8d                         // (c) 1989 Wing Co. Ltd
 lucky8e                         // (c) 1989 Wing Co. Ltd
+lucky8f                         // bootleg?
 luckybar                        // unknown
 luckylad                        // (c) 1985 Wing Co. Ltd
 magodds                         // 198? (c) Micro Manufacturing Ltd.
@@ -15472,6 +15470,9 @@ tmpacman                        // Tomy
 tmscramb                        // Tomy
 tmtennis                        // Tomy
 ufombs                          // Bambino
+
+@source:hhtiger.cpp
+hhtiger                         // 1983 H/H Tiger
 
 @source:hideseek.cpp
 hideseek                        //
@@ -21390,11 +21391,12 @@ mm4                             // Mephisto 4
 mm4tk                           // Mephisto 4 Turbo Kit
 mm5                             // Mephisto 5.1 ROM
 mm50                            // Mephisto 5.0 ROM
-mm5tk                           // Mephisto 5.1 ROM Turbo Kit Speed
 rebel5                          // Mephisto 5
 
 @source:mephisto_montec.cpp
-smondial                        // 1986 Mephisto Super Mondial
+mondial                         // 1985 Mephisto Mondial
+smondial                        // 1986 Mephisto Super Mondial (Ver A)
+smondialb                       // 1986 Mephisto Super Mondial (Ver B)
 montec                          // 1987 Mephisto Monte Carlo
 mondial2                        // 1987 Mephisto Mondial II
 smondial2                       // 1989 Mephisto Super Mondial II
@@ -32580,9 +32582,6 @@ piratesb                        // bootleg?
 @source:piratesh.cpp
 piratesh                        // (c) 1995 Konami
 
-@source:pitagjr.cpp
-pitagjr                         // Pitagorin Junior
-
 @source:pitnrun.cpp
 pitnrun                         // PR  (c) 1984 Taito Corporation
 pitnruna                        // PR  (c) 1984 Taito Corporation
@@ -38623,7 +38622,7 @@ tvc64pru                        //
 tvcapcom                        //
 
 @source:tvg01.cpp
-boatrace                        //
+theboat                         //
 
 @source:tvgame.cpp
 tvgame                          //

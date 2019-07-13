@@ -3367,6 +3367,7 @@ files {
 	MAME_DIR .. "src/mame/includes/microtan.h",
 	MAME_DIR .. "src/mame/machine/microtan.cpp",
 	MAME_DIR .. "src/mame/video/microtan.cpp",
+	MAME_DIR .. "src/mame/drivers/hhtiger.cpp",
 	MAME_DIR .. "src/mame/drivers/oric.cpp",
 }
 
@@ -3739,7 +3740,6 @@ files {
 	MAME_DIR .. "src/mame/includes/pc4.h",
 	MAME_DIR .. "src/mame/video/pc4.cpp",
 	MAME_DIR .. "src/mame/drivers/pc2000.cpp",
-	MAME_DIR .. "src/mame/drivers/pitagjr.cpp",
 	MAME_DIR .. "src/mame/drivers/prestige.cpp",
 	MAME_DIR .. "src/mame/drivers/vtech1.cpp",
 	MAME_DIR .. "src/mame/drivers/vtech2.cpp",
@@ -3885,7 +3885,6 @@ files {
 	MAME_DIR .. "src/mame/drivers/chaos.cpp",
 	MAME_DIR .. "src/mame/drivers/cd2650.cpp",
 	MAME_DIR .. "src/mame/drivers/cdc721.cpp",
-	MAME_DIR .. "src/mame/drivers/cdr4210.cpp",
 	MAME_DIR .. "src/mame/drivers/cit101.cpp",
 	MAME_DIR .. "src/mame/machine/cit101_kbd.cpp",
 	MAME_DIR .. "src/mame/machine/cit101_kbd.h",

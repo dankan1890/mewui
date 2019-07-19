@@ -22,8 +22,8 @@ digit DP lights up).
 #include "emu.h"
 #include "cpu/f8/f8.h"
 #include "machine/f3853.h"
-#include "video/pwm.h"
 #include "machine/sensorboard.h"
+#include "video/pwm.h"
 
 // internal artwork
 #include "saitek_chesstrv.lh" // clickable
@@ -90,7 +90,7 @@ void chesstrv_state::machine_start()
 
 
 /******************************************************************************
-    Devices, I/O
+    I/O
 ******************************************************************************/
 
 // F3870 ports

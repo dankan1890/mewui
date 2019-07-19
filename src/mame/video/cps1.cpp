@@ -442,6 +442,8 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 #include "emu.h"
 #include "includes/cps1.h"
 
+#include <algorithm>
+
 #define VERBOSE 0
 
 /********************************************************************
@@ -2256,8 +2258,6 @@ void cps_state::cps1_update_transmasks()
 
 void cps_state::video_start()
 {
-	int i;
-
 	MACHINE_RESET_CALL_MEMBER(cps);
 
 	/* Put in some const */
@@ -2274,13 +2274,10 @@ void cps_state::video_start()
 	m_bg_tilemap[2] = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(cps_state::get_tile2_info),this), tilemap_mapper_delegate(FUNC(cps_state::tilemap2_scan),this), 32, 32, 64, 64);
 
 	/* create empty tiles */
-	memset(m_empty_tile, 0x0f, sizeof(m_empty_tile));
+	std::fill(std::begin(m_empty_tile), std::end(m_empty_tile), 0x0f);
 
 	/* front masks will change at runtime to handle sprite occluding */
 	cps1_update_transmasks();
-
-	for (i = 0; i < cps1_palette_entries * 16; i++)
-		m_palette->set_pen_color(i, rgb_t(0,0,0));
 
 	m_buffered_obj = make_unique_clear<uint16_t[]>(m_obj_size / 2);
 
@@ -2387,7 +2384,7 @@ void cps_state::cps1_build_palette( const uint16_t* const palette_base )
 				g = ((palette >> 4) & 0x0f) * 0x11 * bright / 0x2d;
 				b = ((palette >> 0) & 0x0f) * 0x11 * bright / 0x2d;
 
-				m_palette->set_pen_color (0x200 * page + offset, rgb_t(r, g, b));
+				m_palette->set_pen_color(0x200 * page + offset, rgb_t(r, g, b));
 			}
 		}
 		else

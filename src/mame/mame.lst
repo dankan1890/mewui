@@ -8884,7 +8884,6 @@ bigstrkba                       // alt set of 'bigstrkb' with Italian teams
 
 @source:binbug.cpp
 binbug                          //
-dg680                           //
 
 @source:bingo.cpp
 brooklyn                        //
@@ -11620,6 +11619,9 @@ destroyr1                       // 030131-030136    1977/10 [6800]
 dfruit                          //
 gemcrush
 
+@source:dg680.cpp
+dg680                           //
+
 @source:dgn_beta.cpp
 dgnbeta                         // Dragon Beta
 
@@ -12842,6 +12844,7 @@ smissw                          //
 supmodel                        // (c) 1994 Comad & New Japan System
 wownfant                        // (c) 2002 Comad
 zipzap                          // (c) 1995 Barko Corp
+zipzapa                         // (c) 1995 Barko Corp
 
 @source:exprraid.cpp
 exprraid                        // (c) 1986 Data East Corporation
@@ -15259,6 +15262,7 @@ gnw_ball                        // Nintendo
 gnw_bfight                      // Nintendo
 gnw_bjack                       // Nintendo
 gnw_boxing                      // Nintendo
+gnw_bsweep                      // Nintendo
 gnw_chef                        // Nintendo
 gnw_climber                     // Nintendo
 gnw_climbcs                     // Nintendo
@@ -18676,6 +18680,12 @@ zephya                          //
 @source:luckgrln.cpp
 7smash                          // (c) 1993 Sovic
 luckgrln                        // (c) 1991 Wing Co. Ltd
+
+@source:lucky37.cpp
+lucky21                         // (c) 199? Wing Co. Ltd
+lucky21d                        // (c) 199? Wing Co. Ltd
+lucky25                         // (c) 199? Wing Co. Ltd
+lucky37                         // (c) 199? Wing Co. Ltd
 
 @source:lucky74.cpp
 excitbj                         // (c) 1992 Wing Co. Ltd
@@ -34105,6 +34115,10 @@ sage2                           //
 @source:saitek_chesstrv.cpp
 chesstrv                        //
 
+@source:saitek_corona.cpp
+corona
+coronaa
+
 @source:saitek_cp2000.cpp
 cp2000                          //
 
@@ -34116,12 +34130,11 @@ risc2500                        //
 montreux                        //
 
 @source:saitek_stratos.cpp
-corona
 stratos
-stratosl
+stratosa
 tking
-tkingl
-tkingp
+tkinga
+tkingb
 
 @source:sam.cpp
 24_130                          //
@@ -34376,6 +34389,9 @@ savia84                         //
 
 @source:savquest.cpp
 savquest                        //
+
+@source:sb8085.cpp
+sb8085                          //
 
 @source:sbasketb.cpp
 sbasketb                        // GX405 (c) 1984 (Version I, Encrypted)
@@ -37743,6 +37759,7 @@ t4490                           // Terco 4490 Mill CNC Control (c) 1986
 alcat258                        //
 loewe715                        //
 loewed                          //
+swtpc8212                       //
 teleguide                       //
 
 @source:terracre.cpp
@@ -38151,6 +38168,7 @@ tmnt                            // GX963 (c) 1989 (World)
 tmnta                           // GX963 (c) 1989 (Asia)
 tmnt2                           // GX063 (c) 1991 (US)
 tmnt22pu                        // GX063 (c) 1991 (US)
+tmnt24pu                        // GX063 (c) 1991 (US)
 tmht22pe                        // GX063 (c) 1991 (UK)
 tmht24pe                        // GX063 (c) 1991 (UK)
 tmnt2a                          // GX063 (c) 1991 (Asia)

@@ -3060,7 +3060,9 @@ files {
 	MAME_DIR .. "src/mame/drivers/saitek_cp2000.cpp",
 	MAME_DIR .. "src/mame/drivers/saitek_delta1.cpp",
 	MAME_DIR .. "src/mame/drivers/saitek_risc2500.cpp",
+	MAME_DIR .. "src/mame/includes/saitek_stratos.h",
 	MAME_DIR .. "src/mame/drivers/saitek_stratos.cpp",
+	MAME_DIR .. "src/mame/drivers/saitek_corona.cpp", -- subdriver of saitek_stratos
 }
 
 createMESSProjects(_target, _subtarget, "samcoupe")
@@ -3891,6 +3893,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/d6800.cpp",
 	MAME_DIR .. "src/mame/drivers/d6809.cpp",
 	MAME_DIR .. "src/mame/drivers/daruma.cpp",
+	MAME_DIR .. "src/mame/drivers/dg680.cpp",
 	MAME_DIR .. "src/mame/drivers/diablo1300.cpp",
 	MAME_DIR .. "src/mame/drivers/didact.cpp",
 	MAME_DIR .. "src/mame/drivers/digel804.cpp",
@@ -4035,6 +4038,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/rvoice.cpp",
 	MAME_DIR .. "src/mame/drivers/sacstate.cpp",
 	MAME_DIR .. "src/mame/drivers/sartorius.cpp",
+	MAME_DIR .. "src/mame/drivers/sb8085.cpp",
 	MAME_DIR .. "src/mame/drivers/sbrain.cpp",
 	MAME_DIR .. "src/mame/drivers/seattlecmp.cpp",
 	MAME_DIR .. "src/mame/drivers/sh4robot.cpp",

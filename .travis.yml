@@ -41,6 +41,7 @@ before_install:
 branches:
   only:
     - master
+    - nana
 notifications:
   email: false
 

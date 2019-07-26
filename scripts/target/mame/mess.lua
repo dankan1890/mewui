@@ -844,6 +844,7 @@ BUSES["SUNKBD"] = true
 BUSES["SUNMOUSE"] = true
 BUSES["SVI_EXPANDER"] = true
 BUSES["SVI_SLOT"] = true
+BUSES["TANBUS"] = true
 BUSES["TATUNG_PIPE"] = true
 BUSES["TMC600"] = true
 BUSES["TI8X"] = true
@@ -1178,6 +1179,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"olivetti",
 		"olympia",
 		"omnibyte",
+		"openuni",
 		"orion",
 		"osborne",
 		"osi",
@@ -1850,6 +1852,7 @@ createMESSProjects(_target, _subtarget, "cccp")
 files {
 	MAME_DIR .. "src/mame/drivers/argo.cpp",
 	MAME_DIR .. "src/mame/drivers/cm1800.cpp",
+	MAME_DIR .. "src/mame/drivers/debut.cpp",
 	MAME_DIR .. "src/mame/drivers/intellect02.cpp",
 	MAME_DIR .. "src/mame/drivers/lviv.cpp",
 	MAME_DIR .. "src/mame/includes/lviv.h",
@@ -2852,6 +2855,11 @@ files {
 	MAME_DIR .. "src/mame/includes/msbc1.h",
 	MAME_DIR .. "src/mame/drivers/ob68k1a.cpp",
 	MAME_DIR .. "src/mame/includes/ob68k1a.h",
+}
+
+createMESSProjects(_target, _subtarget, "openuni")
+files {
+	MAME_DIR .. "src/mame/drivers/hektor.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "orion")

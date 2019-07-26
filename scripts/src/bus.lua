@@ -2160,6 +2160,10 @@ if (BUSES["NSCSI"]~=null) then
 	files {
 		MAME_DIR .. "src/devices/bus/nscsi/cd.cpp",
 		MAME_DIR .. "src/devices/bus/nscsi/cd.h",
+		MAME_DIR .. "src/devices/bus/nscsi/cdd2000.cpp",
+		MAME_DIR .. "src/devices/bus/nscsi/cdd2000.h",
+		MAME_DIR .. "src/devices/bus/nscsi/cdrn820s.cpp",
+		MAME_DIR .. "src/devices/bus/nscsi/cdrn820s.h",
 		MAME_DIR .. "src/devices/bus/nscsi/cw7501.cpp",
 		MAME_DIR .. "src/devices/bus/nscsi/cw7501.h",
 		MAME_DIR .. "src/devices/bus/nscsi/devices.cpp",
@@ -2823,6 +2827,42 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/bus/tanbus/tanbus.h,BUSES["TANBUS"] = true
+---------------------------------------------------
+
+if (BUSES["TANBUS"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/bus/tanbus/bullsnd.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/bullsnd.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tanbus.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tanbus.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tanex.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tanex.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tandos.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tandos.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tanhrg.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tanhrg.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tanram.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tanram.h",
+		MAME_DIR .. "src/devices/bus/tanbus/mpvdu.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/mpvdu.h",
+		MAME_DIR .. "src/devices/bus/tanbus/ra32k.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/ra32k.h",
+		MAME_DIR .. "src/devices/bus/tanbus/radisc.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/radisc.h",
+		MAME_DIR .. "src/devices/bus/tanbus/ravdu.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/ravdu.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tug64k.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tug64k.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tug8082.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tug8082.h",
+		MAME_DIR .. "src/devices/bus/tanbus/tugpgm.cpp",
+		MAME_DIR .. "src/devices/bus/tanbus/tugpgm.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/bus/ti8x/ti8x.h,BUSES["TI8X"] = true
 ---------------------------------------------------
 
@@ -3208,6 +3248,8 @@ if (BUSES["MACPDS"]~=null) then
 		MAME_DIR .. "src/devices/bus/macpds/macpds.h",
 		MAME_DIR .. "src/devices/bus/macpds/pds_tpdfpd.cpp",
 		MAME_DIR .. "src/devices/bus/macpds/pds_tpdfpd.h",
+		MAME_DIR .. "src/devices/bus/macpds/hyperdrive.cpp",
+		MAME_DIR .. "src/devices/bus/macpds/hyperdrive.h",
 	}
 end
 

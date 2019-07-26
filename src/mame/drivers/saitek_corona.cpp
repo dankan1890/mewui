@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:hap
+// thanks-to:Berger
 /***************************************************************************
 
 Saitek Corona. Please refer to saitek_stratos.cpp for driver notes.
@@ -69,6 +70,7 @@ private:
 	DECLARE_READ8_MEMBER(control1_r);
 	DECLARE_READ8_MEMBER(control2_r);
 	DECLARE_READ8_MEMBER(chessboard_r);
+	DECLARE_WRITE8_MEMBER(lcd_reset_w);
 
 	u8 m_control1;
 	u8 m_control2;
@@ -213,6 +215,13 @@ READ8_MEMBER(corona_state::chessboard_r)
 	return ~m_board->read_file(m_select2 & 0xf);
 }
 
+WRITE8_MEMBER(corona_state::lcd_reset_w)
+{
+	// reset lcd?
+	m_lcd_ready = true;
+	m_lcd_count = 0;
+}
+
 
 
 /******************************************************************************
@@ -316,5 +325,5 @@ ROM_END
 ******************************************************************************/
 
 /*    YEAR  NAME      PARENT  CMP MACHINE  INPUT   CLASS         INIT        COMPANY, FULLNAME, FLAGS */
-CONS( 1988, corona,   0,       0, corona,  corona, corona_state, empty_init, "Saitek", "Kasparov Corona (ver. D+)", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_GRAPHICS | MACHINE_CLICKABLE_ARTWORK ) // aka Corona II
-CONS( 1988, coronaa,  corona,  0, corona,  corona, corona_state, empty_init, "Saitek", "Kasparov Corona (ver. D)", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_GRAPHICS | MACHINE_CLICKABLE_ARTWORK )
+CONS( 1990, corona,   0,       0, corona,  corona, corona_state, empty_init, "Saitek", "Kasparov Corona (ver. D+)", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_GRAPHICS | MACHINE_CLICKABLE_ARTWORK ) // aka Corona II
+CONS( 1988, coronaa,  corona,  0, corona,  corona, corona_state, empty_init, "Saitek", "Kasparov Corona (ver. C)", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_GRAPHICS | MACHINE_CLICKABLE_ARTWORK )

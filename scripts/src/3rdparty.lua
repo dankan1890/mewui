@@ -2125,3 +2125,69 @@ links {
 }
 end
 
+--------------------------------------------------
+-- png library objects
+--------------------------------------------------
+project "png"
+	uuid "c6531515-5482-4256-9953-515645faedfb"
+	kind "StaticLib"
+
+	includedirs {
+		ext_includedir("zlib"),
+	}
+
+	defines {
+		"PNG_ARM_NEON_IMPLEMENTATION=0",
+	}
+
+	files {
+		MAME_DIR .. "3rdparty/libpng/png.c",
+		MAME_DIR .. "3rdparty/libpng/pngerror.c",
+		MAME_DIR .. "3rdparty/libpng/pngget.c",
+		MAME_DIR .. "3rdparty/libpng/pngmem.c",
+		MAME_DIR .. "3rdparty/libpng/pngpread.c",
+		MAME_DIR .. "3rdparty/libpng/pngread.c",
+		MAME_DIR .. "3rdparty/libpng/pngrio.c",
+		MAME_DIR .. "3rdparty/libpng/pngrtran.c",
+		MAME_DIR .. "3rdparty/libpng/pngrutil.c",
+		MAME_DIR .. "3rdparty/libpng/pngset.c",
+		MAME_DIR .. "3rdparty/libpng/pngtrans.c",
+		MAME_DIR .. "3rdparty/libpng/pngwio.c",
+		MAME_DIR .. "3rdparty/libpng/pngwrite.c",
+		MAME_DIR .. "3rdparty/libpng/pngwtran.c",
+		MAME_DIR .. "3rdparty/libpng/pngwutil.c",
+	}
+
+--------------------------------------------------
+-- Nana library objects
+--------------------------------------------------
+project "nana"
+	uuid "bf7aa281-4f4b-4bdf-803e-985b3c27280a"
+	kind "StaticLib"
+
+	defines {
+		"NANA_ENABLE_PNG",
+		"USE_LIBPNG_FROM_OS",
+		"NANA_ENABLE_JPEG",
+		"USE_LIBJPEG_FROM_OS",
+	}
+
+	includedirs {
+		MAME_DIR .. "3rdparty/nana/include",
+		MAME_DIR .. "3rdparty/libpng",
+		"/usr/include/freetype2",
+		ext_includedir("jpeg"),
+	}
+	
+	configuration { "gmake or ninja" }
+		buildoptions_cpp {
+			"-Wno-overloaded-virtual",
+			"-std=c++17",
+		}
+	configuration { }
+
+	files {
+		MAME_DIR .. "3rdparty/nana/source/**.cpp",
+		MAME_DIR .. "3rdparty/nana/source/**.hpp",
+		MAME_DIR .. "3rdparty/nana/include/**.hpp",
+	}

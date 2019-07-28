@@ -268,6 +268,8 @@ if (STANDALONE~=true) then
 if (_OPTIONS["osd"] ~= "uwp") then
 	links {
 		"linenoise",
+		"png",
+		"nana",
 	}
 end
 end

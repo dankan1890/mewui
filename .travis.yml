@@ -1,4 +1,11 @@
 language: cpp
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - g++-5
+            - gcc-5
 compiler:
   - gcc
   - clang

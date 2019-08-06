@@ -12,6 +12,7 @@ compiler:
 os:
   - linux
   - osx
+  - windows
 matrix:
   exclude:
     - os: osx
@@ -27,7 +28,9 @@ script:
     else make -j4 IGNORE_GIT=1 OPTIMIZE=0 OVERRIDE_CC="gcc-5" OVERRIDE_CXX="g++-5" && ./$MAME -validate;
     fi
     elif [ $TRAVIS_OS_NAME == 'osx' ]; then
-    unset LDOPTS && make -j2 OPTIMIZE=0 USE_LIBSDL=1 && ./$MAME -validate;
+    unset LDOPTS && make -j2 IGNORE_GIT=1 OPTIMIZE=0 USE_LIBSDL=1 && ./$MAME -validate;
+    elif [ $TRAVIS_OS_NAME == 'windows' ]; then
+    make -j4 IGNORE_GIT=1 OPTIMIZE=0 MSBUILD=1 && ./$MAME -validate;
     fi
 sudo: required
 before_install:

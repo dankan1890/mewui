@@ -19,5 +19,5 @@ jobs:
       sudo apt-get install -y --force-yes libsdl2-dev libsdl2-ttf-dev libasound2-dev libxinerama-dev libxi-dev qt5-default
     displayName: 'dependencies'
   - script: |
-      make -j4 SUBTARGET=tiny
+      make -j4 SUBTARGET=tiny IGNORE_GIT=1
     displayName: 'make'

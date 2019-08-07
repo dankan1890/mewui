@@ -20,3 +20,13 @@ jobs:
   - script: |
       make -j4 SUBTARGET=tiny IGNORE_GIT=1
     displayName: 'make'
+
+- job: Windows
+
+  pool:
+    vmImage: 'vs2015-win2012r2'
+
+  steps:
+  - script: |
+      make -j4 SUBTARGET=tiny IGNORE_GIT=1 MSBUILD=1
+    displayName: 'make'

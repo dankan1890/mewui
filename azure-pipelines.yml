@@ -14,7 +14,6 @@ jobs:
 
   steps:
   - script: |
-      sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
       sudo apt-get update -qq
       sudo apt-get install -y --force-yes libsdl2-dev libsdl2-ttf-dev libasound2-dev libxinerama-dev libxi-dev qt5-default
     displayName: 'dependencies'

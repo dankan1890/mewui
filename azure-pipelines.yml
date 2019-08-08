@@ -7,10 +7,10 @@ trigger:
   - master
 
 jobs:
-- job: Ubuntu_1604
+- job: Ubuntu
 
   pool:
-    vmImage: 'Ubuntu 16.04'
+    vmImage: 'ubuntu-latest'
 
   steps:
   - script: |
@@ -24,12 +24,9 @@ jobs:
 - job: Windows
 
   pool:
-    vmImage: 'vs2015-win2012r2'
+    vmImage: 'windows-latest'
 
   steps:
   - script: |
-      choco install mingw
-    displayName: 'dependencies'
-  - script: |
-      make -j4 SUBTARGET=tiny IGNORE_GIT=1 MSBUILD=1
-    displayName: 'make'
+      make -j4 SUBTARGET=tiny IGNORE_GIT=1
+    displayName: 'make MinGW'

@@ -40,8 +40,7 @@ jobs:
   steps:
   - script: |
       brew update
-      brew install sdl2 sdl2_ttf
     displayName: 'dependencies'
   - script: |
-      make -j4 SUBTARGET=tiny IGNORE_GIT=1
+      make -j4 SUBTARGET=tiny IGNORE_GIT=1 USE_BUNDLED_LIB_SDL2=1
     displayName: 'make'

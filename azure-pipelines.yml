@@ -29,6 +29,8 @@ jobs:
   steps:
   - script: |
       set MINGW32 = %PATH%
-      set MINGW64 = %PATH%
+      echo %MINGW32%
+    displayName: 'test'
+  - script: |
       make -j4 SUBTARGET=tiny IGNORE_GIT=1
     displayName: 'make MinGW'

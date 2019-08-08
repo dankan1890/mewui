@@ -28,5 +28,8 @@ jobs:
 
   steps:
   - script: |
+      choco install mingw
+    displayName: 'dependencies'
+  - script: |
       make -j4 SUBTARGET=tiny IGNORE_GIT=1 MSBUILD=1
     displayName: 'make'

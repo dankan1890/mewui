@@ -43,6 +43,18 @@ end
 
 --------------------------------------------------
 --
+--@src/devices/video/am8052.h,VIDEOS["AM8052"] = true
+--------------------------------------------------
+
+if (VIDEOS["AM8052"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/video/am8052.cpp",
+		MAME_DIR .. "src/devices/video/am8052.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/devices/video/bufsprite.h,VIDEOS["BUFSPRITE"] = true
 --------------------------------------------------
 
@@ -670,6 +682,18 @@ if (VIDEOS["PC_VGA"]~=null) then
 		MAME_DIR .. "src/devices/bus/isa/trident.h",
 		MAME_DIR .. "src/devices/video/clgd542x.cpp",
 		MAME_DIR .. "src/devices/video/clgd542x.h",
+	}
+end
+
+--------------------------------------------------
+--
+--@src/devices/video/virge_pci.h,VIDEOS["VIRGE_PCI"] = true
+--------------------------------------------------
+
+if (VIDEOS["VIRGE_PCI"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/video/virge_pci.cpp",
+		MAME_DIR .. "src/devices/video/virge_pci.h",
 	}
 end
 

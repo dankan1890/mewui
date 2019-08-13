@@ -64,7 +64,6 @@ protected:
 	DECLARE_WRITE8_MEMBER(port_d_w);
 	void update_lcdc(bool lcdc0, bool lcdc1);
 
-	void alphasmart_io(address_map &map);
 	void alphasmart_mem(address_map &map);
 
 	uint8_t           m_matrix[2];
@@ -78,15 +77,12 @@ class asma2k_state : public alphasmart_state
 public:
 	asma2k_state(const machine_config &mconfig, device_type type, const char *tag)
 		: alphasmart_state(mconfig, type, tag)
-		, m_intram(*this, "internal_ram")
 	{
 	}
 
 	void asma2k(machine_config &config);
 
 private:
-	required_shared_ptr<uint8_t> m_intram;
-
 	DECLARE_READ8_MEMBER(io_r);
 	DECLARE_WRITE8_MEMBER(io_w);
 	virtual DECLARE_WRITE8_MEMBER(port_a_w) override;
@@ -177,17 +173,9 @@ void alphasmart_state::alphasmart_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0x7fff).bankrw("rambank");
-	map(0x0000, 0x003f).noprw();   // internal registers
-	map(0x0040, 0x00ff).ram();   // internal RAM
 	map(0x8000, 0xffff).rom().region("maincpu", 0);
 	map(0x8000, 0x8000).rw(FUNC(alphasmart_state::kb_r), FUNC(alphasmart_state::kb_matrixh_w));
 	map(0xc000, 0xc000).w(FUNC(alphasmart_state::kb_matrixl_w));
-}
-
-void alphasmart_state::alphasmart_io(address_map &map)
-{
-	map(MC68HC11_IO_PORTA, MC68HC11_IO_PORTA).rw(FUNC(alphasmart_state::port_a_r), FUNC(alphasmart_state::port_a_w));
-	map(MC68HC11_IO_PORTD, MC68HC11_IO_PORTD).rw(FUNC(alphasmart_state::port_d_r), FUNC(alphasmart_state::port_d_w));
 }
 
 READ8_MEMBER(asma2k_state::io_r)
@@ -224,10 +212,6 @@ WRITE8_MEMBER(asma2k_state::port_a_w)
 			space.install_readwrite_bank(0x0000, 0x7fff, "rambank");
 		else
 			space.install_readwrite_handler(0x0000, 0x7fff, read8_delegate(FUNC(asma2k_state::io_r), this), write8_delegate(FUNC(asma2k_state::io_w), this));
-
-		// internal registers / RAM
-		space.nop_readwrite(0x00, 0x3f);
-		space.install_ram(0x40, 0xff, m_intram.target());
 	}
 
 	m_rambank->set_entry(((data>>4) & 0x03));
@@ -239,8 +223,6 @@ void asma2k_state::asma2k_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0x7fff).bankrw("rambank");
-	map(0x0000, 0x003f).noprw();   // internal registers
-	map(0x0040, 0x00ff).ram().share("internal_ram");   // internal RAM
 	map(0x8000, 0xffff).rom().region("maincpu", 0);
 	map(0x9000, 0x9000).w(FUNC(asma2k_state::kb_matrixl_w));
 }
@@ -434,10 +416,12 @@ void alphasmart_state::machine_reset()
 void alphasmart_state::alphasmart(machine_config &config)
 {
 	/* basic machine hardware */
-	MC68HC11(config, m_maincpu, XTAL(8'000'000)/2);  // MC68HC11D0, XTAL is 8 Mhz, unknown divider
+	MC68HC11D0(config, m_maincpu, XTAL(8'000'000)/2);  // XTAL is 8 Mhz, unknown divider
 	m_maincpu->set_addrmap(AS_PROGRAM, &alphasmart_state::alphasmart_mem);
-	m_maincpu->set_addrmap(AS_IO, &alphasmart_state::alphasmart_io);
-	m_maincpu->set_config(0, 192, 0x00);
+	m_maincpu->in_pa_callback().set(FUNC(alphasmart_state::port_a_r));
+	m_maincpu->out_pa_callback().set(FUNC(alphasmart_state::port_a_w));
+	m_maincpu->in_pd_callback().set(FUNC(alphasmart_state::port_d_r));
+	m_maincpu->out_pd_callback().set(FUNC(alphasmart_state::port_d_w));
 
 	KS0066_F05(config, m_lcdc0, 0);
 	m_lcdc0->set_lcd_size(2, 40);

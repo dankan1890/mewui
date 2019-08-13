@@ -2125,6 +2125,8 @@ if (BUSES["A2BUS"]~=null) then
 		MAME_DIR .. "src/devices/bus/a2bus/agat840k_hle.h",
 		MAME_DIR .. "src/devices/bus/a2bus/agat_fdc.cpp",
 		MAME_DIR .. "src/devices/bus/a2bus/agat_fdc.h",
+		MAME_DIR .. "src/devices/bus/a2bus/nippelclock.cpp",
+		MAME_DIR .. "src/devices/bus/a2bus/nippelclock.h",
 		MAME_DIR .. "src/devices/bus/a2bus/ssprite.cpp",
 		MAME_DIR .. "src/devices/bus/a2bus/ssprite.h",
 		MAME_DIR .. "src/devices/bus/a2bus/ssbapple.cpp",
@@ -2143,6 +2145,8 @@ end
 
 if (BUSES["A2GAMEIO"]~=null) then
 	files {
+		MAME_DIR .. "src/devices/bus/a2gameio/computereyes.cpp",
+		MAME_DIR .. "src/devices/bus/a2gameio/computereyes.h",
 		MAME_DIR .. "src/devices/bus/a2gameio/gameio.cpp",
 		MAME_DIR .. "src/devices/bus/a2gameio/gameio.h",
 		MAME_DIR .. "src/devices/bus/a2gameio/joystick.cpp",

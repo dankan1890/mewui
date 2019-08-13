@@ -8908,6 +8908,7 @@ michkit1                        //
 michkitb                        //
 michnew                         //
 michstake                       //
+missamer                        //
 montana                         //
 newdixie                        //
 penalty                         //
@@ -9251,6 +9252,7 @@ fball_ii                        //
 fbclass                         //
 flashgdn                        //
 flashgdnf                       //
+flashgdnfv                      //
 flashgdnv                       //
 frontier                        //
 futrquen                        //
@@ -9699,6 +9701,7 @@ ckongo                          // bootleg (Orca)
 ckongpt2                        // (c) 1981 Falcon
 ckongpt2a                       // (c) 1981 Falcon
 ckongpt2b                       // bootleg
+ckongpt2b2                      // bootleg
 ckongpt2j                       // (c) 1981 Falcon
 ckongpt2jeu                     // bootleg (Jeutel)
 dking                           // Crazy Kong Bootleg
@@ -10159,13 +10162,14 @@ comebaby                        // (c) 2000 ExPotato
 @source:commando.cpp
 commando                        // 5/1985 (c) 1985 (World)
 commandob                       // bootleg
-commandob2                      // bootleg 2
+commandob2                      // bootleg
+commandob3                      // bootleg
 commandoj                       // 5/1985 (c) 1985 (Japan)
 commandou                       // 5/1985 (c) 1985 + Data East license (US)
 commandou2                      // 5/1985 (c) 1985 + Data East license (US)
+mercenario                      // bootleg
 sinvasn                         // Europe original?
 sinvasnb                        // bootleg
-mercenario                      // bootleg
 
 @source:compc.cpp
 compc10                         // 1984 Commodore PC-10, PC-20 and PC-30
@@ -10436,6 +10440,7 @@ sf2qp2                          // hack
 sf2rb                           // hack
 sf2rb2                          // hack
 sf2rb3                          // hack
+sf2re                           // bootleg
 sf2red                          // hack
 sf2redp2                        // hack
 sf2rk                           // bootleg
@@ -11298,6 +11303,7 @@ play_a24                        //
 poto_a29                        //
 poto_a32                        //
 poto_a31                        //
+robo_a29                        //
 robo_a30                        //
 robo_a34                        //
 simp_a20                        //
@@ -11371,6 +11377,7 @@ trek_120                        //
 trek_200                        //
 trek_201                        //
 wwfr_103                        //
+wwfr_103f                       //
 wwfr_106                        //
 
 @source:de_3b.cpp
@@ -12608,7 +12615,7 @@ klondkp                         // (c) 1999 Eolith
 @source:ep64.cpp
 ep128                           // Enterprise 128
 ep64                            // Enterprise 64
-phc64                           // Hegener & Glaser Mephisto PHC 64
+phc64                           // Hegener + Glaser Mephisto PHC 64
 
 @source:epic14e.cpp
 epic14e                         //
@@ -14726,6 +14733,7 @@ attila                          //
 coneyis                         //
 cpthook                         //
 cyclopes                        //
+cyclopes1                       //
 gwarfare                        //
 ladyshot                        //
 ladyshota                       //
@@ -21407,14 +21415,25 @@ meijinsn                        // (c) 1986 SNK
 @source:mekd2.cpp
 mekd2                           // 1977 Motorola Evaluation Kit
 
+@source:mephisto_brikett.cpp
+mephisto
+mephisto2
+mephisto3
+
 @source:mephisto_glasgow.cpp
 amsterd                         // Amsterdam
-dallas                          // Dallas
+amsterda                        // Amsterdam
 dallas16                        // Dallas
+dallas16a                       // Dallas
 dallas32                        // Dallas
 glasgow                         // Glasgow
-roma                            // Roma
+roma16                          // Roma
+roma16a                         // Roma
 roma32                          // Roma
+
+@source:mephisto_mm1.cpp
+mm1
+mmirage
 
 @source:mephisto_mm2.cpp
 mm2                             // Mephisto MM II
@@ -21428,17 +21447,18 @@ rebel5                          // Mephisto Rebell 5.0
 modena                          // 1992 Mephisto Modena
 
 @source:mephisto_modular.cpp
-alm16                           // 1988 Mephisto Almeria 68000
-alm32                           // 1988 Mephisto Almeria 68020
-port16                          // 1989 Mephisto Portorose 68000
-port32                          // 1989 Mephisto Portorose 68020
-lyon16                          // 1990 Mephisto Lyon 68000
-lyon32                          // 1990 Mephisto Lyon 68020
-van16                           // 1991 Mephisto Vancouver 68000
-van32                           // 1991 Mephisto Vancouver 68020
+alm16                           // 1988 Mephisto Almeria 16 Bit
+alm32                           // 1988 Mephisto Almeria 32 Bit
+port16                          // 1989 Mephisto Portorose 16 Bit
+port32                          // 1989 Mephisto Portorose 32 Bit
+lyon16                          // 1990 Mephisto Lyon 16 Bit
+lyon32                          // 1990 Mephisto Lyon 32 Bit
+van16                           // 1991 Mephisto Vancouver 16 Bit
+van32                           // 1991 Mephisto Vancouver 32 Bit
 gen32                           // 1993 Mephisto Genius 68030
-lond020                         // 1996 Mephisto London 68020
-lond030                         // 1996 Mephisto Genius 68030 London Upgrade
+gen32l                          // 1996 Mephisto Genius 68030 London Upgrade
+lond16                          // 1996 Mephisto London 16 Bit
+lond32                          // 1996 Mephisto London 32 Bit
 berl16                          // 1992 Mephisto Berlin 68000
 berlinp                         // 1994 Mephisto Berlin Pro 68020
 berl16l                         // 1996 Mephisto Berlin 68000 London Upgrade
@@ -21702,6 +21722,9 @@ botss11                         // (c) 1992 Microprose Games Inc.
 f15se                           // (c) 1991 Microprose Games Inc.
 f15se21                         // (c) 1991 Microprose Games Inc.
 tankbatl                        // (c) 1992 Microprose Games Inc.
+
+@source:microdar.cpp
+microdar                        //
 
 @source:microdec.cpp
 md2                             //
@@ -22041,6 +22064,9 @@ mk90                            //
 @source:mkit09.cpp
 mkit09                          //
 mkit09a                         //
+
+@source:ml20.cpp
+ml20                            //
 
 @source:mlanding.cpp
 mlanding                        // B09 (c) 1987 Taito America Corporation (US)
@@ -33980,6 +34006,7 @@ mousn_l1                        //
 mousn_l4                        //
 mousn_lu                        //
 mousn_lx                        //
+polic_g4                        //
 polic_l2                        //
 polic_l3                        //
 polic_l4                        //
@@ -34160,6 +34187,9 @@ stratosa
 tking
 tkinga
 tkingb
+
+@source:saitek_superstar.cpp
+sstar28k
 
 @source:sam.cpp
 24_130                          //
@@ -35880,6 +35910,7 @@ tigerh                          // A47 (c) 1985 Taito America  Corporation   GX-
 tigerhb1                        // bootleg but (c) 1985 Taito Corporation
 tigerhb2                        // bootleg but (c) 1985 Taito Corporation
 tigerhb3                        // bootleg but (c) 1985 Taito Corporation
+tigerhb4                        // bootleg but (c) 1985 Taito Corporation
 tigerhj                         // A47 (c) 1985 Taito Corporation   GX-551 [not a Konami board!]
 
 @source:slapshot.cpp
@@ -36120,7 +36151,9 @@ sonsonj                         // 7/1984 (c) 1984 (Japan)
 @source:sorcerer.cpp
 sorcerer                        // Sorcerer
 sorcerer2                       // monitor 1.1 1979
-sorcererd                       // Sorcerer with floppies
+sorcerera                       // Sorcerer with Dreamdisk fdc
+sorcererb                       // Sorcerer with Digitrio fdc
+sorcererd                       // Sorcerer with Micropolis fdc
 
 @source:storio.cpp
 vreader                         // (c) 2011 V.Tech
@@ -36369,6 +36402,7 @@ tetfight                        // (c) 2001 Sego
 sshangha                        // (c) 1992 Hot-B
 sshanghab                       // bootleg
 sshanghaj                       // (c) 1992 Hot-B
+sshanghak                       // (c) 1992 Hot-B
 
 @source:sshot.cpp
 gunchamps                       // (c) 1980 Model Racing (sshot.cpp)
@@ -39066,6 +39100,7 @@ startrks                        // Sidam bootleg
 subhunt                         // ?   [1977 Taito]
 supcrash                        // bootleg
 tranqgun                        // 413-428 (c) 1980 Sega
+wantsega                        // ? (c) 1982 Sega
 
 @source:victor9k.cpp
 victor9k                        //
@@ -40118,6 +40153,7 @@ dw_p5                           //
 ft_l3                           //
 ft_l4                           //
 ft_l5                           //
+ft_p2                           //
 ft_p4                           //
 gw_l1                           //
 gw_l2                           //

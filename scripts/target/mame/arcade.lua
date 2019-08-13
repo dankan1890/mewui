@@ -284,6 +284,7 @@ SOUNDS["LC7535"] = true
 
 VIDEOS["SEGA315_5124"] = true
 VIDEOS["SEGA315_5313"] = true
+--VIDEOS["AM8052"] = true
 VIDEOS["BUFSPRITE"] = true
 --VIDEOS["CDP1861"] = true
 --VIDEOS["CDP1862"] = true
@@ -929,6 +930,7 @@ function createMAMEProjects(_target, _subtarget, _name)
 		ext_includedir("flac"),
 		ext_includedir("glm"),
 		ext_includedir("jpeg"),
+		ext_includedir("rapidjson"),
 	}
 
 end
@@ -4783,6 +4785,7 @@ files {
 	MAME_DIR .. "src/mame/video/micro3d.cpp",
 	MAME_DIR .. "src/mame/audio/micro3d.cpp",
 	MAME_DIR .. "src/mame/audio/micro3d.h",
+	MAME_DIR .. "src/mame/drivers/microdar.cpp",
 	MAME_DIR .. "src/mame/drivers/midas.cpp",
 	MAME_DIR .. "src/mame/drivers/mil4000.cpp",
 	MAME_DIR .. "src/mame/drivers/miniboy7.cpp",
